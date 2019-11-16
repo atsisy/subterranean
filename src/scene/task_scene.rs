@@ -36,35 +36,38 @@ impl<'a> TaskScene<'a> {
 
 impl<'a> SceneManager for TaskScene<'a> {
     
-    fn key_down_event(&mut self, vkey: tdev::VirtualKey) {
+    fn key_down_event(&mut self, ctx: &mut ggez::Context, vkey: tdev::VirtualKey) {
         match vkey {
-            tdev::VirtualKey::Action1 => println!("Action1"),
+            tdev::VirtualKey::Action1 => println!("Action1 down!"),
             _ => (),
         }
     }
     
-    fn key_up_event(&mut self, vkey: tdev::VirtualKey) {
+    fn key_up_event(&mut self,
+                    _ctx: &mut ggez::Context,
+                    vkey: tdev::VirtualKey) {
         match vkey {
-            tdev::VirtualKey::Action1 => println!("Action1"),
+            tdev::VirtualKey::Action1 => println!("Action1 up!"),
             _ => (),
         }
     }
 
     fn mouse_motion_event(&mut self,
-                          button: ginput::mouse::MouseButton,
-                          status: tdev::MouseButtonStatus,
+                          _ctx: &mut ggez::Context,
                           point: numeric::Point2f,
-                          offset: numeric::Vector2f) {
-        
+                          _offset: numeric::Vector2f) {
+        println!("x: {}, y: {}", point.x, point.y);
     }
 
     fn mouse_button_down_event(&mut self,
+                               ctx: &mut ggez::Context,
                                button: ginput::mouse::MouseButton,
                                point: numeric::Point2f) {
         
     }
     
     fn mouse_button_up_event(&mut self,
+                             ctx: &mut ggez::Context,
                              button: ginput::mouse::MouseButton,
                              point: numeric::Point2f) {
         

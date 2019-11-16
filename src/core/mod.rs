@@ -2,6 +2,11 @@ use ggez::*;
 use ggez::graphics as ggraphics;
 
 use torifune::core::Clock;
+use torifune::device as tdev;
+use torifune::numeric;
+use tdev::ProgramableKey;
+use ggez::input as ginput;
+use ggez::input::keyboard::*;
 use crate::scene;
 
 use std::fs;
@@ -71,13 +76,15 @@ impl GameData {
 
 struct SceneController<'a> {
     current_scene: Box<dyn scene::SceneManager + 'a>,
+    key_map: tdev::ProgramableGenericKey,
 }
 
 impl<'a> SceneController<'a> {
 
     pub fn new(ctx: &mut ggez::Context, game_data: &'a GameData) -> SceneController<'a> {
         SceneController {
-            current_scene: Box::new(scene::task_scene::TaskScene::new(ctx, game_data))
+            current_scene: Box::new(scene::task_scene::TaskScene::new(ctx, game_data)),
+            key_map: tdev::ProgramableGenericKey::new()
         }
     }
     
@@ -105,6 +112,42 @@ impl<'a> SceneController<'a> {
             scene::SceneTransition::Keep => (),
             _ => self.switch_scene(ctx, game_data, self.current_scene.transition()),
         }
+    }
+
+    fn key_down_event(&mut self,
+                      ctx: &mut Context,
+                      keycode: KeyCode,
+                      _keymods: KeyMods,
+                      _repeat: bool) {
+        self.current_scene.key_down_event(ctx, self.key_map.real_to_virtual(keycode));
+    }
+    
+    fn key_up_event(&mut self,
+                    ctx: &mut Context,
+                    keycode: KeyCode,
+                    _keymods: KeyMods,){
+        self.current_scene.key_up_event(ctx, self.key_map.real_to_virtual(keycode));
+    }
+
+    fn mouse_motion_event(&mut self,
+                          ctx: &mut ggez::Context,
+                          point: numeric::Point2f,
+                          offset: numeric::Vector2f){
+        self.current_scene.mouse_motion_event(ctx, point, offset);
+    }
+
+    fn mouse_button_down_event(&mut self,
+                               ctx: &mut ggez::Context,
+                               button: ginput::mouse::MouseButton,
+                               point: numeric::Point2f){
+        self.current_scene.mouse_button_down_event(ctx, button, point);
+    }
+    
+    fn mouse_button_up_event(&mut self,
+                             ctx: &mut ggez::Context,
+                             button: ginput::mouse::MouseButton,
+                             point: numeric::Point2f){
+        self.current_scene.mouse_button_up_event(ctx, button, point);
     }
 }
 
@@ -138,6 +181,54 @@ impl<'data> ggez::event::EventHandler for State<'data> {
         self.scene_controller.run_post_process(ctx, self.game_data);
         
         Ok(())
+    }
+
+    fn key_down_event(
+        &mut self,
+        ctx: &mut ggez::Context,
+        keycode: KeyCode,
+        keymods: KeyMods,
+        repeat: bool) {
+        self.scene_controller.key_down_event(ctx, keycode, keymods, repeat);
+    }
+
+    fn key_up_event(
+        &mut self,
+        ctx: &mut ggez::Context,
+        keycode: KeyCode,
+        keymods: KeyMods) {
+        self.scene_controller.key_up_event(ctx, keycode, keymods);
+    }
+
+    fn mouse_motion_event(
+        &mut self,
+        ctx: &mut Context,
+        x: f32,
+        y: f32,
+        dx: f32,
+        dy: f32) {
+        self.scene_controller.mouse_motion_event(
+            ctx,
+            numeric::Point2f { x: x, y: y },
+            numeric::Vector2f { x: dx, y: dy });
+    }
+
+    fn mouse_button_down_event(
+        &mut self,
+        ctx: &mut Context,
+        button: ginput::mouse::MouseButton,
+        x: f32,
+        y: f32) {
+        self.scene_controller.mouse_button_down_event(ctx, button, numeric::Point2f { x: x, y: y });
+    }
+
+    fn mouse_button_up_event(
+        &mut self,
+        ctx: &mut Context,
+        button: ginput::mouse::MouseButton,
+        x: f32,
+        y: f32) {
+        self.scene_controller.mouse_button_up_event(ctx, button, numeric::Point2f { x: x, y: y });
     }
 }
 

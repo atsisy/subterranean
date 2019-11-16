@@ -21,25 +21,26 @@ pub enum SceneID {
 
 pub trait SceneManager {
     
-    fn key_down_event(&mut self, _vkey: tdev::VirtualKey) {
+    fn key_down_event(&mut self, _ctx: &mut ggez::Context, _vkey: tdev::VirtualKey) {
     }
-    
-    fn key_up_event(&mut self, _vkey: tdev::VirtualKey){
+     
+    fn key_up_event(&mut self, _ctx: &mut ggez::Context, _vkey: tdev::VirtualKey){
     }
 
     fn mouse_motion_event(&mut self,
-                          _button: ginput::mouse::MouseButton,
-                          _status: tdev::MouseButtonStatus,
+                          _ctx: &mut ggez::Context,
                           _point: numeric::Point2f,
                           _offset: numeric::Vector2f){
     }
 
     fn mouse_button_down_event(&mut self,
+                               _ctx: &mut ggez::Context,
                                _button: ginput::mouse::MouseButton,
                                _point: numeric::Point2f){
     }
     
     fn mouse_button_up_event(&mut self,
+                             _ctx: &mut ggez::Context,
                              _button: ginput::mouse::MouseButton,
                              _point: numeric::Point2f){
     }
