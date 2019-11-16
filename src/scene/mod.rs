@@ -73,14 +73,14 @@ impl NullScene {
 
 impl SceneManager for NullScene {
 
-    fn pre_process(&mut self, ctx: &mut ggez::Context) {
+    fn pre_process(&mut self, _ctx: &mut ggez::Context) {
         
     }
     
-    fn drawing_process(&mut self, ctx: &mut ggez::Context) {
+    fn drawing_process(&mut self, _ctx: &mut ggez::Context) {
         
     }
-    fn post_process(&mut self, ctx: &mut ggez::Context) -> SceneTransition {
+    fn post_process(&mut self, _ctx: &mut ggez::Context) -> SceneTransition {
         SceneTransition::Keep
     }
 
