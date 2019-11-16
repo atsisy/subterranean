@@ -1,3 +1,6 @@
+extern crate serde;
+extern crate toml;
+
 use ggez::*;
 use std::env;
 use std::path;
@@ -17,6 +20,11 @@ pub fn main() {
         .add_resource_path(resource_dir)
         .build()
         .unwrap();
-    let state = &mut State::new(ctx).unwrap();
-    event::run(ctx, event_loop, state).unwrap();
+
+    let game_data: GameData = GameData::new(ctx, "game_data.toml".to_owned());
+
+    {
+        let state = &mut State::new(ctx, &game_data).unwrap();
+        event::run(ctx, event_loop, state).unwrap();
+    }
 }
