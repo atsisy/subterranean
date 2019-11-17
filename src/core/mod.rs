@@ -60,7 +60,9 @@ impl GameData {
         };
         
         for texture_path in &src_file.texture_paths {
+            print!("Loading texture {}...", texture_path);
             data.textures.push(ggraphics::Image::new(ctx, texture_path).unwrap());
+            println!(" done!");
         }
 
         data

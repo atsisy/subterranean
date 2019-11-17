@@ -1,1 +1,1 @@
-texture_paths = ["/ghost1.png"]
+texture_paths = ["/ghost1.png", "/lotus_pink.png", "/lotus_blue.png", "/lotus_yellow.png"]

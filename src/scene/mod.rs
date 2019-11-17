@@ -84,13 +84,17 @@ impl<'a> SimpleObjectContainer<'a> {
         &mut self.container
     }
 
-    fn get_most_upper_depth(&mut self) -> i8 {
+    fn get_minimum_depth(&mut self) -> i8 {
         self.sort_with_depth();
         if let Some(depth) = self.container.last() {
             depth.get_drawing_depth()
         } else {
-            -128
+            127
         }
+    }
+
+    fn len(&self) -> usize {
+        self.container.len()
     }
 
     fn change_depth_equally(&mut self, offset: i8)  {
