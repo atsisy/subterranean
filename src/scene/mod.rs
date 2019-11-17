@@ -1,10 +1,11 @@
-
 pub mod task_scene;
 
 use torifune::device as tdev;
 use torifune::core::Clock;
 use ggez::input as ginput;
 use torifune::numeric;
+use torifune::graphics::object as tobj;
+use tobj::DrawableObject;
 
 #[derive(Debug, Eq, PartialEq)]
 pub enum SceneTransition {
@@ -54,6 +55,61 @@ pub trait SceneManager {
 
     fn get_current_clock(&self) -> Clock;
     fn update_current_clock(&mut self);
+}
+
+pub struct SimpleObjectContainer<'a> {
+    container: Vec<tobj::SimpleObject<'a>>,
+}
+
+impl<'a> SimpleObjectContainer<'a> {
+    fn new() -> SimpleObjectContainer<'a> {
+        SimpleObjectContainer {
+            container: Vec::new(),
+        }
+    }
+
+    fn add(&mut self, obj: tobj::SimpleObject<'a>) {
+        self.container.push(obj);
+    }
+
+    fn sort_with_depth(&mut self) {
+        self.container.sort_by(tobj::drawable_object_sort_with_depth);
+    }
+
+    fn get_raw_container(&self) -> &Vec<tobj::SimpleObject<'a>> {
+        &self.container
+    }
+
+    fn get_raw_container_mut(&mut self) -> &mut Vec<tobj::SimpleObject<'a>> {
+        &mut self.container
+    }
+
+    fn get_most_upper_depth(&mut self) -> i8 {
+        self.sort_with_depth();
+        if let Some(depth) = self.container.last() {
+            depth.get_drawing_depth()
+        } else {
+            -128
+        }
+    }
+
+    fn change_depth_equally(&mut self, offset: i8)  {
+        for obj in &mut self.container {
+            let next_depth = obj.get_drawing_depth() + offset;
+
+            if next_depth <= 127 && next_depth >= -128 {
+                // 範囲内
+                obj.set_drawing_depth(next_depth);
+            } else if next_depth > 0 {
+                // 範囲外（上限）
+                obj.set_drawing_depth(127);
+            } else {
+                // 範囲外（下限）
+                obj.set_drawing_depth(-128);
+            }
+        }
+        
+    }
 }
 
 pub struct NullScene {

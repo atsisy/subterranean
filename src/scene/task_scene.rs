@@ -76,7 +76,7 @@ impl MouseInformation {
 }
 
 pub struct TaskScene<'a> {
-    desk_objects: Vec<tobj::SimpleObject<'a>>,
+    desk_objects: SimpleObjectContainer<'a>,
     clock: Clock,
     mouse_info: MouseInformation,
     dragging: Option<*mut tobj::SimpleObject<'a>>,
@@ -95,8 +95,9 @@ impl<'a> TaskScene<'a> {
                 }),
                 0), vec![]);
         
-        let mut desk_objects = vec![obj];
-        desk_objects.sort_by(tobj::drawable_object_sort_with_depth);
+        let mut desk_objects = SimpleObjectContainer::new();
+        desk_objects.add(obj);
+        desk_objects.sort_with_depth();
         
         TaskScene {
             desk_objects: desk_objects,
@@ -118,15 +119,26 @@ impl<'a> TaskScene<'a> {
     }
 
     fn select_dragging_object(&mut self, ctx: &mut ggez::Context, point: numeric::Point2f) {
+
+        // 最も前面に表示されるオブジェクトのdepthを取得
+        let upper = self.desk_objects.get_most_upper_depth();
+
+        // 全てのオブジェクトのdepthを-1する
+        self.desk_objects.change_depth_equally(-1);
+        
         // オブジェクトは深度が深い順にソートされているので、
         // 逆順から検索していくことで、最も手前に表示されているオブジェクトを
         // 取り出すことができる
-        for obj in self.desk_objects.iter_mut().rev() {
+        for obj in self.desk_objects.get_raw_container_mut().iter_mut().rev() {
             if obj.get_drawing_area(ctx).contains(point) {
+
+                // 元々、最前面に表示されていたオブジェクトのdepthに設定する
+                obj.set_drawing_depth(upper);
                 self.dragging = Some(obj as *mut tobj::SimpleObject<'a>);
                 break;
             }
         }
+        
     }
 
     fn unselect_dragging_object(&mut self) {
@@ -185,13 +197,13 @@ impl<'a> SceneManager for TaskScene<'a> {
     }
 
     fn pre_process(&mut self, ctx: &mut ggez::Context) {
-        for p in &mut self.desk_objects {
+        for p in self.desk_objects.get_raw_container_mut() {
             p.move_with_func(self.clock);
         }
     }
     
     fn drawing_process(&mut self, ctx: &mut ggez::Context) {
-        for p in &self.desk_objects {
+        for p in self.desk_objects.get_raw_container_mut() {
             p.draw(ctx).unwrap();
         }
     }
