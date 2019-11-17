@@ -79,6 +79,7 @@ pub struct TaskScene<'a> {
     desk_objects: Vec<tobj::SimpleObject<'a>>,
     clock: Clock,
     mouse_info: MouseInformation,
+    dragging: Option<*mut tobj::SimpleObject<'a>>,
 }
 
 impl<'a> TaskScene<'a> {
@@ -88,29 +89,48 @@ impl<'a> TaskScene<'a> {
             tobj::MovableUniTexture::new(
                 game_data.ref_texture(0),
                 numeric::Point2f { x: 0.0, y: 0.0 },
-                numeric::Vector2f { x: 0.5, y: 0.5 },
+                numeric::Vector2f { x: 0.1, y: 0.1 },
                 0.0, 0,  Box::new(move |p: & dyn tobj::MovableObject, t: Clock| {
                     torifune::numeric::Point2f{x: p.get_position().x, y: p.get_position().y}
                 }),
                 0), vec![]);
         
+        let mut desk_objects = vec![obj];
+        desk_objects.sort_by(tobj::drawable_object_sort_with_depth);
+        
         TaskScene {
-            desk_objects: vec![obj],
+            desk_objects: desk_objects,
             clock: 0,
-            mouse_info: MouseInformation::new()
+            mouse_info: MouseInformation::new(),
+            dragging: None
         }
     }
-
+    
     fn dragging_handler(&mut self,
                         ctx: &mut ggez::Context,
                         point: numeric::Point2f,
                         offset: numeric::Vector2f) {
-        for p in &mut self.desk_objects {
-            if p.get_drawing_area(ctx).contains(point) {
-                let last = self.mouse_info.get_last_dragged(MouseButton::Left);
-                p.move_diff(numeric::Vector2f {x: point.x - last.x, y: point.y - last.y});
+        if let Some(p) = self.dragging {
+            let obj: &mut tobj::SimpleObject<'a> = unsafe { &mut *p };
+            let last = self.mouse_info.get_last_dragged(MouseButton::Left);
+            obj.move_diff(numeric::Vector2f {x: point.x - last.x, y: point.y - last.y});
+        }
+    }
+
+    fn select_dragging_object(&mut self, ctx: &mut ggez::Context, point: numeric::Point2f) {
+        // オブジェクトは深度が深い順にソートされているので、
+        // 逆順から検索していくことで、最も手前に表示されているオブジェクトを
+        // 取り出すことができる
+        for obj in self.desk_objects.iter_mut().rev() {
+            if obj.get_drawing_area(ctx).contains(point) {
+                self.dragging = Some(obj as *mut tobj::SimpleObject<'a>);
+                break;
             }
         }
+    }
+
+    fn unselect_dragging_object(&mut self) {
+        self.dragging = None;
     }
 }
 
@@ -152,14 +172,16 @@ impl<'a> SceneManager for TaskScene<'a> {
         self.mouse_info.set_last_clicked(button, point);
         self.mouse_info.set_last_dragged(button, point);
         self.mouse_info.update_dragging(button, true);
+
+        self.select_dragging_object(ctx, point);
     }
     
     fn mouse_button_up_event(&mut self,
-                             ctx: &mut ggez::Context,
+                             _ctx: &mut ggez::Context,
                              button: MouseButton,
-                             point: numeric::Point2f) {
+                             _point: numeric::Point2f) {
         self.mouse_info.update_dragging(button, false);
-        
+        self.unselect_dragging_object();
     }
 
     fn pre_process(&mut self, ctx: &mut ggez::Context) {

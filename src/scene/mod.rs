@@ -56,7 +56,6 @@ pub trait SceneManager {
     fn update_current_clock(&mut self);
 }
 
-
 pub struct NullScene {
 }
 
