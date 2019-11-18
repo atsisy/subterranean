@@ -9,7 +9,7 @@ use ginput::mouse::MouseButton;
 use ggez::graphics as ggraphics;
 use torifune::numeric;
 use torifune::hash;
-use crate::core::GameData;
+use crate::core::{TextureID, GameData};
 use super::*;
 
 struct MouseInformation {
@@ -88,7 +88,7 @@ impl<'a> DeskObjects<'a> {
         
         desk_objects.add(tobj::SimpleObject::new(
             tobj::MovableUniTexture::new(
-                game_data.ref_texture(0),
+                game_data.ref_texture(TextureID::Ghost1),
                 numeric::Point2f { x: 0.0, y: 0.0 },
                 numeric::Vector2f { x: 0.1, y: 0.1 },
                 0.0, 0,  Box::new(move |p: & dyn tobj::MovableObject, t: Clock| {
@@ -97,7 +97,7 @@ impl<'a> DeskObjects<'a> {
                 0), vec![]));
         desk_objects.add(tobj::SimpleObject::new(
             tobj::MovableUniTexture::new(
-                game_data.ref_texture(1),
+                game_data.ref_texture(TextureID::LotusPink),
                 numeric::Point2f { x: 0.0, y: 0.0 },
                 numeric::Vector2f { x: 0.1, y: 0.1 },
                 0.0, -1,  Box::new(move |p: & dyn tobj::MovableObject, t: Clock| {

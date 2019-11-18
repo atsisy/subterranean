@@ -27,6 +27,14 @@ fn read_whole_file(path: String) -> Result<String, String> {
     Ok(file_content)
 }
 
+#[derive(Debug, Clone, Copy)]
+pub enum TextureID {
+    Ghost1 = 0,
+    LotusPink,
+    LotusBlue,
+    LotusYellow,
+}
+
 #[derive(Debug, Deserialize)]
 pub struct RawConfigFile {
     texture_paths: Vec<String>,
@@ -68,10 +76,10 @@ impl GameData {
         data
     }
 
-    pub fn ref_texture(&self, index: usize) -> &ggraphics::Image {
-        match self.textures.get(index) {
+    pub fn ref_texture(&self, id: TextureID) -> &ggraphics::Image {
+        match self.textures.get(id as usize) {
             Some(texture) => &texture,
-            None => panic!("Unknown Texture ID: {}", index),
+            None => panic!("Unknown Texture ID: {}", id as i32),
         }
     }
 }
