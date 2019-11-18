@@ -12,9 +12,31 @@ use torifune::hash;
 use crate::core::{TextureID, GameData};
 use super::*;
 
+#[derive(PartialEq, Debug, Clone, Copy)]
+struct MouseActionRecord {
+    point: numeric::Point2f,
+    t: Clock,
+}
+
+impl MouseActionRecord {
+    fn new(point: numeric::Point2f, t: Clock) -> MouseActionRecord {
+        MouseActionRecord {
+            point: point,
+            t: t
+        }
+    }
+
+    fn new_empty() -> MouseActionRecord {
+        MouseActionRecord {
+            point: numeric::Point2f { x: 0.0, y: 0.0 },
+            t: 0
+        }
+    }
+}
+
 struct MouseInformation {
-    last_clicked: HashMap<MouseButton, numeric::Point2f>,
-    last_dragged: HashMap<MouseButton, numeric::Point2f>,
+    last_clicked: HashMap<MouseButton, MouseActionRecord>,
+    last_dragged: HashMap<MouseButton, MouseActionRecord>,
     dragging: HashMap<MouseButton, bool>,
 }
 
@@ -22,12 +44,12 @@ impl MouseInformation {
 
     fn new() -> MouseInformation {
         MouseInformation {
-            last_clicked: hash![(MouseButton::Left, numeric::Point2f { x: 0.0, y: 0.0 }),
-                                (MouseButton::Right, numeric::Point2f { x: 0.0, y: 0.0 }),
-                                (MouseButton::Middle, numeric::Point2f { x: 0.0, y: 0.0 })],
-            last_dragged: hash![(MouseButton::Left, numeric::Point2f { x: 0.0, y: 0.0 }),
-                                (MouseButton::Right, numeric::Point2f { x: 0.0, y: 0.0 }),
-                                (MouseButton::Middle, numeric::Point2f { x: 0.0, y: 0.0 })],
+            last_clicked: hash![(MouseButton::Left, MouseActionRecord::new_empty()),
+                                (MouseButton::Right, MouseActionRecord::new_empty()),
+                                (MouseButton::Middle, MouseActionRecord::new_empty())],
+            last_dragged: hash![(MouseButton::Left, MouseActionRecord::new_empty()),
+                                (MouseButton::Right, MouseActionRecord::new_empty()),
+                                (MouseButton::Middle, MouseActionRecord::new_empty())],
             dragging: hash![(MouseButton::Left, false),
                             (MouseButton::Right, false),
                             (MouseButton::Middle, false)]
@@ -36,26 +58,26 @@ impl MouseInformation {
 
     fn get_last_clicked(&self, button: MouseButton) -> numeric::Point2f {
         match self.last_clicked.get(&button) {
-            Some(x) => *x,
+            Some(x) => x.point,
             None => panic!("No such a mouse button"),
         }
     }
 
-    fn set_last_clicked(&mut self, button: MouseButton, point: numeric::Point2f) {
-        if self.last_clicked.insert(button, point) == None {
+    fn set_last_clicked(&mut self, button: MouseButton, point: numeric::Point2f, t: Clock) {
+        if self.last_clicked.insert(button, MouseActionRecord::new(point, t)) == None {
             panic!("No such a mouse button")
         }
     }
 
     fn get_last_dragged(&self, button: MouseButton) -> numeric::Point2f {
         match self.last_dragged.get(&button) {
-            Some(x) => *x,
+            Some(x) => x.point,
             None => panic!("No such a mouse button"),
         }
     }
 
-    fn set_last_dragged(&mut self, button: MouseButton, point: numeric::Point2f) {
-        if self.last_dragged.insert(button, point) == None {
+    fn set_last_dragged(&mut self, button: MouseButton, point: numeric::Point2f, t: Clock) {
+        if self.last_dragged.insert(button, MouseActionRecord::new(point, t)) == None {
             panic!("No such a mouse button")
         }
     }
@@ -250,7 +272,7 @@ impl<'a> SceneManager for TaskScene<'a> {
             //println!("x: {}, y: {} ::: offset_x: {}, offset_y: {}", point.x, point.y, offset.x, offset.y);
             let d = numeric::Vector2f { x: offset.x / 2.0,  y: offset.y / 2.0 };
             self.dragging_handler(ctx, point, d);
-            self.mouse_info.set_last_dragged(MouseButton::Left, point);
+            self.mouse_info.set_last_dragged(MouseButton::Left, point, self.clock);
         }
 
     }
@@ -259,8 +281,8 @@ impl<'a> SceneManager for TaskScene<'a> {
                                ctx: &mut ggez::Context,
                                button: MouseButton,
                                point: numeric::Point2f) {
-        self.mouse_info.set_last_clicked(button, point);
-        self.mouse_info.set_last_dragged(button, point);
+        self.mouse_info.set_last_clicked(button, point, self.clock);
+        self.mouse_info.set_last_dragged(button, point, self.clock);
         self.mouse_info.update_dragging(button, true);
 
         self.select_dragging_object(ctx, point);
