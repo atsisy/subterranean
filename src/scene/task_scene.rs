@@ -99,12 +99,18 @@ impl MouseInformation {
 
 struct DeskObjects<'a> {
     drwob_essential: tobj::DrawableObjectEssential,
+    draw_param: ggraphics::DrawParam,
     desk_objects: SimpleObjectContainer<'a>,
     dragging: Option<SimpleObject<'a>>,
 }
 
 impl<'a> DeskObjects<'a> {
-    pub fn new(ctx: &mut ggez::Context, game_data: &'a GameData) -> DeskObjects<'a> {
+    pub fn new(ctx: &mut ggez::Context, game_data: &'a GameData,
+               pos: numeric::Point2f, rect: ggraphics::Rect) -> DeskObjects<'a> {
+
+        let mut dparam = ggraphics::DrawParam::new();
+        dparam.dest = pos;
+        dparam.src = rect;
         
         let mut desk_objects = SimpleObjectContainer::new();
         
@@ -130,36 +136,13 @@ impl<'a> DeskObjects<'a> {
         
         DeskObjects {
             drwob_essential: tobj::DrawableObjectEssential::new(true, 0),
+            draw_param: dparam,
             desk_objects: desk_objects,
-            dragging: None
+            dragging: None,
         }
     }
 
-    fn draw(&mut self, ctx: &mut ggez::Context) -> ggez::GameResult<()> {
-        if self.is_visible() {
-            for p in self.desk_objects.get_raw_container_mut() {
-                p.draw(ctx).unwrap();
-            }
-
-            if let Some(p) = &self.dragging {
-                p.draw(ctx).unwrap();
-            }
-        }
-        Ok(())
-    }
-
-    fn hide(&mut self) {
-        self.drwob_essential.visible = false;
-    }
-
-    fn appear(&mut self) {
-        self.drwob_essential.visible = true;
-    }
-
-    fn is_visible(&self) -> bool {
-        self.drwob_essential.visible
-    }
-
+    
     fn dragging_handler(&mut self,
                         point: numeric::Point2f,
                         last: numeric::Point2f) {
@@ -205,10 +188,99 @@ impl<'a> DeskObjects<'a> {
         }
     }
 
-    fn update(&mut self, ctx: &ggez::Context, t: Clock) {
+    fn check_border(&mut self, ctx: &mut ggez::Context, t: Clock) {
+        if let Some(p) = &mut self.dragging {
+            let mut crop = p.get_crop();
+            let x_max_border = self.draw_param.src.w * 1000.0;
+            let x_min_border = self.draw_param.src.x * 1000.0;
+            let y_max_border = self.draw_param.src.h * 500.0;
+            let y_min_border = self.draw_param.src.y * 500.0;
+            let drawing_size = p.get_drawing_size(ctx);
+            
+            if p.get_position().x + drawing_size.x >  x_max_border {
+                let diff = p.get_position().x + p.get_drawing_size(ctx).x - x_max_border;
+                let r = 1.0 - (diff / p.get_drawing_size(ctx).x);
+                crop.w = r;
+            }else if p.get_position().x <  x_min_border {
+                let diff = x_min_border - p.get_position().x;
+                let r = diff / drawing_size.x;;
+                crop.x = r;
+            }
+
+            if p.get_position().y + drawing_size.y >  y_max_border {
+                let diff = p.get_position().y + p.get_drawing_size(ctx).y - y_max_border;
+                let r = 1.0 - (diff / p.get_drawing_size(ctx).y);
+                crop.h = r;
+            }else if p.get_position().y <  y_min_border {
+                let diff = y_min_border - p.get_position().y;
+                let r = diff / drawing_size.y;
+                crop.y = r;
+            }
+            
+            p.set_crop(crop);
+        }
+    }
+
+    fn update(&mut self, ctx: &mut ggez::Context, t: Clock) {
+        self.check_border(ctx, t);
         for p in self.desk_objects.get_raw_container_mut() {
             p.move_with_func(t);
         }
+    }
+
+}
+
+impl<'a> tobj::DrawableObject for DeskObjects<'a> {
+
+    fn draw(&self, ctx: &mut ggez::Context) -> ggez::GameResult<()> {
+        if self.is_visible() {
+            for p in self.desk_objects.get_raw_container() {
+                p.draw(ctx).unwrap();
+            }
+
+            if let Some(p) = &self.dragging {
+                p.draw(ctx).unwrap();
+            }
+        }
+        Ok(())
+    }
+
+    fn hide(&mut self) {
+        self.drwob_essential.visible = false;
+    }
+
+    fn appear(&mut self) {
+        self.drwob_essential.visible = true;
+    }
+
+    fn is_visible(&self) -> bool {
+        self.drwob_essential.visible
+    }
+
+    /// 描画順序を設定する
+    fn set_drawing_depth(&mut self, depth: i8) {
+        self.drwob_essential.drawing_depth = depth;
+    }
+
+    /// 描画順序を返す
+    fn get_drawing_depth(&self) -> i8 {
+        self.drwob_essential.drawing_depth
+    }
+
+    /// 描画開始地点を設定する
+    fn set_position(&mut self, pos: numeric::Point2f) {
+        self.draw_param.dest = pos;
+    }
+
+    /// 描画開始地点を返す
+    fn get_position(&self) -> numeric::Point2f {
+        self.draw_param.dest
+    }
+
+    /// offsetで指定しただけ描画位置を動かす
+    fn move_diff(&mut self, offset: numeric::Vector2f) {
+        self.draw_param.dest.x += offset.x;
+        self.draw_param.dest.y += offset.y;
     }
 
 }
@@ -223,7 +295,9 @@ impl<'a> TaskScene<'a> {
     pub fn new(ctx: &mut ggez::Context, game_data: &'a GameData) -> TaskScene<'a>  {
         
         TaskScene {
-            desk_objects: DeskObjects::new(ctx, game_data),
+            desk_objects: DeskObjects::new(ctx, game_data,
+                                           numeric::Point2f { x: 0.0, y: 0.0 },
+                                           ggraphics::Rect::new(0.05, 0.05, 0.5, 0.5)),
             clock: 0,
             mouse_info: MouseInformation::new(),
         }
@@ -281,6 +355,11 @@ impl<'a> SceneManager for TaskScene<'a> {
                                ctx: &mut ggez::Context,
                                button: MouseButton,
                                point: numeric::Point2f) {
+        let info: &MouseActionRecord = &self.mouse_info.last_clicked.get(&button).unwrap();
+        if info.point == point && (self.clock - info.t) < 10 {
+            println!("double clicked!!");
+        }
+        
         self.mouse_info.set_last_clicked(button, point, self.clock);
         self.mouse_info.set_last_dragged(button, point, self.clock);
         self.mouse_info.update_dragging(button, true);
@@ -305,6 +384,7 @@ impl<'a> SceneManager for TaskScene<'a> {
     }
     
     fn post_process(&mut self, ctx: &mut ggez::Context) -> SceneTransition {
+        self.update_current_clock();
         SceneTransition::Keep
     }
 
