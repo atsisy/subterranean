@@ -98,6 +98,7 @@ impl MouseInformation {
 }
 
 struct DeskObjects<'a> {
+    desk_canvas: ggraphics::Canvas,
     drwob_essential: tobj::DrawableObjectEssential,
     draw_param: ggraphics::DrawParam,
     desk_objects: SimpleObjectContainer<'a>,
@@ -108,9 +109,8 @@ impl<'a> DeskObjects<'a> {
     pub fn new(ctx: &mut ggez::Context, game_data: &'a GameData,
                pos: numeric::Point2f, rect: ggraphics::Rect) -> DeskObjects<'a> {
 
-        let mut dparam = ggraphics::DrawParam::new();
+        let mut dparam = ggraphics::DrawParam::default();
         dparam.dest = pos;
-        dparam.src = rect;
         
         let mut desk_objects = SimpleObjectContainer::new();
         
@@ -120,7 +120,7 @@ impl<'a> DeskObjects<'a> {
                 numeric::Point2f { x: 0.0, y: 0.0 },
                 numeric::Vector2f { x: 0.1, y: 0.1 },
                 0.0, 0,  Box::new(move |p: & dyn tobj::MovableObject, t: Clock| {
-                    torifune::numeric::Point2f{x: p.get_position().x, y: p.get_position().y}
+                    torifune::numeric::Point2f{x: p.get_position().x + 8.0, y: p.get_position().y}
                 }),
                 0), vec![]));
         desk_objects.add(tobj::SimpleObject::new(
@@ -129,12 +129,13 @@ impl<'a> DeskObjects<'a> {
                 numeric::Point2f { x: 0.0, y: 0.0 },
                 numeric::Vector2f { x: 0.1, y: 0.1 },
                 0.0, -1,  Box::new(move |p: & dyn tobj::MovableObject, t: Clock| {
-                    torifune::numeric::Point2f{x: p.get_position().x, y: p.get_position().y}
+                    torifune::numeric::Point2f{x: p.get_position().x + 8.0, y: p.get_position().y}
                 }),
                 0), vec![]));
         desk_objects.sort_with_depth();
         
         DeskObjects {
+            desk_canvas: ggraphics::Canvas::new(ctx, 500, 500, ggez::conf::NumSamples::One).unwrap(),
             drwob_essential: tobj::DrawableObjectEssential::new(true, 0),
             draw_param: dparam,
             desk_objects: desk_objects,
@@ -188,41 +189,7 @@ impl<'a> DeskObjects<'a> {
         }
     }
 
-    fn check_border(&mut self, ctx: &mut ggez::Context, t: Clock) {
-        if let Some(p) = &mut self.dragging {
-            let mut crop = p.get_crop();
-            let x_max_border = self.draw_param.src.w * 1000.0;
-            let x_min_border = self.draw_param.src.x * 1000.0;
-            let y_max_border = self.draw_param.src.h * 500.0;
-            let y_min_border = self.draw_param.src.y * 500.0;
-            let drawing_size = p.get_drawing_size(ctx);
-            
-            if p.get_position().x + drawing_size.x >  x_max_border {
-                let diff = p.get_position().x + p.get_drawing_size(ctx).x - x_max_border;
-                let r = 1.0 - (diff / p.get_drawing_size(ctx).x);
-                crop.w = r;
-            }else if p.get_position().x <  x_min_border {
-                let diff = x_min_border - p.get_position().x;
-                let r = diff / drawing_size.x;;
-                crop.x = r;
-            }
-
-            if p.get_position().y + drawing_size.y >  y_max_border {
-                let diff = p.get_position().y + p.get_drawing_size(ctx).y - y_max_border;
-                let r = 1.0 - (diff / p.get_drawing_size(ctx).y);
-                crop.h = r;
-            }else if p.get_position().y <  y_min_border {
-                let diff = y_min_border - p.get_position().y;
-                let r = diff / drawing_size.y;
-                crop.y = r;
-            }
-            
-            p.set_crop(crop);
-        }
-    }
-
     fn update(&mut self, ctx: &mut ggez::Context, t: Clock) {
-        self.check_border(ctx, t);
         for p in self.desk_objects.get_raw_container_mut() {
             p.move_with_func(t);
         }
@@ -234,13 +201,18 @@ impl<'a> tobj::DrawableObject for DeskObjects<'a> {
 
     fn draw(&self, ctx: &mut ggez::Context) -> ggez::GameResult<()> {
         if self.is_visible() {
-            for p in self.desk_objects.get_raw_container() {
-                p.draw(ctx).unwrap();
+            ggraphics::set_canvas(ctx, Some(&self.desk_canvas));
+            ggraphics::clear(ctx, ggraphics::Color::from((255, 255, 255, 255)));
+            ggraphics::set_screen_coordinates(ctx, ggraphics::Rect::new(0.0, 0.0, 500.0, 500.0));
+            for obj in self.desk_objects.get_raw_container() {
+                obj.draw(ctx);
             }
-
             if let Some(p) = &self.dragging {
                 p.draw(ctx).unwrap();
             }
+            ggraphics::set_canvas(ctx, None);
+            ggraphics::set_screen_coordinates(ctx, ggraphics::Rect::new(0.0, 0.0, 1366.0, 768.0));
+            ggraphics::draw(ctx, &self.desk_canvas, self.draw_param);
         }
         Ok(())
     }
@@ -283,6 +255,20 @@ impl<'a> tobj::DrawableObject for DeskObjects<'a> {
         self.draw_param.dest.y += offset.y;
     }
 
+    #[inline(always)]
+    fn set_draw_offset(&mut self, offset: numeric::Vector2f) {
+        self.move_diff(numeric::Vector2f {
+            x: self.drwob_essential.draw_offset.x,
+            y: self.drwob_essential.draw_offset.y});
+        self.drwob_essential.draw_offset = offset;
+        self.move_diff(offset);
+    }
+
+    #[inline(always)]
+    fn get_draw_offset(&self) -> numeric::Vector2f {
+        self.drwob_essential.draw_offset
+    }
+
 }
 
 pub struct TaskScene<'a> {
@@ -296,8 +282,8 @@ impl<'a> TaskScene<'a> {
         
         TaskScene {
             desk_objects: DeskObjects::new(ctx, game_data,
-                                           numeric::Point2f { x: 0.0, y: 0.0 },
-                                           ggraphics::Rect::new(0.05, 0.05, 0.5, 0.5)),
+                                           numeric::Point2f { x: 150.0, y: 150.0 },
+                                           ggraphics::Rect::new(0.0, 0.0, 768.0, 768.0)),
             clock: 0,
             mouse_info: MouseInformation::new(),
         }
