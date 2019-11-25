@@ -219,8 +219,8 @@ impl<'data> ggez::event::EventHandler for State<'data> {
         dy: f32) {
         self.scene_controller.mouse_motion_event(
             ctx,
-            numeric::Point2f { x: x, y: y },
-            numeric::Vector2f { x: dx, y: dy });
+            numeric::Point2f::new(x, y),
+            numeric::Vector2f::new(dx, dy));
     }
 
     fn mouse_button_down_event(
@@ -229,7 +229,7 @@ impl<'data> ggez::event::EventHandler for State<'data> {
         button: ginput::mouse::MouseButton,
         x: f32,
         y: f32) {
-        self.scene_controller.mouse_button_down_event(ctx, button, numeric::Point2f { x: x, y: y });
+        self.scene_controller.mouse_button_down_event(ctx, button, numeric::Point2f::new(x, y));
     }
 
     fn mouse_button_up_event(
@@ -238,7 +238,7 @@ impl<'data> ggez::event::EventHandler for State<'data> {
         button: ginput::mouse::MouseButton,
         x: f32,
         y: f32) {
-        self.scene_controller.mouse_button_up_event(ctx, button, numeric::Point2f { x: x, y: y });
+        self.scene_controller.mouse_button_up_event(ctx, button, numeric::Point2f::new(x, y));
     }
 }
 

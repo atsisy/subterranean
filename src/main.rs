@@ -5,7 +5,7 @@ use ggez::*;
 use std::env;
 use std::path;
 use subterranean::core::*;
-use ggez::conf::{WindowMode, WindowSetup, NumSamples, FullscreenType};
+use ggez::conf::{WindowMode, FullscreenType};
 
 pub fn main() {
     let resource_dir = if let Ok(manifest_dir) = env::var("CARGO_MANIFEST_DIR") {

@@ -28,7 +28,7 @@ impl MouseActionRecord {
 
     fn new_empty() -> MouseActionRecord {
         MouseActionRecord {
-            point: numeric::Point2f { x: 0.0, y: 0.0 },
+            point: numeric::Point2f::new(0.0, 0.0),
             t: 0
         }
     }
@@ -110,26 +110,26 @@ impl<'a> DeskObjects<'a> {
                pos: numeric::Point2f, rect: ggraphics::Rect) -> DeskObjects<'a> {
 
         let mut dparam = ggraphics::DrawParam::default();
-        dparam.dest = pos;
+        dparam.dest = pos.into();
         
         let mut desk_objects = SimpleObjectContainer::new();
         
         desk_objects.add(tobj::SimpleObject::new(
             tobj::MovableUniTexture::new(
                 game_data.ref_texture(TextureID::Ghost1),
-                numeric::Point2f { x: 0.0, y: 0.0 },
-                numeric::Vector2f { x: 0.1, y: 0.1 },
+                numeric::Point2f::new(0.0, 0.0),
+                numeric::Vector2f::new(0.1, 0.1),
                 0.0, 0,  Box::new(move |p: & dyn tobj::MovableObject, t: Clock| {
-                    torifune::numeric::Point2f{x: p.get_position().x + 8.0, y: p.get_position().y}
+                    torifune::numeric::Point2f::new(p.get_position().x + 8.0, p.get_position().y)
                 }),
                 0), vec![]));
         desk_objects.add(tobj::SimpleObject::new(
             tobj::MovableUniTexture::new(
                 game_data.ref_texture(TextureID::LotusPink),
-                numeric::Point2f { x: 0.0, y: 0.0 },
-                numeric::Vector2f { x: 0.1, y: 0.1 },
+                numeric::Point2f::new(0.0, 0.0),
+                numeric::Vector2f::new(0.1, 0.1),
                 0.0, -1,  Box::new(move |p: & dyn tobj::MovableObject, t: Clock| {
-                    torifune::numeric::Point2f{x: p.get_position().x + 8.0, y: p.get_position().y}
+                    torifune::numeric::Point2f::new(p.get_position().x + 8.0, p.get_position().y)
                 }),
                 0), vec![]));
         desk_objects.sort_with_depth();
@@ -148,7 +148,7 @@ impl<'a> DeskObjects<'a> {
                         point: numeric::Point2f,
                         last: numeric::Point2f) {
         if let Some(obj) = &mut self.dragging {
-            obj.move_diff(numeric::Vector2f {x: point.x - last.x, y: point.y - last.y});
+            obj.move_diff(numeric::Vector2f::new(point.x - last.x, point.y - last.y));
         }
     }
 
@@ -241,12 +241,12 @@ impl<'a> tobj::DrawableObject for DeskObjects<'a> {
 
     /// 描画開始地点を設定する
     fn set_position(&mut self, pos: numeric::Point2f) {
-        self.draw_param.dest = pos;
+        self.draw_param.dest = pos.into();
     }
 
     /// 描画開始地点を返す
     fn get_position(&self) -> numeric::Point2f {
-        self.draw_param.dest
+        self.draw_param.dest.into()
     }
 
     /// offsetで指定しただけ描画位置を動かす
@@ -254,21 +254,6 @@ impl<'a> tobj::DrawableObject for DeskObjects<'a> {
         self.draw_param.dest.x += offset.x;
         self.draw_param.dest.y += offset.y;
     }
-
-    #[inline(always)]
-    fn set_draw_offset(&mut self, offset: numeric::Vector2f) {
-        self.move_diff(numeric::Vector2f {
-            x: self.drwob_essential.draw_offset.x,
-            y: self.drwob_essential.draw_offset.y});
-        self.drwob_essential.draw_offset = offset;
-        self.move_diff(offset);
-    }
-
-    #[inline(always)]
-    fn get_draw_offset(&self) -> numeric::Vector2f {
-        self.drwob_essential.draw_offset
-    }
-
 }
 
 pub struct TaskScene<'a> {
@@ -282,7 +267,7 @@ impl<'a> TaskScene<'a> {
         
         TaskScene {
             desk_objects: DeskObjects::new(ctx, game_data,
-                                           numeric::Point2f { x: 150.0, y: 150.0 },
+                                           numeric::Point2f::new(150.0, 150.0),
                                            ggraphics::Rect::new(0.0, 0.0, 768.0, 768.0)),
             clock: 0,
             mouse_info: MouseInformation::new(),
@@ -330,7 +315,7 @@ impl<'a> SceneManager for TaskScene<'a> {
                           offset: numeric::Vector2f) {
         if self.mouse_info.is_dragging(MouseButton::Left) {
             //println!("x: {}, y: {} ::: offset_x: {}, offset_y: {}", point.x, point.y, offset.x, offset.y);
-            let d = numeric::Vector2f { x: offset.x / 2.0,  y: offset.y / 2.0 };
+            let d = numeric::Vector2f::new(offset.x / 2.0, offset.y / 2.0);
             self.dragging_handler(ctx, point, d);
             self.mouse_info.set_last_dragged(MouseButton::Left, point, self.clock);
         }
