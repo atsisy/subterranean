@@ -98,9 +98,7 @@ impl MouseInformation {
 }
 
 struct DeskObjects<'a> {
-    desk_canvas: ggraphics::Canvas,
-    drwob_essential: tobj::DrawableObjectEssential,
-    draw_param: ggraphics::DrawParam,
+    desk_canvas: tgraphics::SubScreen,
     desk_objects: SimpleObjectContainer<'a>,
     dragging: Option<SimpleObject<'a>>,
 }
@@ -135,9 +133,7 @@ impl<'a> DeskObjects<'a> {
         desk_objects.sort_with_depth();
         
         DeskObjects {
-            desk_canvas: ggraphics::Canvas::new(ctx, rect.w as u16, rect.h as u16, ggez::conf::NumSamples::One).unwrap(),
-            drwob_essential: tobj::DrawableObjectEssential::new(true, 0),
-            draw_param: dparam,
+            desk_canvas: tgraphics::SubScreen::new(ctx, rect, 0, ggraphics::Color::new(1.0, 1.0, 1.0, 1.0)),
             desk_objects: desk_objects,
             dragging: None,
         }
@@ -197,62 +193,59 @@ impl<'a> DeskObjects<'a> {
 
 }
 
-impl<'a> tobj::DrawableObject for DeskObjects<'a> {
+impl<'a> tgraphics::DrawableObject for DeskObjects<'a> {
 
     fn draw(&self, ctx: &mut ggez::Context) -> ggez::GameResult<()> {
         if self.is_visible() {
-            ggraphics::set_canvas(ctx, Some(&self.desk_canvas));
-            ggraphics::clear(ctx, ggraphics::Color::from((255, 255, 255, 255)));
-            ggraphics::set_screen_coordinates(ctx, ggraphics::Rect::new(0.0, 0.0, 500.0, 500.0))?;
+            self.desk_canvas.begin_drawing(ctx);
             for obj in self.desk_objects.get_raw_container() {
                 obj.draw(ctx)?;
             }
             if let Some(p) = &self.dragging {
                 p.draw(ctx).unwrap();
             }
-            ggraphics::set_canvas(ctx, None);
-            ggraphics::set_screen_coordinates(ctx, ggraphics::Rect::new(0.0, 0.0, 1366.0, 768.0))?;
-            ggraphics::draw(ctx, &self.desk_canvas, self.draw_param)?;
+            self.desk_canvas.end_drawing(ctx);
+            self.desk_canvas.draw(ctx).unwrap();
+            
         }
         Ok(())
     }
 
     fn hide(&mut self) {
-        self.drwob_essential.visible = false;
+        self.desk_canvas.hide();
     }
 
     fn appear(&mut self) {
-        self.drwob_essential.visible = true;
+        self.desk_canvas.appear();
     }
 
     fn is_visible(&self) -> bool {
-        self.drwob_essential.visible
+        self.desk_canvas.is_visible()
     }
 
     /// 描画順序を設定する
     fn set_drawing_depth(&mut self, depth: i8) {
-        self.drwob_essential.drawing_depth = depth;
+        self.desk_canvas.set_drawing_depth(depth);
     }
 
     /// 描画順序を返す
     fn get_drawing_depth(&self) -> i8 {
-        self.drwob_essential.drawing_depth
+        self.desk_canvas.get_drawing_depth()
     }
 
     /// 描画開始地点を設定する
     fn set_position(&mut self, pos: numeric::Point2f) {
-        self.draw_param.dest = pos.into();
+        self.desk_canvas.set_position(pos);
     }
 
     /// 描画開始地点を返す
     fn get_position(&self) -> numeric::Point2f {
-        self.draw_param.dest.into()
+        self.desk_canvas.get_position()
     }
 
     /// offsetで指定しただけ描画位置を動かす
     fn move_diff(&mut self, offset: numeric::Vector2f) {
-        self.draw_param.dest.x += offset.x;
-        self.draw_param.dest.y += offset.y;
+        self.desk_canvas.move_diff(offset)
     }
 }
 

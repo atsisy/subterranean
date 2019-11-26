@@ -4,8 +4,9 @@ use torifune::device as tdev;
 use torifune::core::Clock;
 use ggez::input as ginput;
 use torifune::numeric;
-use torifune::graphics::object as tobj;
-use tobj::DrawableObject;
+use torifune::graphics as tgraphics;
+use tgraphics::object as tobj;
+use tgraphics::DrawableObject;
 
 #[derive(Debug, Eq, PartialEq)]
 pub enum SceneTransition {
@@ -74,7 +75,7 @@ impl<'a> SimpleObjectContainer<'a> {
     }
 
     fn sort_with_depth(&mut self) {
-        self.container.sort_by(tobj::drawable_object_sort_with_depth);
+        self.container.sort_by(tgraphics::drawable_object_sort_with_depth);
     }
 
     fn get_raw_container(&self) -> &Vec<tobj::SimpleObject<'a>> {
