@@ -54,6 +54,7 @@ pub trait SceneManager {
     
 
     fn get_current_clock(&self) -> Clock;
+    
     fn update_current_clock(&mut self);
 }
 
@@ -99,11 +100,12 @@ impl<'a> SimpleObjectContainer<'a> {
 
     fn change_depth_equally(&mut self, offset: i8)  {
         for obj in &mut self.container {
-            let next_depth = obj.get_drawing_depth() + offset;
+            let current_depth = obj.get_drawing_depth();
+            let next_depth: i16 = (current_depth as i16) + (offset as i16);
 
             if next_depth <= 127 && next_depth >= -128 {
                 // 範囲内
-                obj.set_drawing_depth(next_depth);
+                obj.set_drawing_depth(next_depth as i8);
             } else if next_depth > 0 {
                 // 範囲外（上限）
                 obj.set_drawing_depth(127);
@@ -123,10 +125,6 @@ impl NullScene {
 
     pub fn new() -> Self {
         NullScene {}
-    }
-    
-    fn get_current_clock(&self) -> Clock {
-        0
     }
 }
 
@@ -150,6 +148,7 @@ impl SceneManager for NullScene {
     fn get_current_clock(&self) -> Clock {
         0
     }
+    
     fn update_current_clock(&mut self) {
         
     }

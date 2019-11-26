@@ -107,10 +107,10 @@ struct DeskObjects<'a> {
 
 impl<'a> DeskObjects<'a> {
     pub fn new(ctx: &mut ggez::Context, game_data: &'a GameData,
-               pos: numeric::Point2f, rect: ggraphics::Rect) -> DeskObjects<'a> {
+               rect: ggraphics::Rect) -> DeskObjects<'a> {
 
         let mut dparam = ggraphics::DrawParam::default();
-        dparam.dest = pos.into();
+        dparam.dest = numeric::Point2f::new(rect.x, rect.y).into();
         
         let mut desk_objects = SimpleObjectContainer::new();
         
@@ -119,7 +119,7 @@ impl<'a> DeskObjects<'a> {
                 game_data.ref_texture(TextureID::Ghost1),
                 numeric::Point2f::new(0.0, 0.0),
                 numeric::Vector2f::new(0.1, 0.1),
-                0.0, 0,  Box::new(move |p: & dyn tobj::MovableObject, t: Clock| {
+                0.0, 0,  Box::new(move |p: & dyn tobj::MovableObject, _t: Clock| {
                     torifune::numeric::Point2f::new(p.get_position().x + 8.0, p.get_position().y)
                 }),
                 0), vec![]));
@@ -128,14 +128,14 @@ impl<'a> DeskObjects<'a> {
                 game_data.ref_texture(TextureID::LotusPink),
                 numeric::Point2f::new(0.0, 0.0),
                 numeric::Vector2f::new(0.1, 0.1),
-                0.0, -1,  Box::new(move |p: & dyn tobj::MovableObject, t: Clock| {
+                0.0, -1,  Box::new(move |p: & dyn tobj::MovableObject, _t: Clock| {
                     torifune::numeric::Point2f::new(p.get_position().x + 8.0, p.get_position().y)
                 }),
                 0), vec![]));
         desk_objects.sort_with_depth();
         
         DeskObjects {
-            desk_canvas: ggraphics::Canvas::new(ctx, 500, 500, ggez::conf::NumSamples::One).unwrap(),
+            desk_canvas: ggraphics::Canvas::new(ctx, rect.w as u16, rect.h as u16, ggez::conf::NumSamples::One).unwrap(),
             drwob_essential: tobj::DrawableObjectEssential::new(true, 0),
             draw_param: dparam,
             desk_objects: desk_objects,
@@ -189,7 +189,7 @@ impl<'a> DeskObjects<'a> {
         }
     }
 
-    fn update(&mut self, ctx: &mut ggez::Context, t: Clock) {
+    fn update(&mut self, _ctx: &mut ggez::Context, t: Clock) {
         for p in self.desk_objects.get_raw_container_mut() {
             p.move_with_func(t);
         }
@@ -203,16 +203,16 @@ impl<'a> tobj::DrawableObject for DeskObjects<'a> {
         if self.is_visible() {
             ggraphics::set_canvas(ctx, Some(&self.desk_canvas));
             ggraphics::clear(ctx, ggraphics::Color::from((255, 255, 255, 255)));
-            ggraphics::set_screen_coordinates(ctx, ggraphics::Rect::new(0.0, 0.0, 500.0, 500.0));
+            ggraphics::set_screen_coordinates(ctx, ggraphics::Rect::new(0.0, 0.0, 500.0, 500.0))?;
             for obj in self.desk_objects.get_raw_container() {
-                obj.draw(ctx);
+                obj.draw(ctx)?;
             }
             if let Some(p) = &self.dragging {
                 p.draw(ctx).unwrap();
             }
             ggraphics::set_canvas(ctx, None);
-            ggraphics::set_screen_coordinates(ctx, ggraphics::Rect::new(0.0, 0.0, 1366.0, 768.0));
-            ggraphics::draw(ctx, &self.desk_canvas, self.draw_param);
+            ggraphics::set_screen_coordinates(ctx, ggraphics::Rect::new(0.0, 0.0, 1366.0, 768.0))?;
+            ggraphics::draw(ctx, &self.desk_canvas, self.draw_param)?;
         }
         Ok(())
     }
@@ -267,15 +267,14 @@ impl<'a> TaskScene<'a> {
         
         TaskScene {
             desk_objects: DeskObjects::new(ctx, game_data,
-                                           numeric::Point2f::new(150.0, 150.0),
-                                           ggraphics::Rect::new(0.0, 0.0, 768.0, 768.0)),
+                                           ggraphics::Rect::new(150.0, 150.0, 500.0, 500.0)),
             clock: 0,
             mouse_info: MouseInformation::new(),
         }
     }
     
     fn dragging_handler(&mut self,
-                        ctx: &mut ggez::Context,
+                        _ctx: &mut ggez::Context,
                         point: numeric::Point2f,
                         _offset: numeric::Vector2f) {
         let last = self.mouse_info.get_last_dragged(MouseButton::Left);
@@ -293,7 +292,7 @@ impl<'a> TaskScene<'a> {
 
 impl<'a> SceneManager for TaskScene<'a> {
     
-    fn key_down_event(&mut self, ctx: &mut ggez::Context, vkey: tdev::VirtualKey) {
+    fn key_down_event(&mut self, _ctx: &mut ggez::Context, vkey: tdev::VirtualKey) {
         match vkey {
             tdev::VirtualKey::Action1 => println!("Action1 down!"),
             _ => (),
@@ -317,7 +316,7 @@ impl<'a> SceneManager for TaskScene<'a> {
             //println!("x: {}, y: {} ::: offset_x: {}, offset_y: {}", point.x, point.y, offset.x, offset.y);
             let d = numeric::Vector2f::new(offset.x / 2.0, offset.y / 2.0);
             self.dragging_handler(ctx, point, d);
-            self.mouse_info.set_last_dragged(MouseButton::Left, point, self.clock);
+            self.mouse_info.set_last_dragged(MouseButton::Left, point, self.get_current_clock());
         }
 
     }
@@ -327,12 +326,12 @@ impl<'a> SceneManager for TaskScene<'a> {
                                button: MouseButton,
                                point: numeric::Point2f) {
         let info: &MouseActionRecord = &self.mouse_info.last_clicked.get(&button).unwrap();
-        if info.point == point && (self.clock - info.t) < 10 {
+        if info.point == point && (self.get_current_clock() - info.t) < 10 {
             println!("double clicked!!");
         }
         
-        self.mouse_info.set_last_clicked(button, point, self.clock);
-        self.mouse_info.set_last_dragged(button, point, self.clock);
+        self.mouse_info.set_last_clicked(button, point, self.get_current_clock());
+        self.mouse_info.set_last_dragged(button, point, self.get_current_clock());
         self.mouse_info.update_dragging(button, true);
 
         self.select_dragging_object(ctx, point);
@@ -347,14 +346,14 @@ impl<'a> SceneManager for TaskScene<'a> {
     }
 
     fn pre_process(&mut self, ctx: &mut ggez::Context) {
-        self.desk_objects.update(ctx, self.clock);
+        self.desk_objects.update(ctx, self.get_current_clock());
     }
     
     fn drawing_process(&mut self, ctx: &mut ggez::Context) {
         self.desk_objects.draw(ctx).unwrap();
     }
     
-    fn post_process(&mut self, ctx: &mut ggez::Context) -> SceneTransition {
+    fn post_process(&mut self, _ctx: &mut ggez::Context) -> SceneTransition {
         self.update_current_clock();
         SceneTransition::Keep
     }
