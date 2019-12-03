@@ -1,4 +1,5 @@
 pub mod task_scene;
+pub mod dream_scene;
 
 use torifune::device as tdev;
 use torifune::core::Clock;
@@ -19,6 +20,7 @@ pub enum SceneTransition {
 pub enum SceneID {
     Null,
     MainDesk,
+    Dream,
 }
 
 pub trait SceneManager {

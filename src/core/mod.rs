@@ -93,7 +93,7 @@ impl<'a> SceneController<'a> {
 
     pub fn new(ctx: &mut ggez::Context, game_data: &'a GameData) -> SceneController<'a> {
         SceneController {
-            current_scene: Box::new(scene::task_scene::TaskScene::new(ctx, game_data)),
+            current_scene: Box::new(scene::dream_scene::DreamScene::new(ctx, game_data)),
             key_map: tdev::ProgramableGenericKey::new()
         }
     }
@@ -104,6 +104,8 @@ impl<'a> SceneController<'a> {
                     next_scene_id: scene::SceneID) {
         if next_scene_id == scene::SceneID::MainDesk {
             self.current_scene = Box::new(scene::task_scene::TaskScene::new(ctx, game_data));
+        } else if next_scene_id == scene::SceneID::Dream {
+            self.current_scene = Box::new(scene::dream_scene::DreamScene::new(ctx, game_data));
         } else if next_scene_id == scene::SceneID::Null {
             self.current_scene = Box::new(scene::NullScene::new());
         }
