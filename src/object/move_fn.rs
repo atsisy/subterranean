@@ -5,7 +5,7 @@ use torifune::graphics as tg;
 
 pub fn halt(pos: numeric::Point2f)
             -> Box<dyn Fn(& dyn tg::object::MovableObject, Clock) -> numeric::Point2f> {
-    Box::new(move |p: & dyn tg::object::MovableObject, t: Clock| {
+    Box::new(move |p: & dyn tg::object::MovableObject, _t: Clock| {
         pos
     })
 }

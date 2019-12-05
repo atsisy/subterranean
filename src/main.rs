@@ -7,6 +7,12 @@ use std::path;
 use subterranean::core::*;
 use ggez::conf::{WindowMode, FullscreenType};
 
+fn check(ctx: &mut ggez::Context) {
+    use subterranean::core::map_parser::*;
+    let a = StageObjectMap::new(ctx, "./resources/test.tmx");
+    a.print_info(ctx);
+}
+
 pub fn main() {
     let resource_dir = if let Ok(manifest_dir) = env::var("CARGO_MANIFEST_DIR") {
         let mut path = path::PathBuf::from(manifest_dir);
@@ -37,6 +43,7 @@ pub fn main() {
         .unwrap();
 
     let game_data: GameData = GameData::new(ctx, "game_data.toml".to_owned());
+    check(ctx);
 
     {
         let state = &mut State::new(ctx, &game_data).unwrap();

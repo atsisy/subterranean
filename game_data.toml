@@ -1,1 +1,2 @@
 texture_paths = ["/ghost1.png", "/lotus_pink.png", "/lotus_blue.png", "/lotus_yellow.png"]
+tileset_paths = ["./resources/test.tmx"]

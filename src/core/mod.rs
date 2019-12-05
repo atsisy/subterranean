@@ -1,3 +1,5 @@
+pub mod map_parser;
+
 use ggez::*;
 use ggez::graphics as ggraphics;
 

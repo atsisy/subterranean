@@ -12,11 +12,13 @@ use crate::core::{TextureID, GameData};
 use torifune::core::Updatable;
 use super::*;
 use crate::object;
+use crate::core::map_parser as mp;
 
 pub struct DreamScene<'a> {
     player: object::Character<'a>,
     key_listener: tdev::KeyboardListener,
     clock: Clock,
+    tile_map: mp::StageObjectMap,
 }
 
 impl<'a> DreamScene<'a> {
@@ -33,12 +35,13 @@ impl<'a> DreamScene<'a> {
                 numeric::Vector2f::new(0.1, 0.1),
                 0.0, 0, object::move_fn::halt(numeric::Point2f::new(0.0, 0.0)),
                 0), vec![]),
-        object::TextureSpeedInfo::new(0.2, numeric::Vector2f::new(0.0, 0.0)));
+        object::TextureSpeedInfo::new(0.2, numeric::Vector2f::new(0.0, 0.0), numeric::Rect::new(0.0, 0.0, 1366.0, 600.0)));
         
         DreamScene {
             player: player,
             key_listener: key_listener,
             clock: 0,
+            tile_map: mp::StageObjectMap::new(ctx, "./resources/test.tmx"),
         }
     }
 
@@ -118,6 +121,7 @@ impl<'a> SceneManager for DreamScene<'a> {
         self.check_key_event(ctx);
 
         self.player.update(ctx, t);
+        self.tile_map.update(ctx, t);
         /*
         self.player
             .obj_mut()
@@ -126,6 +130,7 @@ impl<'a> SceneManager for DreamScene<'a> {
     }
     
     fn drawing_process(&mut self, ctx: &mut ggez::Context) {
+        self.tile_map.draw(ctx).unwrap();
         self.player
             .obj()
             .draw(ctx).unwrap();

@@ -7,14 +7,17 @@ use torifune::graphics::DrawableObject;
 
 pub struct TextureSpeedInfo {
     fall_begin: Clock,
+    border: numeric::Rect,
     gravity_acc: f32,
     speed: numeric::Vector2f,
 }
 
 impl TextureSpeedInfo {
-    pub fn new(gravity_acc: f32, speed: numeric::Vector2f) -> TextureSpeedInfo {
+    pub fn new(gravity_acc: f32, speed: numeric::Vector2f, border: numeric::Rect)
+               -> TextureSpeedInfo {
         TextureSpeedInfo {
             fall_begin: 0,
+            border: border,
             gravity_acc: gravity_acc,
             speed: speed
         }
@@ -81,7 +84,7 @@ impl<'a> Updatable for Character<'a> {
 
         let p = self.object.get_position();
         let mut next = p + self.speed_info.get_speed();
-        if next.y > 600.0 {
+        if next.y > self.speed_info().border.y + self.speed_info().border.h {
             next.y = 600.0;
         }
         
