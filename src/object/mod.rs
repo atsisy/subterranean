@@ -28,7 +28,7 @@ impl TextureSpeedInfo {
     }
 
     fn apply_gravity(&mut self, t: Clock) {
-        self.speed.y += (self.gravity_acc * (t - self.fall_begin) as f32);
+        self.speed.y += self.gravity_acc * (t - self.fall_begin) as f32;
     }
 
     pub fn add_speed(&mut self, speed: numeric::Vector2f) {
@@ -79,7 +79,7 @@ impl<'a> Character<'a> {
 }
 
 impl<'a> Updatable for Character<'a> {
-    fn update(&mut self, _ctx: &ggez::Context, t: Clock) -> Result<(), &'static str> {
+    fn update(&mut self, _ctx: &ggez::Context, t: Clock) {
         self.speed_info.apply_gravity(t);
 
         let p = self.object.get_position();
@@ -89,6 +89,5 @@ impl<'a> Updatable for Character<'a> {
         }
         
         self.object.set_position(next);
-        Ok(())
     }
 }

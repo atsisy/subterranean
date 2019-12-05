@@ -1,7 +1,3 @@
-use std::fs::File;
-use std::path::Path;
-use std::io::BufReader;
-
 use std::collections::HashMap;
 
 use tiled;
@@ -12,12 +8,9 @@ use torifune::graphics as tg;
 use torifune::core::*;
 
 pub struct TileSet {
-    source_name: String,
     tile_size: numeric::Vector2u,
     tile_size_ratio: numeric::Vector2f,
     tile_count: numeric::Vector2u,
-    drwob_essential: tg::DrawableObjectEssential,
-    draw_param: ggraphics::DrawParam,
     first_gid: u32,
 }
 
@@ -34,13 +27,10 @@ impl TileSet {
         let image = ggraphics::Image::new(ctx, format!("/{}", tiled_image.source)).unwrap();
         
         (TileSet {
-            source_name: tileset.name.to_string(),
             tile_size: tile_size,
             tile_size_ratio: numeric::Vector2f::new(tile_size.x as f32 / image.width() as f32,
                                                     tile_size.y as f32 / image.height() as f32),
             tile_count: tile_count,
-            drwob_essential: tg::DrawableObjectEssential::new(true, 0),
-            draw_param: ggraphics::DrawParam::default(),
             first_gid: tileset.first_gid,
         }, image)
     }
@@ -102,6 +92,12 @@ impl StageObjectMap {
 
     }
 
+    fn clear_all_batchs(&mut self) {
+        for (_, batch) in &mut self.tilesets_batchs {
+            batch.clear();
+        }
+    }
+
     fn get_tileset_by_gid(&self, gid: u32) -> Option<&TileSet> {
         for tileset in &self.tilesets {
             if tileset.contains_gid(gid) {
@@ -110,6 +106,42 @@ impl StageObjectMap {
         }
 
         None
+    }
+    
+    fn update_sprite_batch(&mut self) {
+        self.clear_all_batchs();
+        
+        let scale = numeric::Vector2f::new(0.2, 0.2);
+        
+        for layer in self.tile_map.layers.iter() {
+            if !layer.visible {
+                continue;
+            }
+            
+            
+            for (y, row) in layer.tiles.iter().enumerate() {
+                for (x, &gid) in row.iter().enumerate() {
+                    if gid == 0 {
+                        continue;
+                    }
+                    
+                    let tileset = self.get_tileset_by_gid(gid).unwrap();
+                    let crop = tileset.gid_to_crop(gid);
+                    let first_gid = tileset.get_first_gid();
+                    let tile_size = tileset.tile_size;
+                    let batch = self.tilesets_batchs.get_mut(&first_gid).unwrap();
+
+                    batch.add(ggraphics::DrawParam {
+                        src: numeric::Rect::new(crop.x, crop.y, crop.w, crop.h),
+                        scale: scale.into(),
+                        dest: numeric::Point2f::new((x as f32 * tile_size.x as f32) * scale.x,
+                                                    (y as f32 * tile_size.y as f32) * scale.y).into(),
+                        .. Default::default()
+                    });
+                    
+                }
+        }
+        }
     }
 }
 
@@ -146,39 +178,7 @@ impl tg::DrawableObject for StageObjectMap {
 }
 
 impl Updatable for StageObjectMap {
-    fn update(&mut self, _ctx: &ggez::Context, _t: Clock) -> Result<(), &'static str> {
-        
-        for layer in self.tile_map.layers.iter() {
-
-            if !layer.visible {
-                continue;
-            }
-
-            for (y, row) in layer.tiles.iter().enumerate() {
-                for (x, &gid) in row.iter().enumerate() {
-                    
-                    if gid == 0 {
-                        continue;
-                    }
-                    
-                    let tileset = self.get_tileset_by_gid(gid).unwrap();
-                    let crop = tileset.gid_to_crop(gid);
-                    let first_gid = tileset.get_first_gid();
-                    let tile_size = tileset.tile_size;
-                    let batch = self.tilesets_batchs.get_mut(&first_gid).unwrap();
-                    
-                    batch.add(ggraphics::DrawParam {
-                        src: numeric::Rect::new(crop.x, crop.y, crop.w, crop.h),
-                        scale: numeric::Vector2f::new(0.1, 0.1).into(),
-                        dest: numeric::Point2f::new((x as f32 * tile_size.x as f32) * 0.1,
-                                                    (y as f32 * tile_size.y as f32) * 0.1).into(),
-                        .. Default::default()
-                    });
-
-                }
-            }
-        }
-
-        Ok(())
+    fn update(&mut self, _ctx: &ggez::Context, _t: Clock) {
+        self.update_sprite_batch();
     }
 }

@@ -6,7 +6,6 @@ use torifune::graphics::object::*;
 use tgraphics::object as tobj;
 use ggez::input as ginput;
 use ginput::mouse::MouseButton;
-use ggez::graphics as ggraphics;
 use torifune::numeric;
 use crate::core::{TextureID, GameData};
 use torifune::core::Updatable;
@@ -59,15 +58,15 @@ impl<'a> DreamScene<'a> {
         }
     }
 
-    fn right_key_handler(&mut self, ctx: &ggez::Context) {
+    fn right_key_handler(&mut self, _ctx: &ggez::Context) {
         self.player.obj_mut().move_diff(numeric::Vector2f::new(3.0, 0.0));
     }
 
-    fn left_key_handler(&mut self, ctx: &ggez::Context) {
+    fn left_key_handler(&mut self, _ctx: &ggez::Context) {
         self.player.obj_mut().move_diff(numeric::Vector2f::new(-3.0, 0.0));
     }
 
-    fn up_key_handler(&mut self, ctx: &ggez::Context) {
+    fn up_key_handler(&mut self, _ctx: &ggez::Context) {
         let t = self.get_current_clock();
 
         self.player

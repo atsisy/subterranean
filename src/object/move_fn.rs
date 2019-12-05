@@ -1,11 +1,10 @@
-use torifune::device as tdev;
 use torifune::core::Clock;
 use torifune::numeric;
 use torifune::graphics as tg;
 
 pub fn halt(pos: numeric::Point2f)
             -> Box<dyn Fn(& dyn tg::object::MovableObject, Clock) -> numeric::Point2f> {
-    Box::new(move |p: & dyn tg::object::MovableObject, _t: Clock| {
+    Box::new(move |_: & dyn tg::object::MovableObject, _: Clock| {
         pos
     })
 }
