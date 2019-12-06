@@ -40,7 +40,7 @@ impl<'a> DreamScene<'a> {
             player: player,
             key_listener: key_listener,
             clock: 0,
-            tile_map: mp::StageObjectMap::new(ctx, "./resources/test.tmx"),
+            tile_map: mp::StageObjectMap::new(ctx, "./resources/sample.tmx"),
         }
     }
 

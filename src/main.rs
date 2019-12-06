@@ -9,8 +9,7 @@ use ggez::conf::{WindowMode, FullscreenType};
 
 fn check(ctx: &mut ggez::Context) {
     use subterranean::core::map_parser::*;
-    let a = StageObjectMap::new(ctx, "./resources/test.tmx");
-    a.print_info(ctx);
+    let _ = StageObjectMap::new(ctx, "./resources/sample.tmx");
 }
 
 pub fn main() {
@@ -43,8 +42,8 @@ pub fn main() {
         .unwrap();
 
     let game_data: GameData = GameData::new(ctx, "game_data.toml".to_owned());
-    check(ctx);
-
+    //check(ctx);
+    
     {
         let state = &mut State::new(ctx, &game_data).unwrap();
         event::run(ctx, event_loop, state).unwrap();

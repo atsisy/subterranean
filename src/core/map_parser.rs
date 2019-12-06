@@ -7,6 +7,8 @@ use ggez::graphics as ggraphics;
 use torifune::graphics as tg;
 use torifune::core::*;
 
+use collision::primitive::Primitive2 as CollisionType;
+
 ///
 /// # TileSetの情報を保持している構造体
 /// ## フィールド
@@ -27,6 +29,7 @@ pub struct TileSet {
     tile_size_ratio: numeric::Vector2f,
     tile_count: numeric::Vector2u,
     first_gid: u32,
+    collision_info: HashMap<u32, CollisionType<f32>>
 }
 
 impl TileSet {
@@ -34,6 +37,29 @@ impl TileSet {
 
         // tilesetが使用する画像を読み込む
         let tiled_image = tileset.images.get(0).unwrap();
+        let mut collision_info = HashMap::new();
+
+        for tile in &tileset.tiles {
+            if let Some(group) = &tile.objectgroup {
+                for object in &group.objects {
+                    println!("{:?}", object);
+                    
+                    let c = match &object.shape {
+                        &tiled::ObjectShape::Rect{ width, height } =>
+                            Some(CollisionType::Rectangle(collision::primitive::Rectangle::new(width, height))),
+                        tiled::ObjectShape::Polygon{ points } =>
+                            Some(CollisionType::ConvexPolygon(
+                                collision::primitive::ConvexPolygon::new(
+                                    points.iter().map(|(x, y)| cgmath::Point2::<f32>::new(*x, *y)).collect()))),
+                        _ => None,
+                    };
+                    
+                    if let Some(cobj) = c {
+                        collision_info.insert(tile.id, cobj);
+                    }
+                }
+            }
+        }
 
         // タイルのサイズとタイルの総数を計算
         let tile_size = numeric::Vector2u::new(tileset.tile_width, tileset.tile_height);
@@ -51,6 +77,7 @@ impl TileSet {
                                                     tile_size.y as f32 / image.height() as f32),
             tile_count: tile_count,
             first_gid: tileset.first_gid,
+            collision_info: collision_info,
         }, image)
     }
 
@@ -111,7 +138,7 @@ impl StageObjectMap {
 
         // タイルセットを読み込み、それと同時にタイルセットの画像からSpriteBatchを生成する
         let mut batchs = HashMap::new();
-        let tilesets = tile_map.tilesets.iter()
+        let tilesets: Vec<TileSet> = tile_map.tilesets.iter()
             .map(|ts| { let (ts, image) = TileSet::new(ctx, &ts);
                         batchs.insert(ts.first_gid, ggraphics::spritebatch::SpriteBatch::new(image));
                         ts })
@@ -122,12 +149,6 @@ impl StageObjectMap {
             tilesets: tilesets,
             tilesets_batchs: batchs,
             drwob_essential: tg::DrawableObjectEssential::new(true, 0),
-        }
-    }
-
-    pub fn print_info(&self, ctx: &mut ggez::Context) {
-        for tile_set in &self.tile_map.tilesets {
-            TileSet::new(ctx, tile_set);
         }
     }
 
@@ -156,7 +177,7 @@ impl StageObjectMap {
 
         // 利用するスケール
         // FIXME 任意定数を設定できるようni
-        let scale = numeric::Vector2f::new(0.2, 0.2);
+        let scale = numeric::Vector2f::new(1.0, 1.0);
 
         // 全てのレイヤーで描画を実行
         for layer in self.tile_map.layers.iter() {
@@ -167,7 +188,8 @@ impl StageObjectMap {
             
             // 二次元のマップデータを全てbatch処理に掛ける
             for (y, row) in layer.tiles.iter().enumerate() {
-                for (x, &gid) in row.iter().enumerate() {
+                for (x, &tile) in row.iter().enumerate() {
+                    let gid = tile.gid;
                     // gidが0のときは、何も配置されていない状態を表すので、描画は行わない
                     if gid == 0 {
                         continue;
