@@ -32,6 +32,9 @@ impl TextureSpeedInfo {
 
     fn apply_gravity(&mut self, t: Clock) {
         self.speed.y += self.gravity_acc * (t - self.fall_begin) as f32;
+        if self.speed.y > 10.0 {
+            self.speed.y = 10.0;
+        }
     }
 
     pub fn add_speed(&mut self, speed: numeric::Vector2f) {
@@ -55,14 +58,18 @@ pub struct Character<'a> {
     last_position: numeric::Point2f,
     speed_info: TextureSpeedInfo,
     object: tobj::SimpleObject<'a>,
+    map_position: numeric::Point2f,
+    last_map_position: numeric::Point2f,
 }
 
 impl<'a> Character<'a> {
     pub fn new(obj: tobj::SimpleObject<'a>, speed_info: TextureSpeedInfo) -> Character<'a> {
         Character {
             last_position: obj.get_position(),
+            map_position: obj.get_position(),
+            last_map_position: obj.get_position(),
             speed_info: speed_info,
-            object: obj
+            object: obj,
         }
     }
 
@@ -90,6 +97,25 @@ impl<'a> Character<'a> {
         self.object.set_position(self.get_last_position());
     }
 
+    fn get_last_move_distance(&self) -> numeric::Vector2f {
+        let current = self.object.get_position();
+        numeric::Vector2f::new(
+            current.x - self.last_position.x,
+            current.y - self.last_position.y,
+        )
+    }
+
+    pub fn get_last_map_move_distance(&self) -> numeric::Vector2f {
+        numeric::Vector2f::new(
+            self.map_position.x - self.last_map_position.x,
+            self.map_position.y - self.last_map_position.y,
+        )
+    }
+
+    pub fn get_map_position(&self) -> numeric::Point2f {
+        self.map_position
+    }
+
     pub fn fix_collision(&mut self, ctx: &mut ggez::Context, info: &CollisionInformation, t: Clock) {
         self.speed_info.fall_start(t);
         
@@ -99,13 +125,13 @@ impl<'a> Character<'a> {
         let area = self.object.get_drawing_size(ctx);
 
         let next = numeric::Point2f::new(p.x, v.y - area.y);
+
+        self.map_position.y += next.y - p.y;
         
         self.object.set_position(next);
     }
-}
 
-impl<'a> Updatable for Character<'a> {
-    fn update(&mut self, _ctx: &ggez::Context, t: Clock) {
+    pub fn gravity_move(&mut self, t: Clock) -> numeric::Vector2f {
         self.speed_info.apply_gravity(t);
 
         let p = self.object.get_position();
@@ -115,7 +141,13 @@ impl<'a> Updatable for Character<'a> {
             next.y = 600.0;
         }
 
+        self.last_map_position = self.map_position;
+        self.map_position += self.speed_info.get_speed();
+
         self.last_position = p;
         self.object.set_position(next);
+
+        self.get_last_move_distance()
+        
     }
 }

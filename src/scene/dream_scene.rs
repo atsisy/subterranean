@@ -1,3 +1,5 @@
+use std::rc::Rc;
+use std::cell::RefCell;
 use torifune::device as tdev;
 use tdev::VirtualKey;
 use torifune::core::Clock;
@@ -18,7 +20,7 @@ pub struct DreamScene<'a> {
     key_listener: tdev::KeyboardListener,
     clock: Clock,
     tile_map: mp::StageObjectMap,
-    camera: numeric::Rect,
+    camera: Rc<RefCell<numeric::Rect>>,
 }
 
 impl<'a> DreamScene<'a> {
@@ -31,19 +33,19 @@ impl<'a> DreamScene<'a> {
         let player = object::Character::new(tobj::SimpleObject::new(
             tobj::MovableUniTexture::new(
                 game_data.ref_texture(TextureID::Ghost1),
-                numeric::Point2f::new(0.0, 0.0),
+                numeric::Point2f::new(100.0, 0.0),
                 numeric::Vector2f::new(0.1, 0.1),
                 0.0, 0, object::move_fn::halt(numeric::Point2f::new(0.0, 0.0)),
                 0), vec![]),
         object::TextureSpeedInfo::new(0.08, numeric::Vector2f::new(0.0, 0.0), numeric::Rect::new(0.0, 0.0, 1366.0, 600.0)));
 
-        let camera = numeric::Rect::new(0.0, 0.0, 1366.0, 768.0);
+        let camera = Rc::new(RefCell::new(numeric::Rect::new(0.0, 0.0, 1366.0, 768.0)));
         
         DreamScene {
             player: player,
             key_listener: key_listener,
             clock: 0,
-            tile_map: mp::StageObjectMap::new(ctx, "./resources/sample.tmx", camera),
+            tile_map: mp::StageObjectMap::new(ctx, "./resources/sample.tmx", camera.clone()),
             camera: camera,
         }
     }
@@ -62,16 +64,32 @@ impl<'a> DreamScene<'a> {
         }
     }
 
+    pub fn move_camera(&mut self, offset: numeric::Vector2f) {
+        self.camera.borrow_mut().x += offset.x;
+        self.camera.borrow_mut().y += offset.y;
+    }
+
+    pub fn set_camera_x(&mut self, offset: f32) {
+        self.camera.borrow_mut().x = offset;
+    }
+
+    pub fn set_camera_y(&mut self, offset: f32) {
+        self.camera.borrow_mut().y = offset;
+    }
+
+    pub fn set_camera(&mut self, offset: numeric::Vector2f) {
+        self.camera.borrow_mut().x = offset.x;
+        self.camera.borrow_mut().y = offset.y;
+    }
+    
     fn right_key_handler(&mut self, _ctx: &ggez::Context) {
         let offset = numeric::Vector2f::new(3.0, 0.0);
-        //self.player.obj_mut().move_diff(offset);
-        self.tile_map.move_camera(offset);
+        self.move_camera(offset);
     }
 
     fn left_key_handler(&mut self, _ctx: &ggez::Context) {
         let offset = numeric::Vector2f::new(-3.0, 0.0);
-        //self.player.obj_mut().move_diff(offset);
-        self.tile_map.move_camera(offset);
+        self.move_camera(offset);
     }
 
     fn up_key_handler(&mut self, _ctx: &ggez::Context) {
@@ -91,7 +109,6 @@ impl<'a> DreamScene<'a> {
     fn check_collision(&mut self, ctx: &mut ggez::Context) {
         let collision_info = self.tile_map.check_collision(self.player.obj().get_drawing_area(ctx));
         if collision_info.collision  {
-            //println!("{:?}", collision_info.boundly);
             self.player.fix_collision(ctx, &collision_info, self.get_current_clock());
             return ();
         }
@@ -136,11 +153,26 @@ impl<'a> SceneManager for DreamScene<'a> {
         
         self.check_key_event(ctx);
 
-        self.player.update(ctx, t);
+        self.player.gravity_move(t);
 
         self.check_collision(ctx);
-        
+        //self.set_camera_y(self.player.get_map_position().y);
+        if self.player.get_map_position().y > 500.0 {
+            println!("{:?}", self.camera.borrow());
+            let a = self.player.get_last_map_move_distance();
+            self.move_camera(numeric::Vector2f::new(0.0, a.y));
+            self.player.obj_mut().move_diff(numeric::Vector2f::new(0.0, -a.y));
+        }
+
+        if self.player.get_map_position().y < 150.0 {
+            println!("{:?}", self.camera.borrow());
+            let a = self.player.get_last_map_move_distance();
+            self.move_camera(numeric::Vector2f::new(0.0, a.y));
+            self.player.obj_mut().move_diff(numeric::Vector2f::new(0.0, -a.y));
+        }
+
         self.tile_map.update(ctx, t);
+        //self.tile_map.set_camera_position(self.player.obj().get_position());
         /*
         self.player
             .obj_mut()

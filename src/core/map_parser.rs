@@ -1,3 +1,5 @@
+use std::rc::Rc;
+use std::cell::RefCell;
 use std::collections::HashMap;
 
 use tiled;
@@ -127,7 +129,8 @@ impl TileSet {
         self.collision_info.contains_key(&r_gid)
     }
 
-    fn check_collision<Obj>(&self, gid: u32, offset: numeric::Point2f, obj: Obj) -> CollisionInformation
+    fn check_collision<Obj>(&self, gid: u32, abs_pos: numeric::Point2f,
+                            offset: numeric::Point2f, obj: Obj) -> CollisionInformation
     where Obj: Discrete<collision::Aabb2<f32>> {
         let r_gid = gid - self.first_gid;
         for c in self.collision_info.get(&r_gid).unwrap() {
@@ -143,7 +146,7 @@ impl TileSet {
                             numeric::Vector2f::new(
                                 std::cmp::min(cp.min.x as u32, cp.max.x as u32) as f32,
                                 std::cmp::min(cp.min.y as u32, cp.max.y as u32) as f32),
-                            numeric::Point2f::new(0.0, 0.0),
+                            abs_pos,
                             numeric::Vector2f::new(0.0, 0.0),
                         );
                     }
@@ -203,11 +206,11 @@ pub struct StageObjectMap {
     tilesets: Vec<TileSet>,
     tilesets_batchs: HashMap<u32, ggraphics::spritebatch::SpriteBatch>,
     drwob_essential: tg::DrawableObjectEssential,
-    camera: numeric::Rect,
+    camera: Rc<RefCell<numeric::Rect>>,
 }
 
 impl StageObjectMap {
-    pub fn new(ctx: &mut ggez::Context, path: &str, camera: numeric::Rect) -> StageObjectMap {
+    pub fn new(ctx: &mut ggez::Context, path: &str, camera: Rc<RefCell<numeric::Rect>>) -> StageObjectMap {
         // マップ情報を読み込む
         let tile_map = tiled::parse_file(std::path::Path::new(path)).unwrap();
 
@@ -228,9 +231,11 @@ impl StageObjectMap {
         }
     }
 
-    fn tile_is_inside_of_camera(&self, dest: numeric::Point2f, size: numeric::Vector2u, scale: numeric::Vector2f) -> bool {
-        !self.camera.contains(dest) &&
-            !self.camera.contains(
+    fn tile_is_inside_of_camera(&self, dest: numeric::Point2f,
+                                size: numeric::Vector2u,
+                                scale: numeric::Vector2f) -> bool {
+        !self.camera.borrow().contains(dest) &&
+            !self.camera.borrow().contains(
                 numeric::Point2f::new(dest.x + (size.x as f32 * scale.x), dest.y + (size.y as f32 * scale.y)))
     }
 
@@ -240,7 +245,7 @@ impl StageObjectMap {
     }
 
     fn camera_relative_position(&self, p: numeric::Point2f) -> numeric::Point2f {
-        numeric::Point2f::new(p.x - self.camera.x, p.y + self.camera.y)
+        numeric::Point2f::new(p.x - self.camera.borrow().x, p.y - self.camera.borrow().y)
     }
 
     pub fn check_collision(&self, rect: numeric::Rect) -> CollisionInformation {
@@ -278,7 +283,10 @@ impl StageObjectMap {
 
                     for loop_tileset in &self.tilesets {
                         if loop_tileset.exist_collision_info(gid) {
-                            let info = loop_tileset.check_collision(gid, self.camera_relative_position(dest_pos), rect);
+                            let info = loop_tileset.check_collision(gid,
+                                                                    dest_pos,
+                                                                    self.camera_relative_position(dest_pos),
+                                                                    rect);
                             if info.collision {
                                 return info;
                             }
@@ -309,9 +317,11 @@ impl StageObjectMap {
         None
     }
 
-    pub fn move_camera(&mut self, offset: numeric::Vector2f) {
-        self.camera.x += offset.x;
-        self.camera.y += offset.y;
+    pub fn set_camera_position(&mut self, offset: numeric::Point2f) {
+        /*
+        self.camera.x = offset.x;
+        self.camera.y = offset.y;
+        */
     }
 
     /// sprite batch処理を実際に行うメソッド
@@ -371,7 +381,7 @@ impl tg::DrawableObject for StageObjectMap {
         // 全てのsprite batchを描画
         for (_, batch) in &self.tilesets_batchs {
             ggraphics::draw(ctx, batch, ggraphics::DrawParam {
-                dest: numeric::Point2f::new(-self.camera.x, self.camera.y).into(),
+                dest: numeric::Point2f::new(-self.camera.borrow().x, -self.camera.borrow().y).into(),
                 .. Default::default()
             })?;
         }
