@@ -3,7 +3,10 @@ use torifune::core::Clock;
 use torifune::core::Updatable;
 use torifune::numeric;
 use torifune::graphics::object as tobj;
+use torifune::graphics::object::TextureObject;
 use torifune::graphics::DrawableObject;
+
+use crate::core::map_parser::CollisionInformation;
 
 pub struct TextureSpeedInfo {
     fall_begin: Clock,
@@ -81,6 +84,23 @@ impl<'a> Character<'a> {
 
     pub fn get_last_position(&self) -> numeric::Point2f {
         self.last_position
+    }
+
+    pub fn undo_move(&mut self) {
+        self.object.set_position(self.get_last_position());
+    }
+
+    pub fn fix_collision(&mut self, ctx: &mut ggez::Context, info: &CollisionInformation, t: Clock) {
+        self.speed_info.fall_start(t);
+        
+        let p = self.object.get_position();
+        let v = info.boundly.unwrap();
+
+        let area = self.object.get_drawing_size(ctx);
+
+        let next = numeric::Point2f::new(p.x, v.y - area.y);
+        
+        self.object.set_position(next);
     }
 }
 

@@ -35,7 +35,7 @@ impl<'a> DreamScene<'a> {
                 numeric::Vector2f::new(0.1, 0.1),
                 0.0, 0, object::move_fn::halt(numeric::Point2f::new(0.0, 0.0)),
                 0), vec![]),
-        object::TextureSpeedInfo::new(0.2, numeric::Vector2f::new(0.0, 0.0), numeric::Rect::new(0.0, 0.0, 1366.0, 600.0)));
+        object::TextureSpeedInfo::new(0.08, numeric::Vector2f::new(0.0, 0.0), numeric::Rect::new(0.0, 0.0, 1366.0, 600.0)));
 
         let camera = numeric::Rect::new(0.0, 0.0, 1366.0, 768.0);
         
@@ -87,6 +87,15 @@ impl<'a> DreamScene<'a> {
             .obj_mut()
             .override_move_func(object::move_fn::gravity_move(-5.0, 24.0, 600.0, 0.2), t)
     }
+
+    fn check_collision(&mut self, ctx: &mut ggez::Context) {
+        let collision_info = self.tile_map.check_collision(self.player.obj().get_drawing_area(ctx));
+        if collision_info.collision  {
+            //println!("{:?}", collision_info.boundly);
+            self.player.fix_collision(ctx, &collision_info, self.get_current_clock());
+            return ();
+        }
+    }
 }
 
 impl<'a> SceneManager for DreamScene<'a> {
@@ -124,14 +133,13 @@ impl<'a> SceneManager for DreamScene<'a> {
 
     fn pre_process(&mut self, ctx: &mut ggez::Context) {
         let t = self.get_current_clock();
-
-        if self.tile_map.check_collision(self.player.obj().get_drawing_area(ctx)) {
-            return ();
-        }
         
         self.check_key_event(ctx);
 
         self.player.update(ctx, t);
+
+        self.check_collision(ctx);
+        
         self.tile_map.update(ctx, t);
         /*
         self.player

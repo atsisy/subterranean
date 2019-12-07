@@ -15,6 +15,35 @@ enum CollisionType {
     Rect(collision::Aabb2<f32>),
 }
 
+pub struct CollisionInformation {
+    pub collision: bool,
+    pub boundly: Option<numeric::Vector2f>,
+    pub tile_position: Option<numeric::Point2f>,
+    pub tile_size: Option<numeric::Vector2f>,
+}
+
+impl CollisionInformation {
+    pub fn new_not_collision() -> CollisionInformation {
+        CollisionInformation {
+            collision: false,
+            boundly: None,
+            tile_position: None,
+            tile_size: None,
+        }
+    }
+
+    pub fn new_collision(boundly: numeric::Vector2f,
+                         tile_pos: numeric::Point2f,
+                         tile_size: numeric::Vector2f) -> CollisionInformation {
+        CollisionInformation {
+            collision: true,
+            boundly: Some(boundly),
+            tile_position: Some(tile_pos),
+            tile_size: Some(tile_size),
+        }
+    }
+}
+
 ///
 /// # TileSetの情報を保持している構造体
 /// ## フィールド
@@ -98,25 +127,32 @@ impl TileSet {
         self.collision_info.contains_key(&r_gid)
     }
 
-    fn check_collision<Obj>(&self, gid: u32, offset: numeric::Point2f, obj: Obj) -> bool
+    fn check_collision<Obj>(&self, gid: u32, offset: numeric::Point2f, obj: Obj) -> CollisionInformation
     where Obj: Discrete<collision::Aabb2<f32>> {
         let r_gid = gid - self.first_gid;
         for c in self.collision_info.get(&r_gid).unwrap() {
-            if match c {
+            match c {
                 CollisionType::Rect(aabb) => {
                     let mut cp = aabb.clone();
                     cp.min.x += offset.x;
                     cp.min.y += offset.y;
                     cp.max.x += offset.x;
                     cp.max.y += offset.y;
-                    obj.intersects(&cp)
+                    if obj.intersects(&cp) {
+                        return CollisionInformation::new_collision(
+                            numeric::Vector2f::new(
+                                std::cmp::min(cp.min.x as u32, cp.max.x as u32) as f32,
+                                std::cmp::min(cp.min.y as u32, cp.max.y as u32) as f32),
+                            numeric::Point2f::new(0.0, 0.0),
+                            numeric::Vector2f::new(0.0, 0.0),
+                        );
+                    }
                 },
-                _ => false,
-            } {
-                return true;
+                _ => (),
             }
         }
-        false
+
+        CollisionInformation::new_not_collision()
     }
 
     /// gidから、Tilesetのクロップ範囲を計算して返す
@@ -192,7 +228,22 @@ impl StageObjectMap {
         }
     }
 
-    pub fn check_collision(&self, rect: numeric::Rect) -> bool {
+    fn tile_is_inside_of_camera(&self, dest: numeric::Point2f, size: numeric::Vector2u, scale: numeric::Vector2f) -> bool {
+        !self.camera.contains(dest) &&
+            !self.camera.contains(
+                numeric::Point2f::new(dest.x + (size.x as f32 * scale.x), dest.y + (size.y as f32 * scale.y)))
+    }
+
+    fn calc_tile_dest_point(x: u32, y: u32, tile_size: numeric::Vector2u, scale: numeric::Vector2f) -> numeric::Point2f {
+        numeric::Point2f::new(x as f32 * tile_size.x as f32 * scale.x,
+                              y as f32 * tile_size.y as f32 * scale.y)
+    }
+
+    fn camera_relative_position(&self, p: numeric::Point2f) -> numeric::Point2f {
+        numeric::Point2f::new(p.x - self.camera.x, p.y + self.camera.y)
+    }
+
+    pub fn check_collision(&self, rect: numeric::Rect) -> CollisionInformation {
         let rect: collision::Aabb2<f32> = collision::Aabb2::<f32>::new(
             cgmath::Point2::<f32>::new(rect.x as f32, rect.y as f32),
             cgmath::Point2::<f32>::new((rect.x + rect.w) as f32, (rect.y + rect.h) as f32)
@@ -219,23 +270,17 @@ impl StageObjectMap {
                     let tileset = self.get_tileset_by_gid(gid).unwrap(); // 目的のタイルセットを取り出す
                     let tile_size = tileset.tile_size; // 利用するタイルセットのタイルサイズを取得
 
-                    let dest_pos = numeric::Point2f::new((x as f32 * tile_size.x as f32 * scale.x),
-                                                         (y as f32 * tile_size.y as f32 * scale.y));
+                    let dest_pos = Self::calc_tile_dest_point(x as u32, y as u32, tile_size, scale);
                     
-                    if !self.camera.contains(dest_pos) &&
-                        !self.camera.contains(numeric::Point2f::new(
-                            dest_pos.x + (tile_size.x as f32 * scale.x), dest_pos.y + (tile_size.y as f32 * scale.y))) {
+                    if self.tile_is_inside_of_camera(dest_pos, tile_size, scale) {
                         continue;
                     }
-                    
-                    let first_gid = tileset.get_first_gid(); // batch処理を行うタイルセットのfirst_gidを取得
 
                     for loop_tileset in &self.tilesets {
                         if loop_tileset.exist_collision_info(gid) {
-                            if loop_tileset.check_collision(gid, numeric::Point2f::new(
-                                dest_pos.x - self.camera.x,
-                                dest_pos.y + self.camera.y), rect) {
-                                return true;
+                            let info = loop_tileset.check_collision(gid, self.camera_relative_position(dest_pos), rect);
+                            if info.collision {
+                                return info;
                             }
                         }
                     }
@@ -243,7 +288,7 @@ impl StageObjectMap {
             }
         }
 
-        false
+        CollisionInformation::new_not_collision()
     }
     
     /// 全てのsprite batch処理をクリアするメソッド
@@ -297,12 +342,8 @@ impl StageObjectMap {
                     let tileset = self.get_tileset_by_gid(gid).unwrap(); // 目的のタイルセットを取り出す
                     let tile_size = tileset.tile_size; // 利用するタイルセットのタイルサイズを取得
 
-                    let dest_pos = numeric::Point2f::new((x as f32 * tile_size.x as f32 * scale.x),
-                                                         (y as f32 * tile_size.y as f32 * scale.y));
-                    
-                    if !self.camera.contains(dest_pos) &&
-                        !self.camera.contains(numeric::Point2f::new(
-                            dest_pos.x + (tile_size.x as f32 * scale.x), dest_pos.y + (tile_size.y as f32 * scale.y))) {
+                    let dest_pos = Self::calc_tile_dest_point(x as u32, y as u32, tile_size, scale);
+                    if self.tile_is_inside_of_camera(dest_pos, tile_size, scale) {
                         continue;
                     }
                     
