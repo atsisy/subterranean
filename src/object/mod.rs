@@ -49,6 +49,7 @@ impl TextureSpeedInfo {
 }
 
 pub struct Character<'a> {
+    last_position: numeric::Point2f,
     speed_info: TextureSpeedInfo,
     object: tobj::SimpleObject<'a>,
 }
@@ -56,6 +57,7 @@ pub struct Character<'a> {
 impl<'a> Character<'a> {
     pub fn new(obj: tobj::SimpleObject<'a>, speed_info: TextureSpeedInfo) -> Character<'a> {
         Character {
+            last_position: obj.get_position(),
             speed_info: speed_info,
             object: obj
         }
@@ -76,6 +78,10 @@ impl<'a> Character<'a> {
     pub fn obj_mut(&mut self) -> &mut tobj::SimpleObject<'a> {
         &mut self.object
     }
+
+    pub fn get_last_position(&self) -> numeric::Point2f {
+        self.last_position
+    }
 }
 
 impl<'a> Updatable for Character<'a> {
@@ -83,11 +89,13 @@ impl<'a> Updatable for Character<'a> {
         self.speed_info.apply_gravity(t);
 
         let p = self.object.get_position();
+        
         let mut next = p + self.speed_info.get_speed();
         if next.y > self.speed_info().border.y + self.speed_info().border.h {
             next.y = 600.0;
         }
-        
+
+        self.last_position = p;
         self.object.set_position(next);
     }
 }

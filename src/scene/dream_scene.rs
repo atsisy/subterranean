@@ -18,6 +18,7 @@ pub struct DreamScene<'a> {
     key_listener: tdev::KeyboardListener,
     clock: Clock,
     tile_map: mp::StageObjectMap,
+    camera: numeric::Rect,
 }
 
 impl<'a> DreamScene<'a> {
@@ -35,12 +36,15 @@ impl<'a> DreamScene<'a> {
                 0.0, 0, object::move_fn::halt(numeric::Point2f::new(0.0, 0.0)),
                 0), vec![]),
         object::TextureSpeedInfo::new(0.2, numeric::Vector2f::new(0.0, 0.0), numeric::Rect::new(0.0, 0.0, 1366.0, 600.0)));
+
+        let camera = numeric::Rect::new(0.0, 0.0, 1366.0, 768.0);
         
         DreamScene {
             player: player,
             key_listener: key_listener,
             clock: 0,
-            tile_map: mp::StageObjectMap::new(ctx, "./resources/sample.tmx"),
+            tile_map: mp::StageObjectMap::new(ctx, "./resources/sample.tmx", camera),
+            camera: camera,
         }
     }
 
@@ -59,11 +63,15 @@ impl<'a> DreamScene<'a> {
     }
 
     fn right_key_handler(&mut self, _ctx: &ggez::Context) {
-        self.player.obj_mut().move_diff(numeric::Vector2f::new(3.0, 0.0));
+        let offset = numeric::Vector2f::new(3.0, 0.0);
+        //self.player.obj_mut().move_diff(offset);
+        self.tile_map.move_camera(offset);
     }
 
     fn left_key_handler(&mut self, _ctx: &ggez::Context) {
-        self.player.obj_mut().move_diff(numeric::Vector2f::new(-3.0, 0.0));
+        let offset = numeric::Vector2f::new(-3.0, 0.0);
+        //self.player.obj_mut().move_diff(offset);
+        self.tile_map.move_camera(offset);
     }
 
     fn up_key_handler(&mut self, _ctx: &ggez::Context) {
@@ -116,6 +124,10 @@ impl<'a> SceneManager for DreamScene<'a> {
 
     fn pre_process(&mut self, ctx: &mut ggez::Context) {
         let t = self.get_current_clock();
+
+        if self.tile_map.check_collision(self.player.obj().get_drawing_area(ctx)) {
+            return ();
+        }
         
         self.check_key_event(ctx);
 
