@@ -5,16 +5,35 @@ use tdev::VirtualKey;
 use torifune::core::Clock;
 use torifune::graphics as tgraphics;
 use torifune::graphics::object::*;
+use torifune::core::Updatable;
 use tgraphics::object as tobj;
 use ggez::input as ginput;
 use ginput::mouse::MouseButton;
 use torifune::numeric;
 use crate::core::{TextureID, GameData};
-use torifune::core::Updatable;
 use super::*;
 use crate::object;
 use crate::core::map_parser as mp;
 
+///
+/// # 夢の中のステージ
+///
+/// ## フィールド
+/// ### player
+/// プレイキャラ
+///
+/// ### key_listener
+/// キー監視用
+///
+/// ### clock
+/// 基準クロック
+///
+/// ### tile_map
+/// マップ情報
+///
+/// ### camera
+/// マップを覗くカメラ
+///
 pub struct DreamScene<'a> {
     player: object::Character<'a>,
     key_listener: tdev::KeyboardListener,
@@ -30,14 +49,14 @@ impl<'a> DreamScene<'a> {
         let key_listener = tdev::KeyboardListener::new_masked(vec![tdev::KeyInputDevice::GenericKeyboard],
                                                                   vec![]);
 
-        let player = object::Character::new(tobj::SimpleObject::new(
+        let player = object::Character::new(ctx, tobj::SimpleObject::new(
             tobj::MovableUniTexture::new(
                 game_data.ref_texture(TextureID::Ghost1),
                 numeric::Point2f::new(100.0, 0.0),
                 numeric::Vector2f::new(0.1, 0.1),
                 0.0, 0, object::move_fn::halt(numeric::Point2f::new(0.0, 0.0)),
                 0), vec![]),
-        object::TextureSpeedInfo::new(0.08, numeric::Vector2f::new(0.0, 0.0), numeric::Rect::new(0.0, 0.0, 1366.0, 600.0)));
+        object::TextureSpeedInfo::new(0.05, numeric::Vector2f::new(0.0, 0.0), numeric::Rect::new(0.0, 0.0, 1366.0, 600.0)));
 
         let camera = Rc::new(RefCell::new(numeric::Rect::new(0.0, 0.0, 1366.0, 768.0)));
         
@@ -50,6 +69,9 @@ impl<'a> DreamScene<'a> {
         }
     }
 
+    ///
+    /// キー入力のイベントハンドラ
+    ///
     fn check_key_event(&mut self, ctx: &ggez::Context) {
         if self.key_listener.current_key_status(ctx, &VirtualKey::Right) == tdev::KeyStatus::Pressed {
             self.right_key_handler(ctx);
@@ -64,6 +86,9 @@ impl<'a> DreamScene<'a> {
         }
     }
 
+    ///
+    /// カメラを動かすメソッド
+    ///
     pub fn move_camera(&mut self, offset: numeric::Vector2f) {
         self.camera.borrow_mut().x += offset.x;
         self.camera.borrow_mut().y += offset.y;
@@ -106,11 +131,30 @@ impl<'a> DreamScene<'a> {
             .override_move_func(object::move_fn::gravity_move(-5.0, 24.0, 600.0, 0.2), t)
     }
 
+    fn scroll_camera(&mut self) {
+        if self.player.get_map_position().y > 500.0 {
+            let a = self.player.get_last_map_move_distance();
+            self.move_camera(numeric::Vector2f::new(0.0, a.y));
+            self.player.obj_mut().move_diff(numeric::Vector2f::new(0.0, -a.y));
+        }
+
+        if self.player.get_map_position().y < 150.0 {
+            let a = self.player.get_last_map_move_distance();
+            self.move_camera(numeric::Vector2f::new(0.0, a.y));
+            self.player.obj_mut().move_diff(numeric::Vector2f::new(0.0, -a.y));
+        }
+    }
+
+    ///
+    /// マップオブジェクトとの衝突を調べるためのメソッド
+    ///
     fn check_collision(&mut self, ctx: &mut ggez::Context) {
-        let collision_info = self.tile_map.check_collision(self.player.obj().get_drawing_area(ctx));
-        if collision_info.collision  {
+        let collision_info = self.tile_map.check_character_collision(ctx, &self.player);
+
+        // 衝突していたか？
+        if  collision_info.collision  {
+            // 修正動作
             self.player.fix_collision(ctx, &collision_info, self.get_current_clock());
-            return ();
         }
     }
 }
@@ -150,34 +194,21 @@ impl<'a> SceneManager for DreamScene<'a> {
 
     fn pre_process(&mut self, ctx: &mut ggez::Context) {
         let t = self.get_current_clock();
-        
+
+        /// キーのチェック
         self.check_key_event(ctx);
 
+        // プレイヤーに重力の影響を受けさせる
         self.player.gravity_move(t);
 
+        // 衝突の検出 + 修正動作
         self.check_collision(ctx);
-        //self.set_camera_y(self.player.get_map_position().y);
-        if self.player.get_map_position().y > 500.0 {
-            println!("{:?}", self.camera.borrow());
-            let a = self.player.get_last_map_move_distance();
-            self.move_camera(numeric::Vector2f::new(0.0, a.y));
-            self.player.obj_mut().move_diff(numeric::Vector2f::new(0.0, -a.y));
-        }
 
-        if self.player.get_map_position().y < 150.0 {
-            println!("{:?}", self.camera.borrow());
-            let a = self.player.get_last_map_move_distance();
-            self.move_camera(numeric::Vector2f::new(0.0, a.y));
-            self.player.obj_mut().move_diff(numeric::Vector2f::new(0.0, -a.y));
-        }
+        // カメラの移動
+        self.scroll_camera();
 
+        // マップ描画の準備
         self.tile_map.update(ctx, t);
-        //self.tile_map.set_camera_position(self.player.obj().get_position());
-        /*
-        self.player
-            .obj_mut()
-            .move_with_func(t);
-        */
     }
     
     fn drawing_process(&mut self, ctx: &mut ggez::Context) {

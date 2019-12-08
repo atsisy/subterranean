@@ -1,4 +1,6 @@
 pub mod move_fn;
+pub mod collision;
+
 use torifune::core::Clock;
 use torifune::core::Updatable;
 use torifune::numeric;
@@ -6,7 +8,7 @@ use torifune::graphics::object as tobj;
 use torifune::graphics::object::TextureObject;
 use torifune::graphics::DrawableObject;
 
-use crate::core::map_parser::CollisionInformation;
+use crate::object::collision::*;
 
 pub struct TextureSpeedInfo {
     fall_begin: Clock,
@@ -45,6 +47,14 @@ impl TextureSpeedInfo {
         self.speed = speed;
     }
 
+    pub fn set_speed_x(&mut self, speed: f32) {
+        self.speed.x = speed;
+    }
+
+    pub fn set_speed_y(&mut self, speed: f32) {
+        self.speed.y = speed;
+    }
+
     fn get_speed(&self) -> numeric::Vector2f {
         self.speed
     }
@@ -63,7 +73,7 @@ pub struct Character<'a> {
 }
 
 impl<'a> Character<'a> {
-    pub fn new(obj: tobj::SimpleObject<'a>, speed_info: TextureSpeedInfo) -> Character<'a> {
+    pub fn new(ctx: &mut ggez::Context, obj: tobj::SimpleObject<'a>, speed_info: TextureSpeedInfo) -> Character<'a> {
         Character {
             last_position: obj.get_position(),
             map_position: obj.get_position(),
@@ -116,19 +126,52 @@ impl<'a> Character<'a> {
         self.map_position
     }
 
-    pub fn fix_collision(&mut self, ctx: &mut ggez::Context, info: &CollisionInformation, t: Clock) {
+    fn fix_collision_above(&mut self,
+                            ctx: &mut ggez::Context,
+                            info: &CollisionInformation,
+                            t: Clock) {
         self.speed_info.fall_start(t);
         
         let p = self.object.get_position();
-        let v = info.boundly.unwrap();
+        let v = info.tile_position.unwrap();
+
+        let area = self.object.get_drawing_size(ctx);
+
+        let next = numeric::Point2f::new(p.x, v.y + v.h);
+
+        self.speed_info.set_speed_y(1.0);
+
+        self.map_position.y += next.y - p.y;
+        
+        self.object.set_position(next);
+    }
+
+    fn fix_collision_bottom(&mut self,
+                            ctx: &mut ggez::Context,
+                            info: &CollisionInformation,
+                            t: Clock) {
+        self.speed_info.fall_start(t);
+        
+        let p = self.object.get_position();
+        let v = info.tile_position.unwrap();
 
         let area = self.object.get_drawing_size(ctx);
 
         let next = numeric::Point2f::new(p.x, v.y - area.y);
 
         self.map_position.y += next.y - p.y;
-        
+        println!("above");
         self.object.set_position(next);
+    }
+    
+    pub fn fix_collision(&mut self, ctx: &mut ggez::Context,
+                         info: &CollisionInformation,
+                         t: Clock) {
+        if info.center_diff.unwrap().y < 0.0 {
+            self.fix_collision_bottom(ctx, &info, t);
+        } else if info.center_diff.unwrap().y > 0.0 {
+            self.fix_collision_above(ctx, &info, t);
+        }
     }
 
     pub fn gravity_move(&mut self, t: Clock) -> numeric::Vector2f {

@@ -8,43 +8,13 @@ use ggez::graphics as ggraphics;
 
 use torifune::graphics as tg;
 use torifune::core::*;
+use torifune::graphics::DrawableObject;
+use torifune::graphics::object::TextureObject;
 
 use collision::prelude::*;
 
-enum CollisionType {
-    Point(cgmath::Point2<f32>),
-    Line(collision::Line2<f32>),
-    Rect(collision::Aabb2<f32>),
-}
-
-pub struct CollisionInformation {
-    pub collision: bool,
-    pub boundly: Option<numeric::Vector2f>,
-    pub tile_position: Option<numeric::Point2f>,
-    pub tile_size: Option<numeric::Vector2f>,
-}
-
-impl CollisionInformation {
-    pub fn new_not_collision() -> CollisionInformation {
-        CollisionInformation {
-            collision: false,
-            boundly: None,
-            tile_position: None,
-            tile_size: None,
-        }
-    }
-
-    pub fn new_collision(boundly: numeric::Vector2f,
-                         tile_pos: numeric::Point2f,
-                         tile_size: numeric::Vector2f) -> CollisionInformation {
-        CollisionInformation {
-            collision: true,
-            boundly: Some(boundly),
-            tile_position: Some(tile_pos),
-            tile_size: Some(tile_size),
-        }
-    }
-}
+use crate::object::collision::*;
+use crate::object::Character;
 
 ///
 /// # TileSetの情報を保持している構造体
@@ -79,7 +49,6 @@ impl TileSet {
         for tile in &tileset.tiles {
             if let Some(group) = &tile.objectgroup {
                 for object in &group.objects {
-                    println!("{:?}", object);
                     
                     let c = match &object.shape {
                         &tiled::ObjectShape::Rect{ width, height } =>
@@ -129,9 +98,36 @@ impl TileSet {
         self.collision_info.contains_key(&r_gid)
     }
 
-    fn check_collision<Obj>(&self, gid: u32, abs_pos: numeric::Point2f,
-                            offset: numeric::Point2f, obj: Obj) -> CollisionInformation
-    where Obj: Discrete<collision::Aabb2<f32>> {
+    fn __check_character_collision(&self, ctx: &mut ggez::Context,
+                                   tile_col: &collision::Aabb2<f32>,
+                                   chara: &Character) -> CollisionInformation {
+        let area = chara.obj().get_drawing_area(ctx);
+        let rect: collision::Aabb2<f32> = collision::Aabb2::<f32>::new(
+            cgmath::Point2::<f32>::new(area.x as f32, area.y as f32),
+            cgmath::Point2::<f32>::new((area.x + area.w) as f32, (area.y + area.h) as f32)
+        );
+        let offset = chara.obj().get_position();
+
+        if tile_col.intersects(&rect) {
+            let tile_pos = numeric::Vector2f::new(
+                std::cmp::min(tile_col.min.x as u32, tile_col.max.x as u32) as f32,
+                std::cmp::min(tile_col.min.y as u32, tile_col.max.y as u32) as f32);
+            let tile_size = numeric::Vector2f::new((tile_col.min.x - tile_col.max.x).abs(),
+                                                   (tile_col.min.y - tile_col.max.y).abs());
+
+            return CollisionInformation::new_collision(
+                ggraphics::Rect::new(tile_pos.x, tile_pos.y, tile_size.x, tile_size.y),
+                chara.obj().get_position(),
+                numeric::Vector2f::new(rect.center().x - tile_col.center().x, rect.center().y - tile_col.center().y)
+            );
+        } else {
+            return CollisionInformation::new_not_collision();
+        }
+    }
+    
+    fn check_character_collision(&self, ctx: &mut ggez::Context,
+                                 gid: u32, abs_pos: numeric::Point2f,
+                                 offset: numeric::Point2f, chara: &Character) -> CollisionInformation {
         let r_gid = gid - self.first_gid;
         for c in self.collision_info.get(&r_gid).unwrap() {
             match c {
@@ -141,14 +137,9 @@ impl TileSet {
                     cp.min.y += offset.y;
                     cp.max.x += offset.x;
                     cp.max.y += offset.y;
-                    if obj.intersects(&cp) {
-                        return CollisionInformation::new_collision(
-                            numeric::Vector2f::new(
-                                std::cmp::min(cp.min.x as u32, cp.max.x as u32) as f32,
-                                std::cmp::min(cp.min.y as u32, cp.max.y as u32) as f32),
-                            abs_pos,
-                            numeric::Vector2f::new(0.0, 0.0),
-                        );
+                    let info = self.__check_character_collision(ctx, &cp, chara);
+                    if info.collision {
+                        return info;
                     }
                 },
                 _ => (),
@@ -231,6 +222,7 @@ impl StageObjectMap {
         }
     }
 
+    /// 引数で受け取ったタイルの情報から、そのタイルがカメラに写るか調べるメソッド
     fn tile_is_inside_of_camera(&self, dest: numeric::Point2f,
                                 size: numeric::Vector2u,
                                 scale: numeric::Vector2f) -> bool {
@@ -239,22 +231,21 @@ impl StageObjectMap {
                 numeric::Point2f::new(dest.x + (size.x as f32 * scale.x), dest.y + (size.y as f32 * scale.y)))
     }
 
+    /// タイルが配置されるであろう座標を計算するメソッド
     fn calc_tile_dest_point(x: u32, y: u32, tile_size: numeric::Vector2u, scale: numeric::Vector2f) -> numeric::Point2f {
         numeric::Point2f::new(x as f32 * tile_size.x as f32 * scale.x,
                               y as f32 * tile_size.y as f32 * scale.y)
     }
 
+    /// ある座標が、カメラに写ったときの座標を返すメソッド
     fn camera_relative_position(&self, p: numeric::Point2f) -> numeric::Point2f {
         numeric::Point2f::new(p.x - self.camera.borrow().x, p.y - self.camera.borrow().y)
     }
 
-    pub fn check_collision(&self, rect: numeric::Rect) -> CollisionInformation {
-        let rect: collision::Aabb2<f32> = collision::Aabb2::<f32>::new(
-            cgmath::Point2::<f32>::new(rect.x as f32, rect.y as f32),
-            cgmath::Point2::<f32>::new((rect.x + rect.w) as f32, (rect.y + rect.h) as f32)
-        );
-        
+    pub fn check_character_collision(&self, ctx: &mut ggez::Context, chara: &Character) -> CollisionInformation {
         let scale = numeric::Vector2f::new(2.0, 2.0);
+
+        //println!("{:?}", chara.get_collision_frame().get_bottom(&numeric::Point2f::new(0.0, 0.0)));
         
         // 全てのレイヤーで描画を実行
         for layer in self.tile_map.layers.iter() {
@@ -276,17 +267,19 @@ impl StageObjectMap {
                     let tile_size = tileset.tile_size; // 利用するタイルセットのタイルサイズを取得
 
                     let dest_pos = Self::calc_tile_dest_point(x as u32, y as u32, tile_size, scale);
-                    
+
+                    // カメラに入っていないマップチップは描画しない
                     if self.tile_is_inside_of_camera(dest_pos, tile_size, scale) {
                         continue;
                     }
 
                     for loop_tileset in &self.tilesets {
                         if loop_tileset.exist_collision_info(gid) {
-                            let info = loop_tileset.check_collision(gid,
-                                                                    dest_pos,
-                                                                    self.camera_relative_position(dest_pos),
-                                                                    rect);
+                            let info = loop_tileset.check_character_collision(ctx,
+                                                                              gid,
+                                                                              dest_pos,
+                                                                              self.camera_relative_position(dest_pos),
+                                                                              chara);
                             if info.collision {
                                 return info;
                             }
@@ -315,13 +308,6 @@ impl StageObjectMap {
         }
 
         None
-    }
-
-    pub fn set_camera_position(&mut self, offset: numeric::Point2f) {
-        /*
-        self.camera.x = offset.x;
-        self.camera.y = offset.y;
-        */
     }
 
     /// sprite batch処理を実際に行うメソッド
@@ -353,6 +339,8 @@ impl StageObjectMap {
                     let tile_size = tileset.tile_size; // 利用するタイルセットのタイルサイズを取得
 
                     let dest_pos = Self::calc_tile_dest_point(x as u32, y as u32, tile_size, scale);
+
+                    // カメラに入っていないマップチップは描画しない
                     if self.tile_is_inside_of_camera(dest_pos, tile_size, scale) {
                         continue;
                     }
