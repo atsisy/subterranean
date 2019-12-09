@@ -49,7 +49,6 @@ impl TileSet {
         for tile in &tileset.tiles {
             if let Some(group) = &tile.objectgroup {
                 for object in &group.objects {
-                    println!("{:?}", tile);
                     let c = match &object.shape {
                         &tiled::ObjectShape::Rect{ width, height } =>
                             Some(CollisionType::Rect(collision::Aabb2::new(cgmath::Point2::<f32>::new(object.x as f32,
@@ -110,8 +109,8 @@ impl TileSet {
 
         if tile_col.intersects(&rect) {
             let tile_pos = numeric::Vector2f::new(
-                std::cmp::min(tile_col.min.x as u32, tile_col.max.x as u32) as f32,
-                std::cmp::min(tile_col.min.y as u32, tile_col.max.y as u32) as f32);
+                tile_col.min.x as f32,
+                tile_col.min.y as f32);
             let tile_size = numeric::Vector2f::new((tile_col.min.x - tile_col.max.x).abs(),
                                                    (tile_col.min.y - tile_col.max.y).abs());
 
@@ -127,16 +126,25 @@ impl TileSet {
     
     fn check_character_collision(&self, ctx: &mut ggez::Context,
                                  gid: u32, abs_pos: numeric::Point2f,
-                                 offset: numeric::Point2f, chara: &Character) -> CollisionInformation {
+                                 offset: numeric::Point2f,
+                                 scale: numeric::Vector2f,
+                                 chara: &Character) -> CollisionInformation {
         let r_gid = gid - self.first_gid;
         for c in self.collision_info.get(&r_gid).unwrap() {
             match c {
                 CollisionType::Rect(aabb) => {
                     let mut cp = aabb.clone();
+                    cp.min.x *= scale.x;
+                    cp.min.y *= scale.y;
+
+                    cp.max.x *= scale.x;
+                    cp.max.y *= scale.y;
+                    
                     cp.min.x += offset.x;
                     cp.min.y += offset.y;
                     cp.max.x += offset.x;
                     cp.max.y += offset.y;
+                    
                     let info = self.__check_character_collision(ctx, &cp, chara);
                     if info.collision {
                         return info;
@@ -279,6 +287,7 @@ impl StageObjectMap {
                                                                               gid,
                                                                               dest_pos,
                                                                               self.camera_relative_position(dest_pos),
+                                                                              scale,
                                                                               chara);
                             if info.collision {
                                 return info;
