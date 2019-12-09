@@ -10,21 +10,52 @@ use torifune::graphics::DrawableObject;
 
 use crate::object::collision::*;
 
+pub struct SpeedBorder {
+    pub positive_x: f32,
+    pub negative_x: f32,
+    pub positive_y: f32,
+    pub negative_y: f32,
+}
+
+impl SpeedBorder {
+    pub fn round_speed_x(&self, speed: f32) -> f32 {
+        if speed > self.positive_x {
+            self.positive_x
+        } else if speed < self.negative_x {
+            self.negative_x
+        } else {
+            speed
+        }
+    }
+
+    pub fn round_speed_y(&self, speed: f32) -> f32 {
+        if speed > self.positive_y {
+            self.positive_y
+        } else if speed < self.negative_y {
+            self.negative_y
+        } else {
+            speed
+        }
+    }
+}
+
 pub struct TextureSpeedInfo {
     fall_begin: Clock,
-    border: numeric::Rect,
     gravity_acc: f32,
+    horizon_resistance: f32,
     speed: numeric::Vector2f,
+    speed_border: SpeedBorder,
 }
 
 impl TextureSpeedInfo {
-    pub fn new(gravity_acc: f32, speed: numeric::Vector2f, border: numeric::Rect)
+    pub fn new(gravity_acc: f32, horizon_res: f32, speed: numeric::Vector2f, border: SpeedBorder)
                -> TextureSpeedInfo {
         TextureSpeedInfo {
             fall_begin: 0,
-            border: border,
             gravity_acc: gravity_acc,
-            speed: speed
+            horizon_resistance: horizon_res,
+            speed: speed,
+            speed_border: border,
         }
     }
 
@@ -32,11 +63,9 @@ impl TextureSpeedInfo {
         self.fall_begin = t;
     }
 
-    fn apply_gravity(&mut self, t: Clock) {
-        self.speed.y += self.gravity_acc * (t - self.fall_begin) as f32;
-        if self.speed.y > 10.0 {
-            self.speed.y = 10.0;
-        }
+    pub fn apply_resistance(&mut self, t: Clock) {
+        self.set_speed_y(self.speed.y + (self.gravity_acc * (t - self.fall_begin) as f32));
+        self.set_speed_x(self.speed.x + if self.speed.x > 0.0 { -self.horizon_resistance } else { self.horizon_resistance });
     }
 
     pub fn add_speed(&mut self, speed: numeric::Vector2f) {
@@ -48,14 +77,14 @@ impl TextureSpeedInfo {
     }
 
     pub fn set_speed_x(&mut self, speed: f32) {
-        self.speed.x = speed;
+        self.speed.x = self.speed_border.round_speed_x(speed);
     }
 
     pub fn set_speed_y(&mut self, speed: f32) {
-        self.speed.y = speed;
+        self.speed.y = self.speed_border.round_speed_y(speed);
     }
 
-    fn get_speed(&self) -> numeric::Vector2f {
+    pub fn get_speed(&self) -> numeric::Vector2f {
         self.speed
     }
 
@@ -133,11 +162,11 @@ impl<'a> Character<'a> {
         self.speed_info.fall_start(t);
         
         let p = self.object.get_position();
-        let v = info.tile_position.unwrap();
+        let tile_pos = info.tile_position.unwrap();
 
         let area = self.object.get_drawing_size(ctx);
 
-        let next = numeric::Point2f::new(p.x, v.y + v.h);
+        let next = numeric::Point2f::new(p.x, tile_pos.y + tile_pos.h);
 
         self.speed_info.set_speed_y(1.0);
 
@@ -153,20 +182,39 @@ impl<'a> Character<'a> {
         self.speed_info.fall_start(t);
         
         let p = self.object.get_position();
-        let v = info.tile_position.unwrap();
+        let tile_pos = info.tile_position.unwrap();
 
         let area = self.object.get_drawing_size(ctx);
 
-        let next = numeric::Point2f::new(p.x, v.y - area.y);
+        let next = numeric::Point2f::new(p.x, tile_pos.y - area.y);
 
         self.map_position.y += next.y - p.y;
-        println!("above");
+
         self.object.set_position(next);
     }
+
+    fn fix_collision_right(&mut self,
+                            ctx: &mut ggez::Context,
+                            info: &CollisionInformation,
+                           t: Clock) -> f32 {
+        let area = self.object.get_drawing_size(ctx);
+        info.tile_position.unwrap().x - (info.player_position.unwrap().x + area.x)
+    }
+
+    fn fix_collision_left(&mut self,
+                           ctx: &mut ggez::Context,
+                           info: &CollisionInformation,
+                          t: Clock) -> f32 {
+        self.speed_info.set_speed_x(0.0);
+        let area = self.object.get_drawing_size(ctx);
+        info.tile_position.unwrap().x + 17.0 - info.player_position.unwrap().x
+        
+    }
     
-    pub fn fix_collision(&mut self, ctx: &mut ggez::Context,
+    pub fn fix_collision_vertical(&mut self, ctx: &mut ggez::Context,
                          info: &CollisionInformation,
-                         t: Clock) {
+                                  t: Clock) {
+        self.speed_info.set_speed_x(0.0);
         if info.center_diff.unwrap().y < 0.0 {
             self.fix_collision_bottom(ctx, &info, t);
         } else if info.center_diff.unwrap().y > 0.0 {
@@ -174,23 +222,58 @@ impl<'a> Character<'a> {
         }
     }
 
-    pub fn gravity_move(&mut self, t: Clock) -> numeric::Vector2f {
-        self.speed_info.apply_gravity(t);
+    pub fn fix_collision_horizon(&mut self, ctx: &mut ggez::Context,
+                                 info: &CollisionInformation,
+                                 t: Clock)  -> f32 {
+        let right = info.player_position.unwrap().x + self.object.get_drawing_area(ctx).w;
+        if right > info.tile_position.unwrap().x && right < info.tile_position.unwrap().x + info.tile_position.unwrap().w {
+            return self.fix_collision_right(ctx, &info, t);
+        } else {
+            return self.fix_collision_left(ctx, &info, t);
+        }
+    }
+    
+    pub fn apply_resistance(&mut self, t: Clock) {
+        self.speed_info.apply_resistance(t);
+    }
 
-        let p = self.object.get_position();
+    pub fn move_right(&mut self) {
+        self.speed_info.set_speed_x(6.0);
+    }
+
+    pub fn move_left(&mut self) {
+        self.speed_info.set_speed_x(-6.0);
+    }
+
+    pub fn move_y(&mut self) {
+
+        let current_y = self.object.get_position().y;
+        let mut next = current_y + self.speed_info.get_speed().y;
         
-        let mut next = p + self.speed_info.get_speed();
-        if next.y > self.speed_info().border.y + self.speed_info().border.h {
-            next.y = 600.0;
+        if next > 600.0 {
+            next = 600.0;
         }
 
+        let diff = next - current_y;
+
+        self.last_position.y = current_y;
+        self.object.move_diff(numeric::Vector2f::new(0.0, diff));
+
         self.last_map_position = self.map_position;
-        self.map_position += self.speed_info.get_speed();
+        self.map_position.y += diff;
+    }
 
-        self.last_position = p;
-        self.object.set_position(next);
+    pub fn move_x(&mut self) {
 
-        self.get_last_move_distance()
-        
+        let current_x = self.object.get_position().x;
+        let mut next = current_x + self.speed_info.get_speed().x;
+
+        let diff = next - current_x;
+
+        self.last_position.x = current_x;
+        self.object.move_diff(numeric::Vector2f::new(diff, 0.0));
+
+        self.last_map_position = self.map_position;
+        self.map_position.x += diff;
     }
 }

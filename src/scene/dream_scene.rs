@@ -52,11 +52,17 @@ impl<'a> DreamScene<'a> {
         let player = object::Character::new(ctx, tobj::SimpleObject::new(
             tobj::MovableUniTexture::new(
                 game_data.ref_texture(TextureID::Ghost1),
-                numeric::Point2f::new(100.0, 0.0),
+                numeric::Point2f::new(650.0, 0.0),
                 numeric::Vector2f::new(0.1, 0.1),
                 0.0, 0, object::move_fn::halt(numeric::Point2f::new(0.0, 0.0)),
                 0), vec![]),
-        object::TextureSpeedInfo::new(0.05, numeric::Vector2f::new(0.0, 0.0), numeric::Rect::new(0.0, 0.0, 1366.0, 600.0)));
+                                            object::TextureSpeedInfo::new(0.05, 0.08, numeric::Vector2f::new(0.0, 0.0),
+                                                                          object::SpeedBorder {
+                                                                              positive_x: 6.0,
+                                                                              negative_x: -6.0,
+                                                                              positive_y: 6.0,
+                                                                              negative_y: -6.0,
+                                                                          }));
 
         let camera = Rc::new(RefCell::new(numeric::Rect::new(0.0, 0.0, 1366.0, 768.0)));
         
@@ -108,21 +114,26 @@ impl<'a> DreamScene<'a> {
     }
     
     fn right_key_handler(&mut self, _ctx: &ggez::Context) {
+        /*
         let offset = numeric::Vector2f::new(3.0, 0.0);
         self.move_camera(offset);
+         */
+        self.player.move_right();
     }
 
     fn left_key_handler(&mut self, _ctx: &ggez::Context) {
+        /*
         let offset = numeric::Vector2f::new(-3.0, 0.0);
         self.move_camera(offset);
+         */
+        self.player.move_left();
     }
 
     fn up_key_handler(&mut self, _ctx: &ggez::Context) {
         let t = self.get_current_clock();
-
         self.player
             .speed_info_mut()
-            .set_speed(numeric::Vector2f::new(0.0, -12.0));
+            .set_speed_y(-12.0);
         self.player
             .speed_info_mut()
             .fall_start(t);
@@ -138,7 +149,7 @@ impl<'a> DreamScene<'a> {
             self.player.obj_mut().move_diff(numeric::Vector2f::new(0.0, -a.y));
         }
 
-        if self.player.get_map_position().y < 150.0 {
+        if self.player.get_map_position().y < 50.0 {
             let a = self.player.get_last_map_move_distance();
             self.move_camera(numeric::Vector2f::new(0.0, a.y));
             self.player.obj_mut().move_diff(numeric::Vector2f::new(0.0, -a.y));
@@ -148,13 +159,27 @@ impl<'a> DreamScene<'a> {
     ///
     /// マップオブジェクトとの衝突を調べるためのメソッド
     ///
-    fn check_collision(&mut self, ctx: &mut ggez::Context) {
+    fn check_collision_horizon(&mut self, ctx: &mut ggez::Context) {
         let collision_info = self.tile_map.check_character_collision(ctx, &self.player);
 
         // 衝突していたか？
         if  collision_info.collision  {
             // 修正動作
-            self.player.fix_collision(ctx, &collision_info, self.get_current_clock());
+            let diff = self.player.fix_collision_horizon(ctx, &collision_info, self.get_current_clock());
+            self.move_camera(numeric::Vector2f::new(diff, 0.0));
+        }
+    }
+
+    ///
+    /// マップオブジェクトとの衝突を調べるためのメソッド
+    ///
+    fn check_collision_vertical(&mut self, ctx: &mut ggez::Context) {
+        let collision_info = self.tile_map.check_character_collision(ctx, &self.player);
+
+        // 衝突していたか？
+        if  collision_info.collision  {
+            // 修正動作
+            self.player.fix_collision_vertical(ctx, &collision_info, self.get_current_clock());
         }
     }
 }
@@ -197,12 +222,27 @@ impl<'a> SceneManager for DreamScene<'a> {
 
         /// キーのチェック
         self.check_key_event(ctx);
+        
+        self.move_camera(numeric::Vector2f::new(self.player.speed_info().get_speed().x, 0.0));
+        self.player.apply_resistance(t);
+        // 衝突の検出 + 修正動作
+        self.check_collision_horizon(ctx);
+
+        /*
+        let a = self.player.obj().get_position() - numeric::Point2f::new(650.0, 400.0);
+        self.move_camera(numeric::Vector2f::new(-a.x, 0.0));
+        self.player.obj_mut().move_diff(numeric::Vector2f::new(-a.x, 0.0));
+        */
 
         // プレイヤーに重力の影響を受けさせる
-        self.player.gravity_move(t);
-
+        self.player.move_y();
         // 衝突の検出 + 修正動作
-        self.check_collision(ctx);
+        self.check_collision_vertical(ctx);
+/*
+        let a = self.player.obj().get_position() - numeric::Point2f::new(650.0, 400.0);
+        self.move_camera(numeric::Vector2f::new(0.0, -a.y));
+        self.player.obj_mut().move_diff(numeric::Vector2f::new(0.0, -a.y));
+        */
 
         // カメラの移動
         self.scroll_camera();
