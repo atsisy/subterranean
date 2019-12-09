@@ -70,7 +70,7 @@ impl<'a> DreamScene<'a> {
             player: player,
             key_listener: key_listener,
             clock: 0,
-            tile_map: mp::StageObjectMap::new(ctx, "./resources/sample.tmx", camera.clone()),
+            tile_map: mp::StageObjectMap::new(ctx, "./resources/map1.tmx", camera.clone()),
             camera: camera,
         }
     }
@@ -179,7 +179,8 @@ impl<'a> DreamScene<'a> {
         // 衝突していたか？
         if  collision_info.collision  {
             // 修正動作
-            self.player.fix_collision_vertical(ctx, &collision_info, self.get_current_clock());
+            let diff = self.player.fix_collision_vertical(ctx, &collision_info, self.get_current_clock());
+            self.move_camera(numeric::Vector2f::new(0.0, diff));
         }
     }
 }
@@ -223,26 +224,25 @@ impl<'a> SceneManager for DreamScene<'a> {
         /// キーのチェック
         self.check_key_event(ctx);
         
-        self.move_camera(numeric::Vector2f::new(self.player.speed_info().get_speed().x, 0.0));
         self.player.apply_resistance(t);
+        self.move_camera(numeric::Vector2f::new(self.player.speed_info().get_speed().x, 0.0));
         // 衝突の検出 + 修正動作
         self.check_collision_horizon(ctx);
-
-        /*
+        
         let a = self.player.obj().get_position() - numeric::Point2f::new(650.0, 400.0);
         self.move_camera(numeric::Vector2f::new(-a.x, 0.0));
         self.player.obj_mut().move_diff(numeric::Vector2f::new(-a.x, 0.0));
-        */
+        
 
         // プレイヤーに重力の影響を受けさせる
-        self.player.move_y();
+        //self.player.move_y();
+        self.move_camera(numeric::Vector2f::new(0.0, self.player.speed_info().get_speed().y));
         // 衝突の検出 + 修正動作
         self.check_collision_vertical(ctx);
-/*
+
         let a = self.player.obj().get_position() - numeric::Point2f::new(650.0, 400.0);
         self.move_camera(numeric::Vector2f::new(0.0, -a.y));
         self.player.obj_mut().move_diff(numeric::Vector2f::new(0.0, -a.y));
-        */
 
         // カメラの移動
         self.scroll_camera();

@@ -65,7 +65,12 @@ impl TextureSpeedInfo {
 
     pub fn apply_resistance(&mut self, t: Clock) {
         self.set_speed_y(self.speed.y + (self.gravity_acc * (t - self.fall_begin) as f32));
-        self.set_speed_x(self.speed.x + if self.speed.x > 0.0 { -self.horizon_resistance } else { self.horizon_resistance });
+        
+        if self.speed.x.abs() <= self.horizon_resistance {
+            self.set_speed_x(0.0);
+        }else {
+            self.set_speed_x(self.speed.x + if self.speed.x > 0.0 { -self.horizon_resistance } else { self.horizon_resistance });
+        }
     }
 
     pub fn add_speed(&mut self, speed: numeric::Vector2f) {
@@ -158,39 +163,21 @@ impl<'a> Character<'a> {
     fn fix_collision_above(&mut self,
                             ctx: &mut ggez::Context,
                             info: &CollisionInformation,
-                            t: Clock) {
+                           t: Clock) -> f32 {
         self.speed_info.fall_start(t);
-        
-        let p = self.object.get_position();
-        let tile_pos = info.tile_position.unwrap();
-
-        let area = self.object.get_drawing_size(ctx);
-
-        let next = numeric::Point2f::new(p.x, tile_pos.y + tile_pos.h);
-
         self.speed_info.set_speed_y(1.0);
-
-        self.map_position.y += next.y - p.y;
-        
-        self.object.set_position(next);
+        (info.tile_position.unwrap().y + 17.0) - info.player_position.unwrap().y
     }
 
     fn fix_collision_bottom(&mut self,
                             ctx: &mut ggez::Context,
                             info: &CollisionInformation,
-                            t: Clock) {
+                            t: Clock) -> f32 {
         self.speed_info.fall_start(t);
-        
-        let p = self.object.get_position();
-        let tile_pos = info.tile_position.unwrap();
+        self.speed_info.set_speed_x(0.0);
 
         let area = self.object.get_drawing_size(ctx);
-
-        let next = numeric::Point2f::new(p.x, tile_pos.y - area.y);
-
-        self.map_position.y += next.y - p.y;
-
-        self.object.set_position(next);
+        info.tile_position.unwrap().y - (info.player_position.unwrap().y + area.y)
     }
 
     fn fix_collision_right(&mut self,
@@ -213,13 +200,15 @@ impl<'a> Character<'a> {
     
     pub fn fix_collision_vertical(&mut self, ctx: &mut ggez::Context,
                          info: &CollisionInformation,
-                                  t: Clock) {
+                                  t: Clock) -> f32 {
         self.speed_info.set_speed_x(0.0);
         if info.center_diff.unwrap().y < 0.0 {
-            self.fix_collision_bottom(ctx, &info, t);
+            return self.fix_collision_bottom(ctx, &info, t);
         } else if info.center_diff.unwrap().y > 0.0 {
-            self.fix_collision_above(ctx, &info, t);
+            return self.fix_collision_above(ctx, &info, t);
         }
+
+        0.0
     }
 
     pub fn fix_collision_horizon(&mut self, ctx: &mut ggez::Context,

@@ -49,7 +49,7 @@ impl TileSet {
         for tile in &tileset.tiles {
             if let Some(group) = &tile.objectgroup {
                 for object in &group.objects {
-                    
+                    println!("{:?}", tile);
                     let c = match &object.shape {
                         &tiled::ObjectShape::Rect{ width, height } =>
                             Some(CollisionType::Rect(collision::Aabb2::new(cgmath::Point2::<f32>::new(object.x as f32,
@@ -369,7 +369,7 @@ impl tg::DrawableObject for StageObjectMap {
         // 全てのsprite batchを描画
         for (_, batch) in &self.tilesets_batchs {
             ggraphics::draw(ctx, batch, ggraphics::DrawParam {
-                dest: numeric::Point2f::new(-self.camera.borrow().x, -self.camera.borrow().y).into(),
+                dest: numeric::Point2f::new(-self.camera.borrow().x.round(), -self.camera.borrow().y.round()).into(),
                 .. Default::default()
             })?;
         }
