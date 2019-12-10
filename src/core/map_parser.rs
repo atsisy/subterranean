@@ -234,9 +234,8 @@ impl StageObjectMap {
     fn tile_is_inside_of_camera(&self, dest: numeric::Point2f,
                                 size: numeric::Vector2u,
                                 scale: numeric::Vector2f) -> bool {
-        !self.camera.borrow().contains(dest) &&
-            !self.camera.borrow().contains(
-                numeric::Point2f::new(dest.x + (size.x as f32 * scale.x), dest.y + (size.y as f32 * scale.y)))
+        let rect = numeric::Rect::new(dest.x, dest.y, dest.x + (size.x as f32 * scale.x), dest.y + (size.y as f32 * scale.y));
+        self.camera.borrow().overlaps(&rect)
     }
 
     /// タイルが配置されるであろう座標を計算するメソッド
@@ -277,7 +276,7 @@ impl StageObjectMap {
                     let dest_pos = Self::calc_tile_dest_point(x as u32, y as u32, tile_size, scale);
 
                     // カメラに入っていないマップチップは描画しない
-                    if self.tile_is_inside_of_camera(dest_pos, tile_size, scale) {
+                    if !self.tile_is_inside_of_camera(dest_pos, tile_size, scale) {
                         continue;
                     }
 
@@ -350,7 +349,7 @@ impl StageObjectMap {
                     let dest_pos = Self::calc_tile_dest_point(x as u32, y as u32, tile_size, scale);
 
                     // カメラに入っていないマップチップは描画しない
-                    if self.tile_is_inside_of_camera(dest_pos, tile_size, scale) {
+                    if !self.tile_is_inside_of_camera(dest_pos, tile_size, scale) {
                         continue;
                     }
                     
