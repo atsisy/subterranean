@@ -70,7 +70,7 @@ impl<'a> DreamScene<'a> {
             player: player,
             key_listener: key_listener,
             clock: 0,
-            tile_map: mp::StageObjectMap::new(ctx, "./resources/map1.tmx", camera.clone()),
+            tile_map: mp::StageObjectMap::new(ctx, "./resources/map1.tmx", camera.clone(), numeric::Vector2f::new(2.0, 2.0)),
             camera: camera,
         }
     }

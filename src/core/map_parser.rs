@@ -214,10 +214,11 @@ pub struct StageObjectMap {
     tilesets_batchs: HashMap<u32, ggraphics::spritebatch::SpriteBatch>,
     drwob_essential: tg::DrawableObjectEssential,
     camera: Rc<RefCell<numeric::Rect>>,
+    scale: numeric::Vector2f,
 }
 
 impl StageObjectMap {
-    pub fn new(ctx: &mut ggez::Context, path: &str, camera: Rc<RefCell<numeric::Rect>>) -> StageObjectMap {
+    pub fn new(ctx: &mut ggez::Context, path: &str, camera: Rc<RefCell<numeric::Rect>>, scale: numeric::Vector2f) -> StageObjectMap {
         // マップ情報を読み込む
         let tile_map = tiled::parse_file(std::path::Path::new(path)).unwrap();
 
@@ -235,14 +236,14 @@ impl StageObjectMap {
             tilesets_batchs: batchs,
             drwob_essential: tg::DrawableObjectEssential::new(true, 0),
             camera: camera,
+            scale: scale,
         }
     }
 
     /// 引数で受け取ったタイルの情報から、そのタイルがカメラに写るか調べるメソッド
     fn tile_is_inside_of_camera(&self, dest: numeric::Point2f,
-                                size: numeric::Vector2u,
-                                scale: numeric::Vector2f) -> bool {
-        let rect = numeric::Rect::new(dest.x, dest.y, dest.x + (size.x as f32 * scale.x), dest.y + (size.y as f32 * scale.y));
+                                size: numeric::Vector2u) -> bool {
+        let rect = numeric::Rect::new(dest.x, dest.y, dest.x + (size.x as f32 * self.scale.x), dest.y + (size.y as f32 * self.scale.y));
         self.camera.borrow().overlaps(&rect)
     }
 
@@ -258,9 +259,6 @@ impl StageObjectMap {
     }
 
     pub fn check_character_collision(&self, ctx: &mut ggez::Context, chara: &Character) -> CollisionInformation {
-        let scale = numeric::Vector2f::new(2.0, 2.0);
-
-        //println!("{:?}", chara.get_collision_frame().get_bottom(&numeric::Point2f::new(0.0, 0.0)));
         
         // 全てのレイヤーで描画を実行
         for layer in self.tile_map.layers.iter() {
@@ -281,10 +279,10 @@ impl StageObjectMap {
                     let tileset = self.get_tileset_by_gid(gid).unwrap(); // 目的のタイルセットを取り出す
                     let tile_size = tileset.tile_size; // 利用するタイルセットのタイルサイズを取得
 
-                    let dest_pos = Self::calc_tile_dest_point(x as u32, y as u32, tile_size, scale);
+                    let dest_pos = Self::calc_tile_dest_point(x as u32, y as u32, tile_size, self.scale);
 
                     // カメラに入っていないマップチップは描画しない
-                    if !self.tile_is_inside_of_camera(dest_pos, tile_size, scale) {
+                    if !self.tile_is_inside_of_camera(dest_pos, tile_size) {
                         continue;
                     }
 
@@ -294,7 +292,7 @@ impl StageObjectMap {
                                                                               gid,
                                                                               dest_pos,
                                                                               self.camera_relative_position(dest_pos),
-                                                                              scale,
+                                                                              self.scale,
                                                                               chara);
                             if info.collision {
                                 return info;
@@ -331,10 +329,6 @@ impl StageObjectMap {
         // batch処理を全てクリア
         self.clear_all_batchs();
 
-        // 利用するスケール
-        // FIXME 任意定数を設定できるようni
-        let scale = numeric::Vector2f::new(2.0, 2.0);
-
         // 全てのレイヤーで描画を実行
         for layer in self.tile_map.layers.iter() {
             if !layer.visible {
@@ -354,10 +348,10 @@ impl StageObjectMap {
                     let tileset = self.get_tileset_by_gid(gid).unwrap(); // 目的のタイルセットを取り出す
                     let tile_size = tileset.tile_size; // 利用するタイルセットのタイルサイズを取得
 
-                    let dest_pos = Self::calc_tile_dest_point(x as u32, y as u32, tile_size, scale);
+                    let dest_pos = Self::calc_tile_dest_point(x as u32, y as u32, tile_size, self.scale);
 
                     // カメラに入っていないマップチップは描画しない
-                    if !self.tile_is_inside_of_camera(dest_pos, tile_size, scale) {
+                    if !self.tile_is_inside_of_camera(dest_pos, tile_size) {
                         continue;
                     }
                     
@@ -369,7 +363,7 @@ impl StageObjectMap {
                     // batch処理を追加
                     batch.add(ggraphics::DrawParam {
                         src: numeric::Rect::new(crop.x, crop.y, crop.w, crop.h),
-                        scale: scale.into(),
+                        scale: self.scale.into(),
                         dest: dest_pos.into(),
                         .. Default::default()
                     });
