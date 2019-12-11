@@ -10,6 +10,9 @@ use torifune::graphics::DrawableObject;
 
 use crate::object::collision::*;
 
+///
+/// ある範囲内に速さを収めたい時に使用する構造体
+///
 pub struct SpeedBorder {
     pub positive_x: f32,
     pub negative_x: f32,
@@ -18,6 +21,9 @@ pub struct SpeedBorder {
 }
 
 impl SpeedBorder {
+    ///
+    /// あるx方向の速さを範囲内に丸め込む
+    ///
     pub fn round_speed_x(&self, speed: f32) -> f32 {
         if speed > self.positive_x {
             self.positive_x
@@ -28,6 +34,9 @@ impl SpeedBorder {
         }
     }
 
+    ///
+    /// あるy方向の速さを範囲内に丸め込む
+    ///
     pub fn round_speed_y(&self, speed: f32) -> f32 {
         if speed > self.positive_y {
             self.positive_y
@@ -107,7 +116,7 @@ pub struct Character<'a> {
 }
 
 impl<'a> Character<'a> {
-    pub fn new(ctx: &mut ggez::Context, obj: tobj::SimpleObject<'a>, speed_info: TextureSpeedInfo) -> Character<'a> {
+    pub fn new(obj: tobj::SimpleObject<'a>, speed_info: TextureSpeedInfo) -> Character<'a> {
         Character {
             last_position: obj.get_position(),
             map_position: obj.get_position(),
@@ -160,15 +169,23 @@ impl<'a> Character<'a> {
         self.map_position
     }
 
+    ///
+    /// キャラクタテクスチャの上側が衝突した場合
+    /// どれだけ、テクスチャを移動させれば良いのかを返す
+    ///
     fn fix_collision_above(&mut self,
-                            ctx: &mut ggez::Context,
-                            info: &CollisionInformation,
+                           _ctx: &mut ggez::Context,
+                           info: &CollisionInformation,
                            t: Clock) -> f32 {
         self.speed_info.fall_start(t);
         self.speed_info.set_speed_y(1.0);
-        (info.tile_position.unwrap().y + 17.0) - info.player_position.unwrap().y
+        (info.tile_position.unwrap().y + info.tile_position.unwrap().h + 0.1) - info.player_position.unwrap().y
     }
 
+    ///
+    /// キャラクタテクスチャの下側が衝突した場合
+    /// どれだけ、テクスチャを移動させれば良いのかを返す
+    ///
     fn fix_collision_bottom(&mut self,
                             ctx: &mut ggez::Context,
                             info: &CollisionInformation,
@@ -180,24 +197,34 @@ impl<'a> Character<'a> {
         info.tile_position.unwrap().y - (info.player_position.unwrap().y + area.y)
     }
 
+    ///
+    /// キャラクタテクスチャの右側が衝突した場合
+    /// どれだけ、テクスチャを移動させれば良いのかを返す
+    ///
     fn fix_collision_right(&mut self,
                             ctx: &mut ggez::Context,
                             info: &CollisionInformation,
-                           t: Clock) -> f32 {
+                           _t: Clock) -> f32 {
         let area = self.object.get_drawing_size(ctx);
-        info.tile_position.unwrap().x - (info.player_position.unwrap().x + area.x)
+        (info.tile_position.unwrap().x - 0.1) - (info.player_position.unwrap().x + area.x)
     }
 
+    ///
+    /// キャラクタテクスチャの左側が衝突した場合
+    /// どれだけ、テクスチャを移動させれば良いのかを返す
+    ///
     fn fix_collision_left(&mut self,
-                           ctx: &mut ggez::Context,
+                           _ctx: &mut ggez::Context,
                            info: &CollisionInformation,
-                          t: Clock) -> f32 {
+                          _t: Clock) -> f32 {
         self.speed_info.set_speed_x(0.0);
-        let area = self.object.get_drawing_size(ctx);
-        info.tile_position.unwrap().x + 17.0 - info.player_position.unwrap().x
+        (info.tile_position.unwrap().x + info.tile_position.unwrap().w + 0.5) - info.player_position.unwrap().x
         
     }
-    
+
+    ///
+    /// 垂直方向の衝突（めり込み）を修正するメソッド
+    ///
     pub fn fix_collision_vertical(&mut self, ctx: &mut ggez::Context,
                          info: &CollisionInformation,
                                   t: Clock) -> f32 {
@@ -211,6 +238,9 @@ impl<'a> Character<'a> {
         0.0
     }
 
+    ///
+    /// 水平方向の衝突（めり込み）を修正するメソッド
+    ///
     pub fn fix_collision_horizon(&mut self, ctx: &mut ggez::Context,
                                  info: &CollisionInformation,
                                  t: Clock)  -> f32 {
@@ -255,7 +285,7 @@ impl<'a> Character<'a> {
     pub fn move_x(&mut self) {
 
         let current_x = self.object.get_position().x;
-        let mut next = current_x + self.speed_info.get_speed().x;
+        let next = current_x + self.speed_info.get_speed().x;
 
         let diff = next - current_x;
 

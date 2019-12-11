@@ -49,7 +49,7 @@ impl<'a> DreamScene<'a> {
         let key_listener = tdev::KeyboardListener::new_masked(vec![tdev::KeyInputDevice::GenericKeyboard],
                                                                   vec![]);
 
-        let player = object::Character::new(ctx, tobj::SimpleObject::new(
+        let player = object::Character::new(tobj::SimpleObject::new(
             tobj::MovableUniTexture::new(
                 game_data.ref_texture(TextureID::Ghost1),
                 numeric::Point2f::new(650.0, 0.0),
@@ -142,6 +142,9 @@ impl<'a> DreamScene<'a> {
             .override_move_func(object::move_fn::gravity_move(-5.0, 24.0, 600.0, 0.2), t)
     }
 
+    ///
+    /// プレイヤーキャラクタの座標を元に、カメラをスクロールする
+    ///
     fn scroll_camera(&mut self) {
         if self.player.get_map_position().y > 500.0 {
             let a = self.player.get_last_map_move_distance();
@@ -221,7 +224,7 @@ impl<'a> SceneManager for DreamScene<'a> {
     fn pre_process(&mut self, ctx: &mut ggez::Context) {
         let t = self.get_current_clock();
 
-        /// キーのチェック
+        // キーのチェック
         self.check_key_event(ctx);
         
         self.player.apply_resistance(t);
