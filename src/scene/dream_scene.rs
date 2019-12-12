@@ -34,17 +34,17 @@ use crate::core::map_parser as mp;
 /// ### camera
 /// マップを覗くカメラ
 ///
-pub struct DreamScene<'a> {
-    player: object::Character<'a>,
+pub struct DreamScene {
+    player: object::Character,
     key_listener: tdev::KeyboardListener,
     clock: Clock,
     tile_map: mp::StageObjectMap,
     camera: Rc<RefCell<numeric::Rect>>,
 }
 
-impl<'a> DreamScene<'a> {
+impl DreamScene {
     
-    pub fn new(ctx: &mut ggez::Context, game_data: &'a GameData) -> DreamScene<'a>  {
+    pub fn new(ctx: &mut ggez::Context, game_data: &GameData) -> DreamScene  {
 
         let key_listener = tdev::KeyboardListener::new_masked(vec![tdev::KeyInputDevice::GenericKeyboard],
                                                                   vec![]);
@@ -188,7 +188,7 @@ impl<'a> DreamScene<'a> {
     }
 }
 
-impl<'a> SceneManager for DreamScene<'a> {
+impl SceneManager for DreamScene {
     
     fn key_down_event(&mut self, _ctx: &mut ggez::Context, _vkey: tdev::VirtualKey) {
     }

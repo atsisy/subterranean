@@ -61,18 +61,18 @@ pub trait SceneManager {
     fn update_current_clock(&mut self);
 }
 
-pub struct SimpleObjectContainer<'a> {
-    container: Vec<tobj::SimpleObject<'a>>,
+pub struct SimpleObjectContainer {
+    container: Vec<tobj::SimpleObject>,
 }
 
-impl<'a> SimpleObjectContainer<'a> {
-    fn new() -> SimpleObjectContainer<'a> {
+impl SimpleObjectContainer {
+    fn new() -> SimpleObjectContainer {
         SimpleObjectContainer {
             container: Vec::new(),
         }
     }
 
-    fn add(&mut self, obj: tobj::SimpleObject<'a>) {
+    fn add(&mut self, obj: tobj::SimpleObject) {
         self.container.push(obj);
     }
 
@@ -80,11 +80,11 @@ impl<'a> SimpleObjectContainer<'a> {
         self.container.sort_by(tgraphics::drawable_object_sort_with_depth);
     }
 
-    fn get_raw_container(&self) -> &Vec<tobj::SimpleObject<'a>> {
+    fn get_raw_container(&self) -> &Vec<tobj::SimpleObject> {
         &self.container
     }
 
-    fn get_raw_container_mut(&mut self) -> &mut Vec<tobj::SimpleObject<'a>> {
+    fn get_raw_container_mut(&mut self) -> &mut Vec<tobj::SimpleObject> {
         &mut self.container
     }
 

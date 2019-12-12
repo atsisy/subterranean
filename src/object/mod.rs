@@ -107,16 +107,16 @@ impl TextureSpeedInfo {
     }
 }
 
-pub struct Character<'a> {
+pub struct Character {
     last_position: numeric::Point2f,
     speed_info: TextureSpeedInfo,
-    object: tobj::SimpleObject<'a>,
+    object: tobj::SimpleObject,
     map_position: numeric::Point2f,
     last_map_position: numeric::Point2f,
 }
 
-impl<'a> Character<'a> {
-    pub fn new(obj: tobj::SimpleObject<'a>, speed_info: TextureSpeedInfo) -> Character<'a> {
+impl Character {
+    pub fn new(obj: tobj::SimpleObject, speed_info: TextureSpeedInfo) -> Character {
         Character {
             last_position: obj.get_position(),
             map_position: obj.get_position(),
@@ -134,11 +134,11 @@ impl<'a> Character<'a> {
         &mut self.speed_info
     }
 
-    pub fn obj(&self) -> &tobj::SimpleObject<'a> {
+    pub fn obj(&self) -> &tobj::SimpleObject {
         &self.object
     }
     
-    pub fn obj_mut(&mut self) -> &mut tobj::SimpleObject<'a> {
+    pub fn obj_mut(&mut self) -> &mut tobj::SimpleObject {
         &mut self.object
     }
 

@@ -9,6 +9,7 @@ use torifune::numeric;
 use tdev::ProgramableKey;
 use ggez::input as ginput;
 use ggez::input::keyboard::*;
+use std::rc::Rc;
 use crate::scene;
 
 use std::fs;
@@ -58,7 +59,7 @@ impl RawConfigFile {
 }
 
 pub struct GameData {
-    textures: Vec<ggraphics::Image>,
+    textures: Vec<Rc<ggraphics::Image>>,
 }
 
 impl GameData {
@@ -71,16 +72,16 @@ impl GameData {
         
         for texture_path in &src_file.texture_paths {
             print!("Loading texture {}...", texture_path);
-            data.textures.push(ggraphics::Image::new(ctx, texture_path).unwrap());
+            data.textures.push(Rc::new(ggraphics::Image::new(ctx, texture_path).unwrap()));
             println!(" done!");
         }
 
         data
     }
 
-    pub fn ref_texture(&self, id: TextureID) -> &ggraphics::Image {
+    pub fn ref_texture(&self, id: TextureID) -> Rc<ggraphics::Image> {
         match self.textures.get(id as usize) {
-            Some(texture) => &texture,
+            Some(texture) => texture.clone(),
             None => panic!("Unknown Texture ID: {}", id as i32),
         }
     }

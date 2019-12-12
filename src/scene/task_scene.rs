@@ -97,15 +97,15 @@ impl MouseInformation {
     
 }
 
-struct DeskObjects<'a> {
+struct DeskObjects {
     desk_canvas: tgraphics::SubScreen,
-    desk_objects: SimpleObjectContainer<'a>,
-    dragging: Option<SimpleObject<'a>>,
+    desk_objects: SimpleObjectContainer,
+    dragging: Option<SimpleObject>,
 }
 
-impl<'a> DeskObjects<'a> {
-    pub fn new(ctx: &mut ggez::Context, game_data: &'a GameData,
-               rect: ggraphics::Rect) -> DeskObjects<'a> {
+impl DeskObjects {
+    pub fn new(ctx: &mut ggez::Context, game_data: & GameData,
+               rect: ggraphics::Rect) -> DeskObjects {
 
         let mut dparam = ggraphics::DrawParam::default();
         dparam.dest = numeric::Point2f::new(rect.x, rect.y).into();
@@ -193,7 +193,7 @@ impl<'a> DeskObjects<'a> {
 
 }
 
-impl<'a> tgraphics::DrawableObject for DeskObjects<'a> {
+impl tgraphics::DrawableObject for DeskObjects {
 
     fn draw(&self, ctx: &mut ggez::Context) -> ggez::GameResult<()> {
         if self.is_visible() {
@@ -249,14 +249,14 @@ impl<'a> tgraphics::DrawableObject for DeskObjects<'a> {
     }
 }
 
-pub struct TaskScene<'a> {
-    desk_objects: DeskObjects<'a>,
+pub struct TaskScene {
+    desk_objects: DeskObjects,
     clock: Clock,
     mouse_info: MouseInformation,
 }
 
-impl<'a> TaskScene<'a> {
-    pub fn new(ctx: &mut ggez::Context, game_data: &'a GameData) -> TaskScene<'a>  {
+impl TaskScene {
+    pub fn new(ctx: &mut ggez::Context, game_data: &GameData) -> TaskScene  {
         
         TaskScene {
             desk_objects: DeskObjects::new(ctx, game_data,
@@ -283,7 +283,7 @@ impl<'a> TaskScene<'a> {
     }
 }
 
-impl<'a> SceneManager for TaskScene<'a> {
+impl SceneManager for TaskScene {
     
     fn key_down_event(&mut self, _ctx: &mut ggez::Context, vkey: tdev::VirtualKey) {
         match vkey {
