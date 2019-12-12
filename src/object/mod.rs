@@ -1,6 +1,10 @@
 pub mod move_fn;
 pub mod collision;
 
+use std::rc::Rc;
+
+use ggez::graphics as ggraphics;
+
 use torifune::core::Clock;
 use torifune::core::Updatable;
 use torifune::numeric;
@@ -107,22 +111,80 @@ impl TextureSpeedInfo {
     }
 }
 
+struct SeqTexture {
+    textures: Vec<Rc<ggraphics::Image>>,
+    index: usize,
+}
+
+impl SeqTexture {
+    pub fn new(textures: Vec<Rc<ggraphics::Image>>) -> Self {
+        SeqTexture {
+            textures: textures,
+            index: 0,
+        }
+    }
+
+    pub fn current_frame(&self) -> Rc<ggraphics::Image> {        
+        self.textures[self.index % self.textures.len()].clone()
+    }
+    
+    pub fn next_frame(&mut self) -> Rc<ggraphics::Image> {
+        self.index += 1;
+        self.current_frame()
+    }
+
+    pub fn prev_frame(&mut self) -> Rc<ggraphics::Image> {
+        if self.index == 0 {
+            self.index = self.textures.len() - 1;
+        } else {
+            self.index -= 1;
+        }
+        
+        self.current_frame()
+    }
+}
+
+pub struct TextureAnimation {
+    textures: Vec<SeqTexture>,
+    current_mode: usize,
+    object: tobj::SimpleObject,
+}
+
+impl TextureAnimation {
+    pub fn new(obj: tobj::SimpleObject, textures: Vec<Vec<Rc<ggraphics::Image>>>, mode: usize) -> Self {
+        TextureAnimation {
+            textures: textures.iter().map(|vec| SeqTexture::new(vec.to_vec())).collect(),
+            current_mode: mode,
+            object: obj,
+        }
+    }
+
+    pub fn get_object(&self) -> &tobj::SimpleObject {
+        &self.object
+    }
+
+    pub fn get_mut_object(&mut self) -> &mut tobj::SimpleObject {
+        &mut self.object
+    }
+}
+
 pub struct Character {
     last_position: numeric::Point2f,
+    object: TextureAnimation,
     speed_info: TextureSpeedInfo,
-    object: tobj::SimpleObject,
     map_position: numeric::Point2f,
     last_map_position: numeric::Point2f,
 }
 
 impl Character {
-    pub fn new(obj: tobj::SimpleObject, speed_info: TextureSpeedInfo) -> Character {
+    pub fn new(obj: tobj::SimpleObject, textures: Vec<Vec<Rc<ggraphics::Image>>>,
+               mode: usize, speed_info: TextureSpeedInfo) -> Character {
         Character {
             last_position: obj.get_position(),
             map_position: obj.get_position(),
             last_map_position: obj.get_position(),
             speed_info: speed_info,
-            object: obj,
+            object: TextureAnimation::new(obj, textures, mode),
         }
     }
 
@@ -135,11 +197,11 @@ impl Character {
     }
 
     pub fn obj(&self) -> &tobj::SimpleObject {
-        &self.object
+        self.object.get_object()
     }
     
     pub fn obj_mut(&mut self) -> &mut tobj::SimpleObject {
-        &mut self.object
+        self.object.get_mut_object()
     }
 
     pub fn get_last_position(&self) -> numeric::Point2f {
@@ -147,11 +209,12 @@ impl Character {
     }
 
     pub fn undo_move(&mut self) {
-        self.object.set_position(self.get_last_position());
+        let last = self.get_last_position();
+        self.object.get_mut_object().set_position(last);
     }
 
     fn get_last_move_distance(&self) -> numeric::Vector2f {
-        let current = self.object.get_position();
+        let current = self.object.get_object().get_position();
         numeric::Vector2f::new(
             current.x - self.last_position.x,
             current.y - self.last_position.y,
@@ -193,7 +256,7 @@ impl Character {
         self.speed_info.fall_start(t);
         self.speed_info.set_speed_x(0.0);
 
-        let area = self.object.get_drawing_size(ctx);
+        let area = self.object.get_object().get_drawing_size(ctx);
         info.tile_position.unwrap().y - (info.player_position.unwrap().y + area.y)
     }
 
@@ -205,7 +268,7 @@ impl Character {
                             ctx: &mut ggez::Context,
                             info: &CollisionInformation,
                            _t: Clock) -> f32 {
-        let area = self.object.get_drawing_size(ctx);
+        let area = self.object.get_object().get_drawing_size(ctx);
         (info.tile_position.unwrap().x - 0.1) - (info.player_position.unwrap().x + area.x)
     }
 
@@ -244,7 +307,7 @@ impl Character {
     pub fn fix_collision_horizon(&mut self, ctx: &mut ggez::Context,
                                  info: &CollisionInformation,
                                  t: Clock)  -> f32 {
-        let right = info.player_position.unwrap().x + self.object.get_drawing_area(ctx).w;
+        let right = info.player_position.unwrap().x + self.object.get_object().get_drawing_area(ctx).w;
         if right > info.tile_position.unwrap().x && right < info.tile_position.unwrap().x + info.tile_position.unwrap().w {
             return self.fix_collision_right(ctx, &info, t);
         } else {
@@ -266,7 +329,7 @@ impl Character {
 
     pub fn move_y(&mut self) {
 
-        let current_y = self.object.get_position().y;
+        let current_y = self.object.get_object().get_position().y;
         let mut next = current_y + self.speed_info.get_speed().y;
         
         if next > 600.0 {
@@ -276,7 +339,7 @@ impl Character {
         let diff = next - current_y;
 
         self.last_position.y = current_y;
-        self.object.move_diff(numeric::Vector2f::new(0.0, diff));
+        self.object.get_mut_object().move_diff(numeric::Vector2f::new(0.0, diff));
 
         self.last_map_position = self.map_position;
         self.map_position.y += diff;
@@ -284,13 +347,13 @@ impl Character {
 
     pub fn move_x(&mut self) {
 
-        let current_x = self.object.get_position().x;
+        let current_x = self.object.get_object().get_position().x;
         let next = current_x + self.speed_info.get_speed().x;
 
         let diff = next - current_x;
 
         self.last_position.x = current_x;
-        self.object.move_diff(numeric::Vector2f::new(diff, 0.0));
+        self.object.get_mut_object().move_diff(numeric::Vector2f::new(diff, 0.0));
 
         self.last_map_position = self.map_position;
         self.map_position.x += diff;
