@@ -56,7 +56,9 @@ impl DreamScene {
                 numeric::Vector2f::new(0.1, 0.1),
                 0.0, 0, object::move_fn::halt(numeric::Point2f::new(0.0, 0.0)),
                 0), vec![]),
-                                            vec![vec![game_data.ref_texture(TextureID::Ghost1)]], 0,
+                                            vec![vec![
+                                                game_data.ref_texture(TextureID::Ghost1)
+                                                ]], 0,
                                             object::TextureSpeedInfo::new(0.05, 0.08, numeric::Vector2f::new(0.0, 0.0),
                                                                           object::SpeedBorder {
                                                                               positive_x: 6.0,
@@ -224,6 +226,8 @@ impl SceneManager for DreamScene {
 
     fn pre_process(&mut self, ctx: &mut ggez::Context) {
         let t = self.get_current_clock();
+
+        self.player.update_texture(t);
 
         // キーのチェック
         self.check_key_event(ctx);

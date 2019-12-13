@@ -124,6 +124,10 @@ impl SeqTexture {
         }
     }
 
+    pub fn reset(&mut self) {
+        self.index = 0;
+    }
+
     pub fn current_frame(&self) -> Rc<ggraphics::Image> {        
         self.textures[self.index % self.textures.len()].clone()
     }
@@ -165,6 +169,18 @@ impl TextureAnimation {
 
     pub fn get_mut_object(&mut self) -> &mut tobj::SimpleObject {
         &mut self.object
+    }
+
+    pub fn change_mode(&mut self, mode: usize) {
+        self.current_mode = mode;
+        self.textures[self.current_mode].reset();
+    }
+
+    pub fn try_next_frame(&mut self, t: Clock) {
+        if t % 5 == 0 {
+            let texture = self.textures[self.current_mode].next_frame();
+            self.get_mut_object().replace_texture(texture);
+        }
     }
 }
 
@@ -313,6 +329,10 @@ impl Character {
         } else {
             return self.fix_collision_left(ctx, &info, t);
         }
+    }
+
+    pub fn update_texture(&mut self, t: Clock) {
+        self.object.try_next_frame(t);
     }
     
     pub fn apply_resistance(&mut self, t: Clock) {
