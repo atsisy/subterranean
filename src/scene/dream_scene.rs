@@ -49,15 +49,20 @@ impl DreamScene {
         let key_listener = tdev::KeyboardListener::new_masked(vec![tdev::KeyInputDevice::GenericKeyboard],
                                                                   vec![]);
 
+        let camera = Rc::new(RefCell::new(numeric::Rect::new(0.0, 0.0, 1366.0, 768.0)));
+
+        let map_position = numeric::Point2f::new(60.0, 100.0);
+        
         let player = object::Character::new(tobj::SimpleObject::new(
             tobj::MovableUniTexture::new(
                 game_data.ref_texture(TextureID::Ghost1),
-                numeric::Point2f::new(650.0, 0.0),
+                mp::map_to_display(&map_position, &camera.borrow()),
                 numeric::Vector2f::new(0.1, 0.1),
                 0.0, 0, object::move_fn::halt(numeric::Point2f::new(0.0, 0.0)),
                 0), vec![]),
                                             vec![vec![
-                                                game_data.ref_texture(TextureID::Ghost1)
+                                                game_data.ref_texture(TextureID::LotusPink),
+                                                game_data.ref_texture(TextureID::LotusBlue)
                                                 ]], 0,
                                             object::TextureSpeedInfo::new(0.05, 0.08, numeric::Vector2f::new(0.0, 0.0),
                                                                           object::SpeedBorder {
@@ -65,9 +70,8 @@ impl DreamScene {
                                                                               negative_x: -6.0,
                                                                               positive_y: 6.0,
                                                                               negative_y: -6.0,
-                                                                          }));
-
-        let camera = Rc::new(RefCell::new(numeric::Rect::new(0.0, 0.0, 1366.0, 768.0)));
+                                                                          }), map_position,
+        camera.clone());
         
         DreamScene {
             player: player,
@@ -172,7 +176,7 @@ impl DreamScene {
         if  collision_info.collision  {
             // 修正動作
             let diff = self.player.fix_collision_horizon(ctx, &collision_info, self.get_current_clock());
-            self.move_camera(numeric::Vector2f::new(diff, 0.0));
+            self.player.move_map(numeric::Vector2f::new(diff, 0.0));
         }
     }
 
@@ -186,7 +190,7 @@ impl DreamScene {
         if  collision_info.collision  {
             // 修正動作
             let diff = self.player.fix_collision_vertical(ctx, &collision_info, self.get_current_clock());
-            self.move_camera(numeric::Vector2f::new(0.0, diff));
+            self.player.move_map(numeric::Vector2f::new(0.0, diff));
         }
     }
 }
@@ -233,27 +237,28 @@ impl SceneManager for DreamScene {
         self.check_key_event(ctx);
         
         self.player.apply_resistance(t);
-        self.move_camera(numeric::Vector2f::new(self.player.speed_info().get_speed().x, 0.0));
+        
+        self.player.move_map(numeric::Vector2f::new(self.player.speed_info().get_speed().x, 0.0));
+        self.player.update_display_position(&self.camera.borrow());
         // 衝突の検出 + 修正動作
         self.check_collision_horizon(ctx);
-        
+        self.player.update_display_position(&self.camera.borrow());
         let a = self.player.obj().get_position() - numeric::Point2f::new(650.0, 400.0);
-        self.move_camera(numeric::Vector2f::new(-a.x, 0.0));
-        self.player.obj_mut().move_diff(numeric::Vector2f::new(-a.x, 0.0));
+        self.move_camera(numeric::Vector2f::new(a.x, 0.0));
         
-
+        
         // プレイヤーに重力の影響を受けさせる
-        //self.player.move_y();
-        self.move_camera(numeric::Vector2f::new(0.0, self.player.speed_info().get_speed().y));
+        self.player.move_map(numeric::Vector2f::new(0.0, self.player.speed_info().get_speed().y));
+        self.player.update_display_position(&self.camera.borrow());
         // 衝突の検出 + 修正動作
         self.check_collision_vertical(ctx);
+        self.player.update_display_position(&self.camera.borrow());
 
         let a = self.player.obj().get_position() - numeric::Point2f::new(650.0, 400.0);
-        self.move_camera(numeric::Vector2f::new(0.0, -a.y));
-        self.player.obj_mut().move_diff(numeric::Vector2f::new(0.0, -a.y));
-
+        self.move_camera(numeric::Vector2f::new(0.0, a.y));
+        
         // カメラの移動
-        self.scroll_camera();
+        //self.scroll_camera();
 
         // マップ描画の準備
         self.tile_map.update(ctx, t);

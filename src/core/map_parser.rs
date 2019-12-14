@@ -412,3 +412,7 @@ impl Updatable for StageObjectMap {
         self.update_sprite_batch();
     }
 }
+
+pub fn map_to_display(map_pos: &numeric::Point2f, camera: &numeric::Rect) -> numeric::Point2f {
+    numeric::Point2f::new(map_pos.x - camera.x, map_pos.y - camera.y)
+}

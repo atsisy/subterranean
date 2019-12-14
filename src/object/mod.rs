@@ -2,6 +2,7 @@ pub mod move_fn;
 pub mod collision;
 
 use std::rc::Rc;
+use std::cell::RefCell;
 
 use ggez::graphics as ggraphics;
 
@@ -13,6 +14,7 @@ use torifune::graphics::object::TextureObject;
 use torifune::graphics::DrawableObject;
 
 use crate::object::collision::*;
+use crate::core::map_parser as mp;
 
 ///
 /// ある範囲内に速さを収めたい時に使用する構造体
@@ -190,17 +192,20 @@ pub struct Character {
     speed_info: TextureSpeedInfo,
     map_position: numeric::Point2f,
     last_map_position: numeric::Point2f,
+    camera: Rc<RefCell<numeric::Rect>>,
 }
 
 impl Character {
     pub fn new(obj: tobj::SimpleObject, textures: Vec<Vec<Rc<ggraphics::Image>>>,
-               mode: usize, speed_info: TextureSpeedInfo) -> Character {
+               mode: usize, speed_info: TextureSpeedInfo, map_position: numeric::Point2f,
+               camera: Rc<RefCell<numeric::Rect>>) -> Character {
         Character {
             last_position: obj.get_position(),
-            map_position: obj.get_position(),
-            last_map_position: obj.get_position(),
+            map_position: map_position,
+            last_map_position:map_position,
             speed_info: speed_info,
             object: TextureAnimation::new(obj, textures, mode),
+            camera: camera,
         }
     }
 
@@ -257,6 +262,7 @@ impl Character {
                            info: &CollisionInformation,
                            t: Clock) -> f32 {
         self.speed_info.fall_start(t);
+        println!("above");
         self.speed_info.set_speed_y(1.0);
         (info.tile_position.unwrap().y + info.tile_position.unwrap().h + 0.1) - info.player_position.unwrap().y
     }
@@ -271,9 +277,9 @@ impl Character {
                             t: Clock) -> f32 {
         self.speed_info.fall_start(t);
         self.speed_info.set_speed_x(0.0);
-
+        println!("bottom");
         let area = self.object.get_object().get_drawing_size(ctx);
-        info.tile_position.unwrap().y - (info.player_position.unwrap().y + area.y)
+        info.tile_position.unwrap().y - (info.player_position.unwrap().y + area.y) - 0.1
     }
 
     ///
@@ -285,6 +291,7 @@ impl Character {
                             info: &CollisionInformation,
                            _t: Clock) -> f32 {
         let area = self.object.get_object().get_drawing_size(ctx);
+        println!("right");
         (info.tile_position.unwrap().x - 0.1) - (info.player_position.unwrap().x + area.x)
     }
 
@@ -297,6 +304,7 @@ impl Character {
                            info: &CollisionInformation,
                           _t: Clock) -> f32 {
         self.speed_info.set_speed_x(0.0);
+        println!("left");
         (info.tile_position.unwrap().x + info.tile_position.unwrap().w + 0.5) - info.player_position.unwrap().x
         
     }
@@ -338,7 +346,17 @@ impl Character {
     pub fn apply_resistance(&mut self, t: Clock) {
         self.speed_info.apply_resistance(t);
     }
+    
+    pub fn move_map(&mut self, offset: numeric::Vector2f) {
+        self.last_map_position = self.map_position;
+        self.map_position += offset;
+    }
 
+    pub fn update_display_position(&mut self, camera: &numeric::Rect) {
+        let dp = mp::map_to_display(&self.map_position, camera);
+        self.object.get_mut_object().set_position(dp);
+    }
+    
     pub fn move_right(&mut self) {
         self.speed_info.set_speed_x(6.0);
     }
