@@ -113,6 +113,19 @@ impl TextureSpeedInfo {
     }
 }
 
+#[derive(Debug, Eq, PartialEq, Clone, Copy)]
+pub enum AnimationType {
+    OneShot,
+    Loop,
+    Times(usize, usize),
+}
+
+#[derive(Debug, Eq, PartialEq, Clone, Copy)]
+pub enum AnimationStatus {
+    Playing,
+    OneLoopFinish,
+}
+
 struct SeqTexture {
     textures: Vec<Rc<ggraphics::Image>>,
     index: usize,
@@ -134,19 +147,19 @@ impl SeqTexture {
         self.textures[self.index % self.textures.len()].clone()
     }
     
-    pub fn next_frame(&mut self) -> Rc<ggraphics::Image> {
+    pub fn next_frame(&mut self, t: AnimationType) -> Result<Rc<ggraphics::Image>, AnimationStatus> {
         self.index += 1;
-        self.current_frame()
-    }
-
-    pub fn prev_frame(&mut self) -> Rc<ggraphics::Image> {
-        if self.index == 0 {
-            self.index = self.textures.len() - 1;
-        } else {
-            self.index -= 1;
-        }
         
-        self.current_frame()
+        match t {
+            AnimationType::OneShot | AnimationType::Times(_, _) => {
+                if self.index == self.textures.len() {
+                    return Err(AnimationStatus::OneLoopFinish);
+                }
+            },
+            _ => (),
+        }
+
+        return Ok(self.current_frame())
     }
 }
 
@@ -154,14 +167,20 @@ pub struct TextureAnimation {
     textures: Vec<SeqTexture>,
     current_mode: usize,
     object: tobj::SimpleObject,
+    animation_type: AnimationType,
+    next_mode: usize,
+    frame_speed: Clock,
 }
 
 impl TextureAnimation {
-    pub fn new(obj: tobj::SimpleObject, textures: Vec<Vec<Rc<ggraphics::Image>>>, mode: usize) -> Self {
+    pub fn new(obj: tobj::SimpleObject, textures: Vec<Vec<Rc<ggraphics::Image>>>, mode: usize, frame_speed: Clock) -> Self {
         TextureAnimation {
             textures: textures.iter().map(|vec| SeqTexture::new(vec.to_vec())).collect(),
             current_mode: mode,
             object: obj,
+            animation_type: AnimationType::Loop,
+            next_mode: mode,
+            frame_speed: frame_speed,
         }
     }
 
@@ -173,16 +192,84 @@ impl TextureAnimation {
         &mut self.object
     }
 
-    pub fn change_mode(&mut self, mode: usize) {
+    pub fn change_mode(&mut self, mode: usize, animation_type: AnimationType, next_mode: usize) {
         self.current_mode = mode;
+        self.next_mode = next_mode;
+        self.animation_type = animation_type;
         self.textures[self.current_mode].reset();
     }
 
-    pub fn try_next_frame(&mut self, t: Clock) {
-        if t % 5 == 0 {
-            let texture = self.textures[self.current_mode].next_frame();
-            self.get_mut_object().replace_texture(texture);
+    fn next_frame(&mut self, t: Clock) {
+        match self.textures[self.current_mode].next_frame(self.animation_type) {
+            // アニメーションは再生中. 特に操作は行わず、ただテクスチャを切り替える
+            Ok(texture) => self.get_mut_object().replace_texture(texture),
+            
+            // アニメーションが終点に到達なんらかの処理を施す必要がある
+            Err(status) => {
+                // アニメーションに関してイベントが発生. イベントの種類ごとに何ら可の処理を施す
+                match status {
+                    // 一回のループが終了したらしい. これは、AnimationType::{OneShot, Times}で発生する
+                    AnimationStatus::OneLoopFinish => {
+                        // 現在のアニメーションのタイプごとに処理を行う
+                        let t = &self.animation_type;
+                        match t {
+                            &AnimationType::OneShot => {
+                                // OneShotの場合
+                                // デフォルトのループに切り替える
+                                self.animation_type = AnimationType::Loop;
+                                self.current_mode = self.next_mode;
+                            },
+                            &AnimationType::Times(mut cur, lim) => {
+                                // Timesの場合
+                                // ループカウンタをインクリメントする
+                                cur += 1;
+
+                                // まだループする予定
+                                if cur < lim {
+                                    // 最初のテクスチャに戻し、アニメーションを再開
+                                    self.textures[self.current_mode].reset();
+                                    let texture = self.textures[self.current_mode].current_frame();
+                                    self.get_mut_object().replace_texture(texture);
+                                } else {
+                                    // OneShotの場合と同じく、デフォルトのループに切り替える
+                                    self.animation_type = AnimationType::Loop;
+                                    self.current_mode = self.next_mode;
+                                }
+                            },
+                            _ => (),
+                        }
+                    },
+                    _ => (),
+                }
+            }
         }
+    }
+
+    pub fn try_next_frame(&mut self, t: Clock) {
+        if t % self.frame_speed == 0 {
+            self.next_frame(t);
+        }
+    }
+}
+
+pub struct TwoStepPoint {
+    pub previous: numeric::Point2f,
+    pub current: numeric::Point2f,
+}
+
+impl TwoStepPoint {
+    pub fn diff(&self) -> numeric::Vector2f {
+        self.current - self.previous
+    }
+
+    pub fn update(&mut self, pos: numeric::Point2f) {
+        self.previous = self.current;
+        self.current = pos;
+    }
+
+    pub fn move_diff(&mut self, pos: &numeric::Vector2f) {
+        self.previous = self.current;
+        self.current += *pos;
     }
 }
 
@@ -190,21 +277,19 @@ pub struct Character {
     last_position: numeric::Point2f,
     object: TextureAnimation,
     speed_info: TextureSpeedInfo,
-    map_position: numeric::Point2f,
-    last_map_position: numeric::Point2f,
+    map_position: TwoStepPoint,
     camera: Rc<RefCell<numeric::Rect>>,
 }
 
 impl Character {
     pub fn new(obj: tobj::SimpleObject, textures: Vec<Vec<Rc<ggraphics::Image>>>,
                mode: usize, speed_info: TextureSpeedInfo, map_position: numeric::Point2f,
-               camera: Rc<RefCell<numeric::Rect>>) -> Character {
+               camera: Rc<RefCell<numeric::Rect>>, frame_speed: Clock) -> Character {
         Character {
             last_position: obj.get_position(),
-            map_position: map_position,
-            last_map_position:map_position,
+            map_position: TwoStepPoint { previous: map_position, current: map_position },
             speed_info: speed_info,
-            object: TextureAnimation::new(obj, textures, mode),
+            object: TextureAnimation::new(obj, textures, mode, frame_speed),
             camera: camera,
         }
     }
@@ -243,14 +328,11 @@ impl Character {
     }
 
     pub fn get_last_map_move_distance(&self) -> numeric::Vector2f {
-        numeric::Vector2f::new(
-            self.map_position.x - self.last_map_position.x,
-            self.map_position.y - self.last_map_position.y,
-        )
+        self.map_position.diff()
     }
 
     pub fn get_map_position(&self) -> numeric::Point2f {
-        self.map_position
+        self.map_position.current
     }
 
     ///
@@ -262,7 +344,6 @@ impl Character {
                            info: &CollisionInformation,
                            t: Clock) -> f32 {
         self.speed_info.fall_start(t);
-        println!("above");
         self.speed_info.set_speed_y(1.0);
         (info.tile_position.unwrap().y + info.tile_position.unwrap().h + 0.1) - info.player_position.unwrap().y
     }
@@ -277,7 +358,6 @@ impl Character {
                             t: Clock) -> f32 {
         self.speed_info.fall_start(t);
         self.speed_info.set_speed_x(0.0);
-        println!("bottom");
         let area = self.object.get_object().get_drawing_size(ctx);
         info.tile_position.unwrap().y - (info.player_position.unwrap().y + area.y) - 0.1
     }
@@ -291,7 +371,6 @@ impl Character {
                             info: &CollisionInformation,
                            _t: Clock) -> f32 {
         let area = self.object.get_object().get_drawing_size(ctx);
-        println!("right");
         (info.tile_position.unwrap().x - 0.1) - (info.player_position.unwrap().x + area.x)
     }
 
@@ -304,7 +383,6 @@ impl Character {
                            info: &CollisionInformation,
                           _t: Clock) -> f32 {
         self.speed_info.set_speed_x(0.0);
-        println!("left");
         (info.tile_position.unwrap().x + info.tile_position.unwrap().w + 0.5) - info.player_position.unwrap().x
         
     }
@@ -348,12 +426,11 @@ impl Character {
     }
     
     pub fn move_map(&mut self, offset: numeric::Vector2f) {
-        self.last_map_position = self.map_position;
-        self.map_position += offset;
+        self.map_position.move_diff(&offset);
     }
 
     pub fn update_display_position(&mut self, camera: &numeric::Rect) {
-        let dp = mp::map_to_display(&self.map_position, camera);
+        let dp = mp::map_to_display(&self.map_position.current, camera);
         self.object.get_mut_object().set_position(dp);
     }
     
@@ -365,35 +442,4 @@ impl Character {
         self.speed_info.set_speed_x(-6.0);
     }
 
-    pub fn move_y(&mut self) {
-
-        let current_y = self.object.get_object().get_position().y;
-        let mut next = current_y + self.speed_info.get_speed().y;
-        
-        if next > 600.0 {
-            next = 600.0;
-        }
-
-        let diff = next - current_y;
-
-        self.last_position.y = current_y;
-        self.object.get_mut_object().move_diff(numeric::Vector2f::new(0.0, diff));
-
-        self.last_map_position = self.map_position;
-        self.map_position.y += diff;
-    }
-
-    pub fn move_x(&mut self) {
-
-        let current_x = self.object.get_object().get_position().x;
-        let next = current_x + self.speed_info.get_speed().x;
-
-        let diff = next - current_x;
-
-        self.last_position.x = current_x;
-        self.object.get_mut_object().move_diff(numeric::Vector2f::new(diff, 0.0));
-
-        self.last_map_position = self.map_position;
-        self.map_position.x += diff;
-    }
 }

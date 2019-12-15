@@ -63,7 +63,7 @@ impl DreamScene {
                                             vec![vec![
                                                 game_data.ref_texture(TextureID::LotusPink),
                                                 game_data.ref_texture(TextureID::LotusBlue)
-                                                ]], 0,
+                                            ]], 0,
                                             object::TextureSpeedInfo::new(0.05, 0.08, numeric::Vector2f::new(0.0, 0.0),
                                                                           object::SpeedBorder {
                                                                               positive_x: 6.0,
@@ -71,7 +71,7 @@ impl DreamScene {
                                                                               positive_y: 6.0,
                                                                               negative_y: -6.0,
                                                                           }), map_position,
-        camera.clone());
+                                            camera.clone(), 5);
         
         DreamScene {
             player: player,
@@ -121,18 +121,10 @@ impl DreamScene {
     }
     
     fn right_key_handler(&mut self, _ctx: &ggez::Context) {
-        /*
-        let offset = numeric::Vector2f::new(3.0, 0.0);
-        self.move_camera(offset);
-         */
         self.player.move_right();
     }
 
     fn left_key_handler(&mut self, _ctx: &ggez::Context) {
-        /*
-        let offset = numeric::Vector2f::new(-3.0, 0.0);
-        self.move_camera(offset);
-         */
         self.player.move_left();
     }
 
@@ -164,6 +156,11 @@ impl DreamScene {
             self.move_camera(numeric::Vector2f::new(0.0, a.y));
             self.player.obj_mut().move_diff(numeric::Vector2f::new(0.0, -a.y));
         }
+    }
+
+    fn fix_camera_position(&self) -> numeric::Point2f {
+        numeric::Point2f::new(if self.player.get_map_position().x >= 650.0 { 650.0 } else { self.player.get_map_position().x },
+                              if self.player.get_map_position().y >= 400.0 { 400.0 } else { self.player.get_map_position().y })
     }
 
     ///
@@ -243,7 +240,7 @@ impl SceneManager for DreamScene {
         // 衝突の検出 + 修正動作
         self.check_collision_horizon(ctx);
         self.player.update_display_position(&self.camera.borrow());
-        let a = self.player.obj().get_position() - numeric::Point2f::new(650.0, 400.0);
+        let a = self.player.obj().get_position() - self.fix_camera_position();
         self.move_camera(numeric::Vector2f::new(a.x, 0.0));
         
         
@@ -254,12 +251,9 @@ impl SceneManager for DreamScene {
         self.check_collision_vertical(ctx);
         self.player.update_display_position(&self.camera.borrow());
 
-        let a = self.player.obj().get_position() - numeric::Point2f::new(650.0, 400.0);
+        let a = self.player.obj().get_position() - self.fix_camera_position();
         self.move_camera(numeric::Vector2f::new(0.0, a.y));
         
-        // カメラの移動
-        //self.scroll_camera();
-
         // マップ描画の準備
         self.tile_map.update(ctx, t);
     }
