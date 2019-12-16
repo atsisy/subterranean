@@ -12,6 +12,7 @@ use torifune::numeric;
 use torifune::graphics::object as tobj;
 use torifune::graphics::object::TextureObject;
 use torifune::graphics::DrawableObject;
+use torifune::graphics::object::MovableObject;
 
 use crate::object::collision::*;
 use crate::core::map_parser as mp;
@@ -199,7 +200,7 @@ impl TextureAnimation {
         self.textures[self.current_mode].reset();
     }
 
-    fn next_frame(&mut self, t: Clock) {
+    fn next_frame(&mut self) {
         match self.textures[self.current_mode].next_frame(self.animation_type) {
             // アニメーションは再生中. 特に操作は行わず、ただテクスチャを切り替える
             Ok(texture) => self.get_mut_object().replace_texture(texture),
@@ -247,7 +248,7 @@ impl TextureAnimation {
 
     pub fn try_next_frame(&mut self, t: Clock) {
         if t % self.frame_speed == 0 {
-            self.next_frame(t);
+            self.next_frame();
         }
     }
 }
@@ -278,19 +279,17 @@ pub struct Character {
     object: TextureAnimation,
     speed_info: TextureSpeedInfo,
     map_position: TwoStepPoint,
-    camera: Rc<RefCell<numeric::Rect>>,
 }
 
 impl Character {
     pub fn new(obj: tobj::SimpleObject, textures: Vec<Vec<Rc<ggraphics::Image>>>,
                mode: usize, speed_info: TextureSpeedInfo, map_position: numeric::Point2f,
-               camera: Rc<RefCell<numeric::Rect>>, frame_speed: Clock) -> Character {
+               frame_speed: Clock) -> Character {
         Character {
             last_position: obj.get_position(),
             map_position: TwoStepPoint { previous: map_position, current: map_position },
             speed_info: speed_info,
             object: TextureAnimation::new(obj, textures, mode, frame_speed),
-            camera: camera,
         }
     }
 
@@ -433,13 +432,73 @@ impl Character {
         let dp = mp::map_to_display(&self.map_position.current, camera);
         self.object.get_mut_object().set_position(dp);
     }
-    
+
+}
+
+pub struct PlayableCharacter {
+    character: Character,
+}
+
+impl PlayableCharacter {
+    pub fn new(character: Character) -> Self {
+        PlayableCharacter {
+            character: character,
+        }
+    }
+
     pub fn move_right(&mut self) {
-        self.speed_info.set_speed_x(6.0);
+        self.character.speed_info.set_speed_x(6.0);
     }
 
     pub fn move_left(&mut self) {
-        self.speed_info.set_speed_x(-6.0);
+        self.character.speed_info.set_speed_x(-6.0);
     }
 
+    pub fn jump(&mut self, t: Clock) {
+        self.character.speed_info_mut().set_speed_y(-12.0);
+        self.character.speed_info_mut().fall_start(t);
+        self.character
+            .obj_mut()
+            .override_move_func(move_fn::gravity_move(-5.0, 24.0, 600.0, 0.2), t)
+    }
+
+    pub fn get_map_position(&self) -> numeric::Point2f {
+        self.character.get_map_position()
+    }
+
+    pub fn get_character_object(&self) -> &Character {
+        &self.character
+    }
+
+    pub fn get_mut_character_object(&mut self) -> &mut Character {
+        &mut self.character
+    }
+
+    pub fn fix_collision_horizon(&mut self, ctx: &mut ggez::Context,
+                                 info: &CollisionInformation,
+                                 t: Clock)  -> f32 {
+        self.character.fix_collision_horizon(ctx, info, t)
+    }
+
+    pub fn fix_collision_vertical(&mut self, ctx: &mut ggez::Context,
+                                 info: &CollisionInformation,
+                                 t: Clock)  -> f32 {
+        self.character.fix_collision_vertical(ctx, info, t)
+    }
+
+    pub fn move_map(&mut self, offset: numeric::Vector2f) {
+        self.character.move_map(offset);
+    }
+}
+
+pub struct EnemyCharacter {
+    character: Character,
+}
+
+impl EnemyCharacter {
+    pub fn new(character: Character) -> Self {
+        EnemyCharacter {
+            character: character,
+        }
+    }
 }
