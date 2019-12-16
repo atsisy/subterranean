@@ -3,7 +3,6 @@ pub mod collision;
 pub mod character_factory;
 
 use std::rc::Rc;
-use std::cell::RefCell;
 
 use ggez::graphics as ggraphics;
 
@@ -357,9 +356,8 @@ impl Character {
                             info: &CollisionInformation,
                             t: Clock) -> f32 {
         self.speed_info.fall_start(t);
-        self.speed_info.set_speed_x(0.0);
         let area = self.object.get_object().get_drawing_size(ctx);
-        info.tile_position.unwrap().y - (info.player_position.unwrap().y + area.y) - 0.1
+        info.tile_position.unwrap().y - (info.player_position.unwrap().y + area.y) - 1.0
     }
 
     ///
@@ -490,6 +488,14 @@ impl PlayableCharacter {
     pub fn move_map(&mut self, offset: numeric::Vector2f) {
         self.character.move_map(offset);
     }
+
+    pub fn move_map_current_speed_x(&mut self) {
+        self.move_map(numeric::Vector2f::new(self.get_character_object().speed_info().get_speed().x, 0.0))
+    }
+
+    pub fn move_map_current_speed_y(&mut self) {
+        self.move_map(numeric::Vector2f::new(0.0, self.get_character_object().speed_info().get_speed().y))
+    }
 }
 
 pub struct EnemyCharacter {
@@ -529,5 +535,13 @@ impl EnemyCharacter {
 
     pub fn move_map(&mut self, offset: numeric::Vector2f) {
         self.character.move_map(offset);
+    }
+
+    pub fn move_map_current_speed_x(&mut self) {
+        self.move_map(numeric::Vector2f::new(self.get_character_object().speed_info().get_speed().x, 0.0))
+    }
+
+    pub fn move_map_current_speed_y(&mut self) {
+        self.move_map(numeric::Vector2f::new(0.0, self.get_character_object().speed_info().get_speed().y))
     }
 }

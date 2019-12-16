@@ -15,13 +15,14 @@ pub fn create_character(order: CharacterFactoryOrder, game_data: &GameData,
     }
 }
 
-fn create_playable_doremy1(game_data: &GameData, camera: &numeric::Rect, map_position: numeric::Point2f) -> Character {
+fn create_playable_doremy1(game_data: &GameData, camera: &numeric::Rect,
+                           map_position: numeric::Point2f) -> Character {
     Character::new(tobj::SimpleObject::new(
             tobj::MovableUniTexture::new(
-                game_data.ref_texture(TextureID::Ghost1),
+                game_data.ref_texture(TextureID::LotusBlue),
                 mp::map_to_display(&map_position, camera),
                 numeric::Vector2f::new(0.1, 0.1),
-                0.0, 0, move_fn::halt(numeric::Point2f::new(0.0, 0.0)),
+                0.0, 0, move_fn::gravity_move(-5.0, 24.0, 600.0, 0.2),
                 0), vec![]),
                                             vec![vec![
                                                 game_data.ref_texture(TextureID::LotusPink),
@@ -36,3 +37,4 @@ fn create_playable_doremy1(game_data: &GameData, camera: &numeric::Rect, map_pos
                                                                           }), map_position,
                            5)
 }
+

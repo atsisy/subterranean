@@ -17,12 +17,14 @@ use crate::core::map_parser as mp;
 
 struct EnemyGroup {
     group: Vec<EnemyCharacter>,
+    drwob_essential: tgraphics::DrawableObjectEssential,
 }
 
 impl EnemyGroup {
     pub fn new() -> Self {
         EnemyGroup {
             group: Vec::new(),
+            drwob_essential: tgraphics::DrawableObjectEssential::new(true, 0),
         }
     }
 
@@ -41,9 +43,61 @@ impl EnemyGroup {
         self.group.len()
     }
 
+    pub fn move_and_collision_check(&mut self, ctx: &mut ggez::Context, camera: &numeric::Rect,
+                           tile_map: &mp::StageObjectMap, t: Clock) {
+        self.group
+            .iter_mut()
+            .for_each(|enemy| {
+                enemy.get_mut_character_object().apply_resistance(t);
+
+                enemy.move_map_current_speed_y();
+
+                // 当たり判定の前に描画位置を決定しないとバグる。この仕様も直すべき
+                enemy.get_mut_character_object().update_display_position(camera);
+                
+                DreamScene::check_collision_vertical(ctx, enemy.get_mut_character_object(), tile_map, t);
+                enemy.get_mut_character_object().update_display_position(camera);
+                
+
+                enemy.move_map_current_speed_x();
+                enemy.get_mut_character_object().update_display_position(camera);
+                DreamScene::check_collision_horizon(ctx, enemy.get_mut_character_object(), tile_map, t);
+                enemy.get_mut_character_object().update_display_position(camera);
+            });
+    }
+
+}
+
+impl DrawableComponent for EnemyGroup {
+    #[inline(always)]
     fn draw(&self, ctx: &mut ggez::Context) -> ggez::GameResult<()> {
         self.group.iter().for_each(|e| { e.get_character_object().obj().draw(ctx); });
         Ok(())
+    }
+
+    #[inline(always)]
+    fn hide(&mut self) {
+        self.drwob_essential.visible = false;
+    }
+
+    #[inline(always)]
+    fn appear(&mut self) {
+        self.drwob_essential.visible = true;
+    }
+
+    #[inline(always)]
+    fn is_visible(&self) -> bool {
+        self.drwob_essential.visible
+    }
+
+    #[inline(always)]
+    fn set_drawing_depth(&mut self, depth: i8) {
+        self.drwob_essential.drawing_depth = depth;
+    }
+
+    #[inline(always)]
+    fn get_drawing_depth(&self) -> i8 {
+        self.drwob_essential.drawing_depth
     }
 }
 
@@ -84,7 +138,7 @@ impl DreamScene {
 
         let camera = Rc::new(RefCell::new(numeric::Rect::new(0.0, 0.0, 1366.0, 768.0)));
 
-        let map_position = numeric::Point2f::new(60.0, 100.0);
+        let map_position = numeric::Point2f::new(800.0, 190.0);
         
         let player = PlayableCharacter::new(
             character_factory::create_character(character_factory::CharacterFactoryOrder::PlayableDoremy1,
@@ -92,7 +146,12 @@ impl DreamScene {
                                                 &camera.borrow(),
                                                 map_position));
         
-        let enemy_group = EnemyGroup::new();
+        let mut enemy_group = EnemyGroup::new();
+        enemy_group.add(EnemyCharacter::new(
+            character_factory::create_character(character_factory::CharacterFactoryOrder::PlayableDoremy1,
+                                                            game_data,
+                                                            &camera.borrow(),
+                                                            map_position)));
         
         DreamScene {
             player: player,
@@ -163,38 +222,36 @@ impl DreamScene {
     ///
     /// マップオブジェクトとの衝突を調べるためのメソッド
     ///
-    fn check_collision_horizon(&mut self, ctx: &mut ggez::Context) {
-        let collision_info = self.tile_map.check_character_collision(ctx, self.player.get_character_object());
+    fn check_collision_horizon(ctx: &mut ggez::Context, character: &mut Character, tile_map: &mp::StageObjectMap, t: Clock) {
+        let collision_info = tile_map.check_character_collision(ctx, character);
 
         // 衝突していたか？
         if  collision_info.collision  {
             // 修正動作
-            let diff = self.player.fix_collision_horizon(ctx, &collision_info, self.get_current_clock());
-            self.player.move_map(numeric::Vector2f::new(diff, 0.0));
+            let diff = character.fix_collision_horizon(ctx, &collision_info, t);
+            character.move_map(numeric::Vector2f::new(diff, 0.0));
         }
     }
 
     ///
     /// マップオブジェクトとの衝突を調べるためのメソッド
     ///
-    fn check_collision_vertical(&mut self, ctx: &mut ggez::Context) {
-        let collision_info = self.tile_map.check_character_collision(ctx, self.player.get_character_object());
+    fn check_collision_vertical(ctx: &mut ggez::Context, character: &mut Character, tile_map: &mp::StageObjectMap, t: Clock) {
+        let collision_info = tile_map.check_character_collision(ctx, character);
 
         // 衝突していたか？
         if  collision_info.collision  {
             // 修正動作
-            let diff = self.player.fix_collision_vertical(ctx, &collision_info, self.get_current_clock());
-            self.player.move_map(numeric::Vector2f::new(0.0, diff));
+            let diff = character.fix_collision_vertical(ctx, &collision_info, t);
+            character.move_map(numeric::Vector2f::new(0.0, diff));
         }
     }
 
     fn playable_check_collision_horizon(&mut self, ctx: &mut ggez::Context) {
         
-        self.player.move_map(numeric::Vector2f::new(self.player.get_character_object().speed_info().get_speed().x, 0.0));
-        self.player.get_mut_character_object().update_display_position(&self.camera.borrow());
-        
         // 衝突の検出 + 修正動作
-        self.check_collision_horizon(ctx);
+        let mut t = self.get_current_clock();
+        Self::check_collision_horizon(ctx, self.player.get_mut_character_object(), &self.tile_map, t);
         self.player.get_mut_character_object().update_display_position(&self.camera.borrow());
         let a = self.player.get_mut_character_object().obj().get_position() - self.fix_camera_position();
         self.move_camera(numeric::Vector2f::new(a.x, 0.0));
@@ -202,15 +259,30 @@ impl DreamScene {
     }
 
     fn playable_check_collision_vertical(&mut self, ctx: &mut ggez::Context) {
-        // プレイヤーに重力の影響を受けさせる
-        self.player.move_map(numeric::Vector2f::new(0.0, self.player.get_character_object().speed_info().get_speed().y));
-        self.player.get_mut_character_object().update_display_position(&self.camera.borrow());
+        let mut t = self.get_current_clock();
+        
         // 衝突の検出 + 修正動作
-        self.check_collision_vertical(ctx);
+        Self::check_collision_vertical(ctx, self.player.get_mut_character_object(), &self.tile_map, t);
         self.player.get_mut_character_object().update_display_position(&self.camera.borrow());
 
         let a = self.player.get_mut_character_object().obj().get_position() - self.fix_camera_position();
         self.move_camera(numeric::Vector2f::new(0.0, a.y));
+    }
+
+    fn move_playable_character_x(&mut self, ctx: &mut ggez::Context, t: Clock) {
+        // プレイヤーをX方向の速度だけ移動させる
+        self.player.move_map_current_speed_x();
+        self.player.get_mut_character_object().update_display_position(&self.camera.borrow());
+        
+        self.playable_check_collision_horizon(ctx);
+    }
+
+    fn move_playable_character_y(&mut self, ctx: &mut ggez::Context, t: Clock) {
+        // プレイヤーに重力の影響を受けさせる
+        self.player.move_map_current_speed_y();
+        self.player.get_mut_character_object().update_display_position(&self.camera.borrow());
+        
+        self.playable_check_collision_vertical(ctx);
     }
 
     fn move_playable_character(&mut self, ctx: &mut ggez::Context, t: Clock) {
@@ -220,8 +292,8 @@ impl DreamScene {
         self.player.get_mut_character_object().update_texture(t);
         self.player.get_mut_character_object().apply_resistance(t);
 
-        self.playable_check_collision_horizon(ctx);
-        self.playable_check_collision_vertical(ctx);
+        self.move_playable_character_x(ctx, t);
+        self.move_playable_character_y(ctx, t);
     }
 }
 
@@ -263,6 +335,8 @@ impl SceneManager for DreamScene {
 
         self.move_playable_character(ctx, t);
         
+        self.enemy_group.move_and_collision_check(ctx, &self.camera.borrow(), &self.tile_map, t);
+        
         // マップ描画の準備
         self.tile_map.update(ctx, t);
     }
@@ -273,6 +347,7 @@ impl SceneManager for DreamScene {
             .get_character_object()
             .obj()
             .draw(ctx).unwrap();
+        self.enemy_group.draw(ctx).unwrap();
     }
     
     fn post_process(&mut self, _ctx: &mut ggez::Context) -> SceneTransition {
