@@ -12,8 +12,40 @@ use ginput::mouse::MouseButton;
 use torifune::numeric;
 use crate::core::{TextureID, GameData};
 use super::*;
-use crate::object;
+use crate::object::*;
 use crate::core::map_parser as mp;
+
+struct EnemyGroup {
+    group: Vec<EnemyCharacter>,
+}
+
+impl EnemyGroup {
+    pub fn new() -> Self {
+        EnemyGroup {
+            group: Vec::new(),
+        }
+    }
+
+    #[inline(always)]
+    pub fn add(&mut self, enemy: EnemyCharacter) {
+        self.group.push(enemy);
+    }
+
+    #[inline(always)]
+    pub fn remove_if<F>(&mut self, f: F)
+    where F: Fn(&EnemyCharacter) -> bool {
+        self.group.retain(|e| !f(e));
+    }
+
+    pub fn len(&self) -> usize {
+        self.group.len()
+    }
+
+    fn draw(&self, ctx: &mut ggez::Context) -> ggez::GameResult<()> {
+        self.group.iter().for_each(|e| { e.get_character_object().obj().draw(ctx); });
+        Ok(())
+    }
+}
 
 ///
 /// # 夢の中のステージ
@@ -35,7 +67,8 @@ use crate::core::map_parser as mp;
 /// マップを覗くカメラ
 ///
 pub struct DreamScene {
-    player: object::PlayableCharacter,
+    player: PlayableCharacter,
+    enemy_group: EnemyGroup,
     key_listener: tdev::KeyboardListener,
     clock: Clock,
     tile_map: mp::StageObjectMap,
@@ -53,29 +86,17 @@ impl DreamScene {
 
         let map_position = numeric::Point2f::new(60.0, 100.0);
         
-        let player = object::PlayableCharacter::new(
-            object::Character::new(tobj::SimpleObject::new(
-            tobj::MovableUniTexture::new(
-                game_data.ref_texture(TextureID::Ghost1),
-                mp::map_to_display(&map_position, &camera.borrow()),
-                numeric::Vector2f::new(0.1, 0.1),
-                0.0, 0, object::move_fn::halt(numeric::Point2f::new(0.0, 0.0)),
-                0), vec![]),
-                                            vec![vec![
-                                                game_data.ref_texture(TextureID::LotusPink),
-                                                game_data.ref_texture(TextureID::LotusBlue)
-                                            ]], 0,
-                                            object::TextureSpeedInfo::new(0.05, 0.08, numeric::Vector2f::new(0.0, 0.0),
-                                                                          object::SpeedBorder {
-                                                                              positive_x: 6.0,
-                                                                              negative_x: -6.0,
-                                                                              positive_y: 6.0,
-                                                                              negative_y: -6.0,
-                                                                          }), map_position,
-                                            5));
+        let player = PlayableCharacter::new(
+            character_factory::create_character(character_factory::CharacterFactoryOrder::PlayableDoremy1,
+                                                game_data,
+                                                &camera.borrow(),
+                                                map_position));
+        
+        let enemy_group = EnemyGroup::new();
         
         DreamScene {
             player: player,
+            enemy_group: enemy_group,
             key_listener: key_listener,
             clock: 0,
             tile_map: mp::StageObjectMap::new(ctx, "./resources/map1.tmx", camera.clone(), numeric::Vector2f::new(2.0, 2.0)),

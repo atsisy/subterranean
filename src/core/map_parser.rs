@@ -374,7 +374,7 @@ impl StageObjectMap {
     }
 }
 
-impl tg::DrawableObject for StageObjectMap {
+impl tg::DrawableComponent for StageObjectMap {
     fn draw(&self, ctx: &mut ggez::Context) -> ggez::GameResult<()> {
         // 全てのsprite batchを描画
         for (_, batch) in &self.tilesets_batchs {
@@ -405,6 +405,10 @@ impl tg::DrawableObject for StageObjectMap {
     fn get_drawing_depth(&self) -> i8 {
         self.drwob_essential.drawing_depth
     }
+}
+
+impl tg::DrawableObject for StageObjectMap {
+
 }
 
 impl Updatable for StageObjectMap {

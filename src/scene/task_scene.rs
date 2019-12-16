@@ -193,8 +193,7 @@ impl DeskObjects {
 
 }
 
-impl tgraphics::DrawableObject for DeskObjects {
-
+impl tgraphics::DrawableComponent for DeskObjects {
     fn draw(&self, ctx: &mut ggez::Context) -> ggez::GameResult<()> {
         if self.is_visible() {
             self.desk_canvas.begin_drawing(ctx);
@@ -232,6 +231,10 @@ impl tgraphics::DrawableObject for DeskObjects {
     fn get_drawing_depth(&self) -> i8 {
         self.desk_canvas.get_drawing_depth()
     }
+
+}
+
+impl tgraphics::DrawableObject for DeskObjects {
 
     /// 描画開始地点を設定する
     fn set_position(&mut self, pos: numeric::Point2f) {

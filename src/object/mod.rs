@@ -1,5 +1,6 @@
 pub mod move_fn;
 pub mod collision;
+pub mod character_factory;
 
 use std::rc::Rc;
 use std::cell::RefCell;
@@ -500,5 +501,33 @@ impl EnemyCharacter {
         EnemyCharacter {
             character: character,
         }
+    }
+
+    pub fn get_map_position(&self) -> numeric::Point2f {
+        self.character.get_map_position()
+    }
+
+    pub fn get_character_object(&self) -> &Character {
+        &self.character
+    }
+
+    pub fn get_mut_character_object(&mut self) -> &mut Character {
+        &mut self.character
+    }
+
+    pub fn fix_collision_horizon(&mut self, ctx: &mut ggez::Context,
+                                 info: &CollisionInformation,
+                                 t: Clock)  -> f32 {
+        self.character.fix_collision_horizon(ctx, info, t)
+    }
+
+    pub fn fix_collision_vertical(&mut self, ctx: &mut ggez::Context,
+                                  info: &CollisionInformation,
+                                  t: Clock)  -> f32 {
+        self.character.fix_collision_vertical(ctx, info, t)
+    }
+
+    pub fn move_map(&mut self, offset: numeric::Vector2f) {
+        self.character.move_map(offset);
     }
 }

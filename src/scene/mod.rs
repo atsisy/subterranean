@@ -7,7 +7,7 @@ use ggez::input as ginput;
 use torifune::numeric;
 use torifune::graphics as tgraphics;
 use tgraphics::object as tobj;
-use tgraphics::DrawableObject;
+use tgraphics::{DrawableComponent, DrawableObject};
 
 #[derive(Debug, Eq, PartialEq)]
 pub enum SceneTransition {
