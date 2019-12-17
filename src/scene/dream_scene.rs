@@ -66,6 +66,13 @@ impl EnemyGroup {
             });
     }
 
+    pub fn iter(&self) -> std::slice::Iter<EnemyCharacter> {
+        self.group.iter()
+    }
+
+    pub fn iter_mut(&mut self) -> std::slice::IterMut<EnemyCharacter> {
+        self.group.iter_mut()
+    }
 }
 
 impl DrawableComponent for EnemyGroup {
@@ -269,12 +276,53 @@ impl DreamScene {
         self.move_camera(numeric::Vector2f::new(0.0, a.y));
     }
 
+    fn focus_camera_playable_character_x(&mut self) {
+        let a = self.player.get_mut_character_object().obj().get_position() - self.fix_camera_position();
+        self.move_camera(numeric::Vector2f::new(a.x, 0.0));
+    }
+
+    fn focus_camera_playable_character_y(&mut self) {
+        let a = self.player.get_mut_character_object().obj().get_position() - self.fix_camera_position();
+        self.move_camera(numeric::Vector2f::new(0.0, a.y));
+    }
+
+    fn check_enemy_collision_x(&mut self, ctx: &mut ggez::Context, t: Clock) {
+        self.player.get_mut_character_object().update_display_position(&self.camera.borrow());
+        for e in self.enemy_group.iter_mut() {
+            e.get_mut_character_object().update_display_position(&self.camera.borrow());
+            let info = self.player.get_character_object().check_collision_with_character(ctx, e.get_character_object());
+            if info.collision {
+                let diff = self.player.get_mut_character_object().fix_collision_horizon(ctx, &info, t);
+                self.player.get_mut_character_object().move_map(numeric::Vector2f::new(-diff, 0.0));
+            }
+        }
+        self.player.get_mut_character_object().update_display_position(&self.camera.borrow());
+        self.focus_camera_playable_character_x();
+    }
+
+    fn check_enemy_collision_y(&mut self, ctx: &mut ggez::Context, t: Clock) {
+        self.player.get_mut_character_object().update_display_position(&self.camera.borrow());
+        for e in self.enemy_group.iter_mut() {
+            e.get_mut_character_object().update_display_position(&self.camera.borrow());
+            let info = self.player.get_character_object().check_collision_with_character(ctx, e.get_character_object());
+            if info.collision {
+                let diff = self.player.get_mut_character_object().fix_collision_vertical(ctx, &info, t);
+                self.player.get_mut_character_object().move_map(numeric::Vector2f::new(0.0, -diff));
+            }
+        }
+        self.player.get_mut_character_object().update_display_position(&self.camera.borrow());
+        self.focus_camera_playable_character_y();
+    }
+
     fn move_playable_character_x(&mut self, ctx: &mut ggez::Context, t: Clock) {
         // プレイヤーをX方向の速度だけ移動させる
         self.player.move_map_current_speed_x();
         self.player.get_mut_character_object().update_display_position(&self.camera.borrow());
         
         self.playable_check_collision_horizon(ctx);
+
+        self.check_enemy_collision_x(ctx, t);
+
     }
 
     fn move_playable_character_y(&mut self, ctx: &mut ggez::Context, t: Clock) {
@@ -283,6 +331,8 @@ impl DreamScene {
         self.player.get_mut_character_object().update_display_position(&self.camera.borrow());
         
         self.playable_check_collision_vertical(ctx);
+
+        self.check_enemy_collision_y(ctx, t);
     }
 
     fn move_playable_character(&mut self, ctx: &mut ggez::Context, t: Clock) {

@@ -344,7 +344,7 @@ impl Character {
                            t: Clock) -> f32 {
         self.speed_info.fall_start(t);
         self.speed_info.set_speed_y(1.0);
-        (info.tile_position.unwrap().y + info.tile_position.unwrap().h + 0.1) - info.player_position.unwrap().y
+        (info.object1_position.unwrap().y + info.object1_position.unwrap().h + 0.1) - info.object2_position.unwrap().y
     }
 
     ///
@@ -357,7 +357,7 @@ impl Character {
                             t: Clock) -> f32 {
         self.speed_info.fall_start(t);
         let area = self.object.get_object().get_drawing_size(ctx);
-        info.tile_position.unwrap().y - (info.player_position.unwrap().y + area.y) - 1.0
+        info.object1_position.unwrap().y - (info.object2_position.unwrap().y + area.y) - 1.0
     }
 
     ///
@@ -369,7 +369,7 @@ impl Character {
                             info: &CollisionInformation,
                            _t: Clock) -> f32 {
         let area = self.object.get_object().get_drawing_size(ctx);
-        (info.tile_position.unwrap().x - 0.1) - (info.player_position.unwrap().x + area.x)
+        (info.object1_position.unwrap().x - 0.1) - (info.object2_position.unwrap().x + area.x)
     }
 
     ///
@@ -381,7 +381,7 @@ impl Character {
                            info: &CollisionInformation,
                           _t: Clock) -> f32 {
         self.speed_info.set_speed_x(0.0);
-        (info.tile_position.unwrap().x + info.tile_position.unwrap().w + 0.5) - info.player_position.unwrap().x
+        (info.object1_position.unwrap().x + info.object1_position.unwrap().w + 0.5) - info.object2_position.unwrap().x
         
     }
 
@@ -407,8 +407,8 @@ impl Character {
     pub fn fix_collision_horizon(&mut self, ctx: &mut ggez::Context,
                                  info: &CollisionInformation,
                                  t: Clock)  -> f32 {
-        let right = info.player_position.unwrap().x + self.object.get_object().get_drawing_area(ctx).w;
-        if right > info.tile_position.unwrap().x && right < info.tile_position.unwrap().x + info.tile_position.unwrap().w {
+        let right = info.object2_position.unwrap().x + self.object.get_object().get_drawing_area(ctx).w;
+        if right > info.object1_position.unwrap().x && right < info.object1_position.unwrap().x + info.object1_position.unwrap().w {
             return self.fix_collision_right(ctx, &info, t);
         } else {
             return self.fix_collision_left(ctx, &info, t);
@@ -432,6 +432,18 @@ impl Character {
         self.object.get_mut_object().set_position(dp);
     }
 
+    pub fn check_collision_with_character(&self, ctx: &mut ggez::Context, chara: &Character) -> CollisionInformation {
+        let a1 = self.obj().get_drawing_area(ctx);
+        let a2 = chara.obj().get_drawing_area(ctx);
+
+        if a1.overlaps(&a2) {
+            CollisionInformation::new_collision(a1, a2,
+                                                numeric::Vector2f::new(a2.x - a1.x, a2.y - a1.y))
+        } else {
+            CollisionInformation::new_not_collision()
+        }
+    }
+    
 }
 
 pub struct PlayableCharacter {

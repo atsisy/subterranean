@@ -13,8 +13,8 @@ pub enum CollisionType {
 #[derive(Clone, Copy)]
 pub struct CollisionInformation {
     pub collision: bool,
-    pub tile_position: Option<ggraphics::Rect>,
-    pub player_position: Option<numeric::Point2f>,
+    pub object1_position: Option<ggraphics::Rect>,
+    pub object2_position: Option<numeric::Rect>,
     pub center_diff: Option<numeric::Vector2f>,
 }
 
@@ -22,20 +22,21 @@ impl CollisionInformation {
     pub fn new_not_collision() -> CollisionInformation {
         CollisionInformation {
             collision: false,
-            tile_position: None,
-            player_position: None,
+            object1_position: None,
+            object2_position: None,
             center_diff: None,
         }
     }
 
-    pub fn new_collision(tile_pos: ggraphics::Rect,
-                         player_pos: numeric::Point2f,
+    pub fn new_collision(obj1: ggraphics::Rect,
+                         obj2: numeric::Rect,
                          center_diff: numeric::Vector2f) -> CollisionInformation {
         CollisionInformation {
             collision: true,
-            tile_position: Some(tile_pos),
-            player_position: Some(player_pos),
+            object1_position: Some(obj1),
+            object2_position: Some(obj2),
             center_diff: Some(center_diff),
         }
     }
 }
+

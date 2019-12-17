@@ -124,7 +124,7 @@ impl TileSet {
 
             return CollisionInformation::new_collision(
                 ggraphics::Rect::new(tile_pos.x, tile_pos.y, tile_size.x, tile_size.y), // タイルの位置とサイズ
-                chara.obj().get_position(), // キャラクターの位置
+                chara.obj().get_drawing_area(ctx), // キャラクターの位置
                 numeric::Vector2f::new(rect.center().x - tile_col.center().x, rect.center().y - tile_col.center().y) // お互いの中心同士の距離（ベクタ）
             );
         } else {
