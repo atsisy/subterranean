@@ -9,6 +9,7 @@ use ggez::graphics as ggraphics;
 use torifune::core::Clock;
 use torifune::core::Updatable;
 use torifune::numeric;
+use torifune::distance;
 use torifune::graphics::object as tobj;
 use torifune::graphics::object::TextureObject;
 use torifune::graphics::DrawableObject;
@@ -274,18 +275,18 @@ impl TwoStepPoint {
     }
 }
 
-pub struct Character {
+pub struct MapObject {
     last_position: numeric::Point2f,
     object: TextureAnimation,
     speed_info: TextureSpeedInfo,
     map_position: TwoStepPoint,
 }
 
-impl Character {
+impl MapObject {
     pub fn new(obj: tobj::SimpleObject, textures: Vec<Vec<Rc<ggraphics::Image>>>,
                mode: usize, speed_info: TextureSpeedInfo, map_position: numeric::Point2f,
-               frame_speed: Clock) -> Character {
-        Character {
+               frame_speed: Clock) -> MapObject {
+        MapObject {
             last_position: obj.get_position(),
             map_position: TwoStepPoint { previous: map_position, current: map_position },
             speed_info: speed_info,
@@ -432,7 +433,7 @@ impl Character {
         self.object.get_mut_object().set_position(dp);
     }
 
-    pub fn check_collision_with_character(&self, ctx: &mut ggez::Context, chara: &Character) -> CollisionInformation {
+    pub fn check_collision_with_character(&self, ctx: &mut ggez::Context, chara: &MapObject) -> CollisionInformation {
         let a1 = self.obj().get_drawing_area(ctx);
         let a2 = chara.obj().get_drawing_area(ctx);
 
@@ -446,14 +447,53 @@ impl Character {
     
 }
 
+pub struct DamageEffect {
+    pub hp_damage: i16,
+    pub mp_damage: f32,
+}
+
+pub struct AttackCore {
+    center_position: numeric::Point2f,
+    radius: f32,
+}
+
+impl AttackCore {
+    pub fn new(center: numeric::Point2f, radius: f32) -> Self {
+        AttackCore {
+            center_position: center,
+            radius: radius,
+        }
+    }
+    
+    pub fn distance(&self, obj: &AttackCore) -> f32 {
+        distance!(self.center_position, obj.center_position)
+    }
+
+    pub fn check_collision(&self, obj: &AttackCore) -> bool {
+        let d = self.distance(obj);
+        d < (self.radius + obj.radius)
+    }
+
+    pub fn move_diff(&mut self, offset: numeric::Vector2f) {
+        self.center_position += offset;
+    }
+}
+
+pub struct PlayerStatus {
+    pub hp: i16,
+    pub mp: f32,
+}
+
 pub struct PlayableCharacter {
-    character: Character,
+    character: MapObject,
+    status: PlayerStatus,
 }
 
 impl PlayableCharacter {
-    pub fn new(character: Character) -> Self {
+    pub fn new(character: MapObject, status: PlayerStatus) -> Self {
         PlayableCharacter {
             character: character,
+            status,
         }
     }
 
@@ -477,11 +517,11 @@ impl PlayableCharacter {
         self.character.get_map_position()
     }
 
-    pub fn get_character_object(&self) -> &Character {
+    pub fn get_character_object(&self) -> &MapObject {
         &self.character
     }
 
-    pub fn get_mut_character_object(&mut self) -> &mut Character {
+    pub fn get_mut_character_object(&mut self) -> &mut MapObject {
         &mut self.character
     }
 
@@ -508,16 +548,26 @@ impl PlayableCharacter {
     pub fn move_map_current_speed_y(&mut self) {
         self.move_map(numeric::Vector2f::new(0.0, self.get_character_object().speed_info().get_speed().y))
     }
+
+    pub fn attack_damage_check(&mut self, ctx: &mut ggez::Context, attack_core: &AttackCore, damage: &DamageEffect) {
+        let center = self.get_map_position() + self.character.obj().get_center_offset(ctx);
+        if distance!(center, attack_core.center_position) < attack_core.radius {
+            self.status.hp -= damage.hp_damage;
+            self.status.mp -= damage.mp_damage;
+        }
+    }
 }
 
 pub struct EnemyCharacter {
-    character: Character,
+    character: MapObject,
+    collision_damage: DamageEffect,
 }
 
 impl EnemyCharacter {
-    pub fn new(character: Character) -> Self {
+    pub fn new(character: MapObject, collision_damage: DamageEffect) -> Self {
         EnemyCharacter {
             character: character,
+            collision_damage: collision_damage,
         }
     }
 
@@ -525,11 +575,11 @@ impl EnemyCharacter {
         self.character.get_map_position()
     }
 
-    pub fn get_character_object(&self) -> &Character {
+    pub fn get_character_object(&self) -> &MapObject {
         &self.character
     }
 
-    pub fn get_mut_character_object(&mut self) -> &mut Character {
+    pub fn get_mut_character_object(&mut self) -> &mut MapObject {
         &mut self.character
     }
 
@@ -555,5 +605,13 @@ impl EnemyCharacter {
 
     pub fn move_map_current_speed_y(&mut self) {
         self.move_map(numeric::Vector2f::new(0.0, self.get_character_object().speed_info().get_speed().y))
+    }
+
+    pub fn get_collision_damage(&self) -> &DamageEffect {
+        &self.collision_damage
+    }
+
+    pub fn get_attack_core(&self, ctx: &mut ggez::Context) -> AttackCore {
+        AttackCore::new(self.character.get_map_position() + self.character.obj().get_center_offset(ctx), 10.0)
     }
 }

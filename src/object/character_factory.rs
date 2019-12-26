@@ -9,15 +9,15 @@ pub enum CharacterFactoryOrder {
 }
 
 pub fn create_character(order: CharacterFactoryOrder, game_data: &GameData,
-                        camera: &numeric::Rect, map_position: numeric::Point2f) -> Character {
+                        camera: &numeric::Rect, map_position: numeric::Point2f) -> MapObject {
     match order {
         CharacterFactoryOrder::PlayableDoremy1 => create_playable_doremy1(game_data, camera, map_position),
     }
 }
 
 fn create_playable_doremy1(game_data: &GameData, camera: &numeric::Rect,
-                           map_position: numeric::Point2f) -> Character {
-    Character::new(tobj::SimpleObject::new(
+                           map_position: numeric::Point2f) -> MapObject {
+    MapObject::new(tobj::SimpleObject::new(
             tobj::MovableUniTexture::new(
                 game_data.ref_texture(TextureID::LotusBlue),
                 mp::map_to_display(&map_position, camera),
@@ -37,4 +37,3 @@ fn create_playable_doremy1(game_data: &GameData, camera: &numeric::Rect,
                                                                           }), map_position,
                            5)
 }
-

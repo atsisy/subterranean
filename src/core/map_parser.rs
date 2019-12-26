@@ -14,7 +14,7 @@ use torifune::graphics::object::TextureObject;
 use collision::prelude::*;
 
 use crate::object::collision::*;
-use crate::object::Character;
+use crate::object::MapObject;
 
 ///
 /// # TileSetの情報を保持している構造体
@@ -102,7 +102,7 @@ impl TileSet {
     ///
     fn __check_character_collision(&self, ctx: &mut ggez::Context,
                                    tile_col: &collision::Aabb2<f32>,
-                                   chara: &Character) -> CollisionInformation {
+                                   chara: &MapObject) -> CollisionInformation {
         let area = chara.obj().get_drawing_area(ctx);
         // キャラクターが描画されている領域をaabbで表現
         let rect: collision::Aabb2<f32> = collision::Aabb2::<f32>::new(
@@ -136,7 +136,7 @@ impl TileSet {
                                  gid: u32, abs_pos: numeric::Point2f,
                                  offset: numeric::Point2f,
                                  scale: numeric::Vector2f,
-                                 chara: &Character) -> CollisionInformation {
+                                 chara: &MapObject) -> CollisionInformation {
         let r_gid = gid - self.first_gid;
         for c in self.collision_info.get(&r_gid).unwrap() {
             match c {
@@ -258,7 +258,7 @@ impl StageObjectMap {
         numeric::Point2f::new(p.x - self.camera.borrow().x, p.y - self.camera.borrow().y)
     }
 
-    pub fn check_character_collision(&self, ctx: &mut ggez::Context, chara: &Character) -> CollisionInformation {
+    pub fn check_character_collision(&self, ctx: &mut ggez::Context, chara: &MapObject) -> CollisionInformation {
         
         // 全てのレイヤーで描画を実行
         for layer in self.tile_map.layers.iter() {

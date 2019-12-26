@@ -151,14 +151,15 @@ impl DreamScene {
             character_factory::create_character(character_factory::CharacterFactoryOrder::PlayableDoremy1,
                                                 game_data,
                                                 &camera.borrow(),
-                                                map_position));
+                                                map_position),
+        PlayerStatus { hp: 10, mp: 10.0 });
         
         let mut enemy_group = EnemyGroup::new();
         enemy_group.add(EnemyCharacter::new(
             character_factory::create_character(character_factory::CharacterFactoryOrder::PlayableDoremy1,
-                                                            game_data,
-                                                            &camera.borrow(),
-                                                            map_position)));
+                                                game_data,
+                                                &camera.borrow(),
+                                                map_position), DamageEffect { hp_damage: 1, mp_damage: 1.0 }));
         
         DreamScene {
             player: player,
@@ -229,7 +230,7 @@ impl DreamScene {
     ///
     /// マップオブジェクトとの衝突を調べるためのメソッド
     ///
-    fn check_collision_horizon(ctx: &mut ggez::Context, character: &mut Character, tile_map: &mp::StageObjectMap, t: Clock) {
+    fn check_collision_horizon(ctx: &mut ggez::Context, character: &mut MapObject, tile_map: &mp::StageObjectMap, t: Clock) {
         let collision_info = tile_map.check_character_collision(ctx, character);
 
         // 衝突していたか？
@@ -243,7 +244,7 @@ impl DreamScene {
     ///
     /// マップオブジェクトとの衝突を調べるためのメソッド
     ///
-    fn check_collision_vertical(ctx: &mut ggez::Context, character: &mut Character, tile_map: &mp::StageObjectMap, t: Clock) {
+    fn check_collision_vertical(ctx: &mut ggez::Context, character: &mut MapObject, tile_map: &mp::StageObjectMap, t: Clock) {
         let collision_info = tile_map.check_character_collision(ctx, character);
 
         // 衝突していたか？
