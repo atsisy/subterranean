@@ -2,15 +2,23 @@ use std::collections::HashMap;
 use torifune::device as tdev;
 use torifune::core::Clock;
 use torifune::graphics as tgraphics;
-use torifune::graphics::object::*;
 use tgraphics::object as tobj;
 use ggez::input as ginput;
 use ginput::mouse::MouseButton;
 use ggez::graphics as ggraphics;
 use torifune::numeric;
 use torifune::hash;
+
 use crate::core::{TextureID, GameData};
+use crate::object::*;
+
+use crate::object::scenario::*;
+use torifune::graphics::*;
+use torifune::graphics::object::TextureObject;
+use torifune::graphics::object::MovableObject;
+
 use super::*;
+
 
 #[derive(PartialEq, Debug, Clone, Copy)]
 struct MouseActionRecord {
@@ -100,11 +108,11 @@ impl MouseInformation {
 struct DeskObjects {
     desk_canvas: tgraphics::SubScreen,
     desk_objects: SimpleObjectContainer,
-    dragging: Option<SimpleObject>,
+    dragging: Option<tobj::SimpleObject>,
 }
 
 impl DeskObjects {
-    pub fn new(ctx: &mut ggez::Context, game_data: & GameData,
+    pub fn new(ctx: &mut ggez::Context, game_data: &GameData,
                rect: ggraphics::Rect) -> DeskObjects {
 
         let mut dparam = ggraphics::DrawParam::default();
@@ -254,16 +262,32 @@ impl tgraphics::DrawableObject for DeskObjects {
 
 pub struct TaskScene {
     desk_objects: DeskObjects,
+    scenario_event: ScenarioEvent,
     clock: Clock,
     mouse_info: MouseInformation,
 }
 
 impl TaskScene {
     pub fn new(ctx: &mut ggez::Context, game_data: &GameData) -> TaskScene  {
+
+        let texture = game_data.ref_texture(TextureID::LotusPink);
+        let scenario = ScenarioEvent::new("./resources/scenario_parsing_test.toml",
+                                          game_data,
+                                          tobj::SimpleObject::new(
+                                              tobj::MovableUniTexture::new(
+                                                  texture,
+                                                  numeric::Point2f::new(0.0, 0.0),
+                                                  numeric::Vector2f::new(0.0, 0.0),
+                                                  0.0,
+                                                  0,
+                                                  move_fn::halt(numeric::Point2f::new(0.0, 0.0)),
+                                                  0),
+                                              Vec::new()), 0);
         
         TaskScene {
             desk_objects: DeskObjects::new(ctx, game_data,
                                            ggraphics::Rect::new(150.0, 150.0, 500.0, 500.0)),
+            scenario_event: scenario,
             clock: 0,
             mouse_info: MouseInformation::new(),
         }
@@ -290,7 +314,10 @@ impl SceneManager for TaskScene {
     
     fn key_down_event(&mut self, _ctx: &mut ggez::Context, vkey: tdev::VirtualKey) {
         match vkey {
-            tdev::VirtualKey::Action1 => println!("Action1 down!"),
+            tdev::VirtualKey::Action1 => {
+                println!("Action1 down!");
+                self.scenario_event.next_page();
+            },
             _ => (),
         }
     }
@@ -343,10 +370,12 @@ impl SceneManager for TaskScene {
 
     fn pre_process(&mut self, ctx: &mut ggez::Context) {
         self.desk_objects.update(ctx, self.get_current_clock());
+        self.scenario_event.update_text();
     }
     
     fn drawing_process(&mut self, ctx: &mut ggez::Context) {
         self.desk_objects.draw(ctx).unwrap();
+        self.scenario_event.draw(ctx);
     }
     
     fn post_process(&mut self, _ctx: &mut ggez::Context) -> SceneTransition {

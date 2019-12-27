@@ -11,6 +11,7 @@ use ggez::input as ginput;
 use ggez::input::keyboard::*;
 use std::rc::Rc;
 use crate::scene;
+use std::str::FromStr;
 
 use std::fs;
 use std::io::{BufReader, Read};
@@ -38,9 +39,29 @@ pub enum TextureID {
     LotusYellow,
 }
 
+#[derive(Debug, Clone, Copy)]
+pub enum FontID {
+    DEFAULT = 0,
+}
+
+impl FromStr for TextureID {
+    type Err = ();
+    fn from_str(s: &str) -> Result<Self, ()> {
+        match s {
+            "Ghost1" => Ok(Self::Ghost1),
+            "LotusPink" => Ok(Self::LotusPink),
+            "LotusBlue" => Ok(Self::LotusBlue),
+            "LotusYellow" => Ok(Self::LotusYellow),
+            _ => Err(())
+        }
+    }
+}
+
+
 #[derive(Debug, Deserialize)]
 pub struct RawConfigFile {
     texture_paths: Vec<String>,
+    font_paths: Vec<String>,
 }
 
 impl RawConfigFile {
@@ -60,6 +81,7 @@ impl RawConfigFile {
 
 pub struct GameData {
     textures: Vec<Rc<ggraphics::Image>>,
+    fonts: Vec<ggraphics::Font>,
 }
 
 impl GameData {
@@ -67,12 +89,19 @@ impl GameData {
         let src_file = RawConfigFile::new(file_path);
 
         let mut data = GameData {
-            textures: vec![]
+            textures: vec![],
+            fonts: vec![],
         };
         
         for texture_path in &src_file.texture_paths {
             print!("Loading texture {}...", texture_path);
             data.textures.push(Rc::new(ggraphics::Image::new(ctx, texture_path).unwrap()));
+            println!(" done!");
+        }
+
+        for font_path in &src_file.font_paths {
+            print!("Loading font {}...", font_path);
+            data.fonts.push(ggraphics::Font::new(ctx, font_path).unwrap());
             println!(" done!");
         }
 
@@ -83,6 +112,13 @@ impl GameData {
         match self.textures.get(id as usize) {
             Some(texture) => texture.clone(),
             None => panic!("Unknown Texture ID: {}", id as i32),
+        }
+    }
+
+    pub fn get_font(&self, id: FontID) -> ggraphics::Font {
+        match self.fonts.get(id as usize) {
+            Some(font) => *font,
+            None => panic!("Unknown Font ID: {}", id as i32),
         }
     }
 }
@@ -96,7 +132,7 @@ impl<'a> SceneController<'a> {
 
     pub fn new(ctx: &mut ggez::Context, game_data: &'a GameData) -> SceneController<'a> {
         SceneController {
-            current_scene: Box::new(scene::dream_scene::DreamScene::new(ctx, game_data)),
+            current_scene: Box::new(scene::task_scene::TaskScene::new(ctx, game_data)),
             key_map: tdev::ProgramableGenericKey::new()
         }
     }

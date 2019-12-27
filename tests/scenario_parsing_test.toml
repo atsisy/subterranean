@@ -1,0 +1,17 @@
+using-tachie = ["LotusPink", "LotusBlue"]
+
+[[script]]
+fpc = 12
+text = "確かにそんな感じがしたよ"
+
+[[script]]
+fpc = 10
+text = "どうしたんだ"
+
+[[script]]
+fpc = 8
+text = "こっちの話"
+
+[[script]]
+fpc = 6
+text = "面白い人がこの街に来たなって"
