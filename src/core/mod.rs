@@ -37,6 +37,7 @@ pub enum TextureID {
     LotusPink,
     LotusBlue,
     LotusYellow,
+    TextBackground,
 }
 
 #[derive(Debug, Clone, Copy)]

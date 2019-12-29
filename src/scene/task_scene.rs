@@ -269,20 +269,9 @@ pub struct TaskScene {
 
 impl TaskScene {
     pub fn new(ctx: &mut ggez::Context, game_data: &GameData) -> TaskScene  {
-
-        let texture = game_data.ref_texture(TextureID::LotusPink);
-        let scenario = ScenarioEvent::new("./resources/scenario_parsing_test.toml",
-                                          game_data,
-                                          tobj::SimpleObject::new(
-                                              tobj::MovableUniTexture::new(
-                                                  texture,
-                                                  numeric::Point2f::new(0.0, 0.0),
-                                                  numeric::Vector2f::new(0.0, 0.0),
-                                                  0.0,
-                                                  0,
-                                                  move_fn::halt(numeric::Point2f::new(0.0, 0.0)),
-                                                  0),
-                                              Vec::new()), 0);
+        let scenario = ScenarioEvent::new(ctx, numeric::Rect::new(100.0, 200.0, 1200.0, 600.0),
+                                          "./resources/scenario_parsing_test.toml",
+                                          game_data, 0);
         
         TaskScene {
             desk_objects: DeskObjects::new(ctx, game_data,
