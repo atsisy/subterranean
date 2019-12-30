@@ -3,8 +3,6 @@ use torifune::graphics::*;
 use torifune::numeric;
 
 use std::str::FromStr;
-use std::fs::File;
-use std::io::{self, BufRead, BufReader};
 use crate::core::{TextureID, FontID, GameData};
 use super::*;
 
@@ -86,7 +84,7 @@ impl ScenarioTextSegment {
 
     fn last_line_length(&self) -> usize {
         let mut length: usize = 0;
-        let mut it = self.text.chars().rev();
+        let it = self.text.chars().rev();
 
         for ch in it {
             if ch == '\n' {
@@ -101,7 +99,6 @@ impl ScenarioTextSegment {
     pub fn slice(&self, length: usize) -> &str {
         let mut reached_flag = false;
 
-        let str_len = self.text.as_str().char_indices().count();
         let str_bytes = self.text.as_str().as_bytes().len();
         
         for (count, (bytes, ch)) in self.text.as_str().char_indices().enumerate() {
@@ -281,8 +278,7 @@ pub struct TextBox {
 
 impl TextBox {
     pub fn new(ctx: &mut ggez::Context, rect: numeric::Rect,
-               mut background: SimpleObject, font: FontInformation,
-               pos: numeric::Point2f, t: Clock) -> Self {
+               mut background: SimpleObject, t: Clock) -> Self {
         background.fit_scale(ctx, numeric::Vector2f::new(rect.w, rect.h));
         background.set_position(numeric::Point2f::new(0.0, 0.0));
         TextBox {
@@ -396,11 +392,7 @@ impl ScenarioEvent {
             text_box: TextBox::new(
                 ctx,
                 numeric::Rect::new(rect.x + 10.0, rect.y + 10.0, rect.w - 20.0, rect.h - 20.0),
-                background, FontInformation::new(
-                    game_data.get_font(FontID::DEFAULT),
-                    numeric::Vector2f::new(30.0, 30.0),
-                    ggraphics::Color::from_rgba_u32(0x00000000)),
-                numeric::Point2f::new(100.0, 100.0), t),
+                background, t),
             canvas: SubScreen::new(ctx, rect, 0, ggraphics::Color::new(0.0, 0.0, 0.0, 0.0)),
         }
     }

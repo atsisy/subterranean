@@ -4,7 +4,6 @@ use torifune::device as tdev;
 use tdev::VirtualKey;
 use torifune::core::Clock;
 use torifune::graphics as tgraphics;
-use torifune::graphics::object::*;
 use torifune::core::Updatable;
 use tgraphics::object as tobj;
 use ggez::input as ginput;
@@ -78,7 +77,7 @@ impl EnemyGroup {
 impl DrawableComponent for EnemyGroup {
     #[inline(always)]
     fn draw(&self, ctx: &mut ggez::Context) -> ggez::GameResult<()> {
-        self.group.iter().for_each(|e| { e.get_character_object().obj().draw(ctx); });
+        self.group.iter().for_each(|e| { e.get_character_object().obj().draw(ctx).unwrap(); });
         Ok(())
     }
 
@@ -258,7 +257,7 @@ impl DreamScene {
     fn playable_check_collision_horizon(&mut self, ctx: &mut ggez::Context) {
         
         // 衝突の検出 + 修正動作
-        let mut t = self.get_current_clock();
+        let t = self.get_current_clock();
         Self::check_collision_horizon(ctx, self.player.get_mut_character_object(), &self.tile_map, t);
         self.player.get_mut_character_object().update_display_position(&self.camera.borrow());
         let a = self.player.get_mut_character_object().obj().get_position() - self.fix_camera_position();
@@ -267,7 +266,7 @@ impl DreamScene {
     }
 
     fn playable_check_collision_vertical(&mut self, ctx: &mut ggez::Context) {
-        let mut t = self.get_current_clock();
+        let t = self.get_current_clock();
         
         // 衝突の検出 + 修正動作
         Self::check_collision_vertical(ctx, self.player.get_mut_character_object(), &self.tile_map, t);

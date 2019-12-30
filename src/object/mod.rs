@@ -2,6 +2,7 @@ pub mod move_fn;
 pub mod collision;
 pub mod character_factory;
 pub mod scenario;
+pub mod simulation_ui;
 
 use std::rc::Rc;
 

@@ -10,9 +10,9 @@ use torifune::numeric;
 use torifune::hash;
 
 use crate::core::{TextureID, GameData};
-use crate::object::*;
 
 use crate::object::scenario::*;
+use crate::object::simulation_ui as sui;
 use torifune::graphics::*;
 use torifune::graphics::object::TextureObject;
 use torifune::graphics::object::MovableObject;
@@ -263,19 +263,21 @@ impl tgraphics::DrawableObject for DeskObjects {
 pub struct TaskScene {
     desk_objects: DeskObjects,
     scenario_event: ScenarioEvent,
+    simulation_status: sui::SimulationStatus,
     clock: Clock,
     mouse_info: MouseInformation,
 }
 
 impl TaskScene {
     pub fn new(ctx: &mut ggez::Context, game_data: &GameData) -> TaskScene  {
-        let scenario = ScenarioEvent::new(ctx, numeric::Rect::new(100.0, 200.0, 1200.0, 600.0),
+        let scenario = ScenarioEvent::new(ctx, numeric::Rect::new(100.0, 520.0, 1200.0, 280.0),
                                           "./resources/scenario_parsing_test.toml",
                                           game_data, 0);
         
         TaskScene {
             desk_objects: DeskObjects::new(ctx, game_data,
                                            ggraphics::Rect::new(150.0, 150.0, 500.0, 500.0)),
+            simulation_status: sui::SimulationStatus::new(ctx, numeric::Rect::new(0.0, 0.0, 1366.0, 200.0), game_data),
             scenario_event: scenario,
             clock: 0,
             mouse_info: MouseInformation::new(),
@@ -360,11 +362,13 @@ impl SceneManager for TaskScene {
     fn pre_process(&mut self, ctx: &mut ggez::Context) {
         self.desk_objects.update(ctx, self.get_current_clock());
         self.scenario_event.update_text();
+        self.simulation_status.update();
     }
     
     fn drawing_process(&mut self, ctx: &mut ggez::Context) {
         self.desk_objects.draw(ctx).unwrap();
-        self.scenario_event.draw(ctx);
+        self.scenario_event.draw(ctx).unwrap();
+        self.simulation_status.draw(ctx).unwrap();
     }
     
     fn post_process(&mut self, _ctx: &mut ggez::Context) -> SceneTransition {
