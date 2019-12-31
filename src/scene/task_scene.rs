@@ -277,7 +277,7 @@ impl TaskScene {
         TaskScene {
             desk_objects: DeskObjects::new(ctx, game_data,
                                            ggraphics::Rect::new(150.0, 150.0, 500.0, 500.0)),
-            simulation_status: sui::SimulationStatus::new(ctx, numeric::Rect::new(0.0, 0.0, 1366.0, 200.0), game_data),
+            simulation_status: sui::SimulationStatus::new(ctx, numeric::Rect::new(0.0, 0.0, 1366.0, 180.0), game_data),
             scenario_event: scenario,
             clock: 0,
             mouse_info: MouseInformation::new(),
