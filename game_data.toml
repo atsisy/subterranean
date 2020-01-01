@@ -1,3 +1,9 @@
-texture_paths = ["/ghost1.png", "/lotus_pink.png", "/lotus_blue.png", "/lotus_yellow.png", "/text_back.png"]
+texture_paths = [
+              "/ghost1.png",
+              "/lotus_pink.png",
+              "/lotus_blue.png",
+              "/lotus_yellow.png",
+              "/text_back.png",
+              "/textures/paper1.jpg"]
 font_paths = ["/azuki.ttf"]
 tileset_paths = ["./resources/test.tmx"]

@@ -143,6 +143,18 @@ impl Meter {
             drwob_essential: DrawableObjectEssential::new(true, 0),
         }
     }
+
+    pub fn get_counter(&self) -> &Counter<f32> {
+        &self.counter
+    }
+
+    pub fn get_mut_counter(&mut self) -> &mut Counter<f32> {
+        &mut self.counter
+    }
+    
+    pub fn update(&mut self) {
+        self.count_fill.get_bounds();
+    }
 }
 
 impl DrawableComponent for Meter {
@@ -186,9 +198,89 @@ impl DrawableComponent for Meter {
     
 }
 
+struct Choice {
+    choice_text: Vec<SimpleText>,
+    choice_texture: Vec<SimpleObject>,
+    selecting: SimpleObject,
+    select_index: usize,
+    drwob_essential: DrawableObjectEssential,
+}
+
+impl Choice {
+    pub fn new(choice_text: Vec<&str>,
+               textures: Vec<TextureID>,
+               select_tid: TextureID,
+               game_data: &GameData) -> Self {
+        Choice {
+            choice_text: choice_text.iter().map(|s| SimpleText::new(
+                MovableText::new(s.to_string(),
+                                 numeric::Point2f::new(0.0, 0.0),
+                                 numeric::Vector2f::new(1.0, 1.0),
+                                 0.0,
+                                 0,
+                                 move_fn::halt(numeric::Point2f::new(0.0, 0.0)),
+                                 FontInformation::new(game_data.get_font(FontID::DEFAULT),
+                                                      numeric::Vector2f::new(24.0, 24.0),
+                                                      ggraphics::BLACK),
+                                 0), Vec::new())).collect(),
+            choice_texture: textures.iter().map(|tid| SimpleObject::new(
+                MovableUniTexture::new(
+                    game_data.ref_texture(*tid),
+                    numeric::Point2f::new(0.0, 0.0),
+                    numeric::Vector2f::new(1.0, 1.0),
+                    0.0,
+                    0,
+                    move_fn::halt(numeric::Point2f::new(0.0, 0.0)),
+                    0), Vec::new())).collect(),
+            selecting: SimpleObject::new(
+                MovableUniTexture::new(
+                    game_data.ref_texture(select_tid),
+                    numeric::Point2f::new(0.0, 0.0),
+                    numeric::Vector2f::new(1.0, 1.0),
+                    0.0,
+                    0,
+                    move_fn::halt(numeric::Point2f::new(0.0, 0.0)),
+                    0), Vec::new()),
+            select_index: 0,
+            drwob_essential: DrawableObjectEssential::new(true, 0),
+        }
+    }
+}
+
+
+impl DrawableComponent for Choice {
+    fn draw(&self, ctx: &mut ggez::Context) -> ggez::GameResult<()> {
+        if self.is_visible() {
+            self.choice_text.get(self.select_index).unwrap().draw(ctx)?;
+        }
+        Ok(())
+    }
+
+    fn hide(&mut self) {
+        self.drwob_essential.visible = false;
+    }
+
+    fn appear(&mut self) {
+        self.drwob_essential.visible = true;
+    }
+
+    fn is_visible(&self) -> bool {
+        self.drwob_essential.visible
+    }
+
+    fn set_drawing_depth(&mut self, depth: i8) {
+        self.drwob_essential.drawing_depth = depth;
+    }
+
+    fn get_drawing_depth(&self) -> i8 {
+        self.drwob_essential.drawing_depth
+    }    
+}
+
 pub struct SimulationStatus {
     money_counter: DrawableCounter<u32>,
-    tired_meter: Meter, 
+    tired_meter: Meter,
+    choice: Choice,
     canvas: SubScreen,
 }
 
@@ -207,6 +299,10 @@ impl SimulationStatus {
                                     ggraphics::Color::from_rgba_u32(0x222222ff),
                                     ggraphics::Color::from_rgba_u32(0xddddddff),
                                     500.0, 1000.0),
+            choice: Choice::new(vec!["test1", "test2"],
+                                vec![TextureID::LotusBlue, TextureID::LotusPink],
+                                TextureID::LotusYellow,
+                                game_data),
             canvas: SubScreen::new(ctx, pos, 0, ggraphics::Color::from_rgba_u32(0xe6cde3ff)),
         }
     }
@@ -223,6 +319,8 @@ impl DrawableComponent for SimulationStatus {
 
             self.money_counter.draw(ctx)?;
             self.tired_meter.draw(ctx)?;
+
+            self.choice.draw(ctx)?;
             
             self.canvas.end_drawing(ctx);
             self.canvas.draw(ctx).unwrap();
