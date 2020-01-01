@@ -38,6 +38,7 @@ pub enum TextureID {
     LotusBlue,
     LotusYellow,
     TextBackground,
+    Paper1,
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -133,7 +134,7 @@ impl<'a> SceneController<'a> {
 
     pub fn new(ctx: &mut ggez::Context, game_data: &'a GameData) -> SceneController<'a> {
         SceneController {
-            current_scene: Box::new(scene::scenario_scene::ScenarioScene::new(ctx, game_data)),
+            current_scene: Box::new(scene::task_scene::TaskScene::new(ctx, game_data)),
             key_map: tdev::ProgramableGenericKey::new()
         }
     }

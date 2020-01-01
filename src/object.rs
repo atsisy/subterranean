@@ -3,6 +3,7 @@ pub mod collision;
 pub mod character_factory;
 pub mod scenario;
 pub mod simulation_ui;
+pub mod task_object;
 
 use std::rc::Rc;
 

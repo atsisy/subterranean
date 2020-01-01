@@ -10,6 +10,7 @@ use torifune::numeric;
 use torifune::hash;
 
 use crate::core::{TextureID, GameData};
+use crate::object::task_object::*;
 
 use crate::object::scenario::*;
 use torifune::graphics::*;
@@ -261,6 +262,7 @@ impl tgraphics::DrawableObject for DeskObjects {
 
 pub struct TaskScene {
     desk_objects: DeskObjects,
+    paper: BorrowingPaper,
     clock: Clock,
     mouse_info: MouseInformation,
 }
@@ -274,6 +276,9 @@ impl TaskScene {
         TaskScene {
             desk_objects: DeskObjects::new(ctx, game_data,
                                            ggraphics::Rect::new(150.0, 150.0, 500.0, 500.0)),
+            paper: BorrowingPaper::new(ctx, ggraphics::Rect::new(10.0, 10.0, 700.0, 700.0), TextureID::Paper1,
+                                       &BorrowingInformation::new(vec!["テスト本1".to_string(), "テスト本2".to_string()],
+                                                                  "霧雨魔里沙".to_string(), GensoDate::new(128, 12, 8), GensoDate::new(128, 12, 8)), game_data, 0),
             clock: 0,
             mouse_info: MouseInformation::new(),
         }
@@ -359,6 +364,7 @@ impl SceneManager for TaskScene {
     
     fn drawing_process(&mut self, ctx: &mut ggez::Context) {
         self.desk_objects.draw(ctx).unwrap();
+        self.paper.draw(ctx).unwrap();
     }
     
     fn post_process(&mut self, _ctx: &mut ggez::Context) -> SceneTransition {

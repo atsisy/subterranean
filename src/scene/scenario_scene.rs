@@ -9,7 +9,7 @@ use ggez::graphics as ggraphics;
 use torifune::numeric;
 use torifune::hash;
 
-use crate::core::{TextureID, GameData};
+use crate::core::GameData;
 
 use crate::object::scenario::*;
 use crate::object::simulation_ui as sui;
