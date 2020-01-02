@@ -2,6 +2,12 @@ use torifune::core::Clock;
 use torifune::numeric;
 use torifune::graphics as tg;
 
+pub fn stop() -> Box<dyn Fn(& dyn tg::object::MovableObject, Clock) -> numeric::Point2f> {
+    Box::new(move |obj: & dyn tg::object::MovableObject, _: Clock| {
+        obj.get_position()
+    })
+}
+
 pub fn halt(pos: numeric::Point2f)
             -> Box<dyn Fn(& dyn tg::object::MovableObject, Clock) -> numeric::Point2f> {
     Box::new(move |_: & dyn tg::object::MovableObject, _: Clock| {

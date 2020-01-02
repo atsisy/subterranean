@@ -101,7 +101,7 @@ impl ScenarioTextSegment {
 
         let str_bytes = self.text.as_str().as_bytes().len();
         
-        for (count, (bytes, ch)) in self.text.as_str().char_indices().enumerate() {
+        for (count, (bytes, _)) in self.text.as_str().char_indices().enumerate() {
             if reached_flag {
                 return self.slice_text_bytes(0, bytes as usize);
             }
@@ -278,7 +278,7 @@ pub struct TextBox {
 
 impl TextBox {
     pub fn new(ctx: &mut ggez::Context, rect: numeric::Rect,
-               mut background: SimpleObject, t: Clock) -> Self {
+               mut background: SimpleObject, _t: Clock) -> Self {
         background.fit_scale(ctx, numeric::Vector2f::new(rect.w, rect.h));
         background.set_position(numeric::Point2f::new(0.0, 0.0));
         TextBox {
@@ -332,13 +332,13 @@ impl TextBox {
 }
 
 impl DrawableComponent for TextBox {
-    fn draw(&self, ctx: &mut ggez::Context) -> ggez::GameResult<()> {
+    fn draw(&mut self, ctx: &mut ggez::Context) -> ggez::GameResult<()> {
         if self.is_visible() {
             self.canvas.begin_drawing(ctx);
             
             self.background.draw(ctx)?;
 
-            for d in &self.text {
+            for d in &mut self.text {
                 d.draw(ctx)?;
             }
 
@@ -409,7 +409,7 @@ impl ScenarioEvent {
 }
 
 impl DrawableComponent for ScenarioEvent {
-    fn draw(&self, ctx: &mut ggez::Context) -> ggez::GameResult<()> {
+    fn draw(&mut self, ctx: &mut ggez::Context) -> ggez::GameResult<()> {
         if self.is_visible() {
             self.canvas.begin_drawing(ctx);
 

@@ -4,6 +4,13 @@ texture_paths = [
               "/lotus_blue.png",
               "/lotus_yellow.png",
               "/text_back.png",
-              "/textures/paper1.jpg"]
+              "/textures/paper1.jpg",
+              "/textures/paper2.jpg",
+              "/textures/large_book1.png",
+              "/textures/large_book2.png",
+              "/textures/large_book3.png",
+              "/textures/middle_book1.png",
+              "/textures/middle_book2.png",
+              "/textures/middle_book3.png"]
 font_paths = ["/azuki.ttf"]
 tileset_paths = ["./resources/test.tmx"]

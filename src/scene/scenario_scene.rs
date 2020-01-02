@@ -1,21 +1,12 @@
-use std::collections::HashMap;
 use torifune::device as tdev;
 use torifune::core::Clock;
-use torifune::graphics as tgraphics;
-use tgraphics::object as tobj;
-use ggez::input as ginput;
-use ginput::mouse::MouseButton;
-use ggez::graphics as ggraphics;
 use torifune::numeric;
-use torifune::hash;
 
 use crate::core::GameData;
 
 use crate::object::scenario::*;
 use crate::object::simulation_ui as sui;
 use torifune::graphics::*;
-use torifune::graphics::object::TextureObject;
-use torifune::graphics::object::MovableObject;
 
 use super::*;
 
@@ -27,7 +18,10 @@ pub struct ScenarioScene {
 
 impl SceneManager for ScenarioScene {
     
-    fn key_down_event(&mut self, _ctx: &mut ggez::Context, vkey: tdev::VirtualKey) {
+    fn key_down_event(&mut self,
+                      _ctx: &mut ggez::Context,
+                      _game_data: &GameData,
+                      vkey: tdev::VirtualKey) {
         match vkey {
             tdev::VirtualKey::Action1 => {
                 println!("Action1 down!");
@@ -39,6 +33,7 @@ impl SceneManager for ScenarioScene {
     
     fn key_up_event(&mut self,
                     _ctx: &mut ggez::Context,
+                    _game_data: &GameData,
                     vkey: tdev::VirtualKey) {
         match vkey {
             tdev::VirtualKey::Action1 => println!("Action1 up!"),
@@ -46,7 +41,7 @@ impl SceneManager for ScenarioScene {
         }
     }
 
-    fn pre_process(&mut self, ctx: &mut ggez::Context) {
+    fn pre_process(&mut self, _ctx: &mut ggez::Context) {
         self.scenario_event.update_text();
         self.simulation_status.update();
     }

@@ -9,16 +9,15 @@ use ggez::graphics as ggraphics;
 use torifune::numeric;
 use torifune::hash;
 
-use crate::core::{TextureID, GameData};
-use crate::object::task_object::*;
-
-use crate::object::scenario::*;
 use torifune::graphics::*;
 use torifune::graphics::object::TextureObject;
 use torifune::graphics::object::MovableObject;
 
 use super::*;
 
+use crate::core::{TextureID, GameData};
+use crate::object::task_object::*;
+use crate::object::move_fn;
 
 #[derive(PartialEq, Debug, Clone, Copy)]
 struct MouseActionRecord {
@@ -105,10 +104,46 @@ impl MouseInformation {
     
 }
 
+struct DrawableComponentContainer {
+    container: Vec<Box<dyn DrawableComponent>>,
+}
+
+impl DrawableComponentContainer {
+    pub fn new() -> Self {
+        DrawableComponentContainer {
+            container: Vec::new(),
+        }
+    }
+
+    #[inline(always)]
+    pub fn add(&mut self, obj: Box<dyn DrawableComponent>) {
+        self.container.push(obj);
+    }
+
+    #[inline(always)]
+    pub fn remove_if<F>(&mut self, f: F)
+    where F: Fn(&Box<dyn DrawableComponent>) -> bool {
+        self.container.retain(|e| !f(e));
+    }
+
+    pub fn len(&self) -> usize {
+        self.container.len()
+    }
+
+    pub fn iter(&self) -> std::slice::Iter<Box<dyn DrawableComponent>> {
+        self.container.iter()
+    }
+
+    pub fn iter_mut(&mut self) -> std::slice::IterMut<Box<dyn DrawableComponent>> {
+        self.container.iter_mut()
+    }
+}
+
 struct DeskObjects {
-    desk_canvas: tgraphics::SubScreen,
+    canvas: tgraphics::SubScreen,
     desk_objects: SimpleObjectContainer,
     dragging: Option<tobj::SimpleObject>,
+    dobj_container: DrawableComponentContainer,
 }
 
 impl DeskObjects {
@@ -125,25 +160,22 @@ impl DeskObjects {
                 game_data.ref_texture(TextureID::Ghost1),
                 numeric::Point2f::new(0.0, 0.0),
                 numeric::Vector2f::new(0.1, 0.1),
-                0.0, 0,  Box::new(move |p: & dyn tobj::MovableObject, _t: Clock| {
-                    torifune::numeric::Point2f::new(p.get_position().x + 8.0, p.get_position().y)
-                }),
+                0.0, 0, move_fn::stop(),
                 0), vec![]));
         desk_objects.add(tobj::SimpleObject::new(
             tobj::MovableUniTexture::new(
                 game_data.ref_texture(TextureID::LotusPink),
                 numeric::Point2f::new(0.0, 0.0),
                 numeric::Vector2f::new(0.1, 0.1),
-                0.0, -1,  Box::new(move |p: & dyn tobj::MovableObject, _t: Clock| {
-                    torifune::numeric::Point2f::new(p.get_position().x + 8.0, p.get_position().y)
-                }),
+                0.0, -1, move_fn::stop(),
                 0), vec![]));
         desk_objects.sort_with_depth();
         
         DeskObjects {
-            desk_canvas: tgraphics::SubScreen::new(ctx, rect, 0, ggraphics::Color::new(1.0, 1.0, 1.0, 1.0)),
+            canvas: tgraphics::SubScreen::new(ctx, rect, 0, ggraphics::Color::new(0.0, 0.0, 0.0, 0.0)),
             desk_objects: desk_objects,
             dragging: None,
+            dobj_container: DrawableComponentContainer::new(),
         }
     }
 
@@ -160,12 +192,14 @@ impl DeskObjects {
 
         let mut dragging_object_index = 0;
         let mut drag_start = false;
+
+        let rpoint = self.canvas.relative_point(point);
         
         // オブジェクトは深度が深い順にソートされているので、
         // 逆順から検索していくことで、最も手前に表示されているオブジェクトを
         // 取り出すことができる
         for (index, obj) in self.desk_objects.get_raw_container_mut().iter_mut().rev().enumerate() {
-            if obj.get_drawing_area(ctx).contains(point) {
+            if obj.get_drawing_area(ctx).contains(rpoint) {
                 dragging_object_index = self.desk_objects.len() - index - 1;
                 drag_start = true;
                 break;
@@ -197,47 +231,79 @@ impl DeskObjects {
         for p in self.desk_objects.get_raw_container_mut() {
             p.move_with_func(t);
         }
-    }
+    }    
 
+    fn double_click_handler(&mut self,
+                            ctx: &mut ggez::Context,
+                            point: numeric::Point2f,
+                            game_data: &GameData) {
+        let rpoint = self.canvas.relative_point(point);
+        
+        // オブジェクトは深度が深い順にソートされているので、
+        // 逆順から検索していくことで、最も手前に表示されているオブジェクトを
+        // 取り出すことができる
+        for (_, obj) in self.desk_objects.get_raw_container_mut().iter_mut().rev().enumerate() {
+            if obj.get_drawing_area(ctx).contains(rpoint) {
+                println!("sassss");
+                self.dobj_container.add(
+                    Box::new(CopyingRequestPaper::new(ctx, ggraphics::Rect::new(0.0, 0.0, 700.0, 700.0), TextureID::Paper2,
+                                                      &CopyingRequestInformation::new("テスト本1".to_string(),
+                                                                                      "霧雨魔里沙".to_string(),
+                                                                                      GensoDate::new(128, 12, 8),
+                                                                                      GensoDate::new(128, 12, 8),
+                                                                                      212),
+                                                      game_data, 0))
+                )
+            }
+        }
+    }
+    
 }
 
 impl tgraphics::DrawableComponent for DeskObjects {
-    fn draw(&self, ctx: &mut ggez::Context) -> ggez::GameResult<()> {
+    fn draw(&mut self, ctx: &mut ggez::Context) -> ggez::GameResult<()> {
         if self.is_visible() {
-            self.desk_canvas.begin_drawing(ctx);
-            for obj in self.desk_objects.get_raw_container() {
+            self.canvas.begin_drawing(ctx);
+            
+            for obj in self.desk_objects.get_raw_container_mut() {
                 obj.draw(ctx)?;
             }
-            if let Some(p) = &self.dragging {
-                p.draw(ctx).unwrap();
+            
+            if let Some(ref mut d) = self.dragging {
+                d.draw(ctx)?;
             }
-            self.desk_canvas.end_drawing(ctx);
-            self.desk_canvas.draw(ctx).unwrap();
+
+            for obj in self.dobj_container.iter_mut() {
+                obj.draw(ctx)?;
+            }
+            
+            self.canvas.end_drawing(ctx);
+            self.canvas.draw(ctx).unwrap();
             
         }
         Ok(())
     }
 
     fn hide(&mut self) {
-        self.desk_canvas.hide();
+        self.canvas.hide();
     }
 
     fn appear(&mut self) {
-        self.desk_canvas.appear();
+        self.canvas.appear();
     }
 
     fn is_visible(&self) -> bool {
-        self.desk_canvas.is_visible()
+        self.canvas.is_visible()
     }
 
     /// 描画順序を設定する
     fn set_drawing_depth(&mut self, depth: i8) {
-        self.desk_canvas.set_drawing_depth(depth);
+        self.canvas.set_drawing_depth(depth);
     }
 
     /// 描画順序を返す
     fn get_drawing_depth(&self) -> i8 {
-        self.desk_canvas.get_drawing_depth()
+        self.canvas.get_drawing_depth()
     }
 
 }
@@ -246,40 +312,41 @@ impl tgraphics::DrawableObject for DeskObjects {
 
     /// 描画開始地点を設定する
     fn set_position(&mut self, pos: numeric::Point2f) {
-        self.desk_canvas.set_position(pos);
+        self.canvas.set_position(pos);
     }
 
     /// 描画開始地点を返す
     fn get_position(&self) -> numeric::Point2f {
-        self.desk_canvas.get_position()
+        self.canvas.get_position()
     }
 
     /// offsetで指定しただけ描画位置を動かす
     fn move_diff(&mut self, offset: numeric::Vector2f) {
-        self.desk_canvas.move_diff(offset)
+        self.canvas.move_diff(offset)
     }
 }
 
 pub struct TaskScene {
     desk_objects: DeskObjects,
-    paper: BorrowingPaper,
+    dobj_container: DrawableComponentContainer,
     clock: Clock,
     mouse_info: MouseInformation,
 }
 
 impl TaskScene {
     pub fn new(ctx: &mut ggez::Context, game_data: &GameData) -> TaskScene  {
-        let scenario = ScenarioEvent::new(ctx, numeric::Rect::new(100.0, 520.0, 1200.0, 280.0),
-                                          "./resources/scenario_parsing_test.toml",
-                                          game_data, 0);
         
         TaskScene {
             desk_objects: DeskObjects::new(ctx, game_data,
-                                           ggraphics::Rect::new(150.0, 150.0, 500.0, 500.0)),
+                                           ggraphics::Rect::new(50.0, 50.0, 1000.0, 700.0)),
+            /*
             paper: BorrowingPaper::new(ctx, ggraphics::Rect::new(10.0, 10.0, 700.0, 700.0), TextureID::Paper1,
                                        &BorrowingInformation::new(vec!["テスト本1".to_string(), "テスト本2".to_string()],
-                                                                  "霧雨魔里沙".to_string(), GensoDate::new(128, 12, 8), GensoDate::new(128, 12, 8)), game_data, 0),
+                                                                  "霧雨魔里沙".to_string(), GensoDate::new(128, 12, 8),
+                                                                  GensoDate::new(128, 12, 8)), game_data, 0),
+            */
             clock: 0,
+            dobj_container: DrawableComponentContainer::new(),
             mouse_info: MouseInformation::new(),
         }
     }
@@ -303,7 +370,10 @@ impl TaskScene {
 
 impl SceneManager for TaskScene {
     
-    fn key_down_event(&mut self, _ctx: &mut ggez::Context, vkey: tdev::VirtualKey) {
+    fn key_down_event(&mut self,
+                      _ctx: &mut ggez::Context,
+                      _game_data: &GameData,
+                      vkey: tdev::VirtualKey) {
         match vkey {
             tdev::VirtualKey::Action1 => {
                 println!("Action1 down!");
@@ -314,6 +384,7 @@ impl SceneManager for TaskScene {
     
     fn key_up_event(&mut self,
                     _ctx: &mut ggez::Context,
+                    _game_data: &GameData,
                     vkey: tdev::VirtualKey) {
         match vkey {
             tdev::VirtualKey::Action1 => println!("Action1 up!"),
@@ -323,6 +394,7 @@ impl SceneManager for TaskScene {
 
     fn mouse_motion_event(&mut self,
                           ctx: &mut ggez::Context,
+                          _game_data: &GameData,
                           point: numeric::Point2f,
                           offset: numeric::Vector2f) {
         if self.mouse_info.is_dragging(MouseButton::Left) {
@@ -336,11 +408,12 @@ impl SceneManager for TaskScene {
 
     fn mouse_button_down_event(&mut self,
                                ctx: &mut ggez::Context,
+                               game_data: &GameData,
                                button: MouseButton,
                                point: numeric::Point2f) {
         let info: &MouseActionRecord = &self.mouse_info.last_clicked.get(&button).unwrap();
-        if info.point == point && (self.get_current_clock() - info.t) < 10 {
-            println!("double clicked!!");
+        if info.point == point && (self.get_current_clock() - info.t) < 20 {
+            self.desk_objects.double_click_handler(ctx, point, game_data);
         }
         
         self.mouse_info.set_last_clicked(button, point, self.get_current_clock());
@@ -352,9 +425,11 @@ impl SceneManager for TaskScene {
     
     fn mouse_button_up_event(&mut self,
                              _ctx: &mut ggez::Context,
+                             _game_data: &GameData,
                              button: MouseButton,
                              _point: numeric::Point2f) {
         self.mouse_info.update_dragging(button, false);
+        //self.paper.button_up(ctx, button, point);
         self.unselect_dragging_object();
     }
 
@@ -364,7 +439,9 @@ impl SceneManager for TaskScene {
     
     fn drawing_process(&mut self, ctx: &mut ggez::Context) {
         self.desk_objects.draw(ctx).unwrap();
-        self.paper.draw(ctx).unwrap();
+        for obj in self.dobj_container.iter_mut() {
+            obj.draw(ctx).unwrap();
+        }
     }
     
     fn post_process(&mut self, _ctx: &mut ggez::Context) -> SceneTransition {

@@ -5,11 +5,10 @@ use tdev::VirtualKey;
 use torifune::core::Clock;
 use torifune::graphics as tgraphics;
 use torifune::core::Updatable;
-use tgraphics::object as tobj;
 use ggez::input as ginput;
 use ginput::mouse::MouseButton;
 use torifune::numeric;
-use crate::core::{TextureID, GameData};
+use crate::core::GameData;
 use super::*;
 use crate::object::*;
 use crate::core::map_parser as mp;
@@ -76,8 +75,8 @@ impl EnemyGroup {
 
 impl DrawableComponent for EnemyGroup {
     #[inline(always)]
-    fn draw(&self, ctx: &mut ggez::Context) -> ggez::GameResult<()> {
-        self.group.iter().for_each(|e| { e.get_character_object().obj().draw(ctx).unwrap(); });
+    fn draw(&mut self, ctx: &mut ggez::Context) -> ggez::GameResult<()> {
+        self.group.iter_mut().for_each(|e| { e.get_mut_character_object().obj_mut().draw(ctx).unwrap(); });
         Ok(())
     }
 
@@ -349,11 +348,15 @@ impl DreamScene {
 
 impl SceneManager for DreamScene {
     
-    fn key_down_event(&mut self, _ctx: &mut ggez::Context, _vkey: tdev::VirtualKey) {
+    fn key_down_event(&mut self,
+                      _ctx: &mut ggez::Context,
+                      _game_data: &GameData,
+                      _vkey: tdev::VirtualKey) {
     }
     
     fn key_up_event(&mut self,
                     _ctx: &mut ggez::Context,
+                    _game_data: &GameData,
                     vkey: tdev::VirtualKey) {
         match vkey {
             tdev::VirtualKey::Action1 => println!("Action1 up!"),
@@ -363,6 +366,7 @@ impl SceneManager for DreamScene {
 
     fn mouse_motion_event(&mut self,
                           _ctx: &mut ggez::Context,
+                          _game_data: &GameData,
                           _point: numeric::Point2f,
                           _offset: numeric::Vector2f) {
 
@@ -370,12 +374,14 @@ impl SceneManager for DreamScene {
 
     fn mouse_button_down_event(&mut self,
                                _ctx: &mut ggez::Context,
+                               _game_data: &GameData,
                                _button: MouseButton,
                                _point: numeric::Point2f) {
     }
     
     fn mouse_button_up_event(&mut self,
                              _ctx: &mut ggez::Context,
+                             _game_data: &GameData,
                              _button: MouseButton,
                              _point: numeric::Point2f) {
     }
@@ -394,8 +400,8 @@ impl SceneManager for DreamScene {
     fn drawing_process(&mut self, ctx: &mut ggez::Context) {
         self.tile_map.draw(ctx).unwrap();
         self.player
-            .get_character_object()
-            .obj()
+            .get_mut_character_object()
+            .obj_mut()
             .draw(ctx).unwrap();
         self.enemy_group.draw(ctx).unwrap();
     }

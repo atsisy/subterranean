@@ -374,7 +374,7 @@ impl StageObjectMap {
 }
 
 impl tg::DrawableComponent for StageObjectMap {
-    fn draw(&self, ctx: &mut ggez::Context) -> ggez::GameResult<()> {
+    fn draw(&mut self, ctx: &mut ggez::Context) -> ggez::GameResult<()> {
         // 全てのsprite batchを描画
         for (_, batch) in &self.tilesets_batchs {
             ggraphics::draw(ctx, batch, ggraphics::DrawParam {

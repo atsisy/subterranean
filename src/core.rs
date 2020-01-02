@@ -39,6 +39,7 @@ pub enum TextureID {
     LotusYellow,
     TextBackground,
     Paper1,
+    Paper2,
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -58,7 +59,6 @@ impl FromStr for TextureID {
         }
     }
 }
-
 
 #[derive(Debug, Deserialize)]
 pub struct RawConfigFile {
@@ -169,38 +169,43 @@ impl<'a> SceneController<'a> {
 
     fn key_down_event(&mut self,
                       ctx: &mut Context,
+                      game_data: &GameData,
                       keycode: KeyCode,
                       _keymods: KeyMods,
                       _repeat: bool) {
-        self.current_scene.key_down_event(ctx, self.key_map.real_to_virtual(keycode));
+        self.current_scene.key_down_event(ctx, game_data, self.key_map.real_to_virtual(keycode));
     }
     
     fn key_up_event(&mut self,
                     ctx: &mut Context,
+                    game_data: &GameData,
                     keycode: KeyCode,
                     _keymods: KeyMods,){
-        self.current_scene.key_up_event(ctx, self.key_map.real_to_virtual(keycode));
+        self.current_scene.key_up_event(ctx, game_data, self.key_map.real_to_virtual(keycode));
     }
 
     fn mouse_motion_event(&mut self,
                           ctx: &mut ggez::Context,
+                          game_data: &GameData,
                           point: numeric::Point2f,
                           offset: numeric::Vector2f){
-        self.current_scene.mouse_motion_event(ctx, point, offset);
+        self.current_scene.mouse_motion_event(ctx, game_data, point, offset);
     }
 
     fn mouse_button_down_event(&mut self,
                                ctx: &mut ggez::Context,
+                               game_data: &GameData,
                                button: ginput::mouse::MouseButton,
                                point: numeric::Point2f){
-        self.current_scene.mouse_button_down_event(ctx, button, point);
+        self.current_scene.mouse_button_down_event(ctx, game_data, button, point);
     }
     
     fn mouse_button_up_event(&mut self,
                              ctx: &mut ggez::Context,
+                             game_data: &GameData,
                              button: ginput::mouse::MouseButton,
                              point: numeric::Point2f){
-        self.current_scene.mouse_button_up_event(ctx, button, point);
+        self.current_scene.mouse_button_up_event(ctx, game_data, button, point);
     }
 }
 
@@ -242,7 +247,7 @@ impl<'data> ggez::event::EventHandler for State<'data> {
         keycode: KeyCode,
         keymods: KeyMods,
         repeat: bool) {
-        self.scene_controller.key_down_event(ctx, keycode, keymods, repeat);
+        self.scene_controller.key_down_event(ctx, self.game_data, keycode, keymods, repeat);
     }
 
     fn key_up_event(
@@ -250,7 +255,7 @@ impl<'data> ggez::event::EventHandler for State<'data> {
         ctx: &mut ggez::Context,
         keycode: KeyCode,
         keymods: KeyMods) {
-        self.scene_controller.key_up_event(ctx, keycode, keymods);
+        self.scene_controller.key_up_event(ctx, self.game_data, keycode, keymods);
     }
 
     fn mouse_motion_event(
@@ -262,6 +267,7 @@ impl<'data> ggez::event::EventHandler for State<'data> {
         dy: f32) {
         self.scene_controller.mouse_motion_event(
             ctx,
+            self.game_data,
             numeric::Point2f::new(x, y),
             numeric::Vector2f::new(dx, dy));
     }
@@ -272,7 +278,7 @@ impl<'data> ggez::event::EventHandler for State<'data> {
         button: ginput::mouse::MouseButton,
         x: f32,
         y: f32) {
-        self.scene_controller.mouse_button_down_event(ctx, button, numeric::Point2f::new(x, y));
+        self.scene_controller.mouse_button_down_event(ctx, self.game_data, button, numeric::Point2f::new(x, y));
     }
 
     fn mouse_button_up_event(
@@ -281,7 +287,7 @@ impl<'data> ggez::event::EventHandler for State<'data> {
         button: ginput::mouse::MouseButton,
         x: f32,
         y: f32) {
-        self.scene_controller.mouse_button_up_event(ctx, button, numeric::Point2f::new(x, y));
+        self.scene_controller.mouse_button_up_event(ctx, self.game_data, button, numeric::Point2f::new(x, y));
     }
 }
 

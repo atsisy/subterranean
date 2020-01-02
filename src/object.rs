@@ -10,7 +10,6 @@ use std::rc::Rc;
 use ggez::graphics as ggraphics;
 
 use torifune::core::Clock;
-use torifune::core::Updatable;
 use torifune::numeric;
 use torifune::distance;
 use torifune::graphics::object as tobj;

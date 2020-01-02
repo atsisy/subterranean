@@ -59,7 +59,7 @@ impl<T: std::ops::AddAssign + Copy + std::fmt::Display> DrawableCounter<T> {
 }
 
 impl<T> DrawableComponent for DrawableCounter<T> {
-    fn draw(&self, ctx: &mut ggez::Context) -> ggez::GameResult<()> {
+    fn draw(&mut self, ctx: &mut ggez::Context) -> ggez::GameResult<()> {
         self.text.draw(ctx)
     }
 
@@ -158,7 +158,7 @@ impl Meter {
 }
 
 impl DrawableComponent for Meter {
-    fn draw(&self, ctx: &mut ggez::Context) -> ggez::GameResult<()> {
+    fn draw(&mut self, ctx: &mut ggez::Context) -> ggez::GameResult<()> {
         let mesh = ggraphics::MeshBuilder::new().rectangle(
             self.frame.get_mode(),
             self.frame.get_bounds(),
@@ -249,9 +249,9 @@ impl Choice {
 
 
 impl DrawableComponent for Choice {
-    fn draw(&self, ctx: &mut ggez::Context) -> ggez::GameResult<()> {
+    fn draw(&mut self, ctx: &mut ggez::Context) -> ggez::GameResult<()> {
         if self.is_visible() {
-            self.choice_text.get(self.select_index).unwrap().draw(ctx)?;
+            self.choice_text.get_mut(self.select_index).unwrap().draw(ctx)?;
         }
         Ok(())
     }
@@ -313,7 +313,7 @@ impl SimulationStatus {
 }
 
 impl DrawableComponent for SimulationStatus {
-    fn draw(&self, ctx: &mut ggez::Context) -> ggez::GameResult<()> {
+    fn draw(&mut self, ctx: &mut ggez::Context) -> ggez::GameResult<()> {
         if self.is_visible() {
             self.canvas.begin_drawing(ctx);
 
