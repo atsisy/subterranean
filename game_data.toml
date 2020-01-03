@@ -11,6 +11,16 @@ texture_paths = [
               "/textures/large_book3.png",
               "/textures/middle_book1.png",
               "/textures/middle_book2.png",
-              "/textures/middle_book3.png"]
+              "/textures/middle_book3.png",
+              "/textures/wood1.jpg"]
 font_paths = ["/azuki.ttf"]
 tileset_paths = ["./resources/test.tmx"]
+customers_name = ["霧雨魔里沙", "すみれの隣人"]
+
+[[books_information]]
+name = "テスト本1"
+pages = 128
+
+[[books_information]]
+name = "テスト本2"
+pages = 128
