@@ -6,6 +6,7 @@ pub mod simulation_ui;
 pub mod task_object;
 
 use std::rc::Rc;
+use std::cmp::Ordering;
 
 use ggez::graphics as ggraphics;
 use torifune::graphics::DrawableComponent;
@@ -619,30 +620,39 @@ impl EnemyCharacter {
     }
 }
 
-pub struct SimpleObjectContainer {
-    container: Vec<tobj::SimpleObject>,
+pub struct TextureObjectContainer {
+    container: Vec<Box<dyn TextureObject>>,
 }
 
-impl SimpleObjectContainer {
-    fn new() -> SimpleObjectContainer {
-        SimpleObjectContainer {
+impl TextureObjectContainer {
+    fn new() -> Self {
+        TextureObjectContainer {
             container: Vec::new(),
         }
     }
 
-    fn add(&mut self, obj: tobj::SimpleObject) {
+    fn add(&mut self, obj: Box<dyn TextureObject>) {
         self.container.push(obj);
     }
 
     fn sort_with_depth(&mut self) {
-        self.container.sort_by(torifune::graphics::drawable_object_sort_with_depth);
+        self.container.sort_by(|a: &Box<dyn TextureObject>, b: &Box<dyn TextureObject>| {
+            let (ad, bd) = (a.get_drawing_depth(), b.get_drawing_depth());
+            if ad > bd {
+                Ordering::Less
+            } else if ad < bd {
+                Ordering::Greater
+            } else {
+                Ordering::Equal
+            }
+        });
     }
 
-    fn get_raw_container(&self) -> &Vec<tobj::SimpleObject> {
+    fn get_raw_container(&self) -> &Vec<Box<dyn TextureObject>> {
         &self.container
     }
 
-    fn get_raw_container_mut(&mut self) -> &mut Vec<tobj::SimpleObject> {
+    fn get_raw_container_mut(&mut self) -> &mut Vec<Box<dyn TextureObject>> {
         &mut self.container
     }
 
@@ -675,6 +685,5 @@ impl SimpleObjectContainer {
                 obj.set_drawing_depth(-128);
             }
         }
-        
     }
 }

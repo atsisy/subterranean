@@ -305,85 +305,85 @@ impl CopyingRequestPaper {
                                               Vec::new());
         
         let title_text = SimpleText::new(MovableText::new("鈴奈庵 転写依頼票".to_string(),
-                                                          numeric::Point2f::new(270.0, 100.0),
+                                                          numeric::Point2f::new(120.0, 50.0),
                                                           numeric::Vector2f::new(1.0, 1.0),
                                                           0.0,
                                                           0,
-                                                          move_fn::halt(numeric::Point2f::new(250.0, 100.0)),
+                                                          move_fn::stop(),
                                                           FontInformation::new(game_data.get_font(FontID::DEFAULT),
-                                                                               numeric::Vector2f::new(28.0, 28.0),
+                                                                               numeric::Vector2f::new(20.0, 20.0),
                                                                                ggraphics::Color::from_rgba_u32(0x000000ff)),
                                                           t),
                                          Vec::new());
 
         let customer = SimpleText::new(MovableText::new(format!("依頼者   {}", info.customer),
-                                                        numeric::Point2f::new(50.0, 200.0),
+                                                        numeric::Point2f::new(50.0, 100.0),
                                                         numeric::Vector2f::new(1.0, 1.0),
                                                         0.0,
                                                         0,
-                                                        move_fn::halt(numeric::Point2f::new(250.0, 100.0)),
+                                                        move_fn::stop(),
                                                         FontInformation::new(game_data.get_font(FontID::DEFAULT),
-                                                                             numeric::Vector2f::new(28.0, 28.0),
+                                                                             numeric::Vector2f::new(19.0, 19.0),
                                                                              ggraphics::Color::from_rgba_u32(0x000000ff)),
                                                         t),
                                        Vec::new());
 
         let request_date = SimpleText::new(MovableText::new(format!("依頼日     {}", info.request_date.to_string()),
-                                                        numeric::Point2f::new(50.0, 250.0),
+                                                        numeric::Point2f::new(50.0, 135.0),
                                                         numeric::Vector2f::new(1.0, 1.0),
                                                         0.0,
                                                         0,
-                                                        move_fn::halt(numeric::Point2f::new(250.0, 100.0)),
+                                                        move_fn::stop(),
                                                         FontInformation::new(game_data.get_font(FontID::DEFAULT),
-                                                                             numeric::Vector2f::new(28.0, 28.0),
+                                                                             numeric::Vector2f::new(19.0, 19.0),
                                                                              ggraphics::Color::from_rgba_u32(0x000000ff)),
                                                         t),
                                           Vec::new());
 
         let return_date = SimpleText::new(MovableText::new(format!("完了予定   {}", info.return_date.to_string()),
-                                                           numeric::Point2f::new(50.0, 300.0),
+                                                           numeric::Point2f::new(50.0, 170.0),
                                                            numeric::Vector2f::new(1.0, 1.0),
                                                            0.0,
                                                            0,
-                                                           move_fn::halt(numeric::Point2f::new(50.0, 300.0)),
+                                                           move_fn::stop(),
                                                            FontInformation::new(game_data.get_font(FontID::DEFAULT),
-                                                                                numeric::Vector2f::new(28.0, 28.0),
+                                                                                numeric::Vector2f::new(19.0, 19.0),
                                                                                 ggraphics::Color::from_rgba_u32(0x000000ff)),
                                                            t),
                                           Vec::new());
         
         let pages = SimpleText::new(MovableText::new(format!("頁数   {}", info.pages),
-                                                     numeric::Point2f::new(50.0, 500.0),
+                                                     numeric::Point2f::new(50.0, 275.0),
                                                      numeric::Vector2f::new(1.0, 1.0),
                                                      0.0,
                                                      0,
-                                                     move_fn::halt(numeric::Point2f::new(50.0, 300.0)),
+                                                     move_fn::stop(),
                                                      FontInformation::new(game_data.get_font(FontID::DEFAULT),
-                                                                          numeric::Vector2f::new(28.0, 28.0),
+                                                                          numeric::Vector2f::new(19.0, 19.0),
                                                                           ggraphics::Color::from_rgba_u32(0x000000ff)),
                                                      t),
                                     Vec::new());
         
         let book_type = SimpleText::new(MovableText::new(format!("寸法   美濃判"),
-                                                         numeric::Point2f::new(50.0, 450.0),
+                                                         numeric::Point2f::new(50.0, 240.0),
                                                          numeric::Vector2f::new(1.0, 1.0),
                                                          0.0,
                                                          0,
-                                                         move_fn::halt(numeric::Point2f::new(50.0, 400.0)),
+                                                         move_fn::stop(),
                                                          FontInformation::new(game_data.get_font(FontID::DEFAULT),
-                                                                              numeric::Vector2f::new(28.0, 28.0),
+                                                                              numeric::Vector2f::new(19.0, 19.0),
                                                                               ggraphics::Color::from_rgba_u32(0x000000ff)),
                                                          t),
                                         Vec::new());
 
         let request_book = SimpleText::new(MovableText::new(format!("転写本    {}", info.book_title),
-                                                            numeric::Point2f::new(50.0, 400.0),
+                                                            numeric::Point2f::new(50.0, 205.0),
                                                             numeric::Vector2f::new(1.0, 1.0),
                                                             0.0,
                                                             0,
-                                                            move_fn::halt(numeric::Point2f::new(50.0, 550.0)),
+                                                            move_fn::stop(),
                                                             FontInformation::new(game_data.get_font(FontID::DEFAULT),
-                                                                                 numeric::Vector2f::new(28.0, 28.0),
+                                                                                 numeric::Vector2f::new(19.0, 19.0),
                                                                                  ggraphics::Color::from_rgba_u32(0x000000ff)),
                                                             t),
                                            Vec::new());
@@ -443,6 +443,112 @@ impl DrawableComponent for CopyingRequestPaper {
     }
 }
 
+impl DrawableObject for CopyingRequestPaper {
+
+    fn set_position(&mut self, pos: numeric::Point2f) {
+        self.canvas.set_position(pos);
+    }
+
+    fn get_position(&self) -> numeric::Point2f {
+        self.canvas.get_position()
+    }
+
+    fn move_diff(&mut self, offset: numeric::Vector2f) {
+        self.canvas.move_diff(offset);
+    }
+}
+
+impl TextureObject for CopyingRequestPaper {
+        #[inline(always)]
+    fn set_scale(&mut self, scale: numeric::Vector2f) {
+        self.canvas.set_scale(scale)
+    }
+
+    #[inline(always)]
+    fn get_scale(&self) -> numeric::Vector2f {
+        self.canvas.get_scale()
+    }
+
+    #[inline(always)]
+    fn set_rotation(&mut self, rad: f32) {
+        self.canvas.set_rotation(rad)
+    }
+
+    #[inline(always)]
+    fn get_rotation(&self) -> f32 {
+        self.canvas.get_rotation()
+    }
+
+    #[inline(always)]
+    fn set_crop(&mut self, crop: ggraphics::Rect) {
+        self.canvas.set_crop(crop);
+    }
+
+    #[inline(always)]
+    fn get_crop(&self) -> ggraphics::Rect {
+        self.canvas.get_crop()
+    }
+
+    #[inline(always)]
+    fn set_drawing_color(&mut self, color: ggraphics::Color) {
+        self.canvas.set_drawing_color(color)
+    }
+
+    #[inline(always)]
+    fn get_drawing_color(&self) -> ggraphics::Color {
+        self.canvas.get_drawing_color()
+    }
+
+    #[inline(always)]
+    fn set_alpha(&mut self, alpha: f32) {
+        self.canvas.set_alpha(alpha);
+    }
+
+    #[inline(always)]
+    fn get_alpha(&self) -> f32 {
+        self.canvas.get_alpha()
+    }
+
+    #[inline(always)]
+    fn set_transform_offset(&mut self, offset: numeric::Point2f) {
+        self.canvas.set_transform_offset(offset);
+    }
+
+    #[inline(always)]
+    fn get_transform_offset(&self) -> numeric::Point2f {
+        self.canvas.get_transform_offset()
+    }
+
+    #[inline(always)]
+    fn get_drawing_area(&self, ctx: &mut ggez::Context) -> ggraphics::Rect {
+        self.canvas.get_drawing_area(ctx)
+    }
+
+    #[inline(always)]
+    fn get_drawing_size(&self, ctx: &mut ggez::Context) -> numeric::Vector2f {
+        self.canvas.get_drawing_size(ctx)
+    }
+
+    #[inline(always)]
+    fn get_texture_size(&self, ctx: &mut ggez::Context) -> numeric::Vector2f {
+        self.canvas.get_texture_size(ctx)
+    }
+
+    #[inline(always)]
+    fn replace_texture(&mut self, texture: Rc<ggraphics::Image>) {
+        self.canvas.replace_texture(texture);
+    }
+
+    #[inline(always)]
+    fn set_color(&mut self, color: ggraphics::Color) {
+        self.canvas.set_color(color);
+    }
+
+    #[inline(always)]
+    fn get_color(&mut self) -> ggraphics::Color {
+        self.canvas.get_color()
+    }
+}
 
 #[derive(PartialEq, Debug, Clone, Copy)]
 pub struct MouseActionRecord {
@@ -529,25 +635,25 @@ impl MouseInformation {
     
 }
 
-pub struct DrawableComponentContainer {
-    container: Vec<Box<dyn DrawableComponent>>,
+pub struct ObjectContainer<T> {
+    container: Vec<T>,
 }
 
-impl DrawableComponentContainer {
+impl<T> ObjectContainer<T> {
     pub fn new() -> Self {
-        DrawableComponentContainer {
+        ObjectContainer {
             container: Vec::new(),
         }
     }
 
     #[inline(always)]
-    pub fn add(&mut self, obj: Box<dyn DrawableComponent>) {
+    pub fn add(&mut self, obj: T) {
         self.container.push(obj);
     }
 
     #[inline(always)]
     pub fn remove_if<F>(&mut self, f: F)
-    where F: Fn(&Box<dyn DrawableComponent>) -> bool {
+    where F: Fn(&T) -> bool {
         self.container.retain(|e| !f(e));
     }
 
@@ -555,20 +661,19 @@ impl DrawableComponentContainer {
         self.container.len()
     }
 
-    pub fn iter(&self) -> std::slice::Iter<Box<dyn DrawableComponent>> {
+    pub fn iter(&self) -> std::slice::Iter<T> {
         self.container.iter()
     }
 
-    pub fn iter_mut(&mut self) -> std::slice::IterMut<Box<dyn DrawableComponent>> {
+    pub fn iter_mut(&mut self) -> std::slice::IterMut<T> {
         self.container.iter_mut()
     }
 }
 
 pub struct DeskObjects {
     canvas: SubScreen,
-    desk_objects: SimpleObjectContainer,
-    dragging: Option<tobj::SimpleObject>,
-    dobj_container: DrawableComponentContainer,
+    desk_objects: TextureObjectContainer,
+    dragging: Option<Box<dyn TextureObject>>,
     table_texture: tobj::SimpleObject,
 }
 
@@ -579,22 +684,22 @@ impl DeskObjects {
         let mut dparam = ggraphics::DrawParam::default();
         dparam.dest = numeric::Point2f::new(rect.x, rect.y).into();
         
-        let mut desk_objects = SimpleObjectContainer::new();
+        let mut desk_objects = TextureObjectContainer::new();
         
-        desk_objects.add(tobj::SimpleObject::new(
+        desk_objects.add(Box::new(tobj::SimpleObject::new(
             tobj::MovableUniTexture::new(
                 game_data.ref_texture(TextureID::Ghost1),
                 numeric::Point2f::new(0.0, 0.0),
                 numeric::Vector2f::new(0.1, 0.1),
                 0.0, 0, move_fn::stop(),
-                0), vec![]));
-        desk_objects.add(tobj::SimpleObject::new(
+                0), vec![])));
+        desk_objects.add(Box::new(tobj::SimpleObject::new(
             tobj::MovableUniTexture::new(
                 game_data.ref_texture(TextureID::LotusPink),
                 numeric::Point2f::new(0.0, 0.0),
                 numeric::Vector2f::new(0.1, 0.1),
                 0.0, -1, move_fn::stop(),
-                0), vec![]));
+                0), vec![])));
         desk_objects.sort_with_depth();
 
         
@@ -603,7 +708,6 @@ impl DeskObjects {
             canvas: SubScreen::new(ctx, rect, 0, ggraphics::Color::new(0.0, 0.0, 0.0, 0.0)),
             desk_objects: desk_objects,
             dragging: None,
-            dobj_container: DrawableComponentContainer::new(),
             table_texture: tobj::SimpleObject::new(
                 tobj::MovableUniTexture::new(game_data.ref_texture(TextureID::Wood1),
                                              numeric::Point2f::new(0.0, 0.0),
@@ -640,8 +744,9 @@ impl DeskObjects {
         }
         if drag_start {
             // 元々、最前面に表示されていたオブジェクトのdepthに設定する
-            self.dragging = Some(self.desk_objects.get_raw_container_mut()
-                                 .swap_remove(dragging_object_index));
+            self.dragging = Some(
+                    self.desk_objects.get_raw_container_mut().swap_remove(dragging_object_index)
+            );
         }
     }
 
@@ -661,9 +766,11 @@ impl DeskObjects {
     }
 
     pub fn update(&mut self, _ctx: &mut ggez::Context, t: Clock) {
+        /*
         for p in self.desk_objects.get_raw_container_mut() {
             p.move_with_func(t);
         }
+        */
     }    
 
     pub fn double_click_handler(&mut self,
@@ -671,23 +778,29 @@ impl DeskObjects {
                             point: numeric::Point2f,
                             game_data: &GameData) {
         let rpoint = self.canvas.relative_point(point);
+        let mut click_flag = false;
         
         // オブジェクトは深度が深い順にソートされているので、
         // 逆順から検索していくことで、最も手前に表示されているオブジェクトを
         // 取り出すことができる
         for (_, obj) in self.desk_objects.get_raw_container_mut().iter_mut().rev().enumerate() {
             if obj.get_drawing_area(ctx).contains(rpoint) {
-                println!("sassss");
-                self.dobj_container.add(
-                    Box::new(CopyingRequestPaper::new(ctx, ggraphics::Rect::new(0.0, 0.0, 700.0, 700.0), TextureID::Paper2,
-                                                      &CopyingRequestInformation::new("テスト本1".to_string(),
-                                                                                      "霧雨魔里沙".to_string(),
-                                                                                      GensoDate::new(128, 12, 8),
-                                                                                      GensoDate::new(128, 12, 8),
-                                                                                      212),
-                                                      game_data, 0))
-                )
+                click_flag = true;
+                break;
             }
+        }
+
+        if click_flag {
+            self.desk_objects.add(
+                Box::new(CopyingRequestPaper::new(ctx, ggraphics::Rect::new(rpoint.x, rpoint.y, 420.0, 350.0), TextureID::Paper2,
+                                                  &CopyingRequestInformation::new("テスト本1".to_string(),
+                                                                                  "霧雨魔里沙".to_string(),
+                                                                                  GensoDate::new(128, 12, 8),
+                                                                                  GensoDate::new(128, 12, 8),
+                                                                                  212),
+                                                  game_data, 0))
+            );
+            self.desk_objects.sort_with_depth();
         }
     }
     
@@ -706,10 +819,6 @@ impl DrawableComponent for DeskObjects {
             
             if let Some(ref mut d) = self.dragging {
                 d.draw(ctx)?;
-            }
-
-            for obj in self.dobj_container.iter_mut() {
-                obj.draw(ctx)?;
             }
             
             self.canvas.end_drawing(ctx);

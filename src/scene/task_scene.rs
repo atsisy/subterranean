@@ -18,7 +18,7 @@ use crate::object::move_fn;
 
 pub struct TaskScene {
     desk_objects: DeskObjects,
-    dobj_container: DrawableComponentContainer,
+    dobj_container: ObjectContainer<Box<dyn DrawableComponent>>,
     clock: Clock,
     mouse_info: MouseInformation,
 }
@@ -36,7 +36,7 @@ impl TaskScene {
                                                                   GensoDate::new(128, 12, 8)), game_data, 0),
             */
             clock: 0,
-            dobj_container: DrawableComponentContainer::new(),
+            dobj_container: ObjectContainer::<Box<dyn DrawableComponent>>::new(),
             mouse_info: MouseInformation::new(),
         }
     }
