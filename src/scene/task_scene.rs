@@ -44,11 +44,13 @@ impl TaskScene {
     }
     
     fn dragging_handler(&mut self,
-                        _ctx: &mut ggez::Context,
+                        ctx: &mut ggez::Context,
                         point: numeric::Point2f,
-                        _offset: numeric::Vector2f) {
+                        _offset: numeric::Vector2f,
+                        game_data: &GameData) {
         let last = self.mouse_info.get_last_dragged(MouseButton::Left);
         self.task_table.dragging_handler(point, last);
+        self.task_table.hand_over_check(ctx, game_data, point);
     }
 
     fn select_dragging_object(&mut self, ctx: &mut ggez::Context, point: numeric::Point2f) {
@@ -86,13 +88,13 @@ impl SceneManager for TaskScene {
 
     fn mouse_motion_event(&mut self,
                           ctx: &mut ggez::Context,
-                          _game_data: &GameData,
+                          game_data: &GameData,
                           point: numeric::Point2f,
                           offset: numeric::Vector2f) {
         if self.mouse_info.is_dragging(MouseButton::Left) {
             //println!("x: {}, y: {} ::: offset_x: {}, offset_y: {}", point.x, point.y, offset.x, offset.y);
             let d = numeric::Vector2f::new(offset.x / 2.0, offset.y / 2.0);
-            self.dragging_handler(ctx, point, d);
+            self.dragging_handler(ctx, point, d, game_data);
             self.mouse_info.set_last_dragged(MouseButton::Left, point, self.get_current_clock());
         }
 

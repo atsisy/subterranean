@@ -4,7 +4,8 @@ extern crate toml;
 use ggez::*;
 use std::env;
 use std::path;
-use subterranean::core::*;
+
+use suzu::core::*;
 use ggez::conf::{WindowMode, FullscreenType};
 
 pub fn main() {

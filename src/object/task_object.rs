@@ -758,7 +758,8 @@ impl DeskObjects {
         match self.dragging {
             None =>  (),
             _ => {
-                self.desk_objects.add(std::mem::replace(&mut self.dragging, None).unwrap());
+                let dragged = self.release_dragging().unwrap();
+                self.desk_objects.add(dragged);
                 self.desk_objects.sort_with_depth();
             }
         }
@@ -816,6 +817,14 @@ impl DeskObjects {
         if d.is_some() {
             self.desk_objects.add(d.unwrap());
         }
+    }
+
+    pub fn release_dragging(&mut self) -> Option<Box<dyn TextureObject>> {
+        std::mem::replace(&mut self.dragging, None)
+    }
+
+    pub fn out_of_desk(&self, point: numeric::Point2f) -> bool {
+        !self.canvas.contains(point)
     }
 }
 
@@ -896,11 +905,15 @@ impl DeskSight {
         DeskSight {
             canvas: SubScreen::new(ctx, rect, 0, ggraphics::Color::from_rgba_u32(0x00000000)),
             desk: DeskObjects::new(ctx, game_data,
-                                   numeric::Rect::new(rect.x, rect.y + (rect.h / 2.0), rect.w, rect.h)),
+                                   numeric::Rect::new(rect.x, rect.y + (rect.h / 2.0), rect.w, rect.h / 2.0)),
         }
     }
 
-    pub fn get_desk(&mut self) -> &mut DeskObjects {
+    pub fn get_desk(&mut self) -> &DeskObjects {
+        &self.desk
+    }
+
+    pub fn get_desk_mut(&mut self) -> &mut DeskObjects {
         &mut self.desk
     }
 }
@@ -910,7 +923,7 @@ impl DrawableComponent for DeskSight {
         if self.is_visible() {
             self.canvas.begin_drawing(ctx);
 
-            self.get_desk().draw(ctx).unwrap();
+            self.get_desk_mut().draw(ctx).unwrap();
             
             self.canvas.end_drawing(ctx);
             self.canvas.draw(ctx).unwrap();
@@ -981,7 +994,7 @@ impl TaskTable {
 
     pub fn select_dragging_object(&mut self, ctx: &mut ggez::Context, point: numeric::Point2f) {
         let rpoint = self.canvas.relative_point(point);
-        self.left.get_desk().select_dragging_object(ctx, rpoint);
+        self.left.get_desk_mut().select_dragging_object(ctx, rpoint);
         self.right.select_dragging_object(ctx, rpoint);
     }
     
@@ -990,7 +1003,7 @@ impl TaskTable {
                                 point: numeric::Point2f,
                                 game_data: &GameData) {
         let rpoint = self.canvas.relative_point(point);
-        self.left.get_desk().double_click_handler(ctx, rpoint, game_data);
+        self.left.get_desk_mut().double_click_handler(ctx, rpoint, game_data);
         self.right.double_click_handler(ctx, rpoint, game_data);
     }
 
@@ -1000,13 +1013,66 @@ impl TaskTable {
         let rpoint = self.canvas.relative_point(point);
         let rlast = self.canvas.relative_point(last);
         
-        self.left.get_desk().dragging_handler(rpoint, rlast);
+        self.left.get_desk_mut().dragging_handler(rpoint, rlast);
         self.right.dragging_handler(rpoint, rlast);
     }
 
     pub fn unselect_dragging_object(&mut self) {
-        self.left.get_desk().unselect_dragging_object();
+        self.left.get_desk_mut().unselect_dragging_object();
         self.right.unselect_dragging_object();
+    }
+
+    pub fn hand_over_check(&mut self, ctx: &mut ggez::Context, game_data: &GameData, point: numeric::Point2f) {
+        self.hand_over_check_r2l(ctx, game_data, point);
+        self.hand_over_check_l2r(ctx, game_data, point);
+    }
+
+    fn hand_over_check_r2l(&mut self, ctx: &mut ggez::Context, game_data: &GameData, point: numeric::Point2f) {
+        let rpoint = self.canvas.relative_point(point);
+        
+        if self.right.has_dragging() && self.right.out_of_desk(rpoint) {
+            let p = self.right_edge_to_left_edge(ctx, rpoint);
+            self.left.get_desk_mut().insert_dragging(
+                Box::new(MovableUniTexture::new(
+                    game_data.ref_texture(TextureID::Ghost1),
+                    p,
+                    numeric::Vector2f::new(0.1, 0.1),
+                    0.0, 0, move_fn::stop(),
+                    0)));
+            self.right.release_dragging();
+        }
+    }
+
+    fn hand_over_check_l2r(&mut self, ctx: &mut ggez::Context, game_data: &GameData, point: numeric::Point2f) {
+        let rpoint = self.canvas.relative_point(point);
+        
+        if self.left.get_desk().has_dragging() && self.left.get_desk().out_of_desk(rpoint) {
+            let p = self.left_edge_to_right_edge(ctx, rpoint);
+            
+            self.right.insert_dragging(
+                Box::new(MovableUniTexture::new(
+                    game_data.ref_texture(TextureID::Ghost1),
+                    p,
+                    numeric::Vector2f::new(0.1, 0.1),
+                    0.0, 0, move_fn::stop(),
+                    0)));
+            self.left.get_desk_mut().release_dragging();
+        }
+    }
+
+    fn right_edge_to_left_edge(&mut self, ctx: &mut ggez::Context, rpoint: numeric::Point2f) -> numeric::Point2f {
+        let h = rpoint.y / self.right.canvas.get_texture_size(ctx).y;
+
+        numeric::Point2f::new(self.left.get_desk().canvas.get_texture_size(ctx).x,
+                              h * self.left.get_desk().canvas.get_texture_size(ctx).y * 0.5)
+    }
+
+    fn left_edge_to_right_edge(&mut self, ctx: &mut ggez::Context, rpoint: numeric::Point2f) -> numeric::Point2f {
+        let left_desk_size = self.left.get_desk().canvas.get_texture_size(ctx);
+        let h = rpoint.y / left_desk_size.y;
+
+        numeric::Point2f::new(0.0,
+                              h * left_desk_size.y)
     }
 }
 
@@ -1016,8 +1082,8 @@ impl DrawableComponent for TaskTable {
         if self.is_visible() {
             self.canvas.begin_drawing(ctx);
 
-            self.left.draw(ctx);
-            self.right.draw(ctx);
+            self.left.draw(ctx).unwrap();
+            self.right.draw(ctx).unwrap();
             
             self.canvas.end_drawing(ctx);
             self.canvas.draw(ctx).unwrap();
