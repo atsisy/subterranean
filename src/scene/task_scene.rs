@@ -17,7 +17,7 @@ use crate::object::task_object::*;
 use crate::object::move_fn;
 
 pub struct TaskScene {
-    desk_objects: DeskObjects,
+    task_table: TaskTable,
     dobj_container: ObjectContainer<Box<dyn DrawableComponent>>,
     clock: Clock,
     mouse_info: MouseInformation,
@@ -27,8 +27,10 @@ impl TaskScene {
     pub fn new(ctx: &mut ggez::Context, game_data: &GameData) -> TaskScene  {
         
         TaskScene {
-            desk_objects: DeskObjects::new(ctx, game_data,
-                                           ggraphics::Rect::new(150.0, 350.0, 1000.0, 400.0)),
+            task_table: TaskTable::new(ctx, game_data,
+                                       ggraphics::Rect::new(10.0, 230.0, 1300.0, 500.0),
+                                       ggraphics::Rect::new(10.0, 0.0, 500.0, 500.0),
+                                       ggraphics::Rect::new(550.0, 0.0, 800.0, 500.0)),
             /*
             paper: BorrowingPaper::new(ctx, ggraphics::Rect::new(10.0, 10.0, 700.0, 700.0), TextureID::Paper1,
                                        &BorrowingInformation::new(vec!["テスト本1".to_string(), "テスト本2".to_string()],
@@ -46,15 +48,15 @@ impl TaskScene {
                         point: numeric::Point2f,
                         _offset: numeric::Vector2f) {
         let last = self.mouse_info.get_last_dragged(MouseButton::Left);
-        self.desk_objects.dragging_handler(point, last);
+        self.task_table.dragging_handler(point, last);
     }
 
     fn select_dragging_object(&mut self, ctx: &mut ggez::Context, point: numeric::Point2f) {
-        self.desk_objects.select_dragging_object(ctx, point);
+        self.task_table.select_dragging_object(ctx, point);
     }
 
     fn unselect_dragging_object(&mut self) {
-        self.desk_objects.unselect_dragging_object();
+        self.task_table.unselect_dragging_object();
     }
 }
 
@@ -103,7 +105,7 @@ impl SceneManager for TaskScene {
                                point: numeric::Point2f) {
         let info: &MouseActionRecord = &self.mouse_info.last_clicked.get(&button).unwrap();
         if info.point == point && (self.get_current_clock() - info.t) < 20 {
-            self.desk_objects.double_click_handler(ctx, point, game_data);
+            self.task_table.double_click_handler(ctx, point, game_data);
         }
         
         self.mouse_info.set_last_clicked(button, point, self.get_current_clock());
@@ -124,11 +126,11 @@ impl SceneManager for TaskScene {
     }
 
     fn pre_process(&mut self, ctx: &mut ggez::Context) {
-        self.desk_objects.update(ctx, self.get_current_clock());
+        //self.task_table.update(ctx, self.get_current_clock());
     }
     
     fn drawing_process(&mut self, ctx: &mut ggez::Context) {
-        self.desk_objects.draw(ctx).unwrap();
+        self.task_table.draw(ctx).unwrap();
         for obj in self.dobj_container.iter_mut() {
             obj.draw(ctx).unwrap();
         }

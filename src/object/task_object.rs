@@ -459,7 +459,7 @@ impl DrawableObject for CopyingRequestPaper {
 }
 
 impl TextureObject for CopyingRequestPaper {
-        #[inline(always)]
+    #[inline(always)]
     fn set_scale(&mut self, scale: numeric::Vector2f) {
         self.canvas.set_scale(scale)
     }
@@ -701,7 +701,6 @@ impl DeskObjects {
                 0.0, -1, move_fn::stop(),
                 0), vec![])));
         desk_objects.sort_with_depth();
-
         
         
         DeskObjects {
@@ -803,7 +802,21 @@ impl DeskObjects {
             self.desk_objects.sort_with_depth();
         }
     }
-    
+
+    pub fn add_object(&mut self, obj: Box<dyn TextureObject>) {
+        self.desk_objects.add(obj);
+    }
+
+    pub fn has_dragging(&self) -> bool {
+        self.dragging.is_some()
+    }
+
+    pub fn insert_dragging(&mut self, obj: Box<dyn TextureObject>) {
+        let d = std::mem::replace(&mut self.dragging, Some(obj));
+        if d.is_some() {
+            self.desk_objects.add(d.unwrap());
+        }
+    }
 }
 
 impl DrawableComponent for DeskObjects {
@@ -867,6 +880,172 @@ impl DrawableObject for DeskObjects {
     /// offsetで指定しただけ描画位置を動かす
     fn move_diff(&mut self, offset: numeric::Vector2f) {
         self.canvas.move_diff(offset)
+    }
+}
+
+pub struct DeskSight {
+    canvas: SubScreen,
+    desk: DeskObjects,
+}
+
+impl DeskSight {
+    pub fn new(ctx: &mut ggez::Context,
+               game_data: &GameData,
+               rect: ggraphics::Rect) -> Self {
+        
+        DeskSight {
+            canvas: SubScreen::new(ctx, rect, 0, ggraphics::Color::from_rgba_u32(0x00000000)),
+            desk: DeskObjects::new(ctx, game_data,
+                                   numeric::Rect::new(rect.x, rect.y + (rect.h / 2.0), rect.w, rect.h)),
+        }
+    }
+
+    pub fn get_desk(&mut self) -> &mut DeskObjects {
+        &mut self.desk
+    }
+}
+
+impl DrawableComponent for DeskSight {
+    fn draw(&mut self, ctx: &mut ggez::Context) -> ggez::GameResult<()> {
+        if self.is_visible() {
+            self.canvas.begin_drawing(ctx);
+
+            self.get_desk().draw(ctx).unwrap();
+            
+            self.canvas.end_drawing(ctx);
+            self.canvas.draw(ctx).unwrap();
+            
+        }
+        Ok(())
+    }
+
+    fn hide(&mut self) {
+        self.canvas.hide();
+    }
+
+    fn appear(&mut self) {
+        self.canvas.appear();
+    }
+
+    fn is_visible(&self) -> bool {
+        self.canvas.is_visible()
+    }
+
+    /// 描画順序を設定する
+    fn set_drawing_depth(&mut self, depth: i8) {
+        self.canvas.set_drawing_depth(depth);
+    }
+
+    /// 描画順序を返す
+    fn get_drawing_depth(&self) -> i8 {
+        self.canvas.get_drawing_depth()
+    }
+
+}
+
+impl DrawableObject for DeskSight {
+
+    /// 描画開始地点を設定する
+    fn set_position(&mut self, pos: numeric::Point2f) {
+        self.canvas.set_position(pos);
+    }
+
+    /// 描画開始地点を返す
+    fn get_position(&self) -> numeric::Point2f {
+        self.canvas.get_position()
+    }
+
+    /// offsetで指定しただけ描画位置を動かす
+    fn move_diff(&mut self, offset: numeric::Vector2f) {
+        self.canvas.move_diff(offset)
+    }
+}
+
+
+pub struct TaskTable {
+    canvas: SubScreen,
+    left: DeskSight,
+    right: DeskObjects,
+}
+
+impl TaskTable {
+    pub fn new(ctx: &mut ggez::Context, game_data: &GameData,
+               pos: numeric::Rect,
+               left_rect: ggraphics::Rect, right_rect: ggraphics::Rect) -> Self {
+        TaskTable {
+            canvas: SubScreen::new(ctx, pos, 0, ggraphics::Color::from_rgba_u32(0x00000000)),
+            left: DeskSight::new(ctx, game_data, left_rect),
+            right: DeskObjects::new(ctx, game_data, right_rect),
+        }
+    }
+
+    pub fn select_dragging_object(&mut self, ctx: &mut ggez::Context, point: numeric::Point2f) {
+        let rpoint = self.canvas.relative_point(point);
+        self.left.get_desk().select_dragging_object(ctx, rpoint);
+        self.right.select_dragging_object(ctx, rpoint);
+    }
+    
+    pub fn double_click_handler(&mut self,
+                                ctx: &mut ggez::Context,
+                                point: numeric::Point2f,
+                                game_data: &GameData) {
+        let rpoint = self.canvas.relative_point(point);
+        self.left.get_desk().double_click_handler(ctx, rpoint, game_data);
+        self.right.double_click_handler(ctx, rpoint, game_data);
+    }
+
+    pub fn dragging_handler(&mut self,
+                            point: numeric::Point2f,
+                            last: numeric::Point2f) {
+        let rpoint = self.canvas.relative_point(point);
+        let rlast = self.canvas.relative_point(last);
+        
+        self.left.get_desk().dragging_handler(rpoint, rlast);
+        self.right.dragging_handler(rpoint, rlast);
+    }
+
+    pub fn unselect_dragging_object(&mut self) {
+        self.left.get_desk().unselect_dragging_object();
+        self.right.unselect_dragging_object();
+    }
+}
+
+impl DrawableComponent for TaskTable {
+    
+    fn draw(&mut self, ctx: &mut ggez::Context) -> ggez::GameResult<()> {
+        if self.is_visible() {
+            self.canvas.begin_drawing(ctx);
+
+            self.left.draw(ctx);
+            self.right.draw(ctx);
+            
+            self.canvas.end_drawing(ctx);
+            self.canvas.draw(ctx).unwrap();
+            
+        }
+        Ok(())
+    }
+
+    fn hide(&mut self) {
+        self.canvas.hide();
+    }
+
+    fn appear(&mut self) {
+        self.canvas.appear();
+    }
+
+    fn is_visible(&self) -> bool {
+        self.canvas.is_visible()
+    }
+
+    /// 描画順序を設定する
+    fn set_drawing_depth(&mut self, depth: i8) {
+        self.canvas.set_drawing_depth(depth);
+    }
+
+    /// 描画順序を返す
+    fn get_drawing_depth(&self) -> i8 {
+        self.canvas.get_drawing_depth()
     }
 }
 

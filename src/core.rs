@@ -213,6 +213,9 @@ impl<'a> SceneController<'a> {
                       keycode: KeyCode,
                       _keymods: KeyMods,
                       _repeat: bool) {
+        if keycode == KeyCode::Escape {
+            std::process::exit(0);
+        }
         self.current_scene.key_down_event(ctx, game_data, self.key_map.real_to_virtual(keycode));
     }
     

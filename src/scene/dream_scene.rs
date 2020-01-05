@@ -321,7 +321,6 @@ impl DreamScene {
         self.playable_check_collision_horizon(ctx);
 
         self.check_enemy_collision_x(ctx, t);
-
     }
 
     fn move_playable_character_y(&mut self, ctx: &mut ggez::Context, t: Clock) {
