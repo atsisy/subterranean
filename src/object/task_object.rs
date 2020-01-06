@@ -635,6 +635,115 @@ impl MouseInformation {
     
 }
 
+pub struct DeskObject {
+    small: Box<dyn TextureObject>,
+    large: Box<dyn TextureObject>,
+    switch: u8,
+}
+
+impl DeskObject {
+    pub fn new(small: Box<dyn TextureObject>, large: Box<dyn TextureObject>, switch: u8) -> Self {
+        DeskObject {
+            small: small,
+            large: large,
+            switch: switch,
+        }
+    }
+
+    pub fn enable_small(&mut self) {
+        self.switch = 0;
+    }
+
+    pub fn enable_large(&mut self) {
+        self.switch = 1;
+    }
+
+    pub fn get_object(&self) -> &Box<dyn TextureObject> {
+        match self.switch {
+            0 => &self.small,
+            1 => &self.large,
+            _ => panic!("Failed to object selecting. select = {}", self.switch),
+        }
+    }
+
+    pub fn get_object_mut(&mut self) -> &mut Box<dyn TextureObject> {
+        match self.switch {
+            0 => &mut self.small,
+            1 => &mut self.large,
+            _ => panic!("Failed to object selecting. select = {}", self.switch),
+        }
+    }
+}
+
+pub struct DeskObjectContainer {
+    container: Vec<DeskObject>,
+}
+
+impl DeskObjectContainer {
+    fn new() -> Self {
+        DeskObjectContainer {
+            container: Vec::new(),
+        }
+    }
+
+    fn add(&mut self, obj: DeskObject) {
+        self.container.push(obj);
+    }
+
+    fn sort_with_depth(&mut self) {
+        self.container.sort_by(|a: &DeskObject, b: &DeskObject| {
+            let (ad, bd) = (a.get_object().get_drawing_depth(), b.get_object().get_drawing_depth());
+            if ad > bd {
+                Ordering::Less
+            } else if ad < bd {
+                Ordering::Greater
+            } else {
+                Ordering::Equal
+            }
+        });
+    }
+
+    fn get_raw_container(&self) -> &Vec<DeskObject> {
+        &self.container
+    }
+
+    fn get_raw_container_mut(&mut self) -> &mut Vec<DeskObject> {
+        &mut self.container
+    }
+
+    fn get_minimum_depth(&mut self) -> i8 {
+        self.sort_with_depth();
+        if let Some(depth) = self.container.last() {
+            depth.get_object().get_drawing_depth()
+        } else {
+            127
+        }
+    }
+
+    fn len(&self) -> usize {
+        self.container.len()
+    }
+
+    fn change_depth_equally(&mut self, offset: i8)  {
+        for obj in &mut self.container {
+            let current_depth = obj.get_object().get_drawing_depth();
+            let next_depth: i16 = (current_depth as i16) + (offset as i16);
+
+            if next_depth <= 127 && next_depth >= -128 {
+                // 範囲内
+                obj.get_object_mut().set_drawing_depth(next_depth as i8);
+            } else if next_depth > 0 {
+                // 範囲外（上限）
+                obj.get_object_mut().set_drawing_depth(127);
+            } else {
+                // 範囲外（下限）
+                obj.get_object_mut().set_drawing_depth(-128);
+            }
+        }
+    }
+}
+
+
 pub struct ObjectContainer<T> {
     container: Vec<T>,
 }
@@ -672,34 +781,51 @@ impl<T> ObjectContainer<T> {
 
 pub struct DeskObjects {
     canvas: SubScreen,
-    desk_objects: TextureObjectContainer,
-    dragging: Option<Box<dyn TextureObject>>,
+    desk_objects: DeskObjectContainer,
+    dragging: Option<DeskObject>,
     table_texture: tobj::SimpleObject,
 }
 
 impl DeskObjects {
     pub fn new(ctx: &mut ggez::Context, game_data: &GameData,
-               rect: ggraphics::Rect) -> DeskObjects {
+               rect: ggraphics::Rect, desk_size: u8) -> DeskObjects {
 
         let mut dparam = ggraphics::DrawParam::default();
         dparam.dest = numeric::Point2f::new(rect.x, rect.y).into();
         
-        let mut desk_objects = TextureObjectContainer::new();
+        let mut desk_objects = DeskObjectContainer::new();
         
-        desk_objects.add(Box::new(tobj::SimpleObject::new(
-            tobj::MovableUniTexture::new(
-                game_data.ref_texture(TextureID::Ghost1),
-                numeric::Point2f::new(0.0, 0.0),
-                numeric::Vector2f::new(0.1, 0.1),
-                0.0, 0, move_fn::stop(),
-                0), vec![])));
-        desk_objects.add(Box::new(tobj::SimpleObject::new(
-            tobj::MovableUniTexture::new(
-                game_data.ref_texture(TextureID::LotusPink),
-                numeric::Point2f::new(0.0, 0.0),
-                numeric::Vector2f::new(0.1, 0.1),
-                0.0, -1, move_fn::stop(),
-                0), vec![])));
+        desk_objects.add(DeskObject::new(
+            Box::new(tobj::SimpleObject::new(
+                tobj::MovableUniTexture::new(
+                    game_data.ref_texture(TextureID::Ghost1),
+                    numeric::Point2f::new(0.0, 0.0),
+                    numeric::Vector2f::new(0.1, 0.1),
+                    0.0, 0, move_fn::stop(),
+                    0), vec![])),
+            Box::new(tobj::SimpleObject::new(
+                tobj::MovableUniTexture::new(
+                    game_data.ref_texture(TextureID::Ghost1),
+                    numeric::Point2f::new(0.0, 0.0),
+                    numeric::Vector2f::new(0.1, 0.1),
+                    0.0, 0, move_fn::stop(),
+                    0), vec![])), desk_size));
+        
+        desk_objects.add(DeskObject::new(
+            Box::new(tobj::SimpleObject::new(
+                tobj::MovableUniTexture::new(
+                    game_data.ref_texture(TextureID::LotusPink),
+                    numeric::Point2f::new(0.0, 0.0),
+                    numeric::Vector2f::new(0.1, 0.1),
+                    0.0, -1, move_fn::stop(),
+                    0), vec![])),
+            Box::new(tobj::SimpleObject::new(
+                tobj::MovableUniTexture::new(
+                    game_data.ref_texture(TextureID::LotusPink),
+                    numeric::Point2f::new(0.0, 0.0),
+                    numeric::Vector2f::new(0.1, 0.1),
+                    0.0, -1, move_fn::stop(),
+                    0), vec![])), desk_size));
         desk_objects.sort_with_depth();
         
         
@@ -720,7 +846,7 @@ impl DeskObjects {
                         point: numeric::Point2f,
                         last: numeric::Point2f) {
         if let Some(obj) = &mut self.dragging {
-            obj.move_diff(numeric::Vector2f::new(point.x - last.x, point.y - last.y));
+            obj.get_object_mut().move_diff(numeric::Vector2f::new(point.x - last.x, point.y - last.y));
         }
     }
 
@@ -735,7 +861,7 @@ impl DeskObjects {
         // 逆順から検索していくことで、最も手前に表示されているオブジェクトを
         // 取り出すことができる
         for (index, obj) in self.desk_objects.get_raw_container_mut().iter_mut().rev().enumerate() {
-            if obj.get_drawing_area(ctx).contains(rpoint) {
+            if obj.get_object().get_drawing_area(ctx).contains(rpoint) {
                 dragging_object_index = self.desk_objects.len() - index - 1;
                 drag_start = true;
                 break;
@@ -752,7 +878,7 @@ impl DeskObjects {
     pub fn unselect_dragging_object(&mut self) {
         if let Some(obj) = &mut self.dragging {
             let min = self.desk_objects.get_minimum_depth();
-            obj.set_drawing_depth(min);
+            obj.get_object_mut().set_drawing_depth(min);
             self.desk_objects.change_depth_equally(1);
         }
         match self.dragging {
@@ -784,13 +910,14 @@ impl DeskObjects {
         // 逆順から検索していくことで、最も手前に表示されているオブジェクトを
         // 取り出すことができる
         for (_, obj) in self.desk_objects.get_raw_container_mut().iter_mut().rev().enumerate() {
-            if obj.get_drawing_area(ctx).contains(rpoint) {
+            if obj.get_object().get_drawing_area(ctx).contains(rpoint) {
                 click_flag = true;
                 break;
             }
         }
 
         if click_flag {
+            /*
             self.desk_objects.add(
                 Box::new(CopyingRequestPaper::new(ctx, ggraphics::Rect::new(rpoint.x, rpoint.y, 420.0, 350.0), TextureID::Paper2,
                                                   &CopyingRequestInformation::new("テスト本1".to_string(),
@@ -800,11 +927,12 @@ impl DeskObjects {
                                                                                   212),
                                                   game_data, 0))
             );
+            */
             self.desk_objects.sort_with_depth();
         }
     }
 
-    pub fn add_object(&mut self, obj: Box<dyn TextureObject>) {
+    pub fn add_object(&mut self, obj: DeskObject) {
         self.desk_objects.add(obj);
     }
 
@@ -812,14 +940,14 @@ impl DeskObjects {
         self.dragging.is_some()
     }
 
-    pub fn insert_dragging(&mut self, obj: Box<dyn TextureObject>) {
+    pub fn insert_dragging(&mut self, obj: DeskObject) {
         let d = std::mem::replace(&mut self.dragging, Some(obj));
         if d.is_some() {
             self.desk_objects.add(d.unwrap());
         }
     }
 
-    pub fn release_dragging(&mut self) -> Option<Box<dyn TextureObject>> {
+    pub fn release_dragging(&mut self) -> Option<DeskObject> {
         std::mem::replace(&mut self.dragging, None)
     }
 
@@ -836,16 +964,15 @@ impl DrawableComponent for DeskObjects {
             self.table_texture.draw(ctx)?;
             
             for obj in self.desk_objects.get_raw_container_mut() {
-                obj.draw(ctx)?;
+                obj.get_object_mut().draw(ctx)?;
             }
             
             if let Some(ref mut d) = self.dragging {
-                d.draw(ctx)?;
+                d.get_object_mut().draw(ctx)?;
             }
             
             self.canvas.end_drawing(ctx);
             self.canvas.draw(ctx).unwrap();
-            
         }
         Ok(())
     }
@@ -905,7 +1032,7 @@ impl DeskSight {
         DeskSight {
             canvas: SubScreen::new(ctx, rect, 0, ggraphics::Color::from_rgba_u32(0x00000000)),
             desk: DeskObjects::new(ctx, game_data,
-                                   numeric::Rect::new(rect.x, rect.y + (rect.h / 2.0), rect.w, rect.h / 2.0)),
+                                   numeric::Rect::new(rect.x, rect.y + (rect.h / 2.0), rect.w, rect.h / 2.0), 0),
         }
     }
 
@@ -988,7 +1115,7 @@ impl TaskTable {
         TaskTable {
             canvas: SubScreen::new(ctx, pos, 0, ggraphics::Color::from_rgba_u32(0x00000000)),
             left: DeskSight::new(ctx, game_data, left_rect),
-            right: DeskObjects::new(ctx, game_data, right_rect),
+            right: DeskObjects::new(ctx, game_data, right_rect, 1),
         }
     }
 
@@ -1023,56 +1150,59 @@ impl TaskTable {
     }
 
     pub fn hand_over_check(&mut self, ctx: &mut ggez::Context, game_data: &GameData, point: numeric::Point2f) {
-        self.hand_over_check_r2l(ctx, game_data, point);
-        self.hand_over_check_l2r(ctx, game_data, point);
+        let rpoint = self.canvas.relative_point(point);
+        self.hand_over_check_r2l(ctx, game_data, rpoint);
+        self.hand_over_check_l2r(ctx, game_data, rpoint);
     }
 
-    fn hand_over_check_r2l(&mut self, ctx: &mut ggez::Context, game_data: &GameData, point: numeric::Point2f) {
-        let rpoint = self.canvas.relative_point(point);
+    fn hand_over_check_r2l(&mut self, ctx: &mut ggez::Context, game_data: &GameData, rpoint: numeric::Point2f) {
+        let border = self.desk_border(ctx);
         
-        if self.right.has_dragging() && self.right.out_of_desk(rpoint) {
+        if self.right.has_dragging() && border > rpoint.x {
             let p = self.right_edge_to_left_edge(ctx, rpoint);
-            self.left.get_desk_mut().insert_dragging(
-                Box::new(MovableUniTexture::new(
-                    game_data.ref_texture(TextureID::Ghost1),
-                    p,
-                    numeric::Vector2f::new(0.1, 0.1),
-                    0.0, 0, move_fn::stop(),
-                    0)));
-            self.right.release_dragging();
+
+            if let Some(mut dragging) = self.right.release_dragging() {
+                dragging.enable_small();
+                dragging.get_object_mut().set_position(p);
+                self.left.get_desk_mut().insert_dragging(dragging);
+            }
         }
     }
 
-    fn hand_over_check_l2r(&mut self, ctx: &mut ggez::Context, game_data: &GameData, point: numeric::Point2f) {
-        let rpoint = self.canvas.relative_point(point);
+    /// point: 絶対座標
+    fn hand_over_check_l2r(&mut self, ctx: &mut ggez::Context, game_data: &GameData, rpoint: numeric::Point2f) {
+        let border = self.desk_border(ctx);
         
-        if self.left.get_desk().has_dragging() && self.left.get_desk().out_of_desk(rpoint) {
+        if self.left.get_desk().has_dragging() && border < rpoint.x {
             let p = self.left_edge_to_right_edge(ctx, rpoint);
-            
-            self.right.insert_dragging(
-                Box::new(MovableUniTexture::new(
-                    game_data.ref_texture(TextureID::Ghost1),
-                    p,
-                    numeric::Vector2f::new(0.1, 0.1),
-                    0.0, 0, move_fn::stop(),
-                    0)));
-            self.left.get_desk_mut().release_dragging();
+
+            if let Some(mut dragging) = self.left.get_desk_mut().release_dragging() {
+                dragging.enable_large();
+                dragging.get_object_mut().set_position(p);
+                self.right.insert_dragging(dragging);
+            }
         }
+    }
+
+    fn desk_border(&mut self, ctx: &mut ggez::Context) -> f32 {
+        let left_edge = self.left.canvas.get_position().x + self.left.canvas.get_texture_size(ctx).x;
+        let diff = (left_edge - self.right.canvas.get_position().x).abs();
+        left_edge + diff
     }
 
     fn right_edge_to_left_edge(&mut self, ctx: &mut ggez::Context, rpoint: numeric::Point2f) -> numeric::Point2f {
-        let h = rpoint.y / self.right.canvas.get_texture_size(ctx).y;
+        let from_bottom = self.right.canvas.get_texture_size(ctx).y - rpoint.y;
+        println!("{} - {} = {}", self.right.canvas.get_texture_size(ctx).y, rpoint.y, from_bottom);
 
         numeric::Point2f::new(self.left.get_desk().canvas.get_texture_size(ctx).x,
-                              h * self.left.get_desk().canvas.get_texture_size(ctx).y * 0.5)
+                              self.left.get_desk().canvas.get_texture_size(ctx).y - from_bottom)
     }
 
     fn left_edge_to_right_edge(&mut self, ctx: &mut ggez::Context, rpoint: numeric::Point2f) -> numeric::Point2f {
-        let left_desk_size = self.left.get_desk().canvas.get_texture_size(ctx);
-        let h = rpoint.y / left_desk_size.y;
+        let from_bottom = self.left.get_desk().canvas.get_texture_size(ctx).y - (rpoint.y - self.left.get_desk().get_position().y);
 
         numeric::Point2f::new(0.0,
-                              h * left_desk_size.y)
+                              self.right.canvas.get_texture_size(ctx).y - from_bottom)
     }
 }
 
