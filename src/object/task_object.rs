@@ -951,6 +951,10 @@ impl DeskObjects {
         std::mem::replace(&mut self.dragging, None)
     }
 
+    pub fn ref_dragging(&self) -> &Option<DeskObject> {
+        &self.dragging
+    }
+
     pub fn out_of_desk(&self, point: numeric::Point2f) -> bool {
         !self.canvas.contains(point)
     }
@@ -1159,9 +1163,8 @@ impl TaskTable {
         let border = self.desk_border(ctx);
         
         if self.right.has_dragging() && border > rpoint.x {
-            let p = self.right_edge_to_left_edge(ctx, rpoint);
-
             if let Some(mut dragging) = self.right.release_dragging() {
+                let p = self.right_edge_to_left_edge(ctx, dragging.get_object_mut().get_position());
                 dragging.enable_small();
                 dragging.get_object_mut().set_position(p);
                 self.left.get_desk_mut().insert_dragging(dragging);
@@ -1174,9 +1177,8 @@ impl TaskTable {
         let border = self.desk_border(ctx);
         
         if self.left.get_desk().has_dragging() && border < rpoint.x {
-            let p = self.left_edge_to_right_edge(ctx, rpoint);
-
             if let Some(mut dragging) = self.left.get_desk_mut().release_dragging() {
+                let p = self.left_edge_to_right_edge(ctx, dragging.get_object().get_position());
                 dragging.enable_large();
                 dragging.get_object_mut().set_position(p);
                 self.right.insert_dragging(dragging);
@@ -1190,16 +1192,15 @@ impl TaskTable {
         left_edge + diff
     }
 
-    fn right_edge_to_left_edge(&mut self, ctx: &mut ggez::Context, rpoint: numeric::Point2f) -> numeric::Point2f {
-        let from_bottom = self.right.canvas.get_texture_size(ctx).y - rpoint.y;
-        println!("{} - {} = {}", self.right.canvas.get_texture_size(ctx).y, rpoint.y, from_bottom);
+    fn right_edge_to_left_edge(&mut self, ctx: &mut ggez::Context, point: numeric::Point2f) -> numeric::Point2f {
+        let from_bottom = self.right.canvas.get_texture_size(ctx).y - point.y;
 
         numeric::Point2f::new(self.left.get_desk().canvas.get_texture_size(ctx).x,
                               self.left.get_desk().canvas.get_texture_size(ctx).y - from_bottom)
     }
 
     fn left_edge_to_right_edge(&mut self, ctx: &mut ggez::Context, rpoint: numeric::Point2f) -> numeric::Point2f {
-        let from_bottom = self.left.get_desk().canvas.get_texture_size(ctx).y - (rpoint.y - self.left.get_desk().get_position().y);
+        let from_bottom = self.left.get_desk().canvas.get_texture_size(ctx).y - rpoint.y;
 
         numeric::Point2f::new(0.0,
                               self.right.canvas.get_texture_size(ctx).y - from_bottom)
