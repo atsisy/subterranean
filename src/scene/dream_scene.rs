@@ -385,7 +385,7 @@ impl SceneManager for DreamScene {
                              _point: numeric::Point2f) {
     }
 
-    fn pre_process(&mut self, ctx: &mut ggez::Context) {
+    fn pre_process(&mut self, ctx: &mut ggez::Context, _: &GameData) {
         let t = self.get_current_clock();
 
         self.move_playable_character(ctx, t);
@@ -405,7 +405,7 @@ impl SceneManager for DreamScene {
         self.enemy_group.draw(ctx).unwrap();
     }
     
-    fn post_process(&mut self, _ctx: &mut ggez::Context) -> SceneTransition {
+    fn post_process(&mut self, _ctx: &mut ggez::Context, _: &GameData) -> SceneTransition {
         self.update_current_clock();
         SceneTransition::Keep
     }

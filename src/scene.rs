@@ -62,10 +62,10 @@ pub trait SceneManager {
                              _point: numeric::Point2f){
     }
 
-    fn pre_process(&mut self, ctx: &mut ggez::Context);
+    fn pre_process(&mut self, ctx: &mut ggez::Context, game_data: &GameData);
     
     fn drawing_process(&mut self, ctx: &mut ggez::Context);
-    fn post_process(&mut self, ctx: &mut ggez::Context) -> SceneTransition;
+    fn post_process(&mut self, ctx: &mut ggez::Context, game_data: &GameData) -> SceneTransition;
     fn transition(&self) -> SceneID;
     
 
@@ -86,14 +86,14 @@ impl NullScene {
 
 impl SceneManager for NullScene {
 
-    fn pre_process(&mut self, _ctx: &mut ggez::Context) {
+    fn pre_process(&mut self, _ctx: &mut ggez::Context, _: &GameData) {
         
     }
     
     fn drawing_process(&mut self, _ctx: &mut ggez::Context) {
         
     }
-    fn post_process(&mut self, _ctx: &mut ggez::Context) -> SceneTransition {
+    fn post_process(&mut self, _ctx: &mut ggez::Context, _: &GameData) -> SceneTransition {
         SceneTransition::Keep
     }
 

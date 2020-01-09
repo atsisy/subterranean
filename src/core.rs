@@ -1,4 +1,5 @@
 pub mod map_parser;
+pub mod util;
 
 use ggez::*;
 use ggez::graphics as ggraphics;
@@ -17,6 +18,9 @@ use std::fs;
 use std::io::{BufReader, Read};
 
 use serde::Deserialize;
+
+extern crate num;
+use num::traits::FromPrimitive;
 
 fn read_whole_file(path: String) -> Result<String, String> {
     let mut file_content = String::new();
@@ -47,6 +51,7 @@ pub enum TextureID {
     MiddleBook2,
     MiddleBook3,
     Wood1,
+    Unknown,
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -62,15 +67,58 @@ impl FromStr for TextureID {
             "LotusPink" => Ok(Self::LotusPink),
             "LotusBlue" => Ok(Self::LotusBlue),
             "LotusYellow" => Ok(Self::LotusYellow),
+            "TextBackground" => Ok(Self::TextBackground),
+            "Paper1" => Ok(Self::Paper1),
+            "Paper2" => Ok(Self::Paper2),
+            "LargeBook1" => Ok(Self::LargeBook1),
+            "LargeBook2" => Ok(Self::LargeBook2),
+            "LargeBook3" => Ok(Self::LargeBook3),
+            "MiddleBook1" => Ok(Self::MiddleBook1),
+            "MiddleBook2" => Ok(Self::MiddleBook2),
+            "MiddleBook3" => Ok(Self::MiddleBook3),
+            "Wood1" => Ok(Self::Wood1),
             _ => Err(())
         }
     }
 }
 
-#[derive(Debug, Deserialize)]
+impl TextureID {
+    fn from_u32(n: u32) -> Option<Self> {
+        match n {
+            0 => Some(Self::Ghost1),
+            1 => Some(Self::LotusPink),
+            2 => Some(Self::LotusBlue),
+            3 => Some(Self::LotusYellow),
+            4 => Some(Self::TextBackground),
+            5 => Some(Self::Paper1),
+            6 => Some(Self::Paper2),
+            7 => Some(Self::LargeBook1),
+            8 => Some(Self::LargeBook2),
+            9 => Some(Self::LargeBook3),
+            10 => Some(Self::MiddleBook1),
+            11 => Some(Self::MiddleBook2),
+            12 => Some(Self::MiddleBook3),
+            13 => Some(Self::Wood1),
+            _ => None
+        }
+    }
+}
+
+impl TextureID {
+    pub fn select_random() -> Self {
+        TextureID::from_u32((rand::random::<u32>() % (Self::Unknown as u32))).unwrap()
+    }
+}
+
+pub const LargeBookTexture: [TextureID; 3] = [TextureID::LargeBook1,
+                                              TextureID::LargeBook2,
+                                              TextureID::LargeBook3];
+
+#[derive(Debug, Deserialize, Clone)]
 pub struct BookInformation {
     pub name: String,
     pub pages: usize,
+    pub size: String,
 }
 
 impl BookInformation {
@@ -192,8 +240,8 @@ impl<'a> SceneController<'a> {
         }
     }
 
-    fn run_pre_process(&mut self, ctx: &mut ggez::Context) {
-        self.current_scene.pre_process(ctx);
+    fn run_pre_process(&mut self, ctx: &mut ggez::Context, game_data: &GameData) {
+        self.current_scene.pre_process(ctx, game_data);
     }
 
     fn run_drawing_process(&mut self, ctx: &mut ggez::Context) {
@@ -201,7 +249,7 @@ impl<'a> SceneController<'a> {
     }
 
     fn run_post_process(&mut self, ctx: &mut ggez::Context, game_data: &'a GameData) {
-        match self.current_scene.post_process(ctx) {
+        match self.current_scene.post_process(ctx, game_data) {
             scene::SceneTransition::Keep => (),
             _ => self.switch_scene(ctx, game_data, self.current_scene.transition()),
         }
@@ -262,7 +310,7 @@ pub struct State<'data> {
 impl<'data> ggez::event::EventHandler for State<'data> {
     fn update(&mut self, ctx: &mut Context) -> GameResult<()> {
 
-        self.scene_controller.run_pre_process(ctx);
+        self.scene_controller.run_pre_process(ctx, self.game_data);
         
         self.clock += 1;
         if (self.clock % 100) == 0 {

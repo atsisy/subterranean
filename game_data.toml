@@ -20,7 +20,9 @@ customers_name = ["霧雨魔里沙", "すみれの隣人"]
 [[books_information]]
 name = "テスト本1"
 pages = 128
+size = "大判本"
 
 [[books_information]]
 name = "テスト本2"
 pages = 128
+size = "中判本"

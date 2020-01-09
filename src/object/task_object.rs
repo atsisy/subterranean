@@ -1,3 +1,5 @@
+pub mod factory;
+
 use std::collections::HashMap;
 
 use ggez::graphics as ggraphics;
@@ -7,6 +9,8 @@ use ginput::mouse::MouseButton;
 use torifune::graphics::object::*;
 use torifune::graphics::*;
 use torifune::numeric;
+
+use crate::core::BookInformation;
 
 use torifune::hash;
 
@@ -35,14 +39,14 @@ impl GensoDate {
 }
 
 pub struct BorrowingInformation {
-    pub borrowing: Vec<String>,
+    pub borrowing: Vec<BookInformation>,
     pub borrower: String,
     pub borrow_date: GensoDate,
     pub return_date: GensoDate,
 }
 
 impl BorrowingInformation {
-    pub fn new(borrowing: Vec<String>,
+    pub fn new(borrowing: Vec<BookInformation>,
                borrower: &str,
                borrow_date: GensoDate,
                return_date: GensoDate) -> Self {
@@ -52,6 +56,19 @@ impl BorrowingInformation {
             borrow_date,
             return_date,
         }
+    }
+
+    pub fn new_random(game_data: &GameData,
+                      borrow_date: GensoDate,
+                      return_date: GensoDate) -> Self {
+        let borrowing_num = rand::random::<u32>() % 5;
+        let mut borrow_books = Vec::new();
+
+        for _ in 0..borrowing_num {
+            borrow_books.push(game_data.book_random_select().clone());
+        }
+
+        Self::new(borrow_books, game_data.customer_random_select(), borrow_date, return_date)
     }
 }
 
@@ -71,9 +88,9 @@ impl BorrowingPaper {
                info: &BorrowingInformation, game_data: &GameData, t: Clock) -> Self {
         let mut pos = numeric::Point2f::new(210.0, 370.0);
         let borrowing = info.borrowing.iter()
-            .map(|s| {
+            .map(|book_info| {
                 pos += numeric::Vector2f::new(0.0, 30.0);
-                SimpleText::new(MovableText::new(s.to_string(),
+                SimpleText::new(MovableText::new(book_info.name.to_string(),
                                                  pos,
                                                  numeric::Vector2f::new(1.0, 1.0),
                                                  0.0,
@@ -172,7 +189,7 @@ impl BorrowingPaper {
         let mut borrowing = Vec::new();
 
         for _ in 0..(rand::random::<u32>() % 7) {
-            borrowing.push(game_data.book_random_select().get_name().to_string());
+            borrowing.push(game_data.book_random_select().clone());
         }
 
         let borrow_info = &BorrowingInformation::new(
@@ -243,25 +260,22 @@ impl Clickable for BorrowingPaper {
 }
 
 pub struct CopyingRequestInformation {
-    pub book_title: String,
+    pub book_info: BookInformation,
     pub customer: String,
     pub request_date: GensoDate,
     pub return_date: GensoDate,
-    pub pages: u32,
 }
 
 impl CopyingRequestInformation {
-    pub fn new(book_title: String,
+    pub fn new(book_info: BookInformation,
                customer: String,
                request_date: GensoDate,
-               return_date: GensoDate,
-               pages: u32) -> Self {
+               return_date: GensoDate) -> Self {
         CopyingRequestInformation {
-            book_title: book_title,
+            book_info: book_info,
             customer: customer,
             request_date: request_date,
             return_date: return_date,
-            pages: pages,
         }
     }
 
@@ -270,11 +284,10 @@ impl CopyingRequestInformation {
                       return_date: GensoDate) -> Self {
         let book_info = game_data.book_random_select();
         CopyingRequestInformation {
-            book_title: book_info.get_name().to_string(),
+            book_info: book_info.clone(),
             customer: game_data.customer_random_select().to_string(),
             request_date: request_date,
             return_date: return_date,
-            pages: book_info.get_pages() as u32,
         }
     }
 }
@@ -352,7 +365,7 @@ impl CopyingRequestPaper {
                                                            t),
                                           Vec::new());
         
-        let pages = SimpleText::new(MovableText::new(format!("頁数   {}", info.pages),
+        let pages = SimpleText::new(MovableText::new(format!("頁数   {}", info.book_info.pages),
                                                      numeric::Point2f::new(50.0, 275.0),
                                                      numeric::Vector2f::new(1.0, 1.0),
                                                      0.0,
@@ -364,7 +377,7 @@ impl CopyingRequestPaper {
                                                      t),
                                     Vec::new());
         
-        let book_type = SimpleText::new(MovableText::new(format!("寸法   美濃判"),
+        let book_type = SimpleText::new(MovableText::new(format!("寸法   {}", info.book_info.size),
                                                          numeric::Point2f::new(50.0, 240.0),
                                                          numeric::Vector2f::new(1.0, 1.0),
                                                          0.0,
@@ -376,7 +389,7 @@ impl CopyingRequestPaper {
                                                          t),
                                         Vec::new());
 
-        let request_book = SimpleText::new(MovableText::new(format!("転写本    {}", info.book_title),
+        let request_book = SimpleText::new(MovableText::new(format!("転写本    {}", info.book_info.name),
                                                             numeric::Point2f::new(50.0, 205.0),
                                                             numeric::Vector2f::new(1.0, 1.0),
                                                             0.0,
@@ -798,22 +811,6 @@ impl DeskObjects {
         desk_objects.add(DeskObject::new(
             Box::new(tobj::SimpleObject::new(
                 tobj::MovableUniTexture::new(
-                    game_data.ref_texture(TextureID::Ghost1),
-                    numeric::Point2f::new(0.0, 0.0),
-                    numeric::Vector2f::new(0.1, 0.1),
-                    0.0, 0, move_fn::stop(),
-                    0), vec![])),
-            Box::new(tobj::SimpleObject::new(
-                tobj::MovableUniTexture::new(
-                    game_data.ref_texture(TextureID::Ghost1),
-                    numeric::Point2f::new(0.0, 0.0),
-                    numeric::Vector2f::new(0.1, 0.1),
-                    0.0, 0, move_fn::stop(),
-                    0), vec![])), desk_size));
-        
-        desk_objects.add(DeskObject::new(
-            Box::new(tobj::SimpleObject::new(
-                tobj::MovableUniTexture::new(
                     game_data.ref_texture(TextureID::LotusPink),
                     numeric::Point2f::new(0.0, 0.0),
                     numeric::Vector2f::new(0.1, 0.1),
@@ -1153,13 +1150,13 @@ impl TaskTable {
         self.right.unselect_dragging_object();
     }
 
-    pub fn hand_over_check(&mut self, ctx: &mut ggez::Context, game_data: &GameData, point: numeric::Point2f) {
+    pub fn hand_over_check(&mut self, ctx: &mut ggez::Context, point: numeric::Point2f) {
         let rpoint = self.canvas.relative_point(point);
-        self.hand_over_check_r2l(ctx, game_data, rpoint);
-        self.hand_over_check_l2r(ctx, game_data, rpoint);
+        self.hand_over_check_r2l(ctx, rpoint);
+        self.hand_over_check_l2r(ctx, rpoint);
     }
 
-    fn hand_over_check_r2l(&mut self, ctx: &mut ggez::Context, game_data: &GameData, rpoint: numeric::Point2f) {
+    fn hand_over_check_r2l(&mut self, ctx: &mut ggez::Context, rpoint: numeric::Point2f) {
         let border = self.desk_border(ctx);
         
         if self.right.has_dragging() && border > rpoint.x {
@@ -1173,7 +1170,7 @@ impl TaskTable {
     }
 
     /// point: 絶対座標
-    fn hand_over_check_l2r(&mut self, ctx: &mut ggez::Context, game_data: &GameData, rpoint: numeric::Point2f) {
+    fn hand_over_check_l2r(&mut self, ctx: &mut ggez::Context, rpoint: numeric::Point2f) {
         let border = self.desk_border(ctx);
         
         if self.left.get_desk().has_dragging() && border < rpoint.x {
@@ -1204,6 +1201,21 @@ impl TaskTable {
 
         numeric::Point2f::new(0.0,
                               self.right.canvas.get_texture_size(ctx).y - from_bottom)
+    }
+
+    pub fn update(&mut self, ctx: &mut ggez::Context, game_data: &GameData, t: Clock) {
+        if t == 500 {
+            self.left.get_desk_mut().desk_objects.add(factory::create_dobj_book_random(ctx, game_data));
+        }
+    }
+
+    pub fn start_customer_event(&mut self,
+                                ctx: &mut ggez::Context,
+                                game_data: &GameData,
+                                info: BorrowingInformation, t: Clock) {
+        for _ in info.borrowing {
+            self.left.get_desk_mut().add_object(factory::create_dobj_book_random(ctx, game_data));
+        }
     }
 }
 

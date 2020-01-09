@@ -41,7 +41,7 @@ impl SceneManager for ScenarioScene {
         }
     }
 
-    fn pre_process(&mut self, _ctx: &mut ggez::Context) {
+    fn pre_process(&mut self, _ctx: &mut ggez::Context, _: &GameData) {
         self.scenario_event.update_text();
         self.simulation_status.update();
     }
@@ -51,7 +51,7 @@ impl SceneManager for ScenarioScene {
         self.simulation_status.draw(ctx).unwrap();
     }
     
-    fn post_process(&mut self, _ctx: &mut ggez::Context) -> SceneTransition {
+    fn post_process(&mut self, _ctx: &mut ggez::Context, _: &GameData) -> SceneTransition {
         self.update_current_clock();
         SceneTransition::Keep
     }
