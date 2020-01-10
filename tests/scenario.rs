@@ -1,4 +1,4 @@
-extern crate subterranean;
+extern crate suzu;
 
 use std::fs::File;
 use std::io::{self, BufRead, BufReader};

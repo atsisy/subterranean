@@ -252,7 +252,7 @@ impl Clickable for BorrowingPaper {
                  _button: ggez::input::mouse::MouseButton,
                  point: numeric::Point2f) {
         let rp = self.canvas.relative_point(point);
-
+        
         if self.title.get_drawing_area(ctx).contains(rp) {
             println!("aaaaaaaaa");
         }
@@ -1261,4 +1261,195 @@ impl DrawableComponent for TaskTable {
 pub enum CustomerRequest {
     Borrowing(BorrowingInformation),
     Copying(CopyingRequestInformation),
+}
+
+pub struct BorrowingRecordBookPage {
+    borrow_book: Vec<VerticalText>,
+    book_head: VerticalText,
+    borrower: VerticalText,
+    borrow_date: VerticalText,
+    return_date: VerticalText,
+    paper_texture: SimpleObject,
+    canvas: SubScreen,
+}
+
+impl DrawableComponent for BorrowingRecordBookPage {
+    fn draw(&mut self, ctx: &mut ggez::Context) -> ggez::GameResult<()> {
+        if self.is_visible() {
+            self.canvas.begin_drawing(ctx);
+
+            self.paper_texture.draw(ctx)?;
+            self.book_head.draw(ctx)?;
+            self.borrower.draw(ctx)?;
+            self.borrow_date.draw(ctx)?;
+            self.return_date.draw(ctx)?;
+
+            for d in &mut self.borrow_book {
+                d.draw(ctx)?;
+            }
+
+            self.canvas.end_drawing(ctx);
+            self.canvas.draw(ctx).unwrap();
+        }
+        Ok(())
+    }
+
+    fn hide(&mut self) {
+        self.canvas.hide()
+    }
+
+    fn appear(&mut self) {
+        self.canvas.appear()
+    }
+
+    fn is_visible(&self) -> bool {
+        self.canvas.is_visible()
+    }
+
+    fn set_drawing_depth(&mut self, depth: i8) {
+        self.canvas.set_drawing_depth(depth)
+    }
+
+    fn get_drawing_depth(&self) -> i8 {
+        self.canvas.get_drawing_depth()
+    }
+}
+
+impl BorrowingRecordBookPage {
+    pub fn new(ctx: &mut ggez::Context, rect: ggraphics::Rect, paper_tid: TextureID,
+               info: &BorrowingInformation, game_data: &GameData, t: Clock) -> Self {
+        let mut pos = numeric::Point2f::new(210.0, 370.0);
+        let borrowing = info.borrowing.iter()
+            .map(|book_info| {
+                pos += numeric::Vector2f::new(0.0, 30.0);
+                VerticalText::new(book_info.name.to_string(),
+                                 pos,
+                                 numeric::Vector2f::new(1.0, 1.0),
+                                 0.0,
+                                 0,
+                                 FontInformation::new(game_data.get_font(FontID::DEFAULT),
+                                                      numeric::Vector2f::new(24.0, 24.0),
+                                                      ggraphics::Color::from_rgba_u32(0x000000ff))) }).collect();
+
+        let borrower = VerticalText::new(format!("借りた人   {}", info.borrower),
+                                         numeric::Point2f::new(50.0, 200.0),
+                                         numeric::Vector2f::new(1.0, 1.0),
+                                         0.0,
+                                         0,
+                                         FontInformation::new(game_data.get_font(FontID::DEFAULT),
+                                                              numeric::Vector2f::new(28.0, 28.0),
+                                                              ggraphics::Color::from_rgba_u32(0x000000ff)));
+
+        let book_head = VerticalText::new("貸出本".to_string(),
+                                                         numeric::Point2f::new(50.0, 400.0),
+                                                         numeric::Vector2f::new(1.0, 1.0),
+                                                         0.0,
+                                                         0,
+                                                         FontInformation::new(game_data.get_font(FontID::DEFAULT),
+                                                                              numeric::Vector2f::new(28.0, 28.0),
+                                                                              ggraphics::Color::from_rgba_u32(0x000000ff)));
+
+        let paper_texture = SimpleObject::new(MovableUniTexture::new(game_data.ref_texture(paper_tid),
+                                                                     numeric::Point2f::new(0.0, 0.0),
+                                                                     numeric::Vector2f::new(1.0, 1.0),
+                                                                     0.0,
+                                                                     0,
+                                                                     move_fn::halt(numeric::Point2f::new(0.0, 0.0)),
+                                                                     t),
+                                              Vec::new());
+
+        let borrow_date = VerticalText::new(format!("貸出日     {}", info.borrow_date.to_string()),
+                                            numeric::Point2f::new(50.0, 250.0),
+                                            numeric::Vector2f::new(1.0, 1.0),
+                                            0.0,
+                                            0,
+                                            FontInformation::new(game_data.get_font(FontID::DEFAULT),
+                                                                 numeric::Vector2f::new(28.0, 28.0),
+                                                                 ggraphics::Color::from_rgba_u32(0x000000ff)));
+        
+        let return_date = VerticalText::new(format!("返却期限   {}", info.return_date.to_string()),
+                                            numeric::Point2f::new(50.0, 300.0),
+                                            numeric::Vector2f::new(1.0, 1.0),
+                                            0.0,
+                                            0,
+                                            FontInformation::new(game_data.get_font(FontID::DEFAULT),
+                                                                 numeric::Vector2f::new(28.0, 28.0),
+                                                                 ggraphics::Color::from_rgba_u32(0x000000ff)));
+        
+        BorrowingRecordBookPage {
+            borrow_book: borrowing,
+            borrower: borrower,
+            book_head: book_head,
+            paper_texture: paper_texture,
+            borrow_date: borrow_date,
+            return_date: return_date,
+            canvas: SubScreen::new(ctx, rect, 0, ggraphics::BLACK),
+        }
+    }
+}
+
+pub struct BorrowingRecordBook {
+    pages: Vec<BorrowingRecordBookPage>,
+    rect: numeric::Rect,
+    current_page: usize,
+    drwob_essential: DrawableObjectEssential,
+}
+
+impl BorrowingRecordBook {
+    pub fn new(rect: ggraphics::Rect) -> Self {
+        BorrowingRecordBook {
+            pages: Vec::new(),
+            rect: rect,
+            current_page: 0,
+            drwob_essential: DrawableObjectEssential::new(true, 0),
+        }
+    }
+
+    pub fn add_page(&mut self, ctx: &mut ggez::Context,
+                    info: &BorrowingInformation,
+                    game_data: &GameData,
+                    t: Clock) -> &Self {
+        self.pages.push(
+            BorrowingRecordBookPage::new(ctx,
+                                         self.rect,
+                                         TextureID::Paper1,
+                                         info,
+                                         game_data, t));
+        self
+    }
+}
+
+impl DrawableComponent for BorrowingRecordBook {
+    #[inline(always)]
+    fn draw(&mut self, ctx: &mut ggez::Context) -> ggez::GameResult<()> {
+        if self.is_visible() {
+            self.pages.get_mut(self.current_page).unwrap().draw(ctx);
+        }
+        Ok(())
+    }
+
+    #[inline(always)]
+    fn hide(&mut self) {
+        self.drwob_essential.visible = false;
+    }
+
+    #[inline(always)]
+    fn appear(&mut self) {
+        self.drwob_essential.visible = true;
+    }
+
+    #[inline(always)]
+    fn is_visible(&self) -> bool {
+        self.drwob_essential.visible
+    }
+
+    #[inline(always)]
+    fn set_drawing_depth(&mut self, depth: i8) {
+        self.drwob_essential.drawing_depth = depth;
+    }
+
+    #[inline(always)]
+    fn get_drawing_depth(&self) -> i8 {
+        self.drwob_essential.drawing_depth
+    }
 }
