@@ -726,10 +726,29 @@ impl DrawableObject for BorrowingRecordBookPage {
 impl BorrowingRecordBookPage {
     pub fn new(ctx: &mut ggez::Context, rect: ggraphics::Rect, paper_tid: TextureID,
                info: &BorrowingInformation, game_data: &GameData, t: Clock) -> Self {
-        let mut pos = numeric::Point2f::new(210.0, 370.0);
-        let borrowing = info.borrowing.iter()
+        let mut pos = numeric::Point2f::new(rect.x + rect.w - 70.0, 100.0);
+        
+        let borrower = VerticalText::new(format!("借りた人   {}", info.borrower),
+                                         numeric::Point2f::new(pos.x, 80.0),
+                                         numeric::Vector2f::new(1.0, 1.0),
+                                         0.0,
+                                         0,
+                                         FontInformation::new(game_data.get_font(FontID::DEFAULT),
+                                                              numeric::Vector2f::new(20.0, 20.0),
+                                                              ggraphics::Color::from_rgba_u32(0x000000ff)));
+	pos.x -= 30.0;
+	
+        let book_head = VerticalText::new("貸出本".to_string(),
+                                          numeric::Point2f::new(pos.x, 80.0),
+                                          numeric::Vector2f::new(1.0, 1.0),
+                                          0.0,
+                                          0,
+                                          FontInformation::new(game_data.get_font(FontID::DEFAULT),
+                                                               numeric::Vector2f::new(22.0, 22.0),
+                                                               ggraphics::Color::from_rgba_u32(0x000000ff)));
+	let borrowing = info.borrowing.iter()
             .map(|book_info| {
-                pos += numeric::Vector2f::new(0.0, 30.0);
+                pos += numeric::Vector2f::new(-30.0, 0.0);
                 VerticalText::new(book_info.name.to_string(),
                                   pos,
                                   numeric::Vector2f::new(1.0, 1.0),
@@ -738,24 +757,8 @@ impl BorrowingRecordBookPage {
                                   FontInformation::new(game_data.get_font(FontID::DEFAULT),
                                                        numeric::Vector2f::new(24.0, 24.0),
                                                        ggraphics::Color::from_rgba_u32(0x000000ff))) }).collect();
-        
-        let borrower = VerticalText::new(format!("借りた人   {}", info.borrower),
-                                         numeric::Point2f::new(rect.x + rect.w - 28.0, 20.0),
-                                         numeric::Vector2f::new(1.0, 1.0),
-                                         0.0,
-                                         0,
-                                         FontInformation::new(game_data.get_font(FontID::DEFAULT),
-                                                              numeric::Vector2f::new(20.0, 20.0),
-                                                              ggraphics::Color::from_rgba_u32(0x000000ff)));
 
-        let book_head = VerticalText::new("貸出本".to_string(),
-                                          numeric::Point2f::new(rect.x + rect.w - 56.0, 80.0),
-                                          numeric::Vector2f::new(1.0, 1.0),
-                                          0.0,
-                                          0,
-                                          FontInformation::new(game_data.get_font(FontID::DEFAULT),
-                                                               numeric::Vector2f::new(22.0, 22.0),
-                                                               ggraphics::Color::from_rgba_u32(0x000000ff)));
+        pos.x -= 30.0;
 
         let paper_texture = SimpleObject::new(MovableUniTexture::new(game_data.ref_texture(paper_tid),
                                                                      numeric::Point2f::new(0.0, 0.0),
@@ -767,16 +770,17 @@ impl BorrowingRecordBookPage {
                                               Vec::new());
 
         let borrow_date = VerticalText::new(format!("貸出日 {}", info.borrow_date.to_string()),
-                                            numeric::Point2f::new(rect.x + rect.w - 80.0, 80.0),
+                                            numeric::Point2f::new(100.0, 70.0),
                                             numeric::Vector2f::new(1.0, 1.0),
                                             0.0,
                                             0,
                                             FontInformation::new(game_data.get_font(FontID::DEFAULT),
                                                                  numeric::Vector2f::new(18.0, 18.0),
                                                                  ggraphics::Color::from_rgba_u32(0x000000ff)));
+	pos.x -= 30.0;
         
         let return_date = VerticalText::new(format!("返却期限 {}", info.return_date.to_string()),
-                                            numeric::Point2f::new(rect.x + rect.w - 108.0, 80.0),
+                                            numeric::Point2f::new(70.0, 70.0),
                                             numeric::Vector2f::new(1.0, 1.0),
                                             0.0,
                                             0,
@@ -1417,20 +1421,79 @@ impl DrawableObject for DeskObjects {
     }
 }
 
-pub struct DeskSight {
+pub struct SuzuMiniSight {
+    background: MovableUniTexture,
+    character: Option<SimpleObject>,
     canvas: SubScreen,
+}
+
+impl SuzuMiniSight {
+    pub fn new(ctx: &mut ggez::Context, rect: numeric::Rect, background: MovableUniTexture) -> Self {
+	SuzuMiniSight {
+	    background: background,
+	    character: None,
+	    canvas: SubScreen::new(ctx, rect, 0, ggraphics::Color::from_rgba_u32(0x00000000)),
+	}
+    }
+}
+
+impl DrawableComponent for SuzuMiniSight {
+    fn draw(&mut self, ctx: &mut ggez::Context) -> ggez::GameResult<()> {
+        if self.is_visible() {
+            self.canvas.begin_drawing(ctx);
+
+	    self.background.draw(ctx)?;
+            
+            self.canvas.end_drawing(ctx);
+            self.canvas.draw(ctx).unwrap();
+            
+        }
+        Ok(())
+    }
+
+    fn hide(&mut self) {
+        self.canvas.hide();
+    }
+
+    fn appear(&mut self) {
+        self.canvas.appear();
+    }
+
+    fn is_visible(&self) -> bool {
+        self.canvas.is_visible()
+    }
+
+    fn set_drawing_depth(&mut self, depth: i8) {
+        self.canvas.set_drawing_depth(depth);
+    }
+
+    fn get_drawing_depth(&self) -> i8 {
+        self.canvas.get_drawing_depth()
+    }
+
+}
+
+pub struct DeskSight {
+    sight: SuzuMiniSight,
     desk: DeskObjects,
+    canvas: SubScreen,
 }
 
 impl DeskSight {
     pub fn new(ctx: &mut ggez::Context,
                game_data: &GameData,
                rect: ggraphics::Rect) -> Self {
-        
+	
         DeskSight {
-            canvas: SubScreen::new(ctx, rect, 0, ggraphics::Color::from_rgba_u32(0x00000000)),
+	    sight: SuzuMiniSight::new(ctx, numeric::Rect::new(rect.x, rect.y, rect.w, rect.h / 2.0),
+				      MovableUniTexture::new(
+					  game_data.ref_texture(TextureID::Paper2),
+					  numeric::Point2f::new(0.0, 0.0),
+					  numeric::Vector2f::new(1.0, 1.0),
+					  0.0, 0, move_fn::stop(), 0)),
             desk: DeskObjects::new(ctx, game_data,
                                    numeric::Rect::new(rect.x, rect.y + (rect.h / 2.0), rect.w, rect.h / 2.0), 0),
+	    canvas: SubScreen::new(ctx, rect, 0, ggraphics::Color::from_rgba_u32(0)),
         }
     }
 
@@ -1445,16 +1508,11 @@ impl DeskSight {
 
 impl DrawableComponent for DeskSight {
     fn draw(&mut self, ctx: &mut ggez::Context) -> ggez::GameResult<()> {
-        if self.is_visible() {
-            self.canvas.begin_drawing(ctx);
+	self.sight.draw(ctx)?;
+	self.desk.draw(ctx)?;
 
-            self.get_desk_mut().draw(ctx).unwrap();
-            
-            self.canvas.end_drawing(ctx);
-            self.canvas.draw(ctx).unwrap();
-            
-        }
-        Ok(())
+	Ok(())
+
     }
 
     fn hide(&mut self) {
@@ -1591,23 +1649,34 @@ impl TaskTable {
         
         if self.right.has_dragging() && border > rpoint.x {
             if let Some(mut dragging) = self.right.release_dragging() {
-                let p = self.right_edge_to_left_edge(ctx, dragging.get_object_mut().get_position());
+		// ドラッグしているオブジェクトの座標を取得
+		let mut drag_obj_p = dragging.get_object().get_position();
+
+		// drag_obj_pのy座標をドラッグしているオブジェクトの中心y座標に書き換える
+		// これは、受け渡す時にオブジェクトの移動に違和感が発生することを防ぐためである
+		drag_obj_p.y = dragging.get_object().get_center(ctx).y;
+		
+                let p = self.right_edge_to_left_edge(ctx, drag_obj_p);
                 dragging.enable_small();
-                dragging.get_object_mut().set_position(p);
+
+		// Y座標が右のデスクにいた時の中心Y座標になっているので、
+		// make_centerで中心座標に設定することで違和感が無くなる
+                dragging.get_object_mut().make_center(ctx, p);
                 self.left.get_desk_mut().insert_dragging(dragging);
             }
         }
     }
 
-    /// point: 絶対座標
     fn hand_over_check_l2r(&mut self, ctx: &mut ggez::Context, rpoint: numeric::Point2f) {
         let border = self.desk_border(ctx);
         
         if self.left.get_desk().has_dragging() && border < rpoint.x {
             if let Some(mut dragging) = self.left.get_desk_mut().release_dragging() {
-                let p = self.left_edge_to_right_edge(ctx, dragging.get_object().get_position());
+		let mut drag_obj_p = dragging.get_object().get_position();
+		drag_obj_p.y = dragging.get_object().get_center(ctx).y;
+                let p = self.left_edge_to_right_edge(ctx, drag_obj_p);
                 dragging.enable_large();
-                dragging.get_object_mut().set_position(p);
+                dragging.get_object_mut().make_center(ctx, p);
                 self.right.insert_dragging(dragging);
             }
         }

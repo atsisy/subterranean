@@ -16,11 +16,12 @@ use crate::object::task_object;
 
 use crate::core::{TextureID, GameData};
 use crate::object::task_object::*;
+use crate::object::simulation_ui as sui;
 use crate::object::move_fn;
 
 pub struct TaskScene {
     task_table: TaskTable,
-    dobj_container: ObjectContainer<Box<dyn DrawableComponent>>,
+    simulation_status: sui::SimulationStatus,
     clock: Clock,
     mouse_info: MouseInformation,
 }
@@ -33,8 +34,8 @@ impl TaskScene {
                                        ggraphics::Rect::new(10.0, 230.0, 1300.0, 500.0),
                                        ggraphics::Rect::new(10.0, 0.0, 500.0, 500.0),
                                        ggraphics::Rect::new(550.0, 0.0, 800.0, 500.0)),
+	    simulation_status: sui::SimulationStatus::new(ctx, numeric::Rect::new(0.0, 0.0, 1366.0, 180.0), game_data),
             clock: 0,
-            dobj_container: ObjectContainer::<Box<dyn DrawableComponent>>::new(),
             mouse_info: MouseInformation::new(),
         }
     }
@@ -138,9 +139,7 @@ impl SceneManager for TaskScene {
 
     fn drawing_process(&mut self, ctx: &mut ggez::Context) {
         self.task_table.draw(ctx).unwrap();
-        for obj in self.dobj_container.iter_mut() {
-            obj.draw(ctx).unwrap();
-        }
+	self.simulation_status.draw(ctx).unwrap();
     }
 
     fn post_process(&mut self, _ctx: &mut ggez::Context, _: &GameData) -> SceneTransition {
