@@ -13,6 +13,7 @@ serde = { version = "1.0", features = ["derive"] }
 cgmath = "0.17.0"
 rand = "0.7.2"
 num = "*"
+number_to_jk = { git = "https://github.com/atsisy/number_to_jk.git" }
 
 [profile.dev]
 opt-level = 3

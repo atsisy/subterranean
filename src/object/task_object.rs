@@ -18,6 +18,8 @@ use super::*;
 
 use crate::core::{TextureID, FontID, GameData};
 
+use number_to_jk::number_to_jk;
+
 pub struct GensoDate {
     pub season: u32,
     pub month: u8,
@@ -34,7 +36,10 @@ impl GensoDate {
     }
 
     pub fn to_string(&self) -> String {
-        format!("第{}季 {}月 {}日", self.season, self.month, self.day)
+        format!("第{}季 {}月 {}日",
+		number_to_jk(self.season as u64),
+		number_to_jk(self.month as u64),
+		number_to_jk(self.day as u64))
     }
 }
 
@@ -767,7 +772,7 @@ impl BorrowingRecordBookPage {
                                             0.0,
                                             0,
                                             FontInformation::new(game_data.get_font(FontID::DEFAULT),
-                                                                 numeric::Vector2f::new(22.0, 22.0),
+                                                                 numeric::Vector2f::new(18.0, 18.0),
                                                                  ggraphics::Color::from_rgba_u32(0x000000ff)));
         
         let return_date = VerticalText::new(format!("返却期限 {}", info.return_date.to_string()),
@@ -776,7 +781,7 @@ impl BorrowingRecordBookPage {
                                             0.0,
                                             0,
                                             FontInformation::new(game_data.get_font(FontID::DEFAULT),
-                                                                 numeric::Vector2f::new(22.0, 22.0),
+                                                                 numeric::Vector2f::new(18.0, 18.0),
                                                                  ggraphics::Color::from_rgba_u32(0x000000ff)));
         
         BorrowingRecordBookPage {
