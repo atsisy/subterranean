@@ -9,7 +9,6 @@ use std::rc::Rc;
 use std::cmp::Ordering;
 
 use ggez::graphics as ggraphics;
-use torifune::graphics::DrawableComponent;
 
 use torifune::core::Clock;
 use torifune::numeric;

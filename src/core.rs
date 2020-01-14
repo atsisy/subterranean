@@ -20,7 +20,6 @@ use std::io::{BufReader, Read};
 use serde::Deserialize;
 
 extern crate num;
-use num::traits::FromPrimitive;
 
 fn read_whole_file(path: String) -> Result<String, String> {
     let mut file_content = String::new();
@@ -106,11 +105,11 @@ impl TextureID {
 
 impl TextureID {
     pub fn select_random() -> Self {
-        TextureID::from_u32((rand::random::<u32>() % (Self::Unknown as u32))).unwrap()
+        TextureID::from_u32(rand::random::<u32>() % (Self::Unknown as u32)).unwrap()
     }
 }
 
-pub const LargeBookTexture: [TextureID; 3] = [TextureID::LargeBook1,
+pub const LARGE_BOOK_TEXTURE: [TextureID; 3] = [TextureID::LargeBook1,
                                               TextureID::LargeBook2,
                                               TextureID::LargeBook3];
 

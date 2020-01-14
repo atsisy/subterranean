@@ -20,11 +20,8 @@ pub fn create_dobj_random(ctx: &mut ggez::Context, game_data: &GameData) -> Desk
                                           game_data, 0)), 0)
 }
 
-pub fn create_dobj_book_random(ctx: &mut ggez::Context, game_data: &GameData) -> DeskObject {
-    let paper_info = CopyingRequestInformation::new_random(game_data,
-                                                           GensoDate::new(128, 12, 8),
-                                                           GensoDate::new(128, 12, 8));
-    let texture = *util::random_select(LargeBookTexture.iter()).unwrap();
+pub fn create_dobj_book_random(_ctx: &mut ggez::Context, game_data: &GameData) -> DeskObject {
+    let texture = *util::random_select(LARGE_BOOK_TEXTURE.iter()).unwrap();
     DeskObject::new(
         Box::new(tobj::MovableUniTexture::new(
             game_data.ref_texture(texture),

@@ -1,23 +1,18 @@
 use torifune::device as tdev;
 use torifune::core::Clock;
-use torifune::graphics as tgraphics;
-use tgraphics::object as tobj;
 use ggez::graphics as ggraphics;
 use ginput::mouse::MouseButton;
 use torifune::numeric;
 
 use torifune::graphics::*;
-use torifune::graphics::object::TextureObject;
-use torifune::graphics::object::MovableObject;
 
 use super::*;
 
 use crate::object::task_object;
 
-use crate::core::{TextureID, GameData};
+use crate::core::GameData;
 use crate::object::task_object::*;
 use crate::object::simulation_ui as sui;
-use crate::object::move_fn;
 
 pub struct TaskScene {
     task_table: TaskTable,
@@ -32,8 +27,8 @@ impl TaskScene {
         TaskScene {
             task_table: TaskTable::new(ctx, game_data,
                                        ggraphics::Rect::new(10.0, 230.0, 1300.0, 500.0),
-                                       ggraphics::Rect::new(10.0, 0.0, 500.0, 500.0),
-                                       ggraphics::Rect::new(550.0, 0.0, 800.0, 500.0)),
+                                       ggraphics::Rect::new(10.0, 0.0, 520.0, 500.0),
+                                       ggraphics::Rect::new(540.0, 0.0, 900.0, 500.0)),
 	    simulation_status: sui::SimulationStatus::new(ctx, numeric::Rect::new(0.0, 0.0, 1366.0, 180.0), game_data),
             clock: 0,
             mouse_info: MouseInformation::new(),
@@ -44,7 +39,7 @@ impl TaskScene {
                         ctx: &mut ggez::Context,
                         point: numeric::Point2f,
                         _offset: numeric::Vector2f,
-                        game_data: &GameData) {
+                        _game_data: &GameData) {
         let last = self.mouse_info.get_last_dragged(MouseButton::Left);
         self.task_table.dragging_handler(point, last);
         self.task_table.hand_over_check(ctx, point);
@@ -54,8 +49,8 @@ impl TaskScene {
         self.task_table.select_dragging_object(ctx, point);
     }
 
-    fn unselect_dragging_object(&mut self) {
-        self.task_table.unselect_dragging_object();
+    fn unselect_dragging_object(&mut self, ctx: &mut ggez::Context) {
+        self.task_table.unselect_dragging_object(ctx);
     }
 }
 
@@ -122,13 +117,13 @@ impl SceneManager for TaskScene {
     }
 
     fn mouse_button_up_event(&mut self,
-                             _ctx: &mut ggez::Context,
+                             ctx: &mut ggez::Context,
                              _game_data: &GameData,
                              button: MouseButton,
                              _point: numeric::Point2f) {
         self.mouse_info.update_dragging(button, false);
         //self.paper.button_up(ctx, button, point);
-        self.unselect_dragging_object();
+        self.unselect_dragging_object(ctx);
     }
 
     fn pre_process(&mut self,

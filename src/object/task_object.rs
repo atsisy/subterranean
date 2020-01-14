@@ -189,7 +189,7 @@ impl BorrowingPaper {
 
     pub fn new_random(ctx: &mut ggez::Context, rect: ggraphics::Rect, paper_tid: TextureID,
                       borrow_date: GensoDate, return_date: GensoDate,
-                      game_data: &GameData, t: Clock) -> Self {
+                      game_data: &GameData, _t: Clock) -> Self {
 
         let mut borrowing = Vec::new();
 
@@ -853,7 +853,7 @@ impl TextureObject for BorrowingRecordBookPage {
 
     #[inline(always)]
     fn set_transform_offset(&mut self, offset: numeric::Point2f) {
-        self.set_transform_offset(offset)
+        self.canvas.set_transform_offset(offset);
     }
 
     #[inline(always)]
@@ -867,7 +867,7 @@ impl TextureObject for BorrowingRecordBookPage {
     }
 
     #[inline(always)]
-    fn replace_texture(&mut self, texture: Rc<ggraphics::Image>) {
+    fn replace_texture(&mut self, _texture: Rc<ggraphics::Image>) {
     }
 
     #[inline(always)]
@@ -925,7 +925,7 @@ impl DrawableComponent for BorrowingRecordBook {
     fn draw(&mut self, ctx: &mut ggez::Context) -> ggez::GameResult<()> {
         if self.is_visible() {
             if self.pages.len() > 0 {
-                self.pages.get_mut(self.current_page).unwrap().draw(ctx);
+                self.pages.get_mut(self.current_page).unwrap().draw(ctx)?;
             }
         }
         Ok(())
@@ -1052,7 +1052,7 @@ impl TextureObject for BorrowingRecordBook {
     }
 
     #[inline(always)]
-    fn replace_texture(&mut self, texture: Rc<ggraphics::Image>) {
+    fn replace_texture(&mut self, _: Rc<ggraphics::Image>) {
     }
 
     #[inline(always)]
@@ -1219,12 +1219,12 @@ pub struct DeskObjects {
 
 impl DeskObjects {
     pub fn new(ctx: &mut ggez::Context, game_data: &GameData,
-               rect: ggraphics::Rect, desk_size: u8) -> DeskObjects {
+               rect: ggraphics::Rect) -> DeskObjects {
 
         let mut dparam = ggraphics::DrawParam::default();
         dparam.dest = numeric::Point2f::new(rect.x, rect.y).into();
         
-        let mut desk_objects = DeskObjectContainer::new();
+        let desk_objects = DeskObjectContainer::new();
         
         DeskObjects {
             canvas: SubScreen::new(ctx, rect, 0, ggraphics::Color::new(0.0, 0.0, 0.0, 0.0)),
@@ -1288,7 +1288,7 @@ impl DeskObjects {
         }
     }
 
-    pub fn update(&mut self, _ctx: &mut ggez::Context, t: Clock) {
+    pub fn update(&mut self, _ctx: &mut ggez::Context, _t: Clock) {
         /*
         for p in self.desk_objects.get_raw_container_mut() {
             p.move_with_func(t);
@@ -1299,7 +1299,7 @@ impl DeskObjects {
     pub fn double_click_handler(&mut self,
                             ctx: &mut ggez::Context,
                             point: numeric::Point2f,
-                            game_data: &GameData) {
+                            _game_data: &GameData) {
         let rpoint = self.canvas.relative_point(point);
         let mut click_flag = false;
         
@@ -1477,6 +1477,7 @@ pub struct SuzuMiniSight {
     canvas: SubScreen,
     desk_objects: DeskObjectContainer,
     dragging: Option<DeskObject>,
+    dropping: Option<tobj::MovableWrap<dyn TextureObject>>,
     table_texture: tobj::SimpleObject,
     silhouette: SuzuMiniSightSilhouette,
 }
@@ -1488,12 +1489,13 @@ impl SuzuMiniSight {
         let mut dparam = ggraphics::DrawParam::default();
         dparam.dest = numeric::Point2f::new(rect.x, rect.y).into();
         
-        let mut desk_objects = DeskObjectContainer::new();
+        let desk_objects = DeskObjectContainer::new();
         
         SuzuMiniSight {
             canvas: SubScreen::new(ctx, rect, 0, ggraphics::Color::new(0.0, 0.0, 0.0, 0.0)),
             desk_objects: desk_objects,
             dragging: None,
+	    dropping: None,
             table_texture: tobj::SimpleObject::new(
                 tobj::MovableUniTexture::new(game_data.ref_texture(TextureID::Wood1),
                                              numeric::Point2f::new(0.0, rect.h / 2.0),
@@ -1510,7 +1512,6 @@ impl SuzuMiniSight {
 									    0)),
         }
     }
-
     
     pub fn dragging_handler(&mut self,
                         point: numeric::Point2f,
@@ -1545,43 +1546,49 @@ impl SuzuMiniSight {
         }
     }
 
-    pub fn unselect_dragging_object(&mut self) {
+    fn check_object_drop(&self, ctx: &mut ggez::Context, desk_obj: &DeskObject) -> bool {
+	let area = desk_obj.get_object().get_drawing_area(ctx);
+	area.y + area.h < self.canvas.get_drawing_area(ctx).h / 2.5
+    }
+
+    pub fn unselect_dragging_object(&mut self, ctx: &mut ggez::Context) {
         if let Some(obj) = &mut self.dragging {
             let min = self.desk_objects.get_minimum_depth();
             obj.get_object_mut().set_drawing_depth(min);
             self.desk_objects.change_depth_equally(1);
         }
-        match self.dragging {
-            None =>  (),
-            _ => {
-                let dragged = self.release_dragging().unwrap();
-                self.desk_objects.add(dragged);
-                self.desk_objects.sort_with_depth();
-            }
+        if self.dragging.is_some() {
+            let mut dragged = self.release_dragging().unwrap();
+
+	    if self.check_object_drop(ctx, &dragged) {
+		println!("drop");
+		self.dropping = Some(tobj::MovableWrap::new(dragged.small,
+							    move_fn::gravity_move(1.0, 10.0, 300.0, 0.2),
+							    0));
+	    } else {
+		self.desk_objects.add(dragged);
+		self.desk_objects.sort_with_depth();
+	    }
         }
     }
 
     pub fn update(&mut self, _ctx: &mut ggez::Context, t: Clock) {
-        /*
-        for p in self.desk_objects.get_raw_container_mut() {
-            p.move_with_func(t);
-        }
-        */
+	if let Some(ref mut d) = self.dropping {
+                d.move_with_func(t);
+            }
     }    
 
     pub fn double_click_handler(&mut self,
                             ctx: &mut ggez::Context,
                             point: numeric::Point2f,
-                            game_data: &GameData) {
+                            _game_data: &GameData) {
         let rpoint = self.canvas.relative_point(point);
-        let mut click_flag = false;
         
         // オブジェクトは深度が深い順にソートされているので、
         // 逆順から検索していくことで、最も手前に表示されているオブジェクトを
         // 取り出すことができる
         for (_, obj) in self.desk_objects.get_raw_container_mut().iter_mut().rev().enumerate() {
             if obj.get_object().get_drawing_area(ctx).contains(rpoint) {
-                click_flag = true;
                 break;
             }
         }
@@ -1621,8 +1628,12 @@ impl DrawableComponent for SuzuMiniSight {
         if self.is_visible() {
             self.canvas.begin_drawing(ctx);
 
-            self.table_texture.draw(ctx)?;
 	    self.silhouette.draw(ctx)?;
+	    
+	    if let Some(ref mut d) = self.dropping {
+                d.draw(ctx)?;
+            }
+	    self.table_texture.draw(ctx)?;
 	    
             for obj in self.desk_objects.get_raw_container_mut() {
                 obj.get_object_mut().draw(ctx)?;
@@ -1689,7 +1700,7 @@ impl TaskTable {
                pos: numeric::Rect,
                left_rect: ggraphics::Rect, right_rect: ggraphics::Rect) -> Self {
 	let mut left = SuzuMiniSight::new(ctx, game_data, left_rect);
-        let mut right = DeskObjects::new(ctx, game_data, right_rect, 1);
+        let mut right = DeskObjects::new(ctx, game_data, right_rect);
         
         right.add_object(DeskObject::new(
                 Box::new(tobj::SimpleObject::new(
@@ -1753,8 +1764,8 @@ impl TaskTable {
         self.right.dragging_handler(rpoint, rlast);
     }
 
-    pub fn unselect_dragging_object(&mut self) {
-        self.left.unselect_dragging_object();
+    pub fn unselect_dragging_object(&mut self, ctx: &mut ggez::Context) {
+        self.left.unselect_dragging_object(ctx);
         self.right.unselect_dragging_object();
     }
 
@@ -1826,12 +1837,13 @@ impl TaskTable {
         if t == 500 {
             self.left.desk_objects.add(factory::create_dobj_book_random(ctx, game_data));
         }
+	self.left.update(ctx, t);
     }
 
     pub fn start_customer_event(&mut self,
                                 ctx: &mut ggez::Context,
                                 game_data: &GameData,
-                                info: BorrowingInformation, t: Clock) {
+                                info: BorrowingInformation, _t: Clock) {
         for _ in info.borrowing {
             self.left.add_object(factory::create_dobj_book_random(ctx, game_data));
         }
