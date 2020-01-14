@@ -49,8 +49,8 @@ impl TaskScene {
         self.task_table.select_dragging_object(ctx, point);
     }
 
-    fn unselect_dragging_object(&mut self, ctx: &mut ggez::Context) {
-        self.task_table.unselect_dragging_object(ctx);
+    fn unselect_dragging_object(&mut self, ctx: &mut ggez::Context, t: Clock) {
+        self.task_table.unselect_dragging_object(ctx, t);
     }
 }
 
@@ -81,7 +81,7 @@ impl SceneManager for TaskScene {
                         game_data,
                         task_object::GensoDate::new(128, 12, 20),
                         task_object::GensoDate::new(128, 12, 20)
-                    ), 0);
+                    ), self.get_current_clock());
             },
             _ => (),
         }
@@ -123,7 +123,7 @@ impl SceneManager for TaskScene {
                              _point: numeric::Point2f) {
         self.mouse_info.update_dragging(button, false);
         //self.paper.button_up(ctx, button, point);
-        self.unselect_dragging_object(ctx);
+        self.unselect_dragging_object(ctx, self.get_current_clock());
     }
 
     fn pre_process(&mut self,

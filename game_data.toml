@@ -12,7 +12,8 @@ texture_paths = [
               "/textures/middle_book1.png",
               "/textures/middle_book2.png",
               "/textures/middle_book3.png",
-              "/textures/wood1.jpg"]
+              "/textures/wood1.jpg",
+	      "/textures/wafu_texture1.jpg"]
 font_paths = ["/azuki.ttf"]
 tileset_paths = ["./resources/test.tmx"]
 customers_name = ["霧雨魔里沙", "すみれの隣人"]

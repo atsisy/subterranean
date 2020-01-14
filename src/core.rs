@@ -50,6 +50,7 @@ pub enum TextureID {
     MiddleBook2,
     MiddleBook3,
     Wood1,
+    WafuTexture1,
     Unknown,
 }
 

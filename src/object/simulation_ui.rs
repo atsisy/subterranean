@@ -282,6 +282,7 @@ pub struct SimulationStatus {
     tired_meter: Meter,
     choice: Choice,
     canvas: SubScreen,
+    background: MovableUniTexture,
 }
 
 impl SimulationStatus {
@@ -304,6 +305,13 @@ impl SimulationStatus {
                                 TextureID::LotusYellow,
                                 game_data),
             canvas: SubScreen::new(ctx, pos, 0, ggraphics::Color::from_rgba_u32(0xe6cde3ff)),
+	    background: MovableUniTexture::new(game_data.ref_texture(TextureID::WafuTexture1),
+					       numeric::Point2f::new(0.0, 0.0),
+					       numeric::Vector2f::new(0.1, 0.1),
+					       0.0,
+					       0,
+					       move_fn::stop(),
+					       0),
         }
     }
 
@@ -317,6 +325,7 @@ impl DrawableComponent for SimulationStatus {
         if self.is_visible() {
             self.canvas.begin_drawing(ctx);
 
+	    self.background.draw(ctx);
             self.money_counter.draw(ctx)?;
             self.tired_meter.draw(ctx)?;
 
