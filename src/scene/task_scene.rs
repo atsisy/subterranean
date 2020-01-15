@@ -1,5 +1,5 @@
 use torifune::device as tdev;
-use torifune::core::Clock;
+use torifune::core::*;
 use ggez::graphics as ggraphics;
 use ginput::mouse::MouseButton;
 use torifune::numeric;
@@ -14,11 +14,61 @@ use crate::core::GameData;
 use crate::object::task_object::*;
 use crate::object::simulation_ui as sui;
 
+struct SceneEvent<T> {
+    run_time: Clock,
+    func: Box<dyn Fn(&mut T, &mut ggez::Context, &GameData) -> ()>,
+}
+
+impl<T> SceneEvent<T> {
+    pub fn new(f: Box<dyn Fn(&mut T, &mut ggez::Context, &GameData) -> ()>, t: Clock) -> Self {
+	SceneEvent::<T> {
+	    run_time: t,
+	    func: f,
+	}
+    }
+}
+
+struct SceneEventList<T> {
+    list: Vec<SceneEvent<T>>,
+}
+
+impl<T> SceneEventList<T> {
+    pub fn new() -> Self {
+	SceneEventList::<T> {
+	    list: Vec::new(),
+	}
+    }
+
+    pub fn add_event(&mut self, f: Box<dyn Fn(&mut T, &mut ggez::Context, &GameData) -> ()>,
+		     t: Clock) -> &mut Self {
+	self.add(SceneEvent::new(f, t))
+    }
+
+    pub fn add(&mut self, event: SceneEvent<T>) -> &mut Self {
+	self.list.push(event);
+	self.list.sort_by(|o1, o2| { o2.run_time.cmp(&o1.run_time) });
+	self
+    }
+
+    pub fn move_top(&mut self) -> Option<SceneEvent<T>> {
+	if self.list.len() > 0 {
+	    self.list.pop()
+	} else {
+	    None
+	}
+    }
+
+    pub fn len(&self) -> usize {
+	self.list.len()
+    }
+}
+
 pub struct TaskScene {
     task_table: TaskTable,
     simulation_status: sui::SimulationStatus,
     clock: Clock,
     mouse_info: MouseInformation,
+    event_list: SceneEventList<Self>,
 }
 
 impl TaskScene {
@@ -32,6 +82,7 @@ impl TaskScene {
 	    simulation_status: sui::SimulationStatus::new(ctx, numeric::Rect::new(0.0, 0.0, 1366.0, 180.0), game_data),
             clock: 0,
             mouse_info: MouseInformation::new(),
+	    event_list: SceneEventList::new(),
         }
     }
 
@@ -52,6 +103,23 @@ impl TaskScene {
     fn unselect_dragging_object(&mut self, ctx: &mut ggez::Context, t: Clock) {
         self.task_table.unselect_dragging_object(ctx, t);
     }
+
+    fn run_scene_event(&mut self, ctx: &mut ggez::Context, game_data: &GameData, t: Clock) {
+	while self.event_list.len() > 0 {
+	    // 最後の要素の所有権を移動
+	    let event = self.event_list.move_top();
+
+	    if let Some(event) = event {
+		if event.run_time > t {
+		    self.event_list.add(event);
+		    break;
+		}
+
+		// 所有権を移動しているため、selfを渡してもエラーにならない
+		(event.func)(self, ctx, game_data);
+	    }
+	}
+    }
 }
 
 impl SceneManager for TaskScene {
@@ -63,6 +131,8 @@ impl SceneManager for TaskScene {
         match vkey {
             tdev::VirtualKey::Action1 => {
                 println!("Action1 down!");
+		self.event_list.add_event(Box::new(|_, _, _| println!("aaaaaaaaaa") ), self.get_current_clock() + 2);
+		self.event_list.add_event(Box::new(|_, _, _| println!("bbbbbbbbbb") ), self.get_current_clock() + 500);
             },
             _ => (),
         }
@@ -130,18 +200,32 @@ impl SceneManager for TaskScene {
                    ctx: &mut ggez::Context,
                    game_data: &GameData) {
         self.task_table.update(ctx, game_data, self.get_current_clock());
+	if !self.task_table.in_customer_event() {
+	    let mut f = |s: &mut TaskScene, ctx: &mut ggez::Context, game_data: &GameData| {
+		s.task_table.start_customer_event(
+                    ctx, game_data,
+                    task_object::BorrowingInformation::new_random(
+			game_data,
+			task_object::GensoDate::new(128, 12, 20),
+			task_object::GensoDate::new(128, 12, 20)
+                    ), s.get_current_clock());
+	    };
+	    self.event_list.add_event(Box::new(f), self.get_current_clock() + 300);
+	}
+
+	self.run_scene_event(ctx, game_data, self.get_current_clock());
     }
 
     fn drawing_process(&mut self, ctx: &mut ggez::Context) {
         self.task_table.draw(ctx).unwrap();
 	self.simulation_status.draw(ctx).unwrap();
     }
-
+    
     fn post_process(&mut self, _ctx: &mut ggez::Context, _: &GameData) -> SceneTransition {
         self.update_current_clock();
         SceneTransition::Keep
     }
-
+    
     fn transition(&self) -> SceneID {
         SceneID::MainDesk
     }

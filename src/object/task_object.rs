@@ -1716,6 +1716,7 @@ pub struct TaskTable {
     canvas: SubScreen,
     left: SuzuMiniSight,
     right: DeskObjects,
+    in_event: bool,
 }
 
 impl TaskTable {
@@ -1726,21 +1727,21 @@ impl TaskTable {
         let mut right = DeskObjects::new(ctx, game_data, right_rect);
         
         right.add_object(DeskObject::new(
-                Box::new(tobj::SimpleObject::new(
-                    tobj::MovableUniTexture::new(
-                        game_data.ref_texture(TextureID::LotusPink),
-                        numeric::Point2f::new(0.0, 0.0),
-                        numeric::Vector2f::new(0.1, 0.1),
-                        0.0, -1, move_fn::stop(),
-                        0), vec![])),
-                Box::new(tobj::SimpleObject::new(
-                    tobj::MovableUniTexture::new(
-                        game_data.ref_texture(TextureID::LotusPink),
-                        numeric::Point2f::new(0.0, 0.0),
-                        numeric::Vector2f::new(0.1, 0.1),
-                        0.0, -1, move_fn::stop(),
-                        0), vec![])), 1, t));
-
+            Box::new(tobj::SimpleObject::new(
+                tobj::MovableUniTexture::new(
+                    game_data.ref_texture(TextureID::LotusPink),
+                    numeric::Point2f::new(0.0, 0.0),
+                    numeric::Vector2f::new(0.1, 0.1),
+                    0.0, -1, move_fn::stop(),
+                    0), vec![])),
+            Box::new(tobj::SimpleObject::new(
+                tobj::MovableUniTexture::new(
+                    game_data.ref_texture(TextureID::LotusPink),
+                    numeric::Point2f::new(0.0, 0.0),
+                    numeric::Vector2f::new(0.1, 0.1),
+                    0.0, -1, move_fn::stop(),
+                    0), vec![])), 1, t));
+	
         let mut book = Box::new(BorrowingRecordBook::new(ggraphics::Rect::new(0.0, 0.0, 400.0, 400.0)));
         book.add_page(ctx,
                       &BorrowingInformation::new_random(game_data, GensoDate::new(12, 12, 12), GensoDate::new(12, 12, 12)),
@@ -1759,9 +1760,10 @@ impl TaskTable {
             canvas: SubScreen::new(ctx, pos, 0, ggraphics::Color::from_rgba_u32(0x00000000)),
             left: left,
             right: right,
+	    in_event: false,
         }
     }
-
+    
     pub fn select_dragging_object(&mut self, ctx: &mut ggez::Context, point: numeric::Point2f) {
         let rpoint = self.canvas.relative_point(point);
         self.left.select_dragging_object(ctx, rpoint);
@@ -1805,7 +1807,7 @@ impl TaskTable {
             if let Some(mut dragging) = self.right.release_dragging() {
 		// ドラッグしているオブジェクトの座標を取得
 		let mut drag_obj_p = dragging.get_object().get_position();
-
+		
 		// drag_obj_pのy座標をドラッグしているオブジェクトの中心y座標に書き換える
 		// これは、受け渡す時にオブジェクトの移動に違和感が発生することを防ぐためである
 		drag_obj_p.y = dragging.get_object().get_center(ctx).y;
@@ -1867,9 +1869,14 @@ impl TaskTable {
                                 ctx: &mut ggez::Context,
                                 game_data: &GameData,
                                 info: BorrowingInformation, t: Clock) {
+	self.in_event = true;
         for _ in info.borrowing {
             self.left.add_object(factory::create_dobj_book_random(ctx, game_data, t));
         }
+    }
+
+    pub fn in_customer_event(&self) -> bool {
+	self.in_event
     }
 }
 
