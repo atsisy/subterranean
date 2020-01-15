@@ -28,7 +28,7 @@ impl TaskScene {
             task_table: TaskTable::new(ctx, game_data,
                                        ggraphics::Rect::new(10.0, 230.0, 1300.0, 500.0),
                                        ggraphics::Rect::new(10.0, 0.0, 520.0, 500.0),
-                                       ggraphics::Rect::new(540.0, 0.0, 900.0, 500.0)),
+                                       ggraphics::Rect::new(540.0, 0.0, 900.0, 500.0), 0),
 	    simulation_status: sui::SimulationStatus::new(ctx, numeric::Rect::new(0.0, 0.0, 1366.0, 180.0), game_data),
             clock: 0,
             mouse_info: MouseInformation::new(),

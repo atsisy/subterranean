@@ -251,7 +251,7 @@ impl DrawableComponent for BorrowingPaper {
     }
 }
 
-impl Clickable for BorrowingPaper {    
+impl Clickable for BorrowingPaper {
     fn button_up(&mut self,
                  ctx: &mut ggez::Context,
                  _button: ggez::input::mouse::MouseButton,
@@ -1067,16 +1067,16 @@ impl TextureObject for BorrowingRecordBook {
 }
 
 pub struct DeskObject {
-    small: Box<dyn TextureObject>,
-    large: Box<dyn TextureObject>,
+    small: Box<EffectableWrap<MovableWrap<dyn TextureObject>>>,
+    large: Box<EffectableWrap<MovableWrap<dyn TextureObject>>>,
     switch: u8,
 }
 
 impl DeskObject {
-    pub fn new(small: Box<dyn TextureObject>, large: Box<dyn TextureObject>, switch: u8) -> Self {
+    pub fn new(small: Box<dyn TextureObject>, large: Box<dyn TextureObject>, switch: u8, t: Clock) -> Self {
         DeskObject {
-            small: small,
-            large: large,
+            small: Box::new(EffectableWrap::new(MovableWrap::new(small, None, t), Vec::new())),
+            large: Box::new(EffectableWrap::new(MovableWrap::new(large, None, t), Vec::new())),
             switch: switch,
         }
     }
@@ -1089,7 +1089,7 @@ impl DeskObject {
         self.switch = 1;
     }
 
-    pub fn get_object(&self) -> &Box<dyn TextureObject> {
+    pub fn get_object(&self) -> &Box<EffectableWrap<MovableWrap<dyn TextureObject>>> {
         match self.switch {
             0 => &self.small,
             1 => &self.large,
@@ -1097,7 +1097,7 @@ impl DeskObject {
         }
     }
 
-    pub fn get_object_mut(&mut self) -> &mut Box<dyn TextureObject> {
+    pub fn get_object_mut(&mut self) -> &mut Box<EffectableWrap<MovableWrap<dyn TextureObject>>> {
         match self.switch {
             0 => &mut self.small,
             1 => &mut self.large,
@@ -1477,7 +1477,7 @@ pub struct SuzuMiniSight {
     canvas: SubScreen,
     desk_objects: DeskObjectContainer,
     dragging: Option<DeskObject>,
-    dropping: Vec<tobj::EffectableWrap<tobj::MovableWrap<dyn TextureObject>>>,
+    dropping: Vec<EffectableWrap<MovableWrap<dyn TextureObject>>>,
     table_texture: tobj::SimpleObject,
     silhouette: SuzuMiniSightSilhouette,
 }
@@ -1551,6 +1551,11 @@ impl SuzuMiniSight {
 	area.y + area.h < self.canvas.get_drawing_area(ctx).h / 2.5
     }
 
+    fn check_object_drop_to_desk(&self, ctx: &mut ggez::Context, desk_obj: &DeskObject) -> bool {
+	let area = desk_obj.get_object().get_drawing_area(ctx);
+	area.y + area.h < self.canvas.get_drawing_area(ctx).h / 1.5
+    }
+
     pub fn unselect_dragging_object(&mut self, ctx: &mut ggez::Context, t: Clock) {
         if let Some(obj) = &mut self.dragging {
             let min = self.desk_objects.get_minimum_depth();
@@ -1558,27 +1563,41 @@ impl SuzuMiniSight {
             self.desk_objects.change_depth_equally(1);
         }
         if self.dragging.is_some() {
-            let dragged = self.release_dragging().unwrap();
+            let mut dragged = self.release_dragging().unwrap();
 
 	    if self.check_object_drop(ctx, &dragged) {
-		let new_drop = tobj::EffectableWrap::new(
-		    tobj::MovableWrap::new(dragged.small,
-					   move_fn::gravity_move(1.0, 10.0, 300.0, 0.3),
-					   t), vec![Box::new(|obj: &mut dyn MovableObject, ctx: &ggez::Context, t: Clock| {
-					       if (t - obj.mf_start_timing()) > 200 { obj.override_move_func(move_fn::stop(), t); }
-					   })]);
+		let new_drop = EffectableWrap::new(
+		    MovableWrap::new(dragged.small.move_wrapped_object().move_wrapped_object(),
+				     move_fn::gravity_move(1.0, 10.0, 300.0, 0.3),
+				     t), vec![Box::new(|obj: &mut dyn MovableObject, ctx: &ggez::Context, t: Clock| {
+					 if (t - obj.mf_start_timing()) > 200 { obj.override_move_func(move_fn::stop(), t); }
+				     })]);
 		self.dropping.push(new_drop);
 	    } else {
+		if self.check_object_drop_to_desk(ctx, &dragged) {
+		    dragged.get_object_mut().override_move_func(move_fn::gravity_move(1.0, 10.0, 300.0, 0.3), t);
+		    dragged.get_object_mut().add_effect(vec![
+			Box::new(|obj: &mut dyn MovableObject, ctx: &ggez::Context, t: Clock| {
+			    if obj.get_position().y > 300.0 { obj.override_move_func(None, t); }
+			})
+		    ]);
+		}
 		self.desk_objects.add(dragged);
 		self.desk_objects.sort_with_depth();
 	    }
         }
     }
-
+    
     pub fn update(&mut self, ctx: &mut ggez::Context, t: Clock) {
+	self.dropping.retain(|d| !d.is_stop());
 	for d in &mut self.dropping {
             d.move_with_func(t);
 	    d.effect(ctx, t);
+        }
+
+	for d in &mut self.desk_objects.get_raw_container_mut().iter_mut() {
+            d.get_object_mut().move_with_func(t);
+	    d.get_object_mut().effect(ctx, t);
         }
     }
 
@@ -1702,7 +1721,7 @@ pub struct TaskTable {
 impl TaskTable {
     pub fn new(ctx: &mut ggez::Context, game_data: &GameData,
                pos: numeric::Rect,
-               left_rect: ggraphics::Rect, right_rect: ggraphics::Rect) -> Self {
+               left_rect: ggraphics::Rect, right_rect: ggraphics::Rect, t: Clock) -> Self {
 	let mut left = SuzuMiniSight::new(ctx, game_data, left_rect);
         let mut right = DeskObjects::new(ctx, game_data, right_rect);
         
@@ -1720,7 +1739,7 @@ impl TaskTable {
                         numeric::Point2f::new(0.0, 0.0),
                         numeric::Vector2f::new(0.1, 0.1),
                         0.0, -1, move_fn::stop(),
-                        0), vec![])), 1));
+                        0), vec![])), 1, t));
 
         let mut book = Box::new(BorrowingRecordBook::new(ggraphics::Rect::new(0.0, 0.0, 400.0, 400.0)));
         book.add_page(ctx,
@@ -1734,7 +1753,7 @@ impl TaskTable {
                     numeric::Vector2f::new(0.1, 0.1),
                     0.0, -1, move_fn::stop(),
                     0), vec![])),
-            book, 0));
+            book, 0, t));
         
         TaskTable {
             canvas: SubScreen::new(ctx, pos, 0, ggraphics::Color::from_rgba_u32(0x00000000)),
