@@ -63,12 +63,21 @@ impl<T> SceneEventList<T> {
     }
 }
 
+#[derive(Debug, Clone, Copy, PartialEq)]
+enum TaskSceneStatus {
+    Init,
+    CustomerFree,
+    CustomerWait,
+    CustomerEvent,
+}
+
 pub struct TaskScene {
     task_table: TaskTable,
     simulation_status: sui::SimulationStatus,
     clock: Clock,
     mouse_info: MouseInformation,
     event_list: SceneEventList<Self>,
+    status: TaskSceneStatus,
 }
 
 impl TaskScene {
@@ -83,6 +92,7 @@ impl TaskScene {
             clock: 0,
             mouse_info: MouseInformation::new(),
 	    event_list: SceneEventList::new(),
+	    status: TaskSceneStatus::Init,
         }
     }
 
@@ -105,19 +115,16 @@ impl TaskScene {
     }
 
     fn run_scene_event(&mut self, ctx: &mut ggez::Context, game_data: &GameData, t: Clock) {
-	while self.event_list.len() > 0 {
-	    // 最後の要素の所有権を移動
-	    let event = self.event_list.move_top();
-
-	    if let Some(event) = event {
-		if event.run_time > t {
-		    self.event_list.add(event);
-		    break;
-		}
-
-		// 所有権を移動しているため、selfを渡してもエラーにならない
-		(event.func)(self, ctx, game_data);
+	// 最後の要素の所有権を移動
+	while let Some(event) = self.event_list.move_top() {
+	    // 時間が来ていない場合は、取り出した要素をリストに戻して処理ループを抜ける
+	    if event.run_time > t {
+		self.event_list.add(event);
+		break;
 	    }
+	    
+	    // 所有権を移動しているため、selfを渡してもエラーにならない
+	    (event.func)(self, ctx, game_data);
 	}
     }
 }
@@ -200,22 +207,30 @@ impl SceneManager for TaskScene {
                    ctx: &mut ggez::Context,
                    game_data: &GameData) {
         self.task_table.update(ctx, game_data, self.get_current_clock());
-	if !self.task_table.in_customer_event() {
-	    let mut f = |s: &mut TaskScene, ctx: &mut ggez::Context, game_data: &GameData| {
-		s.task_table.start_customer_event(
-                    ctx, game_data,
-                    task_object::BorrowingInformation::new_random(
-			game_data,
-			task_object::GensoDate::new(128, 12, 20),
-			task_object::GensoDate::new(128, 12, 20)
-                    ), s.get_current_clock());
-	    };
-	    self.event_list.add_event(Box::new(f), self.get_current_clock() + 300);
-	}
 
+	if self.status == TaskSceneStatus::CustomerEvent && self.status == TaskSceneStatus::Init &&
+	    self.task_table.get_remaining_customer_object_number() == 0 {
+	    self.status = TaskSceneStatus::CustomerFree;
+	}
+	
+	if self.status == TaskSceneStatus::CustomerFree {
+	    self.event_list.add_event(Box::new(
+		|s: &mut TaskScene, ctx: &mut ggez::Context, game_data: &GameData| {
+		    s.task_table.start_customer_event(
+			ctx, game_data,
+			task_object::BorrowingInformation::new_random(
+			    game_data,
+			    task_object::GensoDate::new(128, 12, 20),
+			    task_object::GensoDate::new(128, 12, 20)
+			), s.get_current_clock());
+		    s.status = TaskSceneStatus::CustomerEvent;
+		}), self.get_current_clock() + 100);
+	    self.status = TaskSceneStatus::CustomerWait;
+	}
+	
 	self.run_scene_event(ctx, game_data, self.get_current_clock());
     }
-
+    
     fn drawing_process(&mut self, ctx: &mut ggez::Context) {
         self.task_table.draw(ctx).unwrap();
 	self.simulation_status.draw(ctx).unwrap();

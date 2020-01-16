@@ -325,7 +325,7 @@ impl DrawableComponent for SimulationStatus {
         if self.is_visible() {
             self.canvas.begin_drawing(ctx);
 
-	    self.background.draw(ctx);
+	    self.background.draw(ctx)?;
             self.money_counter.draw(ctx)?;
             self.tired_meter.draw(ctx)?;
 

@@ -1066,18 +1066,27 @@ impl TextureObject for BorrowingRecordBook {
     }
 }
 
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub enum DeskObjectType {
+    CustomerObject = 0,
+    SuzunaObject,
+}
+
 pub struct DeskObject {
     small: Box<EffectableWrap<MovableWrap<dyn TextureObject>>>,
     large: Box<EffectableWrap<MovableWrap<dyn TextureObject>>>,
     switch: u8,
+    object_type: DeskObjectType,
 }
 
 impl DeskObject {
-    pub fn new(small: Box<dyn TextureObject>, large: Box<dyn TextureObject>, switch: u8, t: Clock) -> Self {
+    pub fn new(small: Box<dyn TextureObject>, large: Box<dyn TextureObject>,
+	       switch: u8, obj_type: DeskObjectType, t: Clock) -> Self {
         DeskObject {
             small: Box::new(EffectableWrap::new(MovableWrap::new(small, None, t), Vec::new())),
             large: Box::new(EffectableWrap::new(MovableWrap::new(large, None, t), Vec::new())),
             switch: switch,
+	    object_type: obj_type,
         }
     }
 
@@ -1103,6 +1112,10 @@ impl DeskObject {
             1 => &mut self.large,
             _ => panic!("Failed to object selecting. select = {}", self.switch),
         }
+    }
+
+    pub fn get_object_type(&self) -> DeskObjectType {
+	self.object_type
     }
 }
 
@@ -1355,6 +1368,16 @@ impl DeskObjects {
 
     pub fn out_of_desk(&self, point: numeric::Point2f) -> bool {
         !self.canvas.contains(point)
+    }
+
+    pub fn count_object_by_type(&self, object_type: DeskObjectType) -> usize {
+	self.desk_objects.get_raw_container().iter().fold(0, |sum, obj| {
+	    if obj.get_object_type() == object_type {
+		1
+	    } else {
+		0
+	    }
+	})
     }
 }
 
@@ -1617,6 +1640,10 @@ impl SuzuMiniSight {
         }
     }
 
+    pub fn add_customer_object(&mut self, obj: DeskObject) {
+	self.add_object(obj);
+    }
+    
     pub fn add_object(&mut self, obj: DeskObject) {
         self.desk_objects.add(obj);
         self.desk_objects.sort_with_depth();
@@ -1643,6 +1670,16 @@ impl SuzuMiniSight {
 
     pub fn out_of_desk(&self, point: numeric::Point2f) -> bool {
         !self.canvas.contains(point)
+    }
+
+    pub fn count_object_by_type(&self, object_type: DeskObjectType) -> usize {
+	self.desk_objects.get_raw_container().iter().fold(0, |sum, obj| {
+	    if obj.get_object_type() == object_type {
+		1
+	    } else {
+		0
+	    }
+	})
     }
 }
 
@@ -1740,7 +1777,7 @@ impl TaskTable {
                     numeric::Point2f::new(0.0, 0.0),
                     numeric::Vector2f::new(0.1, 0.1),
                     0.0, -1, move_fn::stop(),
-                    0), vec![])), 1, t));
+                    0), vec![])), 1, DeskObjectType::SuzunaObject, t));
 	
         let mut book = Box::new(BorrowingRecordBook::new(ggraphics::Rect::new(0.0, 0.0, 400.0, 400.0)));
         book.add_page(ctx,
@@ -1754,7 +1791,8 @@ impl TaskTable {
                     numeric::Vector2f::new(0.1, 0.1),
                     0.0, -1, move_fn::stop(),
                     0), vec![])),
-            book, 0, t));
+            book, 0,
+	    DeskObjectType::SuzunaObject, t));
         
         TaskTable {
             canvas: SubScreen::new(ctx, pos, 0, ggraphics::Color::from_rgba_u32(0x00000000)),
@@ -1859,19 +1897,23 @@ impl TaskTable {
     }
 
     pub fn update(&mut self, ctx: &mut ggez::Context, game_data: &GameData, t: Clock) {
-        if t == 500 {
-            self.left.desk_objects.add(factory::create_dobj_book_random(ctx, game_data, t));
-        }
 	self.left.update(ctx, t);
     }
 
+    pub fn get_remaining_customer_object_number(&self) -> usize {
+	self.left.count_object_by_type(DeskObjectType::CustomerObject) +
+	    self.right.count_object_by_type(DeskObjectType::CustomerObject)
+    }
+    
     pub fn start_customer_event(&mut self,
                                 ctx: &mut ggez::Context,
                                 game_data: &GameData,
                                 info: BorrowingInformation, t: Clock) {
 	self.in_event = true;
         for _ in info.borrowing {
-            self.left.add_object(factory::create_dobj_book_random(ctx, game_data, t));
+            self.left.add_customer_object(
+		factory::create_dobj_book_random(ctx, game_data,
+						 DeskObjectType::CustomerObject, t));
         }
     }
 
