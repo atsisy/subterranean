@@ -1,0 +1,24 @@
+using-tachie = ["LotusPink", "LotusBlue"]
+
+[default-text-attribute]
+fpc = 1.0
+font_scale = 28.0
+color = 0x000000ff
+
+[[scenario-group]]
+text = """私の名前は本居小鈴
+"""
+
+[[scenario-group]]
+text = """私の名前は本居小鈴両親が経営する貸本屋
+鈴奈庵 の看板娘かなあああああああああああああ
+"""
+
+[[scenario-group]]
+fpc = 0.1
+font_scale = 28.0
+color = 0xff0000ff
+text = "こっちの話"
+
+[[scenario-group]]
+text = "面白い人がこの街に来たなって"
