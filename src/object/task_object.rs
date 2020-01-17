@@ -77,6 +77,146 @@ impl BorrowingInformation {
     }
 }
 
+pub trait OnDesk : TextureObject + Clickable {
+    fn ondesk_whose(&self) -> i32;
+}
+
+struct OnDeskTexture {
+    texture: UniTexture,
+}
+
+impl OnDeskTexture {
+    pub fn new(obj: UniTexture) -> Self {
+	OnDeskTexture {
+	    texture: obj,
+	}
+    }
+}
+
+impl DrawableComponent for OnDeskTexture {
+    fn draw(&mut self, ctx: &mut ggez::Context) -> ggez::GameResult<()> {
+	self.texture.draw(ctx)
+    }
+
+    #[inline(always)]
+    fn hide(&mut self) {
+	self.texture.hide();
+    }
+
+    #[inline(always)]
+    fn appear(&mut self) {
+	self.texture.appear();
+    }
+
+    #[inline(always)]
+    fn is_visible(&self) -> bool {
+	self.texture.is_visible()
+    }
+
+    #[inline(always)]
+    fn set_drawing_depth(&mut self, depth: i8) {
+	self.texture.set_drawing_depth(depth);
+    }
+
+    #[inline(always)]
+    fn get_drawing_depth(&self) -> i8 {	
+	self.texture.get_drawing_depth()
+    }
+}
+
+impl DrawableObject for OnDeskTexture {
+    #[inline(always)]
+    fn set_position(&mut self, pos: numeric::Point2f) {
+	self.texture.set_position(pos);
+    }
+
+    #[inline(always)]
+    fn get_position(&self) -> numeric::Point2f {
+	self.texture.get_position()
+    }
+
+    #[inline(always)]
+    fn move_diff(&mut self, offset: numeric::Vector2f) {
+	self.texture.move_diff(offset);
+    }
+}
+
+impl TextureObject for OnDeskTexture {
+    
+    fn set_scale(&mut self, scale: numeric::Vector2f) {
+	self.texture.set_scale(scale);
+    }
+
+    fn get_scale(&self) -> numeric::Vector2f {
+	self.texture.get_scale()
+    }
+
+    fn set_rotation(&mut self, rad: f32) {
+	self.texture.set_rotation(rad);
+    }
+
+    fn get_rotation(&self) -> f32 {
+	self.texture.get_rotation()
+    }
+
+    fn set_crop(&mut self, crop: ggraphics::Rect) {
+	self.texture.set_crop(crop);
+    }
+
+    fn get_crop(&self) -> ggraphics::Rect {
+	self.texture.get_crop()
+    }
+
+    fn set_drawing_color(&mut self, color: ggraphics::Color) {
+	self.texture.set_drawing_color(color);
+    }
+
+    fn get_drawing_color(&self) -> ggraphics::Color {
+	self.texture.get_drawing_color()
+    }
+
+    fn set_alpha(&mut self, alpha: f32) {
+	self.texture.set_alpha(alpha);
+    }
+
+    fn get_alpha(&self) -> f32 {
+	self.texture.get_alpha()
+    }
+
+    fn set_transform_offset(&mut self, offset: numeric::Point2f) {
+	self.texture.set_transform_offset(offset);
+    }
+
+    fn get_transform_offset(&self) -> numeric::Point2f {
+	self.texture.get_transform_offset()
+    }
+
+    fn get_texture_size(&self, ctx: &mut ggez::Context) -> numeric::Vector2f {
+	self.texture.get_texture_size(ctx)
+    }
+
+    fn replace_texture(&mut self, texture: Rc<ggraphics::Image>) {
+	self.texture.replace_texture(texture);
+    }
+
+    fn set_color(&mut self, color: ggraphics::Color) {
+	self.texture.set_color(color);
+    }
+
+    fn get_color(&mut self) -> ggraphics::Color {
+	self.texture.get_color()
+    }
+}
+
+impl Clickable for OnDeskTexture {
+}
+
+impl OnDesk for OnDeskTexture {
+    fn ondesk_whose(&self) -> i32 {
+	0
+    }
+}
+
 pub struct BorrowingPaper {
     title: SimpleText,
     borrowing: Vec<SimpleText>,
@@ -568,6 +708,15 @@ impl TextureObject for CopyingRequestPaper {
     }
 }
 
+impl Clickable for CopyingRequestPaper {
+}
+
+impl OnDesk for CopyingRequestPaper {
+    fn ondesk_whose(&self) -> i32 {
+	0
+    }
+}
+
 #[derive(PartialEq, Debug, Clone, Copy)]
 pub struct MouseActionRecord {
     pub point: numeric::Point2f,
@@ -720,6 +869,22 @@ impl DrawableObject for BorrowingRecordBookPage {
     #[inline(always)]
     fn move_diff(&mut self, offset: numeric::Vector2f) {
         self.canvas.move_diff(offset)
+    }
+}
+
+impl Clickable for BorrowingRecordBookPage {
+    fn button_down(&mut self,
+                   _ctx: &mut ggez::Context,
+                   _button: ggez::input::mouse::MouseButton,
+                   _point: numeric::Point2f) {
+    }
+    
+    fn button_up(&mut self,
+                 _ctx: &mut ggez::Context,
+                 _button: ggez::input::mouse::MouseButton,
+                 point: numeric::Point2f) {
+	let rpoint = self.canvas.relative_point(point);
+	println!("{:?}", rpoint);
     }
 }
 
@@ -1066,6 +1231,29 @@ impl TextureObject for BorrowingRecordBook {
     }
 }
 
+impl Clickable for BorrowingRecordBook {
+    fn button_down(&mut self,
+                   _ctx: &mut ggez::Context,
+                   _button: ggez::input::mouse::MouseButton,
+                   _point: numeric::Point2f) {
+    }
+    
+    fn button_up(&mut self,
+                 ctx: &mut ggez::Context,
+                 button: ggez::input::mouse::MouseButton,
+                 point: numeric::Point2f) {
+	if let Some(page) = self.get_current_page_mut() {
+	    page.button_up(ctx, button, point);
+	}
+    }
+}
+
+impl OnDesk for BorrowingRecordBook {
+    fn ondesk_whose(&self) -> i32 {
+	0
+    }
+}
+
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum DeskObjectType {
     CustomerObject = 0,
@@ -1073,14 +1261,14 @@ pub enum DeskObjectType {
 }
 
 pub struct DeskObject {
-    small: Box<EffectableWrap<MovableWrap<dyn TextureObject>>>,
-    large: Box<EffectableWrap<MovableWrap<dyn TextureObject>>>,
+    small: Box<EffectableWrap<MovableWrap<dyn OnDesk>>>,
+    large: Box<EffectableWrap<MovableWrap<dyn OnDesk>>>,
     switch: u8,
     object_type: DeskObjectType,
 }
 
 impl DeskObject {
-    pub fn new(small: Box<dyn TextureObject>, large: Box<dyn TextureObject>,
+    pub fn new(small: Box<dyn OnDesk>, large: Box<dyn OnDesk>,
 	       switch: u8, obj_type: DeskObjectType, t: Clock) -> Self {
         DeskObject {
             small: Box::new(EffectableWrap::new(MovableWrap::new(small, None, t), Vec::new())),
@@ -1098,7 +1286,7 @@ impl DeskObject {
         self.switch = 1;
     }
 
-    pub fn get_object(&self) -> &Box<EffectableWrap<MovableWrap<dyn TextureObject>>> {
+    pub fn get_object(&self) -> &Box<EffectableWrap<MovableWrap<dyn OnDesk>>> {
         match self.switch {
             0 => &self.small,
             1 => &self.large,
@@ -1106,7 +1294,7 @@ impl DeskObject {
         }
     }
 
-    pub fn get_object_mut(&mut self) -> &mut Box<EffectableWrap<MovableWrap<dyn TextureObject>>> {
+    pub fn get_object_mut(&mut self) -> &mut Box<EffectableWrap<MovableWrap<dyn OnDesk>>> {
         match self.switch {
             0 => &mut self.small,
             1 => &mut self.large,
@@ -1371,7 +1559,7 @@ impl DeskObjects {
     }
 
     pub fn count_object_by_type(&self, object_type: DeskObjectType) -> usize {
-	self.desk_objects.get_raw_container().iter().fold(0, |sum, obj| {
+	self.desk_objects.get_raw_container().iter().fold(0, |_, obj| {
 	    if obj.get_object_type() == object_type {
 		1
 	    } else {
@@ -1444,6 +1632,23 @@ impl DrawableObject for DeskObjects {
     }
 }
 
+impl Clickable for DeskObjects {
+    fn button_down(&mut self,
+                   _ctx: &mut ggez::Context,
+                   _button: ggez::input::mouse::MouseButton,
+                   _point: numeric::Point2f) {}
+    
+    fn button_up(&mut self,
+                 ctx: &mut ggez::Context,
+                 button: ggez::input::mouse::MouseButton,
+                 point: numeric::Point2f) {
+	for dobj in self.desk_objects.get_raw_container_mut() {
+	    dobj.get_object_mut().ref_wrapped_object().ref_wrapped_object().button_up(ctx, button, point);
+	}
+    }
+}
+
+
 pub struct SuzuMiniSightSilhouette {
     background: MovableUniTexture,
     character: Option<SimpleObject>,
@@ -1500,7 +1705,7 @@ pub struct SuzuMiniSight {
     canvas: SubScreen,
     desk_objects: DeskObjectContainer,
     dragging: Option<DeskObject>,
-    dropping: Vec<EffectableWrap<MovableWrap<dyn TextureObject>>>,
+    dropping: Vec<EffectableWrap<MovableWrap<dyn OnDesk>>>,
     table_texture: tobj::SimpleObject,
     silhouette: SuzuMiniSightSilhouette,
 }
@@ -1592,7 +1797,7 @@ impl SuzuMiniSight {
 		let new_drop = EffectableWrap::new(
 		    MovableWrap::new(dragged.small.move_wrapped_object().move_wrapped_object(),
 				     move_fn::gravity_move(1.0, 10.0, 300.0, 0.3),
-				     t), vec![Box::new(|obj: &mut dyn MovableObject, ctx: &ggez::Context, t: Clock| {
+				     t), vec![Box::new(|obj: &mut dyn MovableObject, _: &ggez::Context, t: Clock| {
 					 if (t - obj.mf_start_timing()) > 200 { obj.override_move_func(move_fn::stop(), t); }
 				     })]);
 		self.dropping.push(new_drop);
@@ -1600,7 +1805,7 @@ impl SuzuMiniSight {
 		if self.check_object_drop_to_desk(ctx, &dragged) {
 		    dragged.get_object_mut().override_move_func(move_fn::gravity_move(1.0, 10.0, 300.0, 0.3), t);
 		    dragged.get_object_mut().add_effect(vec![
-			Box::new(|obj: &mut dyn MovableObject, ctx: &ggez::Context, t: Clock| {
+			Box::new(|obj: &mut dyn MovableObject, _: &ggez::Context, t: Clock| {
 			    if obj.get_position().y > 300.0 { obj.override_move_func(None, t); }
 			})
 		    ]);
@@ -1673,7 +1878,7 @@ impl SuzuMiniSight {
     }
 
     pub fn count_object_by_type(&self, object_type: DeskObjectType) -> usize {
-	self.desk_objects.get_raw_container().iter().fold(0, |sum, obj| {
+	self.desk_objects.get_raw_container().iter().fold(0, |_, obj| {
 	    if obj.get_object_type() == object_type {
 		1
 	    } else {
@@ -1749,6 +1954,7 @@ impl DrawableObject for SuzuMiniSight {
     }
 }
 
+
 pub struct TaskTable {
     canvas: SubScreen,
     left: SuzuMiniSight,
@@ -1764,33 +1970,31 @@ impl TaskTable {
         let mut right = DeskObjects::new(ctx, game_data, right_rect);
         
         right.add_object(DeskObject::new(
-            Box::new(tobj::SimpleObject::new(
-                tobj::MovableUniTexture::new(
+            Box::new(OnDeskTexture::new(
+                UniTexture::new(
                     game_data.ref_texture(TextureID::LotusPink),
                     numeric::Point2f::new(0.0, 0.0),
                     numeric::Vector2f::new(0.1, 0.1),
-                    0.0, -1, move_fn::stop(),
-                    0), vec![])),
-            Box::new(tobj::SimpleObject::new(
-                tobj::MovableUniTexture::new(
+                    0.0, -1))),
+            Box::new(OnDeskTexture::new(
+                UniTexture::new(
                     game_data.ref_texture(TextureID::LotusPink),
                     numeric::Point2f::new(0.0, 0.0),
                     numeric::Vector2f::new(0.1, 0.1),
-                    0.0, -1, move_fn::stop(),
-                    0), vec![])), 1, DeskObjectType::SuzunaObject, t));
+                    0.0, -1))), 1, DeskObjectType::SuzunaObject, t));
 	
         let mut book = Box::new(BorrowingRecordBook::new(ggraphics::Rect::new(0.0, 0.0, 400.0, 400.0)));
         book.add_page(ctx,
                       &BorrowingInformation::new_random(game_data, GensoDate::new(12, 12, 12), GensoDate::new(12, 12, 12)),
                       game_data, 0);
         left.add_object(DeskObject::new(
-            Box::new(tobj::SimpleObject::new(
-                tobj::MovableUniTexture::new(
-                    game_data.ref_texture(TextureID::LotusPink),
-                    numeric::Point2f::new(0.0, 0.0),
-                    numeric::Vector2f::new(0.1, 0.1),
-                    0.0, -1, move_fn::stop(),
-                    0), vec![])),
+            Box::new(
+		OnDeskTexture::new(
+                    UniTexture::new(
+			game_data.ref_texture(TextureID::Chobo1),
+			numeric::Point2f::new(0.0, 0.0),
+			numeric::Vector2f::new(0.25, 0.25),
+			0.0, -1))),
             book, 0,
 	    DeskObjectType::SuzunaObject, t));
         
@@ -1896,7 +2100,7 @@ impl TaskTable {
                               self.right.canvas.get_texture_size(ctx).y - from_bottom)
     }
 
-    pub fn update(&mut self, ctx: &mut ggez::Context, game_data: &GameData, t: Clock) {
+    pub fn update(&mut self, ctx: &mut ggez::Context, _: &GameData, t: Clock) {
 	self.left.update(ctx, t);
     }
 
@@ -1958,6 +2162,23 @@ impl DrawableComponent for TaskTable {
     /// 描画順序を返す
     fn get_drawing_depth(&self) -> i8 {
         self.canvas.get_drawing_depth()
+    }
+}
+
+impl Clickable for TaskTable {
+    fn button_down(&mut self,
+                   _ctx: &mut ggez::Context,
+                   _button: ggez::input::mouse::MouseButton,
+                   _point: numeric::Point2f) {
+    }
+    
+    fn button_up(&mut self,
+                 ctx: &mut ggez::Context,
+                 button: ggez::input::mouse::MouseButton,
+                 point: numeric::Point2f) {
+	let rpoint = self.canvas.relative_point(point);
+	self.right.button_up(ctx, button, rpoint);
+	println!("click");
     }
 }
 

@@ -51,6 +51,7 @@ pub enum TextureID {
     MiddleBook3,
     Wood1,
     WafuTexture1,
+    Chobo1,
     Unknown,
 }
 
@@ -76,7 +77,9 @@ impl FromStr for TextureID {
             "MiddleBook1" => Ok(Self::MiddleBook1),
             "MiddleBook2" => Ok(Self::MiddleBook2),
             "MiddleBook3" => Ok(Self::MiddleBook3),
-            "Wood1" => Ok(Self::Wood1),
+	    "Wood1" => Ok(Self::Wood1),
+	    "WafuTexture1" => Ok(Self::WafuTexture1),
+	    "Chobo1" => Ok(Self::Chobo1),
             _ => Err(())
         }
     }
@@ -99,6 +102,8 @@ impl TextureID {
             11 => Some(Self::MiddleBook2),
             12 => Some(Self::MiddleBook3),
             13 => Some(Self::Wood1),
+	    14 => Some(Self::WafuTexture1),
+	    15 => Some(Self::Chobo1),
             _ => None
         }
     }

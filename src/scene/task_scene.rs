@@ -3,6 +3,7 @@ use torifune::core::*;
 use ggez::graphics as ggraphics;
 use ginput::mouse::MouseButton;
 use torifune::numeric;
+use torifune::graphics::object::Clickable;
 
 use torifune::graphics::*;
 
@@ -14,6 +15,15 @@ use crate::core::GameData;
 use crate::object::task_object::*;
 use crate::object::simulation_ui as sui;
 
+///
+/// # 遅延イベントを起こすための情報を保持する
+///
+/// ## run_time
+/// 処理が走る時間
+///
+/// ## func
+/// run_time時に実行される処理
+///
 struct SceneEvent<T> {
     run_time: Clock,
     func: Box<dyn Fn(&mut T, &mut ggez::Context, &GameData) -> ()>,
@@ -28,6 +38,12 @@ impl<T> SceneEvent<T> {
     }
 }
 
+///
+/// # 遅延イベントを保持しておく構造体
+///
+/// ## list
+/// 遅延イベントのリスト, run_timeでソートされている
+///
 struct SceneEventList<T> {
     list: Vec<SceneEvent<T>>,
 }
@@ -114,6 +130,9 @@ impl TaskScene {
         self.task_table.unselect_dragging_object(ctx, t);
     }
 
+    ///
+    /// 遅延処理を走らせるメソッド
+    ///
     fn run_scene_event(&mut self, ctx: &mut ggez::Context, game_data: &GameData, t: Clock) {
 	// 最後の要素の所有権を移動
 	while let Some(event) = self.event_list.move_top() {
@@ -195,12 +214,13 @@ impl SceneManager for TaskScene {
 
     fn mouse_button_up_event(&mut self,
                              ctx: &mut ggez::Context,
-                             _game_data: &GameData,
+                             game_data: &GameData,
                              button: MouseButton,
-                             _point: numeric::Point2f) {
+                             point: numeric::Point2f) {
         self.mouse_info.update_dragging(button, false);
         //self.paper.button_up(ctx, button, point);
         self.unselect_dragging_object(ctx, self.get_current_clock());
+	self.task_table.button_up(ctx, button, point);
     }
 
     fn pre_process(&mut self,
@@ -208,7 +228,7 @@ impl SceneManager for TaskScene {
                    game_data: &GameData) {
         self.task_table.update(ctx, game_data, self.get_current_clock());
 
-	if self.status == TaskSceneStatus::CustomerEvent && self.status == TaskSceneStatus::Init &&
+	if (self.status == TaskSceneStatus::CustomerEvent || self.status == TaskSceneStatus::Init) &&
 	    self.task_table.get_remaining_customer_object_number() == 0 {
 	    self.status = TaskSceneStatus::CustomerFree;
 	}
