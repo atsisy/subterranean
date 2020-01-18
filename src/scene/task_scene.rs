@@ -3,11 +3,11 @@ use torifune::core::*;
 use ggez::graphics as ggraphics;
 use ginput::mouse::MouseButton;
 use torifune::numeric;
-use torifune::graphics::object::Clickable;
 
 use torifune::graphics::*;
 
 use super::*;
+use crate::object::Clickable;
 
 use crate::object::task_object;
 
@@ -220,7 +220,7 @@ impl SceneManager for TaskScene {
         self.mouse_info.update_dragging(button, false);
         //self.paper.button_up(ctx, button, point);
         self.unselect_dragging_object(ctx, self.get_current_clock());
-	self.task_table.button_up(ctx, button, point);
+	self.task_table.button_up(ctx, game_data, self.get_current_clock(), button, point);
     }
 
     fn pre_process(&mut self,

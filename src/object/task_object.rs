@@ -16,6 +16,7 @@ use torifune::hash;
 
 use super::*;
 
+use super::Clickable;
 use crate::core::{TextureID, FontID, GameData};
 
 use number_to_jk::number_to_jk;
@@ -394,6 +395,8 @@ impl DrawableComponent for BorrowingPaper {
 impl Clickable for BorrowingPaper {
     fn button_up(&mut self,
                  ctx: &mut ggez::Context,
+		 _: &GameData,
+		 _: Clock,
                  _button: ggez::input::mouse::MouseButton,
                  point: numeric::Point2f) {
         let rp = self.canvas.relative_point(point);
@@ -875,12 +878,16 @@ impl DrawableObject for BorrowingRecordBookPage {
 impl Clickable for BorrowingRecordBookPage {
     fn button_down(&mut self,
                    _ctx: &mut ggez::Context,
+		   _: &GameData,
+		   _: Clock,
                    _button: ggez::input::mouse::MouseButton,
                    _point: numeric::Point2f) {
     }
     
     fn button_up(&mut self,
                  _ctx: &mut ggez::Context,
+		 _: &GameData,
+		 _: Clock,
                  _button: ggez::input::mouse::MouseButton,
                  point: numeric::Point2f) {
 	let rpoint = self.canvas.relative_point(point);
@@ -962,6 +969,10 @@ impl BorrowingRecordBookPage {
             return_date: return_date,
             canvas: SubScreen::new(ctx, rect, 0, ggraphics::BLACK),
         }
+    }
+
+    pub fn relative_point(&self, point: numeric::Point2f) -> numeric::Point2f {
+	self.canvas.relative_point(point)
     }
 }
 
@@ -1082,6 +1093,18 @@ impl BorrowingRecordBook {
 
     fn get_current_page_mut(&mut self) -> Option<&mut BorrowingRecordBookPage> {
         self.pages.get_mut(self.current_page)
+    }
+
+    fn next_page(&mut self) {
+	if self.current_page < self.pages.len() {
+	    self.current_page += 1;
+	}
+    }
+
+    fn prev_page(&mut self) {
+	if self.current_page > 0 {
+	    self.current_page -= 1;
+	}
     }
 }
 
@@ -1234,16 +1257,35 @@ impl TextureObject for BorrowingRecordBook {
 impl Clickable for BorrowingRecordBook {
     fn button_down(&mut self,
                    _ctx: &mut ggez::Context,
+		   _: &GameData,
+		   _: Clock,
                    _button: ggez::input::mouse::MouseButton,
                    _point: numeric::Point2f) {
     }
     
     fn button_up(&mut self,
                  ctx: &mut ggez::Context,
+		 game_data: &GameData,
+		 t: Clock,
                  button: ggez::input::mouse::MouseButton,
                  point: numeric::Point2f) {
 	if let Some(page) = self.get_current_page_mut() {
-	    page.button_up(ctx, button, point);
+	    let rpoint = page.relative_point(point);
+	    
+	    if rpoint.x < 20.0 {
+		println!("next page!!");
+		self.add_page(ctx, &BorrowingInformation::new(Vec::new(),
+							     "",
+							     GensoDate::new(12, 12, 12),
+							     GensoDate::new(12, 12, 12)),
+			      game_data, t);
+		self.next_page();
+	    } else if rpoint.x > page.get_drawing_size(ctx).x - 20.0 {
+		println!("prev page!!");
+		self.prev_page();
+	    } else {
+		page.button_up(ctx, game_data, t, button, point);
+	    }
 	}
     }
 }
@@ -1257,6 +1299,7 @@ impl OnDesk for BorrowingRecordBook {
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum DeskObjectType {
     CustomerObject = 0,
+    BorrowRecordBook,
     SuzunaObject,
 }
 
@@ -1635,15 +1678,25 @@ impl DrawableObject for DeskObjects {
 impl Clickable for DeskObjects {
     fn button_down(&mut self,
                    _ctx: &mut ggez::Context,
+		   _: &GameData,
+		   _: Clock,
                    _button: ggez::input::mouse::MouseButton,
                    _point: numeric::Point2f) {}
     
     fn button_up(&mut self,
                  ctx: &mut ggez::Context,
+		 game_data: &GameData,
+		 t: Clock,
                  button: ggez::input::mouse::MouseButton,
                  point: numeric::Point2f) {
+	let rpoint = self.canvas.relative_point(point);
 	for dobj in self.desk_objects.get_raw_container_mut() {
-	    dobj.get_object_mut().ref_wrapped_object().ref_wrapped_object().button_up(ctx, button, point);
+	    if dobj.get_object_mut().get_drawing_area(ctx).contains(rpoint) {
+		dobj.get_object_mut()
+		    .ref_wrapped_object()
+		    .ref_wrapped_object()
+		    .button_up(ctx, game_data, t, button, rpoint);
+	    }
 	}
     }
 }
@@ -1996,7 +2049,7 @@ impl TaskTable {
 			numeric::Vector2f::new(0.25, 0.25),
 			0.0, -1))),
             book, 0,
-	    DeskObjectType::SuzunaObject, t));
+	    DeskObjectType::BorrowRecordBook, t));
         
         TaskTable {
             canvas: SubScreen::new(ctx, pos, 0, ggraphics::Color::from_rgba_u32(0x00000000)),
@@ -2168,16 +2221,20 @@ impl DrawableComponent for TaskTable {
 impl Clickable for TaskTable {
     fn button_down(&mut self,
                    _ctx: &mut ggez::Context,
+		   _: &GameData,
+		   _: Clock,
                    _button: ggez::input::mouse::MouseButton,
                    _point: numeric::Point2f) {
     }
     
     fn button_up(&mut self,
                  ctx: &mut ggez::Context,
+		 game_data: &GameData,
+		 t: Clock,
                  button: ggez::input::mouse::MouseButton,
                  point: numeric::Point2f) {
 	let rpoint = self.canvas.relative_point(point);
-	self.right.button_up(ctx, button, rpoint);
+	self.right.button_up(ctx, game_data, t, button, rpoint);
 	println!("click");
     }
 }

@@ -20,6 +20,23 @@ use torifune::graphics::object::MovableObject;
 
 use crate::object::collision::*;
 use crate::core::map_parser as mp;
+use crate::core::GameData;
+
+pub trait Clickable {
+    fn button_down(&mut self,
+                   _ctx: &mut ggez::Context,
+		   _: &GameData,
+		   _: Clock,
+                   _button: ggez::input::mouse::MouseButton,
+                   _point: numeric::Point2f) {}
+    
+    fn button_up(&mut self,
+                 _ctx: &mut ggez::Context,
+		 _: &GameData,
+		 _: Clock,
+                 _button: ggez::input::mouse::MouseButton,
+                 _point: numeric::Point2f) {}
+}
 
 ///
 /// ある範囲内に速さを収めたい時に使用する構造体
