@@ -9,6 +9,7 @@ use ginput::mouse::MouseButton;
 use torifune::graphics::object::*;
 use torifune::graphics::*;
 use torifune::numeric;
+use torifune::impl_texture_object_for_wrapped;
 
 use crate::core::BookInformation;
 
@@ -143,70 +144,97 @@ impl DrawableObject for OnDeskTexture {
 }
 
 impl TextureObject for OnDeskTexture {
+    impl_texture_object_for_wrapped!{texture}
+}
+
+pub struct OnDeskBook {
+    info: BookInformation,
+    book_texture: UniTexture,
+    title: VerticalText,
+    canvas: SubScreen,
+}
+
+impl OnDeskBook {
+    pub fn new(ctx: &mut ggez::Context, game_data: &GameData, info: BookInformation) -> Self {
+	let texture = game_data.ref_texture(TextureID::LargeBook1);
+	let book_texture = UniTexture::new(
+	    texture,
+	    numeric::Point2f::new(0.0, 0.0),
+	    numeric::Vector2f::new(0.1, 0.1),
+	    0.0, 0);
+	let book_area = book_texture.get_drawing_area(ctx);
+	let book_title = info.get_name().to_string();
+	OnDeskBook {
+	    info: info,
+	    book_texture: book_texture,
+	    title: VerticalText::new(book_title,
+				     numeric::Point2f::new(0.0, 0.0),
+				     numeric::Vector2f::new(1.0, 1.0),
+				     0.0, 0,
+				     FontInformation::new(game_data.get_font(FontID::DEFAULT), numeric::Vector2f::new(18.0, 18.0),
+							  ggraphics::Color::from_rgba_u32(0x00000000))),
+	    canvas: SubScreen::new(ctx, book_area, 0, ggraphics::Color::from_rgba_u32(0x00000000)),
+	}
+    }
+
+    pub fn get_book_info(&self) -> &BookInformation {
+	&self.info
+    }
+}
+
+impl DrawableComponent for OnDeskBook {
+    fn draw(&mut self, ctx: &mut ggez::Context) -> ggez::GameResult<()> {
+        if self.is_visible() {
+            self.canvas.begin_drawing(ctx);
+
+	    self.book_texture.draw(ctx)?;
+	    self.title.draw(ctx)?;
+
+            self.canvas.end_drawing(ctx);
+            self.canvas.draw(ctx).unwrap();
+        }
+        Ok(())
+    }
+
+    fn hide(&mut self) {
+        self.canvas.hide()
+    }
+
+    fn appear(&mut self) {
+        self.canvas.appear()
+    }
+
+    fn is_visible(&self) -> bool {
+        self.canvas.is_visible()
+    }
+
+    fn set_drawing_depth(&mut self, depth: i8) {
+        self.canvas.set_drawing_depth(depth)
+    }
+
+    fn get_drawing_depth(&self) -> i8 {
+        self.canvas.get_drawing_depth()
+    }
+}
+
+impl DrawableObject for OnDeskBook {
+
+    fn set_position(&mut self, pos: numeric::Point2f) {
+        self.canvas.set_position(pos);
+    }
+
+    fn get_position(&self) -> numeric::Point2f {
+        self.canvas.get_position()
+    }
+
+    fn move_diff(&mut self, offset: numeric::Vector2f) {
+        self.canvas.move_diff(offset);
+    }
     
-    fn set_scale(&mut self, scale: numeric::Vector2f) {
-	self.texture.set_scale(scale);
-    }
+}
 
-    fn get_scale(&self) -> numeric::Vector2f {
-	self.texture.get_scale()
-    }
-
-    fn set_rotation(&mut self, rad: f32) {
-	self.texture.set_rotation(rad);
-    }
-
-    fn get_rotation(&self) -> f32 {
-	self.texture.get_rotation()
-    }
-
-    fn set_crop(&mut self, crop: ggraphics::Rect) {
-	self.texture.set_crop(crop);
-    }
-
-    fn get_crop(&self) -> ggraphics::Rect {
-	self.texture.get_crop()
-    }
-
-    fn set_drawing_color(&mut self, color: ggraphics::Color) {
-	self.texture.set_drawing_color(color);
-    }
-
-    fn get_drawing_color(&self) -> ggraphics::Color {
-	self.texture.get_drawing_color()
-    }
-
-    fn set_alpha(&mut self, alpha: f32) {
-	self.texture.set_alpha(alpha);
-    }
-
-    fn get_alpha(&self) -> f32 {
-	self.texture.get_alpha()
-    }
-
-    fn set_transform_offset(&mut self, offset: numeric::Point2f) {
-	self.texture.set_transform_offset(offset);
-    }
-
-    fn get_transform_offset(&self) -> numeric::Point2f {
-	self.texture.get_transform_offset()
-    }
-
-    fn get_texture_size(&self, ctx: &mut ggez::Context) -> numeric::Vector2f {
-	self.texture.get_texture_size(ctx)
-    }
-
-    fn replace_texture(&mut self, texture: Rc<ggraphics::Image>) {
-	self.texture.replace_texture(texture);
-    }
-
-    fn set_color(&mut self, color: ggraphics::Color) {
-	self.texture.set_color(color);
-    }
-
-    fn get_color(&mut self) -> ggraphics::Color {
-	self.texture.get_color()
-    }
+impl TextureObject for OnDeskBook {
+    impl_texture_object_for_wrapped!{canvas}
 }
 
 impl Clickable for OnDeskTexture {
@@ -620,95 +648,7 @@ impl DrawableObject for CopyingRequestPaper {
 }
 
 impl TextureObject for CopyingRequestPaper {
-    #[inline(always)]
-    fn set_scale(&mut self, scale: numeric::Vector2f) {
-        self.canvas.set_scale(scale)
-    }
-
-    #[inline(always)]
-    fn get_scale(&self) -> numeric::Vector2f {
-        self.canvas.get_scale()
-    }
-
-    #[inline(always)]
-    fn set_rotation(&mut self, rad: f32) {
-        self.canvas.set_rotation(rad)
-    }
-
-    #[inline(always)]
-    fn get_rotation(&self) -> f32 {
-        self.canvas.get_rotation()
-    }
-
-    #[inline(always)]
-    fn set_crop(&mut self, crop: ggraphics::Rect) {
-        self.canvas.set_crop(crop);
-    }
-
-    #[inline(always)]
-    fn get_crop(&self) -> ggraphics::Rect {
-        self.canvas.get_crop()
-    }
-
-    #[inline(always)]
-    fn set_drawing_color(&mut self, color: ggraphics::Color) {
-        self.canvas.set_drawing_color(color)
-    }
-
-    #[inline(always)]
-    fn get_drawing_color(&self) -> ggraphics::Color {
-        self.canvas.get_drawing_color()
-    }
-
-    #[inline(always)]
-    fn set_alpha(&mut self, alpha: f32) {
-        self.canvas.set_alpha(alpha);
-    }
-
-    #[inline(always)]
-    fn get_alpha(&self) -> f32 {
-        self.canvas.get_alpha()
-    }
-
-    #[inline(always)]
-    fn set_transform_offset(&mut self, offset: numeric::Point2f) {
-        self.canvas.set_transform_offset(offset);
-    }
-
-    #[inline(always)]
-    fn get_transform_offset(&self) -> numeric::Point2f {
-        self.canvas.get_transform_offset()
-    }
-
-    #[inline(always)]
-    fn get_drawing_area(&self, ctx: &mut ggez::Context) -> ggraphics::Rect {
-        self.canvas.get_drawing_area(ctx)
-    }
-
-    #[inline(always)]
-    fn get_drawing_size(&self, ctx: &mut ggez::Context) -> numeric::Vector2f {
-        self.canvas.get_drawing_size(ctx)
-    }
-
-    #[inline(always)]
-    fn get_texture_size(&self, ctx: &mut ggez::Context) -> numeric::Vector2f {
-        self.canvas.get_texture_size(ctx)
-    }
-
-    #[inline(always)]
-    fn replace_texture(&mut self, texture: Rc<ggraphics::Image>) {
-        self.canvas.replace_texture(texture);
-    }
-
-    #[inline(always)]
-    fn set_color(&mut self, color: ggraphics::Color) {
-        self.canvas.set_color(color);
-    }
-
-    #[inline(always)]
-    fn get_color(&mut self) -> ggraphics::Color {
-        self.canvas.get_color()
-    }
+    impl_texture_object_for_wrapped!{canvas}
 }
 
 impl Clickable for CopyingRequestPaper {
@@ -898,10 +838,10 @@ impl Clickable for BorrowingRecordBookPage {
 impl BorrowingRecordBookPage {
     pub fn new(ctx: &mut ggez::Context, rect: ggraphics::Rect, paper_tid: TextureID,
                info: &BorrowingInformation, game_data: &GameData, t: Clock) -> Self {
-        let mut pos = numeric::Point2f::new(rect.x + rect.w - 70.0, 100.0);
+        let mut pos = numeric::Point2f::new(rect.w - 70.0, 50.0);
         
         let borrower = VerticalText::new(format!("借りた人   {}", info.borrower),
-                                         numeric::Point2f::new(pos.x, 80.0),
+                                         pos,
                                          numeric::Vector2f::new(1.0, 1.0),
                                          0.0,
                                          0,
@@ -911,7 +851,7 @@ impl BorrowingRecordBookPage {
 	pos.x -= 30.0;
 	
         let book_head = VerticalText::new("貸出本".to_string(),
-                                          numeric::Point2f::new(pos.x, 80.0),
+                                          pos,
                                           numeric::Vector2f::new(1.0, 1.0),
                                           0.0,
                                           0,
@@ -922,7 +862,7 @@ impl BorrowingRecordBookPage {
             .map(|book_info| {
                 pos += numeric::Vector2f::new(-30.0, 0.0);
                 VerticalText::new(book_info.name.to_string(),
-                                  pos,
+                                  numeric::Point2f::new(pos.x, pos.y + 100.0),
                                   numeric::Vector2f::new(1.0, 1.0),
                                   0.0,
                                   0,
@@ -942,7 +882,7 @@ impl BorrowingRecordBookPage {
                                               Vec::new());
 
         let borrow_date = VerticalText::new(format!("貸出日 {}", info.borrow_date.to_string()),
-                                            numeric::Point2f::new(100.0, 70.0),
+                                            numeric::Point2f::new(100.0, 50.0),
                                             numeric::Vector2f::new(1.0, 1.0),
                                             0.0,
                                             0,
@@ -952,7 +892,7 @@ impl BorrowingRecordBookPage {
 	pos.x -= 30.0;
         
         let return_date = VerticalText::new(format!("返却期限 {}", info.return_date.to_string()),
-                                            numeric::Point2f::new(70.0, 70.0),
+                                            numeric::Point2f::new(70.0, 50.0),
                                             numeric::Vector2f::new(1.0, 1.0),
                                             0.0,
                                             0,
@@ -977,84 +917,7 @@ impl BorrowingRecordBookPage {
 }
 
 impl TextureObject for BorrowingRecordBookPage {
-    #[inline(always)]
-    fn set_scale(&mut self, scale: numeric::Vector2f) {
-        self.canvas.set_scale(scale);
-    }
-
-    #[inline(always)]
-    fn get_scale(&self) -> numeric::Vector2f {
-        self.canvas.get_scale()
-    }
-
-    #[inline(always)]
-    fn set_rotation(&mut self, rad: f32) {
-        self.canvas.set_rotation(rad);
-    }
-
-    #[inline(always)]
-    fn get_rotation(&self) -> f32 {
-        self.canvas.get_rotation()
-    }
-
-    #[inline(always)]
-    fn set_crop(&mut self, crop: ggraphics::Rect) {
-        self.canvas.set_crop(crop)
-    }
-
-    #[inline(always)]
-    fn get_crop(&self) -> ggraphics::Rect {
-        self.canvas.get_crop()
-    }
-
-    #[inline(always)]
-    fn set_drawing_color(&mut self, color: ggraphics::Color) {
-        self.canvas.set_drawing_color(color)
-    }
-
-    #[inline(always)]
-    fn get_drawing_color(&self) -> ggraphics::Color {
-        self.canvas.get_drawing_color()
-    }
-
-    #[inline(always)]
-    fn set_alpha(&mut self, alpha: f32) {
-        self.canvas.set_alpha(alpha)
-    }
-
-    #[inline(always)]
-    fn get_alpha(&self) -> f32 {
-        self.canvas.get_alpha()
-    }
-
-    #[inline(always)]
-    fn set_transform_offset(&mut self, offset: numeric::Point2f) {
-        self.canvas.set_transform_offset(offset);
-    }
-
-    #[inline(always)]
-    fn get_transform_offset(&self) -> numeric::Point2f {
-        self.canvas.get_transform_offset()
-    }
-
-    #[inline(always)]
-    fn get_texture_size(&self, ctx: &mut ggez::Context) -> numeric::Vector2f {
-        self.canvas.get_texture_size(ctx)
-    }
-
-    #[inline(always)]
-    fn replace_texture(&mut self, _texture: Rc<ggraphics::Image>) {
-    }
-
-    #[inline(always)]
-    fn set_color(&mut self, color: ggraphics::Color) {
-        self.canvas.set_color(color)
-    }
-
-    #[inline(always)]
-    fn get_color(&mut self) -> ggraphics::Color {
-        self.canvas.get_color()
-    }
+    impl_texture_object_for_wrapped!{canvas}
 }
 
 pub struct BorrowingRecordBook {
@@ -1078,9 +941,14 @@ impl BorrowingRecordBook {
                     info: &BorrowingInformation,
                     game_data: &GameData,
                     t: Clock) -> &Self {
+	let page_rect = if let Some(page) = self.get_current_page() {
+	    page.get_drawing_area(ctx)
+	} else {
+	    self.rect
+	};
         self.pages.push(
             BorrowingRecordBookPage::new(ctx,
-                                         self.rect,
+                                         page_rect,
                                          TextureID::Paper1,
                                          info,
                                          game_data, t));
@@ -2036,7 +1904,7 @@ impl TaskTable {
                     numeric::Vector2f::new(0.1, 0.1),
                     0.0, -1))), 1, DeskObjectType::SuzunaObject, t));
 	
-        let mut book = Box::new(BorrowingRecordBook::new(ggraphics::Rect::new(0.0, 0.0, 400.0, 400.0)));
+        let mut book = Box::new(BorrowingRecordBook::new(ggraphics::Rect::new(0.0, 0.0, 500.0, 350.0)));
         book.add_page(ctx,
                       &BorrowingInformation::new_random(game_data, GensoDate::new(12, 12, 12), GensoDate::new(12, 12, 12)),
                       game_data, 0);
