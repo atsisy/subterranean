@@ -15,7 +15,7 @@ texture_paths = [
               "/textures/wood1.jpg",
 	      "/textures/wafu_texture1.jpg",
 	      "/textures/chobo.png"]
-font_paths = ["/azuki.ttf"]
+font_paths = ["/fonts/azuki.ttf", "/fonts/RiiT_F.ttf"]
 tileset_paths = ["./resources/test.tmx"]
 customers_name = ["霧雨魔里沙", "すみれの隣人"]
 

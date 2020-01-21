@@ -122,10 +122,6 @@ impl TaskScene {
         self.task_table.hand_over_check(ctx, point);
     }
 
-    fn select_dragging_object(&mut self, ctx: &mut ggez::Context, point: numeric::Point2f) {
-        self.task_table.select_dragging_object(ctx, point);
-    }
-
     fn unselect_dragging_object(&mut self, ctx: &mut ggez::Context, t: Clock) {
         self.task_table.unselect_dragging_object(ctx, t);
     }
@@ -160,6 +156,9 @@ impl SceneManager for TaskScene {
 		self.event_list.add_event(Box::new(|_, _, _| println!("aaaaaaaaaa") ), self.get_current_clock() + 2);
 		self.event_list.add_event(Box::new(|_, _, _| println!("bbbbbbbbbb") ), self.get_current_clock() + 500);
             },
+	    tdev::VirtualKey::Action3 => {
+		self.task_table.clear_hold_data();
+	    }
             _ => (),
         }
     }
@@ -209,7 +208,7 @@ impl SceneManager for TaskScene {
         self.mouse_info.set_last_dragged(button, point, self.get_current_clock());
         self.mouse_info.update_dragging(button, true);
 
-        self.select_dragging_object(ctx, point);
+	self.task_table.button_down(ctx, game_data, self.get_current_clock(), button, point);
     }
 
     fn mouse_button_up_event(&mut self,

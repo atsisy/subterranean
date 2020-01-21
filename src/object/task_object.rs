@@ -79,8 +79,16 @@ impl BorrowingInformation {
     }
 }
 
+pub enum HoldData {
+    BookName(String),
+    CustomerName(String),
+    Date(GensoDate),
+    None,
+}
+
 pub trait OnDesk : TextureObject + Clickable {
     fn ondesk_whose(&self) -> i32;
+    fn click_data(&self, ctx: &mut ggez::Context, point: numeric::Point2f) -> HoldData;
 }
 
 struct OnDeskTexture {
@@ -243,6 +251,10 @@ impl Clickable for OnDeskTexture {
 impl OnDesk for OnDeskTexture {
     fn ondesk_whose(&self) -> i32 {
 	0
+    }
+
+    fn click_data(&self, _: &mut ggez::Context, point: numeric::Point2f) -> HoldData {
+	HoldData::None
     }
 }
 
@@ -658,6 +670,10 @@ impl OnDesk for CopyingRequestPaper {
     fn ondesk_whose(&self) -> i32 {
 	0
     }
+
+    fn click_data(&self, _: &mut ggez::Context, point: numeric::Point2f) -> HoldData {
+	HoldData::None
+    }
 }
 
 #[derive(PartialEq, Debug, Clone, Copy)]
@@ -845,7 +861,7 @@ impl BorrowingRecordBookPage {
                                          numeric::Vector2f::new(1.0, 1.0),
                                          0.0,
                                          0,
-                                         FontInformation::new(game_data.get_font(FontID::DEFAULT),
+                                         FontInformation::new(game_data.get_font(FontID::JP_FUDE1),
                                                               numeric::Vector2f::new(20.0, 20.0),
                                                               ggraphics::Color::from_rgba_u32(0x000000ff)));
 	pos.x -= 30.0;
@@ -855,7 +871,7 @@ impl BorrowingRecordBookPage {
                                           numeric::Vector2f::new(1.0, 1.0),
                                           0.0,
                                           0,
-                                          FontInformation::new(game_data.get_font(FontID::DEFAULT),
+                                          FontInformation::new(game_data.get_font(FontID::JP_FUDE1),
                                                                numeric::Vector2f::new(22.0, 22.0),
                                                                ggraphics::Color::from_rgba_u32(0x000000ff)));
 	let borrowing = info.borrowing.iter()
@@ -866,7 +882,7 @@ impl BorrowingRecordBookPage {
                                   numeric::Vector2f::new(1.0, 1.0),
                                   0.0,
                                   0,
-                                  FontInformation::new(game_data.get_font(FontID::DEFAULT),
+                                  FontInformation::new(game_data.get_font(FontID::JP_FUDE1),
                                                        numeric::Vector2f::new(24.0, 24.0),
                                                        ggraphics::Color::from_rgba_u32(0x000000ff))) }).collect();
 
@@ -886,7 +902,7 @@ impl BorrowingRecordBookPage {
                                             numeric::Vector2f::new(1.0, 1.0),
                                             0.0,
                                             0,
-                                            FontInformation::new(game_data.get_font(FontID::DEFAULT),
+                                            FontInformation::new(game_data.get_font(FontID::JP_FUDE1),
                                                                  numeric::Vector2f::new(18.0, 18.0),
                                                                  ggraphics::Color::from_rgba_u32(0x000000ff)));
 	pos.x -= 30.0;
@@ -896,7 +912,7 @@ impl BorrowingRecordBookPage {
                                             numeric::Vector2f::new(1.0, 1.0),
                                             0.0,
                                             0,
-                                            FontInformation::new(game_data.get_font(FontID::DEFAULT),
+                                            FontInformation::new(game_data.get_font(FontID::JP_FUDE1),
                                                                  numeric::Vector2f::new(18.0, 18.0),
                                                                  ggraphics::Color::from_rgba_u32(0x000000ff)));
         
@@ -1162,6 +1178,26 @@ impl OnDesk for BorrowingRecordBook {
     fn ondesk_whose(&self) -> i32 {
 	0
     }
+
+    fn click_data(&self, ctx: &mut ggez::Context, point: numeric::Point2f) -> HoldData {
+	let mut clicked_data = HoldData::None;
+	
+	if let Some(page) = self.get_current_page() {
+	    let rpoint = page.relative_point(point);
+
+	    for book in &page.borrow_book {
+		if book.get_drawing_area(ctx).contains(rpoint) {
+		    clicked_data = HoldData::BookName(book.get_text().to_string())
+		}
+	    }
+
+	    if page.borrower.get_drawing_area(ctx).contains(rpoint) {
+		clicked_data = HoldData::BookName(page.borrower.get_text().to_string())
+	    }
+	}
+
+	clicked_data
+    }
 }
 
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -1262,7 +1298,7 @@ impl DeskObjectContainer {
             127
         }
     }
-
+    
     fn len(&self) -> usize {
         self.container.len()
     }
@@ -1350,6 +1386,23 @@ impl DeskObjects {
         }
     }
 
+    pub fn check_data_click(&mut self, ctx: &mut ggez::Context, point: numeric::Point2f) -> HoldData {
+        let rpoint = self.canvas.relative_point(point);
+	let mut clicked_data = HoldData::None;
+        
+        // オブジェクトは深度が深い順にソートされているので、
+        // 逆順から検索していくことで、最も手前に表示されているオブジェクトを
+        // 取り出すことができる
+        for obj in self.desk_objects.get_raw_container_mut().iter_mut().rev() {
+	    let contains = obj.get_object().get_drawing_area(ctx).contains(rpoint);
+            if contains {
+		clicked_data = obj.get_object_mut().ref_wrapped_object().ref_wrapped_object().click_data(ctx, rpoint);
+                break;
+            }
+        }
+
+	clicked_data
+    }
     
     pub fn dragging_handler(&mut self,
                         point: numeric::Point2f,
@@ -1558,6 +1611,7 @@ impl Clickable for DeskObjects {
                  button: ggez::input::mouse::MouseButton,
                  point: numeric::Point2f) {
 	let rpoint = self.canvas.relative_point(point);
+	
 	for dobj in self.desk_objects.get_raw_container_mut() {
 	    if dobj.get_object_mut().get_drawing_area(ctx).contains(rpoint) {
 		dobj.get_object_mut()
@@ -1566,6 +1620,7 @@ impl Clickable for DeskObjects {
 		    .button_up(ctx, game_data, t, button, rpoint);
 	    }
 	}
+	
     }
 }
 
@@ -1875,12 +1930,28 @@ impl DrawableObject for SuzuMiniSight {
     }
 }
 
+impl HoldData {
+    pub fn is_none(&self) -> bool {
+	match self {
+	    &HoldData::None => true,
+	    _ => false,
+	}
+    }
+
+    pub fn is_some(&self) -> bool {
+	match self {
+	    &HoldData::None => false,
+	    _ => true,
+	}
+    }
+}
 
 pub struct TaskTable {
     canvas: SubScreen,
     left: SuzuMiniSight,
     right: DeskObjects,
     in_event: bool,
+    hold_data: HoldData,
 }
 
 impl TaskTable {
@@ -1924,10 +1995,11 @@ impl TaskTable {
             left: left,
             right: right,
 	    in_event: false,
+	    hold_data: HoldData::None,
         }
     }
     
-    pub fn select_dragging_object(&mut self, ctx: &mut ggez::Context, point: numeric::Point2f) {
+    fn select_dragging_object(&mut self, ctx: &mut ggez::Context, point: numeric::Point2f) {
         let rpoint = self.canvas.relative_point(point);
         self.left.select_dragging_object(ctx, rpoint);
         self.right.select_dragging_object(ctx, rpoint);
@@ -2045,6 +2117,19 @@ impl TaskTable {
     pub fn in_customer_event(&self) -> bool {
 	self.in_event
     }
+
+    pub fn clear_hold_data(&mut self) {
+	self.hold_data = HoldData::None;
+    }
+
+    fn update_hold_data(&mut self, ctx: &mut ggez::Context, point: numeric::Point2f) {
+	if self.hold_data.is_none() {
+	    let clicked_data = self.right.check_data_click(ctx, point);
+	    if clicked_data.is_some() {
+		self.hold_data = clicked_data;
+	    }
+	}
+    }
 }
 
 impl DrawableComponent for TaskTable {
@@ -2088,11 +2173,12 @@ impl DrawableComponent for TaskTable {
 
 impl Clickable for TaskTable {
     fn button_down(&mut self,
-                   _ctx: &mut ggez::Context,
+                   ctx: &mut ggez::Context,
 		   _: &GameData,
 		   _: Clock,
                    _button: ggez::input::mouse::MouseButton,
-                   _point: numeric::Point2f) {
+                   point: numeric::Point2f) {
+	self.select_dragging_object(ctx, point);
     }
     
     fn button_up(&mut self,
@@ -2103,7 +2189,11 @@ impl Clickable for TaskTable {
                  point: numeric::Point2f) {
 	let rpoint = self.canvas.relative_point(point);
 	self.right.button_up(ctx, game_data, t, button, rpoint);
-	println!("click");
+	self.update_hold_data(ctx, rpoint);
+	match &self.hold_data {
+	    HoldData::BookName(title) => println!("{}", title),
+	    _ => (),
+	}
     }
 }
 
