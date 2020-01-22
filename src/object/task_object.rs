@@ -22,6 +22,7 @@ use crate::core::{TextureID, FontID, GameData};
 
 use number_to_jk::number_to_jk;
 
+#[derive(Clone, Copy)]
 pub struct GensoDate {
     pub season: u32,
     pub month: u8,
@@ -88,7 +89,12 @@ pub enum HoldData {
 
 pub trait OnDesk : TextureObject + Clickable {
     fn ondesk_whose(&self) -> i32;
+
     fn click_data(&self, ctx: &mut ggez::Context, point: numeric::Point2f) -> HoldData;
+
+    fn insert_data(&mut self, ctx: &mut ggez::Context, point: numeric::Point2f, data: &HoldData) -> bool {
+	false
+    }
 }
 
 struct OnDeskTexture {
@@ -762,6 +768,7 @@ impl MouseInformation {
 }
 
 pub struct BorrowingRecordBookPage {
+    raw_info: BorrowingInformation,
     borrow_book: Vec<VerticalText>,
     book_head: VerticalText,
     borrower: VerticalText,
@@ -769,6 +776,122 @@ pub struct BorrowingRecordBookPage {
     return_date: VerticalText,
     paper_texture: SimpleObject,
     canvas: SubScreen,
+}
+
+
+impl BorrowingRecordBookPage {
+    pub fn new(ctx: &mut ggez::Context, rect: ggraphics::Rect, paper_tid: TextureID,
+               info: &BorrowingInformation, game_data: &GameData, t: Clock) -> Self {
+        let mut pos = numeric::Point2f::new(rect.w - 70.0, 50.0);
+        
+        let borrower = VerticalText::new(format!("借りた人　{}", info.borrower),
+                                         pos,
+                                         numeric::Vector2f::new(1.0, 1.0),
+                                         0.0,
+                                         0,
+                                         FontInformation::new(game_data.get_font(FontID::JP_FUDE1),
+                                                              numeric::Vector2f::new(20.0, 20.0),
+                                                              ggraphics::Color::from_rgba_u32(0x000000ff)));
+	pos.x -= 30.0;
+	
+        let book_head = VerticalText::new("貸出本".to_string(),
+                                          pos,
+                                          numeric::Vector2f::new(1.0, 1.0),
+                                          0.0,
+                                          0,
+                                          FontInformation::new(game_data.get_font(FontID::JP_FUDE1),
+                                                               numeric::Vector2f::new(22.0, 22.0),
+                                                               ggraphics::Color::from_rgba_u32(0x000000ff)));
+	let mut borrowing: Vec<VerticalText> = info.borrowing.iter()
+            .map(|book_info| {
+                pos += numeric::Vector2f::new(-30.0, 0.0);
+                VerticalText::new(book_info.name.to_string(),
+                                  numeric::Point2f::new(pos.x, pos.y + 100.0),
+                                  numeric::Vector2f::new(1.0, 1.0),
+                                  0.0,
+                                  0,
+                                  FontInformation::new(game_data.get_font(FontID::JP_FUDE1),
+                                                       numeric::Vector2f::new(24.0, 24.0),
+                                                       ggraphics::Color::from_rgba_u32(0x000000ff))) }).collect();
+
+	for _ in 0..(6 - borrowing.len()) {
+	    pos += numeric::Vector2f::new(-30.0, 0.0);
+	    borrowing.push(VerticalText::new("　　　　　　".to_string(),
+                                  numeric::Point2f::new(pos.x, pos.y + 100.0),
+                                  numeric::Vector2f::new(1.0, 1.0),
+                                  0.0,
+                                  0,
+                                  FontInformation::new(game_data.get_font(FontID::JP_FUDE1),
+                                                       numeric::Vector2f::new(24.0, 24.0),
+                                                       ggraphics::Color::from_rgba_u32(0x000000ff))));
+	}
+
+        pos.x -= 30.0;
+
+        let paper_texture = SimpleObject::new(MovableUniTexture::new(game_data.ref_texture(paper_tid),
+                                                                     numeric::Point2f::new(0.0, 0.0),
+                                                                     numeric::Vector2f::new(1.0, 1.0),
+                                                                     0.0,
+                                                                     0,
+                                                                     move_fn::halt(numeric::Point2f::new(0.0, 0.0)),
+                                                                     t),
+                                              Vec::new());
+
+        let borrow_date = VerticalText::new(format!("貸出日 {}", info.borrow_date.to_string()),
+                                            numeric::Point2f::new(100.0, 50.0),
+                                            numeric::Vector2f::new(1.0, 1.0),
+                                            0.0,
+                                            0,
+                                            FontInformation::new(game_data.get_font(FontID::JP_FUDE1),
+                                                                 numeric::Vector2f::new(18.0, 18.0),
+                                                                 ggraphics::Color::from_rgba_u32(0x000000ff)));
+	pos.x -= 30.0;
+        
+        let return_date = VerticalText::new(format!("返却期限 {}", info.return_date.to_string()),
+                                            numeric::Point2f::new(70.0, 50.0),
+                                            numeric::Vector2f::new(1.0, 1.0),
+                                            0.0,
+                                            0,
+                                            FontInformation::new(game_data.get_font(FontID::JP_FUDE1),
+                                                                 numeric::Vector2f::new(18.0, 18.0),
+                                                                 ggraphics::Color::from_rgba_u32(0x000000ff)));
+        
+        BorrowingRecordBookPage {
+	    raw_info: BorrowingInformation::new(info.borrowing.clone(), &info.borrower, info.borrow_date, info.return_date),
+            borrow_book: borrowing,
+            borrower: borrower,
+            book_head: book_head,
+            paper_texture: paper_texture,
+            borrow_date: borrow_date,
+            return_date: return_date,
+            canvas: SubScreen::new(ctx, rect, 0, ggraphics::BLACK),
+        }
+    }
+
+    pub fn get_borrowing_info(&self) -> &BorrowingInformation {
+	&self.raw_info
+    }
+
+    pub fn get_borrowing_info_mut(&mut self) -> &mut BorrowingInformation {
+	&mut self.raw_info
+    }
+
+    pub fn relative_point(&self, point: numeric::Point2f) -> numeric::Point2f {
+	self.canvas.relative_point(point)
+    }
+
+    pub fn replace_borrower_name(&mut self, game_data: &GameData, name: &str) -> &mut Self {
+	let pos = self.borrower.get_position();
+	self.borrower = VerticalText::new(format!("借りた人   {}", name),
+                                          pos,
+                                          numeric::Vector2f::new(1.0, 1.0),
+                                          0.0,
+                                          0,
+                                          FontInformation::new(game_data.get_font(FontID::JP_FUDE1),
+                                                               numeric::Vector2f::new(20.0, 20.0),
+                                                               ggraphics::Color::from_rgba_u32(0x000000ff)));
+	self
+    }
 }
 
 impl DrawableComponent for BorrowingRecordBookPage {
@@ -848,87 +971,6 @@ impl Clickable for BorrowingRecordBookPage {
                  point: numeric::Point2f) {
 	let rpoint = self.canvas.relative_point(point);
 	println!("{:?}", rpoint);
-    }
-}
-
-impl BorrowingRecordBookPage {
-    pub fn new(ctx: &mut ggez::Context, rect: ggraphics::Rect, paper_tid: TextureID,
-               info: &BorrowingInformation, game_data: &GameData, t: Clock) -> Self {
-        let mut pos = numeric::Point2f::new(rect.w - 70.0, 50.0);
-        
-        let borrower = VerticalText::new(format!("借りた人   {}", info.borrower),
-                                         pos,
-                                         numeric::Vector2f::new(1.0, 1.0),
-                                         0.0,
-                                         0,
-                                         FontInformation::new(game_data.get_font(FontID::JP_FUDE1),
-                                                              numeric::Vector2f::new(20.0, 20.0),
-                                                              ggraphics::Color::from_rgba_u32(0x000000ff)));
-	pos.x -= 30.0;
-	
-        let book_head = VerticalText::new("貸出本".to_string(),
-                                          pos,
-                                          numeric::Vector2f::new(1.0, 1.0),
-                                          0.0,
-                                          0,
-                                          FontInformation::new(game_data.get_font(FontID::JP_FUDE1),
-                                                               numeric::Vector2f::new(22.0, 22.0),
-                                                               ggraphics::Color::from_rgba_u32(0x000000ff)));
-	let borrowing = info.borrowing.iter()
-            .map(|book_info| {
-                pos += numeric::Vector2f::new(-30.0, 0.0);
-                VerticalText::new(book_info.name.to_string(),
-                                  numeric::Point2f::new(pos.x, pos.y + 100.0),
-                                  numeric::Vector2f::new(1.0, 1.0),
-                                  0.0,
-                                  0,
-                                  FontInformation::new(game_data.get_font(FontID::JP_FUDE1),
-                                                       numeric::Vector2f::new(24.0, 24.0),
-                                                       ggraphics::Color::from_rgba_u32(0x000000ff))) }).collect();
-
-        pos.x -= 30.0;
-
-        let paper_texture = SimpleObject::new(MovableUniTexture::new(game_data.ref_texture(paper_tid),
-                                                                     numeric::Point2f::new(0.0, 0.0),
-                                                                     numeric::Vector2f::new(1.0, 1.0),
-                                                                     0.0,
-                                                                     0,
-                                                                     move_fn::halt(numeric::Point2f::new(0.0, 0.0)),
-                                                                     t),
-                                              Vec::new());
-
-        let borrow_date = VerticalText::new(format!("貸出日 {}", info.borrow_date.to_string()),
-                                            numeric::Point2f::new(100.0, 50.0),
-                                            numeric::Vector2f::new(1.0, 1.0),
-                                            0.0,
-                                            0,
-                                            FontInformation::new(game_data.get_font(FontID::JP_FUDE1),
-                                                                 numeric::Vector2f::new(18.0, 18.0),
-                                                                 ggraphics::Color::from_rgba_u32(0x000000ff)));
-	pos.x -= 30.0;
-        
-        let return_date = VerticalText::new(format!("返却期限 {}", info.return_date.to_string()),
-                                            numeric::Point2f::new(70.0, 50.0),
-                                            numeric::Vector2f::new(1.0, 1.0),
-                                            0.0,
-                                            0,
-                                            FontInformation::new(game_data.get_font(FontID::JP_FUDE1),
-                                                                 numeric::Vector2f::new(18.0, 18.0),
-                                                                 ggraphics::Color::from_rgba_u32(0x000000ff)));
-        
-        BorrowingRecordBookPage {
-            borrow_book: borrowing,
-            borrower: borrower,
-            book_head: book_head,
-            paper_texture: paper_texture,
-            borrow_date: borrow_date,
-            return_date: return_date,
-            canvas: SubScreen::new(ctx, rect, 0, ggraphics::BLACK),
-        }
-    }
-
-    pub fn relative_point(&self, point: numeric::Point2f) -> numeric::Point2f {
-	self.canvas.relative_point(point)
     }
 }
 
@@ -1192,11 +1234,39 @@ impl OnDesk for BorrowingRecordBook {
 	    }
 
 	    if page.borrower.get_drawing_area(ctx).contains(rpoint) {
-		clicked_data = HoldData::BookName(page.borrower.get_text().to_string())
+		clicked_data = HoldData::CustomerName(page.get_borrowing_info().borrower.to_string())
 	    }
 	}
 
 	clicked_data
+    }
+
+    fn insert_data(&mut self, ctx: &mut ggez::Context, point: numeric::Point2f, data: &HoldData) -> bool {
+	let mut insert_done_flag = false;
+	
+	if let Some(page) = self.get_current_page_mut() {
+	    let rpoint = page.relative_point(point);
+	    let mut hit_book_index = None;
+
+	    for (index, book) in page.borrow_book.iter().enumerate() {
+		if book.get_drawing_area(ctx).contains(rpoint) {
+		    hit_book_index = Some(index);
+		}
+	    }
+
+	    if let Some(hit_book_index) = hit_book_index {
+		match data {
+		    HoldData::BookName(name) =>
+		    {
+			page.borrow_book.get_mut(hit_book_index).unwrap().replace_text(name.to_string());
+			insert_done_flag = true;
+		    }
+		    _ => (),
+		}
+	    }
+	}
+
+	insert_done_flag
     }
 }
 
@@ -1402,6 +1472,22 @@ impl DeskObjects {
         }
 
 	clicked_data
+    }
+
+    pub fn check_insert_data(&mut self, ctx: &mut ggez::Context, point: numeric::Point2f, data: &HoldData) -> bool {
+        let rpoint = self.canvas.relative_point(point);
+        
+        // オブジェクトは深度が深い順にソートされているので、
+        // 逆順から検索していくことで、最も手前に表示されているオブジェクトを
+        // 取り出すことができる
+        for obj in self.desk_objects.get_raw_container_mut().iter_mut().rev() {
+	    let contains = obj.get_object().get_drawing_area(ctx).contains(rpoint);
+            if contains {
+		return obj.get_object_mut().ref_wrapped_object().ref_wrapped_object().insert_data(ctx, rpoint, data);
+            }
+        }
+
+	false
     }
     
     pub fn dragging_handler(&mut self,
@@ -2128,6 +2214,10 @@ impl TaskTable {
 	    if clicked_data.is_some() {
 		self.hold_data = clicked_data;
 	    }
+	} else {
+	    if self.right.check_insert_data(ctx, point, &self.hold_data) {
+		self.hold_data = HoldData::None;
+	    }
 	}
     }
 }
@@ -2192,6 +2282,7 @@ impl Clickable for TaskTable {
 	self.update_hold_data(ctx, rpoint);
 	match &self.hold_data {
 	    HoldData::BookName(title) => println!("{}", title),
+	    HoldData::CustomerName(name) => println!("{}", name),
 	    _ => (),
 	}
     }
