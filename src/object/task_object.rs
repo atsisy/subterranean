@@ -1,3 +1,4 @@
+
 pub mod factory;
 
 use std::collections::HashMap;
@@ -707,6 +708,8 @@ impl MouseActionRecord {
 pub struct MouseInformation {
     pub last_clicked: HashMap<MouseButton, MouseActionRecord>,
     pub last_dragged: HashMap<MouseButton, MouseActionRecord>,
+    pub last_down: HashMap<MouseButton, MouseActionRecord>,
+    pub last_up: HashMap<MouseButton, MouseActionRecord>,
     pub dragging: HashMap<MouseButton, bool>,
 }
 
@@ -720,6 +723,12 @@ impl MouseInformation {
             last_dragged: hash![(MouseButton::Left, MouseActionRecord::new_empty()),
                                 (MouseButton::Right, MouseActionRecord::new_empty()),
                                 (MouseButton::Middle, MouseActionRecord::new_empty())],
+	    last_down: hash![(MouseButton::Left, MouseActionRecord::new_empty()),
+				(MouseButton::Right, MouseActionRecord::new_empty()),
+                             (MouseButton::Middle, MouseActionRecord::new_empty())],
+	    last_up: hash![(MouseButton::Left, MouseActionRecord::new_empty()),
+			     (MouseButton::Right, MouseActionRecord::new_empty()),
+                             (MouseButton::Middle, MouseActionRecord::new_empty())],
             dragging: hash![(MouseButton::Left, false),
                             (MouseButton::Right, false),
                             (MouseButton::Middle, false)]
@@ -748,6 +757,32 @@ impl MouseInformation {
 
     pub fn set_last_dragged(&mut self, button: MouseButton, point: numeric::Point2f, t: Clock) {
         if self.last_dragged.insert(button, MouseActionRecord::new(point, t)) == None {
+            panic!("No such a mouse button")
+        }
+    }
+    
+    pub fn get_last_down(&self, button: MouseButton) -> numeric::Point2f {
+        match self.last_down.get(&button) {
+            Some(x) => x.point,
+            None => panic!("No such a mouse button"),
+        }
+    }
+
+    pub fn set_last_down(&mut self, button: MouseButton, point: numeric::Point2f, t: Clock) {
+        if self.last_down.insert(button, MouseActionRecord::new(point, t)) == None {
+            panic!("No such a mouse button")
+        }
+    }
+    
+    pub fn get_last_up(&self, button: MouseButton) -> numeric::Point2f {
+        match self.last_up.get(&button) {
+            Some(x) => x.point,
+            None => panic!("No such a mouse button"),
+        }
+    }
+
+    pub fn set_last_up(&mut self, button: MouseButton, point: numeric::Point2f, t: Clock) {
+        if self.last_up.insert(button, MouseActionRecord::new(point, t)) == None {
             panic!("No such a mouse button")
         }
     }
@@ -1227,7 +1262,10 @@ impl OnDesk for BorrowingRecordBook {
 	if let Some(page) = self.get_current_page() {
 	    let rpoint = page.relative_point(point);
 
-	    for book in &page.borrow_book {
+	    for (index, book) in page.borrow_book.iter().enumerate() {
+		if index >= page.get_borrowing_info().borrowing.len() {
+		    break;
+		}
 		if book.get_drawing_area(ctx).contains(rpoint) {
 		    clicked_data = HoldData::BookName(book.get_text().to_string())
 		}
@@ -1247,7 +1285,7 @@ impl OnDesk for BorrowingRecordBook {
 	if let Some(page) = self.get_current_page_mut() {
 	    let rpoint = page.relative_point(point);
 	    let mut hit_book_index = None;
-
+	    
 	    for (index, book) in page.borrow_book.iter().enumerate() {
 		if book.get_drawing_area(ctx).contains(rpoint) {
 		    hit_book_index = Some(index);
@@ -1256,8 +1294,12 @@ impl OnDesk for BorrowingRecordBook {
 
 	    if let Some(hit_book_index) = hit_book_index {
 		match data {
-		    HoldData::BookName(name) =>
-		    {
+		    HoldData::BookName(name) => {
+			page.get_borrowing_info_mut().borrowing.push(BookInformation {
+			    name: name.to_string(),
+			    pages: 0,
+			    size: "".to_string(),
+			});
 			page.borrow_book.get_mut(hit_book_index).unwrap().replace_text(name.to_string());
 			insert_done_flag = true;
 		    }
@@ -2279,6 +2321,15 @@ impl Clickable for TaskTable {
                  point: numeric::Point2f) {
 	let rpoint = self.canvas.relative_point(point);
 	self.right.button_up(ctx, game_data, t, button, rpoint);
+    }
+    
+    fn on_click(&mut self,
+                 ctx: &mut ggez::Context,
+		 game_data: &GameData,
+		 t: Clock,
+                 button: ggez::input::mouse::MouseButton,
+                 point: numeric::Point2f) {
+	let rpoint = self.canvas.relative_point(point);
 	self.update_hold_data(ctx, rpoint);
 	match &self.hold_data {
 	    HoldData::BookName(title) => println!("{}", title),

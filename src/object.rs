@@ -36,6 +36,13 @@ pub trait Clickable {
 		 _: Clock,
                  _button: ggez::input::mouse::MouseButton,
                  _point: numeric::Point2f) {}
+
+    fn on_click(&mut self,
+                _ctx: &mut ggez::Context,
+		_: &GameData,
+		_: Clock,
+                _button: ggez::input::mouse::MouseButton,
+                _point: numeric::Point2f) {}
 }
 
 ///

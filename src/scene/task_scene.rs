@@ -200,11 +200,14 @@ impl SceneManager for TaskScene {
                                button: MouseButton,
                                point: numeric::Point2f) {
         let info: &MouseActionRecord = &self.mouse_info.last_clicked.get(&button).unwrap();
-        if info.point == point && (self.get_current_clock() - info.t) < 20 {
-            self.task_table.double_click_handler(ctx, point, game_data);
-        }
-
+        if info.point == point {
+	    if (self.get_current_clock() - info.t) < 20 {
+		self.task_table.double_click_handler(ctx, point, game_data);
+            }
+	}
+	
         self.mouse_info.set_last_clicked(button, point, self.get_current_clock());
+	self.mouse_info.set_last_down(button, point, self.get_current_clock());
         self.mouse_info.set_last_dragged(button, point, self.get_current_clock());
         self.mouse_info.update_dragging(button, true);
 
@@ -220,6 +223,13 @@ impl SceneManager for TaskScene {
         //self.paper.button_up(ctx, button, point);
         self.unselect_dragging_object(ctx, self.get_current_clock());
 	self.task_table.button_up(ctx, game_data, self.get_current_clock(), button, point);
+
+	let info: &MouseActionRecord = &self.mouse_info.last_down.get(&button).unwrap();
+	if info.point == point {
+	    self.task_table.on_click(ctx, game_data, self.get_current_clock(), button, point);
+	}
+	
+	self.mouse_info.set_last_up(button, point, self.get_current_clock());
     }
 
     fn pre_process(&mut self,
