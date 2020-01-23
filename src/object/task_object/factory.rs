@@ -20,7 +20,7 @@ pub fn create_dobj_random(ctx: &mut ggez::Context, game_data: &GameData,
                                           game_data, t)), 0, obj_type, t)
 }
 
-pub fn create_dobj_book_random(_ctx: &mut ggez::Context,
+pub fn create_dobj_book_random(ctx: &mut ggez::Context,
 			       game_data: &GameData, obj_type: DeskObjectType, t: Clock) -> DeskObject {
     let texture = *util::random_select(LARGE_BOOK_TEXTURE.iter()).unwrap();
     DeskObject::new(
@@ -30,10 +30,8 @@ pub fn create_dobj_book_random(_ctx: &mut ggez::Context,
             numeric::Point2f::new(0.0, 0.0),
             numeric::Vector2f::new(0.1, 0.1),
             0.0, 0))),
-        Box::new(OnDeskTexture::new(
-	    UniTexture::new(
-            game_data.ref_texture(texture),
-            numeric::Point2f::new(0.0, 0.0),
-            numeric::Vector2f::new(0.3, 0.3),
-            0.0, 0))), 0, obj_type, t)
+        Box::new(OnDeskBook::new(
+	    ctx,
+	    game_data,
+	    game_data.book_random_select().clone())), 0, obj_type, t)
 }

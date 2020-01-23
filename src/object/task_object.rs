@@ -201,7 +201,7 @@ impl DrawableComponent for OnDeskBook {
     fn draw(&mut self, ctx: &mut ggez::Context) -> ggez::GameResult<()> {
         if self.is_visible() {
             self.canvas.begin_drawing(ctx);
-
+	    
 	    self.book_texture.draw(ctx)?;
 	    self.title.draw(ctx)?;
 
@@ -250,6 +250,19 @@ impl DrawableObject for OnDeskBook {
 
 impl TextureObject for OnDeskBook {
     impl_texture_object_for_wrapped!{canvas}
+}
+
+impl Clickable for OnDeskBook {
+}
+
+impl OnDesk for OnDeskBook {
+    fn ondesk_whose(&self) -> i32 {
+	0
+    }
+
+    fn click_data(&self, _: &mut ggez::Context, point: numeric::Point2f) -> HoldData {
+	HoldData::None
+    }
 }
 
 impl Clickable for OnDeskTexture {
