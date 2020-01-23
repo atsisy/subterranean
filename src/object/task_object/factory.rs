@@ -33,5 +33,6 @@ pub fn create_dobj_book_random(ctx: &mut ggez::Context,
         Box::new(OnDeskBook::new(
 	    ctx,
 	    game_data,
+	    texture,
 	    game_data.book_random_select().clone())), 0, obj_type, t)
 }
