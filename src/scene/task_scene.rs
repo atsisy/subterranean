@@ -89,7 +89,6 @@ enum TaskSceneStatus {
 
 pub struct TaskScene {
     task_table: TaskTable,
-    simulation_status: sui::SimulationStatus,
     clock: Clock,
     mouse_info: MouseInformation,
     event_list: SceneEventList<Self>,
@@ -101,10 +100,9 @@ impl TaskScene {
 
         TaskScene {
             task_table: TaskTable::new(ctx, game_data,
-                                       ggraphics::Rect::new(10.0, 230.0, 1300.0, 500.0),
-                                       ggraphics::Rect::new(10.0, 0.0, 520.0, 500.0),
-                                       ggraphics::Rect::new(540.0, 0.0, 900.0, 500.0), 0),
-	    simulation_status: sui::SimulationStatus::new(ctx, numeric::Rect::new(0.0, 0.0, 1366.0, 180.0), game_data),
+                                       ggraphics::Rect::new(100.0, 20.0, 1300.0, 750.0),
+                                       ggraphics::Rect::new(0.0, 0.0, 500.0, 300.0),
+                                       ggraphics::Rect::new(0.0, 310.0, 1300.0, 500.0), 0),
             clock: 0,
             mouse_info: MouseInformation::new(),
 	    event_list: SceneEventList::new(),
@@ -262,7 +260,6 @@ impl SceneManager for TaskScene {
     
     fn drawing_process(&mut self, ctx: &mut ggez::Context) {
         self.task_table.draw(ctx).unwrap();
-	self.simulation_status.draw(ctx).unwrap();
     }
     
     fn post_process(&mut self, _ctx: &mut ggez::Context, _: &GameData) -> SceneTransition {
