@@ -182,7 +182,7 @@ impl OnDeskBook {
 	let book_texture = UniTexture::new(
 	    texture,
 	    numeric::Point2f::new(0.0, 0.0),
-	    numeric::Vector2f::new(0.25, 0.25),
+	    numeric::Vector2f::new(0.2, 0.2),
 	    0.0, 0);
 	let book_area = book_texture.get_drawing_area(ctx);
 	let book_title = info.get_name().to_string();
@@ -837,7 +837,7 @@ pub struct BorrowingRecordBookPage {
 impl BorrowingRecordBookPage {
     pub fn new(ctx: &mut ggez::Context, rect: ggraphics::Rect, paper_tid: TextureID,
                info: &BorrowingInformation, game_data: &GameData, t: Clock) -> Self {
-        let mut pos = numeric::Point2f::new(rect.w - 70.0, 50.0);
+        let mut pos = numeric::Point2f::new(rect.w - 40.0, 30.0);
         
         let borrower = VerticalText::new(format!("借りた人　{}", info.borrower),
                                          pos,
@@ -845,7 +845,7 @@ impl BorrowingRecordBookPage {
                                          0.0,
                                          0,
                                          FontInformation::new(game_data.get_font(FontID::JP_FUDE1),
-                                                              numeric::Vector2f::new(20.0, 20.0),
+                                                              numeric::Vector2f::new(16.0, 16.0),
                                                               ggraphics::Color::from_rgba_u32(0x000000ff)));
 	pos.x -= 30.0;
 	
@@ -855,7 +855,7 @@ impl BorrowingRecordBookPage {
                                           0.0,
                                           0,
                                           FontInformation::new(game_data.get_font(FontID::JP_FUDE1),
-                                                               numeric::Vector2f::new(22.0, 22.0),
+                                                               numeric::Vector2f::new(18.0, 18.0),
                                                                ggraphics::Color::from_rgba_u32(0x000000ff)));
 	let mut borrowing: Vec<VerticalText> = info.borrowing.iter()
             .map(|book_info| {
@@ -866,7 +866,7 @@ impl BorrowingRecordBookPage {
                                   0.0,
                                   0,
                                   FontInformation::new(game_data.get_font(FontID::JP_FUDE1),
-                                                       numeric::Vector2f::new(24.0, 24.0),
+                                                       numeric::Vector2f::new(18.0, 18.0),
                                                        ggraphics::Color::from_rgba_u32(0x000000ff))) }).collect();
 
 	for _ in 0..(6 - borrowing.len()) {
@@ -877,7 +877,7 @@ impl BorrowingRecordBookPage {
                                   0.0,
                                   0,
                                   FontInformation::new(game_data.get_font(FontID::JP_FUDE1),
-                                                       numeric::Vector2f::new(24.0, 24.0),
+                                                       numeric::Vector2f::new(18.0, 18.0),
                                                        ggraphics::Color::from_rgba_u32(0x000000ff))));
 	}
 
@@ -898,7 +898,7 @@ impl BorrowingRecordBookPage {
                                             0.0,
                                             0,
                                             FontInformation::new(game_data.get_font(FontID::JP_FUDE1),
-                                                                 numeric::Vector2f::new(18.0, 18.0),
+                                                                 numeric::Vector2f::new(14.0, 14.0),
                                                                  ggraphics::Color::from_rgba_u32(0x000000ff)));
 	pos.x -= 30.0;
         
@@ -908,7 +908,7 @@ impl BorrowingRecordBookPage {
                                             0.0,
                                             0,
                                             FontInformation::new(game_data.get_font(FontID::JP_FUDE1),
-                                                                 numeric::Vector2f::new(18.0, 18.0),
+                                                                 numeric::Vector2f::new(14.0, 14.0),
                                                                  ggraphics::Color::from_rgba_u32(0x000000ff)));
         
         BorrowingRecordBookPage {
@@ -925,7 +925,7 @@ impl BorrowingRecordBookPage {
 
     pub fn new_empty(ctx: &mut ggez::Context, rect: ggraphics::Rect,
 		     paper_tid: TextureID, game_data: &GameData, t: Clock) -> Self {
-        let mut pos = numeric::Point2f::new(rect.w - 70.0, 50.0);
+        let mut pos = numeric::Point2f::new(rect.w - 40.0, 30.0);
         
         let borrower = VerticalText::new("借りた人　".to_string(),
                                          pos,
@@ -933,7 +933,7 @@ impl BorrowingRecordBookPage {
                                          0.0,
                                          0,
                                          FontInformation::new(game_data.get_font(FontID::JP_FUDE1),
-                                                              numeric::Vector2f::new(20.0, 20.0),
+                                                              numeric::Vector2f::new(16.0, 16.0),
                                                               ggraphics::Color::from_rgba_u32(0x000000ff)));
 	pos.x -= 30.0;
 	
@@ -943,7 +943,7 @@ impl BorrowingRecordBookPage {
                                           0.0,
                                           0,
                                           FontInformation::new(game_data.get_font(FontID::JP_FUDE1),
-                                                               numeric::Vector2f::new(22.0, 22.0),
+                                                               numeric::Vector2f::new(18.0, 18.0),
                                                                ggraphics::Color::from_rgba_u32(0x000000ff)));
 	let mut borrowing: Vec<VerticalText> = Vec::new();
 
@@ -955,7 +955,7 @@ impl BorrowingRecordBookPage {
                                   0.0,
                                   0,
                                   FontInformation::new(game_data.get_font(FontID::JP_FUDE1),
-                                                       numeric::Vector2f::new(24.0, 24.0),
+                                                       numeric::Vector2f::new(18.0, 18.0),
                                                        ggraphics::Color::from_rgba_u32(0x000000ff))));
 	}
 
@@ -976,7 +976,7 @@ impl BorrowingRecordBookPage {
                                             0.0,
                                             0,
                                             FontInformation::new(game_data.get_font(FontID::JP_FUDE1),
-                                                                 numeric::Vector2f::new(18.0, 18.0),
+                                                                 numeric::Vector2f::new(14.0, 14.0),
                                                                  ggraphics::Color::from_rgba_u32(0x000000ff)));
 	pos.x -= 30.0;
         
@@ -986,7 +986,7 @@ impl BorrowingRecordBookPage {
                                             0.0,
                                             0,
                                             FontInformation::new(game_data.get_font(FontID::JP_FUDE1),
-                                                                 numeric::Vector2f::new(18.0, 18.0),
+                                                                 numeric::Vector2f::new(14.0, 14.0),
                                                                  ggraphics::Color::from_rgba_u32(0x000000ff)));
         
         BorrowingRecordBookPage {
@@ -1673,12 +1673,11 @@ impl DeskObjects {
         }
     }
 
-    pub fn update(&mut self, _ctx: &mut ggez::Context, _t: Clock) {
-        /*
+    pub fn update(&mut self, ctx: &mut ggez::Context, t: Clock) {
         for p in self.desk_objects.get_raw_container_mut() {
-            p.move_with_func(t);
+            p.get_object_mut().move_with_func(t);
+	    p.get_object_mut().effect(ctx, t);
         }
-        */
     }    
 
     pub fn double_click_handler(&mut self,
@@ -2016,7 +2015,6 @@ impl SuzuMiniSight {
 		dragged.get_object_mut().override_move_func(move_fn::gravity_move(1.0, 10.0, 310.0, 0.3), t);
 		dragged.get_object_mut().add_effect(vec![
 		    Box::new(|obj: &mut dyn MovableObject, _: &ggez::Context, t: Clock| {
-			println!("{:?}", obj.get_position());
 			if obj.get_position().y > 300.0 { obj.override_move_func(None, t); }
 		    })
 		]);
@@ -2148,10 +2146,10 @@ impl TaskTable {
                     numeric::Vector2f::new(0.1, 0.1),
                     0.0, -1))), 1, DeskObjectType::SuzunaObject, t));
 	
-        let mut book = Box::new(BorrowingRecordBook::new(ggraphics::Rect::new(0.0, 0.0, 500.0, 350.0)));
-        book.add_empty_page(ctx,
+        let mut record_book = Box::new(BorrowingRecordBook::new(ggraphics::Rect::new(0.0, 0.0, 400.0, 290.0)));
+        record_book.add_empty_page(ctx,
 			    game_data, 0);
-        desk.add_object(DeskObject::new(
+	let mut record_book = DeskObject::new(
             Box::new(
 		OnDeskTexture::new(
                     UniTexture::new(
@@ -2159,8 +2157,10 @@ impl TaskTable {
 			numeric::Point2f::new(0.0, 0.0),
 			numeric::Vector2f::new(0.2, 0.2),
 			0.0, -1))),
-            book, 0,
-	    DeskObjectType::BorrowRecordBook, t));
+            record_book, 0,
+	    DeskObjectType::BorrowRecordBook, t);
+	record_book.enable_large();
+        desk.add_object(record_book);
         
         TaskTable {
             canvas: SubScreen::new(ctx, pos, 0, ggraphics::Color::from_rgba_u32(0x00000000)),
@@ -2205,25 +2205,37 @@ impl TaskTable {
         self.hand_over_check_s2d(ctx, rpoint);
     }
 
+    fn apply_d2s_point_convertion(&mut self, ctx: &mut ggez::Context, obj: &mut DeskObject) {
+	// オブジェクトの座標を取得
+	let mut obj_p = obj.get_object().get_position();
+	
+	// obj_pのy座標をドラッグしているオブジェクトの中心y座標に書き換える
+	// これは、受け渡す時にオブジェクトの移動に違和感が発生することを防ぐためである
+	obj_p.x = obj.get_object().get_center(ctx).x;
+	
+        let p = self.desk_edge_to_sight_edge(ctx, obj_p);
+
+	obj.enable_small();
+	
+	// Y座標が右のデスクにいた時の中心Y座標になっているので、
+	// make_centerで中心座標に設定することで違和感が無くなる
+        obj.get_object_mut().make_center(ctx, p);
+    }
+
+    fn apply_s2d_point_convertion(&mut self, ctx: &mut ggez::Context, obj: &mut DeskObject) {
+	let mut obj_p = obj.get_object().get_position();
+	obj_p.x = obj.get_object().get_center(ctx).x;
+        let p = self.sight_edge_to_desk_edge(ctx, obj_p);
+	obj.enable_large();
+        obj.get_object_mut().make_center(ctx, p);
+    }
+
     fn hand_over_check_d2s(&mut self, ctx: &mut ggez::Context, rpoint: numeric::Point2f) {
         let border = self.desk_border(ctx);
         
         if self.desk.has_dragging() && border > rpoint.y {
             if let Some(mut dragging) = self.desk.release_dragging() {
-		// ドラッグしているオブジェクトの座標を取得
-		let mut drag_obj_p = dragging.get_object().get_position();
-		
-		// drag_obj_pのy座標をドラッグしているオブジェクトの中心y座標に書き換える
-		// これは、受け渡す時にオブジェクトの移動に違和感が発生することを防ぐためである
-		drag_obj_p.x = dragging.get_object().get_center(ctx).x;
-		
-                let p = self.desk_edge_to_sight_edge(ctx, drag_obj_p);
-                dragging.enable_small();
-
-		// Y座標が右のデスクにいた時の中心Y座標になっているので、
-		// make_centerで中心座標に設定することで違和感が無くなる
-		println!("{:?}", p);
-                dragging.get_object_mut().make_center(ctx, p);
+		self.apply_d2s_point_convertion(ctx, &mut dragging);
                 self.sight.insert_dragging(dragging);
             }
         }
@@ -2234,11 +2246,7 @@ impl TaskTable {
 	
         if self.sight.has_dragging() && border < rpoint.y {
             if let Some(mut dragging) = self.sight.release_dragging() {
-		let mut drag_obj_p = dragging.get_object().get_position();
-		drag_obj_p.x = dragging.get_object().get_center(ctx).x;
-                let p = self.sight_edge_to_desk_edge(ctx, drag_obj_p);
-                dragging.enable_large();
-                dragging.get_object_mut().make_center(ctx, p);
+		self.apply_s2d_point_convertion(ctx, &mut dragging);
                 self.desk.insert_dragging(dragging);
             }
         }
@@ -2260,9 +2268,35 @@ impl TaskTable {
                               0.0)
     }
 
+    fn check_sight_drop_to_desk(&mut self, ctx: &mut ggez::Context, t: Clock) {
+	let converted = self.sight.check_drop_desk();
+	if converted.len() == 0 {
+	    return ()
+	}
+	
+	let min = self.desk.desk_objects.get_minimum_depth();
+	let converted = converted.into_iter()
+	    .map(|mut obj| {
+		self.apply_s2d_point_convertion(ctx, &mut obj);
+		obj.get_object_mut().clear_effect();
+		obj.get_object_mut().override_move_func(move_fn::gravity_move(1.0, 10.0, 400.0, 0.3), t);
+		obj.get_object_mut().set_drawing_depth(min);
+		obj.get_object_mut().add_effect(vec![
+		    Box::new(|obj: &mut dyn MovableObject, _: &ggez::Context, t: Clock| {
+			if obj.get_position().y > 150.0 { obj.override_move_func(None, t); }
+		    })
+		]);
+		obj
+	    })
+	    .collect::<Vec<_>>();
+	self.desk.desk_objects.change_depth_equally(1);
+	self.desk.add_customer_object_vec(converted);
+    }
+
     pub fn update(&mut self, ctx: &mut ggez::Context, _: &GameData, t: Clock) {
 	self.sight.update(ctx, t);
-	self.desk.add_customer_object_vec(self.sight.check_drop_desk());
+	self.desk.update(ctx, t);
+	self.check_sight_drop_to_desk(ctx, t);
     }
 
     pub fn get_remaining_customer_object_number(&self) -> usize {
