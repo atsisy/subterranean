@@ -101,7 +101,7 @@ impl TaskScene {
         TaskScene {
             task_table: TaskTable::new(ctx, game_data,
                                        ggraphics::Rect::new(100.0, 20.0, 1300.0, 750.0),
-                                       ggraphics::Rect::new(0.0, 0.0, 500.0, 300.0),
+                                       ggraphics::Rect::new(0.0, 0.0, 800.0, 300.0),
                                        ggraphics::Rect::new(0.0, 310.0, 1300.0, 500.0), 0),
             clock: 0,
             mouse_info: MouseInformation::new(),

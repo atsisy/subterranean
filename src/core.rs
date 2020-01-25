@@ -52,6 +52,7 @@ pub enum TextureID {
     Wood1,
     WafuTexture1,
     Chobo1,
+    JunkoTachieDefault,
     Unknown,
 }
 
@@ -81,6 +82,7 @@ impl FromStr for TextureID {
 	    "Wood1" => Ok(Self::Wood1),
 	    "WafuTexture1" => Ok(Self::WafuTexture1),
 	    "Chobo1" => Ok(Self::Chobo1),
+	    "JunkoTachieDefault" => Ok(Self::JunkoTachieDefault),
             _ => Err(())
         }
     }
@@ -105,6 +107,7 @@ impl TextureID {
             13 => Some(Self::Wood1),
 	    14 => Some(Self::WafuTexture1),
 	    15 => Some(Self::Chobo1),
+	    16 => Some(Self::JunkoTachieDefault),
             _ => None
         }
     }

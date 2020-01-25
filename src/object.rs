@@ -1,4 +1,5 @@
 pub mod move_fn;
+pub mod effect;
 pub mod collision;
 pub mod character_factory;
 pub mod scenario;

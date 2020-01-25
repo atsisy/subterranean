@@ -32,3 +32,6 @@ TaskSceneがエフェクト無しで完成
 *** TaskTable
 **** RecordBookPage
 ***** TODO 右クリックで貸出本のErase処理が走るようにする
+** HasGenericEffect
+*** TODO effect関数に返り値を設定。この値はenumの要素とする
+

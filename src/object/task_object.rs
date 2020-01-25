@@ -16,6 +16,7 @@ use crate::core::BookInformation;
 use torifune::hash;
 
 use super::*;
+use crate::object::effect;
 
 use super::Clickable;
 use crate::core::{TextureID, FontID, GameData};
@@ -1644,6 +1645,7 @@ impl DeskObjects {
         // 取り出すことができる
         for (index, obj) in self.desk_objects.get_raw_container_mut().iter_mut().rev().enumerate() {
             if obj.get_object().get_drawing_area(ctx).contains(rpoint) {
+		obj.get_object_mut().override_move_func(None, 0);
                 dragging_object_index = self.desk_objects.len() - index - 1;
                 drag_start = true;
                 break;
@@ -1752,13 +1754,10 @@ impl DeskObjects {
     }
 
     pub fn count_object_by_type(&self, object_type: DeskObjectType) -> usize {
-	self.desk_objects.get_raw_container().iter().fold(0, |_, obj| {
-	    if obj.get_object_type() == object_type {
-		1
-	    } else {
-		0
-	    }
-	})
+	let count = self.desk_objects.get_raw_container().iter().fold(0, |sum, obj| {
+	    sum + if obj.get_object_type() == object_type { 1 } else { 0 }
+	});
+	count + if self.dragging.is_some() { 1 } else { 0 }
     }
 }
 
@@ -1868,6 +1867,17 @@ impl SuzuMiniSightSilhouette {
 	    canvas: SubScreen::new(ctx, rect, 0, ggraphics::Color::from_rgba_u32(0x00000000)),
 	}
     }
+
+    pub fn replace_character(&mut self, chara: SimpleObject) {
+	self.character = Some(chara);
+    }
+
+    fn run_effect(&mut self, ctx: &mut ggez::Context, t: Clock) {
+	if let Some(character) = &mut self.character {
+	    character.move_with_func(t);
+	    character.effect(ctx, t);
+	}
+    }
 }
 
 impl DrawableComponent for SuzuMiniSightSilhouette {
@@ -1876,6 +1886,9 @@ impl DrawableComponent for SuzuMiniSightSilhouette {
             self.canvas.begin_drawing(ctx);
 
 	    self.background.draw(ctx)?;
+	    if let Some(chara) = &mut self.character {
+		chara.draw(ctx)?;
+	    }
             
             self.canvas.end_drawing(ctx);
             self.canvas.draw(ctx).unwrap();
@@ -1903,7 +1916,6 @@ impl DrawableComponent for SuzuMiniSightSilhouette {
     fn get_drawing_depth(&self) -> i8 {
         self.canvas.get_drawing_depth()
     }
-
 }
 
 pub struct SuzuMiniSight {
@@ -1936,6 +1948,10 @@ impl SuzuMiniSight {
 									    0)),
         }
     }
+
+    pub fn replace_character_silhouette(&mut self, chara: SimpleObject) {
+	self.silhouette.replace_character(chara);
+    }
     
     pub fn dragging_handler(&mut self,
                         point: numeric::Point2f,
@@ -1967,6 +1983,8 @@ impl SuzuMiniSight {
             d.get_object_mut().move_with_func(t);
 	    d.get_object_mut().effect(ctx, t);
         }
+
+	self.silhouette.run_effect(ctx, t);
     }
 
     pub fn check_drop_desk(&mut self) -> Vec<DeskObject> {
@@ -2007,7 +2025,8 @@ impl SuzuMiniSight {
 		dragged.get_object_mut().override_move_func(move_fn::gravity_move(1.0, 10.0, 310.0, 0.3), t);
 		dragged.get_object_mut().add_effect(vec![
 		    Box::new(|obj: &mut dyn MovableObject, _: &ggez::Context, t: Clock| {
-			if obj.get_position().y > 350.0 { obj.override_move_func(None, t); }
+			if obj.get_position().y > 350.0 { obj.override_move_func(None, t); EffectFnStatus::EffectFinish }
+			else { EffectFnStatus::EffectContinue }
 		    })
 		]);
 		self.dropping.push(dragged);
@@ -2015,7 +2034,8 @@ impl SuzuMiniSight {
 		dragged.get_object_mut().override_move_func(move_fn::gravity_move(1.0, 10.0, 310.0, 0.3), t);
 		dragged.get_object_mut().add_effect(vec![
 		    Box::new(|obj: &mut dyn MovableObject, _: &ggez::Context, t: Clock| {
-			if obj.get_position().y > 300.0 { obj.override_move_func(None, t); }
+			if obj.get_position().y > 300.0 { obj.override_move_func(None, t); EffectFnStatus::EffectFinish }
+			else { EffectFnStatus::EffectContinue }
 		    })
 		]);
 		self.dropping_to_desk.push(dragged);
@@ -2283,7 +2303,8 @@ impl TaskTable {
 		obj.get_object_mut().set_drawing_depth(min);
 		obj.get_object_mut().add_effect(vec![
 		    Box::new(|obj: &mut dyn MovableObject, _: &ggez::Context, t: Clock| {
-			if obj.get_position().y > 150.0 { obj.override_move_func(None, t); }
+			if obj.get_position().y > 150.0 { obj.override_move_func(None, t); EffectFnStatus::EffectFinish }
+			else { EffectFnStatus::EffectContinue }
 		    })
 		]);
 		obj
@@ -2314,6 +2335,16 @@ impl TaskTable {
 	    obj.enable_large();
             self.desk.add_customer_object(obj);
         }
+
+	let mut new_silhouette = SimpleObject::new(
+	    MovableUniTexture::new(
+		game_data.ref_texture(TextureID::JunkoTachieDefault),
+		numeric::Point2f::new(100.0, 20.0),
+		numeric::Vector2f::new(0.1, 0.1),
+		0.0, 0, None, t),
+	    vec![effect::fade_in(50, t)]);
+	new_silhouette.set_alpha(0.0);
+	self.sight.replace_character_silhouette(new_silhouette);
     }
 
     pub fn in_customer_event(&self) -> bool {
