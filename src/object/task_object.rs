@@ -96,6 +96,99 @@ pub enum HoldData {
     None,
 }
 
+pub struct DrawableCalendar {
+    date_data: GensoDate,
+    paper: UniTexture,
+    season_text: VerticalText,
+    month_text: VerticalText,
+    day_text: VerticalText,
+    canvas: SubScreen,
+}
+
+impl DrawableCalendar {
+    pub fn new(ctx: &mut ggez::Context, game_data: &GameData,
+	       rect: numeric::Rect, date: GensoDate, paper_tid: TextureID) -> Self {
+	let font_info = FontInformation::new(
+	    game_data.get_font(FontID::JP_FUDE1),
+	    numeric::Vector2f::new(14.0, 14.0),
+	    ggraphics::Color::from_rgba_u32(0x000000ff));
+	let default_scale = numeric::Vector2f::new(1.0, 1.0);
+	
+	DrawableCalendar {
+	    paper: UniTexture::new(game_data.ref_texture(paper_tid), numeric::Point2f::new(0.0, 0.0), default_scale, 0.0, 0),
+	    season_text: VerticalText::new(format!("{}季", number_to_jk(date.season as u64)),
+					   numeric::Point2f::new(50.0, 4.0), default_scale,
+					   0.0, 0, font_info),
+	    month_text: VerticalText::new(format!("{}月", number_to_jk(date.month as u64)),
+					  numeric::Point2f::new(32.0, 4.0), default_scale,
+					  0.0, 0, font_info),
+	    day_text: VerticalText::new(format!("{}日", number_to_jk(date.day as u64)),
+					numeric::Point2f::new(16.0, 4.0), default_scale,
+					0.0, 0, font_info),
+	    date_data: date,
+	    canvas: SubScreen::new(ctx, rect, 0,ggraphics::Color::from_rgba_u32(0x00000000)),
+	}
+    }
+}
+
+impl DrawableComponent for DrawableCalendar {
+    fn draw(&mut self, ctx: &mut ggez::Context) -> ggez::GameResult<()> {
+        if self.is_visible() {
+            self.canvas.begin_drawing(ctx);
+	    
+	    self.paper.draw(ctx)?;
+	    self.season_text.draw(ctx)?;
+	    self.month_text.draw(ctx)?;
+	    self.day_text.draw(ctx)?;
+
+            self.canvas.end_drawing(ctx);
+            self.canvas.draw(ctx).unwrap();
+        }
+        Ok(())
+    }
+
+    fn hide(&mut self) {
+        self.canvas.hide()
+    }
+
+    fn appear(&mut self) {
+        self.canvas.appear()
+    }
+
+    fn is_visible(&self) -> bool {
+        self.canvas.is_visible()
+    }
+
+    fn set_drawing_depth(&mut self, depth: i8) {
+        self.canvas.set_drawing_depth(depth)
+    }
+
+    fn get_drawing_depth(&self) -> i8 {
+        self.canvas.get_drawing_depth()
+    }
+}
+
+impl DrawableObject for DrawableCalendar {
+    #[inline(always)]
+    fn set_position(&mut self, pos: numeric::Point2f) {
+	self.canvas.set_position(pos);
+    }
+
+    #[inline(always)]
+    fn get_position(&self) -> numeric::Point2f {
+	self.canvas.get_position()
+    }
+
+    #[inline(always)]
+    fn move_diff(&mut self, offset: numeric::Vector2f) {
+	self.canvas.move_diff(offset);
+    }
+}
+
+impl TextureObject for DrawableCalendar {
+    impl_texture_object_for_wrapped!{canvas}
+}
+
 pub trait OnDesk : TextureObject + Clickable {
     fn ondesk_whose(&self) -> i32;
 
@@ -194,7 +287,8 @@ impl OnDeskBook {
 				     numeric::Point2f::new(40.0, 30.0),
 				     numeric::Vector2f::new(1.0, 1.0),
 				     0.0, 0,
-				     FontInformation::new(game_data.get_font(FontID::JP_FUDE1), numeric::Vector2f::new(18.0, 18.0),
+				     FontInformation::new(game_data.get_font(FontID::JP_FUDE1),
+							  numeric::Vector2f::new(18.0, 18.0),
 							  ggraphics::Color::from_rgba_u32(0x000000ff))),
 	    canvas: SubScreen::new(ctx, book_area, 0, ggraphics::Color::from_rgba_u32(0x00000000)),
 	}
@@ -2137,18 +2231,69 @@ impl HoldData {
     }
 }
 
+pub struct Goods {
+    calendar: DrawableCalendar,
+    canvas: SubScreen,
+}
+
+impl Goods {
+    pub fn new(ctx: &mut ggez::Context, game_data: &GameData, pos_rect: numeric::Rect) -> Self {
+	Goods {
+	    calendar: DrawableCalendar::new(ctx, game_data, numeric::Rect::new(0.0, 0.0, 100.0, 100.0),
+					    GensoDate::new(12, 12, 12), TextureID::Paper1),
+	    canvas: SubScreen::new(ctx, pos_rect, 0, ggraphics::Color::from_rgba_u32(0x00000000)),
+	}
+    }
+}
+
+impl DrawableComponent for Goods {
+    fn draw(&mut self, ctx: &mut ggez::Context) -> ggez::GameResult<()> {
+        if self.is_visible() {
+            self.canvas.begin_drawing(ctx);
+	    
+	    self.calendar.draw(ctx)?;
+
+            self.canvas.end_drawing(ctx);
+            self.canvas.draw(ctx).unwrap();
+        }
+        Ok(())
+    }
+
+    fn hide(&mut self) {
+        self.canvas.hide()
+    }
+
+    fn appear(&mut self) {
+        self.canvas.appear()
+    }
+
+    fn is_visible(&self) -> bool {
+        self.canvas.is_visible()
+    }
+
+    fn set_drawing_depth(&mut self, depth: i8) {
+        self.canvas.set_drawing_depth(depth)
+    }
+
+    fn get_drawing_depth(&self) -> i8 {
+        self.canvas.get_drawing_depth()
+    }
+}
+
 pub struct TaskTable {
     canvas: SubScreen,
     sight: SuzuMiniSight,
     desk: DeskObjects,
-    in_event: bool,
+    goods: Goods,
     hold_data: HoldData,
 }
 
 impl TaskTable {
     pub fn new(ctx: &mut ggez::Context, game_data: &GameData,
                pos: numeric::Rect,
-               sight_rect: ggraphics::Rect, desk_rect: ggraphics::Rect, t: Clock) -> Self {
+               sight_rect: ggraphics::Rect,
+	       goods_rect: ggraphics::Rect,
+	       desk_rect: ggraphics::Rect, t: Clock) -> Self {
 	let mut sight = SuzuMiniSight::new(ctx, game_data, sight_rect);
         let mut desk = DeskObjects::new(ctx, game_data, desk_rect);
         
@@ -2168,7 +2313,7 @@ impl TaskTable {
 	
         let mut record_book = Box::new(BorrowingRecordBook::new(ggraphics::Rect::new(0.0, 0.0, 400.0, 290.0)));
         record_book.add_empty_page(ctx,
-			    game_data, 0);
+				   game_data, 0);
 	let mut record_book = DeskObject::new(
             Box::new(
 		OnDeskTexture::new(
@@ -2186,7 +2331,7 @@ impl TaskTable {
             canvas: SubScreen::new(ctx, pos, 0, ggraphics::Color::from_rgba_u32(0x00000000)),
             sight: sight,
             desk: desk,
-	    in_event: false,
+	    goods: Goods::new(ctx, game_data, goods_rect),
 	    hold_data: HoldData::None,
         }
     }
@@ -2328,14 +2473,13 @@ impl TaskTable {
                                 ctx: &mut ggez::Context,
                                 game_data: &GameData,
                                 info: BorrowingInformation, t: Clock) {
-	self.in_event = true;
         for _ in info.borrowing {
 	    let mut obj = factory::create_dobj_book_random(ctx, game_data,
-						       DeskObjectType::CustomerObject, t);
+							   DeskObjectType::CustomerObject, t);
 	    obj.enable_large();
             self.desk.add_customer_object(obj);
         }
-
+	
 	let mut new_silhouette = SimpleObject::new(
 	    MovableUniTexture::new(
 		game_data.ref_texture(TextureID::JunkoTachieDefault),
@@ -2345,10 +2489,6 @@ impl TaskTable {
 	    vec![effect::fade_in(50, t)]);
 	new_silhouette.set_alpha(0.0);
 	self.sight.replace_character_silhouette(new_silhouette);
-    }
-
-    pub fn in_customer_event(&self) -> bool {
-	self.in_event
     }
 
     pub fn clear_hold_data(&mut self) {
@@ -2377,10 +2517,10 @@ impl DrawableComponent for TaskTable {
 
             self.sight.draw(ctx).unwrap();
             self.desk.draw(ctx).unwrap();
+	    self.goods.draw(ctx)?;
             
             self.canvas.end_drawing(ctx);
             self.canvas.draw(ctx).unwrap();
-            
         }
         Ok(())
     }
