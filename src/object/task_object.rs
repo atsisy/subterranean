@@ -96,6 +96,16 @@ pub enum HoldData {
     None,
 }
 
+pub trait OnDesk : TextureObject + Clickable {
+    fn ondesk_whose(&self) -> i32;
+
+    fn click_data(&self, ctx: &mut ggez::Context, point: numeric::Point2f) -> HoldData;
+
+    fn insert_data(&mut self, ctx: &mut ggez::Context, point: numeric::Point2f, data: &HoldData) -> bool {
+	false
+    }
+}
+
 pub struct DrawableCalendar {
     date_data: GensoDate,
     paper: UniTexture,
@@ -189,13 +199,16 @@ impl TextureObject for DrawableCalendar {
     impl_texture_object_for_wrapped!{canvas}
 }
 
-pub trait OnDesk : TextureObject + Clickable {
-    fn ondesk_whose(&self) -> i32;
+impl Clickable for DrawableCalendar {
+}
 
-    fn click_data(&self, ctx: &mut ggez::Context, point: numeric::Point2f) -> HoldData;
-
-    fn insert_data(&mut self, ctx: &mut ggez::Context, point: numeric::Point2f, data: &HoldData) -> bool {
-	false
+impl OnDesk for DrawableCalendar {
+    fn ondesk_whose(&self) -> i32 {
+	0
+    }
+    
+    fn click_data(&self, ctx: &mut ggez::Context, point: numeric::Point2f) -> HoldData {
+	HoldData::Date(self.date_data)
     }
 }
 
@@ -1493,6 +1506,18 @@ impl OnDesk for BorrowingRecordBook {
 		    _ => (),
 		}
 	    }
+
+	    if let Some(page) = self.get_current_page_mut() {
+		if page.borrow_date.get_drawing_area(ctx).contains(rpoint) {
+		    match data {
+			HoldData::Date(date_data) => {
+			    page.borrow_date.replace_text(format!("貸出日 {}", date_data.to_string()));
+			    insert_done_flag = true;
+			}
+			_ => (),
+		    }
+		}
+	    }
 	}
 
 	insert_done_flag
@@ -2244,6 +2269,16 @@ impl Goods {
 	    canvas: SubScreen::new(ctx, pos_rect, 0, ggraphics::Color::from_rgba_u32(0x00000000)),
 	}
     }
+
+    pub fn check_data_click(&mut self, ctx: &mut ggez::Context, point: numeric::Point2f) -> HoldData {
+        let rpoint = self.canvas.relative_point(point);
+	
+        if self.calendar.get_drawing_area(ctx).contains(rpoint) {
+	    return self.calendar.click_data(ctx, rpoint);
+        }
+
+	HoldData::None
+    }
 }
 
 impl DrawableComponent for Goods {
@@ -2495,12 +2530,19 @@ impl TaskTable {
 	self.hold_data = HoldData::None;
     }
 
+    fn update_hold_data_if_some(&mut self, new_hold_data: HoldData) {
+	if new_hold_data.is_some() {
+	    self.hold_data = new_hold_data;
+	}
+    }
+
     fn update_hold_data(&mut self, ctx: &mut ggez::Context, point: numeric::Point2f) {
 	if self.hold_data.is_none() {
 	    let clicked_data = self.desk.check_data_click(ctx, point);
-	    if clicked_data.is_some() {
-		self.hold_data = clicked_data;
-	    }
+	    self.update_hold_data_if_some(clicked_data);
+	    
+	    let clicked_data = self.goods.check_data_click(ctx, point);
+	    self.update_hold_data_if_some(clicked_data);
 	} else {
 	    if self.desk.check_insert_data(ctx, point, &self.hold_data) {
 		self.hold_data = HoldData::None;
