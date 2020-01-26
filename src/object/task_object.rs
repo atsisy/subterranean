@@ -5,6 +5,7 @@ use std::collections::HashMap;
 use ggez::graphics as ggraphics;
 use ggez::input as ginput;
 use ginput::mouse::MouseButton;
+use ginput::mouse::MouseCursor;
 
 use torifune::graphics::object::*;
 use torifune::graphics::*;
@@ -201,6 +202,15 @@ impl TextureObject for DrawableCalendar {
 }
 
 impl Clickable for DrawableCalendar {
+    fn clickable_status(&mut self,
+			ctx: &mut ggez::Context,
+			point: numeric::Point2f) -> MouseCursor {
+	if self.canvas.get_drawing_area(ctx).contains(point) {
+	    MouseCursor::Hand
+	} else {
+	    MouseCursor::Default
+	}
+    }
 }
 
 impl OnDesk for DrawableCalendar {
@@ -566,6 +576,14 @@ impl DrawableComponent for BorrowingPaper {
     fn get_drawing_depth(&self) -> i8 {
         self.canvas.get_drawing_depth()
     }
+}
+
+impl DrawableObject for BorrowingPaper {
+    impl_drawable_object_for_wrapped!{canvas}
+}
+
+impl TextureObject for BorrowingPaper {
+    impl_texture_object_for_wrapped!{canvas}
 }
 
 impl Clickable for BorrowingPaper {
@@ -1904,6 +1922,41 @@ impl DeskObjects {
 	});
 	count + if self.dragging.is_some() { 1 } else { 0 }
     }
+
+    fn button_up_handler(&mut self,
+			 ctx: &mut ggez::Context,
+			 game_data: &GameData,
+			 t: Clock,
+			 button: ggez::input::mouse::MouseButton,
+			 point: numeric::Point2f) {
+	let rpoint = self.canvas.relative_point(point);
+	
+	for dobj in self.desk_objects.get_raw_container_mut() {
+	    if dobj.get_object_mut().get_drawing_area(ctx).contains(rpoint) {
+		dobj.get_object_mut()
+		    .ref_wrapped_object()
+		    .ref_wrapped_object()
+		    .button_up(ctx, game_data, t, button, rpoint);
+	    }
+	}
+    }
+
+    pub fn check_mouse_cursor_status(&mut self, ctx: &mut ggez::Context, point: numeric::Point2f) -> MouseCursor {
+	if self.canvas.get_drawing_area(ctx).contains(point) {
+	    let rpoint = self.canvas.relative_point(point);
+
+	    // オブジェクトは深度が深い順にソートされているので、
+            // 逆順から検索していくことで、最も手前に表示されているオブジェクトを
+            // 取り出すことができる
+            for (index, obj) in self.desk_objects.get_raw_container_mut().iter_mut().rev().enumerate() {
+		if obj.get_object().get_drawing_area(ctx).contains(rpoint) {
+		    return MouseCursor::Hand
+		}
+            }
+	}
+
+	MouseCursor::Default
+    }
 }
 
 impl DrawableComponent for DeskObjects {
@@ -1966,34 +2019,6 @@ impl DrawableObject for DeskObjects {
     /// offsetで指定しただけ描画位置を動かす
     fn move_diff(&mut self, offset: numeric::Vector2f) {
         self.canvas.move_diff(offset)
-    }
-}
-
-impl Clickable for DeskObjects {
-    fn button_down(&mut self,
-                   _ctx: &mut ggez::Context,
-		   _: &GameData,
-		   _: Clock,
-                   _button: ggez::input::mouse::MouseButton,
-                   _point: numeric::Point2f) {}
-    
-    fn button_up(&mut self,
-                 ctx: &mut ggez::Context,
-		 game_data: &GameData,
-		 t: Clock,
-                 button: ggez::input::mouse::MouseButton,
-                 point: numeric::Point2f) {
-	let rpoint = self.canvas.relative_point(point);
-	
-	for dobj in self.desk_objects.get_raw_container_mut() {
-	    if dobj.get_object_mut().get_drawing_area(ctx).contains(rpoint) {
-		dobj.get_object_mut()
-		    .ref_wrapped_object()
-		    .ref_wrapped_object()
-		    .button_up(ctx, game_data, t, button, rpoint);
-	    }
-	}
-	
     }
 }
 
@@ -2092,6 +2117,17 @@ impl TextureObject for TaskSilhouette {
 }
 
 impl Clickable for TaskSilhouette {
+    fn clickable_status(&mut self,
+			ctx: &mut ggez::Context,
+			point: numeric::Point2f) -> ggez::input::mouse::MouseCursor {
+	if let Some(character) = &self.character {
+	    if character.get_drawing_area(ctx).contains(point) {
+		return MouseCursor::Hand;
+	    }
+	}
+
+	MouseCursor::Default
+    }
 }
 
 impl OnDesk for TaskSilhouette {
@@ -2184,7 +2220,13 @@ impl TextureObject for SuzuMiniSightSilhouette {
     impl_texture_object_for_wrapped!{canvas}
 }
 
-impl Clickable for SuzuMiniSightSilhouette {}
+impl Clickable for SuzuMiniSightSilhouette {
+    fn clickable_status(&mut self,
+			ctx: &mut ggez::Context,
+			point: numeric::Point2f) -> ggez::input::mouse::MouseCursor {
+	self.silhouette.clickable_status(ctx, point)
+    }
+}
 
 impl OnDesk for SuzuMiniSightSilhouette {
     fn ondesk_whose(&self) -> i32 {
@@ -2346,6 +2388,15 @@ impl SuzuMiniSight {
     pub fn out_of_desk(&self, point: numeric::Point2f) -> bool {
         !self.canvas.contains(point)
     }
+
+    pub fn check_mouse_cursor_status(&mut self, ctx: &mut ggez::Context, point: numeric::Point2f) -> MouseCursor {
+	if self.canvas.get_drawing_area(ctx).contains(point) {
+	    let rpoint = self.canvas.relative_point(point);
+	    return self.silhouette.clickable_status(ctx, rpoint);
+	}
+
+	MouseCursor::Default
+    }
 }
 
 impl DrawableComponent for SuzuMiniSight {
@@ -2451,6 +2502,15 @@ impl Goods {
         }
 
 	HoldData::None
+    }
+    
+    pub fn check_mouse_cursor_status(&mut self, ctx: &mut ggez::Context, point: numeric::Point2f) -> MouseCursor {
+	if self.canvas.get_drawing_area(ctx).contains(point) {
+	    let rpoint = self.canvas.relative_point(point);
+	    return self.calendar.clickable_status(ctx, rpoint);
+	}
+
+	MouseCursor::Default
     }
 }
 
@@ -2766,6 +2826,14 @@ impl DrawableComponent for TaskTable {
     }
 }
 
+impl DrawableObject for TaskTable {
+    impl_drawable_object_for_wrapped!{canvas}
+}
+
+impl TextureObject for TaskTable {
+    impl_texture_object_for_wrapped!{canvas}
+}
+
 impl Clickable for TaskTable {
     fn button_down(&mut self,
                    ctx: &mut ggez::Context,
@@ -2783,7 +2851,7 @@ impl Clickable for TaskTable {
                  button: ggez::input::mouse::MouseButton,
                  point: numeric::Point2f) {
 	let rpoint = self.canvas.relative_point(point);
-	self.desk.button_up(ctx, game_data, t, button, rpoint);
+	self.desk.button_up_handler(ctx, game_data, t, button, rpoint);
     }
     
     fn on_click(&mut self,
@@ -2799,6 +2867,24 @@ impl Clickable for TaskTable {
 	    HoldData::CustomerName(name) => println!("{}", name),
 	    _ => (),
 	}
+    }
+
+    fn clickable_status(&mut self,
+			ctx: &mut ggez::Context,
+			point: numeric::Point2f) -> ggez::input::mouse::MouseCursor {
+	let rpoint = self.canvas.relative_point(point);
+	let mut cursor_status = MouseCursor::Default;
+	
+	cursor_status = self.desk.check_mouse_cursor_status(ctx, rpoint);
+	if cursor_status != MouseCursor::Default { return cursor_status; }
+	
+	cursor_status = self.sight.check_mouse_cursor_status(ctx, rpoint);
+	if cursor_status != MouseCursor::Default { return cursor_status; }
+
+	cursor_status = self.goods.check_mouse_cursor_status(ctx, rpoint);
+	if cursor_status != MouseCursor::Default { return cursor_status; }
+
+	cursor_status
     }
 }
 

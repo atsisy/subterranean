@@ -23,7 +23,7 @@ use crate::object::collision::*;
 use crate::core::map_parser as mp;
 use crate::core::GameData;
 
-pub trait Clickable {
+pub trait Clickable : TextureObject {
     fn button_down(&mut self,
                    _ctx: &mut ggez::Context,
 		   _: &GameData,
@@ -44,6 +44,12 @@ pub trait Clickable {
 		_: Clock,
                 _button: ggez::input::mouse::MouseButton,
                 _point: numeric::Point2f) {}
+
+    fn clickable_status(&mut self,
+                _ctx: &mut ggez::Context,
+                    _point: numeric::Point2f) -> ggez::input::mouse::MouseCursor {
+	ggez::input::mouse::MouseCursor::Default
+    }
 }
 
 ///
