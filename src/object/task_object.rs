@@ -10,6 +10,7 @@ use torifune::graphics::object::*;
 use torifune::graphics::*;
 use torifune::numeric;
 use torifune::impl_texture_object_for_wrapped;
+use torifune::impl_drawable_object_for_wrapped;
 
 use crate::core::BookInformation;
 
@@ -1286,6 +1287,38 @@ impl BorrowingRecordBook {
 	    self.current_page -= 1;
 	}
     }
+
+    fn borrow_date_insert_check(ctx: &mut ggez::Context,
+				rpoint: numeric::Point2f,
+				page: &mut BorrowingRecordBookPage, data: &HoldData) -> bool {
+	if page.borrow_date.get_drawing_area(ctx).contains(rpoint) {
+	    match data {
+		HoldData::Date(date_data) => {
+		    page.borrow_date.replace_text(format!("貸出日 {}", date_data.to_string()));
+		    return true;
+		}
+		_ => (),
+	    }
+	}
+
+	return false;
+    }
+
+    fn borrower_customer_insert_check(ctx: &mut ggez::Context,
+				      rpoint: numeric::Point2f,
+				      page: &mut BorrowingRecordBookPage, data: &HoldData) -> bool {
+	if page.borrower.get_drawing_area(ctx).contains(rpoint) {
+	    match data {
+		HoldData::CustomerName(customer_name) => {
+		    page.borrower.replace_text(format!("借りる人 {}", customer_name.to_string()));
+		    return true;
+		}
+		_ => (),
+	    }
+	}
+
+	return false;
+    }
 }
 
 impl DrawableComponent for BorrowingRecordBook {
@@ -1507,16 +1540,9 @@ impl OnDesk for BorrowingRecordBook {
 		}
 	    }
 
-	    if let Some(page) = self.get_current_page_mut() {
-		if page.borrow_date.get_drawing_area(ctx).contains(rpoint) {
-		    match data {
-			HoldData::Date(date_data) => {
-			    page.borrow_date.replace_text(format!("貸出日 {}", date_data.to_string()));
-			    insert_done_flag = true;
-			}
-			_ => (),
-		    }
-		}
+	    if Self::borrow_date_insert_check(ctx, rpoint, page, data) ||
+		Self::borrower_customer_insert_check(ctx, rpoint, page, data) {
+		return true;
 	    }
 	}
 
@@ -1971,10 +1997,120 @@ impl Clickable for DeskObjects {
     }
 }
 
+struct TaskSilhouette {
+    character: Option<SimpleObject>,
+    name: Option<String>,
+    canvas: SubScreen,
+}
+
+impl TaskSilhouette {
+    pub fn new(ctx: &mut ggez::Context, pos_rect: numeric::Rect, char_obj: SimpleObject, name: &str) -> Self {
+	TaskSilhouette {
+	    character: Some(char_obj),
+	    name: Some(name.to_string()),
+	    canvas: SubScreen::new(ctx, pos_rect, 0, ggraphics::Color::from_rgba_u32(0)),
+	}
+    }
+
+    pub fn new_empty(ctx: &mut ggez::Context, pos_rect: numeric::Rect) -> Self {
+	TaskSilhouette {
+	    character: None,
+	    name: None,
+	    canvas: SubScreen::new(ctx, pos_rect, 0, ggraphics::Color::from_rgba_u32(0)),
+	}
+    }
+
+    pub fn is_some(&self) -> bool {
+	self.character.is_some()
+    }
+    
+    pub fn get_name(&self) -> Option<&String> {
+	self.name.as_ref()
+    }
+
+    pub fn change_character(&mut self, character: SimpleObject) -> &mut Self {
+	self.character = Some(character);
+	self
+    }
+
+    pub fn update_name(&mut self, name: String) -> &mut Self {
+	self.name = Some(name);
+	self
+    }
+
+    pub fn get_object(&self) -> Option<&SimpleObject> {
+	self.character.as_ref()
+    }
+
+    pub fn get_object_mut(&mut self) -> Option<&mut SimpleObject> {
+	self.character.as_mut()
+    }
+}
+
+impl DrawableComponent for TaskSilhouette {
+    fn draw(&mut self, ctx: &mut ggez::Context) -> ggez::GameResult<()> {
+        if self.is_visible() {
+            self.canvas.begin_drawing(ctx);
+
+	    if let Some(character) = &mut self.character {
+		character.draw(ctx)?;
+	    }
+            
+            self.canvas.end_drawing(ctx);
+            self.canvas.draw(ctx).unwrap();
+        }
+        Ok(())
+    }
+
+    fn hide(&mut self) {
+        self.canvas.hide();
+    }
+
+    fn appear(&mut self) {
+        self.canvas.appear();
+    }
+
+    fn is_visible(&self) -> bool {
+        self.canvas.is_visible()
+    }
+
+    fn set_drawing_depth(&mut self, depth: i8) {
+        self.canvas.set_drawing_depth(depth);
+    }
+
+    fn get_drawing_depth(&self) -> i8 {
+        self.canvas.get_drawing_depth()
+    }
+}
+
+impl DrawableObject for TaskSilhouette {
+    impl_drawable_object_for_wrapped!{canvas}
+}
+
+impl TextureObject for TaskSilhouette {
+    impl_texture_object_for_wrapped!{canvas}
+}
+
+impl Clickable for TaskSilhouette {
+}
+
+impl OnDesk for TaskSilhouette {
+    fn ondesk_whose(&self) -> i32 {
+	0
+    }
+
+    fn click_data(&self, _: &mut ggez::Context, point: numeric::Point2f) -> HoldData {
+	if let Some(name) = &self.name {
+	    HoldData::CustomerName(name.to_string())
+	} else {
+	    HoldData::None
+	}
+    }
+}
 
 pub struct SuzuMiniSightSilhouette {
     background: MovableUniTexture,
-    character: Option<SimpleObject>,
+    silhouette: TaskSilhouette,
     canvas: SubScreen,
 }
 
@@ -1982,19 +2118,22 @@ impl SuzuMiniSightSilhouette {
     pub fn new(ctx: &mut ggez::Context, rect: numeric::Rect, background: MovableUniTexture) -> Self {
 	SuzuMiniSightSilhouette {
 	    background: background,
-	    character: None,
+	    silhouette: TaskSilhouette::new_empty(ctx, rect),
 	    canvas: SubScreen::new(ctx, rect, 0, ggraphics::Color::from_rgba_u32(0x00000000)),
 	}
     }
 
-    pub fn replace_character(&mut self, chara: SimpleObject) {
-	self.character = Some(chara);
+    pub fn replace_character(&mut self, chara: SimpleObject, name: String) {
+	self.silhouette
+	    .change_character(chara)
+	    .update_name(name);
+	
     }
 
     fn run_effect(&mut self, ctx: &mut ggez::Context, t: Clock) {
-	if let Some(character) = &mut self.character {
-	    character.move_with_func(t);
-	    character.effect(ctx, t);
+	if self.silhouette.is_some() {
+	    self.silhouette.get_object_mut().unwrap().move_with_func(t);
+	    self.silhouette.get_object_mut().unwrap().effect(ctx, t);
 	}
     }
 }
@@ -2005,8 +2144,8 @@ impl DrawableComponent for SuzuMiniSightSilhouette {
             self.canvas.begin_drawing(ctx);
 
 	    self.background.draw(ctx)?;
-	    if let Some(chara) = &mut self.character {
-		chara.draw(ctx)?;
+	    if self.silhouette.is_some() {
+		self.silhouette.draw(ctx)?;
 	    }
             
             self.canvas.end_drawing(ctx);
@@ -2036,6 +2175,31 @@ impl DrawableComponent for SuzuMiniSightSilhouette {
         self.canvas.get_drawing_depth()
     }
 }
+
+impl DrawableObject for SuzuMiniSightSilhouette {
+    impl_drawable_object_for_wrapped!{canvas}
+}
+
+impl TextureObject for SuzuMiniSightSilhouette {
+    impl_texture_object_for_wrapped!{canvas}
+}
+
+impl Clickable for SuzuMiniSightSilhouette {}
+
+impl OnDesk for SuzuMiniSightSilhouette {
+    fn ondesk_whose(&self) -> i32 {
+	0
+    }
+    
+    fn click_data(&self, ctx: &mut ggez::Context, point: numeric::Point2f) -> HoldData {
+	if self.silhouette.get_drawing_area(ctx).contains(point) {
+	    self.silhouette.click_data(ctx, point)
+	} else {
+	    HoldData::None
+	}
+    }
+}
+
 
 pub struct SuzuMiniSight {
     canvas: SubScreen,
@@ -2068,8 +2232,8 @@ impl SuzuMiniSight {
         }
     }
 
-    pub fn replace_character_silhouette(&mut self, chara: SimpleObject) {
-	self.silhouette.replace_character(chara);
+    pub fn replace_character_silhouette(&mut self, chara: SimpleObject, name: String) {
+	self.silhouette.replace_character(chara, name);
     }
     
     pub fn dragging_handler(&mut self,
@@ -2160,6 +2324,15 @@ impl SuzuMiniSight {
 		self.dropping_to_desk.push(dragged);
 	    }
         }
+    }
+
+    pub fn check_data_click(&mut self, ctx: &mut ggez::Context, point: numeric::Point2f) -> HoldData {
+        let rpoint = self.canvas.relative_point(point);
+	let mut clicked_data = HoldData::None;
+
+	clicked_data = self.silhouette.click_data(ctx, rpoint);
+
+	clicked_data
     }
 
     pub fn release_dragging(&mut self) -> Option<DeskObject> {
@@ -2523,7 +2696,7 @@ impl TaskTable {
 		0.0, 0, None, t),
 	    vec![effect::fade_in(50, t)]);
 	new_silhouette.set_alpha(0.0);
-	self.sight.replace_character_silhouette(new_silhouette);
+	self.sight.replace_character_silhouette(new_silhouette, info.borrower.to_string());
     }
 
     pub fn clear_hold_data(&mut self) {
@@ -2539,6 +2712,9 @@ impl TaskTable {
     fn update_hold_data(&mut self, ctx: &mut ggez::Context, point: numeric::Point2f) {
 	if self.hold_data.is_none() {
 	    let clicked_data = self.desk.check_data_click(ctx, point);
+	    self.update_hold_data_if_some(clicked_data);
+
+	    let clicked_data = self.sight.check_data_click(ctx, point);
 	    self.update_hold_data_if_some(clicked_data);
 	    
 	    let clicked_data = self.goods.check_data_click(ctx, point);
