@@ -16,7 +16,7 @@ pub fn create_dobj_random(ctx: &mut ggez::Context, game_data: &GameData,
                 numeric::Vector2f::new(0.1, 0.1),
                 0.0, 0))),
         Box::new(CopyingRequestPaper::new(ctx, ggraphics::Rect::new(0.0, 0.0, 420.0, 350.0), TextureID::Paper1,
-                                          &paper_info,
+                                          paper_info,
                                           game_data, t)), 0, obj_type, t)
 }
 

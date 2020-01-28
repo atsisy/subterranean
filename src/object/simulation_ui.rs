@@ -101,7 +101,7 @@ impl<T: std::fmt::Display + std::ops::AddAssign + Clone + Copy + std::ops::AddAs
 
     pub fn update_text(&mut self) {
         let value = self.get_value();
-        self.text.ref_wrapped_object().replace_text(&(self.display_method)(value))
+        self.text.ref_wrapped_object_mut().replace_text(&(self.display_method)(value))
     }
 }
 

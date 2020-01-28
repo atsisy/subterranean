@@ -635,21 +635,27 @@ impl CopyingRequestInformation {
 }
 
 pub struct CopyingRequestPaper {
-    title: SimpleText,
-    request_book: SimpleText,
-    customer: SimpleText,
-    request_date: SimpleText,
-    return_date: SimpleText,
-    book_type: SimpleText,
-    pages: SimpleText,
+    title: VerticalText,
+    request_book: VerticalText,
+    customer: VerticalText,
+    request_date: VerticalText,
+    return_date: VerticalText,
+    book_type: VerticalText,
+    pages: VerticalText,
     canvas: SubScreen,
     paper_texture: SimpleObject,
+    raw_info: CopyingRequestInformation,
 }
 
 impl CopyingRequestPaper {
     pub fn new(ctx: &mut ggez::Context, rect: ggraphics::Rect, paper_tid: TextureID,
-               info: &CopyingRequestInformation, game_data: &GameData, t: Clock) -> Self {
-        
+               info: CopyingRequestInformation, game_data: &GameData, t: Clock) -> Self {
+        let default_scale = numeric::Vector2f::new(1.0, 1.0);
+	let font_info = FontInformation::new(
+	    game_data.get_font(FontID::JpFude1),
+	    numeric::Vector2f::new(14.0, 14.0),
+	    ggraphics::Color::from_rgba_u32(0x000000ff));
+	
         let paper_texture = SimpleObject::new(MovableUniTexture::new(game_data.ref_texture(paper_tid),
                                                                      numeric::Point2f::new(0.0, 0.0),
                                                                      numeric::Vector2f::new(1.0, 1.0),
@@ -658,18 +664,10 @@ impl CopyingRequestPaper {
                                                                      move_fn::halt(numeric::Point2f::new(0.0, 0.0)),
                                                                      t),
                                               Vec::new());
-        
-        let title_text = SimpleText::new(MovableText::new("鈴奈庵 転写依頼票".to_string(),
-                                                          numeric::Point2f::new(120.0, 50.0),
-                                                          numeric::Vector2f::new(1.0, 1.0),
-                                                          0.0,
-                                                          0,
-                                                          move_fn::stop(),
-                                                          FontInformation::new(game_data.get_font(FontID::DEFAULT),
-                                                                               numeric::Vector2f::new(20.0, 20.0),
-                                                                               ggraphics::Color::from_rgba_u32(0x000000ff)),
-                                                          t),
-                                         Vec::new());
+	
+	let title_text  = VerticalText::new("鈴奈庵 転写依頼票".to_string(),
+					    numeric::Point2f::new(50.0, 4.0), default_scale,
+					    0.0, 0, font_info);
 
         let customer = SimpleText::new(MovableText::new(format!("依頼者   {}", info.customer),
                                                         numeric::Point2f::new(50.0, 100.0),
@@ -682,66 +680,29 @@ impl CopyingRequestPaper {
                                                                              ggraphics::Color::from_rgba_u32(0x000000ff)),
                                                         t),
                                        Vec::new());
-
-        let request_date = SimpleText::new(MovableText::new(format!("依頼日     {}", info.request_date.to_string()),
-                                                        numeric::Point2f::new(50.0, 135.0),
-                                                        numeric::Vector2f::new(1.0, 1.0),
-                                                        0.0,
-                                                        0,
-                                                        move_fn::stop(),
-                                                        FontInformation::new(game_data.get_font(FontID::DEFAULT),
-                                                                             numeric::Vector2f::new(19.0, 19.0),
-                                                                             ggraphics::Color::from_rgba_u32(0x000000ff)),
-                                                        t),
-                                          Vec::new());
-
-        let return_date = SimpleText::new(MovableText::new(format!("完了予定   {}", info.return_date.to_string()),
-                                                           numeric::Point2f::new(50.0, 170.0),
-                                                           numeric::Vector2f::new(1.0, 1.0),
-                                                           0.0,
-                                                           0,
-                                                           move_fn::stop(),
-                                                           FontInformation::new(game_data.get_font(FontID::DEFAULT),
-                                                                                numeric::Vector2f::new(19.0, 19.0),
-                                                                                ggraphics::Color::from_rgba_u32(0x000000ff)),
-                                                           t),
-                                          Vec::new());
+	let customer = VerticalText::new(format!("依頼者   {}", info.customer),
+					 numeric::Point2f::new(50.0, 4.0), default_scale,
+					 0.0, 0, font_info);
+	
+	let request_date = VerticalText::new(format!("依頼日     {}", info.request_date.to_string()),
+					     numeric::Point2f::new(50.0, 4.0), default_scale,
+					     0.0, 0, font_info);
+	
+	let return_date = VerticalText::new(format!("完了予定   {}", info.return_date.to_string()),
+					    numeric::Point2f::new(50.0, 4.0), default_scale,
+					    0.0, 0, font_info);
         
-        let pages = SimpleText::new(MovableText::new(format!("頁数   {}", info.book_info.pages),
-                                                     numeric::Point2f::new(50.0, 275.0),
-                                                     numeric::Vector2f::new(1.0, 1.0),
-                                                     0.0,
-                                                     0,
-                                                     move_fn::stop(),
-                                                     FontInformation::new(game_data.get_font(FontID::DEFAULT),
-                                                                          numeric::Vector2f::new(19.0, 19.0),
-                                                                          ggraphics::Color::from_rgba_u32(0x000000ff)),
-                                                     t),
-                                    Vec::new());
-        
-        let book_type = SimpleText::new(MovableText::new(format!("寸法   {}", info.book_info.size),
-                                                         numeric::Point2f::new(50.0, 240.0),
-                                                         numeric::Vector2f::new(1.0, 1.0),
-                                                         0.0,
-                                                         0,
-                                                         move_fn::stop(),
-                                                         FontInformation::new(game_data.get_font(FontID::DEFAULT),
-                                                                              numeric::Vector2f::new(19.0, 19.0),
-                                                                              ggraphics::Color::from_rgba_u32(0x000000ff)),
-                                                         t),
-                                        Vec::new());
+	let pages = VerticalText::new(format!("頁数   {}", info.book_info.pages),
+				      numeric::Point2f::new(50.0, 4.0), default_scale,
+				      0.0, 0, font_info);
+	
+	let book_type = VerticalText::new(format!("寸法   {}", info.book_info.size),
+				      numeric::Point2f::new(50.0, 4.0), default_scale,
+				      0.0, 0, font_info);
 
-        let request_book = SimpleText::new(MovableText::new(format!("転写本    {}", info.book_info.name),
-                                                            numeric::Point2f::new(50.0, 205.0),
-                                                            numeric::Vector2f::new(1.0, 1.0),
-                                                            0.0,
-                                                            0,
-                                                            move_fn::stop(),
-                                                            FontInformation::new(game_data.get_font(FontID::DEFAULT),
-                                                                                 numeric::Vector2f::new(19.0, 19.0),
-                                                                                 ggraphics::Color::from_rgba_u32(0x000000ff)),
-                                                            t),
-                                           Vec::new());
+	let request_book = VerticalText::new(format!("転写本    {}", info.book_info.name),
+					  numeric::Point2f::new(50.0, 4.0), default_scale,
+					  0.0, 0, font_info);
         
         CopyingRequestPaper {
             title: title_text,
@@ -753,6 +714,7 @@ impl CopyingRequestPaper {
             pages: pages,
             canvas: SubScreen::new(ctx, rect, 0, ggraphics::BLACK),
             book_type: book_type,
+	    raw_info: info
         }
     }
 }
@@ -799,18 +761,7 @@ impl DrawableComponent for CopyingRequestPaper {
 }
 
 impl DrawableObject for CopyingRequestPaper {
-
-    fn set_position(&mut self, pos: numeric::Point2f) {
-        self.canvas.set_position(pos);
-    }
-
-    fn get_position(&self) -> numeric::Point2f {
-        self.canvas.get_position()
-    }
-
-    fn move_diff(&mut self, offset: numeric::Vector2f) {
-        self.canvas.move_diff(offset);
-    }
+    impl_drawable_object_for_wrapped!{canvas}
 }
 
 impl TextureObject for CopyingRequestPaper {
@@ -825,7 +776,17 @@ impl OnDesk for CopyingRequestPaper {
 	0
     }
 
-    fn click_data(&self, _: &mut ggez::Context, _: numeric::Point2f) -> HoldData {
+    fn click_data(&self, ctx: &mut ggez::Context, point: numeric::Point2f) -> HoldData {
+        let rpoint = self.canvas.relative_point(point);
+
+	if self.request_book.get_drawing_area(ctx).contains(rpoint) {
+	    return HoldData::BookName(self.raw_info.book_info.get_name().to_string())
+	}
+
+	if self.customer.get_drawing_area(ctx).contains(rpoint) {
+	    return HoldData::CustomerName(self.raw_info.customer.to_string())
+	}
+
 	HoldData::None
     }
 }
@@ -1686,7 +1647,6 @@ impl DeskObjectContainer {
     }
 }
 
-
 pub struct ObjectContainer<T> {
     container: Vec<T>,
 }
@@ -1760,7 +1720,7 @@ impl DeskObjects {
         for obj in self.desk_objects.get_raw_container_mut().iter_mut().rev() {
 	    let contains = obj.get_object().get_drawing_area(ctx).contains(rpoint);
             if contains {
-		clicked_data = obj.get_object_mut().ref_wrapped_object().ref_wrapped_object().click_data(ctx, rpoint);
+		clicked_data = obj.get_object_mut().ref_wrapped_object_mut().ref_wrapped_object_mut().click_data(ctx, rpoint);
                 break;
             }
         }
@@ -1777,7 +1737,7 @@ impl DeskObjects {
         for obj in self.desk_objects.get_raw_container_mut().iter_mut().rev() {
 	    let contains = obj.get_object().get_drawing_area(ctx).contains(rpoint);
             if contains {
-		return obj.get_object_mut().ref_wrapped_object().ref_wrapped_object().insert_data(ctx, rpoint, data);
+		return obj.get_object_mut().ref_wrapped_object_mut().ref_wrapped_object_mut().insert_data(ctx, rpoint, data);
             }
         }
 
@@ -1930,8 +1890,8 @@ impl DeskObjects {
 	for dobj in self.desk_objects.get_raw_container_mut() {
 	    if dobj.get_object_mut().get_drawing_area(ctx).contains(rpoint) {
 		dobj.get_object_mut()
-		    .ref_wrapped_object()
-		    .ref_wrapped_object()
+		    .ref_wrapped_object_mut()
+		    .ref_wrapped_object_mut()
 		    .button_up(ctx, game_data, t, button, rpoint);
 	    }
 	}
@@ -2727,11 +2687,11 @@ impl TaskTable {
     pub fn get_remaining_customer_object_number(&self) -> usize {
 	self.desk.count_object_by_type(DeskObjectType::CustomerObject)
     }
-    
-    pub fn start_customer_event(&mut self,
-                                ctx: &mut ggez::Context,
-                                game_data: &GameData,
-                                info: BorrowingInformation, t: Clock) {
+
+    pub fn start_borrowing_customer_event(&mut self,
+					  ctx: &mut ggez::Context,
+					  game_data: &GameData,
+					  info: BorrowingInformation, t: Clock) {
         for _ in info.borrowing {
 	    let mut obj = factory::create_dobj_book_random(ctx, game_data,
 							   DeskObjectType::CustomerObject, t);
@@ -2748,6 +2708,36 @@ impl TaskTable {
 	    vec![effect::fade_in(50, t)]);
 	new_silhouette.set_alpha(0.0);
 	self.sight.replace_character_silhouette(new_silhouette, info.borrower.to_string());
+    }
+
+    pub fn start_copying_request_event(&mut self,
+				       ctx: &mut ggez::Context,
+				       game_data: &GameData,
+				       info: CopyingRequestInformation, t: Clock) {
+	let paper_info = CopyingRequestInformation::new_random(game_data,
+							       GensoDate::new(128, 12, 8),
+                                                               GensoDate::new(128, 12, 8));
+	DeskObject::new(
+            Box::new(OnDeskTexture::new(
+		UniTexture::new(
+                    game_data.ref_texture(TextureID::Paper1),
+                    numeric::Point2f::new(0.0, 0.0),
+                    numeric::Vector2f::new(0.1, 0.1),
+                    0.0, 0))),
+            Box::new(CopyingRequestPaper::new(ctx, ggraphics::Rect::new(0.0, 0.0, 420.0, 350.0), TextureID::Paper1,
+                                              paper_info,
+                                              game_data, t)), 1, DeskObjectType::SuzunaObject, t);
+	
+	let mut new_silhouette = SimpleObject::new(
+	    MovableUniTexture::new(
+		game_data.ref_texture(TextureID::JunkoTachieDefault),
+		numeric::Point2f::new(100.0, 20.0),
+		numeric::Vector2f::new(0.1, 0.1),
+		0.0, 0, None, t),
+	    vec![effect::fade_in(50, t)]);
+	
+	new_silhouette.set_alpha(0.0);
+	self.sight.replace_character_silhouette(new_silhouette, info.customer.to_string());
     }
 
     pub fn clear_hold_data(&mut self) {

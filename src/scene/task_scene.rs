@@ -140,6 +140,49 @@ impl TaskScene {
 	    (event.func)(self, ctx, game_data);
 	}
     }
+
+    fn start_borrowing_customer_event(&mut self,
+				      ctx: &mut ggez::Context,
+				      game_data: &GameData) {
+	self.event_list.add_event(Box::new(
+	    |s: &mut TaskScene, ctx: &mut ggez::Context, game_data: &GameData| {
+		s.task_table.start_borrowing_customer_event(
+		    ctx, game_data,
+		    task_object::BorrowingInformation::new_random(
+			game_data,
+			task_object::GensoDate::new(128, 12, 20),
+			task_object::GensoDate::new(128, 12, 20)
+		    ), s.get_current_clock());
+		s.status = TaskSceneStatus::CustomerEvent;
+	    }), self.get_current_clock() + 100);
+    }
+
+    fn start_copying_customer_event(&mut self,
+				      ctx: &mut ggez::Context,
+				      game_data: &GameData) {
+	self.event_list.add_event(Box::new(
+	    |s: &mut TaskScene, ctx: &mut ggez::Context, game_data: &GameData| {
+		s.task_table.start_copying_request_event(
+		    ctx, game_data,
+		    task_object::CopyingRequestInformation::new_random(
+			game_data,
+			GensoDate::new(12, 12, 12),
+			GensoDate::new(12, 12, 12)), s.get_current_clock());
+
+		s.status = TaskSceneStatus::CustomerEvent;
+	    }), self.get_current_clock() + 100);
+    }
+
+    fn start_customer_event(&mut self,
+			    ctx: &mut ggez::Context,
+			    game_data: &GameData) {
+	match rand::random::<usize>() % 2 {
+	    0 => self.start_borrowing_customer_event(ctx, game_data),
+	    1 => self.start_copying_customer_event(ctx, game_data),
+	    _ => (),
+	}
+
+    }
 }
 
 impl SceneManager for TaskScene {
@@ -168,13 +211,6 @@ impl SceneManager for TaskScene {
         match vkey {
             tdev::VirtualKey::Action1 => println!("Action1 up!"),
             tdev::VirtualKey::Action2 => {
-                self.task_table.start_customer_event(
-                    ctx, game_data,
-                    task_object::BorrowingInformation::new_random(
-                        game_data,
-                        task_object::GensoDate::new(128, 12, 20),
-                        task_object::GensoDate::new(128, 12, 20)
-                    ), self.get_current_clock());
             },
             _ => (),
         }
@@ -243,17 +279,7 @@ impl SceneManager for TaskScene {
 	}
 	
 	if self.status == TaskSceneStatus::CustomerFree {
-	    self.event_list.add_event(Box::new(
-		|s: &mut TaskScene, ctx: &mut ggez::Context, game_data: &GameData| {
-		    s.task_table.start_customer_event(
-			ctx, game_data,
-			task_object::BorrowingInformation::new_random(
-			    game_data,
-			    task_object::GensoDate::new(128, 12, 20),
-			    task_object::GensoDate::new(128, 12, 20)
-			), s.get_current_clock());
-		    s.status = TaskSceneStatus::CustomerEvent;
-		}), self.get_current_clock() + 100);
+	    self.start_customer_event(ctx, game_data);
 	    self.status = TaskSceneStatus::CustomerWait;
 	}
 	
