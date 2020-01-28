@@ -59,7 +59,7 @@ pub enum TextureID {
 #[derive(Debug, Clone, Copy)]
 pub enum FontID {
     DEFAULT = 0,
-    JP_FUDE1,
+    JpFude1,
 }
 
 impl FromStr for TextureID {

@@ -13,7 +13,6 @@ use crate::object::task_object;
 
 use crate::core::GameData;
 use crate::object::task_object::*;
-use crate::object::simulation_ui as sui;
 
 ///
 /// # 遅延イベントを起こすための情報を保持する

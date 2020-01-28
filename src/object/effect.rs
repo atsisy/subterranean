@@ -1,5 +1,4 @@
 use torifune::graphics::object::*;
-use torifune::numeric;
 use torifune::core::Clock;
 
 pub fn fade_in(required_time: Clock, called_clock: Clock) -> GenericEffectFn {

@@ -132,7 +132,7 @@ impl TileSet {
     }
     
     fn check_character_collision(&self, ctx: &mut ggez::Context,
-                                 gid: u32, abs_pos: numeric::Point2f,
+                                 gid: u32, _abs_pos: numeric::Point2f,
                                  offset: numeric::Point2f,
                                  scale: numeric::Vector2f,
                                  chara: &MapObject) -> CollisionInformation {

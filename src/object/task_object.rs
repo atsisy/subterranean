@@ -103,7 +103,7 @@ pub trait OnDesk : TextureObject + Clickable {
 
     fn click_data(&self, ctx: &mut ggez::Context, point: numeric::Point2f) -> HoldData;
 
-    fn insert_data(&mut self, ctx: &mut ggez::Context, point: numeric::Point2f, data: &HoldData) -> bool {
+    fn insert_data(&mut self, _: &mut ggez::Context, _: numeric::Point2f, _: &HoldData) -> bool {
 	false
     }
 }
@@ -121,7 +121,7 @@ impl DrawableCalendar {
     pub fn new(ctx: &mut ggez::Context, game_data: &GameData,
 	       rect: numeric::Rect, date: GensoDate, paper_tid: TextureID) -> Self {
 	let font_info = FontInformation::new(
-	    game_data.get_font(FontID::JP_FUDE1),
+	    game_data.get_font(FontID::JpFude1),
 	    numeric::Vector2f::new(14.0, 14.0),
 	    ggraphics::Color::from_rgba_u32(0x000000ff));
 	let default_scale = numeric::Vector2f::new(1.0, 1.0);
@@ -206,7 +206,7 @@ impl Clickable for DrawableCalendar {
 			ctx: &mut ggez::Context,
 			point: numeric::Point2f) -> MouseCursor {
 	if self.canvas.get_drawing_area(ctx).contains(point) {
-	    MouseCursor::Hand
+	    MouseCursor::Grab
 	} else {
 	    MouseCursor::Default
 	}
@@ -218,7 +218,7 @@ impl OnDesk for DrawableCalendar {
 	0
     }
     
-    fn click_data(&self, ctx: &mut ggez::Context, point: numeric::Point2f) -> HoldData {
+    fn click_data(&self, _: &mut ggez::Context, _: numeric::Point2f) -> HoldData {
 	HoldData::Date(self.date_data)
     }
 }
@@ -311,7 +311,7 @@ impl OnDeskBook {
 				     numeric::Point2f::new(40.0, 30.0),
 				     numeric::Vector2f::new(1.0, 1.0),
 				     0.0, 0,
-				     FontInformation::new(game_data.get_font(FontID::JP_FUDE1),
+				     FontInformation::new(game_data.get_font(FontID::JpFude1),
 							  numeric::Vector2f::new(18.0, 18.0),
 							  ggraphics::Color::from_rgba_u32(0x000000ff))),
 	    canvas: SubScreen::new(ctx, book_area, 0, ggraphics::Color::from_rgba_u32(0x00000000)),
@@ -386,7 +386,7 @@ impl OnDesk for OnDeskBook {
 	0
     }
 
-    fn click_data(&self, _: &mut ggez::Context, point: numeric::Point2f) -> HoldData {
+    fn click_data(&self, _: &mut ggez::Context, _: numeric::Point2f) -> HoldData {
 	return HoldData::BookName(self.info.get_name().to_string())
     }
 }
@@ -399,7 +399,7 @@ impl OnDesk for OnDeskTexture {
 	0
     }
 
-    fn click_data(&self, _: &mut ggez::Context, point: numeric::Point2f) -> HoldData {
+    fn click_data(&self, _: &mut ggez::Context, _: numeric::Point2f) -> HoldData {
 	HoldData::None
     }
 }
@@ -825,7 +825,7 @@ impl OnDesk for CopyingRequestPaper {
 	0
     }
 
-    fn click_data(&self, _: &mut ggez::Context, point: numeric::Point2f) -> HoldData {
+    fn click_data(&self, _: &mut ggez::Context, _: numeric::Point2f) -> HoldData {
 	HoldData::None
     }
 }
@@ -971,7 +971,7 @@ impl BorrowingRecordBookPage {
                                          numeric::Vector2f::new(1.0, 1.0),
                                          0.0,
                                          0,
-                                         FontInformation::new(game_data.get_font(FontID::JP_FUDE1),
+                                         FontInformation::new(game_data.get_font(FontID::JpFude1),
                                                               numeric::Vector2f::new(16.0, 16.0),
                                                               ggraphics::Color::from_rgba_u32(0x000000ff)));
 	pos.x -= 30.0;
@@ -981,7 +981,7 @@ impl BorrowingRecordBookPage {
                                           numeric::Vector2f::new(1.0, 1.0),
                                           0.0,
                                           0,
-                                          FontInformation::new(game_data.get_font(FontID::JP_FUDE1),
+                                          FontInformation::new(game_data.get_font(FontID::JpFude1),
                                                                numeric::Vector2f::new(18.0, 18.0),
                                                                ggraphics::Color::from_rgba_u32(0x000000ff)));
 	let mut borrowing: Vec<VerticalText> = info.borrowing.iter()
@@ -992,7 +992,7 @@ impl BorrowingRecordBookPage {
                                   numeric::Vector2f::new(1.0, 1.0),
                                   0.0,
                                   0,
-                                  FontInformation::new(game_data.get_font(FontID::JP_FUDE1),
+                                  FontInformation::new(game_data.get_font(FontID::JpFude1),
                                                        numeric::Vector2f::new(18.0, 18.0),
                                                        ggraphics::Color::from_rgba_u32(0x000000ff))) }).collect();
 
@@ -1003,7 +1003,7 @@ impl BorrowingRecordBookPage {
                                   numeric::Vector2f::new(1.0, 1.0),
                                   0.0,
                                   0,
-                                  FontInformation::new(game_data.get_font(FontID::JP_FUDE1),
+                                  FontInformation::new(game_data.get_font(FontID::JpFude1),
                                                        numeric::Vector2f::new(18.0, 18.0),
                                                        ggraphics::Color::from_rgba_u32(0x000000ff))));
 	}
@@ -1024,7 +1024,7 @@ impl BorrowingRecordBookPage {
                                             numeric::Vector2f::new(1.0, 1.0),
                                             0.0,
                                             0,
-                                            FontInformation::new(game_data.get_font(FontID::JP_FUDE1),
+                                            FontInformation::new(game_data.get_font(FontID::JpFude1),
                                                                  numeric::Vector2f::new(14.0, 14.0),
                                                                  ggraphics::Color::from_rgba_u32(0x000000ff)));
 	pos.x -= 30.0;
@@ -1034,7 +1034,7 @@ impl BorrowingRecordBookPage {
                                             numeric::Vector2f::new(1.0, 1.0),
                                             0.0,
                                             0,
-                                            FontInformation::new(game_data.get_font(FontID::JP_FUDE1),
+                                            FontInformation::new(game_data.get_font(FontID::JpFude1),
                                                                  numeric::Vector2f::new(14.0, 14.0),
                                                                  ggraphics::Color::from_rgba_u32(0x000000ff)));
         
@@ -1059,7 +1059,7 @@ impl BorrowingRecordBookPage {
                                          numeric::Vector2f::new(1.0, 1.0),
                                          0.0,
                                          0,
-                                         FontInformation::new(game_data.get_font(FontID::JP_FUDE1),
+                                         FontInformation::new(game_data.get_font(FontID::JpFude1),
                                                               numeric::Vector2f::new(16.0, 16.0),
                                                               ggraphics::Color::from_rgba_u32(0x000000ff)));
 	pos.x -= 30.0;
@@ -1069,7 +1069,7 @@ impl BorrowingRecordBookPage {
                                           numeric::Vector2f::new(1.0, 1.0),
                                           0.0,
                                           0,
-                                          FontInformation::new(game_data.get_font(FontID::JP_FUDE1),
+                                          FontInformation::new(game_data.get_font(FontID::JpFude1),
                                                                numeric::Vector2f::new(18.0, 18.0),
                                                                ggraphics::Color::from_rgba_u32(0x000000ff)));
 	let mut borrowing: Vec<VerticalText> = Vec::new();
@@ -1081,7 +1081,7 @@ impl BorrowingRecordBookPage {
                                   numeric::Vector2f::new(1.0, 1.0),
                                   0.0,
                                   0,
-                                  FontInformation::new(game_data.get_font(FontID::JP_FUDE1),
+                                  FontInformation::new(game_data.get_font(FontID::JpFude1),
                                                        numeric::Vector2f::new(18.0, 18.0),
                                                        ggraphics::Color::from_rgba_u32(0x000000ff))));
 	}
@@ -1102,7 +1102,7 @@ impl BorrowingRecordBookPage {
                                             numeric::Vector2f::new(1.0, 1.0),
                                             0.0,
                                             0,
-                                            FontInformation::new(game_data.get_font(FontID::JP_FUDE1),
+                                            FontInformation::new(game_data.get_font(FontID::JpFude1),
                                                                  numeric::Vector2f::new(14.0, 14.0),
                                                                  ggraphics::Color::from_rgba_u32(0x000000ff)));
 	pos.x -= 30.0;
@@ -1112,7 +1112,7 @@ impl BorrowingRecordBookPage {
                                             numeric::Vector2f::new(1.0, 1.0),
                                             0.0,
                                             0,
-                                            FontInformation::new(game_data.get_font(FontID::JP_FUDE1),
+                                            FontInformation::new(game_data.get_font(FontID::JpFude1),
                                                                  numeric::Vector2f::new(14.0, 14.0),
                                                                  ggraphics::Color::from_rgba_u32(0x000000ff)));
         
@@ -1147,7 +1147,7 @@ impl BorrowingRecordBookPage {
                                           numeric::Vector2f::new(1.0, 1.0),
                                           0.0,
                                           0,
-                                          FontInformation::new(game_data.get_font(FontID::JP_FUDE1),
+                                          FontInformation::new(game_data.get_font(FontID::JpFude1),
                                                                numeric::Vector2f::new(20.0, 20.0),
                                                                ggraphics::Color::from_rgba_u32(0x000000ff)));
 	self
@@ -1505,11 +1505,7 @@ impl Clickable for BorrowingRecordBook {
 	    
 	    if rpoint.x < 20.0 {
 		println!("next page!!");
-		self.add_page(ctx, &BorrowingInformation::new(Vec::new(),
-							     "",
-							     GensoDate::new(12, 12, 12),
-							     GensoDate::new(12, 12, 12)),
-			      game_data, t);
+		self.add_empty_page(ctx, game_data, t);
 		self.next_page();
 	    } else if rpoint.x > page.get_drawing_size(ctx).x - 20.0 {
 		println!("prev page!!");
@@ -1526,7 +1522,7 @@ impl OnDesk for BorrowingRecordBook {
 	0
     }
 
-    fn click_data(&self, ctx: &mut ggez::Context, point: numeric::Point2f) -> HoldData {
+    fn click_data(&self, _: &mut ggez::Context, _: numeric::Point2f) -> HoldData {
 	HoldData::None
     }
 
@@ -1948,9 +1944,9 @@ impl DeskObjects {
 	    // オブジェクトは深度が深い順にソートされているので、
             // 逆順から検索していくことで、最も手前に表示されているオブジェクトを
             // 取り出すことができる
-            for (index, obj) in self.desk_objects.get_raw_container_mut().iter_mut().rev().enumerate() {
+            for obj in self.desk_objects.get_raw_container_mut().iter_mut().rev() {
 		if obj.get_object().get_drawing_area(ctx).contains(rpoint) {
-		    return MouseCursor::Hand
+		    return MouseCursor::Grab
 		}
             }
 	}
@@ -2122,7 +2118,7 @@ impl Clickable for TaskSilhouette {
 			point: numeric::Point2f) -> ggez::input::mouse::MouseCursor {
 	if let Some(character) = &self.character {
 	    if character.get_drawing_area(ctx).contains(point) {
-		return MouseCursor::Hand;
+		return MouseCursor::Grab;
 	    }
 	}
 
@@ -2135,7 +2131,7 @@ impl OnDesk for TaskSilhouette {
 	0
     }
 
-    fn click_data(&self, _: &mut ggez::Context, point: numeric::Point2f) -> HoldData {
+    fn click_data(&self, _: &mut ggez::Context, _: numeric::Point2f) -> HoldData {
 	if let Some(name) = &self.name {
 	    HoldData::CustomerName(name.to_string())
 	} else {
@@ -2255,8 +2251,6 @@ impl SuzuMiniSight {
     pub fn new(ctx: &mut ggez::Context, game_data: &GameData,
                rect: ggraphics::Rect) -> Self {
         
-        let desk_objects = DeskObjectContainer::new();
-        
         SuzuMiniSight {
             canvas: SubScreen::new(ctx, rect, 0, ggraphics::Color::new(0.0, 0.0, 0.0, 0.0)),
             dragging: None,
@@ -2370,11 +2364,8 @@ impl SuzuMiniSight {
 
     pub fn check_data_click(&mut self, ctx: &mut ggez::Context, point: numeric::Point2f) -> HoldData {
         let rpoint = self.canvas.relative_point(point);
-	let mut clicked_data = HoldData::None;
 
-	clicked_data = self.silhouette.click_data(ctx, rpoint);
-
-	clicked_data
+	self.silhouette.click_data(ctx, rpoint)
     }
 
     pub fn release_dragging(&mut self) -> Option<DeskObject> {
@@ -2562,7 +2553,7 @@ impl TaskTable {
                sight_rect: ggraphics::Rect,
 	       goods_rect: ggraphics::Rect,
 	       desk_rect: ggraphics::Rect, t: Clock) -> Self {
-	let mut sight = SuzuMiniSight::new(ctx, game_data, sight_rect);
+	let sight = SuzuMiniSight::new(ctx, game_data, sight_rect);
         let mut desk = DeskObjects::new(ctx, game_data, desk_rect);
         
         desk.add_object(DeskObject::new(
@@ -2658,7 +2649,7 @@ impl TaskTable {
     fn apply_s2d_point_convertion(&mut self, ctx: &mut ggez::Context, obj: &mut DeskObject) {
 	let mut obj_p = obj.get_object().get_position();
 	obj_p.x = obj.get_object().get_center(ctx).x;
-        let p = self.sight_edge_to_desk_edge(ctx, obj_p);
+        let p = self.sight_edge_to_desk_edge(obj_p);
 	obj.enable_large();
         obj.get_object_mut().make_center(ctx, p);
     }
@@ -2696,7 +2687,7 @@ impl TaskTable {
                               self.sight.canvas.get_texture_size(ctx).y)
     }
 
-    fn sight_edge_to_desk_edge(&mut self, ctx: &mut ggez::Context, rpoint: numeric::Point2f) -> numeric::Point2f {
+    fn sight_edge_to_desk_edge(&mut self, rpoint: numeric::Point2f) -> numeric::Point2f {
         numeric::Point2f::new(rpoint.x,
                               0.0)
     }
@@ -2855,17 +2846,19 @@ impl Clickable for TaskTable {
     }
     
     fn on_click(&mut self,
-                 ctx: &mut ggez::Context,
-		 game_data: &GameData,
-		 t: Clock,
-                 button: ggez::input::mouse::MouseButton,
-                 point: numeric::Point2f) {
-	let rpoint = self.canvas.relative_point(point);
-	self.update_hold_data(ctx, rpoint);
-	match &self.hold_data {
-	    HoldData::BookName(title) => println!("{}", title),
-	    HoldData::CustomerName(name) => println!("{}", name),
-	    _ => (),
+                ctx: &mut ggez::Context,
+		_: &GameData,
+		_: Clock,
+                button: ggez::input::mouse::MouseButton,
+                point: numeric::Point2f) {
+	if button == MouseButton::Left {
+	    let rpoint = self.canvas.relative_point(point);
+	    self.update_hold_data(ctx, rpoint);
+	    match &self.hold_data {
+		HoldData::BookName(title) => println!("{}", title),
+		HoldData::CustomerName(name) => println!("{}", name),
+		_ => (),
+	    }
 	}
     }
 
@@ -2873,9 +2866,9 @@ impl Clickable for TaskTable {
 			ctx: &mut ggez::Context,
 			point: numeric::Point2f) -> ggez::input::mouse::MouseCursor {
 	let rpoint = self.canvas.relative_point(point);
-	let mut cursor_status = MouseCursor::Default;
 	
-	cursor_status = self.desk.check_mouse_cursor_status(ctx, rpoint);
+	let mut cursor_status = self.desk.check_mouse_cursor_status(ctx, rpoint);
+	
 	if cursor_status != MouseCursor::Default { return cursor_status; }
 	
 	cursor_status = self.sight.check_mouse_cursor_status(ctx, rpoint);
