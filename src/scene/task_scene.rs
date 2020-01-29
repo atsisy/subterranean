@@ -146,13 +146,13 @@ impl TaskScene {
 				      game_data: &GameData) {
 	self.event_list.add_event(Box::new(
 	    |s: &mut TaskScene, ctx: &mut ggez::Context, game_data: &GameData| {
-		s.task_table.start_borrowing_customer_event(
+		s.task_table.start_customer_event(
 		    ctx, game_data,
-		    task_object::BorrowingInformation::new_random(
+		    CustomerRequest::Borrowing(task_object::BorrowingInformation::new_random(
 			game_data,
 			task_object::GensoDate::new(128, 12, 20),
 			task_object::GensoDate::new(128, 12, 20)
-		    ), s.get_current_clock());
+		    )), s.get_current_clock());
 		s.status = TaskSceneStatus::CustomerEvent;
 	    }), self.get_current_clock() + 100);
     }
@@ -162,13 +162,12 @@ impl TaskScene {
 				      game_data: &GameData) {
 	self.event_list.add_event(Box::new(
 	    |s: &mut TaskScene, ctx: &mut ggez::Context, game_data: &GameData| {
-		s.task_table.start_copying_request_event(
+		s.task_table.start_customer_event(
 		    ctx, game_data,
-		    task_object::CopyingRequestInformation::new_random(
+		    CustomerRequest::Copying(task_object::CopyingRequestInformation::new_random(
 			game_data,
 			GensoDate::new(12, 12, 12),
-			GensoDate::new(12, 12, 12)), s.get_current_clock());
-
+			GensoDate::new(12, 12, 12))), s.get_current_clock());
 		s.status = TaskSceneStatus::CustomerEvent;
 	    }), self.get_current_clock() + 100);
     }
