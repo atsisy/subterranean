@@ -25,11 +25,11 @@ use crate::object::task_object::*;
 ///
 struct SceneEvent<T> {
     run_time: Clock,
-    func: Box<dyn Fn(&mut T, &mut ggez::Context, &GameData) -> ()>,
+    func: Box<dyn FnOnce(&mut T, &mut ggez::Context, &GameData) -> ()>,
 }
 
 impl<T> SceneEvent<T> {
-    pub fn new(f: Box<dyn Fn(&mut T, &mut ggez::Context, &GameData) -> ()>, t: Clock) -> Self {
+    pub fn new(f: Box<dyn FnOnce(&mut T, &mut ggez::Context, &GameData) -> ()>, t: Clock) -> Self {
 	SceneEvent::<T> {
 	    run_time: t,
 	    func: f,
@@ -54,7 +54,7 @@ impl<T> SceneEventList<T> {
 	}
     }
 
-    pub fn add_event(&mut self, f: Box<dyn Fn(&mut T, &mut ggez::Context, &GameData) -> ()>,
+    pub fn add_event(&mut self, f: Box<dyn FnOnce(&mut T, &mut ggez::Context, &GameData) -> ()>,
 		     t: Clock) -> &mut Self {
 	self.add(SceneEvent::new(f, t))
     }
@@ -86,12 +86,77 @@ enum TaskSceneStatus {
     CustomerEvent,
 }
 
+pub struct TaskState {
+    done_work: u32,
+    done_work_today: u32,
+    total_money: i32,
+    total_money_today: i32,
+}
+
+impl TaskState {
+    pub fn new() -> Self {
+	TaskState {
+	    done_work: 0,
+	    done_work_today: 0,
+	    total_money: 0,
+	    total_money_today: 0,
+	}
+    }
+
+    pub fn apply_done_day_work(&mut self) -> &mut Self {
+	self.done_work += self.done_work_today;
+	self.done_work_today = 0;
+
+	self.total_money += self.total_money_today;
+	self.total_money_today = 0;
+
+	self
+    }
+
+    pub fn add_done_work(&mut self, work: u32) -> &mut Self {
+	self.done_work_today += work;
+	self
+    }
+
+    pub fn add_money(&mut self, money: i32) -> &mut Self {
+	self.total_money_today += money;
+	self
+    }
+
+    pub fn get_done_work_today(&self) -> u32 {
+	self.done_work_today
+    }
+
+    pub fn get_total_money_today(&self) -> i32 {
+	self.total_money_today
+    }
+
+    pub fn get_done_work(&self) -> u32 {
+	self.done_work
+    }
+
+    pub fn get_total_money(&self) -> i32 {
+	self.total_money
+    }
+
+    pub fn reset(&mut self) -> &mut Self {
+	self.done_work = 0;
+	self.done_work_today = 0;
+	
+	self.total_money = 0;
+	self.total_money_today = 0;
+	
+	self
+    }
+}
+
 pub struct TaskScene {
     task_table: TaskTable,
     clock: Clock,
     mouse_info: MouseInformation,
     event_list: SceneEventList<Self>,
     status: TaskSceneStatus,
+    task_state: TaskState,
 }
 
 impl TaskScene {
@@ -107,6 +172,7 @@ impl TaskScene {
             mouse_info: MouseInformation::new(),
 	    event_list: SceneEventList::new(),
 	    status: TaskSceneStatus::Init,
+	    task_state: TaskState::new(),
         }
     }
 
@@ -141,37 +207,49 @@ impl TaskScene {
 	}
     }
 
-    fn start_borrowing_customer_event(&mut self,
-				      ctx: &mut ggez::Context,
-				      game_data: &GameData) {
+    fn insert_customer_event(&mut self,
+			     game_data: &GameData,
+			     request: CustomerRequest,
+			     delay_clock: Clock) {
 	self.event_list.add_event(Box::new(
 	    |s: &mut TaskScene, ctx: &mut ggez::Context, game_data: &GameData| {
 		s.task_table.start_customer_event(
 		    ctx, game_data,
-		    CustomerRequest::Borrowing(task_object::BorrowingInformation::new_random(
-			game_data,
-			task_object::GensoDate::new(128, 12, 20),
-			task_object::GensoDate::new(128, 12, 20)
-		    )), s.get_current_clock());
+		    request, s.get_current_clock());
 		s.status = TaskSceneStatus::CustomerEvent;
 	    }), self.get_current_clock() + 100);
+    }
+
+    fn check_done_today_work(&mut self) {
+	if self.task_state.get_done_work_today() > 5 {
+	    
+	} else {
+	    self.task_state.add_done_work(1);
+	}
+    }
+
+    fn start_borrowing_customer_event(&mut self,
+				      ctx: &mut ggez::Context,
+				      game_data: &GameData) {
+	self.insert_customer_event(
+	    game_data,
+	    CustomerRequest::Borrowing(task_object::BorrowingInformation::new_random(
+		game_data,
+		task_object::GensoDate::new(128, 12, 20),
+		task_object::GensoDate::new(128, 12, 20))), 100);
     }
 
     fn start_copying_customer_event(&mut self,
 				      ctx: &mut ggez::Context,
 				      game_data: &GameData) {
-	self.event_list.add_event(Box::new(
-	    |s: &mut TaskScene, ctx: &mut ggez::Context, game_data: &GameData| {
-		s.task_table.start_customer_event(
-		    ctx, game_data,
-		    CustomerRequest::Copying(task_object::CopyingRequestInformation::new_random(
+	self.insert_customer_event(
+	    game_data,
+	    CustomerRequest::Copying(task_object::CopyingRequestInformation::new_random(
 			game_data,
 			GensoDate::new(12, 12, 12),
-			GensoDate::new(12, 12, 12))), s.get_current_clock());
-		s.status = TaskSceneStatus::CustomerEvent;
-	    }), self.get_current_clock() + 100);
+			GensoDate::new(12, 12, 12))), 100);
     }
-
+    
     fn start_customer_event(&mut self,
 			    ctx: &mut ggez::Context,
 			    game_data: &GameData) {
@@ -181,6 +259,7 @@ impl TaskScene {
 	    _ => (),
 	}
 
+	self.check_done_today_work();
     }
 }
 

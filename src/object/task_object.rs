@@ -57,6 +57,7 @@ impl GensoDate {
     }
 }
 
+#[derive(Clone)]
 pub struct BorrowingInformation {
     pub borrowing: Vec<BookInformation>,
     pub borrower: String,
@@ -601,6 +602,7 @@ impl Clickable for BorrowingPaper {
     }
 }
 
+#[derive(Clone)]
 pub struct CopyingRequestInformation {
     pub book_info: BookInformation,
     pub customer: String,
@@ -2500,6 +2502,7 @@ impl DrawableComponent for Goods {
     }
 }
 
+#[derive(Clone)]
 pub enum CustomerRequest {
     Borrowing(BorrowingInformation),
     Copying(CopyingRequestInformation),

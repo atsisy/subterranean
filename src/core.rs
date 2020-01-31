@@ -225,6 +225,7 @@ impl GameData {
 struct SceneController<'a> {
     current_scene: Box<dyn scene::SceneManager + 'a>,
     key_map: tdev::ProgramableGenericKey,
+    global_clock: u64,
 }
 
 impl<'a> SceneController<'a> {
@@ -232,7 +233,8 @@ impl<'a> SceneController<'a> {
     pub fn new(ctx: &mut ggez::Context, game_data: &'a GameData) -> SceneController<'a> {
         SceneController {
             current_scene: Box::new(scene::task_scene::TaskScene::new(ctx, game_data)),
-            key_map: tdev::ProgramableGenericKey::new()
+            key_map: tdev::ProgramableGenericKey::new(),
+	    global_clock: 0,
         }
     }
     
@@ -262,6 +264,11 @@ impl<'a> SceneController<'a> {
             scene::SceneTransition::Keep => (),
             _ => self.switch_scene(ctx, game_data, self.current_scene.transition()),
         }
+
+	if self.global_clock % 120 == 0 {
+	    println!("fps: {}", ggez::timer::fps(ctx));
+	}
+	self.global_clock += 1;
     }
 
     fn key_down_event(&mut self,
