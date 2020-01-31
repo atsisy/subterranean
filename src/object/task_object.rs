@@ -2714,7 +2714,7 @@ impl TaskTable {
 		numeric::Point2f::new(100.0, 20.0),
 		numeric::Vector2f::new(0.1, 0.1),
 		0.0, 0, None, t),
-	    vec![effect::fade_in(50, t)]);
+	    vec![effect::appear_bale_from_bottom(50, t), effect::fade_in(50, t)]);
 	new_silhouette.set_alpha(0.0);
 	self.sight.replace_character_silhouette(new_silhouette, info.borrower.to_string());
     }
