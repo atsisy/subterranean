@@ -1,5 +1,7 @@
 use torifune::graphics::object::*;
 use torifune::graphics::*;
+use torifune::graphics::object::sub_screen::SubScreen;
+use torifune::graphics::object::sub_screen;
 use torifune::numeric;
 
 use std::str::FromStr;
@@ -334,7 +336,7 @@ impl TextBox {
 impl DrawableComponent for TextBox {
     fn draw(&mut self, ctx: &mut ggez::Context) -> ggez::GameResult<()> {
         if self.is_visible() {
-            self.canvas.begin_drawing(ctx);
+	    sub_screen::stack_screen(ctx, &self.canvas);
             
             self.background.draw(ctx)?;
 
@@ -342,7 +344,7 @@ impl DrawableComponent for TextBox {
                 d.draw(ctx)?;
             }
 
-            self.canvas.end_drawing(ctx);
+	    sub_screen::pop_screen(ctx);
             self.canvas.draw(ctx).unwrap();
             
         }
@@ -411,11 +413,11 @@ impl ScenarioEvent {
 impl DrawableComponent for ScenarioEvent {
     fn draw(&mut self, ctx: &mut ggez::Context) -> ggez::GameResult<()> {
         if self.is_visible() {
-            self.canvas.begin_drawing(ctx);
+	    sub_screen::stack_screen(ctx, &self.canvas);
 
             self.text_box.draw(ctx)?;
             
-            self.canvas.end_drawing(ctx);
+	    sub_screen::pop_screen(ctx);
             self.canvas.draw(ctx).unwrap();
             
         }

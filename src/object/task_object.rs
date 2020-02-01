@@ -12,6 +12,8 @@ use torifune::graphics::*;
 use torifune::numeric;
 use torifune::impl_texture_object_for_wrapped;
 use torifune::impl_drawable_object_for_wrapped;
+use torifune::graphics::object::sub_screen::SubScreen;
+use torifune::graphics::object::sub_screen;
 
 use crate::core::BookInformation;
 
@@ -147,14 +149,14 @@ impl DrawableCalendar {
 impl DrawableComponent for DrawableCalendar {
     fn draw(&mut self, ctx: &mut ggez::Context) -> ggez::GameResult<()> {
         if self.is_visible() {
-            self.canvas.begin_drawing(ctx);
+	    sub_screen::stack_screen(ctx, &self.canvas);
 	    
 	    self.paper.draw(ctx)?;
 	    self.season_text.draw(ctx)?;
 	    self.month_text.draw(ctx)?;
 	    self.day_text.draw(ctx)?;
 
-            self.canvas.end_drawing(ctx);
+	    sub_screen::pop_screen(ctx);
             self.canvas.draw(ctx).unwrap();
         }
         Ok(())
@@ -327,12 +329,12 @@ impl OnDeskBook {
 impl DrawableComponent for OnDeskBook {
     fn draw(&mut self, ctx: &mut ggez::Context) -> ggez::GameResult<()> {
         if self.is_visible() {
-            self.canvas.begin_drawing(ctx);
+	    sub_screen::stack_screen(ctx, &self.canvas);
 	    
 	    self.book_texture.draw(ctx)?;
 	    self.title.draw(ctx)?;
 
-            self.canvas.end_drawing(ctx);
+	    sub_screen::pop_screen(ctx);
             self.canvas.draw(ctx).unwrap();
         }
         Ok(())
@@ -503,6 +505,7 @@ impl BorrowingPaper {
                                                                                 ggraphics::Color::from_rgba_u32(0x000000ff)),
                                                            t),
                                           Vec::new());
+	
         BorrowingPaper {
             title: title_text,
             borrower: borrower,
@@ -539,7 +542,7 @@ impl BorrowingPaper {
 impl DrawableComponent for BorrowingPaper {
     fn draw(&mut self, ctx: &mut ggez::Context) -> ggez::GameResult<()> {
         if self.is_visible() {
-            self.canvas.begin_drawing(ctx);
+	    sub_screen::stack_screen(ctx, &self.canvas);
 
             self.paper_texture.draw(ctx)?;
             self.title.draw(ctx)?;
@@ -552,7 +555,7 @@ impl DrawableComponent for BorrowingPaper {
                 d.draw(ctx)?;
             }
 
-            self.canvas.end_drawing(ctx);
+	    sub_screen::pop_screen(ctx);
             self.canvas.draw(ctx).unwrap();
         }
         Ok(())
@@ -725,7 +728,7 @@ impl CopyingRequestPaper {
 impl DrawableComponent for CopyingRequestPaper {
     fn draw(&mut self, ctx: &mut ggez::Context) -> ggez::GameResult<()> {
         if self.is_visible() {
-            self.canvas.begin_drawing(ctx);
+	    sub_screen::stack_screen(ctx, &self.canvas);
 
             self.paper_texture.draw(ctx)?;
             self.title.draw(ctx)?;
@@ -736,7 +739,7 @@ impl DrawableComponent for CopyingRequestPaper {
             self.book_type.draw(ctx)?;
             self.request_book.draw(ctx)?;
 
-            self.canvas.end_drawing(ctx);
+	    sub_screen::pop_screen(ctx);
             self.canvas.draw(ctx).unwrap();
         }
         Ok(())
@@ -1121,7 +1124,7 @@ impl BorrowingRecordBookPage {
 impl DrawableComponent for BorrowingRecordBookPage {
     fn draw(&mut self, ctx: &mut ggez::Context) -> ggez::GameResult<()> {
         if self.is_visible() {
-            self.canvas.begin_drawing(ctx);
+	    sub_screen::stack_screen(ctx, &self.canvas);
 
             self.paper_texture.draw(ctx)?;
             self.book_head.draw(ctx)?;
@@ -1133,7 +1136,7 @@ impl DrawableComponent for BorrowingRecordBookPage {
                 d.draw(ctx)?;
             }
 
-            self.canvas.end_drawing(ctx);
+	    sub_screen::pop_screen(ctx);
             self.canvas.draw(ctx).unwrap();
         }
         Ok(())
@@ -1921,7 +1924,7 @@ impl DeskObjects {
 impl DrawableComponent for DeskObjects {
     fn draw(&mut self, ctx: &mut ggez::Context) -> ggez::GameResult<()> {
         if self.is_visible() {
-            self.canvas.begin_drawing(ctx);
+	    sub_screen::stack_screen(ctx, &self.canvas);
 
             self.table_texture.draw(ctx)?;
             
@@ -1933,7 +1936,7 @@ impl DrawableComponent for DeskObjects {
                 d.get_object_mut().draw(ctx)?;
             }
             
-            self.canvas.end_drawing(ctx);
+	    sub_screen::pop_screen(ctx);
             self.canvas.draw(ctx).unwrap();
         }
         Ok(())
@@ -2034,13 +2037,13 @@ impl TaskSilhouette {
 impl DrawableComponent for TaskSilhouette {
     fn draw(&mut self, ctx: &mut ggez::Context) -> ggez::GameResult<()> {
         if self.is_visible() {
-            self.canvas.begin_drawing(ctx);
+	    sub_screen::stack_screen(ctx, &self.canvas);
 
 	    if let Some(character) = &mut self.character {
 		character.draw(ctx)?;
 	    }
             
-            self.canvas.end_drawing(ctx);
+	    sub_screen::pop_screen(ctx);
             self.canvas.draw(ctx).unwrap();
         }
         Ok(())
@@ -2136,14 +2139,14 @@ impl SuzuMiniSightSilhouette {
 impl DrawableComponent for SuzuMiniSightSilhouette {
     fn draw(&mut self, ctx: &mut ggez::Context) -> ggez::GameResult<()> {
         if self.is_visible() {
-            self.canvas.begin_drawing(ctx);
+	    sub_screen::stack_screen(ctx, &self.canvas);
 
 	    self.background.draw(ctx)?;
 	    if self.silhouette.is_some() {
 		self.silhouette.draw(ctx)?;
 	    }
-            
-            self.canvas.end_drawing(ctx);
+
+            sub_screen::pop_screen(ctx);
             self.canvas.draw(ctx).unwrap();
             
         }
@@ -2356,7 +2359,7 @@ impl SuzuMiniSight {
 impl DrawableComponent for SuzuMiniSight {
     fn draw(&mut self, ctx: &mut ggez::Context) -> ggez::GameResult<()> {
         if self.is_visible() {
-            self.canvas.begin_drawing(ctx);
+	    sub_screen::stack_screen(ctx, &self.canvas);
 
 	    self.silhouette.draw(ctx)?;
 	    
@@ -2372,7 +2375,7 @@ impl DrawableComponent for SuzuMiniSight {
                 d.get_object_mut().draw(ctx)?;
             }
             
-            self.canvas.end_drawing(ctx);
+	    sub_screen::pop_screen(ctx);
             self.canvas.draw(ctx).unwrap();
         }
         Ok(())
@@ -2471,11 +2474,11 @@ impl Goods {
 impl DrawableComponent for Goods {
     fn draw(&mut self, ctx: &mut ggez::Context) -> ggez::GameResult<()> {
         if self.is_visible() {
-            self.canvas.begin_drawing(ctx);
+	    sub_screen::stack_screen(ctx, &self.canvas);
 	    
 	    self.calendar.draw(ctx)?;
 
-            self.canvas.end_drawing(ctx);
+	    sub_screen::pop_screen(ctx);
             self.canvas.draw(ctx).unwrap();
         }
         Ok(())
@@ -2714,7 +2717,7 @@ impl TaskTable {
 		numeric::Point2f::new(100.0, 20.0),
 		numeric::Vector2f::new(0.1, 0.1),
 		0.0, 0, None, t),
-	    vec![effect::appear_bale_from_bottom(50, t), effect::fade_in(50, t)]);
+	    vec![effect::appear_bale_down_from_top(50, t), effect::fade_in(50, t)]);
 	new_silhouette.set_alpha(0.0);
 	self.sight.replace_character_silhouette(new_silhouette, info.borrower.to_string());
     }
@@ -2792,13 +2795,13 @@ impl DrawableComponent for TaskTable {
     
     fn draw(&mut self, ctx: &mut ggez::Context) -> ggez::GameResult<()> {
         if self.is_visible() {
-            self.canvas.begin_drawing(ctx);
+	    sub_screen::stack_screen(ctx, &self.canvas);
 
             self.sight.draw(ctx).unwrap();
             self.desk.draw(ctx).unwrap();
-	    self.goods.draw(ctx)?;
-            
-            self.canvas.end_drawing(ctx);
+	    self.goods.draw(ctx).unwrap();
+
+	    sub_screen::pop_screen(ctx);
             self.canvas.draw(ctx).unwrap();
         }
         Ok(())

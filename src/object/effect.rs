@@ -30,7 +30,7 @@ pub fn appear_bale_down_from_top(required_time: Clock, called_clock: Clock) -> G
 	let elapsed_time = t - called_clock;
 	if elapsed_time < required_time {
 	    let mut current_crop = obj.get_crop();
-	    current_crop.w = elapsed_time as f32 / required_time as f32;
+	    current_crop.h = elapsed_time as f32 / required_time as f32;
 	    obj.set_crop(current_crop);
 	    EffectFnStatus::EffectContinue
 	} else {
@@ -39,12 +39,12 @@ pub fn appear_bale_down_from_top(required_time: Clock, called_clock: Clock) -> G
     })
 }
 
-pub fn appear_bale_from_bottom(required_time: Clock, called_clock: Clock) -> GenericEffectFn {
+pub fn appear_bale_up_from_bottom(required_time: Clock, called_clock: Clock) -> GenericEffectFn {
     Box::new(move |obj: &mut dyn MovableObject, _: &ggez::Context, t: Clock| {
 	let elapsed_time = t - called_clock;
 	if elapsed_time < required_time {
 	    let mut current_crop = obj.get_crop();
-	    current_crop.x = 1.0 - (elapsed_time as f32 / required_time as f32);
+	    current_crop.y = elapsed_time as f32 / required_time as f32;
 	    obj.set_crop(current_crop);
 	    EffectFnStatus::EffectContinue
 	} else {

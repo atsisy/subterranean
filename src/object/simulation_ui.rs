@@ -2,6 +2,8 @@ use torifune::core::Clock;
 use torifune::numeric;
 use torifune::graphics::*;
 use torifune::graphics::object::*;
+use torifune::graphics::object::sub_screen::SubScreen;
+use torifune::graphics::object::sub_screen;
 
 use torifune::graphics::object::shape as tshape;
 
@@ -323,7 +325,7 @@ impl SimulationStatus {
 impl DrawableComponent for SimulationStatus {
     fn draw(&mut self, ctx: &mut ggez::Context) -> ggez::GameResult<()> {
         if self.is_visible() {
-            self.canvas.begin_drawing(ctx);
+	    sub_screen::stack_screen(ctx, &self.canvas);
 
 	    self.background.draw(ctx)?;
             self.money_counter.draw(ctx)?;
@@ -331,7 +333,7 @@ impl DrawableComponent for SimulationStatus {
 
             self.choice.draw(ctx)?;
             
-            self.canvas.end_drawing(ctx);
+	    sub_screen::pop_screen(ctx);
             self.canvas.draw(ctx).unwrap();
         }
         Ok(())
