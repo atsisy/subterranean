@@ -12,11 +12,58 @@ use crate::scene::*;
 
 use work_scene_sub::TaskScene;
 
+#[derive(PartialEq, Clone)]
+pub struct TaskResult {
+    done_works: u32,
+    total_money: i32,
+}
+
+impl TaskResult {
+    pub fn new() -> Self {
+	TaskResult {
+	    done_works: 0,
+	    total_money: 0,
+	}
+    }
+
+    pub fn add_done_works(&mut self, works: u32) -> &mut Self {
+	self.done_works += works;
+	self
+    }
+
+    pub fn add_money(&mut self, money: i32) -> &mut Self {
+	self.total_money += money;
+	self
+    }
+
+    pub fn add_result(&mut self, task_result: &TaskResult) -> &mut Self {
+	self.done_works += task_result.done_works;
+	self.total_money += task_result.total_money;
+	self
+    }
+
+    pub fn get_done_works(&self) -> u32 {
+	self.done_works
+    }
+
+    pub fn get_total_money(&self) -> i32 {
+	self.total_money
+    }
+
+    pub fn reset(&mut self) -> &mut Self {
+	self.done_works = 0;
+	self.total_money = 0;
+	
+	self
+    }
+}
+
 pub struct WorkScene {
     clock: Clock,
     mouse_info: MouseInformation,
     event_list: SceneEventList<Self>,
     task_scene: TaskScene,
+    task_result: TaskResult,
 }
 
 impl WorkScene {
@@ -27,7 +74,12 @@ impl WorkScene {
             mouse_info: MouseInformation::new(),
 	    event_list: SceneEventList::new(),
 	    task_scene: TaskScene::new(ctx, game_data),
+	    task_result: TaskResult::new(),
         }
+    }
+
+    fn flush_task_result_data(&mut self) {
+	self.task_result.add_result(self.task_scene.get_task_result());
     }
 }
 
@@ -76,6 +128,9 @@ impl SceneManager for WorkScene {
                    ctx: &mut ggez::Context,
                    game_data: &GameData) {
 	self.task_scene.pre_process(ctx, game_data);
+	if self.task_scene.get_task_result().get_done_works() > 5 {
+	    self.flush_task_result_data();
+	}
     }
     
     fn drawing_process(&mut self, ctx: &mut ggez::Context) {

@@ -21,82 +21,17 @@ enum TaskSceneStatus {
     CustomerEvent,
 }
 
-
-pub struct TaskState {
-    done_work: u32,
-    done_work_today: u32,
-    total_money: i32,
-    total_money_today: i32,
-}
-
-impl TaskState {
-    pub fn new() -> Self {
-	TaskState {
-	    done_work: 0,
-	    done_work_today: 0,
-	    total_money: 0,
-	    total_money_today: 0,
-	}
-    }
-
-    pub fn apply_done_day_work(&mut self) -> &mut Self {
-	self.done_work += self.done_work_today;
-	self.done_work_today = 0;
-
-	self.total_money += self.total_money_today;
-	self.total_money_today = 0;
-
-	self
-    }
-
-    pub fn add_done_work(&mut self, work: u32) -> &mut Self {
-	self.done_work_today += work;
-	self
-    }
-
-    pub fn add_money(&mut self, money: i32) -> &mut Self {
-	self.total_money_today += money;
-	self
-    }
-
-    pub fn get_done_work_today(&self) -> u32 {
-	self.done_work_today
-    }
-
-    pub fn get_total_money_today(&self) -> i32 {
-	self.total_money_today
-    }
-
-    pub fn get_done_work(&self) -> u32 {
-	self.done_work
-    }
-
-    pub fn get_total_money(&self) -> i32 {
-	self.total_money
-    }
-
-    pub fn reset(&mut self) -> &mut Self {
-	self.done_work = 0;
-	self.done_work_today = 0;
-	
-	self.total_money = 0;
-	self.total_money_today = 0;
-	
-	self
-    }
-}
-
 pub struct TaskScene {
     task_table: TaskTable,
     clock: Clock,
     mouse_info: MouseInformation,
     event_list: SceneEventList<Self>,
     status: TaskSceneStatus,
-    task_state: TaskState,
+    task_result: TaskResult,
 }
 
 impl TaskScene {
-    pub fn new(ctx: &mut ggez::Context, game_data: &GameData) -> TaskScene  {
+    pub fn new(ctx: &mut ggez::Context, game_data: &GameData) -> TaskScene {
 
         TaskScene {
             task_table: TaskTable::new(ctx, game_data,
@@ -108,7 +43,7 @@ impl TaskScene {
             mouse_info: MouseInformation::new(),
 	    event_list: SceneEventList::new(),
 	    status: TaskSceneStatus::Init,
-	    task_state: TaskState::new(),
+	    task_result: TaskResult::new(),
         }
     }
 
@@ -157,11 +92,7 @@ impl TaskScene {
     }
 
     fn check_done_today_work(&mut self) {
-	if self.task_state.get_done_work_today() > 5 {
-	    
-	} else {
-	    self.task_state.add_done_work(1);
-	}
+	self.task_result.add_done_works(1);
     }
 
     fn start_borrowing_customer_event(&mut self,
@@ -196,6 +127,14 @@ impl TaskScene {
 	}
 
 	self.check_done_today_work();
+    }
+
+    pub fn get_task_result(&self) -> &TaskResult {
+	&self.task_result
+    }
+
+    pub fn reset_task_result(&mut self) {
+	self.task_result.reset();
     }
 }
 
