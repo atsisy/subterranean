@@ -1,7 +1,5 @@
 pub mod factory;
 
-use std::collections::HashMap;
-
 use ggez::graphics as ggraphics;
 use ggez::input as ginput;
 use ginput::mouse::MouseButton;
@@ -16,8 +14,6 @@ use torifune::graphics::object::sub_screen::SubScreen;
 use torifune::graphics::object::sub_screen;
 
 use crate::core::BookInformation;
-
-use torifune::hash;
 
 use super::*;
 use crate::object::effect;
@@ -155,6 +151,7 @@ impl DrawableComponent for DrawableCalendar {
 	    self.season_text.draw(ctx)?;
 	    self.month_text.draw(ctx)?;
 	    self.day_text.draw(ctx)?;
+	    
 
 	    sub_screen::pop_screen(ctx);
             self.canvas.draw(ctx).unwrap();
@@ -307,6 +304,7 @@ impl OnDeskBook {
 	    0.0, 0);
 	let book_area = book_texture.get_drawing_area(ctx);
 	let book_title = info.get_name().to_string();
+
 	OnDeskBook {
 	    info: info,
 	    book_texture: book_texture,
@@ -795,125 +793,6 @@ impl OnDesk for CopyingRequestPaper {
 
 	HoldData::None
     }
-}
-
-#[derive(PartialEq, Debug, Clone, Copy)]
-pub struct MouseActionRecord {
-    pub point: numeric::Point2f,
-    pub t: Clock,
-}
-
-impl MouseActionRecord {
-    fn new(point: numeric::Point2f, t: Clock) -> MouseActionRecord {
-        MouseActionRecord {
-            point: point,
-            t: t
-        }
-    }
-
-    fn new_empty() -> MouseActionRecord {
-        MouseActionRecord {
-            point: numeric::Point2f::new(0.0, 0.0),
-            t: 0
-        }
-    }
-}
-
-pub struct MouseInformation {
-    pub last_clicked: HashMap<MouseButton, MouseActionRecord>,
-    pub last_dragged: HashMap<MouseButton, MouseActionRecord>,
-    pub last_down: HashMap<MouseButton, MouseActionRecord>,
-    pub last_up: HashMap<MouseButton, MouseActionRecord>,
-    pub dragging: HashMap<MouseButton, bool>,
-}
-
-impl MouseInformation {
-
-    pub fn new() -> MouseInformation {
-        MouseInformation {
-            last_clicked: hash![(MouseButton::Left, MouseActionRecord::new_empty()),
-                                (MouseButton::Right, MouseActionRecord::new_empty()),
-                                (MouseButton::Middle, MouseActionRecord::new_empty())],
-            last_dragged: hash![(MouseButton::Left, MouseActionRecord::new_empty()),
-                                (MouseButton::Right, MouseActionRecord::new_empty()),
-                                (MouseButton::Middle, MouseActionRecord::new_empty())],
-	    last_down: hash![(MouseButton::Left, MouseActionRecord::new_empty()),
-				(MouseButton::Right, MouseActionRecord::new_empty()),
-                             (MouseButton::Middle, MouseActionRecord::new_empty())],
-	    last_up: hash![(MouseButton::Left, MouseActionRecord::new_empty()),
-			     (MouseButton::Right, MouseActionRecord::new_empty()),
-                             (MouseButton::Middle, MouseActionRecord::new_empty())],
-            dragging: hash![(MouseButton::Left, false),
-                            (MouseButton::Right, false),
-                            (MouseButton::Middle, false)]
-        }
-    }
-
-    pub fn get_last_clicked(&self, button: MouseButton) -> numeric::Point2f {
-        match self.last_clicked.get(&button) {
-            Some(x) => x.point,
-            None => panic!("No such a mouse button"),
-        }
-    }
-
-    pub fn set_last_clicked(&mut self, button: MouseButton, point: numeric::Point2f, t: Clock) {
-        if self.last_clicked.insert(button, MouseActionRecord::new(point, t)) == None {
-            panic!("No such a mouse button")
-        }
-    }
-
-    pub fn get_last_dragged(&self, button: MouseButton) -> numeric::Point2f {
-        match self.last_dragged.get(&button) {
-            Some(x) => x.point,
-            None => panic!("No such a mouse button"),
-        }
-    }
-
-    pub fn set_last_dragged(&mut self, button: MouseButton, point: numeric::Point2f, t: Clock) {
-        if self.last_dragged.insert(button, MouseActionRecord::new(point, t)) == None {
-            panic!("No such a mouse button")
-        }
-    }
-    
-    pub fn get_last_down(&self, button: MouseButton) -> numeric::Point2f {
-        match self.last_down.get(&button) {
-            Some(x) => x.point,
-            None => panic!("No such a mouse button"),
-        }
-    }
-
-    pub fn set_last_down(&mut self, button: MouseButton, point: numeric::Point2f, t: Clock) {
-        if self.last_down.insert(button, MouseActionRecord::new(point, t)) == None {
-            panic!("No such a mouse button")
-        }
-    }
-    
-    pub fn get_last_up(&self, button: MouseButton) -> numeric::Point2f {
-        match self.last_up.get(&button) {
-            Some(x) => x.point,
-            None => panic!("No such a mouse button"),
-        }
-    }
-
-    pub fn set_last_up(&mut self, button: MouseButton, point: numeric::Point2f, t: Clock) {
-        if self.last_up.insert(button, MouseActionRecord::new(point, t)) == None {
-            panic!("No such a mouse button")
-        }
-    }
-
-    pub fn is_dragging(&self, button: ginput::mouse::MouseButton) -> bool {
-        match self.dragging.get(&button) {
-            Some(x) => *x,
-            None => panic!("No such a mouse button"),
-        }
-    }
-
-    pub fn update_dragging(&mut self, button: MouseButton, drag: bool) {
-        if self.dragging.insert(button, drag) == None {
-            panic!("No such a mouse button")
-        }
-    }
-    
 }
 
 pub struct BorrowingRecordBookPage {

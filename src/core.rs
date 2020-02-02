@@ -7,12 +7,18 @@ use ggez::graphics as ggraphics;
 use torifune::core::Clock;
 use torifune::device as tdev;
 use torifune::numeric;
+use torifune::hash;
 use tdev::ProgramableKey;
+
 use ggez::input as ginput;
 use ggez::input::keyboard::*;
+use ginput::mouse::MouseButton;
+
 use std::rc::Rc;
-use crate::scene;
+use std::collections::HashMap;
 use std::str::FromStr;
+
+use crate::scene;
 
 use std::fs;
 use std::io::{BufReader, Read};
@@ -222,6 +228,124 @@ impl GameData {
     }
 }
 
+#[derive(PartialEq, Debug, Clone, Copy)]
+pub struct MouseActionRecord {
+    pub point: numeric::Point2f,
+    pub t: Clock,
+}
+
+impl MouseActionRecord {
+    fn new(point: numeric::Point2f, t: Clock) -> MouseActionRecord {
+        MouseActionRecord {
+            point: point,
+            t: t
+        }
+    }
+
+    fn new_empty() -> MouseActionRecord {
+        MouseActionRecord {
+            point: numeric::Point2f::new(0.0, 0.0),
+            t: 0
+        }
+    }
+}
+
+pub struct MouseInformation {
+    pub last_clicked: HashMap<MouseButton, MouseActionRecord>,
+    pub last_dragged: HashMap<MouseButton, MouseActionRecord>,
+    pub last_down: HashMap<MouseButton, MouseActionRecord>,
+    pub last_up: HashMap<MouseButton, MouseActionRecord>,
+    pub dragging: HashMap<MouseButton, bool>,
+}
+
+impl MouseInformation {
+
+    pub fn new() -> MouseInformation {
+        MouseInformation {
+            last_clicked: hash![(MouseButton::Left, MouseActionRecord::new_empty()),
+                                (MouseButton::Right, MouseActionRecord::new_empty()),
+                                (MouseButton::Middle, MouseActionRecord::new_empty())],
+            last_dragged: hash![(MouseButton::Left, MouseActionRecord::new_empty()),
+                                (MouseButton::Right, MouseActionRecord::new_empty()),
+                                (MouseButton::Middle, MouseActionRecord::new_empty())],
+	    last_down: hash![(MouseButton::Left, MouseActionRecord::new_empty()),
+				(MouseButton::Right, MouseActionRecord::new_empty()),
+                             (MouseButton::Middle, MouseActionRecord::new_empty())],
+	    last_up: hash![(MouseButton::Left, MouseActionRecord::new_empty()),
+			     (MouseButton::Right, MouseActionRecord::new_empty()),
+                             (MouseButton::Middle, MouseActionRecord::new_empty())],
+            dragging: hash![(MouseButton::Left, false),
+                            (MouseButton::Right, false),
+                            (MouseButton::Middle, false)]
+        }
+    }
+
+    pub fn get_last_clicked(&self, button: MouseButton) -> numeric::Point2f {
+        match self.last_clicked.get(&button) {
+            Some(x) => x.point,
+            None => panic!("No such a mouse button"),
+        }
+    }
+
+    pub fn set_last_clicked(&mut self, button: MouseButton, point: numeric::Point2f, t: Clock) {
+        if self.last_clicked.insert(button, MouseActionRecord::new(point, t)) == None {
+            panic!("No such a mouse button")
+        }
+    }
+
+    pub fn get_last_dragged(&self, button: MouseButton) -> numeric::Point2f {
+        match self.last_dragged.get(&button) {
+            Some(x) => x.point,
+            None => panic!("No such a mouse button"),
+        }
+    }
+
+    pub fn set_last_dragged(&mut self, button: MouseButton, point: numeric::Point2f, t: Clock) {
+        if self.last_dragged.insert(button, MouseActionRecord::new(point, t)) == None {
+            panic!("No such a mouse button")
+        }
+    }
+    
+    pub fn get_last_down(&self, button: MouseButton) -> numeric::Point2f {
+        match self.last_down.get(&button) {
+            Some(x) => x.point,
+            None => panic!("No such a mouse button"),
+        }
+    }
+
+    pub fn set_last_down(&mut self, button: MouseButton, point: numeric::Point2f, t: Clock) {
+        if self.last_down.insert(button, MouseActionRecord::new(point, t)) == None {
+            panic!("No such a mouse button")
+        }
+    }
+    
+    pub fn get_last_up(&self, button: MouseButton) -> numeric::Point2f {
+        match self.last_up.get(&button) {
+            Some(x) => x.point,
+            None => panic!("No such a mouse button"),
+        }
+    }
+
+    pub fn set_last_up(&mut self, button: MouseButton, point: numeric::Point2f, t: Clock) {
+        if self.last_up.insert(button, MouseActionRecord::new(point, t)) == None {
+            panic!("No such a mouse button")
+        }
+    }
+
+    pub fn is_dragging(&self, button: ginput::mouse::MouseButton) -> bool {
+        match self.dragging.get(&button) {
+            Some(x) => *x,
+            None => panic!("No such a mouse button"),
+        }
+    }
+
+    pub fn update_dragging(&mut self, button: MouseButton, drag: bool) {
+        if self.dragging.insert(button, drag) == None {
+            panic!("No such a mouse button")
+        }
+    }
+}
+
 struct SceneController<'a> {
     current_scene: Box<dyn scene::SceneManager + 'a>,
     key_map: tdev::ProgramableGenericKey,
@@ -232,7 +356,7 @@ impl<'a> SceneController<'a> {
 
     pub fn new(ctx: &mut ggez::Context, game_data: &'a GameData) -> SceneController<'a> {
         SceneController {
-            current_scene: Box::new(scene::task_scene::TaskScene::new(ctx, game_data)),
+            current_scene: Box::new(scene::work_scene::WorkScene::new(ctx, game_data)),
             key_map: tdev::ProgramableGenericKey::new(),
 	    global_clock: 0,
         }
@@ -243,7 +367,7 @@ impl<'a> SceneController<'a> {
                     game_data: &'a GameData,
                     next_scene_id: scene::SceneID) {
         if next_scene_id == scene::SceneID::MainDesk {
-            self.current_scene = Box::new(scene::task_scene::TaskScene::new(ctx, game_data));
+            self.current_scene = Box::new(scene::work_scene::WorkScene::new(ctx, game_data));
         } else if next_scene_id == scene::SceneID::Dream {
             self.current_scene = Box::new(scene::dream_scene::DreamScene::new(ctx, game_data));
         } else if next_scene_id == scene::SceneID::Null {

@@ -8,75 +8,10 @@ use torifune::graphics::*;
 
 use super::*;
 use crate::object::Clickable;
-
 use crate::object::task_object;
 
-use crate::core::GameData;
+use crate::core::{MouseInformation, MouseActionRecord, GameData};
 use crate::object::task_object::*;
-
-///
-/// # 遅延イベントを起こすための情報を保持する
-///
-/// ## run_time
-/// 処理が走る時間
-///
-/// ## func
-/// run_time時に実行される処理
-///
-struct SceneEvent<T> {
-    run_time: Clock,
-    func: Box<dyn FnOnce(&mut T, &mut ggez::Context, &GameData) -> ()>,
-}
-
-impl<T> SceneEvent<T> {
-    pub fn new(f: Box<dyn FnOnce(&mut T, &mut ggez::Context, &GameData) -> ()>, t: Clock) -> Self {
-	SceneEvent::<T> {
-	    run_time: t,
-	    func: f,
-	}
-    }
-}
-
-///
-/// # 遅延イベントを保持しておく構造体
-///
-/// ## list
-/// 遅延イベントのリスト, run_timeでソートされている
-///
-struct SceneEventList<T> {
-    list: Vec<SceneEvent<T>>,
-}
-
-impl<T> SceneEventList<T> {
-    pub fn new() -> Self {
-	SceneEventList::<T> {
-	    list: Vec::new(),
-	}
-    }
-
-    pub fn add_event(&mut self, f: Box<dyn FnOnce(&mut T, &mut ggez::Context, &GameData) -> ()>,
-		     t: Clock) -> &mut Self {
-	self.add(SceneEvent::new(f, t))
-    }
-
-    pub fn add(&mut self, event: SceneEvent<T>) -> &mut Self {
-	self.list.push(event);
-	self.list.sort_by(|o1, o2| { o2.run_time.cmp(&o1.run_time) });
-	self
-    }
-
-    pub fn move_top(&mut self) -> Option<SceneEvent<T>> {
-	if self.list.len() > 0 {
-	    self.list.pop()
-	} else {
-	    None
-	}
-    }
-
-    pub fn len(&self) -> usize {
-	self.list.len()
-    }
-}
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 enum TaskSceneStatus {
@@ -85,6 +20,7 @@ enum TaskSceneStatus {
     CustomerWait,
     CustomerEvent,
 }
+
 
 pub struct TaskState {
     done_work: u32,
