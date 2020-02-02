@@ -6,7 +6,7 @@ use torifune::core::*;
 use torifune::numeric;
 use torifune::device::VirtualKey;
 
-use crate::core::{MouseInformation, MouseActionRecord, GameData};
+use crate::core::{MouseInformation, GameData};
 use super::SceneEventList;
 use crate::scene::*;
 

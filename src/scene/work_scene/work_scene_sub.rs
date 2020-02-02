@@ -79,7 +79,6 @@ impl TaskScene {
     }
 
     fn insert_customer_event(&mut self,
-			     game_data: &GameData,
 			     request: CustomerRequest,
 			     delay_clock: Clock) {
 	self.event_list.add_event(Box::new(
@@ -88,7 +87,7 @@ impl TaskScene {
 		    ctx, game_data,
 		    request, s.get_current_clock());
 		s.status = TaskSceneStatus::CustomerEvent;
-	    }), self.get_current_clock() + 100);
+	    }), self.get_current_clock() + delay_clock);
     }
 
     fn check_done_today_work(&mut self) {
@@ -96,21 +95,18 @@ impl TaskScene {
     }
 
     fn start_borrowing_customer_event(&mut self,
-				      ctx: &mut ggez::Context,
 				      game_data: &GameData) {
 	self.insert_customer_event(
-	    game_data,
-	    CustomerRequest::Borrowing(task_object::BorrowingInformation::new_random(
-		game_data,
-		task_object::GensoDate::new(128, 12, 20),
-		task_object::GensoDate::new(128, 12, 20))), 100);
+	    CustomerRequest::Borrowing(
+		task_object::BorrowingInformation::new_random(
+		    game_data,
+		    task_object::GensoDate::new(128, 12, 20),
+		    task_object::GensoDate::new(128, 12, 20))), 100);
     }
 
     fn start_copying_customer_event(&mut self,
-				      ctx: &mut ggez::Context,
 				      game_data: &GameData) {
 	self.insert_customer_event(
-	    game_data,
 	    CustomerRequest::Copying(task_object::CopyingRequestInformation::new_random(
 			game_data,
 			GensoDate::new(12, 12, 12),
@@ -118,11 +114,10 @@ impl TaskScene {
     }
     
     fn start_customer_event(&mut self,
-			    ctx: &mut ggez::Context,
 			    game_data: &GameData) {
 	match rand::random::<usize>() % 2 {
-	    0 => self.start_borrowing_customer_event(ctx, game_data),
-	    1 => self.start_copying_customer_event(ctx, game_data),
+	    0 => self.start_borrowing_customer_event(game_data),
+	    1 => self.start_copying_customer_event(game_data),
 	    _ => (),
 	}
 
@@ -158,8 +153,8 @@ impl SceneManager for TaskScene {
     }
 
     fn key_up_event(&mut self,
-                    ctx: &mut ggez::Context,
-                    game_data: &GameData,
+                    _ctx: &mut ggez::Context,
+                    _game_data: &GameData,
                     vkey: tdev::VirtualKey) {
         match vkey {
             tdev::VirtualKey::Action1 => println!("Action1 up!"),
@@ -232,7 +227,7 @@ impl SceneManager for TaskScene {
 	}
 	
 	if self.status == TaskSceneStatus::CustomerFree {
-	    self.start_customer_event(ctx, game_data);
+	    self.start_customer_event(game_data);
 	    self.status = TaskSceneStatus::CustomerWait;
 	}
 	
