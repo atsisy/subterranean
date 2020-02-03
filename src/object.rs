@@ -5,6 +5,7 @@ pub mod character_factory;
 pub mod scenario;
 pub mod simulation_ui;
 pub mod task_object;
+pub mod task_result_object;
 
 use std::rc::Rc;
 use std::cmp::Ordering;

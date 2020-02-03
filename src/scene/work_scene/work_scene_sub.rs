@@ -5,14 +5,17 @@ use ginput::mouse::MouseButton;
 use torifune::numeric;
 
 use torifune::graphics::*;
+use torifune::graphics::object::*;
 
 use super::*;
 use crate::object::Clickable;
 use crate::object::task_object;
 
-use crate::core::{MouseInformation, MouseActionRecord, GameData};
+use crate::core::{MouseInformation, MouseActionRecord, GameData, TextureID};
 use crate::object::task_object::*;
 
+use crate::object::task_result_object::*;
+    
 #[derive(Debug, Clone, Copy, PartialEq)]
 enum TaskSceneStatus {
     Init,
@@ -236,6 +239,145 @@ impl SceneManager for TaskScene {
     
     fn drawing_process(&mut self, ctx: &mut ggez::Context) {
         self.task_table.draw(ctx).unwrap();
+    }
+    
+    fn post_process(&mut self, _ctx: &mut ggez::Context, _: &GameData) -> SceneTransition {
+        self.update_current_clock();
+        SceneTransition::Keep
+    }
+    
+    fn transition(&self) -> SceneID {
+        SceneID::MainDesk
+    }
+
+    fn get_current_clock(&self) -> Clock {
+        self.clock
+    }
+
+    fn update_current_clock(&mut self) {
+        self.clock += 1;
+    }
+
+}
+
+pub struct TaskResultScene {
+    clock: Clock,
+    mouse_info: MouseInformation,
+    event_list: SceneEventList<Self>,
+    task_result: TaskResult,
+    drawable_task_result: DrawableTaskResult,
+}
+
+impl TaskResultScene {
+    pub fn new(ctx: &mut ggez::Context, game_data: &GameData, task_result: TaskResult) -> Self {
+
+	let background_object = MovableUniTexture::new(
+	    game_data.ref_texture(TextureID::Paper1),
+            numeric::Point2f::new(0.0, 0.0),
+            numeric::Vector2f::new(1.0, 1.0),
+            0.0,
+            0,
+            None,
+            0);
+
+        TaskResultScene {
+            clock: 0,
+            mouse_info: MouseInformation::new(),
+	    event_list: SceneEventList::new(),
+	    drawable_task_result: DrawableTaskResult::new(ctx, game_data,
+							  numeric::Rect::new(0.0, 0.0, 1000.0, 700.0),
+							  task_result.clone(),
+							  SimpleObject::new(background_object, Vec::new())),
+	    task_result: task_result,
+        }
+    }
+
+    ///
+    /// 遅延処理を走らせるメソッド
+    ///
+    fn run_scene_event(&mut self, ctx: &mut ggez::Context, game_data: &GameData, t: Clock) {
+	// 最後の要素の所有権を移動
+	while let Some(event) = self.event_list.move_top() {
+	    // 時間が来ていない場合は、取り出した要素をリストに戻して処理ループを抜ける
+	    if event.run_time > t {
+		self.event_list.add(event);
+		break;
+	    }
+	    
+	    // 所有権を移動しているため、selfを渡してもエラーにならない
+	    (event.func)(self, ctx, game_data);
+	}
+    }
+}
+
+impl SceneManager for TaskResultScene {
+
+    fn key_down_event(&mut self,
+                      _ctx: &mut ggez::Context,
+                      _game_data: &GameData,
+                      vkey: tdev::VirtualKey) {
+        match vkey {
+            tdev::VirtualKey::Action1 => {
+                println!("Action1 down!");
+		self.event_list.add_event(Box::new(|_, _, _| println!("aaaaaaaaaa") ), self.get_current_clock() + 2);
+		self.event_list.add_event(Box::new(|_, _, _| println!("bbbbbbbbbb") ), self.get_current_clock() + 500);
+            },
+            _ => (),
+        }
+    }
+
+    fn key_up_event(&mut self,
+                    _ctx: &mut ggez::Context,
+                    _game_data: &GameData,
+                    vkey: tdev::VirtualKey) {
+        match vkey {
+            tdev::VirtualKey::Action1 => println!("Action1 up!"),
+            tdev::VirtualKey::Action2 => {
+            },
+            _ => (),
+        }
+    }
+
+    fn mouse_motion_event(&mut self,
+                          ctx: &mut ggez::Context,
+                          game_data: &GameData,
+                          point: numeric::Point2f,
+                          offset: numeric::Vector2f) {
+        if self.mouse_info.is_dragging(MouseButton::Left) {
+            let d = numeric::Vector2f::new(offset.x / 2.0, offset.y / 2.0);
+            self.mouse_info.set_last_dragged(MouseButton::Left, point, self.get_current_clock());
+        }
+    }
+
+    fn mouse_button_down_event(&mut self,
+                               ctx: &mut ggez::Context,
+                               game_data: &GameData,
+                               button: MouseButton,
+                               point: numeric::Point2f) {	
+        self.mouse_info.set_last_clicked(button, point, self.get_current_clock());
+	self.mouse_info.set_last_down(button, point, self.get_current_clock());
+        self.mouse_info.set_last_dragged(button, point, self.get_current_clock());
+        self.mouse_info.update_dragging(button, true);
+
+    }
+
+    fn mouse_button_up_event(&mut self,
+                             ctx: &mut ggez::Context,
+                             game_data: &GameData,
+                             button: MouseButton,
+                             point: numeric::Point2f) {
+        self.mouse_info.update_dragging(button, false);
+	self.mouse_info.set_last_up(button, point, self.get_current_clock());
+    }
+
+    fn pre_process(&mut self,
+                   ctx: &mut ggez::Context,
+                   game_data: &GameData) {
+	self.run_scene_event(ctx, game_data, self.get_current_clock());
+    }
+    
+    fn drawing_process(&mut self, ctx: &mut ggez::Context) {
+	self.drawable_task_result.draw(ctx).unwrap();
     }
     
     fn post_process(&mut self, _ctx: &mut ggez::Context, _: &GameData) -> SceneTransition {
