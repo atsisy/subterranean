@@ -17,11 +17,12 @@ use crate::object::task_object::*;
 use crate::object::task_result_object::*;
     
 #[derive(Debug, Clone, Copy, PartialEq)]
-enum TaskSceneStatus {
+pub enum TaskSceneStatus {
     Init,
     CustomerFree,
     CustomerWait,
     CustomerEvent,
+    FinishDay,
 }
 
 pub struct TaskScene {
@@ -90,11 +91,15 @@ impl TaskScene {
 		    ctx, game_data,
 		    request, s.get_current_clock());
 		s.status = TaskSceneStatus::CustomerEvent;
+		s.check_done_today_work();
 	    }), self.get_current_clock() + delay_clock);
     }
 
     fn check_done_today_work(&mut self) {
-	self.task_result.add_done_works(1);
+	if self.task_result.add_done_works(1).get_done_works() > 5 {
+	    self.status = TaskSceneStatus::FinishDay;
+	    println!("done 5 works!!");
+	}
     }
 
     fn start_borrowing_customer_event(&mut self,
@@ -123,8 +128,6 @@ impl TaskScene {
 	    1 => self.start_copying_customer_event(game_data),
 	    _ => (),
 	}
-
-	self.check_done_today_work();
     }
 
     pub fn get_task_result(&self) -> &TaskResult {
@@ -133,6 +136,10 @@ impl TaskScene {
 
     pub fn reset_task_result(&mut self) {
 	self.task_result.reset();
+    }
+
+    pub fn get_task_status(&self) -> TaskSceneStatus {
+	self.status
     }
 }
 
@@ -344,7 +351,6 @@ impl SceneManager for TaskResultScene {
                           point: numeric::Point2f,
                           offset: numeric::Vector2f) {
         if self.mouse_info.is_dragging(MouseButton::Left) {
-            let d = numeric::Vector2f::new(offset.x / 2.0, offset.y / 2.0);
             self.mouse_info.set_last_dragged(MouseButton::Left, point, self.get_current_clock());
         }
     }
