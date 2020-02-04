@@ -31,8 +31,7 @@ impl DrawableTaskResult {
 	DrawableTaskResult {
 	    title_text: EffectableWrap::new(
 		MovableWrap::new(
-		    Box::new(VerticalText::new(ctx,
-					       "お仕事結果".to_string(),
+		    Box::new(VerticalText::new("お仕事結果".to_string(),
 					       numeric::Point2f::new(500.0, 100.0),
 					       numeric::Vector2f::new(1.0, 1.0),
 					       0.0,

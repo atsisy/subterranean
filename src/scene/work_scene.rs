@@ -74,7 +74,7 @@ pub struct WorkSubScene {
 }
 
 impl WorkSubScene {
-    pub fn new(scene_box: Box<Any>, scene_status: WorkSceneStatus) -> Self {
+    pub fn new(scene_box: Box<dyn Any>, scene_status: WorkSceneStatus) -> Self {
 	let mut sub_scene = WorkSubScene {
 	    task_scene: None,
 	    task_result_scene: None,
