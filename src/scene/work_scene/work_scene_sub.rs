@@ -294,7 +294,8 @@ impl TaskResultScene {
 	    drawable_task_result: DrawableTaskResult::new(ctx, game_data,
 							  numeric::Rect::new(0.0, 0.0, 1000.0, 700.0),
 							  task_result.clone(),
-							  SimpleObject::new(background_object, Vec::new())),
+							  SimpleObject::new(background_object, Vec::new()),
+							  0),
 	    task_result: task_result,
         }
     }
@@ -380,6 +381,7 @@ impl SceneManager for TaskResultScene {
                    ctx: &mut ggez::Context,
                    game_data: &GameData) {
 	self.run_scene_event(ctx, game_data, self.get_current_clock());
+	self.drawable_task_result.effect(ctx, self.get_current_clock());
     }
     
     fn drawing_process(&mut self, ctx: &mut ggez::Context) {
