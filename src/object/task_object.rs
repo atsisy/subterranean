@@ -127,13 +127,16 @@ impl DrawableCalendar {
 	
 	DrawableCalendar {
 	    paper: UniTexture::new(game_data.ref_texture(paper_tid), numeric::Point2f::new(0.0, 0.0), default_scale, 0.0, 0),
-	    season_text: VerticalText::new(format!("{}季", number_to_jk(date.season as u64)),
+	    season_text: VerticalText::new(ctx,
+					   format!("{}季", number_to_jk(date.season as u64)),
 					   numeric::Point2f::new(50.0, 4.0), default_scale,
 					   0.0, 0, font_info),
-	    month_text: VerticalText::new(format!("{}月", number_to_jk(date.month as u64)),
+	    month_text: VerticalText::new(ctx,
+					  format!("{}月", number_to_jk(date.month as u64)),
 					  numeric::Point2f::new(32.0, 4.0), default_scale,
 					  0.0, 0, font_info),
-	    day_text: VerticalText::new(format!("{}日", number_to_jk(date.day as u64)),
+	    day_text: VerticalText::new(ctx,
+					format!("{}日", number_to_jk(date.day as u64)),
 					numeric::Point2f::new(16.0, 4.0), default_scale,
 					0.0, 0, font_info),
 	    date_data: date,
@@ -308,7 +311,8 @@ impl OnDeskBook {
 	OnDeskBook {
 	    info: info,
 	    book_texture: book_texture,
-	    title: VerticalText::new(book_title,
+	    title: VerticalText::new(ctx,
+				     book_title,
 				     numeric::Point2f::new(40.0, 30.0),
 				     numeric::Vector2f::new(1.0, 1.0),
 				     0.0, 0,
@@ -669,41 +673,41 @@ impl CopyingRequestPaper {
                                                                      t),
                                               Vec::new());
 	
-	let title_text  = VerticalText::new("鈴奈庵 転写依頼票".to_string(),
+	let title_text  = VerticalText::new(ctx, "鈴奈庵 転写依頼票".to_string(),
 					    numeric::Point2f::new(pos.x, 50.0), default_scale,
 					    0.0, 0, font_info);
 	pos.x -= 60.0;
 
 	font_info.scale = numeric::Vector2f::new(20.0, 20.0);
 
-	let request_book = VerticalText::new(format!("転写本    {}", info.book_info.name),
+	let request_book = VerticalText::new(ctx, format!("転写本    {}", info.book_info.name),
 					     numeric::Point2f::new(pos.x, 50.0), default_scale,
 					     0.0, 0, font_info);
 	pos.x -= 24.0;
         
-	let pages = VerticalText::new(format!("頁数   {}", number_to_jk(info.book_info.pages as u64)),
+	let pages = VerticalText::new(ctx, format!("頁数   {}", number_to_jk(info.book_info.pages as u64)),
 				      numeric::Point2f::new(pos.x, 50.0), default_scale,
 				      0.0, 0, font_info);
 	pos.x -= 24.0;
 	
-	let book_type = VerticalText::new(format!("寸法   {}", info.book_info.size),
+	let book_type = VerticalText::new(ctx, format!("寸法   {}", info.book_info.size),
 					  numeric::Point2f::new(pos.x, 50.0), default_scale,
 					  0.0, 0, font_info);
 	pos.x -= 180.0;
 
 	font_info.scale = numeric::Vector2f::new(16.0, 16.0);
 
-	let customer = VerticalText::new(format!("依頼者 {}", info.customer),
+	let customer = VerticalText::new(ctx, format!("依頼者 {}", info.customer),
 					 numeric::Point2f::new(pos.x, 50.0), default_scale,
 					 0.0, 0, font_info);
 	pos.x -= 24.0;
 
-	let request_date = VerticalText::new(format!("依頼日 {}", info.request_date.to_string()),
+	let request_date = VerticalText::new(ctx, format!("依頼日 {}", info.request_date.to_string()),
 					     numeric::Point2f::new(pos.x, 50.0), default_scale,
 					     0.0, 0, font_info);
 	pos.x -= 24.0;
 	
-	let return_date = VerticalText::new(format!("完了予定 {}", info.return_date.to_string()),
+	let return_date = VerticalText::new(ctx, format!("完了予定 {}", info.return_date.to_string()),
 					    numeric::Point2f::new(pos.x, 50.0), default_scale,
 					    0.0, 0, font_info);
 	pos.x -= 24.0;
@@ -812,7 +816,7 @@ impl BorrowingRecordBookPage {
                info: &BorrowingInformation, game_data: &GameData, t: Clock) -> Self {
         let mut pos = numeric::Point2f::new(rect.w - 40.0, 30.0);
         
-        let borrower = VerticalText::new(format!("借りた人　{}", info.borrower),
+        let borrower = VerticalText::new(ctx, format!("借りた人　{}", info.borrower),
                                          pos,
                                          numeric::Vector2f::new(1.0, 1.0),
                                          0.0,
@@ -822,7 +826,7 @@ impl BorrowingRecordBookPage {
                                                               ggraphics::Color::from_rgba_u32(0x000000ff)));
 	pos.x -= 30.0;
 	
-        let book_head = VerticalText::new("貸出本".to_string(),
+        let book_head = VerticalText::new(ctx, "貸出本".to_string(),
                                           pos,
                                           numeric::Vector2f::new(1.0, 1.0),
                                           0.0,
@@ -833,7 +837,7 @@ impl BorrowingRecordBookPage {
 	let mut borrowing: Vec<VerticalText> = info.borrowing.iter()
             .map(|book_info| {
                 pos += numeric::Vector2f::new(-30.0, 0.0);
-                VerticalText::new(book_info.name.to_string(),
+                VerticalText::new(ctx, book_info.name.to_string(),
                                   numeric::Point2f::new(pos.x, pos.y + 100.0),
                                   numeric::Vector2f::new(1.0, 1.0),
                                   0.0,
@@ -844,7 +848,7 @@ impl BorrowingRecordBookPage {
 
 	for _ in 0..(6 - borrowing.len()) {
 	    pos += numeric::Vector2f::new(-30.0, 0.0);
-	    borrowing.push(VerticalText::new("　　　　　　".to_string(),
+	    borrowing.push(VerticalText::new(ctx, "　　　　　　".to_string(),
                                   numeric::Point2f::new(pos.x, pos.y + 100.0),
                                   numeric::Vector2f::new(1.0, 1.0),
                                   0.0,
@@ -865,7 +869,7 @@ impl BorrowingRecordBookPage {
                                                                      t),
                                               Vec::new());
 
-        let borrow_date = VerticalText::new(format!("貸出日 {}", info.borrow_date.to_string()),
+        let borrow_date = VerticalText::new(ctx, format!("貸出日 {}", info.borrow_date.to_string()),
                                             numeric::Point2f::new(100.0, 50.0),
                                             numeric::Vector2f::new(1.0, 1.0),
                                             0.0,
@@ -875,7 +879,7 @@ impl BorrowingRecordBookPage {
                                                                  ggraphics::Color::from_rgba_u32(0x000000ff)));
 	pos.x -= 30.0;
         
-        let return_date = VerticalText::new(format!("返却期限 {}", info.return_date.to_string()),
+        let return_date = VerticalText::new(ctx, format!("返却期限 {}", info.return_date.to_string()),
                                             numeric::Point2f::new(70.0, 50.0),
                                             numeric::Vector2f::new(1.0, 1.0),
                                             0.0,
@@ -900,7 +904,7 @@ impl BorrowingRecordBookPage {
 		     paper_tid: TextureID, game_data: &GameData, t: Clock) -> Self {
         let mut pos = numeric::Point2f::new(rect.w - 40.0, 30.0);
         
-        let borrower = VerticalText::new("借りた人　".to_string(),
+        let borrower = VerticalText::new(ctx, "借りた人　".to_string(),
                                          pos,
                                          numeric::Vector2f::new(1.0, 1.0),
                                          0.0,
@@ -910,7 +914,7 @@ impl BorrowingRecordBookPage {
                                                               ggraphics::Color::from_rgba_u32(0x000000ff)));
 	pos.x -= 30.0;
 	
-        let book_head = VerticalText::new("貸出本".to_string(),
+        let book_head = VerticalText::new(ctx, "貸出本".to_string(),
                                           pos,
                                           numeric::Vector2f::new(1.0, 1.0),
                                           0.0,
@@ -922,7 +926,7 @@ impl BorrowingRecordBookPage {
 
 	for _ in 0..(6 - borrowing.len()) {
 	    pos += numeric::Vector2f::new(-30.0, 0.0);
-	    borrowing.push(VerticalText::new("　　　　　　".to_string(),
+	    borrowing.push(VerticalText::new(ctx, "　　　　　　".to_string(),
                                   numeric::Point2f::new(pos.x, pos.y + 100.0),
                                   numeric::Vector2f::new(1.0, 1.0),
                                   0.0,
@@ -943,7 +947,7 @@ impl BorrowingRecordBookPage {
                                                                      t),
                                               Vec::new());
 
-        let borrow_date = VerticalText::new("貸出日".to_string(),
+        let borrow_date = VerticalText::new(ctx, "貸出日".to_string(),
                                             numeric::Point2f::new(100.0, 50.0),
                                             numeric::Vector2f::new(1.0, 1.0),
                                             0.0,
@@ -953,7 +957,7 @@ impl BorrowingRecordBookPage {
                                                                  ggraphics::Color::from_rgba_u32(0x000000ff)));
 	pos.x -= 30.0;
         
-        let return_date = VerticalText::new("返却期限".to_string(),
+        let return_date = VerticalText::new(ctx, "返却期限".to_string(),
                                             numeric::Point2f::new(70.0, 50.0),
                                             numeric::Vector2f::new(1.0, 1.0),
                                             0.0,
@@ -986,9 +990,9 @@ impl BorrowingRecordBookPage {
 	self.canvas.relative_point(point)
     }
 
-    pub fn replace_borrower_name(&mut self, game_data: &GameData, name: &str) -> &mut Self {
+    pub fn replace_borrower_name(&mut self, ctx: &mut ggez::Context, game_data: &GameData, name: &str) -> &mut Self {
 	let pos = self.borrower.get_position();
-	self.borrower = VerticalText::new(format!("借りた人   {}", name),
+	self.borrower = VerticalText::new(ctx, format!("借りた人   {}", name),
                                           pos,
                                           numeric::Vector2f::new(1.0, 1.0),
                                           0.0,
@@ -1158,7 +1162,7 @@ impl BorrowingRecordBook {
 	if page.borrow_date.get_drawing_area(ctx).contains(rpoint) {
 	    match data {
 		HoldData::Date(date_data) => {
-		    page.borrow_date.replace_text(format!("貸出日 {}", date_data.to_string()));
+		    page.borrow_date.replace_text(ctx, format!("貸出日 {}", date_data.to_string()));
 		    return true;
 		}
 		_ => (),
@@ -1174,7 +1178,7 @@ impl BorrowingRecordBook {
 	if page.borrower.get_drawing_area(ctx).contains(rpoint) {
 	    match data {
 		HoldData::CustomerName(customer_name) => {
-		    page.borrower.replace_text(format!("借りる人 {}", customer_name.to_string()));
+		    page.borrower.replace_text(ctx, format!("借りる人 {}", customer_name.to_string()));
 		    return true;
 		}
 		_ => (),
@@ -1393,7 +1397,7 @@ impl OnDesk for BorrowingRecordBook {
 			    pages: 0,
 			    size: "".to_string(),
 			});
-			page.borrow_book.get_mut(hit_book_index).unwrap().replace_text(name.to_string());
+			page.borrow_book.get_mut(hit_book_index).unwrap().replace_text(ctx, name.to_string());
 			insert_done_flag = true;
 		    }
 		    _ => (),
