@@ -14,8 +14,12 @@ use crate::scene::work_scene::TaskResult;
 use crate::core::{GameData, FontID};
 use crate::object::effect;
 
+use number_to_jk::number_to_jk;
+
 pub struct DrawableTaskResult {
     title_text: EffectableWrap<MovableWrap<VerticalText>>,
+    done_work_text: EffectableWrap<MovableWrap<VerticalText>>,
+    money_text: EffectableWrap<MovableWrap<VerticalText>>,
     background: SimpleObject,
     canvas: SubScreen,
 }
@@ -28,16 +32,44 @@ impl DrawableTaskResult {
 	    game_data.get_font(FontID::JpFude1),
 	    numeric::Vector2f::new(30.0, 30.0),
 	    ggraphics::Color::from_rgba_u32(0x000000ff));
+	let init_crop = numeric::Rect::new(0.0, 0.0, 1.0, 0.0);
+
+	let mut title_text = EffectableWrap::new(
+	    MovableWrap::new(
+		Box::new(VerticalText::new("お仕事結果".to_string(),
+					   numeric::Point2f::new(800.0, 100.0),
+					   numeric::Vector2f::new(1.0, 1.0),
+					   0.0,
+					   0,
+					   font_info)), None, t),
+	    vec![effect::appear_bale_down_from_top(100, t)]);
+	title_text.set_crop(init_crop);
+	
+	let mut done_work_text = EffectableWrap::new(
+	    MovableWrap::new(
+		Box::new(VerticalText::new(format!("お客人数 {}人", number_to_jk(task_result.get_done_works() as u64)),
+					   numeric::Point2f::new(600.0, 100.0),
+					   numeric::Vector2f::new(1.0, 1.0),
+					   0.0,
+					   0,
+					   font_info)), None, t), vec![effect::appear_bale_down_from_top(100, t + 100)]);
+	done_work_text.set_crop(init_crop);
+
+	let mut money_text = EffectableWrap::new(
+	    MovableWrap::new(
+		Box::new(VerticalText::new(format!("収入 {}円", number_to_jk(task_result.get_total_money() as u64)),
+					   numeric::Point2f::new(480.0, 100.0),
+					   numeric::Vector2f::new(1.0, 1.0),
+					   0.0,
+					   0,
+					   font_info)), None, t),
+	    vec![effect::appear_bale_down_from_top(100, t + 200)]);
+	money_text.set_crop(init_crop);
+	
 	DrawableTaskResult {
-	    title_text: EffectableWrap::new(
-		MovableWrap::new(
-		    Box::new(VerticalText::new("お仕事結果".to_string(),
-					       numeric::Point2f::new(500.0, 100.0),
-					       numeric::Vector2f::new(1.0, 1.0),
-					       0.0,
-					       0,
-					       font_info)), None, t),
-		vec![effect::appear_bale_down_from_top(100, t)]),
+	    title_text: title_text,
+	    done_work_text: done_work_text,
+	    money_text: money_text,
 	    background: background,
 	    canvas: SubScreen::new(ctx, rect_pos, 0, ggraphics::Color::from_rgba_u32(0)),
 	}
@@ -51,6 +83,8 @@ impl DrawableComponent for DrawableTaskResult {
 
 	    self.background.draw(ctx)?;
 	    self.title_text.draw(ctx)?;
+	    self.money_text.draw(ctx)?;
+	    self.done_work_text.draw(ctx)?;
 
 	    sub_screen::pop_screen(ctx);
             self.canvas.draw(ctx).unwrap();
@@ -90,5 +124,7 @@ impl TextureObject for DrawableTaskResult {
 impl Effectable for DrawableTaskResult {
     fn effect(&mut self, ctx: &ggez::Context, t: Clock) {
 	self.title_text.effect(ctx, t);
+	self.done_work_text.effect(ctx, t);
+	self.money_text.effect(ctx, t);
     }
 }

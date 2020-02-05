@@ -292,6 +292,12 @@ impl WorkScene {
 	    Box::new(TaskResultScene::new(ctx, game_data, self.task_result.clone())),
 	    WorkSceneStatus::Result);
     }
+
+    fn switch_result_scene_to_task_scene(&mut self, ctx: &mut ggez::Context, game_data: &GameData) {
+	self.sub_scene.switch_scene(
+	    Box::new(TaskScene::new(ctx, game_data)),
+	    WorkSceneStatus::InTask);
+    }
 }
 
 
@@ -326,7 +332,7 @@ impl SceneManager for WorkScene {
                                point: numeric::Point2f) {
 	self.sub_scene.mouse_button_down_event(ctx, game_data, button, point);
     }
-
+    
     fn mouse_button_up_event(&mut self,
                              ctx: &mut ggez::Context,
                              game_data: &GameData,
@@ -346,7 +352,7 @@ impl SceneManager for WorkScene {
     }
     
     fn post_process(&mut self, ctx: &mut ggez::Context, game_data: &GameData) -> SceneTransition {
-	self.sub_scene.post_process(ctx, game_data);
+	let transition_status = self.sub_scene.post_process(ctx, game_data);
 
 	match self.sub_scene.get_status() {
 	    WorkSceneStatus::InTask => {
@@ -356,6 +362,9 @@ impl SceneManager for WorkScene {
 		}
 	    },
 	    WorkSceneStatus::Result => {
+		if transition_status == SceneTransition::Transition {
+		    self.switch_result_scene_to_task_scene(ctx, game_data);
+		}
 	    },
 	}
 

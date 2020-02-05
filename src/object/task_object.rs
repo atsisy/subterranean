@@ -986,7 +986,7 @@ impl BorrowingRecordBookPage {
 	self.canvas.relative_point(point)
     }
 
-    pub fn replace_borrower_name(&mut self, ctx: &mut ggez::Context, game_data: &GameData, name: &str) -> &mut Self {
+    pub fn replace_borrower_name(&mut self, game_data: &GameData, name: &str) -> &mut Self {
 	let pos = self.borrower.get_position();
 	self.borrower = VerticalText::new(format!("借りた人   {}", name),
                                           pos,

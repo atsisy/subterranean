@@ -15,7 +15,7 @@ use crate::core::{MouseInformation, MouseActionRecord, GameData, TextureID};
 use crate::object::task_object::*;
 
 use crate::object::task_result_object::*;
-    
+
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum TaskSceneStatus {
     Init,
@@ -113,12 +113,12 @@ impl TaskScene {
     }
 
     fn start_copying_customer_event(&mut self,
-				      game_data: &GameData) {
+				    game_data: &GameData) {
 	self.insert_customer_event(
 	    CustomerRequest::Copying(task_object::CopyingRequestInformation::new_random(
-			game_data,
-			GensoDate::new(12, 12, 12),
-			GensoDate::new(12, 12, 12))), 100);
+		game_data,
+		GensoDate::new(12, 12, 12),
+		GensoDate::new(12, 12, 12))), 100);
     }
     
     fn start_customer_event(&mut self,
@@ -233,8 +233,8 @@ impl SceneManager for TaskScene {
 
 	if (self.status == TaskSceneStatus::CustomerEvent || self.status == TaskSceneStatus::Init) &&
 	    self.task_table.get_remaining_customer_object_number() == 0 {
-	    self.status = TaskSceneStatus::CustomerFree;
-	}
+		self.status = TaskSceneStatus::CustomerFree;
+	    }
 	
 	if self.status == TaskSceneStatus::CustomerFree {
 	    self.start_customer_event(game_data);
@@ -271,8 +271,8 @@ pub struct TaskResultScene {
     clock: Clock,
     mouse_info: MouseInformation,
     event_list: SceneEventList<Self>,
-    task_result: TaskResult,
     drawable_task_result: DrawableTaskResult,
+    scene_transition_status: SceneTransition,
 }
 
 impl TaskResultScene {
@@ -295,7 +295,7 @@ impl TaskResultScene {
 							  numeric::Rect::new(0.0, 0.0, 1000.0, 700.0),
 							  task_result.clone(),
 							  SimpleObject::new(background_object, Vec::new()), 0),
-	    task_result: task_result,
+	    scene_transition_status: SceneTransition::Keep,
         }
     }
 
@@ -326,8 +326,7 @@ impl SceneManager for TaskResultScene {
         match vkey {
             tdev::VirtualKey::Action1 => {
                 println!("Action1 down!");
-		self.event_list.add_event(Box::new(|_, _, _| println!("aaaaaaaaaa") ), self.get_current_clock() + 2);
-		self.event_list.add_event(Box::new(|_, _, _| println!("bbbbbbbbbb") ), self.get_current_clock() + 500);
+		self.scene_transition_status = SceneTransition::Transition;
             },
             _ => (),
         }
@@ -346,18 +345,18 @@ impl SceneManager for TaskResultScene {
     }
 
     fn mouse_motion_event(&mut self,
-                          ctx: &mut ggez::Context,
-                          game_data: &GameData,
+                          _: &mut ggez::Context,
+                          _: &GameData,
                           point: numeric::Point2f,
-                          offset: numeric::Vector2f) {
+                          _: numeric::Vector2f) {
         if self.mouse_info.is_dragging(MouseButton::Left) {
             self.mouse_info.set_last_dragged(MouseButton::Left, point, self.get_current_clock());
         }
     }
 
     fn mouse_button_down_event(&mut self,
-                               ctx: &mut ggez::Context,
-                               game_data: &GameData,
+                               _: &mut ggez::Context,
+                               _: &GameData,
                                button: MouseButton,
                                point: numeric::Point2f) {	
         self.mouse_info.set_last_clicked(button, point, self.get_current_clock());
@@ -368,8 +367,8 @@ impl SceneManager for TaskResultScene {
     }
 
     fn mouse_button_up_event(&mut self,
-                             ctx: &mut ggez::Context,
-                             game_data: &GameData,
+                             _: &mut ggez::Context,
+                             _: &GameData,
                              button: MouseButton,
                              point: numeric::Point2f) {
         self.mouse_info.update_dragging(button, false);
@@ -389,7 +388,7 @@ impl SceneManager for TaskResultScene {
     
     fn post_process(&mut self, _ctx: &mut ggez::Context, _: &GameData) -> SceneTransition {
         self.update_current_clock();
-        SceneTransition::Keep
+	self.scene_transition_status
     }
     
     fn transition(&self) -> SceneID {

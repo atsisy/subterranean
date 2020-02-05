@@ -11,7 +11,7 @@ use tgraphics::{DrawableComponent, DrawableObject};
 
 use crate::core::GameData;
 
-#[derive(Debug, Eq, PartialEq)]
+#[derive(Debug, Eq, PartialEq, Clone, Copy)]
 pub enum SceneTransition {
     Keep,
     Reset,

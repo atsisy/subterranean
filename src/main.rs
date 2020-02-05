@@ -36,7 +36,7 @@ pub fn main() {
         )
         .build()
         .unwrap();
-
+    
     let game_data: GameData = GameData::new(ctx, "game_data.toml".to_owned());
     
     {

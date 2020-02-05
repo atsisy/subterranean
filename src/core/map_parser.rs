@@ -8,7 +8,6 @@ use ggez::graphics as ggraphics;
 
 use torifune::graphics as tg;
 use torifune::core::*;
-use torifune::graphics::*;
 use torifune::graphics::object::*;
 
 use collision::prelude::*;
