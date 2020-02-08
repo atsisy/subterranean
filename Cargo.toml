@@ -7,6 +7,7 @@ edition = "2018"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+ggez = "0.5.1"
 toml = "0.5.5"
 collision = "0.20.1"
 serde = { version = "1.0", features = ["derive"] }
@@ -16,10 +17,7 @@ num = "*"
 number_to_jk = { git = "https://github.com/atsisy/number_to_jk.git" }
 
 [profile.dev]
-opt-level = 3
-
-[dependencies.ggez]
-path = "../ggez"
+opt-level = 2
 
 [dependencies.torifune]
 path = "../torifune"
