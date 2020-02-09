@@ -16,6 +16,20 @@ pub struct ScenarioScene {
     clock: Clock,
 }
 
+impl ScenarioScene {
+    pub fn new(ctx: &mut ggez::Context, game_data: &GameData) -> Self {
+        let scenario = ScenarioEvent::new(ctx, numeric::Rect::new(100.0, 520.0, 1200.0, 280.0),
+                                          "./resources/scenario_parsing_test.toml",
+                                          game_data, 0);
+        
+        ScenarioScene {
+            simulation_status: sui::SimulationStatus::new(ctx, numeric::Rect::new(0.0, 0.0, 1366.0, 180.0), game_data),
+            scenario_event: scenario,
+            clock: 0,
+        }
+    }
+}
+
 impl SceneManager for ScenarioScene {
     
     fn key_down_event(&mut self,
@@ -70,16 +84,3 @@ impl SceneManager for ScenarioScene {
     
 }
 
-impl ScenarioScene {
-    pub fn new(ctx: &mut ggez::Context, game_data: &GameData) -> Self {
-        let scenario = ScenarioEvent::new(ctx, numeric::Rect::new(100.0, 520.0, 1200.0, 280.0),
-                                          "./resources/scenario_parsing_test.toml",
-                                          game_data, 0);
-        
-        ScenarioScene {
-            simulation_status: sui::SimulationStatus::new(ctx, numeric::Rect::new(0.0, 0.0, 1366.0, 180.0), game_data),
-            scenario_event: scenario,
-            clock: 0,
-        }
-    }
-}

@@ -18,7 +18,7 @@ pub fn main() {
     };
 
     let (ref mut ctx, ref mut event_loop) = ContextBuilder::new("subterranean", "akichi")
-        .window_setup(conf::WindowSetup::default().title("subterranean"))
+        .window_setup(conf::WindowSetup::default().title("suzu").samples(ggez::conf::NumSamples::One))
         .add_resource_path(resource_dir)
         .window_mode(
             WindowMode {

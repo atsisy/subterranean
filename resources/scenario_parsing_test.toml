@@ -1,7 +1,7 @@
 using-tachie = ["LotusPink", "LotusBlue"]
 
 [default-text-attribute]
-fpc = 1.0
+fpc = 0.2
 font_scale = 28.0
 color = 0x000000ff
 

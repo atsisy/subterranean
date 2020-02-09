@@ -1,3 +1,5 @@
+use std::collections::VecDeque;
+
 use torifune::graphics::object::*;
 use torifune::graphics::*;
 use torifune::graphics::object::sub_screen::SubScreen;
@@ -273,64 +275,101 @@ impl Scenario {
 }
 
 pub struct TextBox {
-    text: Vec<SimpleText>,
+    box_lines: usize,
+    buffered_text: VecDeque<SimpleText>,
+    text: VecDeque<SimpleText>,
     background: SimpleObject,
     canvas: SubScreen,
 }
 
 impl TextBox {
     pub fn new(ctx: &mut ggez::Context, rect: numeric::Rect,
-               mut background: SimpleObject, _t: Clock) -> Self {
+               mut background: SimpleObject, box_lines: usize, _t: Clock) -> Self {
         background.fit_scale(ctx, numeric::Vector2f::new(rect.w, rect.h));
         background.set_position(numeric::Point2f::new(0.0, 0.0));
         TextBox {
-            text: Vec::new(),
+	    box_lines: box_lines,
+	    buffered_text: VecDeque::new(),
+            text: VecDeque::new(),
             background: background,
-            canvas: SubScreen::new(ctx, rect, 0, ggraphics::Color::new(0.0, 0.0, 0.0, 0.0)),
+            canvas: SubScreen::new(ctx, rect, 0, ggraphics::Color::from_rgba_u32(0xff00ffff)),
         }
     }
 
-    pub fn text_from_segment(segment: &ScenarioTextSegment, length: usize, pos: numeric::Point2f) -> SimpleText {
-        SimpleText::new(tobj::MovableText::new(segment.slice(length).to_string(),
-                                               pos,
-                                               numeric::Vector2f::new(1.0, 1.0),
-                                               0.0,
-                                               0,
-                                               move_fn::halt(pos),
-                                               segment.attribute.font_info, 0),
-                        Vec::new())
+    // ScenarioTextSegmentを改行で分割しVec<SimpleText>に変換する
+    pub fn text_from_segment(segment: &ScenarioTextSegment, length: usize) -> Vec<SimpleText> {
+	let mut text_lines = Vec::new();
+	
+	for line in segment.slice(length).lines() {
+	    text_lines.push(SimpleText::new(tobj::MovableText::new(line.to_string(),
+								   numeric::Point2f::new(0.0, 0.0),
+								   numeric::Vector2f::new(1.0, 1.0),
+								   0.0,
+								   0,
+								   None,
+								   segment.attribute.font_info, 0),
+					    Vec::new()));
+	}
+
+	text_lines
     }
 
     pub fn update_text(&mut self, scenario: &ScenarioText) -> usize {
+	// 表示するテキストバッファをクリア。これで、新しくテキストを詰めていく
         self.text.clear();
+	self.buffered_text.clear();
+
+	// 表示する文字数を取得。この値を減算していき文字数チェックを行う
         let mut remain = scenario.current_iterator();
 
-        let mut pos = numeric::Point2f::new(50.0, 50.0);
+	// この関数の返り値は、テキスト化したセグメントの数なので、カウンタを初期化する
         let mut seg_count: usize = 0;
-        
+
         for seg in scenario.seq_text_iter() {
+	    // このテキストセグメントの文字数を取得
             let seg_len = seg.str_len();
-            
+
+	    // セグメントの切り出す文字数を計算
             let slice_len = if seg_len < remain {
                 seg_len
             } else {
                 remain
             };
-            
-            self.text.push(Self::text_from_segment(seg, slice_len, pos));
 
+	    // 行ごとにSimleTextに変換していく
+	    let mut index = 0;
+	    for mut line in Self::text_from_segment(seg, slice_len) {
+		line.move_diff(numeric::Vector2f::new(0.0, seg.get_attribute().font_info.scale.y * index as f32));
+		self.text.push_back(line);
+		index += 1;
+	    }
+
+	    // テキストボックスの行数制限
+	    if self.text.len() > self.box_lines {
+		// オーバーしたら、buffered_textに追加
+		self.buffered_text.push_back(self.text.pop_front().unwrap());
+	    }
+
+	    // 残りの文字数が0になったら、break
             remain -= slice_len;
             if remain as usize <= 0 {
                 break;
             }
-            seg_count += 1;
 
-            pos.y += (seg.count_indent() * seg.get_attribute().font_info.scale.x as usize) as f32;
-            pos.x = (seg.last_line_length() * seg.get_attribute().font_info.scale.y as usize) as f32 + 50.0;
+            seg_count += 1;
         }
 
+	// ボックスに入ったSimpleTextの位置を設定
+	let mut pos = numeric::Point2f::new(50.0, 50.0);
+	for line in &mut self.text {
+	    line.set_position(pos);
+	    pos.y += line.ref_wrapped_object_mut().get_font_scale().y;
+	}
+
+	// 処理したセグメントの数を返す
         seg_count
     }
+
 }
 
 impl DrawableComponent for TextBox {
@@ -393,12 +432,12 @@ impl ScenarioEvent {
             scenario: Scenario::new(file_path, game_data),
             text_box: TextBox::new(
                 ctx,
-                numeric::Rect::new(rect.x + 10.0, rect.y + 10.0, rect.w - 20.0, rect.h - 20.0),
-                background, t),
-            canvas: SubScreen::new(ctx, rect, 0, ggraphics::Color::new(0.0, 0.0, 0.0, 0.0)),
+                numeric::Rect::new(10.0, 10.0, rect.w - 20.0, rect.h - 20.0),
+                background, 3, t),
+            canvas: SubScreen::new(ctx, rect, 0, ggraphics::Color::from_rgba_u32(0x00)),
         }
     }
-
+    
     pub fn update_text(&mut self) {
         self.scenario.current_page_mut().update_iterator();
         let current_segment = self.text_box.update_text(&self.scenario.current_page());
@@ -419,7 +458,6 @@ impl DrawableComponent for ScenarioEvent {
             
 	    sub_screen::pop_screen(ctx);
             self.canvas.draw(ctx).unwrap();
-            
         }
         Ok(())
     }
