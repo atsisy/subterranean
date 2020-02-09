@@ -1,8 +1,11 @@
+use ggez::graphics as ggraphics;
+
 use torifune::device as tdev;
 use torifune::core::Clock;
 use torifune::numeric;
+use torifune::graphics::object::*;
 
-use crate::core::GameData;
+use crate::core::{GameData, FontID};
 
 use crate::object::scenario::*;
 use crate::object::simulation_ui as sui;
@@ -42,16 +45,30 @@ impl SceneManager for ScenarioScene {
         match vkey {
             tdev::VirtualKey::Action1 => {
                 println!("Action1 down!");
+		if let Some(choice) = &mut self.choice_box {
+		    self.scenario_event.make_scenario_event();
+		}
+		self.choice_box = None;
                 self.scenario_event.next_page();
             },
 	    tdev::VirtualKey::Right => {
 		if let Some(choice) = &mut self.choice_box {
 		    choice.move_right();
+		    
+		    self.scenario_event.set_fixed_text(choice.get_selecting_str(),
+						       FontInformation::new(game_data.get_font(FontID::JpFude1),
+									    numeric::Vector2f::new(32.0, 32.0),
+									    ggraphics::Color::from_rgba_u32(0x000000ff)));
 		}
 	    },
 	    tdev::VirtualKey::Left => {
 		if let Some(choice) = &mut self.choice_box {
 		    choice.move_left();
+		    
+		    self.scenario_event.set_fixed_text(choice.get_selecting_str(),
+						       FontInformation::new(game_data.get_font(FontID::JpFude1),
+									    numeric::Vector2f::new(32.0, 32.0),
+									    ggraphics::Color::from_rgba_u32(0x000000ff)));
 		}
 	    },
 	    tdev::VirtualKey::Action2 => {
@@ -59,6 +76,10 @@ impl SceneManager for ScenarioScene {
 		self.choice_box = Some(ChoiceBox::new(
 		    ctx, numeric::Rect::new(110.0, 600.0, 1200.0, 150.0),
 		    game_data, vec!["選択肢1".to_string(), "選択肢2".to_string(), "選択肢3".to_string()]));
+		self.scenario_event.set_fixed_text(self.choice_box.as_ref().unwrap().get_selecting_str(),
+						   FontInformation::new(game_data.get_font(FontID::JpFude1),
+									numeric::Vector2f::new(32.0, 32.0),
+									ggraphics::Color::from_rgba_u32(0x000000ff)));
 	    }
             _ => (),
         }

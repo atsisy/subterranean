@@ -317,7 +317,7 @@ impl TextBox {
 	text_lines
     }
 
-    pub fn update_text(&mut self, scenario: &ScenarioText) -> usize {
+    pub fn update_scenario_text(&mut self, scenario: &ScenarioText) -> usize {
 	// 表示するテキストバッファをクリア。これで、新しくテキストを詰めていく
         self.text.clear();
 	self.buffered_text.clear();
@@ -368,11 +368,23 @@ impl TextBox {
 	    line.set_position(pos);
 	    pos.y += line.ref_wrapped_object_mut().get_font_scale().y;
 	}
-
+	
 	// 処理したセグメントの数を返す
         seg_count
     }
 
+    pub fn set_fixed_text(&mut self, text: &str, font_info: FontInformation) {
+	self.text.clear();
+	self.text.push_back(SimpleText::new(
+	    tobj::MovableText::new(text.to_string(),
+				   numeric::Point2f::new(50.0, 50.0),
+				   numeric::Vector2f::new(1.0, 1.0),
+				   0.0,
+				   0,
+				   None,
+				   font_info, 0),
+	    Vec::new()));
+    }
 }
 
 impl DrawableComponent for TextBox {
@@ -414,10 +426,17 @@ impl DrawableComponent for TextBox {
     }
 }
 
+#[derive(Clone, Copy)]
+pub enum ScenarioEventStatus {
+    Scenario = 0,
+    Choice,
+}
+
 pub struct ScenarioEvent {
     scenario: Scenario,
     text_box: TextBox,
     canvas: SubScreen,
+    status: ScenarioEventStatus,
 }
 
 impl ScenarioEvent {
@@ -438,13 +457,28 @@ impl ScenarioEvent {
                 numeric::Rect::new(10.0, 10.0, rect.w - 20.0, rect.h - 20.0),
                 background, 3, t),
             canvas: SubScreen::new(ctx, rect, 0, ggraphics::Color::from_rgba_u32(0x00)),
+	    status: ScenarioEventStatus::Scenario,
         }
     }
     
     pub fn update_text(&mut self) {
-        self.scenario.current_page_mut().update_iterator();
-        let current_segment = self.text_box.update_text(&self.scenario.current_page());
-        self.scenario.current_page_mut().set_current_segment(current_segment);
+	match self.status {
+	    ScenarioEventStatus::Scenario => {
+		self.scenario.current_page_mut().update_iterator();
+		let current_segment = self.text_box.update_scenario_text(&self.scenario.current_page());
+		self.scenario.current_page_mut().set_current_segment(current_segment);
+	    },
+	    ScenarioEventStatus::Choice => (),
+	}
+    }
+
+    pub fn set_fixed_text(&mut self, text: &str, font_info: FontInformation) {
+	self.text_box.set_fixed_text(text, font_info);
+	self.status = ScenarioEventStatus::Choice;
+    }
+
+    pub fn make_scenario_event(&mut self) {
+	self.status = ScenarioEventStatus::Scenario;
     }
 
     pub fn next_page(&mut self) {
@@ -564,9 +598,16 @@ impl ChoiceBox {
     
     pub fn new(ctx: &mut ggez::Context, pos_rect: numeric::Rect,
 	       game_data: &GameData, choice_text: Vec<String>) -> Self {
+	let mut panels = Self::generate_choice_panel(ctx, game_data, choice_text.len(),
+						     numeric::Vector2f::new(10.0, 10.0), 10.0);
+
+	for panel in &mut panels {
+	    panel.set_color(ggraphics::Color::from_rgba_u32(0xaaaaaaff));
+	}
+	panels.get_mut(0).unwrap().set_color(ggraphics::Color::from_rgba_u32(0xffffffff));
+	
 	ChoiceBox {
-	    panels: Self::generate_choice_panel(ctx, game_data, choice_text.len(),
-						numeric::Vector2f::new(10.0, 10.0), 10.0),
+	    panels: panels,
 	    choice_text: choice_text,
 	    selecting: 0,
 	    canvas: SubScreen::new(ctx, pos_rect, 0, ggraphics::Color::from_rgba_u32(0)),
@@ -583,13 +624,17 @@ impl ChoiceBox {
 
     pub fn move_right(&mut self) {
 	if self.choice_text.len() > (self.selecting + 1) {
+	    self.panels.get_mut(self.selecting).unwrap().set_color(ggraphics::Color::from_rgba_u32(0xaaaaaaff));
 	    self.selecting += 1;
+	    self.panels.get_mut(self.selecting).unwrap().set_color(ggraphics::Color::from_rgba_u32(0xffffffff));
 	}
     }
 
     pub fn move_left(&mut self) {
 	if self.selecting > 0 {
+	    self.panels.get_mut(self.selecting).unwrap().set_color(ggraphics::Color::from_rgba_u32(0xaaaaaaff));
 	    self.selecting -= 1;
+	    self.panels.get_mut(self.selecting).unwrap().set_color(ggraphics::Color::from_rgba_u32(0xffffffff));
 	}
     }
 }
