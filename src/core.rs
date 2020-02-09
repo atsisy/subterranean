@@ -58,6 +58,11 @@ pub enum TextureID {
     Wood1,
     WafuTexture1,
     Chobo1,
+    ChoicePanel1,
+    ChoicePanel2,
+    ChoicePanel3,
+    ChoicePanel4,
+    ChoicePanel5,
     JunkoTachieDefault,
     Unknown,
 }
@@ -95,7 +100,7 @@ impl FromStr for TextureID {
 }
 
 impl TextureID {
-    fn from_u32(n: u32) -> Option<Self> {
+    pub fn from_u32(n: u32) -> Option<Self> {
         match n {
             0 => Some(Self::Ghost1),
             1 => Some(Self::LotusPink),
@@ -113,7 +118,12 @@ impl TextureID {
             13 => Some(Self::Wood1),
 	    14 => Some(Self::WafuTexture1),
 	    15 => Some(Self::Chobo1),
-	    16 => Some(Self::JunkoTachieDefault),
+	    16 => Some(Self::ChoicePanel1),
+	    17 => Some(Self::ChoicePanel2),
+	    18 => Some(Self::ChoicePanel3),
+	    19 => Some(Self::ChoicePanel4),
+	    20 => Some(Self::ChoicePanel5),
+	    21 => Some(Self::JunkoTachieDefault),
             _ => None
         }
     }

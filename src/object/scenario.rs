@@ -6,6 +6,9 @@ use torifune::graphics::object::sub_screen::SubScreen;
 use torifune::graphics::object::sub_screen;
 use torifune::numeric;
 
+use torifune::impl_texture_object_for_wrapped;
+use torifune::impl_drawable_object_for_wrapped;
+
 use std::str::FromStr;
 use crate::core::{TextureID, FontID, GameData};
 use super::*;
@@ -456,6 +459,150 @@ impl DrawableComponent for ScenarioEvent {
 
             self.text_box.draw(ctx)?;
             
+	    sub_screen::pop_screen(ctx);
+            self.canvas.draw(ctx).unwrap();
+        }
+        Ok(())
+    }
+
+    fn hide(&mut self) {
+        self.canvas.hide()
+    }
+
+    fn appear(&mut self) {
+        self.canvas.appear()
+    }
+
+    fn is_visible(&self) -> bool {
+        self.canvas.is_visible()
+    }
+
+    fn set_drawing_depth(&mut self, depth: i8) {
+        self.canvas.set_drawing_depth(depth)
+    }
+
+    fn get_drawing_depth(&self) -> i8 {
+        self.canvas.get_drawing_depth()
+    }
+}
+
+struct ChoicePanel {
+    panel: UniTexture,
+}
+
+impl ChoicePanel {
+    pub fn new(panel: UniTexture) -> Self {
+	ChoicePanel {
+	    panel: panel,
+	}
+    }
+}
+
+impl DrawableComponent for ChoicePanel {
+    fn draw(&mut self, ctx: &mut ggez::Context) -> ggez::GameResult<()> {
+	self.panel.draw(ctx)
+    }
+
+    fn hide(&mut self) {
+	self.panel.hide();
+    }
+
+    fn appear(&mut self) {
+	self.panel.appear();
+    }
+
+    fn is_visible(&self) -> bool {
+	self.panel.is_visible()
+    }
+
+    fn set_drawing_depth(&mut self, depth: i8) {
+	self.panel.set_drawing_depth(depth)
+    }
+
+    fn get_drawing_depth(&self) -> i8 {
+	self.panel.get_drawing_depth()
+    }
+}
+
+impl DrawableObject for ChoicePanel {
+    impl_drawable_object_for_wrapped!{panel}
+}
+
+impl TextureObject for ChoicePanel {
+    impl_texture_object_for_wrapped!{panel}
+}
+
+pub struct ChoiceBox {
+    choice_text: Vec<String>,
+    panels: Vec<ChoicePanel>,
+    selecting: usize,
+    canvas: SubScreen,
+}
+
+impl ChoiceBox {
+    fn generate_choice_panel(ctx: &mut ggez::Context, game_data: &GameData,
+			     size: usize, left_top: numeric::Vector2f, align: f32) -> Vec<ChoicePanel> {
+	let mut choice_panels = Vec::new();
+	let mut panel = TextureID::ChoicePanel1 as u32;
+	let mut pos: numeric::Point2f = left_top.into();
+
+	for _ in 0..size {
+	    choice_panels.push(ChoicePanel::new(
+		UniTexture::new(
+		    game_data.ref_texture(TextureID::from_u32(panel).unwrap()),
+		    pos,
+		    numeric::Vector2f::new(1.0, 1.0),
+		    0.0,
+		    0)));
+	    pos.x += choice_panels.last().unwrap().get_drawing_size(ctx).x;
+	    pos.x += align;
+	    panel += 1;
+	}
+
+	choice_panels
+    }
+    
+    pub fn new(ctx: &mut ggez::Context, pos_rect: numeric::Rect,
+	       game_data: &GameData, choice_text: Vec<String>) -> Self {
+	ChoiceBox {
+	    panels: Self::generate_choice_panel(ctx, game_data, choice_text.len(),
+						numeric::Vector2f::new(10.0, 10.0), 10.0),
+	    choice_text: choice_text,
+	    selecting: 0,
+	    canvas: SubScreen::new(ctx, pos_rect, 0, ggraphics::Color::from_rgba_u32(0)),
+	}
+    }
+
+    pub fn get_selecting_index(&self) -> usize {
+	self.selecting
+    }
+
+    pub fn get_selecting_str(&self) -> &str {
+	self.choice_text.get(self.get_selecting_index()).as_ref().unwrap()
+    }
+
+    pub fn move_right(&mut self) {
+	if self.choice_text.len() > (self.selecting + 1) {
+	    self.selecting += 1;
+	}
+    }
+
+    pub fn move_left(&mut self) {
+	if self.selecting > 0 {
+	    self.selecting -= 1;
+	}
+    }
+}
+
+impl DrawableComponent for ChoiceBox {
+    fn draw(&mut self, ctx: &mut ggez::Context) -> ggez::GameResult<()> {
+	if self.is_visible() {
+	    sub_screen::stack_screen(ctx, &self.canvas);
+
+	    for panel in &mut self.panels {
+		panel.draw(ctx)?;
+	    }
+
 	    sub_screen::pop_screen(ctx);
             self.canvas.draw(ctx).unwrap();
         }

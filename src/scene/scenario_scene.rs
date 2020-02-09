@@ -6,12 +6,14 @@ use crate::core::GameData;
 
 use crate::object::scenario::*;
 use crate::object::simulation_ui as sui;
+use crate::object::scenario::ChoiceBox;
 use torifune::graphics::*;
 
 use super::*;
 
 pub struct ScenarioScene {
     scenario_event: ScenarioEvent,
+    choice_box: Option<ChoiceBox>,
     simulation_status: sui::SimulationStatus,
     clock: Clock,
 }
@@ -24,6 +26,7 @@ impl ScenarioScene {
         
         ScenarioScene {
             simulation_status: sui::SimulationStatus::new(ctx, numeric::Rect::new(0.0, 0.0, 1366.0, 180.0), game_data),
+	    choice_box: None,
             scenario_event: scenario,
             clock: 0,
         }
@@ -33,14 +36,30 @@ impl ScenarioScene {
 impl SceneManager for ScenarioScene {
     
     fn key_down_event(&mut self,
-                      _ctx: &mut ggez::Context,
-                      _game_data: &GameData,
+                      ctx: &mut ggez::Context,
+                      game_data: &GameData,
                       vkey: tdev::VirtualKey) {
         match vkey {
             tdev::VirtualKey::Action1 => {
                 println!("Action1 down!");
                 self.scenario_event.next_page();
             },
+	    tdev::VirtualKey::Right => {
+		if let Some(choice) = &mut self.choice_box {
+		    choice.move_right();
+		}
+	    },
+	    tdev::VirtualKey::Left => {
+		if let Some(choice) = &mut self.choice_box {
+		    choice.move_left();
+		}
+	    },
+	    tdev::VirtualKey::Action2 => {
+		println!("choice box is appearing");
+		self.choice_box = Some(ChoiceBox::new(
+		    ctx, numeric::Rect::new(110.0, 600.0, 1200.0, 150.0),
+		    game_data, vec!["選択肢1".to_string(), "選択肢2".to_string(), "選択肢3".to_string()]));
+	    }
             _ => (),
         }
     }
@@ -62,6 +81,11 @@ impl SceneManager for ScenarioScene {
     
     fn drawing_process(&mut self, ctx: &mut ggez::Context) {
         self.scenario_event.draw(ctx).unwrap();
+
+	if let Some(choice_box) = &mut self.choice_box {
+	    choice_box.draw(ctx).unwrap();
+	}
+	
         self.simulation_status.draw(ctx).unwrap();
     }
     
