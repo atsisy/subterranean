@@ -1,3 +1,4 @@
+
 use ggez::graphics as ggraphics;
 
 use torifune::device as tdev;
@@ -45,11 +46,12 @@ impl SceneManager for ScenarioScene {
         match vkey {
             tdev::VirtualKey::Action1 => {
                 println!("Action1 down!");
-		if let Some(choice) = &mut self.choice_box {
+		if self.choice_box.is_some() {
 		    self.scenario_event.make_scenario_event();
 		}
 		self.choice_box = None;
                 self.scenario_event.next_page();
+		self.scenario_event.go_next_line();
             },
 	    tdev::VirtualKey::Right => {
 		if let Some(choice) = &mut self.choice_box {

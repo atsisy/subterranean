@@ -13,23 +13,13 @@ use std::str::FromStr;
 use crate::core::{TextureID, FontID, GameData};
 use super::*;
 
-pub enum ScenarioID {
-    Test1,
-}
-
-impl FromStr for ScenarioID {
-    type Err = ();
-    fn from_str(s: &str) -> Result<Self, ()> {
-        match s {
-            "Test1" => Ok(Self::Test1),
-            _ => Err(())
-        }
-    }
-}
+pub type ScenarioSegmentID = i32;
 
 pub struct ScenarioTextAttribute {
     pub fpc: f32,
     pub font_info: FontInformation,
+    pub this_segment_id: ScenarioSegmentID,
+    pub next_segment_id: ScenarioSegmentID,
 }
 
 pub struct ScenarioTextSegment {
@@ -38,10 +28,15 @@ pub struct ScenarioTextSegment {
 }
 
 impl ScenarioTextSegment {
-    pub fn new(text: &str, fpc: f32, font_info: FontInformation) -> Self {
+    pub fn new(text: &str, fpc: f32, this_segment_id: ScenarioSegmentID, next_segment_id: ScenarioSegmentID, font_info: FontInformation) -> Self {
         ScenarioTextSegment {
             text: text.to_string(),
-            attribute: ScenarioTextAttribute { fpc: fpc, font_info: font_info },
+            attribute: ScenarioTextAttribute {
+		fpc: fpc,
+		font_info: font_info,
+		this_segment_id: this_segment_id,
+		next_segment_id: next_segment_id
+	    },
         }
     }
 
@@ -65,13 +60,29 @@ impl ScenarioTextSegment {
         } else {
             default.font_info.color
         };
+
+	let this_segment_id = if let Some(this_segment_id) = obj.get("id") {
+	    this_segment_id.as_integer().unwrap() as ScenarioSegmentID
+        } else {
+	    default.this_segment_id
+        };
+
+	let next_segment_id = if let Some(next_segment_id) = obj.get("next-id") {
+	    next_segment_id.as_integer().unwrap() as ScenarioSegmentID
+        } else {
+	    this_segment_id
+        };
         
         ScenarioTextSegment {
             text: text.unwrap().as_str().unwrap().to_string(),
-            attribute: ScenarioTextAttribute { fpc: fpc,
-                                               font_info: FontInformation::new(game_data.get_font(FontID::DEFAULT),
-                                                                               numeric::Vector2f::new(font_scale, font_scale),
-                                                                               color) },
+            attribute: ScenarioTextAttribute {
+		fpc: fpc,
+                font_info: FontInformation::new(game_data.get_font(FontID::DEFAULT),
+                                                numeric::Vector2f::new(font_scale, font_scale),
+                                                color),
+		this_segment_id: this_segment_id,
+		next_segment_id: next_segment_id,
+	    },
         }
     }
     
@@ -99,7 +110,7 @@ impl ScenarioTextSegment {
             }
             length += 1
         }
-
+	
         length
     }
 
@@ -199,9 +210,49 @@ impl ScenarioText {
     }
 }
 
+pub struct ChoicePatternData {
+    text: Vec<String>,
+    jump_scenario_id: Vec<ScenarioSegmentID>,
+}
+
+impl ChoicePatternData {
+    pub fn new(choice_text: Vec<String>, jump_scenario_id: Vec<ScenarioSegmentID>) -> Self {
+	ChoicePatternData {
+	    text: choice_text,
+	    jump_scenario_id: jump_scenario_id,
+	}
+    }
+
+    pub fn from_toml_object(obj: &toml::value::Table, game_data: &GameData) -> Self {
+	let choice_pattern_array = obj.get("choice-pattern").unwrap()
+	    .as_array()
+	    .unwrap()
+	    .iter()
+	    .map(|toml_value| toml_value.as_str().unwrap().to_string())
+	    .collect();
+
+	let jump_scenario_array = obj.get("jump-scenario-id").unwrap()
+	    .as_array()
+	    .unwrap()
+	    .iter()
+	    .map(|toml_value| toml_value.as_integer().unwrap() as ScenarioSegmentID)
+	    .collect();
+	
+	ChoicePatternData {
+	    text: choice_pattern_array,
+	    jump_scenario_id: jump_scenario_array,
+	}
+    }
+}
+
+pub enum ScenarioElement {
+    Text(ScenarioText),
+    ChoiceSwitch(ChoicePatternData),
+}
+
 pub struct Scenario {
     tachie: Vec<SimpleObject>,
-    scenario: Vec<ScenarioText>,
+    scenario: Vec<ScenarioElement>,
     page: usize,
 }
 
@@ -224,14 +275,13 @@ impl Scenario {
             font_info: FontInformation::new(game_data.get_font(FontID::DEFAULT),
                                             numeric::Vector2f::new(default_font_scale, default_font_scale),
                                             ggraphics::Color::from_rgba_u32(toml_default_attribute["color"].as_integer().unwrap() as u32)),
+	    this_segment_id: -1,
+	    next_segment_id: -1,
         };
         
         let array = root["scenario-group"].as_array().unwrap();
-        scenario.push(ScenarioText::new(array, game_data, &default_attribute));
-        // for elem in array {
-        //     let table = elem.as_table().unwrap();
-        //     scenario.push(ScenarioText::new(elem.as_array().unwrap(), game_data));
-        // }
+        scenario.push(ScenarioElement::Text(ScenarioText::new(array, game_data, &default_attribute)));
+
 
         let tachie_array = root["using-tachie"].as_array().unwrap();
         for elem in tachie_array {
@@ -265,22 +315,32 @@ impl Scenario {
     }
 
     pub fn update_current_page(&mut self) {
-        self.current_page_mut().update_iterator();
-    }
-    
-    pub fn current_page(&self) -> &ScenarioText {
-        &self.scenario.get(self.page).unwrap()
+	match self.current_page_mut() {
+	    ScenarioElement::Text(scenario_text) => {
+		scenario_text.update_iterator();
+	    },
+	    _ => (),
+	}
     }
 
-    pub fn current_page_mut(&mut self) -> &mut ScenarioText {
+    pub fn current_page_mut(&mut self) -> &mut ScenarioElement {
         self.scenario.get_mut(self.page).unwrap()
     }
+
+}
+
+#[derive(PartialEq, Clone, Copy)]
+enum TextBoxStatus {
+    WaitNextLineKey,
+    UpdatingText,
 }
 
 pub struct TextBox {
     box_lines: usize,
     buffered_text: VecDeque<SimpleText>,
+    head_line_number: u32,
     text: VecDeque<SimpleText>,
+    text_box_status: TextBoxStatus,
     background: SimpleObject,
     canvas: SubScreen,
 }
@@ -293,7 +353,9 @@ impl TextBox {
         TextBox {
 	    box_lines: box_lines,
 	    buffered_text: VecDeque::new(),
+	    head_line_number: 0,
             text: VecDeque::new(),
+	    text_box_status: TextBoxStatus::UpdatingText,
             background: background,
             canvas: SubScreen::new(ctx, rect, 0, ggraphics::Color::from_rgba_u32(0xff00ffff)),
         }
@@ -325,6 +387,8 @@ impl TextBox {
 	// 表示する文字数を取得。この値を減算していき文字数チェックを行う
         let mut remain = scenario.current_iterator();
 
+	let mut this_head_line = 0;
+
 	// この関数の返り値は、テキスト化したセグメントの数なので、カウンタを初期化する
         let mut seg_count: usize = 0;
 
@@ -349,8 +413,16 @@ impl TextBox {
 
 	    // テキストボックスの行数制限
 	    if self.text.len() > self.box_lines {
-		// オーバーしたら、buffered_textに追加
-		self.buffered_text.push_back(self.text.pop_front().unwrap());
+		if this_head_line >= self.head_line_number {
+		    self.text.pop_back().unwrap();
+		    self.text_box_status = TextBoxStatus::WaitNextLineKey;
+		    break;
+		} else {
+		    // オーバーしたら、buffered_textに追加
+		    self.buffered_text.push_back(self.text.pop_front().unwrap());
+		}
+
+		this_head_line += 1;
 	    }
 
 	    // 残りの文字数が0になったら、break
@@ -385,6 +457,12 @@ impl TextBox {
 				   font_info, 0),
 	    Vec::new()));
     }
+
+    pub fn next_button_handler(&mut self) {
+	self.head_line_number += 1;
+	self.text_box_status = TextBoxStatus::UpdatingText;
+    }
+
 }
 
 impl DrawableComponent for TextBox {
@@ -462,13 +540,18 @@ impl ScenarioEvent {
     }
     
     pub fn update_text(&mut self) {
-	match self.status {
-	    ScenarioEventStatus::Scenario => {
-		self.scenario.current_page_mut().update_iterator();
-		let current_segment = self.text_box.update_scenario_text(&self.scenario.current_page());
-		self.scenario.current_page_mut().set_current_segment(current_segment);
+	match self.scenario.current_page_mut() {
+	    ScenarioElement::Text(scenario_text) => {
+		if self.text_box.text_box_status == TextBoxStatus::UpdatingText {
+		    // 表示する文字数を更新
+		    scenario_text.update_iterator();
+
+		    // 
+		    let current_segment = self.text_box.update_scenario_text(&scenario_text);
+		    scenario_text.set_current_segment(current_segment);
+		}
 	    },
-	    ScenarioEventStatus::Choice => (),
+	    ScenarioElement::ChoiceSwitch(_) => (),
 	}
     }
 
@@ -481,6 +564,10 @@ impl ScenarioEvent {
 	self.status = ScenarioEventStatus::Scenario;
     }
 
+    pub fn go_next_line(&mut self) {
+	self.text_box.next_button_handler();
+    }
+    
     pub fn next_page(&mut self) {
         self.scenario.next_page();
     }
