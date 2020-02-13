@@ -479,6 +479,9 @@ impl Scenario {
         }
     }
 
+    ///
+    /// 次のScenarioElementIDから、ScenarioElementのインデックスを得るメソッド
+    ///
     fn find_index_of_specified_scenario_id(&self, scenario_id: ScenarioElementID) -> usize {
 	for (index, elem) in self.scenario.iter().enumerate() {
 	    if scenario_id == elem.get_scenario_id() {
@@ -489,44 +492,60 @@ impl Scenario {
 	0
     }
 
+    ///
+    /// Scenarioの状態遷移を行うメソッド
+    /// このメソッドは通常のテキストから他の状態に遷移する際に呼び出す
+    ///
     pub fn go_next_scenario_from_text_scenario(&mut self) {
-        if !self.final_page() {
-	    println!("next scenario!!");
-	    
-	    let next_id = match self.current_page_mut() {
-		ScenarioElement::Text(obj) => {
-		    obj.next_scenario_id
-		},
-		_ => {
-		    panic!("Error: go_next_scenario_from_text_scenario");
-		}
-	    };
-	    
-	    self.current_page = self.find_index_of_specified_scenario_id(next_id);
-        }
+	// 次のScenarioElementIDは、ScenarioTextがフィールドとして保持しているので取り出す
+	let next_id = match self.current_page_mut() {
+	    ScenarioElement::Text(obj) => {
+		obj.next_scenario_id
+	    },
+	    _ => {
+		panic!("Error: go_next_scenario_from_text_scenario");
+	    }
+	};
+
+	// 次のScenarioElementIDから、ScenarioElementのインデックスを得る
+	self.current_page = self.find_index_of_specified_scenario_id(next_id);
+
+	
+	// 次がシナリオなら初期化する
+	match self.current_page_mut() {
+	    ScenarioElement::Text(obj) => {
+		obj.reset();
+	    },
+	    _ => (),
+	}
     }
 
+    ///
+    /// Scenarioの状態遷移を行うメソッド
+    /// このメソッドは選択肢から他の状態に遷移する際に呼び出す
+    ///
     pub fn go_next_scenario_from_choice_scenario(&mut self, select_index: usize) {
-	println!("next scenario!!");
-	
+
+	// 次のScenarioElementIDは、選択肢から選ぶ
         let next_id = match self.current_page_mut() {
 	    ScenarioElement::ChoiceSwitch(obj) => {
+		// 選択中の選択肢のジャンプ先を取得する
 		*obj.jump_scenario_id.get(select_index).unwrap()
 	    },
 	    _ => {
 		panic!("Error: go_next_scenario_from_text_scenario");
 	    }
 	};
-	
+
+	// 次のScenarioElementIDから、ScenarioElementのインデックスを得る
 	self.current_page = self.find_index_of_specified_scenario_id(next_id);
 
+	// シナリオを初期化する
 	match self.current_page_mut() {
 	    ScenarioElement::Text(obj) => {
 		obj.reset();
 	    },
-	    _ => {
-		panic!("Error: go_next_scenario_from_text_scenario");
-	    }
+	    _ => (),
 	}
     }
 
@@ -764,7 +783,10 @@ impl ScenarioEvent {
 	    status: ScenarioEventStatus::Scenario,
         }
     }
-
+    
+    ///
+    /// 表示しているテキストや選択肢を更新するメソッド
+    ///
     pub fn update_text(&mut self, ctx: &mut ggez::Context, game_data: &GameData) {
 	match self.scenario.current_page_mut() {
 	    ScenarioElement::Text(scenario_text) => {
@@ -772,17 +794,22 @@ impl ScenarioEvent {
 		    // 表示する文字数を更新
 		    scenario_text.update_iterator();
 
-		    // 
+		    // 何行目までのテキストが表示されたか？
 		    let current_segment = self.text_box.update_scenario_text(&scenario_text);
+
+		    // どこまで表示したかを更新
 		    scenario_text.set_current_segment(current_segment);
 		}
 	    },
 	    ScenarioElement::ChoiceSwitch(choice_pattern) => {
+		// ChoiceBoxが表示されていない場合、新しくオブジェクトを生成する
 		if self.choice_box.is_none() {
 		    self.choice_box = Some(ChoiceBox::new(
 			ctx, numeric::Rect::new(40.0, 100.0, 1200.0, 150.0),
 			game_data, choice_pattern.text.clone()));
-		    		let selected_text = self.choice_box.as_ref().unwrap().get_selecting_str().to_string();
+
+		    // テキストボックスに選択肢の文字列を表示する
+		    let selected_text = self.choice_box.as_ref().unwrap().get_selecting_str().to_string();
 		    self.set_fixed_text(&selected_text,
 					FontInformation::new(game_data.get_font(FontID::JpFude1),
 							     numeric::Vector2f::new(32.0, 32.0),
@@ -805,11 +832,16 @@ impl ScenarioEvent {
 	self.text_box.next_button_handler();
     }
 
+    ///
+    /// Action1キーが押されたときの、ScenarioEventの挙動
+    ///
     pub fn key_down_action1(&mut self,
                       ctx: &mut ggez::Context,
 			    game_data: &GameData) {
 	match self.scenario.current_page_mut() {
+	    // 現在のScenarioElementがテキスト
 	    ScenarioElement::Text(scenario_text) => {
+		// 最後まで到達していた場合、新しいScenarioElementに遷移し、テキストボックスをリセット
 		if scenario_text.iterator_finish() {
 		    self.scenario.go_next_scenario_from_text_scenario();
 		    self.text_box.reset_head_line();
@@ -818,10 +850,13 @@ impl ScenarioEvent {
 		
 		if self.choice_box.is_some() {
 		    self.make_scenario_event();
+
+		    // choice_boxは消す
+		    self.choice_box = None;
+		} else {
+		    // すでにchoice_boxがNoneなら、text_boxの行を進める動作
+		    self.go_next_line();
 		}
-		
-		self.choice_box = None;
-		self.go_next_line();
 	    },
 	    ScenarioElement::ChoiceSwitch(choice_pattern) => {
 		self.scenario.go_next_scenario_from_choice_scenario(self.choice_box.as_ref().unwrap().get_selecting_index());
@@ -830,12 +865,15 @@ impl ScenarioEvent {
 	}
     }
 
+    ///
+    /// Rightキーが押されたときの、ScenarioEventの挙動
+    ///
     pub fn key_down_right(&mut self,
                       ctx: &mut ggez::Context,
 			  game_data: &GameData) {
-	if self.choice_box.is_some() {
-	    self.choice_box.as_mut().unwrap().move_right();
-	    let selected_text = self.choice_box.as_ref().unwrap().get_selecting_str().to_string();
+	if let Some(choice) = &mut self.choice_box {
+	    choice.move_right();
+	    let selected_text = choice.get_selecting_str().to_string();
 	    self.set_fixed_text(&selected_text,
 				FontInformation::new(game_data.get_font(FontID::JpFude1),
 						     numeric::Vector2f::new(32.0, 32.0),
@@ -843,14 +881,16 @@ impl ScenarioEvent {
 	}
     }
 
+    ///
+    /// Leftキーが押されたときの、ScenarioEventの挙動
+    ///
     pub fn key_down_left(&mut self,
                       ctx: &mut ggez::Context,
                       game_data: &GameData) {
 	if let Some(choice) = &mut self.choice_box {
 	    choice.move_left();
-	    println!("mooove leeeeft");
 	    
-	    let selected_text = self.choice_box.as_ref().unwrap().get_selecting_str().to_string();
+	    let selected_text = choice.get_selecting_str().to_string();
 	    self.set_fixed_text(&selected_text,
 					       FontInformation::new(game_data.get_font(FontID::JpFude1),
 								    numeric::Vector2f::new(32.0, 32.0),
