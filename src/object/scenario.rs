@@ -142,11 +142,14 @@ pub struct ScenarioText {
     current_segment_index: usize,
     total_length: usize,
     scenario_id: ScenarioElementID,
+    next_scenario_id: ScenarioElementID,
 }
 
 impl ScenarioText {
     pub fn new(toml_scripts: &toml::value::Value, game_data: &GameData) -> Self {
 	let id = toml_scripts.get("id").unwrap().as_integer().unwrap() as i32;
+	let next_id = toml_scripts.get("next-id").unwrap().as_integer().unwrap() as i32;
+	
 	let toml_default_attribute = toml_scripts.get("default-text-attribute")
 	    .unwrap()
 	    .as_table()
@@ -176,6 +179,7 @@ impl ScenarioText {
             current_segment_index: 0,
             total_length: total_length,
 	    scenario_id: id,
+	    next_scenario_id: next_id,
         }
     }
 
@@ -208,7 +212,14 @@ impl ScenarioText {
         self.seq_text.iter()
     }
 
+    pub fn get_scenario_id(&self) -> ScenarioElementID {
+	self.scenario_id
+    }
 
+    pub fn reset(&mut self) {
+	self.iterator = 0.0;
+	self.current_segment_index = 0;
+    }
 }
 
 pub struct ChoicePatternData {
@@ -235,6 +246,10 @@ impl ChoicePatternData {
 	    jump_scenario_id: jump_scenario_array,
 	    scenario_id: id,
 	}
+    }
+
+    pub fn get_scenario_id(&self) -> ScenarioElementID {
+	self.scenario_id
     }
 }
 
@@ -399,10 +414,19 @@ pub enum ScenarioElement {
     ChoiceSwitch(ChoicePatternData),
 }
 
+impl ScenarioElement {
+    pub fn get_scenario_id(&self) -> ScenarioElementID {
+	match self {
+	    Self::Text(text) => text.get_scenario_id(),
+	    Self::ChoiceSwitch(choice) => choice.get_scenario_id(),
+	}
+    }
+}
+
 pub struct Scenario {
     tachie: Vec<SimpleObject>,
     scenario: Vec<ScenarioElement>,
-    page: usize,
+    current_page: usize,
 }
 
 impl Scenario {
@@ -433,8 +457,6 @@ impl Scenario {
 		eprintln!("Error");
 	    }
 	}
-        //scenario.push(ScenarioElement::Text(ScenarioText::new(array, game_data, &default_attribute)));
-
 
         let tachie_array = root["using-tachie"].as_array().unwrap();
         for elem in tachie_array {
@@ -453,18 +475,63 @@ impl Scenario {
         Scenario {
             tachie: tachie,
             scenario: scenario,
-            page: 0,
+            current_page: 0,
         }
     }
 
-    pub fn next_page(&mut self) {
+    fn find_index_of_specified_scenario_id(&self, scenario_id: ScenarioElementID) -> usize {
+	for (index, elem) in self.scenario.iter().enumerate() {
+	    if scenario_id == elem.get_scenario_id() {
+		return index;
+	    }
+	}
+
+	0
+    }
+
+    pub fn go_next_scenario_from_text_scenario(&mut self) {
         if !self.final_page() {
-            self.page += 1;
+	    println!("next scenario!!");
+	    
+	    let next_id = match self.current_page_mut() {
+		ScenarioElement::Text(obj) => {
+		    obj.next_scenario_id
+		},
+		_ => {
+		    panic!("Error: go_next_scenario_from_text_scenario");
+		}
+	    };
+	    
+	    self.current_page = self.find_index_of_specified_scenario_id(next_id);
         }
+    }
+
+    pub fn go_next_scenario_from_choice_scenario(&mut self, select_index: usize) {
+	println!("next scenario!!");
+	
+        let next_id = match self.current_page_mut() {
+	    ScenarioElement::ChoiceSwitch(obj) => {
+		*obj.jump_scenario_id.get(select_index).unwrap()
+	    },
+	    _ => {
+		panic!("Error: go_next_scenario_from_text_scenario");
+	    }
+	};
+	
+	self.current_page = self.find_index_of_specified_scenario_id(next_id);
+
+	match self.current_page_mut() {
+	    ScenarioElement::Text(obj) => {
+		obj.reset();
+	    },
+	    _ => {
+		panic!("Error: go_next_scenario_from_text_scenario");
+	    }
+	}
     }
 
     pub fn final_page(&self) -> bool {
-        self.scenario.len() - 1 == self.page
+        self.scenario.len() - 1 == self.current_page
     }
 
     pub fn update_current_page(&mut self) {
@@ -477,7 +544,7 @@ impl Scenario {
     }
 
     pub fn current_page_mut(&mut self) -> &mut ScenarioElement {
-        self.scenario.get_mut(self.page).unwrap()
+        self.scenario.get_mut(self.current_page).unwrap()
     }
 
 }
@@ -616,6 +683,10 @@ impl TextBox {
 	self.text_box_status = TextBoxStatus::UpdatingText;
     }
 
+    pub fn reset_head_line(&mut self) {
+	self.head_line_number = 0;
+    }
+
 }
 
 impl DrawableComponent for TextBox {
@@ -694,28 +765,30 @@ impl ScenarioEvent {
         }
     }
 
-    pub fn next_page(&mut self) {
-        self.scenario.next_page();
-    }
-    
-    pub fn update_text(&mut self) {
+    pub fn update_text(&mut self, ctx: &mut ggez::Context, game_data: &GameData) {
 	match self.scenario.current_page_mut() {
 	    ScenarioElement::Text(scenario_text) => {
 		if self.text_box.text_box_status == TextBoxStatus::UpdatingText {
 		    // 表示する文字数を更新
 		    scenario_text.update_iterator();
 
-		    if scenario_text.iterator_finish() {
-			self.next_page();
-			return;
-		    }
-
 		    // 
 		    let current_segment = self.text_box.update_scenario_text(&scenario_text);
 		    scenario_text.set_current_segment(current_segment);
 		}
 	    },
-	    ScenarioElement::ChoiceSwitch(_) => (),
+	    ScenarioElement::ChoiceSwitch(choice_pattern) => {
+		if self.choice_box.is_none() {
+		    self.choice_box = Some(ChoiceBox::new(
+			ctx, numeric::Rect::new(40.0, 100.0, 1200.0, 150.0),
+			game_data, choice_pattern.text.clone()));
+		    		let selected_text = self.choice_box.as_ref().unwrap().get_selecting_str().to_string();
+		    self.set_fixed_text(&selected_text,
+					FontInformation::new(game_data.get_font(FontID::JpFude1),
+							     numeric::Vector2f::new(32.0, 32.0),
+							     ggraphics::Color::from_rgba_u32(0x000000ff)));
+		}
+	    },
 	}
     }
 
@@ -734,12 +807,27 @@ impl ScenarioEvent {
 
     pub fn key_down_action1(&mut self,
                       ctx: &mut ggez::Context,
-                      game_data: &GameData) {
-	if self.choice_box.is_some() {
-	    self.make_scenario_event();
+			    game_data: &GameData) {
+	match self.scenario.current_page_mut() {
+	    ScenarioElement::Text(scenario_text) => {
+		if scenario_text.iterator_finish() {
+		    self.scenario.go_next_scenario_from_text_scenario();
+		    self.text_box.reset_head_line();
+		    return;
+		}
+		
+		if self.choice_box.is_some() {
+		    self.make_scenario_event();
+		}
+		
+		self.choice_box = None;
+		self.go_next_line();
+	    },
+	    ScenarioElement::ChoiceSwitch(choice_pattern) => {
+		self.scenario.go_next_scenario_from_choice_scenario(self.choice_box.as_ref().unwrap().get_selecting_index());
+		self.choice_box = None;
+	    },
 	}
-	self.choice_box = None;
-	self.go_next_line();
     }
 
     pub fn key_down_right(&mut self,
@@ -753,9 +841,6 @@ impl ScenarioEvent {
 						     numeric::Vector2f::new(32.0, 32.0),
 						     ggraphics::Color::from_rgba_u32(0x000000ff)));
 	}
-	if let Some(choice) = &mut self.choice_box {
-	    
-	}
     }
 
     pub fn key_down_left(&mut self,
@@ -763,6 +848,7 @@ impl ScenarioEvent {
                       game_data: &GameData) {
 	if let Some(choice) = &mut self.choice_box {
 	    choice.move_left();
+	    println!("mooove leeeeft");
 	    
 	    let selected_text = self.choice_box.as_ref().unwrap().get_selecting_str().to_string();
 	    self.set_fixed_text(&selected_text,
@@ -772,18 +858,6 @@ impl ScenarioEvent {
 	}
     }
 
-    pub fn key_down_action2(&mut self,
-                      ctx: &mut ggez::Context,
-                      game_data: &GameData) {
-	self.choice_box = Some(ChoiceBox::new(
-	    ctx, numeric::Rect::new(110.0, 600.0, 1200.0, 150.0),
-	    game_data, vec!["選択肢1".to_string(), "選択肢2".to_string(), "選択肢3".to_string()]));
-	let selected_text = self.choice_box.as_ref().unwrap().get_selecting_str().to_string();
-	self.set_fixed_text(&selected_text,
-					   FontInformation::new(game_data.get_font(FontID::JpFude1),
-								numeric::Vector2f::new(32.0, 32.0),
-								ggraphics::Color::from_rgba_u32(0x000000ff)));
-    }
 }
 
 impl DrawableComponent for ScenarioEvent {
@@ -792,6 +866,7 @@ impl DrawableComponent for ScenarioEvent {
 	    sub_screen::stack_screen(ctx, &self.canvas);
 
             self.text_box.draw(ctx)?;
+	    
 	    if let Some(choice) = self.choice_box.as_mut() {
 		choice.draw(ctx);
 	    }

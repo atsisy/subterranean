@@ -3,6 +3,7 @@ using-tachie = ["LotusPink", "LotusBlue"]
 [[scenario-group]]
 type = "scenario"
 id = 1
+next-id = 2
 
    [scenario-group.default-text-attribute]
    fpc = 0.2

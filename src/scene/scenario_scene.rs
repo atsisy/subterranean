@@ -52,10 +52,6 @@ impl SceneManager for ScenarioScene {
 	    tdev::VirtualKey::Left => {
 		self.scenario_event.key_down_left(ctx, game_data);
 	    },
-	    tdev::VirtualKey::Action2 => {
-		println!("choice box is appearing");
-		self.scenario_event.key_down_action2(ctx, game_data);
-	    }
             _ => (),
         }
     }
@@ -70,8 +66,8 @@ impl SceneManager for ScenarioScene {
         }
     }
 
-    fn pre_process(&mut self, _ctx: &mut ggez::Context, _: &GameData) {
-        self.scenario_event.update_text();
+    fn pre_process(&mut self, ctx: &mut ggez::Context, game_data: &GameData) {
+        self.scenario_event.update_text(ctx, game_data);
         self.simulation_status.update();
     }
     
