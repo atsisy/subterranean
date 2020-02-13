@@ -17,7 +17,6 @@ use super::*;
 
 pub struct ScenarioScene {
     scenario_event: ScenarioEvent,
-    choice_box: Option<ChoiceBox>,
     simulation_status: sui::SimulationStatus,
     clock: Clock,
 }
@@ -30,7 +29,6 @@ impl ScenarioScene {
         
         ScenarioScene {
             simulation_status: sui::SimulationStatus::new(ctx, numeric::Rect::new(0.0, 0.0, 1366.0, 180.0), game_data),
-	    choice_box: None,
             scenario_event: scenario,
             clock: 0,
         }
@@ -46,42 +44,17 @@ impl SceneManager for ScenarioScene {
         match vkey {
             tdev::VirtualKey::Action1 => {
                 println!("Action1 down!");
-		if self.choice_box.is_some() {
-		    self.scenario_event.make_scenario_event();
-		}
-		self.choice_box = None;
-                self.scenario_event.next_page();
-		self.scenario_event.go_next_line();
+		self.scenario_event.key_down_action1(ctx, game_data);
             },
 	    tdev::VirtualKey::Right => {
-		if let Some(choice) = &mut self.choice_box {
-		    choice.move_right();
-		    
-		    self.scenario_event.set_fixed_text(choice.get_selecting_str(),
-						       FontInformation::new(game_data.get_font(FontID::JpFude1),
-									    numeric::Vector2f::new(32.0, 32.0),
-									    ggraphics::Color::from_rgba_u32(0x000000ff)));
-		}
+		self.scenario_event.key_down_right(ctx, game_data);
 	    },
 	    tdev::VirtualKey::Left => {
-		if let Some(choice) = &mut self.choice_box {
-		    choice.move_left();
-		    
-		    self.scenario_event.set_fixed_text(choice.get_selecting_str(),
-						       FontInformation::new(game_data.get_font(FontID::JpFude1),
-									    numeric::Vector2f::new(32.0, 32.0),
-									    ggraphics::Color::from_rgba_u32(0x000000ff)));
-		}
+		self.scenario_event.key_down_left(ctx, game_data);
 	    },
 	    tdev::VirtualKey::Action2 => {
 		println!("choice box is appearing");
-		self.choice_box = Some(ChoiceBox::new(
-		    ctx, numeric::Rect::new(110.0, 600.0, 1200.0, 150.0),
-		    game_data, vec!["選択肢1".to_string(), "選択肢2".to_string(), "選択肢3".to_string()]));
-		self.scenario_event.set_fixed_text(self.choice_box.as_ref().unwrap().get_selecting_str(),
-						   FontInformation::new(game_data.get_font(FontID::JpFude1),
-									numeric::Vector2f::new(32.0, 32.0),
-									ggraphics::Color::from_rgba_u32(0x000000ff)));
+		self.scenario_event.key_down_action2(ctx, game_data);
 	    }
             _ => (),
         }
@@ -104,10 +77,6 @@ impl SceneManager for ScenarioScene {
     
     fn drawing_process(&mut self, ctx: &mut ggez::Context) {
         self.scenario_event.draw(ctx).unwrap();
-
-	if let Some(choice_box) = &mut self.choice_box {
-	    choice_box.draw(ctx).unwrap();
-	}
 	
         self.simulation_status.draw(ctx).unwrap();
     }

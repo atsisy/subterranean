@@ -1,24 +1,43 @@
 using-tachie = ["LotusPink", "LotusBlue"]
 
-[default-text-attribute]
-fpc = 0.2
-font_scale = 28.0
-color = 0x000000ff
+[[scenario-group]]
+type = "scenario"
+id = 1
+
+   [scenario-group.default-text-attribute]
+   fpc = 0.2
+   font_scale = 32.0
+   color = 0x000000ff
+   	 
+   [[scenario-group.text]]
+   text = """テスト用テキスト
+   """
+   [[scenario-group.text]]
+   text = """本居小鈴
+   サンプルテキスト
+   """
+   [[scenario-group.text]]
+   fpc = 0.1
+   font_scale = 28.0
+   color = 0xff0000ff
+   text = "赤字"
+
+   [[scenario-group.text]]
+   id = 4
+   text = """古明地さとり
+   """
 
 [[scenario-group]]
-text = """私の名前は本居小鈴
-"""
+type = "choice"
+id = 2
+   [[scenario-group.choice-pattern]]
+   pattern = "選択肢1"
+   jump-id = 1
+   [[scenario-group.choice-pattern]]
+   pattern = "選択肢2"
+   jump-id = 1
+   [[scenario-group.choice-pattern]]
+   pattern = "選択肢3"
+   jump-id = 1
 
-[[scenario-group]]
-text = """私の名前は本居小鈴両親が経営する貸本屋
-鈴奈庵 の看板娘かなあああああああああああああ
-"""
-
-[[scenario-group]]
-fpc = 0.1
-font_scale = 28.0
-color = 0xff0000ff
-text = "こっちの話"
-
-[[scenario-group]]
-text = "面白い人がこの街に来たなって"
+   

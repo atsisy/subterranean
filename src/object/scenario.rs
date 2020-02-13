@@ -5,6 +5,7 @@ use torifune::graphics::*;
 use torifune::graphics::object::sub_screen::SubScreen;
 use torifune::graphics::object::sub_screen;
 use torifune::numeric;
+use torifune::device::VirtualKey;
 
 use torifune::impl_texture_object_for_wrapped;
 use torifune::impl_drawable_object_for_wrapped;
@@ -13,13 +14,11 @@ use std::str::FromStr;
 use crate::core::{TextureID, FontID, GameData};
 use super::*;
 
-pub type ScenarioSegmentID = i32;
+pub type ScenarioElementID = i32;
 
 pub struct ScenarioTextAttribute {
     pub fpc: f32,
     pub font_info: FontInformation,
-    pub this_segment_id: ScenarioSegmentID,
-    pub next_segment_id: ScenarioSegmentID,
 }
 
 pub struct ScenarioTextSegment {
@@ -28,14 +27,12 @@ pub struct ScenarioTextSegment {
 }
 
 impl ScenarioTextSegment {
-    pub fn new(text: &str, fpc: f32, this_segment_id: ScenarioSegmentID, next_segment_id: ScenarioSegmentID, font_info: FontInformation) -> Self {
+    pub fn new(text: &str, fpc: f32, font_info: FontInformation) -> Self {
         ScenarioTextSegment {
             text: text.to_string(),
             attribute: ScenarioTextAttribute {
 		fpc: fpc,
 		font_info: font_info,
-		this_segment_id: this_segment_id,
-		next_segment_id: next_segment_id
 	    },
         }
     }
@@ -60,18 +57,6 @@ impl ScenarioTextSegment {
         } else {
             default.font_info.color
         };
-
-	let this_segment_id = if let Some(this_segment_id) = obj.get("id") {
-	    this_segment_id.as_integer().unwrap() as ScenarioSegmentID
-        } else {
-	    default.this_segment_id
-        };
-
-	let next_segment_id = if let Some(next_segment_id) = obj.get("next-id") {
-	    next_segment_id.as_integer().unwrap() as ScenarioSegmentID
-        } else {
-	    this_segment_id
-        };
         
         ScenarioTextSegment {
             text: text.unwrap().as_str().unwrap().to_string(),
@@ -80,8 +65,6 @@ impl ScenarioTextSegment {
                 font_info: FontInformation::new(game_data.get_font(FontID::DEFAULT),
                                                 numeric::Vector2f::new(font_scale, font_scale),
                                                 color),
-		this_segment_id: this_segment_id,
-		next_segment_id: next_segment_id,
 	    },
         }
     }
@@ -158,15 +141,30 @@ pub struct ScenarioText {
     iterator: f32,
     current_segment_index: usize,
     total_length: usize,
+    scenario_id: ScenarioElementID,
 }
 
 impl ScenarioText {
-    pub fn new(toml_scripts: &toml::value::Array, game_data: &GameData, default: &ScenarioTextAttribute) -> Self {
+    pub fn new(toml_scripts: &toml::value::Value, game_data: &GameData) -> Self {
+	let id = toml_scripts.get("id").unwrap().as_integer().unwrap() as i32;
+	let toml_default_attribute = toml_scripts.get("default-text-attribute")
+	    .unwrap()
+	    .as_table()
+	    .unwrap();
+        let default_font_scale = toml_default_attribute["font_scale"].as_float().unwrap() as f32;
+	
+        let default = ScenarioTextAttribute {
+            fpc: toml_default_attribute["fpc"].as_float().unwrap() as f32,
+            font_info: FontInformation::new(game_data.get_font(FontID::DEFAULT),
+                                            numeric::Vector2f::new(default_font_scale, default_font_scale),
+                                            ggraphics::Color::from_rgba_u32(toml_default_attribute["color"].as_integer().unwrap() as u32)),
+        };
+	
         let mut seq_text = Vec::<ScenarioTextSegment>::new();
 
-        for elem in toml_scripts {
+        for elem in toml_scripts.get("text").unwrap().as_array().unwrap() {
             if let toml::Value::Table(scenario) = elem {
-                seq_text.push(ScenarioTextSegment::from_toml_using_default(scenario, game_data, default));
+                seq_text.push(ScenarioTextSegment::from_toml_using_default(scenario, game_data, &default));
             }
         }
 
@@ -177,6 +175,7 @@ impl ScenarioText {
             iterator: 0.0,
             current_segment_index: 0,
             total_length: total_length,
+	    scenario_id: id,
         }
     }
 
@@ -208,40 +207,190 @@ impl ScenarioText {
     pub fn seq_text_iter(&self) -> std::slice::Iter<ScenarioTextSegment> {
         self.seq_text.iter()
     }
+
+
 }
 
 pub struct ChoicePatternData {
     text: Vec<String>,
-    jump_scenario_id: Vec<ScenarioSegmentID>,
+    jump_scenario_id: Vec<ScenarioElementID>,
+    scenario_id: ScenarioElementID,
 }
 
 impl ChoicePatternData {
-    pub fn new(choice_text: Vec<String>, jump_scenario_id: Vec<ScenarioSegmentID>) -> Self {
-	ChoicePatternData {
-	    text: choice_text,
-	    jump_scenario_id: jump_scenario_id,
+
+    pub fn from_toml_object(toml_scripts: &toml::value::Value, game_data: &GameData) -> Self {
+	let id = toml_scripts.get("id").unwrap().as_integer().unwrap() as i32;
+
+	let mut choice_pattern_array = Vec::new();
+	let mut jump_scenario_array = Vec::new();
+
+	for elem in toml_scripts.get("choice-pattern").unwrap().as_array().unwrap() {
+	    choice_pattern_array.push(elem.get("pattern").unwrap().as_str().unwrap().to_string());
+	    jump_scenario_array.push(elem.get("jump-id").unwrap().as_integer().unwrap() as ScenarioElementID);
 	}
-    }
-
-    pub fn from_toml_object(obj: &toml::value::Table, game_data: &GameData) -> Self {
-	let choice_pattern_array = obj.get("choice-pattern").unwrap()
-	    .as_array()
-	    .unwrap()
-	    .iter()
-	    .map(|toml_value| toml_value.as_str().unwrap().to_string())
-	    .collect();
-
-	let jump_scenario_array = obj.get("jump-scenario-id").unwrap()
-	    .as_array()
-	    .unwrap()
-	    .iter()
-	    .map(|toml_value| toml_value.as_integer().unwrap() as ScenarioSegmentID)
-	    .collect();
 	
 	ChoicePatternData {
 	    text: choice_pattern_array,
 	    jump_scenario_id: jump_scenario_array,
+	    scenario_id: id,
 	}
+    }
+}
+
+
+struct ChoicePanel {
+    panel: UniTexture,
+}
+
+impl ChoicePanel {
+    pub fn new(panel: UniTexture) -> Self {
+	ChoicePanel {
+	    panel: panel,
+	}
+    }
+}
+
+impl DrawableComponent for ChoicePanel {
+    fn draw(&mut self, ctx: &mut ggez::Context) -> ggez::GameResult<()> {
+	self.panel.draw(ctx)
+    }
+
+    fn hide(&mut self) {
+	self.panel.hide();
+    }
+
+    fn appear(&mut self) {
+	self.panel.appear();
+    }
+
+    fn is_visible(&self) -> bool {
+	self.panel.is_visible()
+    }
+
+    fn set_drawing_depth(&mut self, depth: i8) {
+	self.panel.set_drawing_depth(depth)
+    }
+
+    fn get_drawing_depth(&self) -> i8 {
+	self.panel.get_drawing_depth()
+    }
+}
+
+impl DrawableObject for ChoicePanel {
+    impl_drawable_object_for_wrapped!{panel}
+}
+
+impl TextureObject for ChoicePanel {
+    impl_texture_object_for_wrapped!{panel}
+}
+
+pub struct ChoiceBox {
+    choice_text: Vec<String>,
+    panels: Vec<ChoicePanel>,
+    selecting: usize,
+    canvas: SubScreen,
+}
+
+impl ChoiceBox {
+    fn generate_choice_panel(ctx: &mut ggez::Context, game_data: &GameData,
+			     size: usize, left_top: numeric::Vector2f, align: f32) -> Vec<ChoicePanel> {
+	let mut choice_panels = Vec::new();
+	let mut panel = TextureID::ChoicePanel1 as u32;
+	let mut pos: numeric::Point2f = left_top.into();
+
+	for _ in 0..size {
+	    choice_panels.push(ChoicePanel::new(
+		UniTexture::new(
+		    game_data.ref_texture(TextureID::from_u32(panel).unwrap()),
+		    pos,
+		    numeric::Vector2f::new(1.0, 1.0),
+		    0.0,
+		    0)));
+	    pos.x += choice_panels.last().unwrap().get_drawing_size(ctx).x;
+	    pos.x += align;
+	    panel += 1;
+	}
+
+	choice_panels
+    }
+    
+    pub fn new(ctx: &mut ggez::Context, pos_rect: numeric::Rect,
+	       game_data: &GameData, choice_text: Vec<String>) -> Self {
+	let mut panels = Self::generate_choice_panel(ctx, game_data, choice_text.len(),
+						     numeric::Vector2f::new(10.0, 10.0), 10.0);
+
+	for panel in &mut panels {
+	    panel.set_color(ggraphics::Color::from_rgba_u32(0xaaaaaaff));
+	}
+	panels.get_mut(0).unwrap().set_color(ggraphics::Color::from_rgba_u32(0xffffffff));
+	
+	ChoiceBox {
+	    panels: panels,
+	    choice_text: choice_text,
+	    selecting: 0,
+	    canvas: SubScreen::new(ctx, pos_rect, 0, ggraphics::Color::from_rgba_u32(0)),
+	}
+    }
+
+    pub fn get_selecting_index(&self) -> usize {
+	self.selecting
+    }
+
+    pub fn get_selecting_str(&self) -> &str {
+	self.choice_text.get(self.get_selecting_index()).as_ref().unwrap()
+    }
+
+    pub fn move_right(&mut self) {
+	if self.choice_text.len() > (self.selecting + 1) {
+	    self.panels.get_mut(self.selecting).unwrap().set_color(ggraphics::Color::from_rgba_u32(0xaaaaaaff));
+	    self.selecting += 1;
+	    self.panels.get_mut(self.selecting).unwrap().set_color(ggraphics::Color::from_rgba_u32(0xffffffff));
+	}
+    }
+
+    pub fn move_left(&mut self) {
+	if self.selecting > 0 {
+	    self.panels.get_mut(self.selecting).unwrap().set_color(ggraphics::Color::from_rgba_u32(0xaaaaaaff));
+	    self.selecting -= 1;
+	    self.panels.get_mut(self.selecting).unwrap().set_color(ggraphics::Color::from_rgba_u32(0xffffffff));
+	}
+    }
+}
+
+impl DrawableComponent for ChoiceBox {
+    fn draw(&mut self, ctx: &mut ggez::Context) -> ggez::GameResult<()> {
+	if self.is_visible() {
+	    sub_screen::stack_screen(ctx, &self.canvas);
+
+	    for panel in &mut self.panels {
+		panel.draw(ctx)?;
+	    }
+
+	    sub_screen::pop_screen(ctx);
+            self.canvas.draw(ctx).unwrap();
+        }
+        Ok(())
+    }
+
+    fn hide(&mut self) {
+        self.canvas.hide()
+    }
+
+    fn appear(&mut self) {
+        self.canvas.appear()
+    }
+
+    fn is_visible(&self) -> bool {
+        self.canvas.is_visible()
+    }
+
+    fn set_drawing_depth(&mut self, depth: i8) {
+        self.canvas.set_drawing_depth(depth)
+    }
+
+    fn get_drawing_depth(&self) -> i8 {
+        self.canvas.get_drawing_depth()
     }
 }
 
@@ -267,20 +416,24 @@ impl Scenario {
         };
         
         let root = content.parse::<toml::Value>().unwrap();
-
-        let toml_default_attribute = root["default-text-attribute"].as_table().unwrap();
-        let default_font_scale = toml_default_attribute["font_scale"].as_float().unwrap() as f32;
-        let default_attribute = ScenarioTextAttribute {
-            fpc: toml_default_attribute["fpc"].as_float().unwrap() as f32,
-            font_info: FontInformation::new(game_data.get_font(FontID::DEFAULT),
-                                            numeric::Vector2f::new(default_font_scale, default_font_scale),
-                                            ggraphics::Color::from_rgba_u32(toml_default_attribute["color"].as_integer().unwrap() as u32)),
-	    this_segment_id: -1,
-	    next_segment_id: -1,
-        };
-        
         let array = root["scenario-group"].as_array().unwrap();
-        scenario.push(ScenarioElement::Text(ScenarioText::new(array, game_data, &default_attribute)));
+	
+	for elem in array {
+	    if let Some(type_info) = elem.get("type") {
+		match type_info.as_str().unwrap() {
+		    "scenario" => {
+			scenario.push(ScenarioElement::Text(ScenarioText::new(elem, game_data)));
+		    },
+		    "choice" => {
+			scenario.push(ScenarioElement::ChoiceSwitch(ChoicePatternData::from_toml_object(elem, game_data)));
+		    },
+		    _ => eprintln!("Error"),
+		}
+	    } else {
+		eprintln!("Error");
+	    }
+	}
+        //scenario.push(ScenarioElement::Text(ScenarioText::new(array, game_data, &default_attribute)));
 
 
         let tachie_array = root["using-tachie"].as_array().unwrap();
@@ -513,6 +666,7 @@ pub enum ScenarioEventStatus {
 pub struct ScenarioEvent {
     scenario: Scenario,
     text_box: TextBox,
+    choice_box: Option<ChoiceBox>,
     canvas: SubScreen,
     status: ScenarioEventStatus,
 }
@@ -534,9 +688,14 @@ impl ScenarioEvent {
                 ctx,
                 numeric::Rect::new(10.0, 10.0, rect.w - 20.0, rect.h - 20.0),
                 background, 3, t),
+	    choice_box: None,
             canvas: SubScreen::new(ctx, rect, 0, ggraphics::Color::from_rgba_u32(0x00)),
 	    status: ScenarioEventStatus::Scenario,
         }
+    }
+
+    pub fn next_page(&mut self) {
+        self.scenario.next_page();
     }
     
     pub fn update_text(&mut self) {
@@ -545,6 +704,11 @@ impl ScenarioEvent {
 		if self.text_box.text_box_status == TextBoxStatus::UpdatingText {
 		    // 表示する文字数を更新
 		    scenario_text.update_iterator();
+
+		    if scenario_text.iterator_finish() {
+			self.next_page();
+			return;
+		    }
 
 		    // 
 		    let current_segment = self.text_box.update_scenario_text(&scenario_text);
@@ -567,9 +731,58 @@ impl ScenarioEvent {
     pub fn go_next_line(&mut self) {
 	self.text_box.next_button_handler();
     }
-    
-    pub fn next_page(&mut self) {
-        self.scenario.next_page();
+
+    pub fn key_down_action1(&mut self,
+                      ctx: &mut ggez::Context,
+                      game_data: &GameData) {
+	if self.choice_box.is_some() {
+	    self.make_scenario_event();
+	}
+	self.choice_box = None;
+	self.go_next_line();
+    }
+
+    pub fn key_down_right(&mut self,
+                      ctx: &mut ggez::Context,
+			  game_data: &GameData) {
+	if self.choice_box.is_some() {
+	    self.choice_box.as_mut().unwrap().move_right();
+	    let selected_text = self.choice_box.as_ref().unwrap().get_selecting_str().to_string();
+	    self.set_fixed_text(&selected_text,
+				FontInformation::new(game_data.get_font(FontID::JpFude1),
+						     numeric::Vector2f::new(32.0, 32.0),
+						     ggraphics::Color::from_rgba_u32(0x000000ff)));
+	}
+	if let Some(choice) = &mut self.choice_box {
+	    
+	}
+    }
+
+    pub fn key_down_left(&mut self,
+                      ctx: &mut ggez::Context,
+                      game_data: &GameData) {
+	if let Some(choice) = &mut self.choice_box {
+	    choice.move_left();
+	    
+	    let selected_text = self.choice_box.as_ref().unwrap().get_selecting_str().to_string();
+	    self.set_fixed_text(&selected_text,
+					       FontInformation::new(game_data.get_font(FontID::JpFude1),
+								    numeric::Vector2f::new(32.0, 32.0),
+								    ggraphics::Color::from_rgba_u32(0x000000ff)));
+	}
+    }
+
+    pub fn key_down_action2(&mut self,
+                      ctx: &mut ggez::Context,
+                      game_data: &GameData) {
+	self.choice_box = Some(ChoiceBox::new(
+	    ctx, numeric::Rect::new(110.0, 600.0, 1200.0, 150.0),
+	    game_data, vec!["選択肢1".to_string(), "選択肢2".to_string(), "選択肢3".to_string()]));
+	let selected_text = self.choice_box.as_ref().unwrap().get_selecting_str().to_string();
+	self.set_fixed_text(&selected_text,
+					   FontInformation::new(game_data.get_font(FontID::JpFude1),
+								numeric::Vector2f::new(32.0, 32.0),
+								ggraphics::Color::from_rgba_u32(0x000000ff)));
     }
 }
 
@@ -579,162 +792,10 @@ impl DrawableComponent for ScenarioEvent {
 	    sub_screen::stack_screen(ctx, &self.canvas);
 
             self.text_box.draw(ctx)?;
-            
-	    sub_screen::pop_screen(ctx);
-            self.canvas.draw(ctx).unwrap();
-        }
-        Ok(())
-    }
-
-    fn hide(&mut self) {
-        self.canvas.hide()
-    }
-
-    fn appear(&mut self) {
-        self.canvas.appear()
-    }
-
-    fn is_visible(&self) -> bool {
-        self.canvas.is_visible()
-    }
-
-    fn set_drawing_depth(&mut self, depth: i8) {
-        self.canvas.set_drawing_depth(depth)
-    }
-
-    fn get_drawing_depth(&self) -> i8 {
-        self.canvas.get_drawing_depth()
-    }
-}
-
-struct ChoicePanel {
-    panel: UniTexture,
-}
-
-impl ChoicePanel {
-    pub fn new(panel: UniTexture) -> Self {
-	ChoicePanel {
-	    panel: panel,
-	}
-    }
-}
-
-impl DrawableComponent for ChoicePanel {
-    fn draw(&mut self, ctx: &mut ggez::Context) -> ggez::GameResult<()> {
-	self.panel.draw(ctx)
-    }
-
-    fn hide(&mut self) {
-	self.panel.hide();
-    }
-
-    fn appear(&mut self) {
-	self.panel.appear();
-    }
-
-    fn is_visible(&self) -> bool {
-	self.panel.is_visible()
-    }
-
-    fn set_drawing_depth(&mut self, depth: i8) {
-	self.panel.set_drawing_depth(depth)
-    }
-
-    fn get_drawing_depth(&self) -> i8 {
-	self.panel.get_drawing_depth()
-    }
-}
-
-impl DrawableObject for ChoicePanel {
-    impl_drawable_object_for_wrapped!{panel}
-}
-
-impl TextureObject for ChoicePanel {
-    impl_texture_object_for_wrapped!{panel}
-}
-
-pub struct ChoiceBox {
-    choice_text: Vec<String>,
-    panels: Vec<ChoicePanel>,
-    selecting: usize,
-    canvas: SubScreen,
-}
-
-impl ChoiceBox {
-    fn generate_choice_panel(ctx: &mut ggez::Context, game_data: &GameData,
-			     size: usize, left_top: numeric::Vector2f, align: f32) -> Vec<ChoicePanel> {
-	let mut choice_panels = Vec::new();
-	let mut panel = TextureID::ChoicePanel1 as u32;
-	let mut pos: numeric::Point2f = left_top.into();
-
-	for _ in 0..size {
-	    choice_panels.push(ChoicePanel::new(
-		UniTexture::new(
-		    game_data.ref_texture(TextureID::from_u32(panel).unwrap()),
-		    pos,
-		    numeric::Vector2f::new(1.0, 1.0),
-		    0.0,
-		    0)));
-	    pos.x += choice_panels.last().unwrap().get_drawing_size(ctx).x;
-	    pos.x += align;
-	    panel += 1;
-	}
-
-	choice_panels
-    }
-    
-    pub fn new(ctx: &mut ggez::Context, pos_rect: numeric::Rect,
-	       game_data: &GameData, choice_text: Vec<String>) -> Self {
-	let mut panels = Self::generate_choice_panel(ctx, game_data, choice_text.len(),
-						     numeric::Vector2f::new(10.0, 10.0), 10.0);
-
-	for panel in &mut panels {
-	    panel.set_color(ggraphics::Color::from_rgba_u32(0xaaaaaaff));
-	}
-	panels.get_mut(0).unwrap().set_color(ggraphics::Color::from_rgba_u32(0xffffffff));
-	
-	ChoiceBox {
-	    panels: panels,
-	    choice_text: choice_text,
-	    selecting: 0,
-	    canvas: SubScreen::new(ctx, pos_rect, 0, ggraphics::Color::from_rgba_u32(0)),
-	}
-    }
-
-    pub fn get_selecting_index(&self) -> usize {
-	self.selecting
-    }
-
-    pub fn get_selecting_str(&self) -> &str {
-	self.choice_text.get(self.get_selecting_index()).as_ref().unwrap()
-    }
-
-    pub fn move_right(&mut self) {
-	if self.choice_text.len() > (self.selecting + 1) {
-	    self.panels.get_mut(self.selecting).unwrap().set_color(ggraphics::Color::from_rgba_u32(0xaaaaaaff));
-	    self.selecting += 1;
-	    self.panels.get_mut(self.selecting).unwrap().set_color(ggraphics::Color::from_rgba_u32(0xffffffff));
-	}
-    }
-
-    pub fn move_left(&mut self) {
-	if self.selecting > 0 {
-	    self.panels.get_mut(self.selecting).unwrap().set_color(ggraphics::Color::from_rgba_u32(0xaaaaaaff));
-	    self.selecting -= 1;
-	    self.panels.get_mut(self.selecting).unwrap().set_color(ggraphics::Color::from_rgba_u32(0xffffffff));
-	}
-    }
-}
-
-impl DrawableComponent for ChoiceBox {
-    fn draw(&mut self, ctx: &mut ggez::Context) -> ggez::GameResult<()> {
-	if self.is_visible() {
-	    sub_screen::stack_screen(ctx, &self.canvas);
-
-	    for panel in &mut self.panels {
-		panel.draw(ctx)?;
+	    if let Some(choice) = self.choice_box.as_mut() {
+		choice.draw(ctx);
 	    }
-
+            
 	    sub_screen::pop_screen(ctx);
             self.canvas.draw(ctx).unwrap();
         }
