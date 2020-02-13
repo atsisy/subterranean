@@ -19,7 +19,8 @@ texture_paths = [
 	      "/textures/choice_panel2.png",
 	      "/textures/choice_panel3.png",
 	      "/textures/choice_panel4.png",
-	      "/textures/choice_panel5.png"]
+	      "/textures/choice_panel5.png",
+	      "/textures/junko_tachie_default.png"]
 font_paths = ["/fonts/azuki.ttf", "/fonts/RiiT_F.ttf"]
 tileset_paths = ["./resources/test.tmx"]
 customers_name = ["霧雨魔里沙", "すみれの隣人"]
