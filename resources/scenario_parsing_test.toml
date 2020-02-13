@@ -1,9 +1,14 @@
 using-tachie = ["LotusPink", "LotusBlue"]
 
+[scene-transition]
+scenario = 1
+dream = 2
+desk = 3
+
 [[scenario-group]]
 type = "scenario"
-id = 1
-next-id = 2
+id = 10
+next-id = 11
 
    [scenario-group.default-text-attribute]
    fpc = 0.2
@@ -30,15 +35,15 @@ next-id = 2
 
 [[scenario-group]]
 type = "choice"
-id = 2
+id = 11
    [[scenario-group.choice-pattern]]
    pattern = "選択肢1"
-   jump-id = 1
+   jump-id = 3
    [[scenario-group.choice-pattern]]
    pattern = "選択肢2"
-   jump-id = 1
+   jump-id = 3
    [[scenario-group.choice-pattern]]
    pattern = "選択肢3"
-   jump-id = 1
+   jump-id = 3
 
    

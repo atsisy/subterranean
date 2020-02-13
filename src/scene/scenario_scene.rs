@@ -18,6 +18,7 @@ use super::*;
 pub struct ScenarioScene {
     scenario_event: ScenarioEvent,
     simulation_status: sui::SimulationStatus,
+    scene_transition: SceneID,
     clock: Clock,
 }
 
@@ -30,6 +31,7 @@ impl ScenarioScene {
         ScenarioScene {
             simulation_status: sui::SimulationStatus::new(ctx, numeric::Rect::new(0.0, 0.0, 1366.0, 180.0), game_data),
             scenario_event: scenario,
+	    scene_transition: SceneID::Scenario,
             clock: 0,
         }
     }
@@ -79,11 +81,19 @@ impl SceneManager for ScenarioScene {
     
     fn post_process(&mut self, _ctx: &mut ggez::Context, _: &GameData) -> SceneTransition {
         self.update_current_clock();
+
+	if self.scenario_event.get_status() == ScenarioEventStatus::SceneTransition {
+	    if let Some(scene_id) = self.scenario_event.get_scene_transition() {
+		self.scene_transition = scene_id;
+		return SceneTransition::Transition;
+	    }
+	}
+	
         SceneTransition::Keep
     }
 
     fn transition(&self) -> SceneID {
-        SceneID::Scenario
+	self.scene_transition
     }
 
     fn get_current_clock(&self) -> Clock {

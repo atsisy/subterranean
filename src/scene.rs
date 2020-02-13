@@ -18,7 +18,7 @@ pub enum SceneTransition {
     Transition,
 }
 
-#[derive(Debug, Eq, PartialEq)]
+#[derive(Debug, Eq, PartialEq, Clone, Copy)]
 pub enum SceneID {
     Null,
     MainDesk,
