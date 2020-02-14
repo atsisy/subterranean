@@ -2,6 +2,7 @@ use torifune::numeric;
 
 use crate::core::{TextureID, GameData};
 use super::*;
+use super::map_object::*;
 
 #[derive(Debug, Eq, PartialEq, Clone, Copy)]
 pub enum CharacterFactoryOrder {

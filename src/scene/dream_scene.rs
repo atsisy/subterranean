@@ -11,6 +11,7 @@ use torifune::numeric;
 use crate::core::GameData;
 use super::*;
 use crate::object::*;
+use crate::object::map_object::*;
 use crate::core::map_parser as mp;
 
 struct EnemyGroup {

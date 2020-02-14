@@ -13,7 +13,7 @@ use torifune::graphics::object::*;
 use collision::prelude::*;
 
 use crate::object::collision::*;
-use crate::object::MapObject;
+use crate::object::map_object::MapObject;
 
 ///
 /// # TileSetの情報を保持している構造体
