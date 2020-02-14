@@ -15,12 +15,10 @@ cgmath = "0.17.0"
 rand = "0.7.2"
 num = "*"
 number_to_jk = { git = "https://github.com/atsisy/number_to_jk.git" }
+tiled = { git = "https://github.com/mattyhall/rs-tiled" }
 
 [profile.dev]
 opt-level = 2
 
 [dependencies.torifune]
 path = "../torifune"
-
-[dependencies.tiled]
-path = "../rs-tiled"
