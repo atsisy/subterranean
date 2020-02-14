@@ -136,6 +136,94 @@ impl ScenarioTextSegment {
     }
 }
 
+pub struct ScenarioTachie {
+    left: Option<SimpleObject>,
+    right: Option<SimpleObject>,
+    drwob_essential: DrawableObjectEssential,
+}
+
+impl ScenarioTachie {
+    pub fn new(game_data: &GameData, tid_array: Vec<TextureID>, t: Clock) -> Self {
+
+	// left
+	let left_texture = if tid_array.len() > 0 {
+	    Some(
+		SimpleObject::new(
+		    MovableUniTexture::new(
+			game_data.ref_texture(tid_array[0]),
+			numeric::Point2f::new(50.0, 0.0),
+			numeric::Vector2f::new(0.12, 0.12),
+			0.0,
+			0,
+			None,
+			t), Vec::new()
+		)
+	    )
+	} else {
+	    None
+	};
+	
+	let right_texture = if tid_array.len() > 1 {
+	    Some(
+		SimpleObject::new(
+		    MovableUniTexture::new(
+			game_data.ref_texture(tid_array[1]),
+			numeric::Point2f::new(900.0, 0.0),
+			numeric::Vector2f::new(0.12, 0.12),
+			0.0,
+			0,
+			None,
+			t), Vec::new()
+		)
+	    )
+	} else {
+	    None
+	};
+	
+	ScenarioTachie {
+	    left: left_texture,
+	    right: right_texture,
+	    drwob_essential: DrawableObjectEssential::new(true, 0)
+	}
+    }
+}
+
+impl DrawableComponent for ScenarioTachie {
+    fn draw(&mut self, ctx: &mut ggez::Context) -> ggez::GameResult<()> {
+	if self.drwob_essential.visible {
+	    if let Some(texture) = self.left.as_mut() {
+		texture.draw(ctx)?;
+	    }
+	    
+	    if let Some(texture) = self.right.as_mut() {
+		texture.draw(ctx)?;
+	    } 
+	}
+
+	Ok(())
+    }
+
+    fn hide(&mut self) {
+	self.drwob_essential.visible = false;
+    }
+
+    fn appear(&mut self) {
+	self.drwob_essential.visible = true;
+    }
+
+    fn is_visible(&self) -> bool {
+	self.drwob_essential.visible
+    }
+
+    fn set_drawing_depth(&mut self, depth: i8) {
+	self.drwob_essential.drawing_depth = depth;
+    }
+
+    fn get_drawing_depth(&self) -> i8 {
+	self.drwob_essential.drawing_depth
+    }
+}
+
 pub struct ScenarioText {
     seq_text: Vec<ScenarioTextSegment>,
     iterator: f32,
@@ -144,6 +232,7 @@ pub struct ScenarioText {
     scenario_id: ScenarioElementID,
     next_scenario_id: ScenarioElementID,
     background_texture_id: TextureID,
+    tachie_data: Option<Vec<TextureID>>,
 }
 
 impl ScenarioText {
@@ -175,6 +264,21 @@ impl ScenarioText {
 	let background_texture_id = TextureID::from_str(toml_scripts.get("background").unwrap().as_str().unwrap()).unwrap();
 
         let total_length: usize = seq_text.iter().fold(0, |sum, s| sum + s.str_len());
+
+	let tachie_data = if let Some(tachie_table) = toml_scripts.get("tachie-data") {
+	    let mut tid_vec = Vec::new();
+	    if let Some(tid) = tachie_table.get("right") {
+		tid_vec.push(TextureID::from_str(tid.as_str().unwrap()).unwrap());
+	    }
+
+	    if let Some(tid) = tachie_table.get("left") {
+		tid_vec.push(TextureID::from_str(tid.as_str().unwrap()).unwrap());
+	    }
+
+	    Some(tid_vec)
+	} else {
+	    None
+	};
         
         ScenarioText {
             seq_text: seq_text,
@@ -184,6 +288,7 @@ impl ScenarioText {
 	    scenario_id: id,
 	    next_scenario_id: next_id,
 	    background_texture_id: background_texture_id,
+	    tachie_data: tachie_data,
         }
     }
 
@@ -228,6 +333,10 @@ impl ScenarioText {
     pub fn get_background_texture_id(&self) -> TextureID {
 	self.background_texture_id
     }
+
+    pub fn get_tachie_data(&self) -> Option<Vec<TextureID>> {
+	self.tachie_data.clone()
+    }
 }
 
 pub struct ChoicePatternData {
@@ -235,6 +344,7 @@ pub struct ChoicePatternData {
     jump_scenario_id: Vec<ScenarioElementID>,
     scenario_id: ScenarioElementID,
     background_texture_id: Option<TextureID>,
+    tachie_data: Option<Vec<TextureID>>,
 }
 
 impl ChoicePatternData {
@@ -255,12 +365,28 @@ impl ChoicePatternData {
 	} else {
 	    None
 	};
+
+	let tachie_data = if let Some(tachie_table) = toml_scripts.get("tachie-data") {
+	    let mut tid_vec = Vec::new();
+	    if let Some(tid) = tachie_table.get("right") {
+		tid_vec.push(TextureID::from_str(tid.as_str().unwrap()).unwrap());
+	    }
+
+	    if let Some(tid) = tachie_table.get("left") {
+		tid_vec.push(TextureID::from_str(tid.as_str().unwrap()).unwrap());
+	    }
+
+	    Some(tid_vec)
+	} else {
+	    None
+	};
 	
 	ChoicePatternData {
 	    text: choice_pattern_array,
 	    jump_scenario_id: jump_scenario_array,
 	    scenario_id: id,
 	    background_texture_id: background_texture_id,
+	    tachie_data: tachie_data,
 	}
     }
 
@@ -270,6 +396,10 @@ impl ChoicePatternData {
 
     pub fn get_background_texture_id(&self) -> Option<TextureID> {
 	self.background_texture_id
+    }
+
+    pub fn get_tachie_data(&self) -> Option<Vec<TextureID>> {
+	self.tachie_data.clone()
     }
 }
 
@@ -459,17 +589,23 @@ impl ScenarioElement {
 	    Self::SceneTransition(transition_data) => None,
 	}
     }
+
+    pub fn get_tachie_info(&self) -> Option<Vec<TextureID>> {
+	match self {
+	    Self::Text(text) => text.get_tachie_data(),
+	    Self::ChoiceSwitch(choice) => choice.get_tachie_data(),
+	    Self::SceneTransition(transition_data) => None,
+	}
+    }
 }
 
 pub struct Scenario {
-    tachie: Vec<SimpleObject>,
     scenario: Vec<ScenarioElement>,
     current_page: usize,
 }
 
 impl Scenario {
     pub fn new(file_path: &str, game_data: &GameData) -> Self {
-        let mut tachie = Vec::new();
         let mut scenario = Vec::new();
 
         let content = match std::fs::read_to_string(file_path) {
@@ -496,20 +632,6 @@ impl Scenario {
 	    }
 	}
 
-        let tachie_array = root["using-tachie"].as_array().unwrap();
-        for elem in tachie_array {
-            let tid = TextureID::from_str(elem.as_str().unwrap());
-            if let Ok(tid) = tid {
-            tachie.push(SimpleObject::new(
-                MovableUniTexture::new(
-                    game_data.ref_texture(tid),
-                    numeric::Point2f::new(0.0, 0.0),
-                    numeric::Vector2f::new(0.1, 0.1),
-                    0.0, 0, move_fn::halt(numeric::Point2f::new(0.0, 0.0)),
-                    0), vec![]));
-            }
-        }
-
 	// シーン切り替えのScenarioElementをロード
 	let scene_transition = root["scene-transition"].as_table().unwrap();
 	scenario.push(ScenarioElement::SceneTransition(
@@ -520,7 +642,6 @@ impl Scenario {
 	    ScenarioTransitionData(SceneID::MainDesk, scene_transition.get("desk").unwrap().as_integer().unwrap() as i32)));
 
         Scenario {
-            tachie: tachie,
             scenario: scenario,
             current_page: 0,
         }
@@ -813,6 +934,7 @@ pub struct ScenarioEvent {
     status: ScenarioEventStatus,
     scene_transition: Option<SceneID>,
     background: Option<UniTexture>,
+    tachie: Option<ScenarioTachie>,
 }
 
 impl ScenarioEvent {
@@ -827,17 +949,15 @@ impl ScenarioEvent {
                 move_fn::halt(numeric::Point2f::new(0.0, 0.0)),
                 0), Vec::new());
 	let scenario = Scenario::new(file_path, game_data);
-	let event_background = if let Some(texture_id) = scenario.ref_current_element().get_background_texture() {
-	    let mut texture = UniTexture::new(game_data.ref_texture(texture_id),
-					      numeric::Point2f::new(0.0, 0.0),
-					      numeric::Vector2f::new(1.0, 1.0),
-					      0.0,
-					      0);
+
+	let event_background = if let Some(mut texture) = Self::update_event_background_sub(game_data, scenario.ref_current_element()) {
 	    texture.fit_scale(ctx, numeric::Vector2f::new(rect.w, rect.h));
 	    Some(texture)
 	} else {
 	    None
 	};
+
+	let event_tachie = Self::update_event_tachie_sub(game_data, scenario.ref_current_element(), t);
 
         ScenarioEvent {
             scenario: scenario,
@@ -850,7 +970,53 @@ impl ScenarioEvent {
 	    status: ScenarioEventStatus::Scenario,
 	    scene_transition: None,
 	    background: event_background,
+	    tachie: event_tachie,
         }
+    }
+
+    pub fn update_event_background_sub(game_data: &GameData, scenario_element: &ScenarioElement) -> Option<UniTexture> {
+	// ScenarioEventの背景を設定
+	// ScenarioElementが背景情報を持っていれば、設定を行う
+	if let Some(texture_id) = scenario_element.get_background_texture() {
+	    // 持っていたので、テクスチャを生成し、画面にフィットさせる
+	    Some(
+		UniTexture::new(game_data.ref_texture(texture_id),
+				numeric::Point2f::new(0.0, 0.0),
+				numeric::Vector2f::new(1.0, 1.0),
+				0.0,
+				0))
+	} else {
+	    None
+	}
+    }
+
+    pub fn update_event_background(&mut self, ctx: &mut ggez::Context, game_data: &GameData) {
+	// 現在のScenarioElementに背景がある場合、背景を変更
+	// そうでない場合は、何もしない
+	if let Some(mut texture) = Self::update_event_background_sub(game_data, self.scenario.ref_current_element()) {
+	    let canvas_size = self.canvas.get_drawing_size(ctx);
+	    texture.fit_scale(ctx, canvas_size);
+	    self.background = Some(texture);
+	}
+    }
+
+    pub fn update_event_tachie_sub(game_data: &GameData, scenario_element: &ScenarioElement, t: Clock) -> Option<ScenarioTachie> {
+	// ScenarioEventの立ち絵データ取り出し
+	// ScenarioElementが立ち絵情報を持っていれば、取り出す
+	if let Some(tachie_vec) = scenario_element.get_tachie_info() {
+	    Some(ScenarioTachie::new(game_data, tachie_vec, t))
+	} else {
+	    None
+	}
+    }
+    
+    pub fn update_event_tachie(&mut self, ctx: &mut ggez::Context, game_data: &GameData, t: Clock) {
+	// 現在のScenarioElementに立ち絵がある場合、立ち絵データを取り込み
+	// そうでない場合は、何もしない
+	let scenario_tachie = Self::update_event_tachie_sub(game_data, self.scenario.ref_current_element(), t);
+	if scenario_tachie.is_some() {
+	    self.tachie = scenario_tachie;
+	}
     }
     
     ///
@@ -874,7 +1040,7 @@ impl ScenarioEvent {
 		// ChoiceBoxが表示されていない場合、新しくオブジェクトを生成する
 		if self.choice_box.is_none() {
 		    self.choice_box = Some(ChoiceBox::new(
-			ctx, numeric::Rect::new(40.0, 100.0, 1200.0, 150.0),
+			ctx, numeric::Rect::new(40.0, 450.0, 1200.0, 150.0),
 			game_data, choice_pattern.text.clone()));
 
 		    // テキストボックスに選択肢の文字列を表示する
@@ -918,14 +1084,17 @@ impl ScenarioEvent {
     /// Action1キーが押されたときの、ScenarioEventの挙動
     ///
     pub fn key_down_action1(&mut self,
-			    _: &mut ggez::Context,
-			    _: &GameData) {
+			    ctx: &mut ggez::Context,
+			    game_data: &GameData,
+			    t: Clock) {
 	match self.scenario.ref_current_element_mut() {
 	    // 現在のScenarioElementがテキスト
 	    ScenarioElement::Text(scenario_text) => {
 		// 最後まで到達していた場合、新しいScenarioElementに遷移し、テキストボックスをリセット
 		if scenario_text.iterator_finish() {
 		    self.scenario.go_next_scenario_from_text_scenario();
+		    self.update_event_background(ctx, game_data);
+		    self.update_event_tachie(ctx, game_data, 0);
 		    self.text_box.reset_head_line();
 		    return;
 		}
@@ -942,6 +1111,8 @@ impl ScenarioEvent {
 	    },
 	    ScenarioElement::ChoiceSwitch(_) => {
 		self.scenario.go_next_scenario_from_choice_scenario(self.choice_box.as_ref().unwrap().get_selecting_index());
+		self.update_event_background(ctx, game_data);
+		self.update_event_tachie(ctx, game_data, 0);
 		self.choice_box = None;
 	    },
 	    ScenarioElement::SceneTransition(_) => (),
@@ -990,6 +1161,10 @@ impl DrawableComponent for ScenarioEvent {
 
 	    if let Some(background) = self.background.as_mut() {
 		background.draw(ctx)?;
+	    }
+	    
+	    if let Some(tachie) = self.tachie.as_mut() {
+		tachie.draw(ctx)?;
 	    }
 	    
             self.text_box.draw(ctx)?;

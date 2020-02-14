@@ -41,7 +41,7 @@ impl SceneManager for ScenarioScene {
         match vkey {
             tdev::VirtualKey::Action1 => {
                 println!("Action1 down!");
-		self.scenario_event.key_down_action1(ctx, game_data);
+		self.scenario_event.key_down_action1(ctx, game_data, self.get_current_clock());
             },
 	    tdev::VirtualKey::Right => {
 		self.scenario_event.key_down_right(ctx, game_data);
