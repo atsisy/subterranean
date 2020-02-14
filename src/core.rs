@@ -57,6 +57,7 @@ pub enum TextureID {
     MiddleBook3,
     Wood1,
     WafuTexture1,
+    WafuTexture2,
     Chobo1,
     ChoicePanel1,
     ChoicePanel2,
@@ -64,6 +65,7 @@ pub enum TextureID {
     ChoicePanel4,
     ChoicePanel5,
     JunkoTachieDefault,
+    SightBackground1,
     Unknown,
 }
 
@@ -92,8 +94,15 @@ impl FromStr for TextureID {
             "MiddleBook3" => Ok(Self::MiddleBook3),
 	    "Wood1" => Ok(Self::Wood1),
 	    "WafuTexture1" => Ok(Self::WafuTexture1),
+	    "WafuTexture2" => Ok(Self::WafuTexture2),
 	    "Chobo1" => Ok(Self::Chobo1),
+	    "ChoicePanel1" => Ok(Self::ChoicePanel1),
+	    "ChoicePanel2" => Ok(Self::ChoicePanel2),
+	    "ChoicePanel3" => Ok(Self::ChoicePanel3),
+	    "ChoicePanel4" => Ok(Self::ChoicePanel4),
+	    "ChoicePanel5" => Ok(Self::ChoicePanel5),
 	    "JunkoTachieDefault" => Ok(Self::JunkoTachieDefault),
+	    "SightBackground1" => Ok(Self::SightBackground1),
             _ => Err(())
         }
     }
@@ -117,13 +126,15 @@ impl TextureID {
             12 => Some(Self::MiddleBook3),
             13 => Some(Self::Wood1),
 	    14 => Some(Self::WafuTexture1),
-	    15 => Some(Self::Chobo1),
-	    16 => Some(Self::ChoicePanel1),
-	    17 => Some(Self::ChoicePanel2),
-	    18 => Some(Self::ChoicePanel3),
-	    19 => Some(Self::ChoicePanel4),
-	    20 => Some(Self::ChoicePanel5),
-	    21 => Some(Self::JunkoTachieDefault),
+	    15 => Some(Self::WafuTexture2),
+	    16 => Some(Self::Chobo1),
+	    17 => Some(Self::ChoicePanel1),
+	    18 => Some(Self::ChoicePanel2),
+	    19 => Some(Self::ChoicePanel3),
+	    20 => Some(Self::ChoicePanel4),
+	    21 => Some(Self::ChoicePanel5),
+	    22 => Some(Self::JunkoTachieDefault),
+	    23 => Some(Self::SightBackground1),
             _ => None
         }
     }

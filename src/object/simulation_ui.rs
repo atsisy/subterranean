@@ -146,12 +146,20 @@ impl Meter {
         }
     }
 
-    pub fn get_counter(&self) -> &Counter<f32> {
-        &self.counter
+    pub fn add(&mut self, value: f32) {
+	self.counter.add(value);
     }
 
-    pub fn get_mut_counter(&mut self) -> &mut Counter<f32> {
-        &mut self.counter
+    pub fn get_value(&self) -> f32 {
+	self.counter.get_value()
+    }
+
+    pub fn set_value(&mut self, value: f32) {
+	if self.get_value() < self.max {
+	    self.counter.set_value(value);
+	} else {
+	    self.counter.set_value(self.max);
+	}
     }
     
     pub fn update(&mut self) {
@@ -295,7 +303,7 @@ impl SimulationStatus {
                                                                             numeric::Vector2f::new(24.0, 24.0),
                                                                             ggraphics::Color::from_rgba_u32(0xffffffff)),
                                                        Box::new(move |count| { format!("{}円", count) }), 0),
-            tired_meter: Meter::new(numeric::Point2f::new(100.0, 10.0),
+            tired_meter: Meter::new(numeric::Point2f::new(800.0, 10.0),
                                     numeric::Rect::new(0.0, 0.0, 200.0, 40.0),
                                     ggraphics::Color::from_rgba_u32(0x000000ff),
                                     numeric::Rect::new(10.0, 10.0, 180.0, 20.0),
@@ -307,9 +315,9 @@ impl SimulationStatus {
                                 TextureID::LotusYellow,
                                 game_data),
             canvas: SubScreen::new(ctx, pos, 0, ggraphics::Color::from_rgba_u32(0xe6cde3ff)),
-	    background: MovableUniTexture::new(game_data.ref_texture(TextureID::WafuTexture1),
+	    background: MovableUniTexture::new(game_data.ref_texture(TextureID::WafuTexture2),
 					       numeric::Point2f::new(0.0, 0.0),
-					       numeric::Vector2f::new(0.1, 0.1),
+					       numeric::Vector2f::new(1.0, 1.0),
 					       0.0,
 					       0,
 					       move_fn::stop(),

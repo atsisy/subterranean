@@ -1,16 +1,11 @@
-
-use ggez::graphics as ggraphics;
-
 use torifune::device as tdev;
 use torifune::core::Clock;
 use torifune::numeric;
-use torifune::graphics::object::*;
 
-use crate::core::{GameData, FontID};
+use crate::core::GameData;
 
 use crate::object::scenario::*;
 use crate::object::simulation_ui as sui;
-use crate::object::scenario::ChoiceBox;
 use torifune::graphics::*;
 
 use super::*;
@@ -24,7 +19,7 @@ pub struct ScenarioScene {
 
 impl ScenarioScene {
     pub fn new(ctx: &mut ggez::Context, game_data: &GameData) -> Self {
-        let scenario = ScenarioEvent::new(ctx, numeric::Rect::new(100.0, 520.0, 1200.0, 280.0),
+        let scenario = ScenarioEvent::new(ctx, numeric::Rect::new(0.0, 180.0, 1366.0, 600.0),
                                           "./resources/scenario_parsing_test.toml",
                                           game_data, 0);
         
@@ -82,7 +77,9 @@ impl SceneManager for ScenarioScene {
     fn post_process(&mut self, _ctx: &mut ggez::Context, _: &GameData) -> SceneTransition {
         self.update_current_clock();
 
+	// SceneTransition状態になっている
 	if self.scenario_event.get_status() == ScenarioEventStatus::SceneTransition {
+	    // 遷移先のSceneIDを取り出し、遷移先として登録する
 	    if let Some(scene_id) = self.scenario_event.get_scene_transition() {
 		self.scene_transition = scene_id;
 		return SceneTransition::Transition;
@@ -100,7 +97,7 @@ impl SceneManager for ScenarioScene {
         self.clock
     }
     
-    fn update_current_clock(&mut self) {
+    fn update_current_clock(&mut self) { 
         self.clock += 1;
     }
     

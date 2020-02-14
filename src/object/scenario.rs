@@ -5,7 +5,6 @@ use torifune::graphics::*;
 use torifune::graphics::object::sub_screen::SubScreen;
 use torifune::graphics::object::sub_screen;
 use torifune::numeric;
-use torifune::device::VirtualKey;
 
 use torifune::impl_texture_object_for_wrapped;
 use torifune::impl_drawable_object_for_wrapped;
@@ -144,6 +143,7 @@ pub struct ScenarioText {
     total_length: usize,
     scenario_id: ScenarioElementID,
     next_scenario_id: ScenarioElementID,
+    background_texture_id: TextureID,
 }
 
 impl ScenarioText {
@@ -172,6 +172,8 @@ impl ScenarioText {
             }
         }
 
+	let background_texture_id = TextureID::from_str(toml_scripts.get("background").unwrap().as_str().unwrap()).unwrap();
+
         let total_length: usize = seq_text.iter().fold(0, |sum, s| sum + s.str_len());
         
         ScenarioText {
@@ -181,6 +183,7 @@ impl ScenarioText {
             total_length: total_length,
 	    scenario_id: id,
 	    next_scenario_id: next_id,
+	    background_texture_id: background_texture_id,
         }
     }
 
@@ -221,17 +224,22 @@ impl ScenarioText {
 	self.iterator = 0.0;
 	self.current_segment_index = 0;
     }
+
+    pub fn get_background_texture_id(&self) -> TextureID {
+	self.background_texture_id
+    }
 }
 
 pub struct ChoicePatternData {
     text: Vec<String>,
     jump_scenario_id: Vec<ScenarioElementID>,
     scenario_id: ScenarioElementID,
+    background_texture_id: Option<TextureID>,
 }
 
 impl ChoicePatternData {
 
-    pub fn from_toml_object(toml_scripts: &toml::value::Value, game_data: &GameData) -> Self {
+    pub fn from_toml_object(toml_scripts: &toml::value::Value, _: &GameData) -> Self {
 	let id = toml_scripts.get("id").unwrap().as_integer().unwrap() as i32;
 
 	let mut choice_pattern_array = Vec::new();
@@ -241,16 +249,27 @@ impl ChoicePatternData {
 	    choice_pattern_array.push(elem.get("pattern").unwrap().as_str().unwrap().to_string());
 	    jump_scenario_array.push(elem.get("jump-id").unwrap().as_integer().unwrap() as ScenarioElementID);
 	}
+
+	let background_texture_id = if let Some(background_tid_str) = toml_scripts.get("background") {
+	    Some(TextureID::from_str(background_tid_str.as_str().unwrap()).unwrap())
+	} else {
+	    None
+	};
 	
 	ChoicePatternData {
 	    text: choice_pattern_array,
 	    jump_scenario_id: jump_scenario_array,
 	    scenario_id: id,
+	    background_texture_id: background_texture_id,
 	}
     }
 
     pub fn get_scenario_id(&self) -> ScenarioElementID {
 	self.scenario_id
+    }
+
+    pub fn get_background_texture_id(&self) -> Option<TextureID> {
+	self.background_texture_id
     }
 }
 
@@ -410,6 +429,11 @@ impl DrawableComponent for ChoiceBox {
     }
 }
 
+///
+/// SceneIDとSceneElementIDのペア
+/// ScenarioElementIDを持っていて、SceneEventの切り替えと同じインターフェースの
+/// シーンの切り替えが実現できる
+///
 #[derive(Clone, Copy)]
 pub struct ScenarioTransitionData(SceneID, ScenarioElementID);
 
@@ -425,6 +449,14 @@ impl ScenarioElement {
 	    Self::Text(text) => text.get_scenario_id(),
 	    Self::ChoiceSwitch(choice) => choice.get_scenario_id(),
 	    Self::SceneTransition(transition_data) => transition_data.1,
+	}
+    }
+
+    pub fn get_background_texture(&self) -> Option<TextureID> {
+	match self {
+	    Self::Text(text) => Some(text.get_background_texture_id()),
+	    Self::ChoiceSwitch(choice) => choice.get_background_texture_id(),
+	    Self::SceneTransition(transition_data) => None,
 	}
     }
 }
@@ -478,6 +510,7 @@ impl Scenario {
             }
         }
 
+	// シーン切り替えのScenarioElementをロード
 	let scene_transition = root["scene-transition"].as_table().unwrap();
 	scenario.push(ScenarioElement::SceneTransition(
 	    ScenarioTransitionData(SceneID::Scenario, scene_transition.get("scenario").unwrap().as_integer().unwrap() as i32)));
@@ -512,7 +545,7 @@ impl Scenario {
     ///
     pub fn go_next_scenario_from_text_scenario(&mut self) {
 	// 次のScenarioElementIDは、ScenarioTextがフィールドとして保持しているので取り出す
-	let next_id = match self.current_page_mut() {
+	let next_id = match self.ref_current_element_mut() {
 	    ScenarioElement::Text(obj) => {
 		obj.next_scenario_id
 	    },
@@ -526,7 +559,7 @@ impl Scenario {
 
 	
 	// 次がシナリオなら初期化する
-	match self.current_page_mut() {
+	match self.ref_current_element_mut() {
 	    ScenarioElement::Text(obj) => {
 		obj.reset();
 	    },
@@ -541,7 +574,7 @@ impl Scenario {
     pub fn go_next_scenario_from_choice_scenario(&mut self, select_index: usize) {
 
 	// 次のScenarioElementIDは、選択肢から選ぶ
-        let next_id = match self.current_page_mut() {
+        let next_id = match self.ref_current_element_mut() {
 	    ScenarioElement::ChoiceSwitch(obj) => {
 		// 選択中の選択肢のジャンプ先を取得する
 		*obj.jump_scenario_id.get(select_index).unwrap()
@@ -555,7 +588,7 @@ impl Scenario {
 	self.current_page = self.find_index_of_specified_scenario_id(next_id);
 
 	// シナリオを初期化する
-	match self.current_page_mut() {
+	match self.ref_current_element_mut() {
 	    ScenarioElement::Text(obj) => {
 		obj.reset();
 	    },
@@ -568,7 +601,7 @@ impl Scenario {
     }
 
     pub fn update_current_page(&mut self) {
-	match self.current_page_mut() {
+	match self.ref_current_element_mut() {
 	    ScenarioElement::Text(scenario_text) => {
 		scenario_text.update_iterator();
 	    },
@@ -576,7 +609,11 @@ impl Scenario {
 	}
     }
 
-    pub fn current_page_mut(&mut self) -> &mut ScenarioElement {
+    pub fn ref_current_element(&self) -> &ScenarioElement {
+        self.scenario.get(self.current_page).unwrap()
+    }
+    
+    pub fn ref_current_element_mut(&mut self) -> &mut ScenarioElement {
         self.scenario.get_mut(self.current_page).unwrap()
     }
 
@@ -775,6 +812,7 @@ pub struct ScenarioEvent {
     canvas: SubScreen,
     status: ScenarioEventStatus,
     scene_transition: Option<SceneID>,
+    background: Option<UniTexture>,
 }
 
 impl ScenarioEvent {
@@ -788,16 +826,30 @@ impl ScenarioEvent {
                 0,
                 move_fn::halt(numeric::Point2f::new(0.0, 0.0)),
                 0), Vec::new());
+	let scenario = Scenario::new(file_path, game_data);
+	let event_background = if let Some(texture_id) = scenario.ref_current_element().get_background_texture() {
+	    let mut texture = UniTexture::new(game_data.ref_texture(texture_id),
+					      numeric::Point2f::new(0.0, 0.0),
+					      numeric::Vector2f::new(1.0, 1.0),
+					      0.0,
+					      0);
+	    texture.fit_scale(ctx, numeric::Vector2f::new(rect.w, rect.h));
+	    Some(texture)
+	} else {
+	    None
+	};
+
         ScenarioEvent {
-            scenario: Scenario::new(file_path, game_data),
+            scenario: scenario,
             text_box: TextBox::new(
                 ctx,
-                numeric::Rect::new(10.0, 10.0, rect.w - 20.0, rect.h - 20.0),
+                numeric::Rect::new(20.0, 330.0, rect.w - 40.0, 270.0),
                 background, 3, t),
 	    choice_box: None,
             canvas: SubScreen::new(ctx, rect, 0, ggraphics::Color::from_rgba_u32(0x00)),
 	    status: ScenarioEventStatus::Scenario,
 	    scene_transition: None,
+	    background: event_background,
         }
     }
     
@@ -805,7 +857,7 @@ impl ScenarioEvent {
     /// 表示しているテキストや選択肢を更新するメソッド
     ///
     pub fn update_text(&mut self, ctx: &mut ggez::Context, game_data: &GameData) {
-	match self.scenario.current_page_mut() {
+	match self.scenario.ref_current_element_mut() {
 	    ScenarioElement::Text(scenario_text) => {
 		if self.text_box.text_box_status == TextBoxStatus::UpdatingText {
 		    // 表示する文字数を更新
@@ -866,9 +918,9 @@ impl ScenarioEvent {
     /// Action1キーが押されたときの、ScenarioEventの挙動
     ///
     pub fn key_down_action1(&mut self,
-                      ctx: &mut ggez::Context,
-			    game_data: &GameData) {
-	match self.scenario.current_page_mut() {
+			    _: &mut ggez::Context,
+			    _: &GameData) {
+	match self.scenario.ref_current_element_mut() {
 	    // 現在のScenarioElementがテキスト
 	    ScenarioElement::Text(scenario_text) => {
 		// 最後まで到達していた場合、新しいScenarioElementに遷移し、テキストボックスをリセット
@@ -888,7 +940,7 @@ impl ScenarioEvent {
 		    self.go_next_line();
 		}
 	    },
-	    ScenarioElement::ChoiceSwitch(choice_pattern) => {
+	    ScenarioElement::ChoiceSwitch(_) => {
 		self.scenario.go_next_scenario_from_choice_scenario(self.choice_box.as_ref().unwrap().get_selecting_index());
 		self.choice_box = None;
 	    },
@@ -900,7 +952,7 @@ impl ScenarioEvent {
     /// Rightキーが押されたときの、ScenarioEventの挙動
     ///
     pub fn key_down_right(&mut self,
-                      ctx: &mut ggez::Context,
+			  _: &mut ggez::Context,
 			  game_data: &GameData) {
 	if let Some(choice) = &mut self.choice_box {
 	    choice.move_right();
@@ -916,8 +968,8 @@ impl ScenarioEvent {
     /// Leftキーが押されたときの、ScenarioEventの挙動
     ///
     pub fn key_down_left(&mut self,
-                      ctx: &mut ggez::Context,
-                      game_data: &GameData) {
+			 _: &mut ggez::Context,
+			 game_data: &GameData) {
 	if let Some(choice) = &mut self.choice_box {
 	    choice.move_left();
 	    
@@ -936,10 +988,14 @@ impl DrawableComponent for ScenarioEvent {
         if self.is_visible() {
 	    sub_screen::stack_screen(ctx, &self.canvas);
 
+	    if let Some(background) = self.background.as_mut() {
+		background.draw(ctx)?;
+	    }
+	    
             self.text_box.draw(ctx)?;
 	    
 	    if let Some(choice) = self.choice_box.as_mut() {
-		choice.draw(ctx);
+		choice.draw(ctx)?;
 	    }
             
 	    sub_screen::pop_screen(ctx);

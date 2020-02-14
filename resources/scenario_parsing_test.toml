@@ -9,6 +9,7 @@ desk = 3
 type = "scenario"
 id = 10
 next-id = 11
+background = "SightBackground1"
 
    [scenario-group.default-text-attribute]
    fpc = 0.2
@@ -35,6 +36,7 @@ next-id = 11
 
 [[scenario-group]]
 type = "choice"
+background = "WafuTexture1"
 id = 11
    [[scenario-group.choice-pattern]]
    pattern = "選択肢1"
