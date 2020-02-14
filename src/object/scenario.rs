@@ -296,6 +296,7 @@ impl ScenarioText {
         self.iterator as usize
     }
 
+    // 表示する文字数を更新する
     pub fn update_iterator(&mut self) {
         let current_segment = self.seq_text.get(self.current_segment_index).unwrap();
         self.iterator += current_segment.get_fpc();
@@ -339,6 +340,9 @@ impl ScenarioText {
     }
 }
 
+///
+/// 選択肢のデータを保持する構造体
+///
 pub struct ChoicePatternData {
     text: Vec<String>,
     jump_scenario_id: Vec<ScenarioElementID>,
@@ -586,7 +590,7 @@ impl ScenarioElement {
 	match self {
 	    Self::Text(text) => Some(text.get_background_texture_id()),
 	    Self::ChoiceSwitch(choice) => choice.get_background_texture_id(),
-	    Self::SceneTransition(transition_data) => None,
+	    Self::SceneTransition(_) => None,
 	}
     }
 
@@ -594,7 +598,7 @@ impl ScenarioElement {
 	match self {
 	    Self::Text(text) => text.get_tachie_data(),
 	    Self::ChoiceSwitch(choice) => choice.get_tachie_data(),
-	    Self::SceneTransition(transition_data) => None,
+	    Self::SceneTransition(_) => None,
 	}
     }
 }
@@ -1010,7 +1014,7 @@ impl ScenarioEvent {
 	}
     }
     
-    pub fn update_event_tachie(&mut self, ctx: &mut ggez::Context, game_data: &GameData, t: Clock) {
+    pub fn update_event_tachie(&mut self, game_data: &GameData, t: Clock) {
 	// 現在のScenarioElementに立ち絵がある場合、立ち絵データを取り込み
 	// そうでない場合は、何もしない
 	let scenario_tachie = Self::update_event_tachie_sub(game_data, self.scenario.ref_current_element(), t);
@@ -1086,7 +1090,7 @@ impl ScenarioEvent {
     pub fn key_down_action1(&mut self,
 			    ctx: &mut ggez::Context,
 			    game_data: &GameData,
-			    t: Clock) {
+			    _: Clock) {
 	match self.scenario.ref_current_element_mut() {
 	    // 現在のScenarioElementがテキスト
 	    ScenarioElement::Text(scenario_text) => {
@@ -1094,7 +1098,7 @@ impl ScenarioEvent {
 		if scenario_text.iterator_finish() {
 		    self.scenario.go_next_scenario_from_text_scenario();
 		    self.update_event_background(ctx, game_data);
-		    self.update_event_tachie(ctx, game_data, 0);
+		    self.update_event_tachie(game_data, 0);
 		    self.text_box.reset_head_line();
 		    return;
 		}
@@ -1112,7 +1116,7 @@ impl ScenarioEvent {
 	    ScenarioElement::ChoiceSwitch(_) => {
 		self.scenario.go_next_scenario_from_choice_scenario(self.choice_box.as_ref().unwrap().get_selecting_index());
 		self.update_event_background(ctx, game_data);
-		self.update_event_tachie(ctx, game_data, 0);
+		self.update_event_tachie(game_data, 0);
 		self.choice_box = None;
 	    },
 	    ScenarioElement::SceneTransition(_) => (),

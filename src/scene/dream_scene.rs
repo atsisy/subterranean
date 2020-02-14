@@ -46,8 +46,6 @@ impl EnemyGroup {
         self.group
             .iter_mut()
             .for_each(|enemy| {
-                enemy.get_mut_character_object().apply_resistance(t);
-
                 enemy.move_map_current_speed_y();
 
                 // 当たり判定の前に描画位置を決定しないとバグる。この仕様も直すべき
@@ -184,6 +182,10 @@ impl DreamScene {
         if self.key_listener.current_key_status(ctx, &VirtualKey::Up) == tdev::KeyStatus::Pressed {
             self.up_key_handler(ctx);
         }
+
+	if self.key_listener.current_key_status(ctx, &VirtualKey::Down) == tdev::KeyStatus::Pressed {
+            self.down_key_handler(ctx);
+        }
     }
 
     ///
@@ -208,16 +210,19 @@ impl DreamScene {
     }
     
     fn right_key_handler(&mut self, _ctx: &ggez::Context) {
-        self.player.move_right();
+	self.player.set_speed_x(4.0);
     }
 
     fn left_key_handler(&mut self, _ctx: &ggez::Context) {
-        self.player.move_left();
+	self.player.set_speed_x(-4.0);
     }
 
     fn up_key_handler(&mut self, _ctx: &ggez::Context) {
-        let t = self.get_current_clock();
-        self.player.jump(t);
+	self.player.set_speed_y(-4.0);
+    }
+
+    fn down_key_handler(&mut self, _ctx: &ggez::Context) {
+	self.player.set_speed_y(4.0);
     }
 
     fn fix_camera_position(&self) -> numeric::Point2f {
@@ -253,83 +258,140 @@ impl DreamScene {
         }
     }
 
+    ///
+    /// PlayerCharacterのマップチップとのX方向の衝突を修正する
+    ///
     fn playable_check_collision_horizon(&mut self, ctx: &mut ggez::Context) {
         
-        // 衝突の検出 + 修正動作
         let t = self.get_current_clock();
+
+	// プレイヤーのマップチップに対する衝突を修正
         Self::check_collision_horizon(ctx, self.player.get_mut_character_object(), &self.tile_map, t);
+
+	// プレイヤーのマップ座標を更新
         self.player.get_mut_character_object().update_display_position(&self.camera.borrow());
-        let a = self.player.get_mut_character_object().obj().get_position() - self.fix_camera_position();
-        self.move_camera(numeric::Vector2f::new(a.x, 0.0));
+
+	// カメラをプレイヤーにフォーカス
+	self.focus_camera_playable_character_x();
         
     }
 
+    ///
+    /// PlayerCharacterのマップチップとのY方向の衝突を修正する
+    ///
     fn playable_check_collision_vertical(&mut self, ctx: &mut ggez::Context) {
         let t = self.get_current_clock();
         
-        // 衝突の検出 + 修正動作
+	// プレイヤーのマップチップに対する衝突を修正
         Self::check_collision_vertical(ctx, self.player.get_mut_character_object(), &self.tile_map, t);
+
+	// プレイヤーのマップ座標を更新
         self.player.get_mut_character_object().update_display_position(&self.camera.borrow());
 
-        let a = self.player.get_mut_character_object().obj().get_position() - self.fix_camera_position();
-        self.move_camera(numeric::Vector2f::new(0.0, a.y));
+	// カメラをプレイヤーにフォーカス
+	self.focus_camera_playable_character_y();
     }
 
     fn focus_camera_playable_character_x(&mut self) {
-        let a = self.player.get_mut_character_object().obj().get_position() - self.fix_camera_position();
-        self.move_camera(numeric::Vector2f::new(a.x, 0.0));
+	// カメラとプレイヤーキャラクターの差分を計算し、プレイヤーが中心に来るようにカメラを移動
+        let player_diff = self.player.get_mut_character_object().obj().get_position() - self.fix_camera_position();
+        self.move_camera(numeric::Vector2f::new(player_diff.x, 0.0));
     }
 
     fn focus_camera_playable_character_y(&mut self) {
-        let a = self.player.get_mut_character_object().obj().get_position() - self.fix_camera_position();
-        self.move_camera(numeric::Vector2f::new(0.0, a.y));
+	// カメラとプレイヤーキャラクターの差分を計算し、プレイヤーが中心に来るようにカメラを移動
+        let player_diff = self.player.get_mut_character_object().obj().get_position() - self.fix_camera_position();
+        self.move_camera(numeric::Vector2f::new(0.0, player_diff.y));
     }
 
+    ///
+    /// PlayerCharacterの他キャラクターとのX方向の衝突を修正する
+    ///
     fn check_enemy_collision_x(&mut self, ctx: &mut ggez::Context, t: Clock) {
+	// マップ座標を更新
         self.player.get_mut_character_object().update_display_position(&self.camera.borrow());
+
+	// 他キャラクターすべてとの衝突判定を行う
         for e in self.enemy_group.iter_mut() {
+	    // 他キャラクターのマップ座標を更新
             e.get_mut_character_object().update_display_position(&self.camera.borrow());
-            let info = self.player.get_character_object().check_collision_with_character(ctx, e.get_character_object());
-            if info.collision {
-                let diff = self.player.get_mut_character_object().fix_collision_horizon(ctx, &info, t);
+
+	    // 衝突情報を取得
+            let collision_info = self.player.get_character_object().check_collision_with_character(ctx, e.get_character_object());
+
+	    // collisionフィールドがtrueなら、衝突している
+            if collision_info.collision {
+		// プレイヤーと他キャラクターの衝突状況から、プレイヤーがどれだけ、突き放されればいいのか計算
+                let diff = self.player.get_mut_character_object().fix_collision_horizon(ctx, &collision_info, t);
+		
+		// プレイヤーの突き放し距離分動かす
                 self.player.get_mut_character_object().move_map(numeric::Vector2f::new(-diff, 0.0));
+
+		// プレイヤーのマップ座標を更新
+		self.player.get_mut_character_object().update_display_position(&self.camera.borrow());
             }
         }
-        self.player.get_mut_character_object().update_display_position(&self.camera.borrow());
+
+	// カメラをプレイヤーに合わせる
         self.focus_camera_playable_character_x();
     }
 
+    ///
+    /// PlayerCharacterの他キャラクターとのY方向の衝突を修正する
+    ///
     fn check_enemy_collision_y(&mut self, ctx: &mut ggez::Context, t: Clock) {
+	// マップ座標を更新
         self.player.get_mut_character_object().update_display_position(&self.camera.borrow());
+
+	// 他キャラクターすべてとの衝突判定を行う
         for e in self.enemy_group.iter_mut() {
+
+	    // 他キャラクターのマップ座標を更新
             e.get_mut_character_object().update_display_position(&self.camera.borrow());
-            let info = self.player.get_character_object().check_collision_with_character(ctx, e.get_character_object());
-            if info.collision {
-                let diff = self.player.get_mut_character_object().fix_collision_vertical(ctx, &info, t);
+
+	    // 衝突情報を取得
+            let collision_info = self.player.get_character_object().check_collision_with_character(ctx, e.get_character_object());
+
+	    // collisionフィールドがtrueなら、衝突している
+            if collision_info.collision {
+		// プレイヤーと他キャラクターの衝突状況から、プレイヤーがどれだけ、突き放されればいいのか計算
+                let diff = self.player.get_mut_character_object().fix_collision_vertical(ctx, &collision_info, t);
+
+		// プレイヤーの突き放し距離分動かす
                 self.player.get_mut_character_object().move_map(numeric::Vector2f::new(0.0, -diff));
+
+		// プレイヤーのマップ座標を更新
+		self.player.get_mut_character_object().update_display_position(&self.camera.borrow());
             }
         }
-        self.player.get_mut_character_object().update_display_position(&self.camera.borrow());
+
+	// カメラをプレイヤーに合わせる
         self.focus_camera_playable_character_y();
     }
 
     fn move_playable_character_x(&mut self, ctx: &mut ggez::Context, t: Clock) {
-        // プレイヤーをX方向の速度だけ移動させる
+	// プレイヤーのX方向の移動
         self.player.move_map_current_speed_x();
+		// マップ座標を更新, これで、衝突判定を行えるようになる
         self.player.get_mut_character_object().update_display_position(&self.camera.borrow());
-        
+
+        // マップチップとの衝突判定（横）
         self.playable_check_collision_horizon(ctx);
 
+	// 他キャラクターとの当たり判定
         self.check_enemy_collision_x(ctx, t);
     }
 
     fn move_playable_character_y(&mut self, ctx: &mut ggez::Context, t: Clock) {
-        // プレイヤーに重力の影響を受けさせる
+        // プレイヤーのY方向の移動
         self.player.move_map_current_speed_y();
+	// マップ座標を更新, これで、衝突判定を行えるようになる
         self.player.get_mut_character_object().update_display_position(&self.camera.borrow());
-        
+
+	// マップチップとの衝突判定（縦）
         self.playable_check_collision_vertical(ctx);
 
+	// 他キャラクターとの当たり判定
         self.check_enemy_collision_y(ctx, t);
     }
 
@@ -338,7 +400,6 @@ impl DreamScene {
         self.check_key_event(ctx);
         
         self.player.get_mut_character_object().update_texture(t);
-        self.player.get_mut_character_object().apply_resistance(t);
 
         self.move_playable_character_x(ctx, t);
         self.move_playable_character_y(ctx, t);
@@ -387,6 +448,7 @@ impl SceneManager for DreamScene {
 
     fn pre_process(&mut self, ctx: &mut ggez::Context, _: &GameData) {
         let t = self.get_current_clock();
+	self.player.reset_speed();
 
         self.move_playable_character(ctx, t);
         

@@ -93,36 +93,16 @@ impl SpeedBorder {
 }
 
 pub struct TextureSpeedInfo {
-    fall_begin: Clock,
-    gravity_acc: f32,
-    horizon_resistance: f32,
     speed: numeric::Vector2f,
     speed_border: SpeedBorder,
 }
 
 impl TextureSpeedInfo {
-    pub fn new(gravity_acc: f32, horizon_res: f32, speed: numeric::Vector2f, border: SpeedBorder)
+    pub fn new(speed: numeric::Vector2f, border: SpeedBorder)
                -> TextureSpeedInfo {
         TextureSpeedInfo {
-            fall_begin: 0,
-            gravity_acc: gravity_acc,
-            horizon_resistance: horizon_res,
             speed: speed,
             speed_border: border,
-        }
-    }
-
-    pub fn fall_start(&mut self, t: Clock) {
-        self.fall_begin = t;
-    }
-
-    pub fn apply_resistance(&mut self, t: Clock) {
-        self.set_speed_y(self.speed.y + (self.gravity_acc * (t - self.fall_begin) as f32));
-        
-        if self.speed.x.abs() <= self.horizon_resistance {
-            self.set_speed_x(0.0);
-        }else {
-            self.set_speed_x(self.speed.x + if self.speed.x > 0.0 { -self.horizon_resistance } else { self.horizon_resistance });
         }
     }
 
@@ -144,10 +124,6 @@ impl TextureSpeedInfo {
 
     pub fn get_speed(&self) -> numeric::Vector2f {
         self.speed
-    }
-
-    fn set_gravity(&mut self, g: f32) {
-        self.gravity_acc = g;
     }
 }
 
@@ -378,9 +354,7 @@ impl MapObject {
     fn fix_collision_above(&mut self,
                            _ctx: &mut ggez::Context,
                            info: &CollisionInformation,
-                           t: Clock) -> f32 {
-        self.speed_info.fall_start(t);
-        self.speed_info.set_speed_y(1.0);
+                           _: Clock) -> f32 {
         (info.object1_position.unwrap().y + info.object1_position.unwrap().h + 0.1) - info.object2_position.unwrap().y
     }
 
@@ -391,8 +365,7 @@ impl MapObject {
     fn fix_collision_bottom(&mut self,
                             ctx: &mut ggez::Context,
                             info: &CollisionInformation,
-                            t: Clock) -> f32 {
-        self.speed_info.fall_start(t);
+                            _: Clock) -> f32 {
         let area = self.object.get_object().get_drawing_size(ctx);
         info.object1_position.unwrap().y - (info.object2_position.unwrap().y + area.y) - 1.0
     }
@@ -402,11 +375,11 @@ impl MapObject {
     /// どれだけ、テクスチャを移動させれば良いのかを返す
     ///
     fn fix_collision_right(&mut self,
-                            ctx: &mut ggez::Context,
-                            info: &CollisionInformation,
-                           _t: Clock) -> f32 {
+                           ctx: &mut ggez::Context,
+                           info: &CollisionInformation,
+                           _: Clock) -> f32 {
         let area = self.object.get_object().get_drawing_size(ctx);
-        (info.object1_position.unwrap().x - 0.1) - (info.object2_position.unwrap().x + area.x)
+        (info.object1_position.unwrap().x - 2.0) - (info.object2_position.unwrap().x + area.x)
     }
 
     ///
@@ -426,7 +399,7 @@ impl MapObject {
     /// 垂直方向の衝突（めり込み）を修正するメソッド
     ///
     pub fn fix_collision_vertical(&mut self, ctx: &mut ggez::Context,
-                         info: &CollisionInformation,
+				  info: &CollisionInformation,
                                   t: Clock) -> f32 {
         self.speed_info.set_speed_x(0.0);
         if info.center_diff.unwrap().y < 0.0 {
@@ -444,20 +417,18 @@ impl MapObject {
     pub fn fix_collision_horizon(&mut self, ctx: &mut ggez::Context,
                                  info: &CollisionInformation,
                                  t: Clock)  -> f32 {
-        let right = info.object2_position.unwrap().x + self.object.get_object().get_drawing_area(ctx).w;
-        if right > info.object1_position.unwrap().x && right < info.object1_position.unwrap().x + info.object1_position.unwrap().w {
+	self.speed_info.set_speed_x(0.0);
+        if info.center_diff.unwrap().x < 0.0 {
             return self.fix_collision_right(ctx, &info, t);
-        } else {
+        } else if info.center_diff.unwrap().x > 0.0 {
             return self.fix_collision_left(ctx, &info, t);
         }
+
+        0.0
     }
 
     pub fn update_texture(&mut self, t: Clock) {
         self.object.try_next_frame(t);
-    }
-    
-    pub fn apply_resistance(&mut self, t: Clock) {
-        self.speed_info.apply_resistance(t);
     }
     
     pub fn move_map(&mut self, offset: numeric::Vector2f) {
@@ -533,22 +504,6 @@ impl PlayableCharacter {
         }
     }
 
-    pub fn move_right(&mut self) {
-        self.character.speed_info.set_speed_x(6.0);
-    }
-
-    pub fn move_left(&mut self) {
-        self.character.speed_info.set_speed_x(-6.0);
-    }
-
-    pub fn jump(&mut self, t: Clock) {
-        self.character.speed_info_mut().set_speed_y(-12.0);
-        self.character.speed_info_mut().fall_start(t);
-        self.character
-            .obj_mut()
-            .override_move_func(move_fn::gravity_move(-5.0, 24.0, 600.0, 0.2), t)
-    }
-
     pub fn get_map_position(&self) -> numeric::Point2f {
         self.character.get_map_position()
     }
@@ -591,6 +546,22 @@ impl PlayableCharacter {
             self.status.hp -= damage.hp_damage;
             self.status.mp -= damage.mp_damage;
         }
+    }
+
+    pub fn set_speed(&mut self, speed: numeric::Vector2f) {
+	self.character.speed_info_mut().set_speed(speed);
+    }
+
+    pub fn set_speed_x(&mut self, speed: f32) {
+	self.character.speed_info_mut().set_speed_x(speed);
+    }
+
+    pub fn set_speed_y(&mut self, speed: f32) {
+	self.character.speed_info_mut().set_speed_y(speed);
+    }
+
+    pub fn reset_speed(&mut self) {
+	self.character.speed_info_mut().set_speed(numeric::Vector2f::new(0.0, 0.0));
     }
 }
 
@@ -649,74 +620,6 @@ impl EnemyCharacter {
 
     pub fn get_attack_core(&self, ctx: &mut ggez::Context) -> AttackCore {
         AttackCore::new(self.character.get_map_position() + self.character.obj().get_center_offset(ctx), 10.0)
-    }
-}
-
-pub struct TextureObjectContainer {
-    container: Vec<Box<dyn TextureObject>>,
-}
-
-impl TextureObjectContainer {
-    fn new() -> Self {
-        TextureObjectContainer {
-            container: Vec::new(),
-        }
-    }
-
-    fn add(&mut self, obj: Box<dyn TextureObject>) {
-        self.container.push(obj);
-    }
-
-    fn sort_with_depth(&mut self) {
-        self.container.sort_by(|a: &Box<dyn TextureObject>, b: &Box<dyn TextureObject>| {
-            let (ad, bd) = (a.get_drawing_depth(), b.get_drawing_depth());
-            if ad > bd {
-                Ordering::Less
-            } else if ad < bd {
-                Ordering::Greater
-            } else {
-                Ordering::Equal
-            }
-        });
-    }
-
-    fn get_raw_container(&self) -> &Vec<Box<dyn TextureObject>> {
-        &self.container
-    }
-
-    fn get_raw_container_mut(&mut self) -> &mut Vec<Box<dyn TextureObject>> {
-        &mut self.container
-    }
-
-    fn get_minimum_depth(&mut self) -> i8 {
-        self.sort_with_depth();
-        if let Some(depth) = self.container.last() {
-            depth.get_drawing_depth()
-        } else {
-            127
-        }
-    }
-
-    fn len(&self) -> usize {
-        self.container.len()
-    }
-
-    fn change_depth_equally(&mut self, offset: i8)  {
-        for obj in &mut self.container {
-            let current_depth = obj.get_drawing_depth();
-            let next_depth: i16 = (current_depth as i16) + (offset as i16);
-
-            if next_depth <= 127 && next_depth >= -128 {
-                // 範囲内
-                obj.set_drawing_depth(next_depth as i8);
-            } else if next_depth > 0 {
-                // 範囲外（上限）
-                obj.set_drawing_depth(127);
-            } else {
-                // 範囲外（下限）
-                obj.set_drawing_depth(-128);
-            }
-        }
     }
 }
 

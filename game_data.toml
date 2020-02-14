@@ -12,7 +12,7 @@ texture_paths = [
               "/textures/middle_book1.png",
               "/textures/middle_book2.png",
               "/textures/middle_book3.png",
-              "/textures/wood1.jpg",
+              "/textures/wood1.png",
 	      "/textures/wafu_texture1.jpg",
 	      "/textures/wafu_texture2.jpg",
 	      "/textures/chobo.png",

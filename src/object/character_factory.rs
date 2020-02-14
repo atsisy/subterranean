@@ -28,7 +28,7 @@ fn create_playable_doremy1(game_data: &GameData, camera: &numeric::Rect,
                        game_data.ref_texture(TextureID::LotusPink),
                        game_data.ref_texture(TextureID::LotusBlue)
                    ]], 0,
-                   TextureSpeedInfo::new(0.05, 0.08, numeric::Vector2f::new(0.0, 0.0),
+                   TextureSpeedInfo::new(numeric::Vector2f::new(0.0, 0.0),
                                          SpeedBorder {
                                              positive_x: 6.0,
                                              negative_x: -6.0,
