@@ -522,14 +522,14 @@ impl PlayableCharacter {
     }
 }
 
-pub struct EnemyCharacter {
+pub struct GeneralCharacter {
     character: MapObject,
     collision_damage: DamageEffect,
 }
 
-impl EnemyCharacter {
+impl GeneralCharacter {
     pub fn new(character: MapObject, collision_damage: DamageEffect) -> Self {
-        EnemyCharacter {
+        GeneralCharacter {
             character: character,
             collision_damage: collision_damage,
         }
@@ -579,3 +579,4 @@ impl EnemyCharacter {
         AttackCore::new(self.character.get_map_position() + self.character.obj().get_center_offset(ctx), 10.0)
     }
 }
+
