@@ -745,7 +745,7 @@ impl Scenario {
 }
 
 #[derive(PartialEq, Clone, Copy)]
-enum TextBoxStatus {
+pub enum TextBoxStatus {
     WaitNextLineKey,
     UpdatingText,
 }
@@ -923,6 +923,111 @@ impl DrawableComponent for TextBox {
     }
 }
 
+pub struct ScenarioBox {
+    pub text_box: TextBox,
+    pub choice_box: Option<ChoiceBox>,
+    canvas: SubScreen,
+}
+
+impl ScenarioBox {
+    pub fn new(ctx: &mut ggez::Context, game_data: &GameData, rect: numeric::Rect, t: Clock) -> Self {
+	let background = tobj::SimpleObject::new(
+	    tobj::MovableUniTexture::new(
+                game_data.ref_texture(TextureID::TextBackground),
+                numeric::Point2f::new(20.0, 20.0),
+                numeric::Vector2f::new(0.8, 0.8),
+                0.0,
+                0,
+                None,
+                0), Vec::new());
+	ScenarioBox {
+	    text_box: TextBox::new(
+                ctx,
+                numeric::Rect::new(0.0, 0.0, rect.w, rect.h),
+                background, 3, t),
+	    choice_box: None,
+	    canvas: SubScreen::new(ctx, rect, 0, ggraphics::Color::from_rgba_u32(0x00)),
+	}
+    }
+
+    pub fn get_text_box_status(&self) -> TextBoxStatus {
+	self.text_box.text_box_status
+    }
+
+    pub fn update_scenario_text(&mut self, scenario: &ScenarioText) -> usize {
+	self.text_box.update_scenario_text(scenario)
+    }
+
+    pub fn is_enable_choice_box(&self) -> bool {
+	self.choice_box.is_some()
+    }
+
+    pub fn insert_choice_box(&mut self, choice_box: Option<ChoiceBox>) {
+	self.choice_box = choice_box;
+    }
+
+    pub fn display_choice_box_text(&mut self, font_info: FontInformation) {
+	if self.choice_box.is_some() {
+	    // テキストボックスに選択肢の文字列を表示する
+	    let selected_text = self.choice_box.as_ref().unwrap().get_selecting_str().to_string();
+	    self.text_box.set_fixed_text(&selected_text, font_info);
+	}
+    }
+
+    pub fn reset_head_line(&mut self) {
+	self.text_box.reset_head_line();
+    }
+
+    pub fn get_choice_selecting_index(&self) -> Option<usize> {
+	if let Some(choice) = self.choice_box.as_ref() {
+	    Some(choice.get_selecting_index())
+	} else {
+	    None
+	}
+    }
+}
+
+impl DrawableComponent for ScenarioBox {
+    
+    fn draw(&mut self, ctx: &mut ggez::Context) -> ggez::GameResult<()> {
+	if self.canvas.is_visible() {
+	    sub_screen::stack_screen(ctx, &self.canvas);
+	    
+	    self.text_box.draw(ctx)?;
+	    
+	    if let Some(choice) = self.choice_box.as_mut() {
+		choice.draw(ctx)?;
+	    }
+	    
+	    sub_screen::pop_screen(ctx);
+            self.canvas.draw(ctx).unwrap();
+	}
+	
+	Ok(())
+    }
+    
+    fn hide(&mut self) {
+	self.canvas.hide();
+    }
+
+    fn appear(&mut self) {
+	self.canvas.appear();
+    }
+
+    fn is_visible(&self) -> bool {
+	self.canvas.is_visible()
+    }
+
+    fn set_drawing_depth(&mut self, depth: i8) {
+	self.canvas.set_drawing_depth(depth);
+    }
+
+    fn get_drawing_depth(&self) -> i8 {
+	self.canvas.get_drawing_depth()
+    }
+
+}
+
 #[derive(PartialEq, Clone, Copy)]
 pub enum ScenarioEventStatus {
     Scenario = 0,
@@ -932,8 +1037,7 @@ pub enum ScenarioEventStatus {
 
 pub struct ScenarioEvent {
     scenario: Scenario,
-    text_box: TextBox,
-    choice_box: Option<ChoiceBox>,
+    scenario_box: ScenarioBox,
     canvas: SubScreen,
     status: ScenarioEventStatus,
     scene_transition: Option<SceneID>,
@@ -950,7 +1054,7 @@ impl ScenarioEvent {
                 numeric::Vector2f::new(0.8, 0.8),
                 0.0,
                 0,
-                move_fn::halt(numeric::Point2f::new(0.0, 0.0)),
+                None,
                 0), Vec::new());
 	let scenario = Scenario::new(file_path, game_data);
 
@@ -965,11 +1069,7 @@ impl ScenarioEvent {
 
         ScenarioEvent {
             scenario: scenario,
-            text_box: TextBox::new(
-                ctx,
-                numeric::Rect::new(20.0, 330.0, rect.w - 40.0, 270.0),
-                background, 3, t),
-	    choice_box: None,
+	    scenario_box: ScenarioBox::new(ctx, game_data, numeric::Rect::new(20.0, 330.0, rect.w - 40.0, 270.0), t),
             canvas: SubScreen::new(ctx, rect, 0, ggraphics::Color::from_rgba_u32(0x00)),
 	    status: ScenarioEventStatus::Scenario,
 	    scene_transition: None,
@@ -1029,12 +1129,12 @@ impl ScenarioEvent {
     pub fn update_text(&mut self, ctx: &mut ggez::Context, game_data: &GameData) {
 	match self.scenario.ref_current_element_mut() {
 	    ScenarioElement::Text(scenario_text) => {
-		if self.text_box.text_box_status == TextBoxStatus::UpdatingText {
+		if self.scenario_box.get_text_box_status() == TextBoxStatus::UpdatingText {
 		    // 表示する文字数を更新
 		    scenario_text.update_iterator();
 
 		    // 何行目までのテキストが表示されたか？
-		    let current_segment = self.text_box.update_scenario_text(&scenario_text);
+		    let current_segment = self.scenario_box.update_scenario_text(&scenario_text);
 
 		    // どこまで表示したかを更新
 		    scenario_text.set_current_segment(current_segment);
@@ -1042,17 +1142,19 @@ impl ScenarioEvent {
 	    },
 	    ScenarioElement::ChoiceSwitch(choice_pattern) => {
 		// ChoiceBoxが表示されていない場合、新しくオブジェクトを生成する
-		if self.choice_box.is_none() {
-		    self.choice_box = Some(ChoiceBox::new(
-			ctx, numeric::Rect::new(40.0, 450.0, 1200.0, 150.0),
-			game_data, choice_pattern.text.clone()));
-
+		if !self.scenario_box.is_enable_choice_box() {
+		    self.scenario_box.insert_choice_box(
+			Some(
+			    ChoiceBox::new(
+				ctx, numeric::Rect::new(40.0, 100.0, 1200.0, 150.0),
+				game_data, choice_pattern.text.clone())));
+		    
 		    // テキストボックスに選択肢の文字列を表示する
-		    let selected_text = self.choice_box.as_ref().unwrap().get_selecting_str().to_string();
-		    self.set_fixed_text(&selected_text,
-					FontInformation::new(game_data.get_font(FontID::JpFude1),
-							     numeric::Vector2f::new(32.0, 32.0),
-							     ggraphics::Color::from_rgba_u32(0x000000ff)));
+		    self.scenario_box.display_choice_box_text(FontInformation::new(game_data.get_font(FontID::JpFude1),
+										   numeric::Vector2f::new(32.0, 32.0),
+										   ggraphics::Color::from_rgba_u32(0x000000ff)));
+		    // 状態を選択中に変更
+		    self.status = ScenarioEventStatus::Choice;
 		}
 	    },
 	    ScenarioElement::SceneTransition(transition_data) => {
@@ -1063,17 +1165,12 @@ impl ScenarioEvent {
 	}
     }
 
-    pub fn set_fixed_text(&mut self, text: &str, font_info: FontInformation) {
-	self.text_box.set_fixed_text(text, font_info);
-	self.status = ScenarioEventStatus::Choice;
-    }
-
     pub fn make_scenario_event(&mut self) {
 	self.status = ScenarioEventStatus::Scenario;
     }
 
     pub fn go_next_line(&mut self) {
-	self.text_box.next_button_handler();
+	self.scenario_box.text_box.next_button_handler();
     }
 
     pub fn get_scene_transition(&self) -> Option<SceneID> {
@@ -1099,25 +1196,27 @@ impl ScenarioEvent {
 		    self.scenario.go_next_scenario_from_text_scenario();
 		    self.update_event_background(ctx, game_data);
 		    self.update_event_tachie(game_data, 0);
-		    self.text_box.reset_head_line();
+		    self.scenario_box.reset_head_line();
 		    return;
 		}
 		
-		if self.choice_box.is_some() {
+		if self.scenario_box.is_enable_choice_box() {
 		    self.make_scenario_event();
 
 		    // choice_boxは消す
-		    self.choice_box = None;
+		    self.scenario_box.insert_choice_box(None);
 		} else {
 		    // すでにchoice_boxがNoneなら、text_boxの行を進める動作
 		    self.go_next_line();
 		}
 	    },
 	    ScenarioElement::ChoiceSwitch(_) => {
-		self.scenario.go_next_scenario_from_choice_scenario(self.choice_box.as_ref().unwrap().get_selecting_index());
+		self.scenario.go_next_scenario_from_choice_scenario(self.scenario_box.get_choice_selecting_index().unwrap());
 		self.update_event_background(ctx, game_data);
 		self.update_event_tachie(game_data, 0);
-		self.choice_box = None;
+		
+		// choice_boxは消す
+		self.scenario_box.insert_choice_box(None);
 	    },
 	    ScenarioElement::SceneTransition(_) => (),
 	}
@@ -1129,13 +1228,11 @@ impl ScenarioEvent {
     pub fn key_down_right(&mut self,
 			  _: &mut ggez::Context,
 			  game_data: &GameData) {
-	if let Some(choice) = &mut self.choice_box {
+	if let Some(choice) = self.scenario_box.choice_box.as_mut() {
 	    choice.move_right();
-	    let selected_text = choice.get_selecting_str().to_string();
-	    self.set_fixed_text(&selected_text,
-				FontInformation::new(game_data.get_font(FontID::JpFude1),
-						     numeric::Vector2f::new(32.0, 32.0),
-						     ggraphics::Color::from_rgba_u32(0x000000ff)));
+	    self.scenario_box.display_choice_box_text(FontInformation::new(game_data.get_font(FontID::JpFude1),
+									   numeric::Vector2f::new(32.0, 32.0),
+									   ggraphics::Color::from_rgba_u32(0x000000ff)));
 	}
     }
 
@@ -1145,14 +1242,11 @@ impl ScenarioEvent {
     pub fn key_down_left(&mut self,
 			 _: &mut ggez::Context,
 			 game_data: &GameData) {
-	if let Some(choice) = &mut self.choice_box {
+	if let Some(choice) = self.scenario_box.choice_box.as_mut() {
 	    choice.move_left();
-	    
-	    let selected_text = choice.get_selecting_str().to_string();
-	    self.set_fixed_text(&selected_text,
-					       FontInformation::new(game_data.get_font(FontID::JpFude1),
-								    numeric::Vector2f::new(32.0, 32.0),
-								    ggraphics::Color::from_rgba_u32(0x000000ff)));
+	    self.scenario_box.display_choice_box_text(FontInformation::new(game_data.get_font(FontID::JpFude1),
+									   numeric::Vector2f::new(32.0, 32.0),
+									   ggraphics::Color::from_rgba_u32(0x000000ff)));
 	}
     }
 
@@ -1171,12 +1265,8 @@ impl DrawableComponent for ScenarioEvent {
 		tachie.draw(ctx)?;
 	    }
 	    
-            self.text_box.draw(ctx)?;
+            self.scenario_box.draw(ctx)?;
 	    
-	    if let Some(choice) = self.choice_box.as_mut() {
-		choice.draw(ctx)?;
-	    }
-            
 	    sub_screen::pop_screen(ctx);
             self.canvas.draw(ctx).unwrap();
         }
