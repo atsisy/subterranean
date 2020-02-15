@@ -304,6 +304,10 @@ impl StageObjectMap {
 
         CollisionInformation::new_not_collision()
     }
+
+    pub fn get_tile_size(&self) -> numeric::Point2u {
+	numeric::Point2u::new(self.tile_map.tile_width, self.tile_map.tile_height)
+    }
     
     /// 全てのsprite batch処理をクリアするメソッド
     fn clear_all_batchs(&mut self) {

@@ -1,0 +1,7 @@
+[[event-panel]]
+type = "text"
+trigger = "action"
+text = "イベント発生!!"
+[event-panel.position]
+x = 20
+y = 0

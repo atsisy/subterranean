@@ -25,7 +25,13 @@ texture_paths = [
 	      "/textures/sight_background1.png"]
 font_paths = ["/fonts/azuki.ttf", "/fonts/RiiT_F.ttf"]
 tileset_paths = ["./resources/test.tmx"]
-customers_name = ["霧雨魔里沙", "すみれの隣人"]
+customers_name = ["霧雨魔里沙", "稗田阿求"]
+
+[[map_information]]
+id = 1
+comment = "鈴奈庵マップ1"
+map_file_path = "./resources/map1.tmx"
+event_map_file_path = "./resources/event_map1.toml"
 
 [[books_information]]
 name = "テスト本1"

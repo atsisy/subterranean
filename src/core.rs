@@ -167,12 +167,22 @@ impl BookInformation {
     }
 }
 
+#[derive(Debug, Deserialize, Clone)]
+pub struct MapConstractData {
+    pub id: u32,
+    pub comment: String,
+    pub map_file_path: String,
+    pub event_map_file_path: String,
+}
+
 #[derive(Debug, Deserialize)]
 pub struct RawConfigFile {
     texture_paths: Vec<String>,
     font_paths: Vec<String>,
     customers_name: Vec<String>,
     books_information: Vec<BookInformation>,
+    map_information: Vec<MapConstractData>,
+    
 }
 
 impl RawConfigFile {
@@ -195,6 +205,7 @@ pub struct GameData {
     fonts: Vec<ggraphics::Font>,
     customers_name: Vec<String>,
     books_information: Vec<BookInformation>,
+    map_data: Vec<MapConstractData>,
 }
 
 impl GameData {
@@ -217,12 +228,14 @@ impl GameData {
         }
 
         println!("{:?}", src_file.books_information);
+	println!("{:?}", src_file.map_information);
 
         GameData {
             textures: textures,
             fonts: fonts,
             customers_name: src_file.customers_name,
             books_information: src_file.books_information,
+	    map_data: src_file.map_information,
         }
     }
 
@@ -238,6 +251,14 @@ impl GameData {
             Some(font) => *font,
             None => panic!("Unknown Font ID: {}", id as i32),
         }
+    }
+
+    pub fn get_map_data(&self, id: u32) -> Option<MapConstractData> {
+	for map_data in &self.map_data {
+	    return Some(map_data.clone())
+	}
+
+	None
     }
 
     pub fn book_random_select(&self) -> &BookInformation {
@@ -379,7 +400,7 @@ impl<'a> SceneController<'a> {
         SceneController {
             //current_scene: Box::new(scene::work_scene::WorkScene::new(ctx, game_data)),
 	    //current_scene: Box::new(scene::scenario_scene::ScenarioScene::new(ctx, game_data)),
-	    current_scene: Box::new(scene::dream_scene::DreamScene::new(ctx, game_data)),
+	    current_scene: Box::new(scene::dream_scene::DreamScene::new(ctx, game_data, 0)),
             key_map: tdev::ProgramableGenericKey::new(),
 	    global_clock: 0,
         }
@@ -392,7 +413,7 @@ impl<'a> SceneController<'a> {
         if next_scene_id == scene::SceneID::MainDesk {
             self.current_scene = Box::new(scene::work_scene::WorkScene::new(ctx, game_data));
         } else if next_scene_id == scene::SceneID::Dream {
-            self.current_scene = Box::new(scene::dream_scene::DreamScene::new(ctx, game_data));
+            self.current_scene = Box::new(scene::dream_scene::DreamScene::new(ctx, game_data, 0));
         } else if next_scene_id == scene::SceneID::Null {
             self.current_scene = Box::new(scene::NullScene::new());
         }

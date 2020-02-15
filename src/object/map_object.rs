@@ -1,4 +1,6 @@
 use std::rc::Rc;
+use std::collections::HashMap;
+use std::str::FromStr;
 
 use ggez::graphics as ggraphics;
 
@@ -580,3 +582,118 @@ impl GeneralCharacter {
     }
 }
 
+#[derive(PartialEq, Clone, Copy)]
+pub enum EventTrigger {
+    Action,
+    Touch,
+}
+
+impl FromStr for EventTrigger {
+    type Err = ();
+    
+    fn from_str(trigger_str: &str) -> Result<Self, Self::Err> {
+	match trigger_str {
+	    "action" => Ok(Self::Action),
+	    "touch" => Ok(Self::Touch),
+	    _ => panic!("Error: EventTrigger::from_str"),
+	}
+    }
+}
+
+pub trait MapEvent {
+    fn get_trigger_method(&self) -> EventTrigger;
+}
+
+pub struct MapTextEvent {
+    trigger: EventTrigger,
+    text: String,
+}
+
+impl MapTextEvent {
+    pub fn from_toml_object(toml_script: &toml::value::Value) -> Self {
+	MapTextEvent {
+	    trigger: EventTrigger::from_str(toml_script.get("trigger").unwrap().as_str().unwrap()).unwrap(),
+	    text: toml_script.get("text").unwrap().as_str().unwrap().to_string(),
+	}
+    }
+
+    pub fn get_text(&self) -> &str {
+	&self.text
+    }
+}
+
+impl MapEvent for MapTextEvent {
+    fn get_trigger_method(&self) -> EventTrigger {
+	self.trigger
+    }
+}
+
+pub enum MapEventElement {
+    TextEvent(MapTextEvent),
+}
+
+impl MapEvent for MapEventElement {
+    fn get_trigger_method(&self) -> EventTrigger {
+	match self {
+	    Self::TextEvent(text) => text.get_trigger_method(),
+	}
+    }
+}
+
+pub struct MapEventList {
+    event_table: HashMap<numeric::Point2i, MapEventElement>,
+}
+
+impl MapEventList {
+    
+    pub fn from_file(file_path: &str) -> Self {
+	let mut table = HashMap::new();
+	
+	let content = match std::fs::read_to_string(file_path) {
+            Ok(c) => c,
+            Err(_) => panic!("Failed to read: {}", file_path),
+        };
+        
+        let root = content.parse::<toml::Value>().unwrap();
+        let array = root["event-panel"].as_array().unwrap();
+
+	for elem in array {
+	    let position_data = elem.get("position").unwrap().as_table().unwrap();
+	    let position = numeric::Point2i::new(
+		position_data.get("x").unwrap().as_integer().unwrap() as i32,
+		position_data.get("y").unwrap().as_integer().unwrap() as i32
+	    );
+	    if let Some(type_info) = elem.get("type") {
+		match type_info.as_str().unwrap() {
+		    "text" => {
+			table.insert(position, MapEventElement::TextEvent(MapTextEvent::from_toml_object(elem)));
+		    },
+		    _ => eprintln!("Error"),
+		}
+	    } else {
+		eprintln!("Error");
+	    }
+	}
+	
+	MapEventList {
+	    event_table: table,
+	}
+    }
+
+    pub fn register_event(&mut self, point: numeric::Point2i, event: MapEventElement) -> &mut Self {
+	self.event_table.insert(point, event);
+	self
+    }
+
+    pub fn check_event(&self, trigger: EventTrigger, point: numeric::Point2i) {
+	if let Some(event_element) = self.event_table.get(&point) {
+	    if event_element.get_trigger_method() == trigger {
+		match event_element {
+		    MapEventElement::TextEvent(text) => {
+			println!("{}", text.get_text());
+		    },
+		}
+	    }
+	}
+    }
+}

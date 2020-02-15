@@ -8,11 +8,13 @@ use torifune::core::Updatable;
 use ggez::input as ginput;
 use ginput::mouse::MouseButton;
 use torifune::numeric;
+
 use crate::core::GameData;
 use super::*;
 use crate::object::*;
 use crate::object::map_object::*;
 use crate::core::map_parser as mp;
+use crate::object::map_object::EventTrigger;
 
 struct CharacterGroup {
     group: Vec<GeneralCharacter>,
@@ -105,6 +107,34 @@ impl DrawableComponent for CharacterGroup {
     }
 }
 
+struct MapData {
+    pub tile_map: mp::StageObjectMap,
+    pub event_map: MapEventList,
+}
+
+impl MapData {
+    pub fn new(ctx: &mut ggez::Context, game_data: &GameData, map_id: u32, camera: Rc<RefCell<numeric::Rect>>) -> Self {
+	let map_constract_data = game_data.get_map_data(map_id).unwrap();
+	
+	MapData {
+	    tile_map: mp::StageObjectMap::new(ctx,
+					      &map_constract_data.map_file_path,
+					      camera.clone(), numeric::Vector2f::new(2.0, 2.0)),
+	    event_map: MapEventList::from_file(&map_constract_data.event_map_file_path),
+	}
+    }
+
+    pub fn check_event_panel(&self, trigger: EventTrigger, point: numeric::Point2f) {
+	let tile_size = self.tile_map.get_tile_size();
+	self.event_map.check_event(
+	    trigger,
+	    numeric::Point2i::new(
+		(point.x as u32 / tile_size.x) as i32,
+		(point.y as u32 / tile_size.y) as i32,
+	));
+    }
+}
+
 ///
 /// # 夢の中のステージ
 ///
@@ -114,6 +144,9 @@ impl DrawableComponent for CharacterGroup {
 ///
 /// ### key_listener
 /// キー監視用
+///
+/// ### map_event_lsit
+/// マップ上のイベント
 ///
 /// ### clock
 /// 基準クロック
@@ -129,13 +162,13 @@ pub struct DreamScene {
     character_group: CharacterGroup,
     key_listener: tdev::KeyboardListener,
     clock: Clock,
-    tile_map: mp::StageObjectMap,
+    map: MapData,
     camera: Rc<RefCell<numeric::Rect>>,
 }
 
 impl DreamScene {
     
-    pub fn new(ctx: &mut ggez::Context, game_data: &GameData) -> DreamScene  {
+    pub fn new(ctx: &mut ggez::Context, game_data: &GameData, map_id: u32) -> DreamScene  {
 
         let key_listener = tdev::KeyboardListener::new_masked(vec![tdev::KeyInputDevice::GenericKeyboard],
                                                                   vec![]);
@@ -163,7 +196,7 @@ impl DreamScene {
             character_group: character_group,
             key_listener: key_listener,
             clock: 0,
-            tile_map: mp::StageObjectMap::new(ctx, "./resources/map1.tmx", camera.clone(), numeric::Vector2f::new(2.0, 2.0)),
+	    map: MapData::new(ctx, game_data, map_id, camera.clone()),
             camera: camera,
         }
     }
@@ -267,7 +300,7 @@ impl DreamScene {
         let t = self.get_current_clock();
 
 	// プレイヤーのマップチップに対する衝突を修正
-        Self::check_collision_horizon(ctx, self.player.get_mut_character_object(), &self.tile_map, t);
+        Self::check_collision_horizon(ctx, self.player.get_mut_character_object(), &self.map.tile_map, t);
 
 	// プレイヤーのマップ座標を更新
         self.player.get_mut_character_object().update_display_position(&self.camera.borrow());
@@ -284,7 +317,7 @@ impl DreamScene {
         let t = self.get_current_clock();
         
 	// プレイヤーのマップチップに対する衝突を修正
-        Self::check_collision_vertical(ctx, self.player.get_mut_character_object(), &self.tile_map, t);
+        Self::check_collision_vertical(ctx, self.player.get_mut_character_object(), &self.map.tile_map, t);
 
 	// プレイヤーのマップ座標を更新
         self.player.get_mut_character_object().update_display_position(&self.camera.borrow());
@@ -412,7 +445,13 @@ impl SceneManager for DreamScene {
     fn key_down_event(&mut self,
                       _ctx: &mut ggez::Context,
                       _game_data: &GameData,
-                      _vkey: tdev::VirtualKey) {
+                      vkey: tdev::VirtualKey) {
+	match vkey {
+            tdev::VirtualKey::Action1 => {
+		self.map.check_event_panel(EventTrigger::Action, self.player.get_map_position());
+	    },
+            _ => (),
+	}
     }
     
     fn key_up_event(&mut self,
@@ -452,15 +491,16 @@ impl SceneManager for DreamScene {
 	self.player.reset_speed();
 
         self.move_playable_character(ctx, t);
+	self.map.check_event_panel(EventTrigger::Touch, self.player.get_map_position());
         
-        self.character_group.move_and_collision_check(ctx, &self.camera.borrow(), &self.tile_map, t);
+        self.character_group.move_and_collision_check(ctx, &self.camera.borrow(), &self.map.tile_map, t);
         
         // マップ描画の準備
-        self.tile_map.update(ctx, t);
+        self.map.tile_map.update(ctx, t);
     }
     
     fn drawing_process(&mut self, ctx: &mut ggez::Context) {
-        self.tile_map.draw(ctx).unwrap();
+        self.map.tile_map.draw(ctx).unwrap();
         self.player
             .get_mut_character_object()
             .obj_mut()
