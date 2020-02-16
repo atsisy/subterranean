@@ -1,20 +1,26 @@
 use std::rc::Rc;
 use std::cell::RefCell;
+
 use torifune::device as tdev;
+use torifune::graphics::object::FontInformation;
+
 use tdev::VirtualKey;
 use torifune::core::Clock;
 use torifune::graphics as tgraphics;
 use torifune::core::Updatable;
 use ggez::input as ginput;
+use ggez::graphics as ggraphics;
+
 use ginput::mouse::MouseButton;
 use torifune::numeric;
 
-use crate::core::GameData;
+use crate::core::{GameData, FontID};
 use super::*;
 use crate::object::*;
 use crate::object::map_object::*;
 use crate::core::map_parser as mp;
 use crate::object::map_object::EventTrigger;
+use crate::object::scenario::*;
 
 struct CharacterGroup {
     group: Vec<GeneralCharacter>,
@@ -110,6 +116,7 @@ impl DrawableComponent for CharacterGroup {
 struct MapData {
     pub tile_map: mp::StageObjectMap,
     pub event_map: MapEventList,
+    pub scenario_box: Option<ScenarioBox>,
 }
 
 impl MapData {
@@ -121,17 +128,34 @@ impl MapData {
 					      &map_constract_data.map_file_path,
 					      camera.clone(), numeric::Vector2f::new(2.0, 2.0)),
 	    event_map: MapEventList::from_file(&map_constract_data.event_map_file_path),
+	    scenario_box: None,
 	}
     }
 
-    pub fn check_event_panel(&self, trigger: EventTrigger, point: numeric::Point2f) {
+    pub fn check_event_panel(&mut self, ctx: &mut ggez::Context, game_data: &GameData,
+			     trigger: EventTrigger, point: numeric::Point2f, t: Clock) {
 	let tile_size = self.tile_map.get_tile_size();
-	self.event_map.check_event(
+	let target_event = self.event_map.check_event(
 	    trigger,
 	    numeric::Point2i::new(
 		(point.x as u32 / tile_size.x) as i32,
 		(point.y as u32 / tile_size.y) as i32,
-	));
+	    ));
+
+	if let Some(event_element) = target_event {
+	    match event_element {
+		MapEventElement::TextEvent(text) => {
+		    println!("{}", text.get_text());
+
+		    let mut scenario_box = ScenarioBox::new(ctx, game_data, numeric::Rect::new(0.0, 330.0, 1300.0, 270.0), t);
+		    scenario_box.text_box.set_fixed_text(text.get_text(),
+							 FontInformation::new(game_data.get_font(FontID::JpFude1),
+									      numeric::Vector2f::new(32.0, 32.0),
+									      ggraphics::Color::from_rgba_u32(0x000000ff)));
+		    self.scenario_box = Some(scenario_box);
+		},
+	    }
+	}
     }
 }
 
@@ -443,12 +467,20 @@ impl DreamScene {
 impl SceneManager for DreamScene {
     
     fn key_down_event(&mut self,
-                      _ctx: &mut ggez::Context,
-                      _game_data: &GameData,
+                      ctx: &mut ggez::Context,
+                      game_data: &GameData,
                       vkey: tdev::VirtualKey) {
 	match vkey {
             tdev::VirtualKey::Action1 => {
-		self.map.check_event_panel(EventTrigger::Action, self.player.get_map_position());
+		if let Some(scenario_box) = self.map.scenario_box.as_mut() {
+		    if scenario_box.get_text_box_status() == TextBoxStatus::FixedText {
+			self.map.scenario_box = None;
+		    }
+		} else {
+		    self.map.check_event_panel(ctx, game_data, EventTrigger::Action,
+					       self.player.get_map_position(), self.get_current_clock())
+		}
+
 	    },
             _ => (),
 	}
@@ -486,12 +518,13 @@ impl SceneManager for DreamScene {
                              _point: numeric::Point2f) {
     }
 
-    fn pre_process(&mut self, ctx: &mut ggez::Context, _: &GameData) {
+    fn pre_process(&mut self, ctx: &mut ggez::Context, game_data: &GameData) {
         let t = self.get_current_clock();
 	self.player.reset_speed();
 
         self.move_playable_character(ctx, t);
-	self.map.check_event_panel(EventTrigger::Touch, self.player.get_map_position());
+	self.map.check_event_panel(ctx, game_data, EventTrigger::Touch,
+				   self.player.get_map_position(), self.get_current_clock());
         
         self.character_group.move_and_collision_check(ctx, &self.camera.borrow(), &self.map.tile_map, t);
         
@@ -501,11 +534,16 @@ impl SceneManager for DreamScene {
     
     fn drawing_process(&mut self, ctx: &mut ggez::Context) {
         self.map.tile_map.draw(ctx).unwrap();
+
         self.player
             .get_mut_character_object()
             .obj_mut()
             .draw(ctx).unwrap();
         self.character_group.draw(ctx).unwrap();
+
+	if let Some(scenario_box) = self.map.scenario_box.as_mut() {
+	    scenario_box.draw(ctx).unwrap();
+	}
     }
     
     fn post_process(&mut self, _ctx: &mut ggez::Context, _: &GameData) -> SceneTransition {

@@ -685,15 +685,13 @@ impl MapEventList {
 	self
     }
 
-    pub fn check_event(&self, trigger: EventTrigger, point: numeric::Point2i) {
+    pub fn check_event(&self, trigger: EventTrigger, point: numeric::Point2i) -> Option<&MapEventElement> {
 	if let Some(event_element) = self.event_table.get(&point) {
 	    if event_element.get_trigger_method() == trigger {
-		match event_element {
-		    MapEventElement::TextEvent(text) => {
-			println!("{}", text.get_text());
-		    },
-		}
+		return Some(&event_element);
 	    }
 	}
+
+	None
     }
 }

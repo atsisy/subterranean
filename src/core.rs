@@ -399,8 +399,8 @@ impl<'a> SceneController<'a> {
     pub fn new(ctx: &mut ggez::Context, game_data: &'a GameData) -> SceneController<'a> {
         SceneController {
             //current_scene: Box::new(scene::work_scene::WorkScene::new(ctx, game_data)),
-	    current_scene: Box::new(scene::scenario_scene::ScenarioScene::new(ctx, game_data)),
-	    //current_scene: Box::new(scene::dream_scene::DreamScene::new(ctx, game_data, 0)),
+	    //current_scene: Box::new(scene::scenario_scene::ScenarioScene::new(ctx, game_data)),
+	    current_scene: Box::new(scene::dream_scene::DreamScene::new(ctx, game_data, 0)),
             key_map: tdev::ProgramableGenericKey::new(),
 	    global_clock: 0,
         }

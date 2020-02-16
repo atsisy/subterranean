@@ -748,6 +748,7 @@ impl Scenario {
 pub enum TextBoxStatus {
     WaitNextLineKey,
     UpdatingText,
+    FixedText,
 }
 
 pub struct TextBox {
@@ -871,6 +872,7 @@ impl TextBox {
 				   None,
 				   font_info, 0),
 	    Vec::new()));
+	self.text_box_status = TextBoxStatus::FixedText;
     }
 
     pub fn next_button_handler(&mut self) {
@@ -881,7 +883,6 @@ impl TextBox {
     pub fn reset_head_line(&mut self) {
 	self.head_line_number = 0;
     }
-
 }
 
 impl DrawableComponent for TextBox {
@@ -935,7 +936,7 @@ impl ScenarioBox {
 	    tobj::MovableUniTexture::new(
                 game_data.ref_texture(TextureID::TextBackground),
                 numeric::Point2f::new(20.0, 20.0),
-                numeric::Vector2f::new(0.8, 0.8),
+                numeric::Vector2f::new(1.0, 1.0),
                 0.0,
                 0,
                 None,
@@ -948,6 +949,31 @@ impl ScenarioBox {
 	    choice_box: None,
 	    canvas: SubScreen::new(ctx, rect, 0, ggraphics::Color::from_rgba_u32(0x00)),
 	}
+    }
+
+    pub fn new_choice(ctx: &mut ggez::Context, game_data: &GameData, rect: numeric::Rect,
+		      choice_pattern: ChoicePatternData, font_info: FontInformation, t: Clock) -> Self {
+	let background = tobj::SimpleObject::new(
+	    tobj::MovableUniTexture::new(
+                game_data.ref_texture(TextureID::TextBackground),
+                numeric::Point2f::new(20.0, 20.0),
+                numeric::Vector2f::new(0.8, 0.8),
+                0.0,
+                0,
+                None,
+                0), Vec::new());
+	let mut scenario_box = ScenarioBox {
+	    text_box: TextBox::new(
+                ctx,
+                numeric::Rect::new(0.0, 0.0, rect.w, rect.h),
+                background, 3, t),
+	    choice_box: Some(ChoiceBox::new(ctx, numeric::Rect::new(40.0, 100.0, 1200.0, 150.0),
+					    game_data, choice_pattern.text.clone())),
+	    canvas: SubScreen::new(ctx, rect, 0, ggraphics::Color::from_rgba_u32(0x00)),
+	};
+	scenario_box.display_choice_box_text(font_info);
+	
+	scenario_box
     }
 
     pub fn get_text_box_status(&self) -> TextBoxStatus {
@@ -1002,7 +1028,6 @@ impl DrawableComponent for ScenarioBox {
 	    sub_screen::pop_screen(ctx);
             self.canvas.draw(ctx).unwrap();
 	}
-	
 	Ok(())
     }
     
@@ -1047,15 +1072,6 @@ pub struct ScenarioEvent {
 
 impl ScenarioEvent {
     pub fn new(ctx: &mut ggez::Context, rect: numeric::Rect, file_path: &str, game_data: &GameData, t: Clock) -> Self {
-        let background = tobj::SimpleObject::new(
-            tobj::MovableUniTexture::new(
-                game_data.ref_texture(TextureID::TextBackground),
-                numeric::Point2f::new(20.0, 20.0),
-                numeric::Vector2f::new(0.8, 0.8),
-                0.0,
-                0,
-                None,
-                0), Vec::new());
 	let scenario = Scenario::new(file_path, game_data);
 
 	let event_background = if let Some(mut texture) = Self::update_event_background_sub(game_data, scenario.ref_current_element()) {
