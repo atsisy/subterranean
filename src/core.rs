@@ -9,6 +9,10 @@ use torifune::device as tdev;
 use torifune::numeric;
 use torifune::hash;
 use tdev::ProgramableKey;
+use torifune::graphics::object::sub_screen::SubScreen;
+use torifune::graphics::object::sub_screen;
+use torifune::graphics::DrawableComponent;
+use torifune::graphics::object::TextureObject;
 
 use ggez::input as ginput;
 use ggez::input::keyboard::*;
@@ -392,17 +396,26 @@ struct SceneController<'a> {
     current_scene: Box<dyn scene::SceneManager + 'a>,
     key_map: tdev::ProgramableGenericKey,
     global_clock: u64,
+    root_screen: SubScreen,
 }
 
 impl<'a> SceneController<'a> {
 
     pub fn new(ctx: &mut ggez::Context, game_data: &'a GameData) -> SceneController<'a> {
+	let window_size = ggraphics::drawable_size(ctx);
+
+	let mut root_screen = SubScreen::new(ctx, numeric::Rect::new(0.0, 0.0, 1366.0, 768.0),
+					     0, ggraphics::Color::from_rgba_u32(0));
+
+	root_screen.fit_scale(ctx, numeric::Vector2f::new(window_size.0.round(), window_size.1.round()));
+	
         SceneController {
             //current_scene: Box::new(scene::work_scene::WorkScene::new(ctx, game_data)),
 	    //current_scene: Box::new(scene::scenario_scene::ScenarioScene::new(ctx, game_data)),
 	    current_scene: Box::new(scene::dream_scene::DreamScene::new(ctx, game_data, 0)),
             key_map: tdev::ProgramableGenericKey::new(),
 	    global_clock: 0,
+	    root_screen: root_screen,
         }
     }
     
@@ -424,7 +437,12 @@ impl<'a> SceneController<'a> {
     }
 
     fn run_drawing_process(&mut self, ctx: &mut ggez::Context) {
+	sub_screen::stack_screen(ctx, &self.root_screen);
+	
         self.current_scene.drawing_process(ctx);
+
+	sub_screen::pop_screen(ctx);
+        self.root_screen.draw(ctx).unwrap();
     }
 
     fn run_post_process(&mut self, ctx: &mut ggez::Context, game_data: &'a GameData) {
@@ -572,7 +590,7 @@ impl<'data> State<'data> {
             clock: 0,
             fps: 0.0,
             game_data: game_data,
-            scene_controller: SceneController::new(ctx, game_data)
+            scene_controller: SceneController::new(ctx, game_data),
         };
         
         Ok(s)
