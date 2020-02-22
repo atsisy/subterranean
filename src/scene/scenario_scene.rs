@@ -15,10 +15,11 @@ pub struct ScenarioScene {
     simulation_status: sui::SimulationStatus,
     scene_transition: SceneID,
     clock: Clock,
+    generate_id: i32,
 }
 
 impl ScenarioScene {
-    pub fn new(ctx: &mut ggez::Context, game_data: &GameData) -> Self {
+    pub fn new(ctx: &mut ggez::Context, game_data: &GameData, generate_id: i32) -> Self {
         let scenario = ScenarioEvent::new(ctx, numeric::Rect::new(0.0, 180.0, 1366.0, 600.0),
                                           "./resources/scenario_parsing_test.toml",
                                           game_data, 0);
@@ -28,6 +29,7 @@ impl ScenarioScene {
             scenario_event: scenario,
 	    scene_transition: SceneID::Scenario,
             clock: 0,
+	    generate_id: generate_id,
         }
     }
 }
@@ -82,7 +84,7 @@ impl SceneManager for ScenarioScene {
 	    // 遷移先のSceneIDを取り出し、遷移先として登録する
 	    if let Some(scene_id) = self.scenario_event.get_scene_transition() {
 		self.scene_transition = scene_id;
-		return SceneTransition::Transition;
+		return SceneTransition::SwapTransition;
 	    }
 	}
 	
@@ -100,6 +102,5 @@ impl SceneManager for ScenarioScene {
     fn update_current_clock(&mut self) { 
         self.clock += 1;
     }
-    
 }
 

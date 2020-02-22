@@ -258,7 +258,6 @@ impl SceneManager for WorkSubScene {
 	    }
 	}
     }
-
 }
 
 pub struct WorkScene {
@@ -362,7 +361,7 @@ impl SceneManager for WorkScene {
 		}
 	    },
 	    WorkSceneStatus::Result => {
-		if transition_status == SceneTransition::Transition {
+		if transition_status == SceneTransition::SwapTransition {
 		    self.switch_result_scene_to_task_scene(ctx, game_data);
 		}
 	    },
@@ -382,5 +381,4 @@ impl SceneManager for WorkScene {
     fn update_current_clock(&mut self) {
         self.clock += 1;
     }
-
 }

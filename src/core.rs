@@ -20,6 +20,7 @@ use ginput::mouse::MouseButton;
 
 use std::rc::Rc;
 use std::collections::HashMap;
+use std::collections::VecDeque;
 use std::str::FromStr;
 
 use crate::scene;
@@ -392,8 +393,31 @@ impl MouseInformation {
     }
 }
 
+struct SceneStack<'a> {
+    stack: VecDeque<Box<dyn scene::SceneManager + 'a>>,
+    next_generate_id: i32,
+}
+
+impl<'a> SceneStack<'a> {
+    pub fn new() -> SceneStack<'a> {
+	SceneStack {
+	    stack: VecDeque::new(),
+	    next_generate_id: 1,
+	}
+    }
+
+    pub fn push(&mut self, scene: Box<dyn scene::SceneManager + 'a>) {
+	self.stack.push_back(scene);
+    }
+
+    pub fn pop(&mut self) -> Option<Box<dyn scene::SceneManager + 'a>> {
+	self.stack.pop_back()
+    }
+}
+
 struct SceneController<'a> {
     current_scene: Box<dyn scene::SceneManager + 'a>,
+    scene_stack: SceneStack<'a>,
     key_map: tdev::ProgramableGenericKey,
     global_clock: u64,
     root_screen: SubScreen,
@@ -410,16 +434,17 @@ impl<'a> SceneController<'a> {
 	root_screen.fit_scale(ctx, numeric::Vector2f::new(window_size.0.round(), window_size.1.round()));
 	
         SceneController {
-            //current_scene: Box::new(scene::work_scene::WorkScene::new(ctx, game_data)),
-	    //current_scene: Box::new(scene::scenario_scene::ScenarioScene::new(ctx, game_data)),
+            //current_scene: Box::new(scene::work_scene::WorkScene::new(ctx, game_data, 0)),
+	    //current_scene: Box::new(scene::scenario_scene::ScenarioScene::new(ctx, game_data, 0)),
 	    current_scene: Box::new(scene::dream_scene::DreamScene::new(ctx, game_data, 0)),
+	    scene_stack: SceneStack::new(),
             key_map: tdev::ProgramableGenericKey::new(),
 	    global_clock: 0,
 	    root_screen: root_screen,
         }
     }
     
-    fn switch_scene(&mut self,
+    fn switch_scene_with_swap(&mut self,
                     ctx: &mut ggez::Context,
                     game_data: &'a GameData,
                     next_scene_id: scene::SceneID) {
@@ -431,7 +456,38 @@ impl<'a> SceneController<'a> {
             self.current_scene = Box::new(scene::NullScene::new());
         }
     }
+    
+    fn switch_scene_with_stacking(&mut self,
+				  ctx: &mut ggez::Context,
+				  game_data: &'a GameData,
+				  next_scene_id: scene::SceneID) {
+	let next_scene: Option<Box<dyn scene::SceneManager + 'a>> = if next_scene_id == scene::SceneID::MainDesk {
+            Some(Box::new(scene::work_scene::WorkScene::new(ctx, game_data)))
+        } else if next_scene_id == scene::SceneID::Dream {
+            Some(Box::new(scene::dream_scene::DreamScene::new(ctx, game_data, 0)))
+        } else if next_scene_id == scene::SceneID::Null {
+            Some(Box::new(scene::NullScene::new()))
+        } else {
+	    None
+	};
 
+	if let Some(mut scene) = next_scene {
+	    std::mem::swap(&mut self.current_scene, &mut scene);
+	    self.scene_stack.push(scene);
+	}
+    }
+    
+    fn switch_scene_with_popping(&mut self,
+				ctx: &mut ggez::Context,
+				game_data: &'a GameData,
+				next_scene_id: scene::SceneID) {
+	if let Some(scene) = self.scene_stack.pop() {
+	    self.current_scene = scene;
+	} else {
+	    eprintln!("Scene Stack is Empty!!");
+	}
+    }
+    
     fn run_pre_process(&mut self, ctx: &mut ggez::Context, game_data: &GameData) {
         self.current_scene.pre_process(ctx, game_data);
     }
@@ -448,7 +504,14 @@ impl<'a> SceneController<'a> {
     fn run_post_process(&mut self, ctx: &mut ggez::Context, game_data: &'a GameData) {
         match self.current_scene.post_process(ctx, game_data) {
             scene::SceneTransition::Keep => (),
-            _ => self.switch_scene(ctx, game_data, self.current_scene.transition()),
+	    scene::SceneTransition::Reset => println!("FIXME!!"),
+	    scene::SceneTransition::SwapTransition => self.switch_scene_with_swap(ctx, game_data, self.current_scene.transition()),
+            scene::SceneTransition::StackingTransition => {
+		self.switch_scene_with_stacking(ctx, game_data, self.current_scene.transition());
+	    },
+	    scene::SceneTransition::PoppingTransition => {
+		self.switch_scene_with_popping(ctx, game_data, self.current_scene.transition());
+	    },
         }
 
 	if self.global_clock % 120 == 0 {

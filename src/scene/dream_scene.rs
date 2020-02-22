@@ -490,7 +490,7 @@ impl DreamScene {
                     self.map.scenario_box = Some(scenario_box);
                 },
 		MapEventElement::SwitchScene(switch_scene) => {
-		    self.transition_status = SceneTransition::Transition;
+		    self.transition_status = SceneTransition::StackingTransition;
 		    self.transition_scene = switch_scene.get_switch_scene_id();
 		}
 	    }
@@ -611,5 +611,4 @@ impl SceneManager for DreamScene {
     fn update_current_clock(&mut self) {
         self.clock += 1;
     }
-    
 }

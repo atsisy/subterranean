@@ -17,7 +17,9 @@ use crate::core::GameData;
 pub enum SceneTransition {
     Keep,
     Reset,
-    Transition,
+    SwapTransition,
+    StackingTransition,
+    PoppingTransition,
 }
 
 #[derive(Debug, Eq, PartialEq, Clone, Copy)]

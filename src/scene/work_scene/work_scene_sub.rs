@@ -264,7 +264,6 @@ impl SceneManager for TaskScene {
     fn update_current_clock(&mut self) {
         self.clock += 1;
     }
-
 }
 
 pub struct TaskResultScene {
@@ -326,7 +325,7 @@ impl SceneManager for TaskResultScene {
         match vkey {
             tdev::VirtualKey::Action1 => {
                 println!("Action1 down!");
-		self.scene_transition_status = SceneTransition::Transition;
+		self.scene_transition_status = SceneTransition::SwapTransition;
             },
             _ => (),
         }
@@ -402,5 +401,4 @@ impl SceneManager for TaskResultScene {
     fn update_current_clock(&mut self) {
         self.clock += 1;
     }
-
 }
