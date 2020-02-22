@@ -65,8 +65,6 @@ impl TileSet {
                             collision_info.insert(tile.id, vec![cobj]);
                         }
                     }
-
-                    
                 }
             }
         }
@@ -217,7 +215,8 @@ pub struct StageObjectMap {
 }
 
 impl StageObjectMap {
-    pub fn new(ctx: &mut ggez::Context, path: &str, camera: Rc<RefCell<numeric::Rect>>, scale: numeric::Vector2f) -> StageObjectMap {
+    pub fn new(ctx: &mut ggez::Context, path: &str, camera: Rc<RefCell<numeric::Rect>>,
+	       scale: numeric::Vector2f) -> StageObjectMap {
         // マップ情報を読み込む
         let tile_map = tiled::parse_file(std::path::Path::new(path)).unwrap();
 
@@ -307,6 +306,15 @@ impl StageObjectMap {
 
     pub fn get_tile_size(&self) -> numeric::Point2u {
 	numeric::Point2u::new(self.tile_map.tile_width, self.tile_map.tile_height)
+    }
+
+    pub fn get_tile_scale(&self) -> numeric::Vector2f {
+	self.scale
+    }
+
+    pub fn get_tile_drawing_size(&self) -> numeric::Vector2f {
+	numeric::Vector2f::new((self.tile_map.tile_width as f32) * self.scale.x,
+			      (self.tile_map.tile_height as f32) * self.scale.y)
     }
     
     /// 全てのsprite batch処理をクリアするメソッド

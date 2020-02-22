@@ -11,5 +11,5 @@ type = "switch-scene"
 trigger = "action"
 switch-scene-id = "MainDesk"
 [event-panel.position]
-x = 20
-y = 5
+x = 1
+y = 10

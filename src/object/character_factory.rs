@@ -22,7 +22,7 @@ fn create_playable_doremy1(game_data: &GameData, camera: &numeric::Rect,
         tobj::MovableUniTexture::new(
             game_data.ref_texture(TextureID::LotusBlue),
             mp::map_to_display(&map_position, camera),
-            numeric::Vector2f::new(0.1, 0.1),
+            numeric::Vector2f::new(0.09, 0.09),
             0.0, 0, move_fn::gravity_move(-5.0, 24.0, 600.0, 0.2),
             0), vec![]),
                    vec![vec![

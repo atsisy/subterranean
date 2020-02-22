@@ -350,7 +350,6 @@ impl MapObject {
                            _ctx: &mut ggez::Context,
                            info: &CollisionInformation,
                           _t: Clock) -> f32 {
-        self.speed_info.set_speed_x(0.0);
         (info.object1_position.unwrap().x + info.object1_position.unwrap().w + 0.5) - info.object2_position.unwrap().x
         
     }
@@ -361,7 +360,6 @@ impl MapObject {
     pub fn fix_collision_vertical(&mut self, ctx: &mut ggez::Context,
 				  info: &CollisionInformation,
                                   t: Clock) -> f32 {
-        self.speed_info.set_speed_x(0.0);
         if info.center_diff.unwrap().y < 0.0 {
             return self.fix_collision_bottom(ctx, &info, t);
         } else if info.center_diff.unwrap().y > 0.0 {
@@ -377,7 +375,6 @@ impl MapObject {
     pub fn fix_collision_horizon(&mut self, ctx: &mut ggez::Context,
                                  info: &CollisionInformation,
                                  t: Clock)  -> f32 {
-	self.speed_info.set_speed_x(0.0);
         if info.center_diff.unwrap().x < 0.0 {
             return self.fix_collision_right(ctx, &info, t);
         } else if info.center_diff.unwrap().x > 0.0 {
@@ -492,12 +489,24 @@ impl PlayableCharacter {
         self.character.move_map(offset);
     }
 
-    pub fn move_map_current_speed_x(&mut self) {
-        self.move_map(numeric::Vector2f::new(self.get_character_object().speed_info().get_speed().x, 0.0))
+    pub fn move_map_current_speed_x(&mut self, border: f32) {
+	let x_speed = self.get_character_object().speed_info().get_speed().x;
+	let overflow = (self.get_map_position().x + x_speed) - border;
+	if overflow > 0.0 {
+	    self.move_map(numeric::Vector2f::new(x_speed - overflow, 0.0))
+	} else {
+	    self.move_map(numeric::Vector2f::new(x_speed, 0.0))
+	}
     }
 
-    pub fn move_map_current_speed_y(&mut self) {
-        self.move_map(numeric::Vector2f::new(0.0, self.get_character_object().speed_info().get_speed().y))
+    pub fn move_map_current_speed_y(&mut self, border: f32) {
+	let y_speed = self.get_character_object().speed_info().get_speed().y;
+	let overflow = (self.get_map_position().y + y_speed) - border;
+	if overflow > 0.0 {
+	    self.move_map(numeric::Vector2f::new(0.0, y_speed - overflow))
+	} else {
+	    self.move_map(numeric::Vector2f::new(0.0, y_speed))
+	}
     }
 
     pub fn attack_damage_check(&mut self, ctx: &mut ggez::Context, attack_core: &AttackCore, damage: &DamageEffect) {

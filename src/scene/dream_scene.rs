@@ -4,6 +4,7 @@ use std::cell::RefCell;
 
 use torifune::device as tdev;
 use torifune::graphics::object::FontInformation;
+use torifune::graphics::object::TextureObject;
 
 use tdev::VirtualKey;
 use torifune::core::Clock;
@@ -139,20 +140,20 @@ impl MapData {
 	MapData {
 	    tile_map: mp::StageObjectMap::new(ctx,
 					      &map_constract_data.map_file_path,
-					      camera.clone(), numeric::Vector2f::new(2.0, 2.0)),
+					      camera.clone(), numeric::Vector2f::new(6.0, 6.0)),
 	    event_map: MapEventList::from_file(&map_constract_data.event_map_file_path),
 	    scenario_box: None,
 	}
     }
 
-    pub fn check_event_panel(&mut self, ctx: &mut ggez::Context, game_data: &GameData,
-			     trigger: EventTrigger, point: numeric::Point2f, t: Clock) -> Option<&MapEventElement> {
-	let tile_size = self.tile_map.get_tile_size();
+    pub fn check_event_panel(&mut self, trigger: EventTrigger,
+			     point: numeric::Point2f, _t: Clock) -> Option<&MapEventElement> {
+	let tile_size = self.tile_map.get_tile_drawing_size();
 	self.event_map.check_event(
 	    trigger,
 	    numeric::Point2i::new(
-		(point.x as u32 / tile_size.x) as i32,
-		(point.y as u32 / tile_size.y) as i32,
+		(point.x as f32 / tile_size.x) as i32,
+		(point.y as f32 / tile_size.y) as i32,
 	    ))
     }
 }
@@ -208,12 +209,7 @@ impl DreamScene {
                                                 map_position),
             PlayerStatus { hp: 10, mp: 10.0 });
         
-        let mut character_group = CharacterGroup::new();
-        character_group.add(GeneralCharacter::new(
-            character_factory::create_character(character_factory::CharacterFactoryOrder::PlayableDoremy1,
-                                                game_data,
-                                                &camera.borrow(),
-                                                map_position), DamageEffect { hp_damage: 1, mp_damage: 1.0 }));
+        let character_group = CharacterGroup::new();
 
         DreamScene {
             player: player,
@@ -232,6 +228,7 @@ impl DreamScene {
     ///
     fn check_key_event(&mut self, ctx: &ggez::Context) {
 	if self.map.scenario_box.is_none() {
+	    self.player.reset_speed();
             if self.key_listener.current_key_status(ctx, &VirtualKey::Right) == tdev::KeyStatus::Pressed {
 		self.right_key_handler(ctx);
             }
@@ -288,8 +285,12 @@ impl DreamScene {
     }
 
     fn fix_camera_position(&self) -> numeric::Point2f {
-        numeric::Point2f::new(if self.player.get_map_position().x >= 650.0 { 650.0 } else { self.player.get_map_position().x },
-                              if self.player.get_map_position().y >= 400.0 { 400.0 } else { self.player.get_map_position().y })
+        numeric::Point2f::new(if self.player.get_map_position().x >= 700.0 { self.player.get_map_position().x - 650.0 }
+			      else if self.player.get_map_position().x >= 650.0 { 650.0 }
+			      else { self.player.get_map_position().x },
+			      if self.player.get_map_position().y >= 1300.0 { self.player.get_map_position().y - 650.0 }
+                              else if self.player.get_map_position().y >= 400.0 { 400.0 }
+			      else { self.player.get_map_position().y })
     }
 
     ///
@@ -433,8 +434,9 @@ impl DreamScene {
 
     fn move_playable_character_x(&mut self, ctx: &mut ggez::Context, t: Clock) {
 	// プレイヤーのX方向の移動
-        self.player.move_map_current_speed_x();
-		// マップ座標を更新, これで、衝突判定を行えるようになる
+        self.player.move_map_current_speed_x(1500.0);
+	
+	// マップ座標を更新, これで、衝突判定を行えるようになる
         self.player.get_mut_character_object().update_display_position(&self.camera.borrow());
 
         // マップチップとの衝突判定（横）
@@ -446,7 +448,7 @@ impl DreamScene {
 
     fn move_playable_character_y(&mut self, ctx: &mut ggez::Context, t: Clock) {
         // プレイヤーのY方向の移動
-        self.player.move_map_current_speed_y();
+        self.player.move_map_current_speed_y(1500.0);
 	// マップ座標を更新, これで、衝突判定を行えるようになる
         self.player.get_mut_character_object().update_display_position(&self.camera.borrow());
 
@@ -459,7 +461,7 @@ impl DreamScene {
 
     fn move_playable_character(&mut self, ctx: &mut ggez::Context, t: Clock) {
         // キーのチェック
-        self.check_key_event(ctx);
+        //self.check_key_event(ctx);
         
         self.player.get_mut_character_object().update_texture(t);
 
@@ -471,7 +473,7 @@ impl DreamScene {
 			       ctx: &mut ggez::Context,
 			       game_data: &GameData) {
 	let t = self.get_current_clock();
-	let target_event = self.map.check_event_panel(ctx, game_data, EventTrigger::Action,
+	let target_event = self.map.check_event_panel(EventTrigger::Action,
 						      self.player.get_map_position(), self.get_current_clock());
 	
 	if let Some(event_element) = target_event {
@@ -493,6 +495,22 @@ impl DreamScene {
 		}
 	    }
 	}
+    }
+
+    pub fn start_mouse_move(&mut self,
+                            ctx: &mut ggez::Context,
+                            point: numeric::Point2f) {
+	let current = self.player.get_character_object().obj().get_center(ctx);
+	let offset = numeric::Point2f::new(point.x - current.x, point.y - current.y);
+	let rad = (offset.y / offset.x).atan();
+	let mut speed = numeric::Vector2f::new(rad.cos() * 4.0, rad.sin() * 4.0);
+	
+	if offset.x < 0.0 {
+	    speed.y = -speed.y;
+	    speed.x = -speed.x;
+	}
+	
+	self.player.set_speed(speed);
     }
 }
 
@@ -536,10 +554,11 @@ impl SceneManager for DreamScene {
     }
 
     fn mouse_button_down_event(&mut self,
-                               _ctx: &mut ggez::Context,
+                               ctx: &mut ggez::Context,
                                _game_data: &GameData,
                                _button: MouseButton,
-                               _point: numeric::Point2f) {
+                               point: numeric::Point2f) {
+	self.start_mouse_move(ctx, point);
     }
     
     fn mouse_button_up_event(&mut self,
@@ -551,10 +570,9 @@ impl SceneManager for DreamScene {
 
     fn pre_process(&mut self, ctx: &mut ggez::Context, game_data: &GameData) {
         let t = self.get_current_clock();
-	self.player.reset_speed();
 
         self.move_playable_character(ctx, t);
-	self.map.check_event_panel(ctx, game_data, EventTrigger::Touch,
+	self.map.check_event_panel(EventTrigger::Touch,
 				   self.player.get_map_position(), self.get_current_clock());
         
         self.character_group.move_and_collision_check(ctx, &self.camera.borrow(), &self.map.tile_map, t);
