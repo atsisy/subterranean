@@ -285,12 +285,21 @@ impl DreamScene {
     }
 
     fn fix_camera_position(&self) -> numeric::Point2f {
-        numeric::Point2f::new(if self.player.get_map_position().x >= 700.0 { self.player.get_map_position().x - 650.0 }
-			      else if self.player.get_map_position().x >= 650.0 { 650.0 }
-			      else { self.player.get_map_position().x },
-			      if self.player.get_map_position().y >= 1300.0 { self.player.get_map_position().y - 650.0 }
-                              else if self.player.get_map_position().y >= 400.0 { 400.0 }
-			      else { self.player.get_map_position().y })
+        numeric::Point2f::new(
+	    if self.player.get_map_position().x >= 800.0 {
+		self.player.get_character_object().obj().get_position().x
+	    } else if self.player.get_map_position().x >= 650.0 {
+		650.0
+	    } else {
+		self.player.get_map_position().x
+	    },
+	    if self.player.get_map_position().y >= 782.0 {
+		self.player.get_character_object().obj().get_position().y
+	    } else if self.player.get_map_position().y >= 400.0 {
+		400.0
+	    } else {
+		self.player.get_map_position().y
+	    })
     }
 
     ///
