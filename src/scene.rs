@@ -2,6 +2,8 @@ pub mod dream_scene;
 pub mod work_scene;
 pub mod scenario_scene;
 
+use std::str::FromStr;
+
 use torifune::device as tdev;
 use torifune::core::Clock;
 use ggez::input as ginput;
@@ -24,6 +26,19 @@ pub enum SceneID {
     MainDesk,
     Scenario,
     Dream,
+}
+
+impl FromStr for SceneID {
+    type Err = ();
+    
+    fn from_str(scene_str: &str) -> Result<Self, Self::Err> {
+	match scene_str {
+	    "MainDesk" => Ok(Self::MainDesk),
+	    "Scenario" => Ok(Self::Scenario),
+	    "Dream" => Ok(Self::Dream),
+	    _ => panic!("Error: EventTrigger::from_str"),
+	}
+    }
 }
 
 pub trait SceneManager {

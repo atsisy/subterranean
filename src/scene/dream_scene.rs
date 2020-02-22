@@ -1,3 +1,4 @@
+
 use std::rc::Rc;
 use std::cell::RefCell;
 
@@ -113,6 +114,18 @@ impl DrawableComponent for CharacterGroup {
     }
 }
 
+///
+/// ## マップ上のデータをまとめる構造体
+///
+/// ### tile_map
+/// tilesetで構成された描画可能なマップ
+///
+/// ### event_map
+/// マップ上のイベントをまとめておく構造体
+///
+/// ### scenario_box
+/// マップ上に表示されるテキストボックス
+///
 struct MapData {
     pub tile_map: mp::StageObjectMap,
     pub event_map: MapEventList,
@@ -133,29 +146,14 @@ impl MapData {
     }
 
     pub fn check_event_panel(&mut self, ctx: &mut ggez::Context, game_data: &GameData,
-			     trigger: EventTrigger, point: numeric::Point2f, t: Clock) {
+			     trigger: EventTrigger, point: numeric::Point2f, t: Clock) -> Option<&MapEventElement> {
 	let tile_size = self.tile_map.get_tile_size();
-	let target_event = self.event_map.check_event(
+	self.event_map.check_event(
 	    trigger,
 	    numeric::Point2i::new(
 		(point.x as u32 / tile_size.x) as i32,
 		(point.y as u32 / tile_size.y) as i32,
-	    ));
-
-	if let Some(event_element) = target_event {
-	    match event_element {
-		MapEventElement::TextEvent(text) => {
-		    println!("{}", text.get_text());
-
-		    let mut scenario_box = ScenarioBox::new(ctx, game_data, numeric::Rect::new(0.0, 330.0, 1300.0, 270.0), t);
-		    scenario_box.text_box.set_fixed_text(text.get_text(),
-							 FontInformation::new(game_data.get_font(FontID::JpFude1),
-									      numeric::Vector2f::new(32.0, 32.0),
-									      ggraphics::Color::from_rgba_u32(0x000000ff)));
-		    self.scenario_box = Some(scenario_box);
-		},
-	    }
-	}
+	    ))
     }
 }
 
@@ -188,11 +186,13 @@ pub struct DreamScene {
     clock: Clock,
     map: MapData,
     camera: Rc<RefCell<numeric::Rect>>,
+    transition_status: SceneTransition,
+    transition_scene: SceneID,
 }
 
 impl DreamScene {
     
-    pub fn new(ctx: &mut ggez::Context, game_data: &GameData, map_id: u32) -> DreamScene  {
+    pub fn new(ctx: &mut ggez::Context, game_data: &GameData, map_id: u32) -> DreamScene {
 
         let key_listener = tdev::KeyboardListener::new_masked(vec![tdev::KeyInputDevice::GenericKeyboard],
                                                                   vec![]);
@@ -206,7 +206,7 @@ impl DreamScene {
                                                 game_data,
                                                 &camera.borrow(),
                                                 map_position),
-        PlayerStatus { hp: 10, mp: 10.0 });
+            PlayerStatus { hp: 10, mp: 10.0 });
         
         let mut character_group = CharacterGroup::new();
         character_group.add(GeneralCharacter::new(
@@ -214,7 +214,7 @@ impl DreamScene {
                                                 game_data,
                                                 &camera.borrow(),
                                                 map_position), DamageEffect { hp_damage: 1, mp_damage: 1.0 }));
-        
+
         DreamScene {
             player: player,
             character_group: character_group,
@@ -222,6 +222,8 @@ impl DreamScene {
             clock: 0,
 	    map: MapData::new(ctx, game_data, map_id, camera.clone()),
             camera: camera,
+	    transition_scene: SceneID::Dream,
+	    transition_status: SceneTransition::Keep,
         }
     }
 
@@ -229,21 +231,23 @@ impl DreamScene {
     /// キー入力のイベントハンドラ
     ///
     fn check_key_event(&mut self, ctx: &ggez::Context) {
-        if self.key_listener.current_key_status(ctx, &VirtualKey::Right) == tdev::KeyStatus::Pressed {
-            self.right_key_handler(ctx);
-        }
+	if self.map.scenario_box.is_none() {
+            if self.key_listener.current_key_status(ctx, &VirtualKey::Right) == tdev::KeyStatus::Pressed {
+		self.right_key_handler(ctx);
+            }
 
-        if self.key_listener.current_key_status(ctx, &VirtualKey::Left) == tdev::KeyStatus::Pressed {
-            self.left_key_handler(ctx);
-        }
-
-        if self.key_listener.current_key_status(ctx, &VirtualKey::Up) == tdev::KeyStatus::Pressed {
-            self.up_key_handler(ctx);
-        }
-
-	if self.key_listener.current_key_status(ctx, &VirtualKey::Down) == tdev::KeyStatus::Pressed {
-            self.down_key_handler(ctx);
-        }
+            if self.key_listener.current_key_status(ctx, &VirtualKey::Left) == tdev::KeyStatus::Pressed {
+		self.left_key_handler(ctx);
+            }
+	    
+            if self.key_listener.current_key_status(ctx, &VirtualKey::Up) == tdev::KeyStatus::Pressed {
+		self.up_key_handler(ctx);
+            }
+	    
+	    if self.key_listener.current_key_status(ctx, &VirtualKey::Down) == tdev::KeyStatus::Pressed {
+		self.down_key_handler(ctx);
+            }
+	}
     }
 
     ///
@@ -462,6 +466,34 @@ impl DreamScene {
         self.move_playable_character_x(ctx, t);
         self.move_playable_character_y(ctx, t);
     }
+
+    fn check_event_panel_onmap(&mut self,
+			       ctx: &mut ggez::Context,
+			       game_data: &GameData) {
+	let t = self.get_current_clock();
+	let target_event = self.map.check_event_panel(ctx, game_data, EventTrigger::Action,
+						      self.player.get_map_position(), self.get_current_clock());
+	
+	if let Some(event_element) = target_event {
+	    match event_element {
+		MapEventElement::TextEvent(text) => {
+		    println!("{}", text.get_text());
+		    
+		    let mut scenario_box = ScenarioBox::new(ctx, game_data,
+							    numeric::Rect::new(33.0, 470.0, 1300.0, 270.0), t);
+		    scenario_box.text_box.set_fixed_text(text.get_text(),
+							 FontInformation::new(game_data.get_font(FontID::JpFude1),
+									      numeric::Vector2f::new(32.0, 32.0),
+									      ggraphics::Color::from_rgba_u32(0x000000ff)));
+                    self.map.scenario_box = Some(scenario_box);
+                },
+		MapEventElement::SwitchScene(switch_scene) => {
+		    self.transition_status = SceneTransition::Transition;
+		    self.transition_scene = switch_scene.get_switch_scene_id();
+		}
+	    }
+	}
+    }
 }
 
 impl SceneManager for DreamScene {
@@ -477,10 +509,9 @@ impl SceneManager for DreamScene {
 			self.map.scenario_box = None;
 		    }
 		} else {
-		    self.map.check_event_panel(ctx, game_data, EventTrigger::Action,
-					       self.player.get_map_position(), self.get_current_clock())
+		    self.check_event_panel_onmap(ctx, game_data);
 		}
-
+		
 	    },
             _ => (),
 	}
@@ -548,11 +579,11 @@ impl SceneManager for DreamScene {
     
     fn post_process(&mut self, _ctx: &mut ggez::Context, _: &GameData) -> SceneTransition {
         self.update_current_clock();
-        SceneTransition::Keep
+	self.transition_status
     }
 
     fn transition(&self) -> SceneID {
-        SceneID::Dream
+	self.transition_scene
     }
 
     fn get_current_clock(&self) -> Clock {

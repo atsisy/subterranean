@@ -5,3 +5,11 @@ text = "イベント発生!!"
 [event-panel.position]
 x = 20
 y = 0
+
+[[event-panel]]
+type = "switch-scene"
+trigger = "action"
+switch-scene-id = "MainDesk"
+[event-panel.position]
+x = 20
+y = 5

@@ -12,6 +12,7 @@ use torifune::graphics::object::*;
 
 use crate::core::map_parser as mp;
 use crate::object::collision::*;
+use crate::scene::SceneID;
 
 ///
 /// ある範囲内に速さを収めたい時に使用する構造体
@@ -628,14 +629,47 @@ impl MapEvent for MapTextEvent {
     }
 }
 
+pub struct MapEventSceneSwitch {
+    trigger: EventTrigger,
+    switch_scene: SceneID,
+}
+
+impl MapEventSceneSwitch {
+    pub fn new(trigger: EventTrigger, switch_scene: SceneID) -> Self {
+	MapEventSceneSwitch {
+	    trigger: trigger,
+	    switch_scene: switch_scene,
+	}
+    }
+
+    pub fn from_toml_object(toml_script: &toml::value::Value) -> Self {
+	MapEventSceneSwitch {
+	    trigger: EventTrigger::from_str(toml_script.get("trigger").unwrap().as_str().unwrap()).unwrap(),
+	    switch_scene: SceneID::from_str(toml_script.get("switch-scene-id").unwrap().as_str().unwrap()).unwrap(),
+	}
+    }
+
+    pub fn get_switch_scene_id(&self) -> SceneID {
+	self.switch_scene
+    }
+}
+
+impl MapEvent for MapEventSceneSwitch {
+    fn get_trigger_method(&self) -> EventTrigger {
+	self.trigger
+    }
+}
+
 pub enum MapEventElement {
     TextEvent(MapTextEvent),
+    SwitchScene(MapEventSceneSwitch),
 }
 
 impl MapEvent for MapEventElement {
     fn get_trigger_method(&self) -> EventTrigger {
 	match self {
-	    Self::TextEvent(text) => text.get_trigger_method(),
+            Self::TextEvent(text) => text.get_trigger_method(),
+            Self::SwitchScene(switch_scene) => switch_scene.get_trigger_method(),
 	}
     }
 }
@@ -666,7 +700,12 @@ impl MapEventList {
 	    if let Some(type_info) = elem.get("type") {
 		match type_info.as_str().unwrap() {
 		    "text" => {
-			table.insert(position, MapEventElement::TextEvent(MapTextEvent::from_toml_object(elem)));
+			table.insert(position, MapEventElement::TextEvent(
+			    MapTextEvent::from_toml_object(elem)));
+		    },
+		    "switch-scene" => {
+			table.insert(position, MapEventElement::SwitchScene(
+			    MapEventSceneSwitch::from_toml_object(elem)));
 		    },
 		    _ => eprintln!("Error"),
 		}
