@@ -524,6 +524,10 @@ impl ShopScene {
 	
 	self.player.set_speed(speed);
     }
+
+    pub fn switched_and_restart(&mut self) {
+	self.transition_scene = SceneID::Dream;
+    }
 }
 
 impl SceneManager for ShopScene {

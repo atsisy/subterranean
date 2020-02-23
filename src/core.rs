@@ -462,7 +462,8 @@ impl<'a> SceneController<'a> {
         SceneController {
             //current_scene: Box::new(scene::work_scene::WorkScene::new(ctx, game_data, 0)),
 	    //current_scene: Box::new(scene::scenario_scene::ScenarioScene::new(ctx, game_data, 0)),
-	    current_scene: Box::new(scene::shop_scene::ShopScene::new(ctx, game_data, 0)),
+	    //current_scene: Box::new(scene::shop_scene::ShopScene::new(ctx, game_data, 0)),
+	    current_scene: Box::new(scene::suzuna_scene::SuzunaScene::new(ctx, game_data, 0)),
 	    scene_stack: SceneStack::new(),
             key_map: tdev::ProgramableGenericKey::new(),
 	    global_clock: 0,

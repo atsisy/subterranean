@@ -1,3 +1,4 @@
+pub mod suzuna_scene;
 pub mod shop_scene;
 pub mod work_scene;
 pub mod scenario_scene;

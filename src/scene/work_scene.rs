@@ -266,6 +266,7 @@ pub struct WorkScene {
     event_list: SceneEventList<Self>,
     sub_scene: WorkSubScene,
     task_result: TaskResult,
+    transition_scene: SceneID,
 }
 
 impl WorkScene {
@@ -277,6 +278,7 @@ impl WorkScene {
 	    event_list: SceneEventList::new(),
 	    sub_scene: WorkSubScene::new(Box::new(TaskScene::new(ctx, game_data)), WorkSceneStatus::InTask),
 	    task_result: TaskResult::new(),
+	    transition_scene: SceneID::MainDesk,
         }
     }
 
@@ -357,7 +359,10 @@ impl SceneManager for WorkScene {
 	    WorkSceneStatus::InTask => {
 		if self.sub_scene.get_task_scene_mut().unwrap().get_task_status() == TaskSceneStatus::FinishDay {
 		    self.flush_task_result_data();
-		    self.switch_task_scene_to_result_scene(ctx, game_data);
+		    //self.switch_task_scene_to_result_scene(ctx, game_data);
+		    
+		    self.transition_scene = SceneID::Dream;
+		    return SceneTransition::PoppingTransition;
 		}
 	    },
 	    WorkSceneStatus::Result => {
@@ -371,7 +376,7 @@ impl SceneManager for WorkScene {
     }
     
     fn transition(&self) -> SceneID {
-        SceneID::MainDesk
+	self.transition_scene
     }
 
     fn get_current_clock(&self) -> Clock {
