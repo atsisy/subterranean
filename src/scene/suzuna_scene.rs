@@ -9,17 +9,23 @@ use crate::core::GameData;
 use crate::scene::*;
 
 use crate::scene::work_scene::WorkScene;
+use crate::scene::work_scene::work_scene_sub::TaskScene;
+use crate::scene::work_scene::work_scene_sub::TaskResultScene;
 use crate::scene::shop_scene::ShopScene;
+
+use crate::scene::work_scene::TaskResult;
 
 #[derive(PartialEq, Clone, Copy)]
 pub enum SuzunaSceneStatus {
     Shop,
     DeskWork,
+    DayResult,
 }
 
 pub struct SuzunaSubScene {
     shop_scene: Option<Box<ShopScene>>,
-    desk_work_scene: Option<Box<WorkScene>>,
+    desk_work_scene: Option<Box<TaskScene>>,
+    day_result_scene: Option<Box<TaskResultScene>>,
     scene_status: SuzunaSceneStatus,
 }
 
@@ -28,6 +34,7 @@ impl SuzunaSubScene {
 	SuzunaSubScene {
 	    shop_scene: Some(Box::new(ShopScene::new(ctx, game_data, map_id))),
 	    desk_work_scene: None,
+	    day_result_scene: None,
 	    scene_status: SuzunaSceneStatus::Shop,
 	}
     }
@@ -36,10 +43,14 @@ impl SuzunaSubScene {
 	self.shop_scene.as_mut()
     }
 
-    pub fn get_deskwork_scene_mut(&mut self) -> Option<&mut Box<WorkScene>> {
+    pub fn get_deskwork_scene_mut(&mut self) -> Option<&mut Box<TaskScene>> {
 	self.desk_work_scene.as_mut()
     }
 
+    pub fn get_dayresult_scene_mut(&mut self) -> Option<&mut Box<TaskResultScene>> {
+	self.day_result_scene.as_mut()
+    }
+    
     pub fn get_scene_status(&self) -> SuzunaSceneStatus {
 	self.scene_status
     }
@@ -47,7 +58,7 @@ impl SuzunaSubScene {
     fn switch_shop_to_deskwork(&mut self, ctx: &mut ggez::Context, game_data: &GameData, transition: SceneTransition) {
 	if transition == SceneTransition::StackingTransition {
 	    self.scene_status = SuzunaSceneStatus::DeskWork;
-	    self.desk_work_scene = Some(Box::new(WorkScene::new(ctx, game_data)));
+	    self.desk_work_scene = Some(Box::new(TaskScene::new(ctx, game_data)));
 	}
     }
 
@@ -71,6 +82,9 @@ impl SceneManager for SuzunaSubScene {
 	    },
 	    SuzunaSceneStatus::DeskWork => {
 		self.desk_work_scene.as_mut().unwrap().key_down_event(ctx, game_data, vkey);
+	    },
+	    SuzunaSceneStatus::DayResult => {
+		self.day_result_scene.as_mut().unwrap().key_down_event(ctx, game_data, vkey);
 	    }
 	}
     }
@@ -85,6 +99,9 @@ impl SceneManager for SuzunaSubScene {
 	    },
 	    SuzunaSceneStatus::DeskWork => {
 		self.desk_work_scene.as_mut().unwrap().key_up_event(ctx, game_data, vkey);
+	    },
+	    SuzunaSceneStatus::DayResult => {
+		self.day_result_scene.as_mut().unwrap().key_up_event(ctx, game_data, vkey);
 	    }
 	}
     }
@@ -100,6 +117,9 @@ impl SceneManager for SuzunaSubScene {
 	    },
 	    SuzunaSceneStatus::DeskWork => {
 		self.desk_work_scene.as_mut().unwrap().mouse_motion_event(ctx, game_data, point, offset);
+	    },
+	    SuzunaSceneStatus::DayResult => {
+		self.day_result_scene.as_mut().unwrap().mouse_motion_event(ctx, game_data, point, offset);
 	    }
 	}
     }
@@ -115,6 +135,9 @@ impl SceneManager for SuzunaSubScene {
 	    },
 	    SuzunaSceneStatus::DeskWork => {
 		self.desk_work_scene.as_mut().unwrap().mouse_button_down_event(ctx, game_data, button, point);
+	    },
+	    SuzunaSceneStatus::DayResult => {
+		self.day_result_scene.as_mut().unwrap().mouse_button_down_event(ctx, game_data, button, point);
 	    }
 	}
     }
@@ -130,6 +153,9 @@ impl SceneManager for SuzunaSubScene {
 	    },
 	    SuzunaSceneStatus::DeskWork => {
 		self.desk_work_scene.as_mut().unwrap().mouse_button_up_event(ctx, game_data, button, point);
+	    },
+	    SuzunaSceneStatus::DayResult => {
+		self.day_result_scene.as_mut().unwrap().mouse_button_up_event(ctx, game_data, button, point);
 	    }
 	}
     }
@@ -143,6 +169,9 @@ impl SceneManager for SuzunaSubScene {
 	    },
 	    SuzunaSceneStatus::DeskWork => {
 		self.desk_work_scene.as_mut().unwrap().pre_process(ctx, game_data);
+	    },
+	    SuzunaSceneStatus::DayResult => {
+		self.day_result_scene.as_mut().unwrap().pre_process(ctx, game_data);
 	    }
 	}
     }
@@ -154,6 +183,9 @@ impl SceneManager for SuzunaSubScene {
 	    },
 	    SuzunaSceneStatus::DeskWork => {
 		self.desk_work_scene.as_mut().unwrap().drawing_process(ctx);
+	    },
+	    SuzunaSceneStatus::DayResult => {
+		self.day_result_scene.as_mut().unwrap().drawing_process(ctx);
 	    }
 	}
     }
@@ -165,6 +197,9 @@ impl SceneManager for SuzunaSubScene {
 	    },
 	    SuzunaSceneStatus::DeskWork => {
 		self.desk_work_scene.as_mut().unwrap().post_process(ctx, game_data)
+	    },
+	    SuzunaSceneStatus::DayResult => {
+		self.day_result_scene.as_mut().unwrap().post_process(ctx, game_data)
 	    }
 	}
     }
@@ -176,6 +211,9 @@ impl SceneManager for SuzunaSubScene {
 	    },
 	    SuzunaSceneStatus::DeskWork => {
 		self.desk_work_scene.as_ref().unwrap().transition()
+	    },
+	    SuzunaSceneStatus::DayResult => {
+		self.day_result_scene.as_ref().unwrap().transition()
 	    }
 	}
     }
@@ -187,6 +225,9 @@ impl SceneManager for SuzunaSubScene {
 	    },
 	    SuzunaSceneStatus::DeskWork => {
 		self.desk_work_scene.as_ref().unwrap().get_current_clock()
+	    },
+	    SuzunaSceneStatus::DayResult => {
+		self.day_result_scene.as_ref().unwrap().get_current_clock()
 	    }
 	}
     }
@@ -198,6 +239,9 @@ impl SceneManager for SuzunaSubScene {
 	    },
 	    SuzunaSceneStatus::DeskWork => {
 		self.desk_work_scene.as_mut().unwrap().update_current_clock()
+	    },
+	    SuzunaSceneStatus::DayResult => {
+		self.day_result_scene.as_mut().unwrap().update_current_clock()
 	    }
 	}
     }
@@ -206,6 +250,7 @@ impl SceneManager for SuzunaSubScene {
 pub struct SuzunaScene {
     clock: Clock,
     sub_scene: SuzunaSubScene,
+    task_result: TaskResult,
 }
 
 impl SuzunaScene {
@@ -213,6 +258,7 @@ impl SuzunaScene {
 	SuzunaScene {
 	    clock: 0,
 	    sub_scene: SuzunaSubScene::new(ctx, game_data, suzuna_map_id),
+	    task_result: TaskResult::new(),
 	}
     }
 }
@@ -282,10 +328,15 @@ impl SceneManager for SuzunaScene {
 	    SuzunaSceneStatus::DeskWork => {
 		if transition_status == SceneTransition::PoppingTransition {
 		    if self.sub_scene.get_deskwork_scene_mut().unwrap().transition() == SceneID::Dream {
+			self.task_result.add_result(self.sub_scene.desk_work_scene.as_ref().unwrap().get_task_result());
 			self.sub_scene.switch_deskwork_to_shop(transition_status);
+			debug::debug_screen_push_text(&format!("{:?}", self.task_result));
 		    }
 		}
 	    },
+	    SuzunaSceneStatus::DayResult => {
+		debug::debug_screen_push_text("Implement Result!!!!!!!!!!!!!");
+	    }
 	}
 
         SceneTransition::Keep

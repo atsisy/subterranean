@@ -13,6 +13,7 @@ use crate::object::task_object;
 
 use crate::core::{MouseInformation, MouseActionRecord, GameData, TextureID};
 use crate::object::task_object::*;
+use crate::scene::{SceneID, SceneTransition};
 
 use crate::object::task_result_object::*;
 
@@ -32,6 +33,8 @@ pub struct TaskScene {
     event_list: SceneEventList<Self>,
     status: TaskSceneStatus,
     task_result: TaskResult,
+    transition_status: SceneTransition,
+    transition_scene: SceneID,
 }
 
 impl TaskScene {
@@ -48,6 +51,8 @@ impl TaskScene {
 	    event_list: SceneEventList::new(),
 	    status: TaskSceneStatus::Init,
 	    task_result: TaskResult::new(),
+	    transition_status: SceneTransition::Keep,
+	    transition_scene: SceneID::MainDesk,
         }
     }
 
@@ -98,6 +103,8 @@ impl TaskScene {
     fn check_done_today_work(&mut self) {
 	if self.task_result.add_done_works(1).get_done_works() > 5 {
 	    self.status = TaskSceneStatus::FinishDay;
+	    self.transition_scene = SceneID::Dream;
+	    self.transition_status = SceneTransition::PoppingTransition;
 	    println!("done 5 works!!");
 	}
     }
@@ -250,11 +257,11 @@ impl SceneManager for TaskScene {
     
     fn post_process(&mut self, _ctx: &mut ggez::Context, _: &GameData) -> SceneTransition {
         self.update_current_clock();
-        SceneTransition::Keep
+	self.transition_status
     }
     
     fn transition(&self) -> SceneID {
-        SceneID::MainDesk
+	self.transition_scene
     }
 
     fn get_current_clock(&self) -> Clock {

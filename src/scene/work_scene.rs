@@ -15,7 +15,7 @@ use crate::scene::*;
 use work_scene_sub::{TaskScene, TaskResultScene};
 use work_scene_sub::TaskSceneStatus;
 
-#[derive(PartialEq, Clone)]
+#[derive(PartialEq, Clone, Debug)]
 pub struct TaskResult {
     done_works: u32,
     total_money: i32,
