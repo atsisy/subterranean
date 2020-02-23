@@ -12,7 +12,8 @@ use tdev::ProgramableKey;
 use torifune::graphics::object::sub_screen::SubScreen;
 use torifune::graphics::object::sub_screen;
 use torifune::graphics::DrawableComponent;
-use torifune::graphics::object::TextureObject;
+use torifune::graphics::object::{FontInformation, TextureObject};
+use torifune::debug;
 
 use ggez::input as ginput;
 use ggez::input::keyboard::*;
@@ -450,6 +451,13 @@ impl<'a> SceneController<'a> {
 					     0, ggraphics::Color::from_rgba_u32(0));
 
 	root_screen.fit_scale(ctx, numeric::Vector2f::new(window_size.0.round(), window_size.1.round()));
+
+	debug::debug_screen_init(ctx, numeric::Rect::new(940.0, 0.0, 420.0, 300.0),
+				 FontInformation::new(game_data.get_font(FontID::DEFAULT),
+						      numeric::Vector2f::new(12.0, 12.0),
+						      ggraphics::Color::from_rgba_u32(0xffffffa0)
+				 ));
+	
 	
         SceneController {
             //current_scene: Box::new(scene::work_scene::WorkScene::new(ctx, game_data, 0)),
@@ -511,7 +519,9 @@ impl<'a> SceneController<'a> {
 	sub_screen::stack_screen(ctx, &self.root_screen);
 	
         self.current_scene.drawing_process(ctx);
-
+	
+	debug::debug_screen_draw(ctx);
+	
 	sub_screen::pop_screen(ctx);
         self.root_screen.draw(ctx).unwrap();
     }

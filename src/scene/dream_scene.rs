@@ -1,4 +1,3 @@
-
 use std::rc::Rc;
 use std::cell::RefCell;
 
@@ -15,6 +14,7 @@ use ggez::graphics as ggraphics;
 
 use ginput::mouse::MouseButton;
 use torifune::numeric;
+use torifune::debug;
 
 use crate::core::{GameData, FontID};
 use super::*;
@@ -539,6 +539,7 @@ impl SceneManager for DreamScene {
 			self.map.scenario_box = None;
 		    }
 		} else {
+		    debug::debug_screen_push_text("OK");
 		    self.check_event_panel_onmap(ctx, game_data);
 		}
 		
