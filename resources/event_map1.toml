@@ -13,3 +13,13 @@ switch-scene-id = "MainDesk"
 [event-panel.position]
 x = 1
 y = 10
+
+[[event-panel]]
+type = "book-shelf"
+trigger = "action"
+[event-panel.shelf-info]
+begin-number = 700
+end-number = 800
+[event-panel.position]
+x = 1
+y = 9

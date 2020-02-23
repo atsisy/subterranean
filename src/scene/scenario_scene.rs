@@ -15,11 +15,10 @@ pub struct ScenarioScene {
     simulation_status: sui::SimulationStatus,
     scene_transition: SceneID,
     clock: Clock,
-    generate_id: i32,
 }
 
 impl ScenarioScene {
-    pub fn new(ctx: &mut ggez::Context, game_data: &GameData, generate_id: i32) -> Self {
+    pub fn new(ctx: &mut ggez::Context, game_data: &GameData) -> Self {
         let scenario = ScenarioEvent::new(ctx, numeric::Rect::new(0.0, 180.0, 1366.0, 600.0),
                                           "./resources/scenario_parsing_test.toml",
                                           game_data, 0);
@@ -29,7 +28,6 @@ impl ScenarioScene {
             scenario_event: scenario,
 	    scene_transition: SceneID::Scenario,
             clock: 0,
-	    generate_id: generate_id,
         }
     }
 }

@@ -13,6 +13,7 @@ use torifune::graphics::object::*;
 use crate::core::map_parser as mp;
 use crate::object::collision::*;
 use crate::scene::SceneID;
+use crate::core::{BookShelfInformation};
 
 ///
 /// ある範囲内に速さを収めたい時に使用する構造体
@@ -669,9 +670,38 @@ impl MapEvent for MapEventSceneSwitch {
     }
 }
 
+pub struct BookStoreEvent {
+    trigger: EventTrigger,
+    book_shelf_info: BookShelfInformation,
+}
+
+impl BookStoreEvent {
+    pub fn from_toml_object(toml_script: &toml::value::Value) -> Self {
+	let shelf_info = toml_script.get("shelf-info").unwrap().as_table().unwrap();
+	let book_shelf_info = BookShelfInformation::new(shelf_info.get("begin-number").unwrap().as_integer().unwrap() as u16,
+							shelf_info.get("end-number").unwrap().as_integer().unwrap() as u16);
+	
+	BookStoreEvent {
+	    trigger: EventTrigger::from_str(toml_script.get("trigger").unwrap().as_str().unwrap()).unwrap(),
+	    book_shelf_info: book_shelf_info,
+	}
+    }
+
+    pub fn get_book_shelf_info(&self) -> &BookShelfInformation {
+	&self.book_shelf_info
+    } 
+}
+
+impl MapEvent for BookStoreEvent {
+    fn get_trigger_method(&self) -> EventTrigger {
+	self.trigger
+    }
+}
+
 pub enum MapEventElement {
     TextEvent(MapTextEvent),
     SwitchScene(MapEventSceneSwitch),
+    BookStoreEvent(BookStoreEvent),
 }
 
 impl MapEvent for MapEventElement {
@@ -679,6 +709,7 @@ impl MapEvent for MapEventElement {
 	match self {
             Self::TextEvent(text) => text.get_trigger_method(),
             Self::SwitchScene(switch_scene) => switch_scene.get_trigger_method(),
+	    Self::BookStoreEvent(book_store_event) => book_store_event.get_trigger_method(),
 	}
     }
 }
@@ -715,6 +746,10 @@ impl MapEventList {
 		    "switch-scene" => {
 			table.insert(position, MapEventElement::SwitchScene(
 			    MapEventSceneSwitch::from_toml_object(elem)));
+		    },
+		    "book-shelf" => {
+			table.insert(position, MapEventElement::BookStoreEvent(
+			    BookStoreEvent::from_toml_object(elem)));
 		    },
 		    _ => eprintln!("Error"),
 		}

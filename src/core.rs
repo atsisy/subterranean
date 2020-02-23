@@ -173,6 +173,25 @@ impl BookInformation {
 }
 
 #[derive(Debug, Deserialize, Clone)]
+pub struct BookShelfInformation {
+    billing_number_begin: u16,
+    billing_number_end: u16,
+}
+
+impl BookShelfInformation {
+    pub fn new(begin: u16, end: u16) -> Self {
+	BookShelfInformation {
+	    billing_number_begin: begin,
+	    billing_number_end: end,
+	}
+    }
+
+    pub fn contains_number(&self, inquire_number: u16) -> bool {
+	self.billing_number_begin <= inquire_number && inquire_number <= self.billing_number_end
+    }
+}
+
+#[derive(Debug, Deserialize, Clone)]
 pub struct MapConstractData {
     pub id: u32,
     pub comment: String,
@@ -260,6 +279,7 @@ impl GameData {
 
     pub fn get_map_data(&self, id: u32) -> Option<MapConstractData> {
 	for map_data in &self.map_data {
+	    println!("FIXME!!");
 	    return Some(map_data.clone())
 	}
 
@@ -395,14 +415,12 @@ impl MouseInformation {
 
 struct SceneStack<'a> {
     stack: VecDeque<Box<dyn scene::SceneManager + 'a>>,
-    next_generate_id: i32,
 }
 
 impl<'a> SceneStack<'a> {
     pub fn new() -> SceneStack<'a> {
 	SceneStack {
 	    stack: VecDeque::new(),
-	    next_generate_id: 1,
 	}
     }
 
@@ -477,10 +495,7 @@ impl<'a> SceneController<'a> {
 	}
     }
     
-    fn switch_scene_with_popping(&mut self,
-				ctx: &mut ggez::Context,
-				game_data: &'a GameData,
-				next_scene_id: scene::SceneID) {
+    fn switch_scene_with_popping(&mut self) {
 	if let Some(scene) = self.scene_stack.pop() {
 	    self.current_scene = scene;
 	} else {
@@ -510,9 +525,9 @@ impl<'a> SceneController<'a> {
 		self.switch_scene_with_stacking(ctx, game_data, self.current_scene.transition());
 	    },
 	    scene::SceneTransition::PoppingTransition => {
-		self.switch_scene_with_popping(ctx, game_data, self.current_scene.transition());
+		self.switch_scene_with_popping();
 	    },
-        }
+	}
 
 	if self.global_clock % 120 == 0 {
 	    println!("fps: {}", ggez::timer::fps(ctx));

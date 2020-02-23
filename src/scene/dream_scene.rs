@@ -293,7 +293,7 @@ impl DreamScene {
 	    } else {
 		self.player.get_map_position().x
 	    },
-	    if self.player.get_map_position().y >= 782.0 {
+	    if self.player.get_map_position().y >= 1130.0 {
 		self.player.get_character_object().obj().get_position().y
 	    } else if self.player.get_map_position().y >= 400.0 {
 		400.0
@@ -501,7 +501,10 @@ impl DreamScene {
 		MapEventElement::SwitchScene(switch_scene) => {
 		    self.transition_status = SceneTransition::StackingTransition;
 		    self.transition_scene = switch_scene.get_switch_scene_id();
-		}
+		},
+		MapEventElement::BookStoreEvent(book_store_event) => {
+		    println!("book store event: {:?}", book_store_event.get_book_shelf_info());
+		},
 	    }
 	}
     }
@@ -577,7 +580,7 @@ impl SceneManager for DreamScene {
                              _point: numeric::Point2f) {
     }
 
-    fn pre_process(&mut self, ctx: &mut ggez::Context, game_data: &GameData) {
+    fn pre_process(&mut self, ctx: &mut ggez::Context, _: &GameData) {
         let t = self.get_current_clock();
 
         self.move_playable_character(ctx, t);
