@@ -10,7 +10,7 @@ use torifune::graphics::*;
 use torifune::impl_texture_object_for_wrapped;
 use torifune::impl_drawable_object_for_wrapped;
 
-use crate::scene::work_scene::TaskResult;
+use crate::scene::suzuna_scene::TaskResult;
 use crate::core::{GameData, FontID};
 use crate::object::effect;
 

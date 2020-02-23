@@ -1,3 +1,5 @@
+pub mod suzuna_sub_scene;
+
 use ggez::input::mouse::MouseButton;
 
 use torifune::core::*;
@@ -8,12 +10,55 @@ use torifune::debug;
 use crate::core::GameData;
 use crate::scene::*;
 
-use crate::scene::work_scene::WorkScene;
-use crate::scene::work_scene::work_scene_sub::TaskScene;
-use crate::scene::work_scene::work_scene_sub::TaskResultScene;
+use crate::scene::suzuna_scene::suzuna_sub_scene::TaskScene;
+use crate::scene::suzuna_scene::suzuna_sub_scene::TaskResultScene;
 use crate::scene::shop_scene::ShopScene;
 
-use crate::scene::work_scene::TaskResult;
+#[derive(PartialEq, Clone, Debug)]
+pub struct TaskResult {
+    done_works: u32,
+    total_money: i32,
+}
+
+impl TaskResult {
+    pub fn new() -> Self {
+	TaskResult {
+	    done_works: 0,
+	    total_money: 0,
+	}
+    }
+
+    pub fn add_done_works(&mut self, works: u32) -> &mut Self {
+	self.done_works += works;
+	self
+    }
+
+    pub fn add_money(&mut self, money: i32) -> &mut Self {
+	self.total_money += money;
+	self
+    }
+
+    pub fn add_result(&mut self, task_result: &TaskResult) -> &mut Self {
+	self.done_works += task_result.done_works;
+	self.total_money += task_result.total_money;
+	self
+    }
+
+    pub fn get_done_works(&self) -> u32 {
+	self.done_works
+    }
+
+    pub fn get_total_money(&self) -> i32 {
+	self.total_money
+    }
+
+    pub fn reset(&mut self) -> &mut Self {
+	self.done_works = 0;
+	self.total_money = 0;
+	
+	self
+    }
+}
 
 #[derive(PartialEq, Clone, Copy)]
 pub enum SuzunaSceneStatus {
