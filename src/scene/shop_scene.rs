@@ -62,13 +62,13 @@ impl CharacterGroup {
                 // 当たり判定の前に描画位置を決定しないとバグる。この仕様も直すべき
                 character.get_mut_character_object().update_display_position(camera);
                 
-                DreamScene::check_collision_vertical(ctx, character.get_mut_character_object(), tile_map, t);
+                ShopScene::check_collision_vertical(ctx, character.get_mut_character_object(), tile_map, t);
                 character.get_mut_character_object().update_display_position(camera);
                 
 
                 character.move_map_current_speed_x();
                 character.get_mut_character_object().update_display_position(camera);
-                DreamScene::check_collision_horizon(ctx, character.get_mut_character_object(), tile_map, t);
+                ShopScene::check_collision_horizon(ctx, character.get_mut_character_object(), tile_map, t);
                 character.get_mut_character_object().update_display_position(camera);
             });
     }
@@ -180,7 +180,7 @@ impl MapData {
 /// ### camera
 /// マップを覗くカメラ
 ///
-pub struct DreamScene {
+pub struct ShopScene {
     player: PlayableCharacter,
     character_group: CharacterGroup,
     key_listener: tdev::KeyboardListener,
@@ -191,9 +191,9 @@ pub struct DreamScene {
     transition_scene: SceneID,
 }
 
-impl DreamScene {
+impl ShopScene {
     
-    pub fn new(ctx: &mut ggez::Context, game_data: &GameData, map_id: u32) -> DreamScene {
+    pub fn new(ctx: &mut ggez::Context, game_data: &GameData, map_id: u32) -> ShopScene {
 
         let key_listener = tdev::KeyboardListener::new_masked(vec![tdev::KeyInputDevice::GenericKeyboard],
                                                                   vec![]);
@@ -211,7 +211,7 @@ impl DreamScene {
         
         let character_group = CharacterGroup::new();
 
-        DreamScene {
+        ShopScene {
             player: player,
             character_group: character_group,
             key_listener: key_listener,
@@ -526,7 +526,7 @@ impl DreamScene {
     }
 }
 
-impl SceneManager for DreamScene {
+impl SceneManager for ShopScene {
     
     fn key_down_event(&mut self,
                       ctx: &mut ggez::Context,
@@ -569,9 +569,17 @@ impl SceneManager for DreamScene {
     fn mouse_button_down_event(&mut self,
                                ctx: &mut ggez::Context,
                                _game_data: &GameData,
-                               _button: MouseButton,
+                               button: MouseButton,
                                point: numeric::Point2f) {
-	self.start_mouse_move(ctx, point);
+	match button {
+	    MouseButton::Left => {
+		self.start_mouse_move(ctx, point);
+	    },
+	    MouseButton::Right => {
+		self.player.reset_speed();
+	    },
+	    _ => (),
+	}
     }
     
     fn mouse_button_up_event(&mut self,

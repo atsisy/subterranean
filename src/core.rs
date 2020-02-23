@@ -462,7 +462,7 @@ impl<'a> SceneController<'a> {
         SceneController {
             //current_scene: Box::new(scene::work_scene::WorkScene::new(ctx, game_data, 0)),
 	    //current_scene: Box::new(scene::scenario_scene::ScenarioScene::new(ctx, game_data, 0)),
-	    current_scene: Box::new(scene::dream_scene::DreamScene::new(ctx, game_data, 0)),
+	    current_scene: Box::new(scene::shop_scene::ShopScene::new(ctx, game_data, 0)),
 	    scene_stack: SceneStack::new(),
             key_map: tdev::ProgramableGenericKey::new(),
 	    global_clock: 0,
@@ -477,7 +477,7 @@ impl<'a> SceneController<'a> {
         if next_scene_id == scene::SceneID::MainDesk {
             self.current_scene = Box::new(scene::work_scene::WorkScene::new(ctx, game_data));
         } else if next_scene_id == scene::SceneID::Dream {
-            self.current_scene = Box::new(scene::dream_scene::DreamScene::new(ctx, game_data, 0));
+            self.current_scene = Box::new(scene::shop_scene::ShopScene::new(ctx, game_data, 0));
         } else if next_scene_id == scene::SceneID::Null {
             self.current_scene = Box::new(scene::NullScene::new());
         }
@@ -490,7 +490,7 @@ impl<'a> SceneController<'a> {
 	let next_scene: Option<Box<dyn scene::SceneManager + 'a>> = if next_scene_id == scene::SceneID::MainDesk {
             Some(Box::new(scene::work_scene::WorkScene::new(ctx, game_data)))
         } else if next_scene_id == scene::SceneID::Dream {
-            Some(Box::new(scene::dream_scene::DreamScene::new(ctx, game_data, 0)))
+            Some(Box::new(scene::shop_scene::ShopScene::new(ctx, game_data, 0)))
         } else if next_scene_id == scene::SceneID::Null {
             Some(Box::new(scene::NullScene::new()))
         } else {
