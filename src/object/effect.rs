@@ -31,6 +31,33 @@ pub fn fade_in(required_time: Clock, start: Clock) -> GenericEffectFn {
 /// # start
 /// アニメーションが開始する時間, 未来を指定することもできる
 ///
+pub fn alpha_effect(required_time: Clock, start: Clock, init_alpha: u8, fin_alpha: u8) -> GenericEffectFn {
+    let init_ratio_alpha = init_alpha as f32 / 255.0;
+    let alpha_offset = fin_alpha as i32 - init_alpha as i32;
+    let diff_alpha_per_clock = alpha_offset as f32 / 255.0 / required_time as f32;
+    
+    Box::new(move |obj: &mut dyn MovableObject, _: &ggez::Context, t: Clock| {
+	if start <= t {
+	    let elapsed_time = t - start;
+	    if elapsed_time < required_time {
+		obj.set_alpha(init_ratio_alpha + (diff_alpha_per_clock * elapsed_time as f32));
+		EffectFnStatus::EffectContinue
+	    } else {
+		EffectFnStatus::EffectFinish
+	    }
+	} else {
+	    EffectFnStatus::EffectContinue
+	}
+    })
+}
+
+///
+/// # required_time
+/// アニメーションにかける時間
+///
+/// # start
+/// アニメーションが開始する時間, 未来を指定することもできる
+///
 pub fn fade_out(required_time: Clock, start: Clock) -> GenericEffectFn {
     Box::new(move |obj: &mut dyn MovableObject, _: &ggez::Context, t: Clock| {
 	if start <= t {

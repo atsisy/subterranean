@@ -9,7 +9,6 @@ use torifune::core::Clock;
 use ggez::input as ginput;
 use torifune::numeric;
 use torifune::graphics as tgraphics;
-use tgraphics::{DrawableComponent, DrawableObject};
 
 use crate::core::GameData;
 

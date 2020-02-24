@@ -17,6 +17,7 @@ use torifune::core::Clock;
 use torifune::numeric;
 use torifune::graphics::object as tobj;
 use torifune::graphics::object::*;
+use torifune::graphics::object::sub_screen::SubScreen;
 use torifune::graphics::*;
 use torifune::impl_texture_object_for_wrapped;
 use torifune::impl_drawable_object_for_wrapped;
@@ -139,4 +140,69 @@ impl DrawableObject for BlackOutTexture {
 
 impl TextureObject for BlackOutTexture {
     impl_texture_object_for_wrapped!{texture}
+}
+
+pub struct DarkEffectPanel {
+    canvas: EffectableWrap<MovableWrap<SubScreen>>,
+}
+
+impl DarkEffectPanel {
+    pub fn new(ctx: &mut ggez::Context,
+	       rect: numeric::Rect,
+	       now: Clock) -> Self {
+	DarkEffectPanel {
+	    canvas:
+	    EffectableWrap::new(
+		MovableWrap::new(
+		    Box::new(
+			SubScreen::new(ctx, rect, 0, ggraphics::Color::from_rgba_u32(0))
+		    ), None, now),
+		vec![]),
+	}
+    }
+
+    pub fn new_effect(&mut self, required_time: Clock, now: Clock,
+		      init_dark_alpha: u8, fin_dark_alpha: u8) {
+	self.canvas.add_effect(vec![effect::alpha_effect(required_time,
+							 now,
+							 init_dark_alpha,
+							 fin_dark_alpha)]);
+    }
+
+    pub fn run_effect(&mut self, ctx: &mut ggez::Context, t: Clock) {
+	self.canvas.effect(ctx, t);
+    }
+}
+
+impl DrawableComponent for DarkEffectPanel {
+    fn draw(&mut self, ctx: &mut ggez::Context) -> ggez::GameResult<()> {
+	sub_screen::stack_screen(ctx, self.canvas.ref_wrapped_object().ref_wrapped_object());
+	sub_screen::pop_screen(ctx);
+	self.canvas.draw(ctx)
+    }
+
+    #[inline(always)]
+    fn hide(&mut self) {
+	self.canvas.hide()
+    }
+
+    #[inline(always)]
+    fn appear(&mut self) {
+	self.canvas.appear()
+    }
+
+    #[inline(always)]
+    fn is_visible(&self) -> bool {
+	self.canvas.is_visible()
+    }
+
+    #[inline(always)]
+    fn set_drawing_depth(&mut self, depth: i8) {
+	self.canvas.set_drawing_depth(depth)
+    }
+
+    #[inline(always)]
+    fn get_drawing_depth(&self) -> i8 {
+	self.canvas.get_drawing_depth()
+    }
 }
