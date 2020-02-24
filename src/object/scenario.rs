@@ -641,7 +641,7 @@ impl Scenario {
 	scenario.push(ScenarioElement::SceneTransition(
 	    ScenarioTransitionData(SceneID::Scenario, scene_transition.get("scenario").unwrap().as_integer().unwrap() as i32)));
 	scenario.push(ScenarioElement::SceneTransition(
-	    ScenarioTransitionData(SceneID::Dream, scene_transition.get("dream").unwrap().as_integer().unwrap() as i32)));
+	    ScenarioTransitionData(SceneID::SuzunaShop, scene_transition.get("dream").unwrap().as_integer().unwrap() as i32)));
 	scenario.push(ScenarioElement::SceneTransition(
 	    ScenarioTransitionData(SceneID::MainDesk, scene_transition.get("desk").unwrap().as_integer().unwrap() as i32)));
 

@@ -1,5 +1,6 @@
 use torifune::core::Clock;
 use torifune::numeric;
+use torifune::distance;
 use torifune::graphics as tg;
 
 pub fn stop() -> Option<Box<dyn Fn(& dyn tg::object::MovableObject, Clock) -> numeric::Point2f>> {
@@ -31,5 +32,22 @@ pub fn gravity_move(init_speed: f32, max_speed: f32, border_y: f32, a: f32)
         }
 
         next
+    }))
+}
+
+pub fn devide_distance(dest: numeric::Point2f, divide_c: f32)
+                -> Option<Box<dyn Fn(& dyn tg::object::MovableObject, Clock) -> numeric::Point2f>> {
+    Some(Box::new(move |p: & dyn tg::object::MovableObject, t: Clock| {
+        let current_pos = p.get_position();
+
+	if distance!(current_pos, dest) < 1.0 {
+	    return dest;
+	}
+	
+	let offset = numeric::Vector2f::new(dest.x - current_pos.x, dest.y - current_pos.y);
+	numeric::Point2f::new(
+	    current_pos.x + (offset.x * divide_c),
+	    current_pos.y + (offset.y * divide_c)
+	)
     }))
 }

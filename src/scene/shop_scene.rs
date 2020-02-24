@@ -2,13 +2,13 @@ use std::rc::Rc;
 use std::cell::RefCell;
 
 use torifune::device as tdev;
-use torifune::graphics::object::FontInformation;
-use torifune::graphics::object::TextureObject;
+use torifune::graphics::object::*;
 
 use tdev::VirtualKey;
 use torifune::core::Clock;
 use torifune::graphics as tgraphics;
 use torifune::core::Updatable;
+use torifune::graphics::object::sub_screen::SubScreen;
 use ggez::input as ginput;
 use ggez::graphics as ggraphics;
 
@@ -23,6 +23,7 @@ use crate::object::map_object::*;
 use crate::core::map_parser as mp;
 use crate::object::map_object::EventTrigger;
 use crate::object::scenario::*;
+use crate::object::move_fn;
 
 struct CharacterGroup {
     group: Vec<GeneralCharacter>,
@@ -158,6 +159,75 @@ impl MapData {
     }
 }
 
+pub struct ShopMenu {
+    canvas: MovableWrap<SubScreen>,
+    menu_canvas_size: numeric::Vector2f,
+    now_appear: bool,
+}
+
+impl ShopMenu {
+    pub fn new(ctx: &mut ggez::Context, size: numeric::Vector2f, t: Clock) -> Self {
+	ShopMenu {
+	    canvas: MovableWrap::new(
+		Box::new(SubScreen::new(ctx, numeric::Rect::new(-size.x, 0.0, size.x, size.y),
+					0, ggraphics::Color::from_rgba_u32(0x000000ff))),
+		None,
+		t),
+	    menu_canvas_size: size,
+	    now_appear: false,
+	}
+    }
+
+    pub fn slide_toggle(&mut self, t: Clock) {
+	if self.now_appear {
+	    self.canvas.override_move_func(
+		move_fn::devide_distance(numeric::Point2f::new(-self.menu_canvas_size.x, 0.0), 0.5),
+		t);
+	    self.now_appear = false;
+	} else {
+	    self.canvas.override_move_func(
+		move_fn::devide_distance(numeric::Point2f::new(0.0, 0.0), 0.5),
+		t);
+	    self.now_appear = true;
+	}
+    }
+}
+
+impl Updatable for ShopMenu {
+    fn update(&mut self, ctx: &ggez::Context, t: Clock) {
+	self.canvas.move_with_func(t);
+    }
+}
+
+impl DrawableComponent for ShopMenu {
+    fn draw(&mut self, ctx: &mut ggez::Context) -> ggez::GameResult<()> {
+	sub_screen::stack_screen(ctx, self.canvas.ref_wrapped_object());
+	
+	sub_screen::pop_screen(ctx);
+        self.canvas.draw(ctx)
+    }
+
+    fn hide(&mut self) {
+	self.canvas.hide();
+    }
+
+    fn appear(&mut self) {
+	self.canvas.appear();
+    }
+
+    fn is_visible(&self) -> bool {
+	self.canvas.is_visible()
+    }
+
+    fn set_drawing_depth(&mut self, depth: i8) {
+	self.canvas.set_drawing_depth(depth);
+    }
+
+    fn get_drawing_depth(&self) -> i8 {
+	self.canvas.get_drawing_depth()
+    }
+}
+
 ///
 /// # 夢の中のステージ
 ///
@@ -186,6 +256,7 @@ pub struct ShopScene {
     key_listener: tdev::KeyboardListener,
     clock: Clock,
     map: MapData,
+    shop_menu: ShopMenu,
     camera: Rc<RefCell<numeric::Rect>>,
     transition_status: SceneTransition,
     transition_scene: SceneID,
@@ -217,8 +288,9 @@ impl ShopScene {
             key_listener: key_listener,
             clock: 0,
 	    map: MapData::new(ctx, game_data, map_id, camera.clone()),
+	    shop_menu: ShopMenu::new(ctx, numeric::Vector2f::new(450.0, 768.0), 0),
             camera: camera,
-	    transition_scene: SceneID::Dream,
+	    transition_scene: SceneID::SuzunaShop,
 	    transition_status: SceneTransition::Keep,
         }
     }
@@ -526,7 +598,7 @@ impl ShopScene {
     }
 
     pub fn switched_and_restart(&mut self) {
-	self.transition_scene = SceneID::Dream;
+	self.transition_scene = SceneID::SuzunaShop;
     }
 }
 
@@ -545,8 +617,10 @@ impl SceneManager for ShopScene {
 		} else {
 		    debug::debug_screen_push_text("OK");
 		    self.check_event_panel_onmap(ctx, game_data);
-		}
-		
+		}	
+	    },
+	    tdev::VirtualKey::Action2 => {
+		self.shop_menu.slide_toggle(self.get_current_clock());
 	    },
             _ => (),
 	}
@@ -604,6 +678,9 @@ impl SceneManager for ShopScene {
         
         // マップ描画の準備
         self.map.tile_map.update(ctx, t);
+
+	// メニューの更新
+	self.shop_menu.update(ctx, t);
     }
     
     fn drawing_process(&mut self, ctx: &mut ggez::Context) {
@@ -618,6 +695,8 @@ impl SceneManager for ShopScene {
 	if let Some(scenario_box) = self.map.scenario_box.as_mut() {
 	    scenario_box.draw(ctx).unwrap();
 	}
+
+	self.shop_menu.draw(ctx).unwrap();
     }
     
     fn post_process(&mut self, _ctx: &mut ggez::Context, _: &GameData) -> SceneTransition {

@@ -10,8 +10,8 @@ use torifune::debug;
 use crate::core::GameData;
 use crate::scene::*;
 
-use crate::scene::suzuna_scene::suzuna_sub_scene::TaskScene;
-use crate::scene::suzuna_scene::suzuna_sub_scene::TaskResultScene;
+use suzuna_sub_scene::TaskScene;
+use suzuna_sub_scene::TaskResultScene;
 use crate::scene::shop_scene::ShopScene;
 
 #[derive(PartialEq, Clone, Debug)]
@@ -67,6 +67,9 @@ pub enum SuzunaSceneStatus {
     DayResult,
 }
 
+///
+/// 鈴奈庵シーンのサブシーンをまとめる構造体
+///
 pub struct SuzunaSubScene {
     shop_scene: Option<Box<ShopScene>>,
     desk_work_scene: Option<Box<TaskScene>>,
@@ -372,7 +375,7 @@ impl SceneManager for SuzunaScene {
 	    },
 	    SuzunaSceneStatus::DeskWork => {
 		if transition_status == SceneTransition::PoppingTransition {
-		    if self.sub_scene.get_deskwork_scene_mut().unwrap().transition() == SceneID::Dream {
+		    if self.sub_scene.get_deskwork_scene_mut().unwrap().transition() == SceneID::SuzunaShop {
 			self.task_result.add_result(self.sub_scene.desk_work_scene.as_ref().unwrap().get_task_result());
 			self.sub_scene.switch_deskwork_to_shop(transition_status);
 			debug::debug_screen_push_text(&format!("{:?}", self.task_result));

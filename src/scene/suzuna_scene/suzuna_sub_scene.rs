@@ -103,7 +103,7 @@ impl TaskScene {
     fn check_done_today_work(&mut self) {
 	if self.task_result.add_done_works(1).get_done_works() > 5 {
 	    self.status = TaskSceneStatus::FinishDay;
-	    self.transition_scene = SceneID::Dream;
+	    self.transition_scene = SceneID::SuzunaShop;
 	    self.transition_status = SceneTransition::PoppingTransition;
 	    println!("done 5 works!!");
 	}
