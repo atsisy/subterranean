@@ -47,7 +47,7 @@ impl DrawableTaskResult {
 	
 	let mut done_work_text = EffectableWrap::new(
 	    MovableWrap::new(
-		Box::new(VerticalText::new(format!("お客人数 {}人", number_to_jk(task_result.get_done_works() as u64)),
+		Box::new(VerticalText::new(format!("お客人数 {}人", number_to_jk(task_result.done_works as u64)),
 					   numeric::Point2f::new(600.0, 100.0),
 					   numeric::Vector2f::new(1.0, 1.0),
 					   0.0,
@@ -57,7 +57,7 @@ impl DrawableTaskResult {
 
 	let mut money_text = EffectableWrap::new(
 	    MovableWrap::new(
-		Box::new(VerticalText::new(format!("収入 {}円", number_to_jk(task_result.get_total_money() as u64)),
+		Box::new(VerticalText::new(format!("収入 {}円", number_to_jk(task_result.total_money as u64)),
 					   numeric::Point2f::new(480.0, 100.0),
 					   numeric::Vector2f::new(1.0, 1.0),
 					   0.0,

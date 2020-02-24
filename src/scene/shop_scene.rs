@@ -25,6 +25,7 @@ use crate::core::map_parser as mp;
 use crate::object::map_object::EventTrigger;
 use crate::object::scenario::*;
 use crate::object::move_fn;
+use crate::scene::suzuna_scene::TaskResult;
 
 use number_to_jk::number_to_jk;
 
@@ -173,6 +174,8 @@ pub struct ShopMenuContents {
     wait_for_return_num: VerticalText,
     not_shelved: VerticalText,
     not_shelved_num: VerticalText,
+    kosuzu_level: VerticalText,
+    kosuzu_level_num: VerticalText,
     drwob_essential: DrawableObjectEssential,
 }
 
@@ -202,7 +205,7 @@ impl ShopMenuContents {
 		0,
 		normal_scale_font),
 	    copy_request_num: VerticalText::new(
-		format!("{}件", number_to_jk(4)),
+		format!("{}件", number_to_jk(0)),
 		numeric::Point2f::new(260.0, 150.0),
 		numeric::Vector2f::new(1.0, 1.0),
 		0.0,
@@ -216,7 +219,7 @@ impl ShopMenuContents {
 		0,
 		normal_scale_font),
 	    wait_for_return_num: VerticalText::new(
-		format!("{}冊", number_to_jk(4)),
+		format!("{}冊", number_to_jk(0)),
 		numeric::Point2f::new(160.0, 150.0),
 		numeric::Vector2f::new(1.0, 1.0),
 		0.0,
@@ -230,14 +233,78 @@ impl ShopMenuContents {
 		0,
 		normal_scale_font),
 	    not_shelved_num: VerticalText::new(
-		format!("{}冊", number_to_jk(4)),
+		format!("{}冊", number_to_jk(0)),
 		numeric::Point2f::new(60.0, 150.0),
+		numeric::Vector2f::new(1.0, 1.0),
+		0.0,
+		0,
+		large_scale_font),
+	    kosuzu_level: VerticalText::new(
+		format!("小鈴 習熟度"),
+		numeric::Point2f::new(300.0, 350.0),
+		numeric::Vector2f::new(1.0, 1.0),
+		0.0,
+		0,
+		normal_scale_font),
+	    kosuzu_level_num: VerticalText::new(
+		format!("{}", number_to_jk(0)),
+		numeric::Point2f::new(260.0, 450.0),
 		numeric::Vector2f::new(1.0, 1.0),
 		0.0,
 		0,
 		large_scale_font),
 	    drwob_essential: DrawableObjectEssential::new(true, 0),
 	}
+    }
+
+    pub fn update_contents(&mut self, game_data: &GameData, task_result: &TaskResult) {
+	let normal_scale_font = FontInformation::new(game_data.get_font(FontID::JpFude1),
+						     numeric::Vector2f::new(26.0, 26.0),
+						     ggraphics::Color::from_rgba_u32(0x000000ff));
+	
+	let large_scale_font = FontInformation::new(game_data.get_font(FontID::JpFude1),
+						    numeric::Vector2f::new(30.0, 30.0),
+						    ggraphics::Color::from_rgba_u32(0x000000ff));
+	
+	self.day_text = VerticalText::new(
+	    format!("日付　{}月 {}日", number_to_jk(12), number_to_jk(12)),
+	    numeric::Point2f::new(370.0, 50.0),
+	    numeric::Vector2f::new(1.0, 1.0),
+	    0.0,
+	    0,
+	    large_scale_font);
+	
+	self.copy_request_num = VerticalText::new(
+	    format!("{}件", number_to_jk(task_result.remain_copy_request as u64)),
+	    numeric::Point2f::new(260.0, 150.0),
+	    numeric::Vector2f::new(1.0, 1.0),
+	    0.0,
+	    0,
+	    large_scale_font);
+	
+	self.wait_for_return_num = VerticalText::new(
+	    format!("{}冊", number_to_jk(task_result.borrowing as u64)),
+	    numeric::Point2f::new(160.0, 150.0),
+	    numeric::Vector2f::new(1.0, 1.0),
+	    0.0,
+	    0,
+	    large_scale_font);
+	
+	self.not_shelved_num = VerticalText::new(
+	    format!("{}冊", number_to_jk(task_result.not_shelved as u64)),
+	    numeric::Point2f::new(60.0, 150.0),
+	    numeric::Vector2f::new(1.0, 1.0),
+	    0.0,
+	    0,
+	    large_scale_font);
+	
+	self.kosuzu_level_num = VerticalText::new(
+	    format!("{}", number_to_jk((task_result.done_works / 3) as u64)),
+	    numeric::Point2f::new(260.0, 450.0),
+	    numeric::Vector2f::new(1.0, 1.0),
+	    0.0,
+	    0,
+	    large_scale_font);
     }
 }
 
@@ -254,6 +321,9 @@ impl DrawableComponent for ShopMenuContents {
 
 	    self.not_shelved.draw(ctx).unwrap();
 	    self.not_shelved_num.draw(ctx).unwrap();
+
+	    self.kosuzu_level.draw(ctx).unwrap();
+	    self.kosuzu_level_num.draw(ctx).unwrap();
 	}
 	Ok(())
     }
@@ -321,6 +391,10 @@ impl ShopMenu {
 
     pub fn appearing_now(&self) -> bool {
 	self.now_appear
+    }
+
+    pub fn update_menu_contents(&mut self, game_data: &GameData, task_result: &TaskResult) {
+	self.menu_contents.update_contents(game_data, task_result);
     }
 }
 
@@ -734,6 +808,10 @@ impl ShopScene {
 
     pub fn switched_and_restart(&mut self) {
 	self.transition_scene = SceneID::SuzunaShop;
+    }
+
+    pub fn update_task_result(&mut self, game_data: &GameData, task_result: &TaskResult) {
+	self.shop_menu.update_menu_contents(game_data, task_result);
     }
 }
 

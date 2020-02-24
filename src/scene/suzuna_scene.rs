@@ -16,44 +16,39 @@ use crate::scene::shop_scene::ShopScene;
 
 #[derive(PartialEq, Clone, Debug)]
 pub struct TaskResult {
-    done_works: u32,
-    total_money: i32,
+    pub done_works: u32,
+    pub not_shelved: i32,
+    pub borrowing: i32,
+    pub remain_copy_request: i32,
+    pub total_money: i32,
 }
 
 impl TaskResult {
     pub fn new() -> Self {
 	TaskResult {
 	    done_works: 0,
+	    not_shelved: 0,
 	    total_money: 0,
+	    borrowing: 0,
+	    remain_copy_request: 0,
 	}
     }
 
-    pub fn add_done_works(&mut self, works: u32) -> &mut Self {
-	self.done_works += works;
-	self
-    }
-
-    pub fn add_money(&mut self, money: i32) -> &mut Self {
-	self.total_money += money;
-	self
-    }
-
     pub fn add_result(&mut self, task_result: &TaskResult) -> &mut Self {
-	self.done_works += task_result.done_works;
-	self.total_money += task_result.total_money;
+	self.done_works = task_result.done_works;
+	self.not_shelved = task_result.not_shelved;
+	self.borrowing = task_result.borrowing;
+	self.remain_copy_request = task_result.remain_copy_request;
+	self.total_money = task_result.total_money;
+	
 	self
-    }
-
-    pub fn get_done_works(&self) -> u32 {
-	self.done_works
-    }
-
-    pub fn get_total_money(&self) -> i32 {
-	self.total_money
     }
 
     pub fn reset(&mut self) -> &mut Self {
 	self.done_works = 0;
+	self.not_shelved = 0;
+	self.borrowing = 0;
+	self.remain_copy_request = 0;
 	self.total_money = 0;
 	
 	self
@@ -378,6 +373,7 @@ impl SceneManager for SuzunaScene {
 		    if self.sub_scene.get_deskwork_scene_mut().unwrap().transition() == SceneID::SuzunaShop {
 			self.task_result.add_result(self.sub_scene.desk_work_scene.as_ref().unwrap().get_task_result());
 			self.sub_scene.switch_deskwork_to_shop(transition_status);
+			self.sub_scene.shop_scene.as_mut().unwrap().update_task_result(game_data, &self.task_result);
 			debug::debug_screen_push_text(&format!("{:?}", self.task_result));
 		    }
 		}
