@@ -275,7 +275,7 @@ impl ShopMenuContents {
 	    large_scale_font);
 	
 	self.copy_request_num = VerticalText::new(
-	    format!("{}件", number_to_jk(task_result.remain_copy_request as u64)),
+	    format!("{}件", number_to_jk(task_result.remain_copy_request.len() as u64)),
 	    numeric::Point2f::new(260.0, 150.0),
 	    numeric::Vector2f::new(1.0, 1.0),
 	    0.0,
@@ -283,7 +283,7 @@ impl ShopMenuContents {
 	    large_scale_font);
 	
 	self.wait_for_return_num = VerticalText::new(
-	    format!("{}冊", number_to_jk(task_result.borrowing as u64)),
+	    format!("{}冊", number_to_jk(task_result.borrowing_books.len() as u64)),
 	    numeric::Point2f::new(160.0, 150.0),
 	    numeric::Vector2f::new(1.0, 1.0),
 	    0.0,
@@ -291,7 +291,7 @@ impl ShopMenuContents {
 	    large_scale_font);
 	
 	self.not_shelved_num = VerticalText::new(
-	    format!("{}冊", number_to_jk(task_result.not_shelved as u64)),
+	    format!("{}冊", number_to_jk(task_result.not_shelved_books.len() as u64)),
 	    numeric::Point2f::new(60.0, 150.0),
 	    numeric::Vector2f::new(1.0, 1.0),
 	    0.0,
@@ -784,7 +784,7 @@ impl ShopScene {
 		    self.transition_scene = switch_scene.get_switch_scene_id();
 		},
 		MapEventElement::BookStoreEvent(book_store_event) => {
-		    println!("book store event: {:?}", book_store_event.get_book_shelf_info());
+		    debug::debug_screen_push_text(&format!("book store event: {:?}", book_store_event.get_book_shelf_info()));
 		},
 	    }
 	}

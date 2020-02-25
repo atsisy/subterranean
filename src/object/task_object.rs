@@ -23,7 +23,7 @@ use crate::core::{TextureID, FontID, GameData};
 
 use number_to_jk::number_to_jk;
 
-#[derive(Clone, Copy)]
+#[derive(Debug, Clone, Copy)]
 pub struct GensoDate {
     pub season: u32,
     pub month: u8,
@@ -603,7 +603,7 @@ impl Clickable for BorrowingPaper {
     }
 }
 
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 pub struct CopyingRequestInformation {
     pub book_info: BookInformation,
     pub customer: String,
@@ -2580,10 +2580,10 @@ impl TaskTable {
     }
 
     fn start_borrowing_customer_event(&mut self,
-					  ctx: &mut ggez::Context,
-					  game_data: &GameData,
-					  info: BorrowingInformation, t: Clock) {
-        for _ in info.borrowing {
+				      ctx: &mut ggez::Context,
+				      game_data: &GameData,
+				      info: BorrowingInformation, t: Clock) {
+        for _ in &info.borrowing {
 	    let mut obj = factory::create_dobj_book_random(ctx, game_data,
 							   DeskObjectType::CustomerObject, t);
 	    obj.enable_large();

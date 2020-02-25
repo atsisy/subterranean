@@ -94,14 +94,26 @@ impl TaskScene {
 	    |s: &mut TaskScene, ctx: &mut ggez::Context, game_data: &GameData| {
 		s.task_table.start_customer_event(
 		    ctx, game_data,
-		    request, s.get_current_clock());
+		    request.clone(), s.get_current_clock());
 		s.status = TaskSceneStatus::CustomerEvent;
-		s.check_done_today_work();
+		s.check_done_today_work(request);
 	    }), self.get_current_clock() + delay_clock);
     }
 
-    fn check_done_today_work(&mut self) {
-	self.task_result.done_works += 1;
+    fn check_done_today_work(&mut self, request: CustomerRequest) {
+	match request {
+	    CustomerRequest::Borrowing(request_information) => {
+		// 貸出本を記録
+		self.task_result.done_works += 1;
+		self.task_result.borrowing_books.extend(request_information.borrowing);
+	    },
+	    CustomerRequest::Copying(copying_request_information) => {
+		// 写本依頼を記録
+		self.task_result.done_works += 1;
+		self.task_result.remain_copy_request.push(copying_request_information);
+	    }
+	}
+	
 	if self.task_result.done_works > 5 {
 	    self.status = TaskSceneStatus::FinishDay;
 	    self.transition_scene = SceneID::SuzunaShop;
