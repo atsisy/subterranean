@@ -258,7 +258,7 @@ impl ShopMenuContents {
     }
 
     pub fn update_contents(&mut self, game_data: &GameData, task_result: &TaskResult) {
-	let normal_scale_font = FontInformation::new(game_data.get_font(FontID::JpFude1),
+	let _normal_scale_font = FontInformation::new(game_data.get_font(FontID::JpFude1),
 						     numeric::Vector2f::new(26.0, 26.0),
 						     ggraphics::Color::from_rgba_u32(0x000000ff));
 	
@@ -399,7 +399,7 @@ impl ShopMenu {
 }
 
 impl Updatable for ShopMenu {
-    fn update(&mut self, ctx: &ggez::Context, t: Clock) {
+    fn update(&mut self, _: &ggez::Context, t: Clock) {
 	self.canvas.move_with_func(t);
     }
 }

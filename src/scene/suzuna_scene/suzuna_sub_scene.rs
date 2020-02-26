@@ -1,6 +1,5 @@
 use torifune::device as tdev;
 use torifune::core::*;
-use ggez::graphics as ggraphics;
 use ginput::mouse::MouseButton;
 use torifune::numeric;
 
@@ -9,10 +8,10 @@ use torifune::graphics::object::*;
 
 use super::*;
 use crate::object::Clickable;
-use crate::object::task_object;
 
 use crate::core::{MouseInformation, MouseActionRecord, GameData, TextureID};
 use crate::object::task_object::*;
+use crate::object::task_object::task_table_elements::*;
 use crate::scene::{SceneID, SceneTransition};
 
 use crate::object::task_result_object::*;
@@ -42,10 +41,12 @@ impl TaskScene {
 
         TaskScene {
             task_table: TaskTable::new(ctx, game_data,
-                                       ggraphics::Rect::new(100.0, 20.0, 1300.0, 750.0),
-                                       ggraphics::Rect::new(0.0, 0.0, 800.0, 300.0),
+                                       numeric::Rect::new(100.0, 20.0, 1300.0, 750.0),
+                                       numeric::Rect::new(0.0, 0.0, 800.0, 300.0),
 				       numeric::Rect::new(800.0, 0.0, 400.0, 300.0),
-                                       ggraphics::Rect::new(0.0, 310.0, 1300.0, 500.0), 0),
+                                       numeric::Rect::new(0.0, 310.0, 900.0, 500.0),
+				       numeric::Rect::new(900.0, 310.0, 500.0, 500.0),
+				       0),
             clock: 0,
             mouse_info: MouseInformation::new(),
 	    event_list: SceneEventList::new(),
@@ -107,6 +108,11 @@ impl TaskScene {
 		self.task_result.done_works += 1;
 		self.task_result.borrowing_books.extend(request_information.borrowing);
 	    },
+	    CustomerRequest::Returning(request_information) => {
+		// 貸出本を記録
+		self.task_result.done_works += 1;
+		self.task_result.not_shelved_books.extend(request_information.returning);
+	    },
 	    CustomerRequest::Copying(copying_request_information) => {
 		// 写本依頼を記録
 		self.task_result.done_works += 1;
@@ -126,16 +132,26 @@ impl TaskScene {
 				      game_data: &GameData) {
 	self.insert_customer_event(
 	    CustomerRequest::Borrowing(
-		task_object::BorrowingInformation::new_random(
+		BorrowingInformation::new_random(
 		    game_data,
-		    task_object::GensoDate::new(128, 12, 20),
-		    task_object::GensoDate::new(128, 12, 20))), 100);
+		    GensoDate::new(128, 12, 20),
+		    GensoDate::new(128, 12, 20))), 100);
+    }
+
+    fn start_returning_customer_event(&mut self,
+				      game_data: &GameData) {
+	self.insert_customer_event(
+	    CustomerRequest::Returning(
+		ReturnBookInformation::new_random(
+		    game_data,
+		    GensoDate::new(128, 12, 20),
+		    GensoDate::new(128, 12, 20))), 100);
     }
 
     fn start_copying_customer_event(&mut self,
 				    game_data: &GameData) {
 	self.insert_customer_event(
-	    CustomerRequest::Copying(task_object::CopyingRequestInformation::new_random(
+	    CustomerRequest::Copying(CopyingRequestInformation::new_random(
 		game_data,
 		GensoDate::new(12, 12, 12),
 		GensoDate::new(12, 12, 12))), 100);
@@ -143,9 +159,12 @@ impl TaskScene {
     
     fn start_customer_event(&mut self,
 			    game_data: &GameData) {
-	match rand::random::<usize>() % 2 {
+	let random_select = rand::random::<usize>() % 3;
+	debug::debug_screen_push_text(&format!("task type: {}", random_select));
+	match  random_select {
 	    0 => self.start_borrowing_customer_event(game_data),
-	    1 => self.start_copying_customer_event(game_data),
+	    1 => self.start_returning_customer_event(game_data),
+	    2 => self.start_copying_customer_event(game_data),
 	    _ => (),
 	}
     }

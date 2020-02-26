@@ -8,7 +8,6 @@ use torifune::device as tdev;
 use torifune::core::Clock;
 use ggez::input as ginput;
 use torifune::numeric;
-use torifune::graphics as tgraphics;
 
 use crate::core::GameData;
 

@@ -161,6 +161,7 @@ pub struct BookInformation {
     pub name: String,
     pub pages: usize,
     pub size: String,
+    pub billing_number: u16,
 }
 
 impl BookInformation {
@@ -278,7 +279,7 @@ impl GameData {
         }
     }
 
-    pub fn get_map_data(&self, id: u32) -> Option<MapConstractData> {
+    pub fn get_map_data(&self, _id: u32) -> Option<MapConstractData> {
 	for map_data in &self.map_data {
 	    println!("FIXME!!");
 	    return Some(map_data.clone())

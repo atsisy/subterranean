@@ -37,7 +37,7 @@ pub fn gravity_move(init_speed: f32, max_speed: f32, border_y: f32, a: f32)
 
 pub fn devide_distance(dest: numeric::Point2f, divide_c: f32)
                 -> Option<Box<dyn Fn(& dyn tg::object::MovableObject, Clock) -> numeric::Point2f>> {
-    Some(Box::new(move |p: & dyn tg::object::MovableObject, t: Clock| {
+    Some(Box::new(move |p: & dyn tg::object::MovableObject, _t: Clock| {
         let current_pos = p.get_position();
 
 	if distance!(current_pos, dest) < 1.0 {

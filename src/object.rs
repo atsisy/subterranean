@@ -9,7 +9,6 @@ pub mod task_result_object;
 pub mod map_object;
 
 use std::rc::Rc;
-use std::cmp::Ordering;
 
 use ggez::graphics as ggraphics;
 

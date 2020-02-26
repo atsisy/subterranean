@@ -1,4 +1,7 @@
-use super::*;
+use torifune::core::Clock;
+
+use crate::object::task_object::task_table_elements::*;
+use crate::object::task_object::*;
 use crate::core::*;
 use crate::core::util;
 

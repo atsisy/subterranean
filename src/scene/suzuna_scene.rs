@@ -13,7 +13,7 @@ use crate::scene::*;
 use suzuna_sub_scene::TaskScene;
 use suzuna_sub_scene::TaskResultScene;
 use crate::scene::shop_scene::ShopScene;
-use crate::object::task_object::CopyingRequestInformation;
+use crate::object::task_object::task_table_elements::CopyingRequestInformation;
 
 #[derive(Clone, Debug)]
 pub struct TaskResult {
