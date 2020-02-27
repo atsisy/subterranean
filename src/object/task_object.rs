@@ -16,6 +16,7 @@ use torifune::impl_drawable_object_for_wrapped;
 use torifune::graphics::object::sub_screen::SubScreen;
 use torifune::graphics::object::sub_screen;
 use torifune::core::Clock;
+use torifune::debug;
 
 use crate::object::{move_fn, effect};
 use task_table_elements::*;
@@ -28,7 +29,7 @@ pub struct TaskTable {
     sight: SuzuMiniSight,
     desk: DeskObjects,
     goods: Goods,
-    book_wagon: BookWagon,
+    shelving_box: ShelvingBookBox,
     hold_data: HoldData,
 }
 
@@ -38,7 +39,7 @@ impl TaskTable {
                sight_rect: numeric::Rect,
 	       goods_rect: numeric::Rect,
 	       desk_rect: numeric::Rect,
-	       book_wagon_rect: numeric::Rect,
+	       shelving_box_rect: numeric::Rect,
 	       t: Clock) -> Self {
 	let sight = SuzuMiniSight::new(ctx, game_data, sight_rect);
         let mut desk = DeskObjects::new(ctx, game_data, desk_rect);
@@ -73,14 +74,14 @@ impl TaskTable {
 	record_book.enable_large();
         desk.add_object(record_book);
 
-	let book_wagon = BookWagon::new(ctx, game_data, book_wagon_rect);
+	let shelving_box = ShelvingBookBox::new(ctx, game_data, shelving_box_rect);
         
         TaskTable {
             canvas: SubScreen::new(ctx, pos, 0, ggraphics::Color::from_rgba_u32(0x00000000)),
             sight: sight,
             desk: desk,
 	    goods: Goods::new(ctx, game_data, goods_rect),
-	    book_wagon: book_wagon,
+	    shelving_box: shelving_box,
 	    hold_data: HoldData::None,
         }
     }
@@ -106,17 +107,23 @@ impl TaskTable {
         
         self.sight.dragging_handler(rpoint, rlast);
         self.desk.dragging_handler(rpoint, rlast);
+	self.shelving_box.dragging_handler(rpoint, rlast);
     }
 
     pub fn unselect_dragging_object(&mut self, ctx: &mut ggez::Context, t: Clock) {
 	self.sight.unselect_dragging_object(ctx, t);
         self.desk.unselect_dragging_object();
+	self.shelving_box.unselect_dragging_object(ctx, t);
     }
 
     pub fn hand_over_check(&mut self, ctx: &mut ggez::Context, point: numeric::Point2f) {
         let rpoint = self.canvas.relative_point(point);
+	
         self.hand_over_check_d2s(ctx, rpoint);
         self.hand_over_check_s2d(ctx, rpoint);
+	self.hand_over_check_desk2box(ctx, rpoint);
+	self.hand_over_check_box2desk(ctx, rpoint);
+	
     }
 
     fn apply_d2s_point_convertion(&mut self, ctx: &mut ggez::Context, obj: &mut DeskObject) {
@@ -144,6 +151,39 @@ impl TaskTable {
         obj.get_object_mut().make_center(ctx, p);
     }
 
+    fn apply_desk2box_point_convertion(&mut self, ctx: &mut ggez::Context, obj: &mut DeskObject) {
+	// オブジェクトの座標を取得
+	let mut obj_p = obj.get_object().get_position();
+	
+	// Y座標は変更せず, X座標をCanvasの右端に来るように設定
+	obj_p.x = 0.0;
+	
+        let p = self.desk_edge_to_sight_edge(ctx, obj_p);
+
+	obj.enable_small();
+
+	// 新しい座標を設定
+        obj.get_object_mut().make_center(ctx, p);
+    }
+
+    fn apply_box2desk_point_convertion(&mut self, ctx: &mut ggez::Context, obj: &mut DeskObject) {
+	// オブジェクトの座標を取得
+	let mut obj_p = obj.get_object().get_position();
+	
+	// Y座標は変更せず, X座標をCanvasの左端に来るように設定
+	obj_p.x = self.desk.canvas.get_drawing_size(ctx).x;
+	
+        let p = self.desk_edge_to_sight_edge(ctx, obj_p);
+
+	obj.enable_small();
+
+	// 新しい座標を設定
+        obj.get_object_mut().make_center(ctx, p);
+    }
+
+    ///
+    /// DeskからMiniSightにオブジェクトを移動させるメソッド
+    ///
     fn hand_over_check_d2s(&mut self, ctx: &mut ggez::Context, rpoint: numeric::Point2f) {
         let border = self.desk_border(ctx);
         
@@ -155,6 +195,9 @@ impl TaskTable {
         }
     }
 
+    ///
+    /// MiniSightからDeskにオブジェクトを移動させるメソッド
+    ///
     fn hand_over_check_s2d(&mut self, ctx: &mut ggez::Context, rpoint: numeric::Point2f) {
         let border = self.desk_border(ctx);
 	
@@ -166,10 +209,40 @@ impl TaskTable {
         }
     }
 
+    fn hand_over_check_desk2box(&mut self, ctx: &mut ggez::Context, rpoint: numeric::Point2f) {
+        let border = self.desk_border_x(ctx);
+	
+        if self.desk.has_dragging() && border < rpoint.x {
+	    torifune::debug::debug_screen_push_text("desk 2 box");
+            if let Some(mut dragging) = self.desk.release_dragging() {
+		self.apply_desk2box_point_convertion(ctx, &mut dragging);
+                self.shelving_box.insert_dragging(dragging);
+            }
+        }
+    }
+    
+    fn hand_over_check_box2desk(&mut self, ctx: &mut ggez::Context, rpoint: numeric::Point2f) {
+	let border = self.desk_border_x(ctx);
+	
+        if self.shelving_box.has_dragging() && border >= rpoint.x {
+	    torifune::debug::debug_screen_push_text("box 2 desk");
+            if let Some(mut dragging) = self.shelving_box.release_dragging() {
+		self.apply_box2desk_point_convertion(ctx, &mut dragging);
+                self.desk.insert_dragging(dragging);
+            }
+        }
+    }
+
     fn desk_border(&mut self, ctx: &mut ggez::Context) -> f32 {
         let sight_edge = self.sight.canvas.get_position().y + self.sight.canvas.get_texture_size(ctx).y;
         let diff = (sight_edge - self.desk.canvas.get_position().y).abs();
         sight_edge + diff
+    }
+
+    fn desk_border_x(&mut self, ctx: &mut ggez::Context) -> f32 {
+        let desk_edge = self.desk.canvas.get_position().x + self.desk.canvas.get_texture_size(ctx).x;
+        let diff = (desk_edge - self.shelving_box.canvas.get_position().x).abs();
+        desk_edge + diff
     }
 
     fn desk_edge_to_sight_edge(&mut self, ctx: &mut ggez::Context, point: numeric::Point2f) -> numeric::Point2f {
@@ -211,6 +284,7 @@ impl TaskTable {
     pub fn update(&mut self, ctx: &mut ggez::Context, _: &GameData, t: Clock) {
 	self.sight.update(ctx, t);
 	self.desk.update(ctx, t);
+	self.shelving_box.update(ctx, t);
 	self.check_sight_drop_to_desk(ctx, t);
     }
 
@@ -222,6 +296,9 @@ impl TaskTable {
 				      ctx: &mut ggez::Context,
 				      game_data: &GameData,
 				      info: BorrowingInformation, t: Clock) {
+	// 客への返却処理有効化
+	self.sight.unlock_object_handover();
+	
         for _ in &info.borrowing {
 	    let mut obj = factory::create_dobj_book_random(ctx, game_data,
 							   DeskObjectType::CustomerObject, t);
@@ -244,6 +321,9 @@ impl TaskTable {
 				      ctx: &mut ggez::Context,
 				      game_data: &GameData,
 				      info: ReturnBookInformation, t: Clock) {
+	// 客への返却処理無効化
+	self.sight.lock_object_handover();
+	
         for _ in &info.returning {
 	    let mut obj = factory::create_dobj_book_random(ctx, game_data,
 							   DeskObjectType::CustomerObject, t);
@@ -263,9 +343,12 @@ impl TaskTable {
     }
 
     fn start_copying_request_event(&mut self,
-				       ctx: &mut ggez::Context,
-				       game_data: &GameData,
-				       info: CopyingRequestInformation, t: Clock) {
+				   ctx: &mut ggez::Context,
+				   game_data: &GameData,
+				   info: CopyingRequestInformation, t: Clock) {
+	// 客への返却処理有効化
+	self.sight.unlock_object_handover();
+	    
 	let paper_info = CopyingRequestInformation::new_random(game_data,
 							       GensoDate::new(128, 12, 8),
                                                                GensoDate::new(128, 12, 8));
@@ -330,6 +413,14 @@ impl TaskTable {
 	    }
 	}
     }
+
+    pub fn get_shelving_box(&self) -> &ShelvingBookBox {
+	&self.shelving_box
+    }
+
+    pub fn get_shelving_box_mut(&mut self) -> &mut ShelvingBookBox {
+	&mut self.shelving_box
+    }
 }
 
 impl DrawableComponent for TaskTable {
@@ -341,7 +432,7 @@ impl DrawableComponent for TaskTable {
             self.sight.draw(ctx).unwrap();
             self.desk.draw(ctx).unwrap();
 	    self.goods.draw(ctx).unwrap();
-	    self.book_wagon.draw(ctx).unwrap();
+	    self.shelving_box.draw(ctx).unwrap();
 
 	    sub_screen::pop_screen(ctx);
             self.canvas.draw(ctx).unwrap();

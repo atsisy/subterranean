@@ -189,7 +189,6 @@ impl DrawableComponent for DrawableCalendar {
 	    self.month_text.draw(ctx)?;
 	    self.day_text.draw(ctx)?;
 	    
-
 	    sub_screen::pop_screen(ctx);
             self.canvas.draw(ctx).unwrap();
         }
@@ -332,7 +331,8 @@ pub struct OnDeskBook {
 }
 
 impl OnDeskBook {
-    pub fn new(ctx: &mut ggez::Context, game_data: &GameData, texture_id: TextureID, info: BookInformation) -> Self {
+    pub fn new(ctx: &mut ggez::Context, game_data: &GameData,
+	       texture_id: TextureID, info: BookInformation) -> Self {
 	let texture = game_data.ref_texture(texture_id);
 	let book_texture = UniTexture::new(
 	    texture,
@@ -2128,6 +2128,7 @@ pub struct SuzuMiniSight {
     pub dropping: Vec<DeskObject>,
     pub dropping_to_desk: Vec<DeskObject>,
     pub silhouette: SuzuMiniSightSilhouette,
+    object_handover_lock: bool,
 }
 
 impl SuzuMiniSight {
@@ -2148,6 +2149,7 @@ impl SuzuMiniSight {
 									    0,
 									    move_fn::stop(),
 									    0)),
+	    object_handover_lock: false,
         }
     }
 
@@ -2164,11 +2166,24 @@ impl SuzuMiniSight {
     }
 
     fn check_object_drop(&self, ctx: &mut ggez::Context, desk_obj: &DeskObject) -> bool {
-	let area = desk_obj.get_object().get_drawing_area(ctx);
-	area.y + area.h < self.canvas.get_drawing_area(ctx).h
+	if self.object_handover_lock {
+	    // 客への手渡しがロックされているので、手渡しが発生しないようにfalseを返す
+	    return false;
+	} else {
+	    let area = desk_obj.get_object().get_drawing_area(ctx);
+	    return area.y + area.h < self.canvas.get_drawing_area(ctx).h;
+	}
     }
 
-    fn check_object_drop_to_desk(&self, ctx: &mut ggez::Context, desk_obj: &DeskObject) -> bool {
+    pub fn lock_object_handover(&mut self) {
+	self.object_handover_lock = true;
+    }
+
+    pub fn unlock_object_handover(&mut self) {
+	self.object_handover_lock = false;
+    }
+
+    fn check_object_drop_to_desk(&self, ctx: &mut ggez::Context, desk_obj: &DeskObject) -> bool {	
 	let area = desk_obj.get_object().get_drawing_area(ctx);
 	area.y + area.h < self.canvas.get_drawing_area(ctx).h / 1.5
     }
@@ -2430,25 +2445,23 @@ pub enum CustomerRequest {
 }
 
 
-pub struct BookWagon {
-    canvas: SubScreen,
-    desk_objects: DeskObjectContainer,
-    dragging: Option<DeskObject>,
-    table_texture: SimpleObject,
+pub struct ShelvingBookBox {
+    pub canvas: SubScreen,
+    pub shelved: Vec<DeskObject>,
+    pub dragging: Option<DeskObject>,
+    pub table_texture: SimpleObject,
 }
 
-impl BookWagon {
+impl ShelvingBookBox {
     pub fn new(ctx: &mut ggez::Context, game_data: &GameData,
-               rect: ggraphics::Rect) -> BookWagon {
+               rect: ggraphics::Rect) -> ShelvingBookBox {
 
         let mut dparam = ggraphics::DrawParam::default();
         dparam.dest = numeric::Point2f::new(rect.x, rect.y).into();
         
-        let desk_objects = DeskObjectContainer::new();
-        
-        BookWagon {
+        ShelvingBookBox {
             canvas: SubScreen::new(ctx, rect, 0, ggraphics::Color::new(0.0, 0.0, 0.0, 0.0)),
-            desk_objects: desk_objects,
+            shelved: Vec::new(),
             dragging: None,
             table_texture: SimpleObject::new(
                 MovableUniTexture::new(game_data.ref_texture(TextureID::Wood1),
@@ -2465,7 +2478,7 @@ impl BookWagon {
         // オブジェクトは深度が深い順にソートされているので、
         // 逆順から検索していくことで、最も手前に表示されているオブジェクトを
         // 取り出すことができる
-        for obj in self.desk_objects.get_raw_container_mut().iter_mut().rev() {
+        for obj in self.shelved.iter_mut().rev() {
 	    let contains = obj.get_object().get_drawing_area(ctx).contains(rpoint);
             if contains {
 		clicked_data = obj.get_object_mut().ref_wrapped_object_mut().ref_wrapped_object_mut().click_data(ctx, rpoint);
@@ -2482,7 +2495,7 @@ impl BookWagon {
         // オブジェクトは深度が深い順にソートされているので、
         // 逆順から検索していくことで、最も手前に表示されているオブジェクトを
         // 取り出すことができる
-        for obj in self.desk_objects.get_raw_container_mut().iter_mut().rev() {
+        for obj in self.shelved.iter_mut().rev() {
 	    let contains = obj.get_object().get_drawing_area(ctx).contains(rpoint);
             if contains {
 		return obj.get_object_mut().ref_wrapped_object_mut().ref_wrapped_object_mut().insert_data(ctx, rpoint, data);
@@ -2500,62 +2513,29 @@ impl BookWagon {
         }
     }
 
-    pub fn select_dragging_object(&mut self, ctx: &mut ggez::Context, point: numeric::Point2f) {
-
-        let mut dragging_object_index = 0;
-        let mut drag_start = false;
-
-        let rpoint = self.canvas.relative_point(point);
-        
-        // オブジェクトは深度が深い順にソートされているので、
-        // 逆順から検索していくことで、最も手前に表示されているオブジェクトを
-        // 取り出すことができる
-        for (index, obj) in self.desk_objects.get_raw_container_mut().iter_mut().rev().enumerate() {
-            if obj.get_object().get_drawing_area(ctx).contains(rpoint) {
-		obj.get_object_mut().override_move_func(None, 0);
-                dragging_object_index = self.desk_objects.len() - index - 1;
-                drag_start = true;
-                break;
-            }
-        }
-        if drag_start {
-            // 元々、最前面に表示されていたオブジェクトのdepthに設定する
-            self.dragging = Some(
-                    self.desk_objects.get_raw_container_mut().swap_remove(dragging_object_index)
-            );
-        }
-    }
-
-    pub fn unselect_dragging_object(&mut self) {
-        if let Some(obj) = &mut self.dragging {
-            let min = self.desk_objects.get_minimum_depth();
-            obj.get_object_mut().set_drawing_depth(min);
-            self.desk_objects.change_depth_equally(1);
-        }
-        match self.dragging {
-            None =>  (),
-            _ => {
-                let dragged = self.release_dragging().unwrap();
-                self.desk_objects.add(dragged);
-                self.desk_objects.sort_with_depth();
-            }
+    pub fn unselect_dragging_object(&mut self, ctx: &mut ggez::Context, t: Clock) {
+	if let Some(dragged) = &mut self.dragging {
+	    dragged.get_object_mut().override_move_func(move_fn::gravity_move(1.0, 10.0, 310.0, 0.3), t);
+	    dragged.get_object_mut().add_effect(vec![
+		Box::new(|obj: &mut dyn MovableObject, _: &ggez::Context, t: Clock| {
+		    if obj.get_position().y > 350.0 { obj.override_move_func(None, t); EffectFnStatus::EffectFinish }
+		    else { EffectFnStatus::EffectContinue }
+		})
+	    ]);
+	    let dragged_object = std::mem::replace(&mut self.dragging, None);
+	    self.shelved.push(dragged_object.unwrap());
         }
     }
 
     pub fn update(&mut self, ctx: &mut ggez::Context, t: Clock) {
-        for p in self.desk_objects.get_raw_container_mut() {
+        for p in &mut self.shelved {
             p.get_object_mut().move_with_func(t);
 	    p.get_object_mut().effect(ctx, t);
         }
     }    
 
     pub fn add_object(&mut self, obj: DeskObject) {
-        self.desk_objects.add(obj);
-        self.desk_objects.sort_with_depth();
-    }
-
-    pub fn add_customer_object(&mut self, obj: DeskObject) {
-	self.add_object(obj);
+        self.shelved.push(obj);
     }
 
     pub fn add_customer_object_vec(&mut self, mut obj_vec: Vec<DeskObject>) {
@@ -2571,7 +2551,7 @@ impl BookWagon {
     pub fn insert_dragging(&mut self, obj: DeskObject) {
         let d = std::mem::replace(&mut self.dragging, Some(obj));
         if d.is_some() {
-            self.desk_objects.add(d.unwrap());
+	    self.add_object(d.unwrap());
         }
     }
 
@@ -2587,13 +2567,6 @@ impl BookWagon {
         !self.canvas.contains(point)
     }
 
-    pub fn count_object_by_type(&self, object_type: DeskObjectType) -> usize {
-	let count = self.desk_objects.get_raw_container().iter().fold(0, |sum, obj| {
-	    sum + if obj.get_object_type() == object_type { 1 } else { 0 }
-	});
-	count + if self.dragging.is_some() { 1 } else { 0 }
-    }
-
     fn button_up_handler(&mut self,
 			 ctx: &mut ggez::Context,
 			 game_data: &GameData,
@@ -2602,7 +2575,7 @@ impl BookWagon {
 			 point: numeric::Point2f) {
 	let rpoint = self.canvas.relative_point(point);
 	
-	for dobj in self.desk_objects.get_raw_container_mut() {
+	for dobj in &mut self.shelved {
 	    if dobj.get_object_mut().get_drawing_area(ctx).contains(rpoint) {
 		dobj.get_object_mut()
 		    .ref_wrapped_object_mut()
@@ -2619,7 +2592,7 @@ impl BookWagon {
 	    // オブジェクトは深度が深い順にソートされているので、
             // 逆順から検索していくことで、最も手前に表示されているオブジェクトを
             // 取り出すことができる
-            for obj in self.desk_objects.get_raw_container_mut().iter_mut().rev() {
+            for obj in self.shelved.iter_mut().rev() {
 		if obj.get_object().get_drawing_area(ctx).contains(rpoint) {
 		    return MouseCursor::Grab
 		}
@@ -2630,14 +2603,14 @@ impl BookWagon {
     }
 }
 
-impl DrawableComponent for BookWagon {
+impl DrawableComponent for ShelvingBookBox {
     fn draw(&mut self, ctx: &mut ggez::Context) -> ggez::GameResult<()> {
         if self.is_visible() {
 	    sub_screen::stack_screen(ctx, &self.canvas);
 
             self.table_texture.draw(ctx)?;
             
-            for obj in self.desk_objects.get_raw_container_mut() {
+            for obj in &mut self.shelved {
                 obj.get_object_mut().draw(ctx)?;
             }
             
