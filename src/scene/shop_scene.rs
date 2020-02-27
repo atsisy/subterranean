@@ -145,7 +145,8 @@ impl MapData {
 	MapData {
 	    tile_map: mp::StageObjectMap::new(ctx,
 					      &map_constract_data.map_file_path,
-					      camera.clone(), numeric::Vector2f::new(6.0, 6.0)),
+					      camera.clone(), numeric::Rect::new(0.0, 0.0, 1366.0, 768.0),
+					      numeric::Vector2f::new(6.0, 6.0)),
 	    event_map: MapEventList::from_file(&map_constract_data.event_map_file_path),
 	    scenario_box: None,
 	}

@@ -7,6 +7,8 @@ use torifune::numeric;
 use ggez::graphics as ggraphics;
 
 use torifune::graphics as tg;
+use torifune::graphics::object::sub_screen;
+use sub_screen::SubScreen;
 use torifune::core::*;
 use torifune::graphics::object::*;
 
@@ -212,10 +214,12 @@ pub struct StageObjectMap {
     drwob_essential: tg::DrawableObjectEssential,
     camera: Rc<RefCell<numeric::Rect>>,
     scale: numeric::Vector2f,
+    canvas: SubScreen,
 }
 
 impl StageObjectMap {
-    pub fn new(ctx: &mut ggez::Context, path: &str, camera: Rc<RefCell<numeric::Rect>>,
+    pub fn new(ctx: &mut ggez::Context, path: &str,
+	       camera: Rc<RefCell<numeric::Rect>>, canvas_rect: numeric::Rect,
 	       scale: numeric::Vector2f) -> StageObjectMap {
         // マップ情報を読み込む
         let tile_map = tiled::parse_file(std::path::Path::new(path)).unwrap();
@@ -223,10 +227,17 @@ impl StageObjectMap {
         // タイルセットを読み込み、それと同時にタイルセットの画像からSpriteBatchを生成する
         let mut batchs = HashMap::new();
         let tilesets: Vec<TileSet> = tile_map.tilesets.iter()
-            .map(|ts| { let (ts, image) = TileSet::new(ctx, &ts);
-                        batchs.insert(ts.first_gid, ggraphics::spritebatch::SpriteBatch::new(image));
-                        ts })
+            .map(|ts| {
+		let (ts, image) = TileSet::new(ctx, &ts);
+		let mut batch = ggraphics::spritebatch::SpriteBatch::new(image);
+		batch.set_filter(ggraphics::FilterMode::Nearest);
+		
+                batchs.insert(ts.first_gid, batch);
+                ts })
             .collect();
+
+	let mut canvas = SubScreen::new(ctx, canvas_rect, 0, ggraphics::Color::from_rgba_u32(0));
+	canvas.set_filter(ggraphics::FilterMode::Nearest);
 
         StageObjectMap {
             tile_map: tile_map,
@@ -235,6 +246,7 @@ impl StageObjectMap {
             drwob_essential: tg::DrawableObjectEssential::new(true, 0),
             camera: camera,
             scale: scale,
+	    canvas: canvas,
         }
     }
 
@@ -387,34 +399,43 @@ impl StageObjectMap {
 
 impl tg::DrawableComponent for StageObjectMap {
     fn draw(&mut self, ctx: &mut ggez::Context) -> ggez::GameResult<()> {
-        // 全てのsprite batchを描画
-        for (_, batch) in &self.tilesets_batchs {
-            ggraphics::draw(ctx, batch, ggraphics::DrawParam {
-                dest: numeric::Point2f::new(-self.camera.borrow().x.round(), -self.camera.borrow().y.round()).into(),
+
+	if self.is_visible() {
+	    sub_screen::stack_screen(ctx, &self.canvas);
+	    
+	    // 全てのsprite batchを描画
+            for (_, batch) in &self.tilesets_batchs {
+		ggraphics::draw(ctx, batch, ggraphics::DrawParam {
+                    dest: numeric::Point2f::new(-self.camera.borrow().x.round(), -self.camera.borrow().y.round()).into(),
                 .. Default::default()
-            })?;
-        }
-        Ok(())
+		})?;
+            }
+	    
+	    sub_screen::pop_screen(ctx);
+            self.canvas.draw(ctx).unwrap();
+	}
+	
+	Ok(())
     }
 
     fn hide(&mut self) {
-        self.drwob_essential.visible = false;
+	self.canvas.hide();
     }
 
     fn appear(&mut self) {
-        self.drwob_essential.visible = true;
+	self.canvas.appear();
     }
 
     fn is_visible(&self) -> bool {
-        self.drwob_essential.visible
+	self.canvas.is_visible()
     }
 
     fn set_drawing_depth(&mut self, depth: i8) {
-        self.drwob_essential.drawing_depth = depth;
+	self.canvas.set_drawing_depth(depth);
     }
 
     fn get_drawing_depth(&self) -> i8 {
-        self.drwob_essential.drawing_depth
+	self.canvas.get_drawing_depth()
     }
 }
 
