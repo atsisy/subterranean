@@ -113,7 +113,7 @@ impl TaskTable {
     pub fn unselect_dragging_object(&mut self, ctx: &mut ggez::Context, t: Clock) {
 	self.sight.unselect_dragging_object(ctx, t);
         self.desk.unselect_dragging_object();
-	self.shelving_box.unselect_dragging_object(ctx, t);
+	self.shelving_box.unselect_dragging_object(t);
     }
 
     pub fn hand_over_check(&mut self, ctx: &mut ggez::Context, point: numeric::Point2f) {
@@ -213,7 +213,7 @@ impl TaskTable {
         let border = self.desk_border_x(ctx);
 	
         if self.desk.has_dragging() && border < rpoint.x {
-	    torifune::debug::debug_screen_push_text("desk 2 box");
+	    debug::debug_screen_push_text("desk 2 box");
             if let Some(mut dragging) = self.desk.release_dragging() {
 		self.apply_desk2box_point_convertion(ctx, &mut dragging);
                 self.shelving_box.insert_dragging(dragging);
@@ -225,7 +225,7 @@ impl TaskTable {
 	let border = self.desk_border_x(ctx);
 	
         if self.shelving_box.has_dragging() && border >= rpoint.x {
-	    torifune::debug::debug_screen_push_text("box 2 desk");
+	    debug::debug_screen_push_text("box 2 desk");
             if let Some(mut dragging) = self.shelving_box.release_dragging() {
 		self.apply_box2desk_point_convertion(ctx, &mut dragging);
                 self.desk.insert_dragging(dragging);

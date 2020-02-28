@@ -4,12 +4,13 @@ use std::cell::RefCell;
 use torifune::device as tdev;
 use torifune::graphics::object::*;
 
-use tdev::VirtualKey;
+use tdev::{VirtualKey, KeyboardEvent};
 use torifune::core::Clock;
 use torifune::graphics::*;
 use torifune::core::Updatable;
 use torifune::graphics::object::sub_screen::SubScreen;
 use torifune::graphics::object::VerticalText;
+use torifune::graphics::object::menu;
 use ggez::input as ginput;
 use ggez::graphics as ggraphics;
 
@@ -17,7 +18,7 @@ use ginput::mouse::MouseButton;
 use torifune::numeric;
 use torifune::debug;
 
-use crate::core::{GameData, FontID};
+use crate::core::{GameData, FontID, BookInformation};
 use super::*;
 use crate::object::*;
 use crate::object::map_object::*;
@@ -161,6 +162,108 @@ impl MapData {
 		(point.x as f32 / tile_size.x) as i32,
 		(point.y as f32 / tile_size.y) as i32,
 	    ))
+    }
+}
+
+
+///
+/// メニューに表示するやつ
+///
+pub struct ShelvingDetailContents {
+    canvas: SubScreen,
+    title: VerticalText,
+    book_info: Vec<VerticalText>,
+}
+
+impl ShelvingDetailContents {
+    pub fn new(ctx: &mut ggez::Context, game_data: &GameData,
+	       menu_rect: numeric::Rect) -> Self {
+	let title = VerticalText::new(
+	    "配架中".to_string(),
+	    numeric::Point2f::new(200.0, 30.0),
+	    numeric::Vector2f::new(1.0, 1.0),
+	    0.0,
+	    0,
+	    FontInformation::new(
+		game_data.get_font(FontID::JpFude1),
+		numeric::Vector2f::new(30.0, 30.0),
+		ggraphics::Color::from_rgba_u32(0xff)
+	    )
+	);
+
+	ShelvingDetailContents {
+	    canvas: SubScreen::new(ctx, menu_rect, 0, ggraphics::Color::from_rgba_u32(0xffffffff)),
+	    title: title,
+	    book_info: Vec::new(),
+	}
+    }
+
+    pub fn update_contents(&mut self, ctx: &mut ggez::Context, game_data: &GameData, task_result: &TaskResult) {
+	self.book_info.clear();
+
+	let mut book_info_position = numeric::Point2f::new(self.canvas.get_drawing_size(ctx).x - 20.0, 60.0);
+	let book_font_information = FontInformation::new(game_data.get_font(FontID::JpFude1),
+							 numeric::Vector2f::new(24.0, 24.0),
+							 ggraphics::Color::from_rgba_u32(0xff));
+
+	self.book_info = task_result.not_shelved_books.iter()
+	    .map(|book_info| {
+		let vtext = VerticalText::new(
+		    format!("{}\t\t{}", book_info.billing_number, &book_info.name),
+		    book_info_position,
+		    numeric::Vector2f::new(1.0, 1.0),
+		    0.0,
+		    0,
+		    book_font_information.clone()
+		);
+		
+		book_info_position.x -= 30.0;
+		
+		vtext
+	    })
+    	    .collect();
+    }
+}
+
+impl DrawableComponent for ShelvingDetailContents {
+    fn draw(&mut self, ctx: &mut ggez::Context) -> ggez::GameResult<()> {
+	if self.is_visible() {
+	    sub_screen::stack_screen(ctx, &self.canvas);
+
+	    self.title.draw(ctx)?;
+	    for vtext in &mut self.book_info {
+		vtext.draw(ctx)?;
+	    }
+	    
+	    sub_screen::pop_screen(ctx);
+	    self.canvas.draw(ctx)?;
+	}
+	Ok(())
+    }
+
+    #[inline(always)]
+    fn hide(&mut self) {
+	self.canvas.hide();
+    }
+
+    #[inline(always)]
+    fn appear(&mut self) {
+	self.canvas.appear();
+    }
+
+    #[inline(always)]
+    fn is_visible(&self) -> bool {
+	self.canvas.is_visible()
+    }
+
+    #[inline(always)]
+    fn set_drawing_depth(&mut self, depth: i8) {
+	self.canvas.set_drawing_depth(depth);
+    }
+    
+    #[inline(always)]
+    fn get_drawing_depth(&self) -> i8 {
+	self.canvas.get_drawing_depth()
     }
 }
 
@@ -326,6 +429,7 @@ impl DrawableComponent for ShopMenuContents {
 	    self.kosuzu_level.draw(ctx).unwrap();
 	    self.kosuzu_level_num.draw(ctx).unwrap();
 	}
+	
 	Ok(())
     }
 
@@ -436,6 +540,95 @@ impl DrawableComponent for ShopMenu {
     }
 }
 
+pub struct ShopDetailMenuContents {
+    shelving_info: ShelvingDetailContents
+}
+
+impl ShopDetailMenuContents {
+    pub fn new(ctx: &mut ggez::Context, game_data: &GameData,
+	       shelving_rect: numeric::Rect) -> Self {
+	ShopDetailMenuContents {
+	    shelving_info: ShelvingDetailContents::new(ctx, game_data, shelving_rect),
+	}
+    }
+
+    pub fn update_contents(&mut self) {
+	debug::debug_screen_push_text("No Implementation (STUB)");
+    }
+}
+
+pub struct ShopMenuMaster {
+    first_menu: ShopMenu,
+    detail_menu: ShopDetailMenuContents,
+    canvas: SubScreen,
+}
+
+impl ShopMenuMaster {
+    pub fn new(ctx: &mut ggez::Context, game_data: &GameData,
+	       
+	       first_menu_size: numeric::Vector2f, shelving_rect: numeric::Rect, t: Clock) -> Self {
+	ShopMenuMaster {
+	    first_menu: ShopMenu::new(ctx, game_data, first_menu_size, t),
+	    detail_menu: ShopDetailMenuContents::new(ctx, game_data, shelving_rect),
+	    canvas: SubScreen::new(ctx, numeric::Rect::new(0.0, 0.0, 1366.0, 768.0), 0, ggraphics::Color::from_rgba_u32(0)),
+	}
+    }
+
+    pub fn update_contents(&mut self, game_data: &GameData, task_result: &TaskResult) {
+	self.first_menu.update_menu_contents(game_data, task_result);
+	self.detail_menu.update_contents();
+    }
+
+    pub fn toggle_first_menu(&mut self, t: Clock) {
+	self.first_menu.slide_toggle(t);
+    }
+
+    pub fn first_menu_is_open(&self) -> bool {
+	self.first_menu.appearing_now()
+    }
+}
+
+impl Updatable for ShopMenuMaster {
+    fn update(&mut self, ctx: &ggez::Context, t: Clock) {
+	self.first_menu.update(ctx, t);
+    }
+}
+
+impl DrawableComponent for ShopMenuMaster {
+    fn draw(&mut self, ctx: &mut ggez::Context) -> ggez::GameResult<()> {
+	if self.is_visible() {
+	    sub_screen::stack_screen(ctx, &self.canvas);
+	    
+	    self.first_menu.draw(ctx)?;
+	    
+	    sub_screen::pop_screen(ctx);
+            self.canvas.draw(ctx)?;
+	}
+
+	Ok(())
+    }
+
+    fn hide(&mut self) {
+	self.canvas.hide();
+    }
+
+    fn appear(&mut self) {
+	self.canvas.appear();
+    }
+
+    fn is_visible(&self) -> bool {
+	self.canvas.is_visible()
+    }
+
+    fn set_drawing_depth(&mut self, depth: i8) {
+	self.canvas.set_drawing_depth(depth);
+    }
+
+    fn get_drawing_depth(&self) -> i8 {
+	self.canvas.get_drawing_depth()
+    }
+}
+
 ///
 /// # 夢の中のステージ
 ///
@@ -461,10 +654,11 @@ impl DrawableComponent for ShopMenu {
 pub struct ShopScene {
     player: PlayableCharacter,
     character_group: CharacterGroup,
+    drawable_component_list: Vec<Box<dyn DrawableComponent>>,
     key_listener: tdev::KeyboardListener,
     clock: Clock,
     map: MapData,
-    shop_menu: ShopMenu,
+    shop_menu: ShopMenuMaster,
     camera: Rc<RefCell<numeric::Rect>>,
     dark_effect_panel: DarkEffectPanel,
     transition_status: SceneTransition,
@@ -494,10 +688,12 @@ impl ShopScene {
         ShopScene {
             player: player,
             character_group: character_group,
+	    drawable_component_list: Vec::new(),
             key_listener: key_listener,
             clock: 0,
 	    map: MapData::new(ctx, game_data, map_id, camera.clone()),
-	    shop_menu: ShopMenu::new(ctx, game_data, numeric::Vector2f::new(450.0, 768.0), 0),
+	    shop_menu: ShopMenuMaster::new(ctx, game_data, numeric::Vector2f::new(450.0, 768.0),
+					   numeric::Rect::new(0.0, 0.0, 450.0, 768.0), 0),
 	    dark_effect_panel: DarkEffectPanel::new(ctx, numeric::Rect::new(0.0, 0.0, 1366.0, 768.0), 0),
             camera: camera,
 	    transition_scene: SceneID::SuzunaShop,
@@ -812,7 +1008,7 @@ impl ShopScene {
     }
 
     pub fn update_task_result(&mut self, game_data: &GameData, task_result: &TaskResult) {
-	self.shop_menu.update_menu_contents(game_data, task_result);
+	self.shop_menu.update_contents(game_data, task_result);
     }
 }
 
@@ -834,25 +1030,44 @@ impl SceneManager for ShopScene {
 		}	
 	    },
 	    tdev::VirtualKey::Action2 => {
-		self.shop_menu.slide_toggle(self.get_current_clock());
-		if self.shop_menu.appearing_now() {
+		self.shop_menu.toggle_first_menu(self.get_current_clock());
+		if self.shop_menu.first_menu_is_open() {
 		    self.dark_effect_panel.new_effect(8, self.get_current_clock(), 0, 200);
 		} else {
 		    self.dark_effect_panel.new_effect(8, self.get_current_clock(), 200, 0);
 		}
 	    },
+	    tdev::VirtualKey::Action3 => {
+		self.drawable_component_list.push(
+		    Box::new(
+			menu::VerticalMenu::new(ctx, numeric::Point2f::new(100.0, 100.0), 10.0,
+						vec!["項目 一".to_string(), "項目 二".to_string(), "項目 三".to_string()],
+						FontInformation::new(game_data.get_font(FontID::JpFude1),
+								     numeric::Vector2f::new(20.0, 20.0),
+								     ggraphics::Color::from_rgba_u32(0xffffffff)))
+		    )
+		);
+	    },
             _ => (),
+	}
+
+	for component in &mut self.drawable_component_list {
+	    component.virtual_key_event(ctx, KeyboardEvent::FirstPressed, vkey);
 	}
     }
     
     fn key_up_event(&mut self,
-                    _ctx: &mut ggez::Context,
+                    ctx: &mut ggez::Context,
                     _game_data: &GameData,
                     vkey: tdev::VirtualKey) {
         match vkey {
             tdev::VirtualKey::Action1 => println!("Action1 up!"),
             _ => (),
         }
+
+	for component in &mut self.drawable_component_list {
+	    component.virtual_key_event(ctx, KeyboardEvent::Typed, vkey);
+	}
     }
 
     fn mouse_motion_event(&mut self,
@@ -889,7 +1104,7 @@ impl SceneManager for ShopScene {
     fn pre_process(&mut self, ctx: &mut ggez::Context, _: &GameData) {
         let t = self.get_current_clock();
 
-	if !self.shop_menu.appearing_now() {
+	if !self.shop_menu.first_menu_is_open() {
             self.move_playable_character(ctx, t);
 	    self.map.check_event_panel(EventTrigger::Touch,
 				       self.player.get_map_position(), self.get_current_clock());
@@ -918,6 +1133,10 @@ impl SceneManager for ShopScene {
 
 	if let Some(scenario_box) = self.map.scenario_box.as_mut() {
 	    scenario_box.draw(ctx).unwrap();
+	}
+
+	for component in &mut self.drawable_component_list {
+	    component.draw(ctx);
 	}
 
 	self.dark_effect_panel.draw(ctx).unwrap();

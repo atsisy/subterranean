@@ -2513,7 +2513,7 @@ impl ShelvingBookBox {
         }
     }
 
-    pub fn unselect_dragging_object(&mut self, ctx: &mut ggez::Context, t: Clock) {
+    pub fn unselect_dragging_object(&mut self, t: Clock) {
 	if let Some(dragged) = &mut self.dragging {
 	    dragged.get_object_mut().override_move_func(move_fn::gravity_move(1.0, 10.0, 310.0, 0.3), t);
 	    dragged.get_object_mut().add_effect(vec![
