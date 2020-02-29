@@ -173,6 +173,7 @@ pub struct ShelvingDetailContents {
     canvas: MovableWrap<SubScreen>,
     menu_rect: numeric::Rect,
     title: VerticalText,
+    cell_desc: VerticalText,
     book_info: Vec<VerticalText>,
 }
 
@@ -181,17 +182,30 @@ impl ShelvingDetailContents {
 	       menu_rect: numeric::Rect, t: Clock) -> Self {
 	let title = VerticalText::new(
 	    "配架中".to_string(),
-	    numeric::Point2f::new(200.0, 30.0),
+	    numeric::Point2f::new(menu_rect.w - 60.0, 70.0),
 	    numeric::Vector2f::new(1.0, 1.0),
 	    0.0,
 	    0,
 	    FontInformation::new(
 		game_data.get_font(FontID::JpFude1),
-		numeric::Vector2f::new(30.0, 30.0),
+		numeric::Vector2f::new(40.0, 40.0),
 		ggraphics::Color::from_rgba_u32(0xff)
 	    )
 	);
 
+	let cell_desc = VerticalText::new(
+	    "請求番号\t\t表題".to_string(),
+	    numeric::Point2f::new(menu_rect.w - 120.0, 150.0),
+	    numeric::Vector2f::new(1.0, 1.0),
+	    0.0,
+	    0,
+	    FontInformation::new(
+		game_data.get_font(FontID::JpFude1),
+		numeric::Vector2f::new(34.0, 34.0),
+		ggraphics::Color::from_rgba_u32(0xff)
+	    )
+	);
+	
 	ShelvingDetailContents {
 	    canvas: MovableWrap::new(
 		Box::new(SubScreen::new(ctx, menu_rect,
@@ -200,22 +214,23 @@ impl ShelvingDetailContents {
 		t),
 	    menu_rect: menu_rect,
 	    title: title,
+	    cell_desc: cell_desc,
 	    book_info: Vec::new(),
 	}
     }
 
-    pub fn update_contents(&mut self, ctx: &mut ggez::Context, game_data: &GameData, task_result: &TaskResult) {
+    pub fn update_contents(&mut self, game_data: &GameData, task_result: &TaskResult) {
 	self.book_info.clear();
 
-	let mut book_info_position = numeric::Point2f::new(self.canvas.get_drawing_size(ctx).x - 20.0, 60.0);
+	let mut book_info_position = numeric::Point2f::new(self.menu_rect.w - 180.0, 150.0);
 	let book_font_information = FontInformation::new(game_data.get_font(FontID::JpFude1),
-							 numeric::Vector2f::new(24.0, 24.0),
+							 numeric::Vector2f::new(30.0, 30.0),
 							 ggraphics::Color::from_rgba_u32(0xff));
 	
 	self.book_info = task_result.not_shelved_books.iter()
 	    .map(|book_info| {
 		let vtext = VerticalText::new(
-		    format!("{}\t\t{}", book_info.billing_number, &book_info.name),
+		    format!("{}\t\t{}", number_to_jk(book_info.billing_number as u64), &book_info.name),
 		    book_info_position,
 		    numeric::Vector2f::new(1.0, 1.0),
 		    0.0,
@@ -223,7 +238,7 @@ impl ShelvingDetailContents {
 		    book_font_information.clone()
 		);
 		
-		book_info_position.x -= 30.0;
+		book_info_position.x -= 35.0;
 		
 		vtext
 	    })
@@ -258,6 +273,7 @@ impl DrawableComponent for ShelvingDetailContents {
 	    sub_screen::stack_screen(ctx, self.canvas.ref_wrapped_object());
 
 	    self.title.draw(ctx)?;
+	    self.cell_desc.draw(ctx)?;
 	    for vtext in &mut self.book_info {
 		vtext.draw(ctx)?;
 	    }
@@ -594,8 +610,8 @@ impl ShopDetailMenuContents {
 	}
     }
 
-    pub fn update_contents(&mut self) {
-	debug::debug_screen_push_text("No Implementation (STUB)");
+    pub fn update_contents(&mut self, game_data: &GameData, task_result: &TaskResult) {
+	self.shelving_info.update_contents(game_data, task_result);
     }
 
     pub fn detail_menu_is_open(&self) -> bool {
@@ -687,7 +703,7 @@ impl ShopMenuMaster {
 
     pub fn update_contents(&mut self, game_data: &GameData, task_result: &TaskResult) {
 	self.first_menu.update_menu_contents(game_data, task_result);
-	self.detail_menu.update_contents();
+	self.detail_menu.update_contents(game_data, task_result);
     }
 
     pub fn toggle_first_menu(&mut self, t: Clock) {
@@ -1163,6 +1179,7 @@ impl SceneManager for ShopScene {
 		}
 	    },
 	    tdev::VirtualKey::Action3 => {
+		/*
 		self.drawable_component_list.push(
 		    Box::new(
 			menu::VerticalMenu::new(ctx, numeric::Point2f::new(100.0, 100.0), 10.0,
@@ -1172,6 +1189,7 @@ impl SceneManager for ShopScene {
 								     ggraphics::Color::from_rgba_u32(0xffffffff)))
 		    )
 		);
+		 */
 	    },
             _ => (),
 	}
