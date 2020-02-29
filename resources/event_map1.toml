@@ -23,3 +23,12 @@ end-number = 800
 [event-panel.position]
 x = 1
 y = 9
+
+[[event-panel]]
+type = "builtin-event"
+trigger = "touch"
+[event-panel.builtin-event-info]
+symbol = "select-shelving-book"	
+[event-panel.position]
+x = 0
+y = 9

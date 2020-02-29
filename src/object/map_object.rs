@@ -452,13 +452,15 @@ pub struct PlayerStatus {
 pub struct PlayableCharacter {
     character: MapObject,
     status: PlayerStatus,
+    shelving_book: Vec<BookShelfInformation>,
 }
 
 impl PlayableCharacter {
     pub fn new(character: MapObject, status: PlayerStatus) -> Self {
         PlayableCharacter {
             character: character,
-            status,
+            status: status,
+	    shelving_book: Vec::new(),
         }
     }
 
@@ -472,6 +474,14 @@ impl PlayableCharacter {
 
     pub fn get_mut_character_object(&mut self) -> &mut MapObject {
         &mut self.character
+    }
+
+    pub fn shelving_book(&self) -> &Vec<BookShelfInformation> {
+	&self.shelving_book
+    }
+
+    pub fn shelving_book_mut(&mut self) -> &mut Vec<BookShelfInformation> {
+	&mut self.shelving_book
     }
 
     pub fn fix_collision_horizon(&mut self, ctx: &mut ggez::Context,
@@ -698,10 +708,53 @@ impl MapEvent for BookStoreEvent {
     }
 }
 
+#[derive(PartialEq, Clone, Copy)]
+pub enum BuiltinEventSymbol {
+    SelectShelvingBook = 0,
+}
+
+impl FromStr for BuiltinEventSymbol {
+    type Err = ();
+    
+    fn from_str(builtin_event_symbol: &str) -> Result<Self, Self::Err> {
+	match builtin_event_symbol {
+	    "select-shelving-book" => Ok(Self::SelectShelvingBook),
+	    _ => panic!("Error: BuiltinEventSymbol::from_str"),
+	}
+    }
+}
+
+#[derive(Clone, Copy)]
+pub struct BuiltinEvent {
+    trigger: EventTrigger,
+    event_symbol: BuiltinEventSymbol,
+}
+
+impl BuiltinEvent {
+    pub fn from_toml_object(toml_script: &toml::value::Value) -> Self {
+	let builtin_event_info = toml_script.get("builtin-event-info").unwrap().as_table().unwrap();
+	BuiltinEvent {
+	    trigger: EventTrigger::from_str(toml_script.get("trigger").unwrap().as_str().unwrap()).unwrap(),
+	    event_symbol: BuiltinEventSymbol::from_str(builtin_event_info.get("symbol").unwrap().as_str().unwrap()).unwrap(),
+	}
+    }
+
+    pub fn get_event_symbol(&self) -> BuiltinEventSymbol {
+	self.event_symbol
+    }
+}
+
+impl MapEvent for BuiltinEvent {
+    fn get_trigger_method(&self) -> EventTrigger {
+	self.trigger
+    }
+}
+
 pub enum MapEventElement {
     TextEvent(MapTextEvent),
     SwitchScene(MapEventSceneSwitch),
     BookStoreEvent(BookStoreEvent),
+    BuiltinEvent(BuiltinEvent),
 }
 
 impl MapEvent for MapEventElement {
@@ -710,6 +763,7 @@ impl MapEvent for MapEventElement {
             Self::TextEvent(text) => text.get_trigger_method(),
             Self::SwitchScene(switch_scene) => switch_scene.get_trigger_method(),
 	    Self::BookStoreEvent(book_store_event) => book_store_event.get_trigger_method(),
+	    Self::BuiltinEvent(builtin_event) => builtin_event.get_trigger_method(),
 	}
     }
 }
@@ -750,6 +804,10 @@ impl MapEventList {
 		    "book-shelf" => {
 			table.insert(position, MapEventElement::BookStoreEvent(
 			    BookStoreEvent::from_toml_object(elem)));
+		    },
+		    "builtin-event" => {
+			table.insert(position, MapEventElement::BuiltinEvent(
+			    BuiltinEvent::from_toml_object(elem)));
 		    },
 		    _ => eprintln!("Error"),
 		}

@@ -10,7 +10,7 @@ use torifune::graphics::*;
 use torifune::core::Updatable;
 use torifune::graphics::object::sub_screen::SubScreen;
 use torifune::graphics::object::VerticalText;
-use torifune::graphics::object::menu;
+//use torifune::graphics::object::menu;
 use ggez::input as ginput;
 use ggez::graphics as ggraphics;
 
@@ -22,6 +22,7 @@ use crate::core::{GameData, FontID};
 use super::*;
 use crate::object::*;
 use crate::object::map_object::*;
+use crate::object::shop_object::*;
 use crate::core::map_parser as mp;
 use crate::object::map_object::EventTrigger;
 use crate::object::scenario::*;
@@ -153,7 +154,7 @@ impl MapData {
 	}
     }
 
-    pub fn check_event_panel(&mut self, trigger: EventTrigger,
+    pub fn check_event_panel(&self, trigger: EventTrigger,
 			     point: numeric::Point2f, _t: Clock) -> Option<&MapEventElement> {
 	let tile_size = self.tile_map.get_tile_drawing_size();
 	self.event_map.check_event(
@@ -246,14 +247,12 @@ impl ShelvingDetailContents {
     }
     
     pub fn slide_appear(&mut self, slide_position: numeric::Point2f, t: Clock) {
-	debug::debug_screen_push_text("fix appearing point @ shop_scene.rs ShelvingDetailContents::slide_appear");
 	self.canvas.override_move_func(
 	    move_fn::devide_distance(slide_position, 0.5),
 	    t);
     }
 
     pub fn slide_hide(&mut self, t: Clock) {
-	debug::debug_screen_push_text("fix appearing point @ shop_scene.rs ShelvingDetailContents::slide_appear");
 	self.canvas.override_move_func(
 	    move_fn::devide_distance(numeric::Point2f::new(-self.menu_rect.w, 0.0), 0.2),
 	    t);
@@ -798,6 +797,7 @@ pub struct ShopScene {
     character_group: CharacterGroup,
     drawable_component_list: Vec<Box<dyn DrawableComponent>>,
     key_listener: tdev::KeyboardListener,
+    task_result: TaskResult,
     clock: Clock,
     map: MapData,
     shop_menu: ShopMenuMaster,
@@ -832,6 +832,7 @@ impl ShopScene {
             character_group: character_group,
 	    drawable_component_list: Vec::new(),
             key_listener: key_listener,
+	    task_result: TaskResult::new(),
             clock: 0,
 	    map: MapData::new(ctx, game_data, map_id, camera.clone()),
 	    shop_menu: ShopMenuMaster::new(ctx, game_data, numeric::Vector2f::new(450.0, 768.0), 0),
@@ -1097,11 +1098,20 @@ impl ShopScene {
         self.move_playable_character_y(ctx, t);
     }
 
+    pub fn run_builtin_event(&mut self, builtin_event: BuiltinEvent) {
+	match builtin_event.get_event_symbol() {
+	    BuiltinEventSymbol::SelectShelvingBook => {
+		debug::debug_screen_push_text("STUB run shelving book select program");
+	    }
+	}
+    }
+    
     fn check_event_panel_onmap(&mut self,
 			       ctx: &mut ggez::Context,
-			       game_data: &GameData) {
+			       game_data: &GameData,
+			       trigger: EventTrigger) {
 	let t = self.get_current_clock();
-	let target_event = self.map.check_event_panel(EventTrigger::Action,
+	let target_event = self.map.check_event_panel(trigger,
 						      self.player.get_map_position(), self.get_current_clock());
 	
 	if let Some(event_element) = target_event {
@@ -1124,6 +1134,9 @@ impl ShopScene {
 		MapEventElement::BookStoreEvent(book_store_event) => {
 		    debug::debug_screen_push_text(&format!("book store event: {:?}", book_store_event.get_book_shelf_info()));
 		},
+		MapEventElement::BuiltinEvent(builtin_event) => {
+		    self.run_builtin_event(builtin_event.clone());
+		}
 	    }
 	}
     }
@@ -1150,6 +1163,7 @@ impl ShopScene {
 
     pub fn update_task_result(&mut self, game_data: &GameData, task_result: &TaskResult) {
 	self.shop_menu.update_contents(game_data, task_result);
+	self.task_result = task_result.clone();
     }
 }
 
@@ -1167,7 +1181,7 @@ impl SceneManager for ShopScene {
 		    }
 		} else {
 		    debug::debug_screen_push_text("OK");
-		    self.check_event_panel_onmap(ctx, game_data);
+		    self.check_event_panel_onmap(ctx, game_data, EventTrigger::Action);
 		}	
 	    },
 	    tdev::VirtualKey::Action2 => {
@@ -1190,6 +1204,14 @@ impl SceneManager for ShopScene {
 		    )
 		);
 		 */
+		self.drawable_component_list.push(
+		    Box::new(
+			SelectShelvingBookUI::new(
+			    ctx, game_data, numeric::Rect::new(0.0, 0.0, 1366.0, 768.0),
+			    self.task_result.not_shelved_books.clone(), Vec::new()
+			)
+		    )
+		);
 	    },
             _ => (),
 	}
@@ -1246,13 +1268,12 @@ impl SceneManager for ShopScene {
                              _point: numeric::Point2f) {
     }
 
-    fn pre_process(&mut self, ctx: &mut ggez::Context, _: &GameData) {
+    fn pre_process(&mut self, ctx: &mut ggez::Context, game_data: &GameData) {
         let t = self.get_current_clock();
 
 	if !self.shop_menu.first_menu_is_open() {
             self.move_playable_character(ctx, t);
-	    self.map.check_event_panel(EventTrigger::Touch,
-				       self.player.get_map_position(), self.get_current_clock());
+	    self.check_event_panel_onmap(ctx, game_data, EventTrigger::Touch);
             
             self.character_group.move_and_collision_check(ctx, &self.camera.borrow(), &self.map.tile_map, t);
             
