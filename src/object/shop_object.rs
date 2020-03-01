@@ -15,6 +15,8 @@ use torifune::debug;
 use crate::core::{BookInformation, GameData, FontID, TextureID};
 use crate::object::Clickable;
 
+use number_to_jk::number_to_jk;
+
 pub struct SelectButton {
     canvas: SubScreen,
     button_texture: Box<dyn TextureObject>,
@@ -94,6 +96,7 @@ impl TextureObject for SelectButton {
 pub struct SelectShelvingBookWindow {
     canvas: SubScreen,
     title: VerticalText,
+    cell_desc: VerticalText,
     book_text: Vec<VerticalText>,
     selecting_book_index: Vec<usize>,
     book_font: FontInformation,
@@ -111,6 +114,8 @@ impl SelectShelvingBookWindow {
 	    canvas: SubScreen::new(ctx, window_rect, 0, ggraphics::Color::from_rgba_u32(0xeeeeeeff)),
 	    title: VerticalText::new(title.to_string(), numeric::Point2f::new(window_rect.w - 50.0, 50.0),
 				     numeric::Vector2f::new(1.0, 1.0), 0.0, 0, font_info),
+	    cell_desc: VerticalText::new("請求番号\t\t表題".to_string(), numeric::Point2f::new(window_rect.w - 100.0, 50.0),
+				     numeric::Vector2f::new(1.0, 1.0), 0.0, 0, font_info),
 	    book_text: Vec::new(),
 	    selecting_book_index: Vec::new(),
 	    book_font: font_info,
@@ -123,7 +128,7 @@ impl SelectShelvingBookWindow {
 
     fn update_contents(&mut self, ctx: &mut ggez::Context, book_info: &Vec<BookInformation>) {
 	let window_rect = self.canvas.get_drawing_area(ctx);
-	let mut text_position = numeric::Point2f::new(window_rect.w - 100.0, 50.0);
+	let mut text_position = numeric::Point2f::new(window_rect.w - 150.0, 50.0);
 	
 	self.book_text = book_info
 	    .iter()
@@ -131,12 +136,13 @@ impl SelectShelvingBookWindow {
 	    .map(|enumerate_data| {
 		let (index, info) = enumerate_data;
 
-		if index == 8 {
+		if index == 12 {
 		    text_position.x = window_rect.w - 100.0;
 		    text_position.y += 500.0;
 		}
 		
-		let vtext = VerticalText::new(info.name.to_string(), text_position,
+		let vtext = VerticalText::new(format!("{0: <6}{1}", number_to_jk(info.billing_number as u64), info.name),
+					      text_position,
 					      numeric::Vector2f::new(1.0,1.0), 0.0, 0, self.book_font.clone());
 		text_position.x -= 40.0;
 		vtext
@@ -163,6 +169,7 @@ impl DrawableComponent for SelectShelvingBookWindow {
 	    sub_screen::stack_screen(ctx, &self.canvas);
 
 	    self.title.draw(ctx)?;
+	    self.cell_desc.draw(ctx)?;
 	    for vtext in &mut self.book_text {
 		vtext.draw(ctx)?;
 	    }
@@ -213,8 +220,6 @@ impl Clickable for SelectShelvingBookWindow {
 	
 	for (index, vtext) in self.book_text.iter_mut().enumerate() {
 	    if vtext.get_drawing_area(ctx).contains(rpoint) {
-		debug::debug_screen_push_text("click!!!!!!");
-		
 		// 既に選択されている場合は、削除
 		if self.selecting_book_index.contains(&index) {
 		    vtext.set_color(ggraphics::Color::from_rgba_u32(0x000000ff));
@@ -251,7 +256,11 @@ pub struct SelectShelvingBookUI {
 
 impl SelectShelvingBookUI {
     pub fn new(ctx: &mut ggez::Context, game_data: &GameData, ui_rect: numeric::Rect,
-	       box_book_info: Vec<BookInformation>, shelving_book: Vec<BookInformation>) -> Self {
+	       mut box_book_info: Vec<BookInformation>, mut shelving_book: Vec<BookInformation>) -> Self {
+
+	box_book_info.sort_by(|a, b| a.billing_number.cmp(&b.billing_number));
+	shelving_book.sort_by(|a, b| a.billing_number.cmp(&b.billing_number));
+	
 	SelectShelvingBookUI {
 	    canvas: SubScreen::new(ctx, ui_rect, 0, ggraphics::Color::from_rgba_u32(0)),
 	    box_info_window: SelectShelvingBookWindow::new(ctx, game_data, numeric::Rect::new(70.0, 50.0, 550.0, 600.0),
@@ -271,7 +280,13 @@ impl SelectShelvingBookUI {
 	}
     }
 
+    fn sort_book_info_greater(&mut self) {
+	self.boxed_books.sort_by(|a, b| a.billing_number.cmp(&b.billing_number));
+	self.shelving_books.sort_by(|a, b| a.billing_number.cmp(&b.billing_number));
+    }
+
     fn update_window(&mut self, ctx: &mut ggez::Context) {
+	self.sort_book_info_greater();
 	self.box_info_window.update_contents(ctx, &self.boxed_books);
 	self.shelving_window.update_contents(ctx, &self.shelving_books);
     }

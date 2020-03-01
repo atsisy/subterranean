@@ -786,12 +786,14 @@ impl ShopSpecialObject {
 
     pub fn show_shelving_select_ui(&mut self, ctx: &mut ggez::Context, game_data: &GameData,
 				   task_result: &TaskResult, t: Clock) {
-	self.shelving_select_ui = Some(
-	    MovableWrap::new(Box::new(
-		SelectShelvingBookUI::new(
-		    ctx, game_data, numeric::Rect::new(0.0, -768.0, 1366.0, 768.0),
-		    task_result.not_shelved_books.clone(), Vec::new()
-		)), move_fn::devide_distance(numeric::Point2f::new(0.0, 0.0), 0.4), t));
+	if self.shelving_select_ui.is_none() {
+	    self.shelving_select_ui = Some(
+		MovableWrap::new(Box::new(
+		    SelectShelvingBookUI::new(
+			ctx, game_data, numeric::Rect::new(0.0, -768.0, 1366.0, 768.0),
+			task_result.not_shelved_books.clone(), Vec::new()
+		    )), move_fn::devide_distance(numeric::Point2f::new(0.0, 0.0), 0.4), t));
+	}
     }
 
     pub fn hide_shelving_select_ui(&mut self, t: Clock) {

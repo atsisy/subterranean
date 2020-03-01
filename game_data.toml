@@ -39,7 +39,7 @@ event_map_file_path = "./resources/event_map1.toml"
 name = "テスト本1"
 pages = 128
 size = "大判本"
-billing_number = 128
+billing_number = 10
 
 [[books_information]]
 name = "テスト本2"
