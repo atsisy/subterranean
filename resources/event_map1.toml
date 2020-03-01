@@ -26,9 +26,9 @@ y = 9
 
 [[event-panel]]
 type = "builtin-event"
-trigger = "touch"
+trigger = "action"
 [event-panel.builtin-event-info]
 symbol = "select-shelving-book"	
 [event-panel.position]
-x = 0
-y = 9
+x = 1
+y = 11

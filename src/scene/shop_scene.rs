@@ -769,6 +769,121 @@ impl DrawableComponent for ShopMenuMaster {
     }
 }
 
+struct ShopSpecialObject {
+    event_list: DelayEventList<Self>,
+    shelving_select_ui: Option<MovableWrap<SelectShelvingBookUI>>,
+    drwob_essential: DrawableObjectEssential,
+}
+
+impl ShopSpecialObject {
+    pub fn new() -> Self {
+	ShopSpecialObject {
+	    event_list: DelayEventList::new(),
+	    shelving_select_ui: None,
+	    drwob_essential: DrawableObjectEssential::new(true, 0),
+	}
+    }
+
+    pub fn show_shelving_select_ui(&mut self, ctx: &mut ggez::Context, game_data: &GameData,
+				   task_result: &TaskResult, t: Clock) {
+	self.shelving_select_ui = Some(
+	    MovableWrap::new(Box::new(
+		SelectShelvingBookUI::new(
+		    ctx, game_data, numeric::Rect::new(0.0, -768.0, 1366.0, 768.0),
+		    task_result.not_shelved_books.clone(), Vec::new()
+		)), move_fn::devide_distance(numeric::Point2f::new(0.0, 0.0), 0.4), t));
+    }
+
+    pub fn hide_shelving_select_ui(&mut self, t: Clock) {
+	if let Some(ui) = self.shelving_select_ui.as_mut() {
+	    ui.override_move_func(move_fn::devide_distance(numeric::Point2f::new(0.0, -768.0), 0.4), t);
+	    self.event_list.add_event(Box::new(|shop_special_object, _, _| {
+		shop_special_object.shelving_select_ui = None;
+	    }), t + 7);
+	}
+    }
+
+    pub fn is_enable_now(&self) -> bool {
+	self.shelving_select_ui.is_some()
+    }
+    
+    pub fn key_action(&mut self, _: &mut ggez::Context, _: &GameData, vkey: VirtualKey, t: Clock) {
+	match vkey {
+	    VirtualKey::Action3 => {
+		self.hide_shelving_select_ui(t);
+	    }
+	    _ => (),
+	}
+    }
+
+    pub fn mouse_down_action(&mut self, ctx: &mut ggez::Context, game_data: &GameData,
+			     button: MouseButton, point: numeric::Point2f, t: Clock) {
+	if let Some(ui) = self.shelving_select_ui.as_mut() {
+	    ui.ref_wrapped_object_mut().on_click(ctx, game_data, t, button, point);
+	}
+    }
+
+    pub fn run_delay_event(&mut self, ctx: &mut ggez::Context, game_data: &GameData, t: Clock) {
+	// 最後の要素の所有権を移動
+	while let Some(event) = self.event_list.move_top() {
+	    // 時間が来ていない場合は、取り出した要素をリストに戻して処理ループを抜ける
+	    if event.run_time > t {
+		self.event_list.add(event);
+		break;
+	    }
+	    
+	    // 所有権を移動しているため、selfを渡してもエラーにならない
+	    (event.func)(self, ctx, game_data);
+	}
+    }
+}
+
+impl Updatable for ShopSpecialObject {
+    fn update(&mut self, _: &ggez::Context, t: Clock) {	
+	if let Some(ui) = self.shelving_select_ui.as_mut() {
+	    ui.move_with_func(t);
+	}
+    }
+}
+
+impl DrawableComponent for ShopSpecialObject {
+    fn draw(&mut self, ctx: &mut ggez::Context) -> ggez::GameResult<()> {
+	if self.is_visible() {
+	    if let Some(select_ui) = self.shelving_select_ui.as_mut() {
+		select_ui.draw(ctx)?;
+	    }
+	}
+	
+	Ok(())
+    }
+
+    #[inline(always)]
+    fn hide(&mut self) {
+        self.drwob_essential.visible = false;
+    }
+
+    #[inline(always)]
+    fn appear(&mut self) {
+        self.drwob_essential.visible = true;
+    }
+
+    #[inline(always)]
+    fn is_visible(&self) -> bool {
+        self.drwob_essential.visible
+    }
+
+    #[inline(always)]
+    fn set_drawing_depth(&mut self, depth: i8) {
+        self.drwob_essential.drawing_depth = depth;
+    }
+    
+    #[inline(always)]
+    fn get_drawing_depth(&self) -> i8 {
+        self.drwob_essential.drawing_depth
+    }
+}
+
+
 ///
 /// # 夢の中のステージ
 ///
@@ -795,6 +910,7 @@ pub struct ShopScene {
     player: PlayableCharacter,
     character_group: CharacterGroup,
     shop_object_list: Vec<Box<dyn Clickable>>,
+    shop_special_object: ShopSpecialObject,
     key_listener: tdev::KeyboardListener,
     task_result: TaskResult,
     clock: Clock,
@@ -830,6 +946,7 @@ impl ShopScene {
             player: player,
             character_group: character_group,
 	    shop_object_list: Vec::new(),
+	    shop_special_object: ShopSpecialObject::new(),
             key_listener: key_listener,
 	    task_result: TaskResult::new(),
             clock: 0,
@@ -1097,10 +1214,12 @@ impl ShopScene {
         self.move_playable_character_y(ctx, t);
     }
 
-    pub fn run_builtin_event(&mut self, builtin_event: BuiltinEvent) {
+    pub fn run_builtin_event(&mut self, ctx: &mut ggez::Context, game_data: &GameData, builtin_event: BuiltinEvent) {
 	match builtin_event.get_event_symbol() {
 	    BuiltinEventSymbol::SelectShelvingBook => {
 		debug::debug_screen_push_text("STUB run shelving book select program");
+		self.shop_special_object.show_shelving_select_ui(ctx, game_data,
+								 &self.task_result, self.get_current_clock());
 	    }
 	}
     }
@@ -1135,7 +1254,7 @@ impl ShopScene {
 		},
 		MapEventElement::BuiltinEvent(builtin_event) => {
 		    let builtin_event = builtin_event.clone();
-		    self.run_builtin_event(builtin_event);
+		    self.run_builtin_event(ctx, game_data, builtin_event);
 		}
 	    }
 	}
@@ -1192,27 +1311,6 @@ impl SceneManager for ShopScene {
 		    self.dark_effect_panel.new_effect(8, self.get_current_clock(), 200, 0);
 		}
 	    },
-	    tdev::VirtualKey::Action3 => {
-		/*
-		self.shop_object_list.push(
-		    Box::new(
-			menu::VerticalMenu::new(ctx, numeric::Point2f::new(100.0, 100.0), 10.0,
-						vec!["項目 一".to_string(), "項目 二".to_string(), "項目 三".to_string()],
-						FontInformation::new(game_data.get_font(FontID::JpFude1),
-								     numeric::Vector2f::new(20.0, 20.0),
-								     ggraphics::Color::from_rgba_u32(0xffffffff)))
-		    )
-		);
-		 */
-		self.shop_object_list.push(
-		    Box::new(
-			SelectShelvingBookUI::new(
-			    ctx, game_data, numeric::Rect::new(0.0, 0.0, 1366.0, 768.0),
-			    self.task_result.not_shelved_books.clone(), Vec::new()
-			)
-		    )
-		);
-	    },
             _ => (),
 	}
 
@@ -1220,6 +1318,7 @@ impl SceneManager for ShopScene {
 	    component.virtual_key_event(ctx, KeyboardEvent::FirstPressed, vkey);
 	}
 
+	self.shop_special_object.key_action(ctx, game_data, vkey, self.get_current_clock());
 	self.shop_menu.menu_key_action(ctx, game_data, vkey, self.get_current_clock());
     }
     
@@ -1263,6 +1362,8 @@ impl SceneManager for ShopScene {
 	    },
 	    _ => (),
 	}
+
+	self.shop_special_object.mouse_down_action(ctx, game_data, button, point, self.get_current_clock());
     }
     
     fn mouse_button_up_event(&mut self,
@@ -1275,7 +1376,7 @@ impl SceneManager for ShopScene {
     fn pre_process(&mut self, ctx: &mut ggez::Context, game_data: &GameData) {
         let t = self.get_current_clock();
 
-	if !self.shop_menu.first_menu_is_open() {
+	if !self.shop_menu.first_menu_is_open() && !self.shop_special_object.is_enable_now() {
             self.move_playable_character(ctx, t);
 	    self.check_event_panel_onmap(ctx, game_data, EventTrigger::Touch);
             
@@ -1287,6 +1388,10 @@ impl SceneManager for ShopScene {
 
 	// 暗転の描画
 	self.dark_effect_panel.run_effect(ctx, t);
+
+	// select_uiなどの更新
+	self.shop_special_object.run_delay_event(ctx, game_data, t);
+	self.shop_special_object.update(ctx, t);
 	
 	// メニューの更新
 	self.shop_menu.update(ctx, t);
@@ -1310,7 +1415,8 @@ impl SceneManager for ShopScene {
 	}
 
 	self.dark_effect_panel.draw(ctx).unwrap();
-	
+
+	self.shop_special_object.draw(ctx).unwrap();
 	self.shop_menu.draw(ctx).unwrap();
     }
     

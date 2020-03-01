@@ -124,7 +124,6 @@ impl SceneManager for NullScene {
     }
 }
 
-
 ///
 /// # 遅延イベントを起こすための情報を保持する
 ///
@@ -134,14 +133,14 @@ impl SceneManager for NullScene {
 /// ## func
 /// run_time時に実行される処理
 ///
-pub struct SceneEvent<T> {
+pub struct DelayEvent<T> {
     run_time: Clock,
     func: Box<dyn FnOnce(&mut T, &mut ggez::Context, &GameData) -> ()>,
 }
 
-impl<T> SceneEvent<T> {
+impl<T> DelayEvent<T> {
     pub fn new(f: Box<dyn FnOnce(&mut T, &mut ggez::Context, &GameData) -> ()>, t: Clock) -> Self {
-	SceneEvent::<T> {
+	DelayEvent::<T> {
 	    run_time: t,
 	    func: f,
 	}
@@ -154,29 +153,29 @@ impl<T> SceneEvent<T> {
 /// ## list
 /// 遅延イベントのリスト, run_timeでソートされている
 ///
-struct SceneEventList<T> {
-    list: Vec<SceneEvent<T>>,
+pub struct DelayEventList<T> {
+    list: Vec<DelayEvent<T>>,
 }
 
-impl<T> SceneEventList<T> {
+impl<T> DelayEventList<T> {
     pub fn new() -> Self {
-	SceneEventList::<T> {
+	DelayEventList::<T> {
 	    list: Vec::new(),
 	}
     }
 
     pub fn add_event(&mut self, f: Box<dyn FnOnce(&mut T, &mut ggez::Context, &GameData) -> ()>,
 		     t: Clock) -> &mut Self {
-	self.add(SceneEvent::new(f, t))
+	self.add(DelayEvent::new(f, t))
     }
 
-    pub fn add(&mut self, event: SceneEvent<T>) -> &mut Self {
+    pub fn add(&mut self, event: DelayEvent<T>) -> &mut Self {
 	self.list.push(event);
 	self.list.sort_by(|o1, o2| { o2.run_time.cmp(&o1.run_time) });
 	self
     }
 
-    pub fn move_top(&mut self) -> Option<SceneEvent<T>> {
+    pub fn move_top(&mut self) -> Option<DelayEvent<T>> {
 	if self.list.len() > 0 {
 	    self.list.pop()
 	} else {

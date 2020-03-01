@@ -213,7 +213,8 @@ impl Clickable for SelectShelvingBookWindow {
 	
 	for (index, vtext) in self.book_text.iter_mut().enumerate() {
 	    if vtext.get_drawing_area(ctx).contains(rpoint) {
-
+		debug::debug_screen_push_text("click!!!!!!");
+		
 		// 既に選択されている場合は、削除
 		if self.selecting_book_index.contains(&index) {
 		    vtext.set_color(ggraphics::Color::from_rgba_u32(0x000000ff));

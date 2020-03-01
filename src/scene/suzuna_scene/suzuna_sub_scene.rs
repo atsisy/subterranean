@@ -29,7 +29,7 @@ pub struct TaskScene {
     task_table: TaskTable,
     clock: Clock,
     mouse_info: MouseInformation,
-    event_list: SceneEventList<Self>,
+    event_list: DelayEventList<Self>,
     status: TaskSceneStatus,
     task_result: TaskResult,
     transition_status: SceneTransition,
@@ -49,7 +49,7 @@ impl TaskScene {
 				       0),
             clock: 0,
             mouse_info: MouseInformation::new(),
-	    event_list: SceneEventList::new(),
+	    event_list: DelayEventList::new(),
 	    status: TaskSceneStatus::Init,
 	    task_result: TaskResult::new(),
 	    transition_status: SceneTransition::Keep,
@@ -308,7 +308,7 @@ impl SceneManager for TaskScene {
 pub struct TaskResultScene {
     clock: Clock,
     mouse_info: MouseInformation,
-    event_list: SceneEventList<Self>,
+    event_list: DelayEventList<Self>,
     drawable_task_result: DrawableTaskResult,
     scene_transition_status: SceneTransition,
 }
@@ -328,7 +328,7 @@ impl TaskResultScene {
         TaskResultScene {
             clock: 0,
             mouse_info: MouseInformation::new(),
-	    event_list: SceneEventList::new(),
+	    event_list: DelayEventList::new(),
 	    drawable_task_result: DrawableTaskResult::new(ctx, game_data,
 							  numeric::Rect::new(0.0, 0.0, 1000.0, 700.0),
 							  task_result.clone(),
