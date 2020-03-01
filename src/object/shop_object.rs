@@ -217,7 +217,7 @@ impl Clickable for SelectShelvingBookWindow {
 		// 既に選択されている場合は、削除
 		if self.selecting_book_index.contains(&index) {
 		    vtext.set_color(ggraphics::Color::from_rgba_u32(0x000000ff));
-		    self.selecting_book_index.retain(|inner_index| *inner_index == index);
+		    self.selecting_book_index.retain(|inner_index| *inner_index != index);
 		} else {
 		    // テキストを赤に変更し、選択中のインデックスとして登録
 		    vtext.set_color(ggraphics::Color::from_rgba_u32(0xee0000ff));
