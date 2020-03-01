@@ -10,7 +10,6 @@ use torifune::graphics::*;
 use torifune::core::Updatable;
 use torifune::graphics::object::sub_screen::SubScreen;
 use torifune::graphics::object::VerticalText;
-//use torifune::graphics::object::menu;
 use ggez::input as ginput;
 use ggez::graphics as ggraphics;
 
@@ -795,7 +794,7 @@ impl DrawableComponent for ShopMenuMaster {
 pub struct ShopScene {
     player: PlayableCharacter,
     character_group: CharacterGroup,
-    drawable_component_list: Vec<Box<dyn DrawableComponent>>,
+    shop_object_list: Vec<Box<dyn Clickable>>,
     key_listener: tdev::KeyboardListener,
     task_result: TaskResult,
     clock: Clock,
@@ -830,7 +829,7 @@ impl ShopScene {
         ShopScene {
             player: player,
             character_group: character_group,
-	    drawable_component_list: Vec::new(),
+	    shop_object_list: Vec::new(),
             key_listener: key_listener,
 	    task_result: TaskResult::new(),
             clock: 0,
@@ -1135,7 +1134,8 @@ impl ShopScene {
 		    debug::debug_screen_push_text(&format!("book store event: {:?}", book_store_event.get_book_shelf_info()));
 		},
 		MapEventElement::BuiltinEvent(builtin_event) => {
-		    self.run_builtin_event(builtin_event.clone());
+		    let builtin_event = builtin_event.clone();
+		    self.run_builtin_event(builtin_event);
 		}
 	    }
 	}
@@ -1194,7 +1194,7 @@ impl SceneManager for ShopScene {
 	    },
 	    tdev::VirtualKey::Action3 => {
 		/*
-		self.drawable_component_list.push(
+		self.shop_object_list.push(
 		    Box::new(
 			menu::VerticalMenu::new(ctx, numeric::Point2f::new(100.0, 100.0), 10.0,
 						vec!["項目 一".to_string(), "項目 二".to_string(), "項目 三".to_string()],
@@ -1204,7 +1204,7 @@ impl SceneManager for ShopScene {
 		    )
 		);
 		 */
-		self.drawable_component_list.push(
+		self.shop_object_list.push(
 		    Box::new(
 			SelectShelvingBookUI::new(
 			    ctx, game_data, numeric::Rect::new(0.0, 0.0, 1366.0, 768.0),
@@ -1216,7 +1216,7 @@ impl SceneManager for ShopScene {
             _ => (),
 	}
 
-	for component in &mut self.drawable_component_list {
+	for component in &mut self.shop_object_list {
 	    component.virtual_key_event(ctx, KeyboardEvent::FirstPressed, vkey);
 	}
 
@@ -1232,7 +1232,7 @@ impl SceneManager for ShopScene {
             _ => (),
         }
 
-	for component in &mut self.drawable_component_list {
+	for component in &mut self.shop_object_list {
 	    component.virtual_key_event(ctx, KeyboardEvent::Typed, vkey);
 	}
     }
@@ -1247,12 +1247,16 @@ impl SceneManager for ShopScene {
 
     fn mouse_button_down_event(&mut self,
                                ctx: &mut ggez::Context,
-                               _game_data: &GameData,
+                               game_data: &GameData,
                                button: MouseButton,
                                point: numeric::Point2f) {
 	match button {
 	    MouseButton::Left => {
 		self.start_mouse_move(ctx, point);
+		let t = self.get_current_clock();
+		for shop_object in &mut self.shop_object_list {
+		    shop_object.on_click(ctx, game_data, t, button, point);
+		}
 	    },
 	    MouseButton::Right => {
 		self.player.reset_speed();
@@ -1301,7 +1305,7 @@ impl SceneManager for ShopScene {
 	    scenario_box.draw(ctx).unwrap();
 	}
 
-	for component in &mut self.drawable_component_list {
+	for component in &mut self.shop_object_list {
 	    component.draw(ctx).unwrap();
 	}
 
