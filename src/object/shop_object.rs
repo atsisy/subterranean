@@ -11,10 +11,85 @@ use torifune::impl_texture_object_for_wrapped;
 use torifune::graphics::object::sub_screen;
 use sub_screen::SubScreen;
 use torifune::debug;
-use torifune::device::*;
 
-use crate::core::{BookInformation, GameData, FontID};
+use crate::core::{BookInformation, GameData, FontID, TextureID};
 use crate::object::Clickable;
+
+pub struct SelectButton {
+    canvas: SubScreen,
+    button_texture: Box<dyn TextureObject>,
+    button_toggle: bool,
+}
+
+impl SelectButton {
+    pub fn new(ctx: &mut ggez::Context, button_rect: numeric::Rect, mut texture: Box<dyn TextureObject>) -> Self {
+
+	texture.set_position(numeric::Point2f::new(0.0, 0.0));
+	
+	SelectButton {
+	    canvas: SubScreen::new(ctx, button_rect, 0, ggraphics::Color::from_rgba_u32(0)),
+	    button_texture: texture,
+	    button_toggle: false,
+	}
+    }
+
+    pub fn push(&mut self) {
+	self.button_toggle = true;
+	self.button_texture.set_color(ggraphics::Color::from_rgba_u32(0xffffffff));
+    }
+
+    pub fn release(&mut self) {
+	self.button_toggle = false;
+	self.button_texture.set_color(ggraphics::Color::from_rgba_u32(0x888888ff));
+    }
+
+    pub fn get_button_status(&self) -> bool {
+	self.button_toggle
+    }
+}
+
+impl DrawableComponent for SelectButton {
+    fn draw(&mut self, ctx: &mut ggez::Context) -> ggez::GameResult<()> {
+        if self.is_visible() {
+	    sub_screen::stack_screen(ctx, &self.canvas);
+
+	    self.button_texture.draw(ctx)?;
+	    
+	    sub_screen::pop_screen(ctx);
+            self.canvas.draw(ctx).unwrap();
+        }
+	
+        Ok(())
+    }
+
+    fn hide(&mut self) {
+        self.canvas.hide();
+    }
+
+    fn appear(&mut self) {
+        self.canvas.appear();
+    }
+
+    fn is_visible(&self) -> bool {
+        self.canvas.is_visible()
+    }
+
+    fn set_drawing_depth(&mut self, depth: i8) {
+        self.canvas.set_drawing_depth(depth);
+    }
+
+    fn get_drawing_depth(&self) -> i8 {
+        self.canvas.get_drawing_depth()
+    }
+}
+
+impl DrawableObject for SelectButton {
+    impl_drawable_object_for_wrapped!{canvas}
+}
+
+impl TextureObject for SelectButton {
+    impl_texture_object_for_wrapped!{canvas}
+}
 
 pub struct SelectShelvingBookWindow {
     canvas: SubScreen,
@@ -67,6 +142,10 @@ impl SelectShelvingBookWindow {
 		vtext
 	    })
     	    .collect();
+    }
+
+    pub fn sort_selecting_index_less(&mut self) {
+	self.selecting_book_index.sort_by(|a, b| b.cmp(a));
     }
 
     pub fn get_selecting_index(&self) -> &Vec<usize> {
@@ -131,10 +210,20 @@ impl Clickable for SelectShelvingBookWindow {
                 _button: ggez::input::mouse::MouseButton,
                 point: numeric::Point2f) {
 	let rpoint = self.canvas.relative_point(point);
+	
 	for (index, vtext) in self.book_text.iter_mut().enumerate() {
 	    if vtext.get_drawing_area(ctx).contains(rpoint) {
-		vtext.set_color(ggraphics::Color::from_rgba_u32(0xee0000ff));
-		self.selecting_book_index.push(index);
+
+		// 既に選択されている場合は、削除
+		if self.selecting_book_index.contains(&index) {
+		    vtext.set_color(ggraphics::Color::from_rgba_u32(0x000000ff));
+		    self.selecting_book_index.retain(|inner_index| *inner_index == index);
+		} else {
+		    // テキストを赤に変更し、選択中のインデックスとして登録
+		    vtext.set_color(ggraphics::Color::from_rgba_u32(0xee0000ff));
+		    self.selecting_book_index.push(index);
+		}
+		
 		break;
 	    }
 	}
@@ -155,6 +244,8 @@ pub struct SelectShelvingBookUI {
     shelving_books: Vec<BookInformation>,
     box_info_window: SelectShelvingBookWindow,
     shelving_window: SelectShelvingBookWindow,
+    move_box_to_shelving_button: SelectButton,
+    move_shelving_to_box_button: SelectButton,
 }
 
 impl SelectShelvingBookUI {
@@ -162,12 +253,20 @@ impl SelectShelvingBookUI {
 	       box_book_info: Vec<BookInformation>, shelving_book: Vec<BookInformation>) -> Self {
 	SelectShelvingBookUI {
 	    canvas: SubScreen::new(ctx, ui_rect, 0, ggraphics::Color::from_rgba_u32(0)),
-	    box_info_window: SelectShelvingBookWindow::new(ctx, game_data, numeric::Rect::new(70.0, 50.0, 600.0, 600.0),
+	    box_info_window: SelectShelvingBookWindow::new(ctx, game_data, numeric::Rect::new(70.0, 50.0, 550.0, 600.0),
 							   "返却済み", box_book_info.clone()),
-	    shelving_window: SelectShelvingBookWindow::new(ctx, game_data, numeric::Rect::new(720.0, 50.0, 600.0, 600.0),
+	    shelving_window: SelectShelvingBookWindow::new(ctx, game_data, numeric::Rect::new(770.0, 50.0, 550.0, 600.0),
 							   "配架中", shelving_book.clone()),
 	    boxed_books: box_book_info,
 	    shelving_books: shelving_book,
+	    move_box_to_shelving_button: SelectButton::new(
+		ctx, numeric::Rect::new(650.0, 200.0, 100.0, 50.0),
+		Box::new(UniTexture::new(game_data.ref_texture(TextureID::ArrowRight),
+					 numeric::Point2f::new(0.0, 0.0), numeric::Vector2f::new(0.5, 0.5), 0.0, 0))),
+	    move_shelving_to_box_button: SelectButton::new(
+		ctx, numeric::Rect::new(650.0, 500.0, 100.0, 50.0),
+		Box::new(UniTexture::new(game_data.ref_texture(TextureID::ArrowLeft),
+					 numeric::Point2f::new(0.0, 0.0), numeric::Vector2f::new(0.5, 0.5), 0.0, 0))),
 	}
     }
 
@@ -177,6 +276,7 @@ impl SelectShelvingBookUI {
     }
 
     fn move_box_to_shelving(&mut self, ctx: &mut ggez::Context) {
+	self.box_info_window.sort_selecting_index_less();
 	for selecting_index in self.box_info_window.get_selecting_index().iter() {
 	    debug::debug_screen_push_text(&format!("remove book: {}", selecting_index));
 	    let select_book = self.boxed_books.swap_remove(*selecting_index);
@@ -184,6 +284,20 @@ impl SelectShelvingBookUI {
 	}
 
 	self.box_info_window.clear_selecting_index();
+	self.update_window(ctx);
+    }
+
+    fn move_shelving_to_box(&mut self, ctx: &mut ggez::Context) {
+	self.shelving_window.sort_selecting_index_less();
+	for selecting_index in self.shelving_window.get_selecting_index().iter() {
+	    debug::debug_screen_push_text(&format!("remove book: {}", selecting_index));
+	    let select_book = self.shelving_books.swap_remove(*selecting_index);
+	    self.boxed_books.push(select_book);
+	}
+
+	self.box_info_window.clear_selecting_index();
+	self.shelving_window.clear_selecting_index();
+	
 	self.update_window(ctx);
     }
 }
@@ -195,10 +309,14 @@ impl DrawableComponent for SelectShelvingBookUI {
 
 	    self.box_info_window.draw(ctx)?;
 	    self.shelving_window.draw(ctx)?;
+
+	    self.move_box_to_shelving_button.draw(ctx)?;
+	    self.move_shelving_to_box_button.draw(ctx)?;
 	    
 	    sub_screen::pop_screen(ctx);
             self.canvas.draw(ctx).unwrap();
         }
+	
         Ok(())
     }
 
@@ -220,17 +338,6 @@ impl DrawableComponent for SelectShelvingBookUI {
 
     fn get_drawing_depth(&self) -> i8 {
         self.canvas.get_drawing_depth()
-    }
-
-    fn virtual_key_event(&mut self, ctx: &mut ggez::Context, event_type: KeyboardEvent, vkey: VirtualKey) {
-	match vkey {
-	    VirtualKey::Action1 => {
-		if event_type == KeyboardEvent::FirstPressed {
-		    self.move_box_to_shelving(ctx);
-		}
-	    },
-	    _ =>  (),
-	}
     }
 }
 
@@ -258,6 +365,15 @@ impl Clickable for SelectShelvingBookUI {
 	if self.shelving_window.get_drawing_area(ctx).contains(rpoint) {
 	    self.shelving_window.on_click(ctx, game_data, clock, button, rpoint);
 	}
+
+	if self.move_box_to_shelving_button.get_drawing_area(ctx).contains(rpoint) {
+	    self.move_box_to_shelving(ctx);
+	}
+
+	if self.move_shelving_to_box_button.get_drawing_area(ctx).contains(rpoint) {
+	    self.move_shelving_to_box(ctx);
+	}
+
     }
 
     fn clickable_status(&mut self,

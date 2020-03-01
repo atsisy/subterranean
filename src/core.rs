@@ -72,6 +72,8 @@ pub enum TextureID {
     ChoicePanel5,
     JunkoTachieDefault,
     SightBackground1,
+    ArrowRight,
+    ArrowLeft,
     Unknown,
 }
 
@@ -109,6 +111,8 @@ impl FromStr for TextureID {
 	    "ChoicePanel5" => Ok(Self::ChoicePanel5),
 	    "JunkoTachieDefault" => Ok(Self::JunkoTachieDefault),
 	    "SightBackground1" => Ok(Self::SightBackground1),
+	    "ArrowRight" => Ok(Self::ArrowRight),
+	    "ArrowLeft" => Ok(Self::ArrowLeft),
             _ => Err(())
         }
     }
@@ -141,6 +145,8 @@ impl TextureID {
 	    21 => Some(Self::ChoicePanel5),
 	    22 => Some(Self::JunkoTachieDefault),
 	    23 => Some(Self::SightBackground1),
+	    24 => Some(Self::ArrowRight),
+	    25 => Some(Self::ArrowLeft),
             _ => None
         }
     }
