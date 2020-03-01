@@ -13,7 +13,7 @@ use torifune::graphics::object::*;
 use crate::core::map_parser as mp;
 use crate::object::collision::*;
 use crate::scene::SceneID;
-use crate::core::{BookShelfInformation};
+use crate::core::{BookInformation, BookShelfInformation};
 
 ///
 /// ある範囲内に速さを収めたい時に使用する構造体
@@ -452,7 +452,7 @@ pub struct PlayerStatus {
 pub struct PlayableCharacter {
     character: MapObject,
     status: PlayerStatus,
-    shelving_book: Vec<BookShelfInformation>,
+    shelving_book: Vec<BookInformation>,
 }
 
 impl PlayableCharacter {
@@ -476,12 +476,16 @@ impl PlayableCharacter {
         &mut self.character
     }
 
-    pub fn shelving_book(&self) -> &Vec<BookShelfInformation> {
+    pub fn get_shelving_book(&self) -> &Vec<BookInformation> {
 	&self.shelving_book
     }
 
-    pub fn shelving_book_mut(&mut self) -> &mut Vec<BookShelfInformation> {
+    pub fn get_shelving_book_mut(&mut self) -> &mut Vec<BookInformation> {
 	&mut self.shelving_book
+    }
+
+    pub fn update_shelving_book(&mut self, shelving_book: Vec<BookInformation>) {
+	self.shelving_book = shelving_book;
     }
 
     pub fn fix_collision_horizon(&mut self, ctx: &mut ggez::Context,

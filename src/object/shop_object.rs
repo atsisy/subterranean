@@ -316,6 +316,10 @@ impl SelectShelvingBookUI {
 	
 	self.update_window(ctx);
     }
+
+    pub fn get_select_result(&self) -> (Vec<BookInformation>, Vec<BookInformation>) {
+	(self.boxed_books.clone(), self.shelving_books.clone())
+    }
 }
 
 impl DrawableComponent for SelectShelvingBookUI {

@@ -17,7 +17,7 @@ use ginput::mouse::MouseButton;
 use torifune::numeric;
 use torifune::debug;
 
-use crate::core::{GameData, FontID};
+use crate::core::{GameData, FontID, BookInformation};
 use super::*;
 use crate::object::*;
 use crate::object::map_object::*;
@@ -219,7 +219,7 @@ impl ShelvingDetailContents {
 	}
     }
 
-    pub fn update_contents(&mut self, game_data: &GameData, task_result: &TaskResult) {
+    pub fn update_contents(&mut self, game_data: &GameData, task_result: &TaskResult, player_shelving: &Vec<BookInformation>) {
 	self.book_info.clear();
 
 	let mut book_info_position = numeric::Point2f::new(self.menu_rect.w - 180.0, 150.0);
@@ -227,10 +227,10 @@ impl ShelvingDetailContents {
 							 numeric::Vector2f::new(30.0, 30.0),
 							 ggraphics::Color::from_rgba_u32(0xff));
 	
-	self.book_info = task_result.not_shelved_books.iter()
+	self.book_info = player_shelving.iter()
 	    .map(|book_info| {
 		let vtext = VerticalText::new(
-		    format!("{}\t\t{}", number_to_jk(book_info.billing_number as u64), &book_info.name),
+		    format!("{0:<6}{1}", number_to_jk(book_info.billing_number as u64), &book_info.name),
 		    book_info_position,
 		    numeric::Vector2f::new(1.0, 1.0),
 		    0.0,
@@ -608,8 +608,8 @@ impl ShopDetailMenuContents {
 	}
     }
 
-    pub fn update_contents(&mut self, game_data: &GameData, task_result: &TaskResult) {
-	self.shelving_info.update_contents(game_data, task_result);
+    pub fn update_contents(&mut self, game_data: &GameData, task_result: &TaskResult, player_shelving: &Vec<BookInformation>) {
+	self.shelving_info.update_contents(game_data, task_result, player_shelving);
     }
 
     pub fn detail_menu_is_open(&self) -> bool {
@@ -699,9 +699,9 @@ impl ShopMenuMaster {
 	}
     }
 
-    pub fn update_contents(&mut self, game_data: &GameData, task_result: &TaskResult) {
+    pub fn update_contents(&mut self, game_data: &GameData, task_result: &TaskResult, player_shelving: &Vec<BookInformation>) {
 	self.first_menu.update_menu_contents(game_data, task_result);
-	self.detail_menu.update_contents(game_data, task_result);
+	self.detail_menu.update_contents(game_data, task_result, player_shelving);
     }
 
     pub fn toggle_first_menu(&mut self, t: Clock) {
@@ -785,37 +785,32 @@ impl ShopSpecialObject {
     }
 
     pub fn show_shelving_select_ui(&mut self, ctx: &mut ggez::Context, game_data: &GameData,
-				   task_result: &TaskResult, t: Clock) {
+				   task_result: &TaskResult, player_shelving_books: Vec<BookInformation>, t: Clock) {
 	if self.shelving_select_ui.is_none() {
 	    self.shelving_select_ui = Some(
 		MovableWrap::new(Box::new(
 		    SelectShelvingBookUI::new(
 			ctx, game_data, numeric::Rect::new(0.0, -768.0, 1366.0, 768.0),
-			task_result.not_shelved_books.clone(), Vec::new()
+			task_result.not_shelved_books.clone(), player_shelving_books
 		    )), move_fn::devide_distance(numeric::Point2f::new(0.0, 0.0), 0.4), t));
 	}
     }
 
-    pub fn hide_shelving_select_ui(&mut self, t: Clock) {
+    pub fn hide_shelving_select_ui(&mut self, t: Clock) -> Option<(Vec<BookInformation>, Vec<BookInformation>)> {
 	if let Some(ui) = self.shelving_select_ui.as_mut() {
 	    ui.override_move_func(move_fn::devide_distance(numeric::Point2f::new(0.0, -768.0), 0.4), t);
 	    self.event_list.add_event(Box::new(|shop_special_object, _, _| {
 		shop_special_object.shelving_select_ui = None;
 	    }), t + 7);
+
+	    Some(ui.ref_wrapped_object().get_select_result())
+	} else {
+	    None
 	}
     }
 
     pub fn is_enable_now(&self) -> bool {
 	self.shelving_select_ui.is_some()
-    }
-    
-    pub fn key_action(&mut self, _: &mut ggez::Context, _: &GameData, vkey: VirtualKey, t: Clock) {
-	match vkey {
-	    VirtualKey::Action3 => {
-		self.hide_shelving_select_ui(t);
-	    }
-	    _ => (),
-	}
     }
 
     pub fn mouse_down_action(&mut self, ctx: &mut ggez::Context, game_data: &GameData,
@@ -1220,8 +1215,9 @@ impl ShopScene {
 	match builtin_event.get_event_symbol() {
 	    BuiltinEventSymbol::SelectShelvingBook => {
 		debug::debug_screen_push_text("STUB run shelving book select program");
-		self.shop_special_object.show_shelving_select_ui(ctx, game_data,
-								 &self.task_result, self.get_current_clock());
+		self.shop_special_object.show_shelving_select_ui(ctx, game_data, &self.task_result,
+								 self.player.get_shelving_book().clone(),
+								 self.get_current_clock());
 	    }
 	}
     }
@@ -1283,7 +1279,7 @@ impl ShopScene {
     }
 
     pub fn update_task_result(&mut self, game_data: &GameData, task_result: &TaskResult) {
-	self.shop_menu.update_contents(game_data, task_result);
+	self.shop_menu.update_contents(game_data, task_result, self.player.get_shelving_book());
 	self.task_result = task_result.clone();
     }
 }
@@ -1313,6 +1309,14 @@ impl SceneManager for ShopScene {
 		    self.dark_effect_panel.new_effect(8, self.get_current_clock(), 200, 0);
 		}
 	    },
+	    tdev::VirtualKey::Action3 => {
+		let select_result = self.shop_special_object.hide_shelving_select_ui(self.get_current_clock());
+		if let Some((boxed, shelving)) = select_result {
+		    self.task_result.not_shelved_books = boxed;
+		    self.player.update_shelving_book(shelving);
+		    self.shop_menu.update_contents(game_data, &self.task_result, self.player.get_shelving_book());
+		}
+	    },
             _ => (),
 	}
 
@@ -1320,7 +1324,6 @@ impl SceneManager for ShopScene {
 	    component.virtual_key_event(ctx, KeyboardEvent::FirstPressed, vkey);
 	}
 
-	self.shop_special_object.key_action(ctx, game_data, vkey, self.get_current_clock());
 	self.shop_menu.menu_key_action(ctx, game_data, vkey, self.get_current_clock());
     }
     
