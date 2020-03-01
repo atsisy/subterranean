@@ -744,6 +744,9 @@ impl CopyingRequestPaper {
 					    numeric::Point2f::new(pos.x, 50.0), default_scale,
 					    0.0, 0, font_info);
 	pos.x -= 24.0;
+
+	let mut canvas = SubScreen::new(ctx, rect, 0, ggraphics::BLACK);
+	canvas.set_filter(ggraphics::FilterMode::Nearest);
         
         CopyingRequestPaper {
             title: title_text,
@@ -753,7 +756,7 @@ impl CopyingRequestPaper {
             request_date: request_date,
             return_date: return_date,
             pages: pages,
-            canvas: SubScreen::new(ctx, rect, 0, ggraphics::BLACK),
+            canvas: canvas,
             book_type: book_type,
 	    raw_info: info
         }
@@ -920,6 +923,9 @@ impl BorrowingRecordBookPage {
                                             FontInformation::new(game_data.get_font(FontID::JpFude1),
                                                                  numeric::Vector2f::new(14.0, 14.0),
                                                                  ggraphics::Color::from_rgba_u32(0x000000ff)));
+
+	let mut canvas = SubScreen::new(ctx, rect, 0, ggraphics::BLACK);
+	canvas.set_filter(ggraphics::FilterMode::Nearest);
         
         BorrowingRecordBookPage {
 	    raw_info: BorrowingInformation::new(info.borrowing.clone(), &info.borrower, info.borrow_date, info.return_date),
@@ -929,7 +935,7 @@ impl BorrowingRecordBookPage {
             paper_texture: paper_texture,
             borrow_date: borrow_date,
             return_date: return_date,
-            canvas: SubScreen::new(ctx, rect, 0, ggraphics::BLACK),
+            canvas: canvas,
         }
     }
 

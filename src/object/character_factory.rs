@@ -22,12 +22,11 @@ fn create_playable_doremy1(game_data: &GameData, camera: &numeric::Rect,
         tobj::MovableUniTexture::new(
             game_data.ref_texture(TextureID::LotusBlue),
             mp::map_to_display(&map_position, camera),
-            numeric::Vector2f::new(0.09, 0.09),
-            0.0, 0, move_fn::gravity_move(-5.0, 24.0, 600.0, 0.2),
+            numeric::Vector2f::new(1.2, 1.2),
+            0.0, 0, None,
             0), vec![]),
                    vec![vec![
-                       game_data.ref_texture(TextureID::LotusPink),
-                       game_data.ref_texture(TextureID::LotusBlue)
+                       game_data.ref_texture(TextureID::KosuzuDotFront),
                    ]], 0,
                    TextureSpeedInfo::new(numeric::Vector2f::new(0.0, 0.0),
                                          SpeedBorder {

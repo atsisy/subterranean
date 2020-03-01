@@ -74,6 +74,10 @@ pub enum TextureID {
     SightBackground1,
     ArrowRight,
     ArrowLeft,
+    KosuzuDotFront,
+    KosuzuDotBack,
+    KosuzuDotRight,
+    KosuzuDotLeft,
     Unknown,
 }
 
@@ -113,6 +117,10 @@ impl FromStr for TextureID {
 	    "SightBackground1" => Ok(Self::SightBackground1),
 	    "ArrowRight" => Ok(Self::ArrowRight),
 	    "ArrowLeft" => Ok(Self::ArrowLeft),
+	    "KosuzuDotFront" => Ok(Self::KosuzuDotFront),
+	    "KosuzuDotBack" => Ok(Self::KosuzuDotBack),
+	    "KosuzuDotRight" => Ok(Self::KosuzuDotRight),
+	    "KosuzuDotLeft" => Ok(Self::KosuzuDotLeft),
             _ => Err(())
         }
     }
@@ -147,6 +155,10 @@ impl TextureID {
 	    23 => Some(Self::SightBackground1),
 	    24 => Some(Self::ArrowRight),
 	    25 => Some(Self::ArrowLeft),
+	    26 => Some(Self::KosuzuDotFront),
+	    27 => Some(Self::KosuzuDotBack),
+	    28 => Some(Self::KosuzuDotRight),
+	    29 => Some(Self::KosuzuDotLeft),
             _ => None
         }
     }

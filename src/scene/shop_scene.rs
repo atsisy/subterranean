@@ -928,7 +928,7 @@ impl ShopScene {
 
         let camera = Rc::new(RefCell::new(numeric::Rect::new(0.0, 0.0, 1366.0, 768.0)));
 
-        let map_position = numeric::Point2f::new(800.0, 190.0);
+        let map_position = numeric::Point2f::new(800.0, 230.0);
         
         let player = PlayableCharacter::new(
             character_factory::create_character(character_factory::CharacterFactoryOrder::PlayableDoremy1,
@@ -961,20 +961,20 @@ impl ShopScene {
     ///
     fn check_key_event(&mut self, ctx: &ggez::Context) {
 	if self.map.scenario_box.is_none() {
-	    self.player.reset_speed();
-            if self.key_listener.current_key_status(ctx, &VirtualKey::Right) == tdev::KeyStatus::Pressed {
+	    //self.player.reset_speed();
+            if self.key_listener.current_key_status(ctx, &VirtualKey::RightSub) == tdev::KeyStatus::Pressed {
 		self.right_key_handler(ctx);
             }
 
-            if self.key_listener.current_key_status(ctx, &VirtualKey::Left) == tdev::KeyStatus::Pressed {
+            if self.key_listener.current_key_status(ctx, &VirtualKey::LeftSub) == tdev::KeyStatus::Pressed {
 		self.left_key_handler(ctx);
             }
 	    
-            if self.key_listener.current_key_status(ctx, &VirtualKey::Up) == tdev::KeyStatus::Pressed {
+            if self.key_listener.current_key_status(ctx, &VirtualKey::UpSub) == tdev::KeyStatus::Pressed {
 		self.up_key_handler(ctx);
             }
 	    
-	    if self.key_listener.current_key_status(ctx, &VirtualKey::Down) == tdev::KeyStatus::Pressed {
+	    if self.key_listener.current_key_status(ctx, &VirtualKey::DownSub) == tdev::KeyStatus::Pressed {
 		self.down_key_handler(ctx);
             }
 	}
@@ -1203,7 +1203,7 @@ impl ShopScene {
 
     fn move_playable_character(&mut self, ctx: &mut ggez::Context, t: Clock) {
         // キーのチェック
-        //self.check_key_event(ctx);
+        self.check_key_event(ctx);
         
         self.player.get_mut_character_object().update_texture(t);
 
@@ -1214,7 +1214,7 @@ impl ShopScene {
     pub fn run_builtin_event(&mut self, ctx: &mut ggez::Context, game_data: &GameData, builtin_event: BuiltinEvent) {
 	match builtin_event.get_event_symbol() {
 	    BuiltinEventSymbol::SelectShelvingBook => {
-		debug::debug_screen_push_text("STUB run shelving book select program");
+		self.dark_effect_panel.new_effect(8, self.get_current_clock(), 0, 200);
 		self.shop_special_object.show_shelving_select_ui(ctx, game_data, &self.task_result,
 								 self.player.get_shelving_book().clone(),
 								 self.get_current_clock());
@@ -1315,6 +1315,7 @@ impl SceneManager for ShopScene {
 		    self.task_result.not_shelved_books = boxed;
 		    self.player.update_shelving_book(shelving);
 		    self.shop_menu.update_contents(game_data, &self.task_result, self.player.get_shelving_book());
+		    self.dark_effect_panel.new_effect(8, self.get_current_clock(), 200, 0);
 		}
 	    },
             _ => (),
