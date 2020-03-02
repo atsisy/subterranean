@@ -70,7 +70,6 @@ impl CharacterGroup {
                 
                 ShopScene::check_collision_vertical(ctx, character.get_mut_character_object(), tile_map, t);
                 character.get_mut_character_object().update_display_position(camera);
-                
 
                 character.move_map_current_speed_x();
                 character.get_mut_character_object().update_display_position(camera);

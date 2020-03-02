@@ -20,9 +20,9 @@ fn create_playable_doremy1(game_data: &GameData, camera: &numeric::Rect,
                            map_position: numeric::Point2f) -> MapObject {
     MapObject::new(tobj::SimpleObject::new(
         tobj::MovableUniTexture::new(
-            game_data.ref_texture(TextureID::LotusBlue),
+            game_data.ref_texture(TextureID::KosuzuDotFront),
             mp::map_to_display(&map_position, camera),
-            numeric::Vector2f::new(1.2, 1.2),
+            numeric::Vector2f::new(1.5, 1.5),
             0.0, 0, None,
             0), vec![]),
                    vec![vec![
@@ -35,5 +35,6 @@ fn create_playable_doremy1(game_data: &GameData, camera: &numeric::Rect,
                                              positive_y: 6.0,
                                              negative_y: -6.0,
                                          }), map_position,
+		   numeric::Rect::new(0.0, 0.6, 1.0, 1.0),
                    5)
 }

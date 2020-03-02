@@ -253,18 +253,38 @@ pub struct MapObject {
     object: TextureAnimation,
     speed_info: TextureSpeedInfo,
     map_position: TwoStepPoint,
+    collision_crop: numeric::Rect,
 }
 
 impl MapObject {
     pub fn new(obj: SimpleObject, textures: Vec<Vec<Rc<ggraphics::Image>>>,
                mode: usize, speed_info: TextureSpeedInfo, map_position: numeric::Point2f,
-               frame_speed: Clock) -> MapObject {
+               collision_crop: numeric::Rect, frame_speed: Clock) -> MapObject {
         MapObject {
             last_position: obj.get_position(),
             map_position: TwoStepPoint { previous: map_position, current: map_position },
             speed_info: speed_info,
             object: TextureAnimation::new(obj, textures, mode, frame_speed),
+	    collision_crop: collision_crop,
         }
+    }
+
+    pub fn get_collision_area(&self, ctx: &mut ggez::Context) -> numeric::Rect {
+	let croppped_size = self.get_collision_size(ctx);
+	let drawing_size = self.obj().get_drawing_size(ctx);
+	let position = self.obj().get_position();
+	
+	numeric::Rect::new(position.x + (drawing_size.x * self.collision_crop.x),
+			   position.y + (drawing_size.y * self.collision_crop.y),
+			   croppped_size.x,
+			   croppped_size.y)
+    }
+
+    pub fn get_collision_size(&self, ctx: &mut ggez::Context) -> numeric::Vector2f {
+	let drawing_size = self.obj().get_drawing_size(ctx);
+	
+	numeric::Vector2f::new(drawing_size.x * (self.collision_crop.w - self.collision_crop.x),
+			       drawing_size.y * (self.collision_crop.h - self.collision_crop.y))
     }
 
     pub fn speed_info(&self) -> &TextureSpeedInfo {
@@ -327,7 +347,7 @@ impl MapObject {
                             ctx: &mut ggez::Context,
                             info: &CollisionInformation,
                             _: Clock) -> f32 {
-        let area = self.object.get_object().get_drawing_size(ctx);
+        let area = self.get_collision_size(ctx);
         info.object1_position.unwrap().y - (info.object2_position.unwrap().y + area.y) - 1.0
     }
 
@@ -339,7 +359,7 @@ impl MapObject {
                            ctx: &mut ggez::Context,
                            info: &CollisionInformation,
                            _: Clock) -> f32 {
-        let area = self.object.get_object().get_drawing_size(ctx);
+        let area = self.get_collision_size(ctx);
         (info.object1_position.unwrap().x - 2.0) - (info.object2_position.unwrap().x + area.x)
     }
 
@@ -399,8 +419,8 @@ impl MapObject {
     }
 
     pub fn check_collision_with_character(&self, ctx: &mut ggez::Context, chara: &MapObject) -> CollisionInformation {
-        let a1 = self.obj().get_drawing_area(ctx);
-        let a2 = chara.obj().get_drawing_area(ctx);
+        let a1 = self.get_collision_area(ctx);
+        let a2 = chara.get_collision_area(ctx);
 
         if a1.overlaps(&a2) {
             CollisionInformation::new_collision(a1, a2,
