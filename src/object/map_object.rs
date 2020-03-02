@@ -9,6 +9,7 @@ use torifune::distance;
 use torifune::numeric;
 use torifune::graphics::*;
 use torifune::graphics::object::*;
+use torifune::debug;
 
 use crate::core::map_parser as mp;
 use crate::object::collision::*;
@@ -295,6 +296,10 @@ impl MapObject {
         &mut self.speed_info
     }
 
+    pub fn change_animation_mode(&mut self, mode: usize) {
+	self.object.change_mode(mode, AnimationType::Loop, mode);
+    }
+
     pub fn obj(&self) -> &SimpleObject {
         self.object.get_object()
     }
@@ -488,6 +493,11 @@ impl PlayableCharacter {
         self.character.get_map_position()
     }
 
+    pub fn get_center_map_position(&self, ctx: &mut ggez::Context) -> numeric::Point2f {
+	let drawing_size = self.character.obj().get_drawing_size(ctx);
+        self.get_map_position() + numeric::Vector2f::new(drawing_size.x / 2.0, drawing_size.y / 2.0)
+    }
+
     pub fn get_character_object(&self) -> &MapObject {
         &self.character
     }
@@ -550,6 +560,10 @@ impl PlayableCharacter {
             self.status.hp -= damage.hp_damage;
             self.status.mp -= damage.mp_damage;
         }
+    }
+
+    pub fn get_speed(&self) -> numeric::Vector2f {
+	self.character.speed_info().get_speed()
     }
 
     pub fn set_speed(&mut self, speed: numeric::Vector2f) {

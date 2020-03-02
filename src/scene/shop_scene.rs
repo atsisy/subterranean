@@ -1000,19 +1000,23 @@ impl ShopScene {
         self.camera.borrow_mut().y = offset.y;
     }
     
-    fn right_key_handler(&mut self, _ctx: &ggez::Context) {
+    fn right_key_handler(&mut self, ctx: &ggez::Context) {
+	self.player.get_mut_character_object().change_animation_mode(2);
 	self.player.set_speed_x(4.0);
     }
 
     fn left_key_handler(&mut self, _ctx: &ggez::Context) {
+	self.player.get_mut_character_object().change_animation_mode(3);
 	self.player.set_speed_x(-4.0);
     }
 
     fn up_key_handler(&mut self, _ctx: &ggez::Context) {
+	self.player.get_mut_character_object().change_animation_mode(1);
 	self.player.set_speed_y(-4.0);
     }
 
     fn down_key_handler(&mut self, _ctx: &ggez::Context) {
+	self.player.get_mut_character_object().change_animation_mode(0);
 	self.player.set_speed_y(4.0);
     }
 
@@ -1227,7 +1231,8 @@ impl ShopScene {
 			       trigger: EventTrigger) {
 	let t = self.get_current_clock();
 	let target_event = self.map.check_event_panel(trigger,
-						      self.player.get_map_position(), self.get_current_clock());
+						      self.player.get_center_map_position(ctx),
+						      self.get_current_clock());
 	
 	if let Some(event_element) = target_event {
 	    match event_element {
@@ -1257,6 +1262,40 @@ impl ShopScene {
 	}
     }
 
+    fn update_playable_character_texture(&mut self) {
+	let speed = self.player.get_speed();
+	
+	if speed.x > 0.0 {
+	    if speed.y > 0.0 {
+		if speed.x.abs() < speed.y.abs() {
+		    self.player.get_mut_character_object().change_animation_mode(0);
+		} else {
+		    self.player.get_mut_character_object().change_animation_mode(2);
+		}
+	    } else {
+		if speed.x.abs() < speed.y.abs() {
+		    self.player.get_mut_character_object().change_animation_mode(1);
+		} else {
+		    self.player.get_mut_character_object().change_animation_mode(2);
+		}
+	    }
+	} else {
+	    if speed.y > 0.0 {
+		if speed.x.abs() < speed.y.abs() {
+		    self.player.get_mut_character_object().change_animation_mode(0);
+		} else {
+		    self.player.get_mut_character_object().change_animation_mode(3);
+		}
+	    } else {
+		if speed.x.abs() < speed.y.abs() {
+		    self.player.get_mut_character_object().change_animation_mode(1);
+		} else {
+		    self.player.get_mut_character_object().change_animation_mode(3);
+		}
+	    }
+	}
+    }
+
     pub fn start_mouse_move(&mut self,
                             ctx: &mut ggez::Context,
                             point: numeric::Point2f) {
@@ -1271,6 +1310,7 @@ impl ShopScene {
 	}
 	
 	self.player.set_speed(speed);
+	self.update_playable_character_texture();
     }
 
     pub fn switched_and_restart(&mut self) {
@@ -1342,11 +1382,13 @@ impl SceneManager for ShopScene {
     }
 
     fn mouse_motion_event(&mut self,
-                          _ctx: &mut ggez::Context,
+                          ctx: &mut ggez::Context,
                           _game_data: &GameData,
-                          _point: numeric::Point2f,
+                          point: numeric::Point2f,
                           _offset: numeric::Vector2f) {
-
+	if ggez::input::mouse::button_pressed(ctx, MouseButton::Left) {
+	    self.start_mouse_move(ctx, point);
+	}
     }
 
     fn mouse_button_down_event(&mut self,
@@ -1356,7 +1398,6 @@ impl SceneManager for ShopScene {
                                point: numeric::Point2f) {
 	match button {
 	    MouseButton::Left => {
-		self.start_mouse_move(ctx, point);
 		let t = self.get_current_clock();
 		for shop_object in &mut self.shop_object_list {
 		    shop_object.on_click(ctx, game_data, t, button, point);
@@ -1374,8 +1415,14 @@ impl SceneManager for ShopScene {
     fn mouse_button_up_event(&mut self,
                              _ctx: &mut ggez::Context,
                              _game_data: &GameData,
-                             _button: MouseButton,
+                             button: MouseButton,
                              _point: numeric::Point2f) {
+	match button {
+	    MouseButton::Left => {
+		self.player.reset_speed();
+	    },
+	    _ => (),
+	}
     }
 
     fn pre_process(&mut self, ctx: &mut ggez::Context, game_data: &GameData) {

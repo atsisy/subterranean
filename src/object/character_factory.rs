@@ -25,9 +25,12 @@ fn create_playable_doremy1(game_data: &GameData, camera: &numeric::Rect,
             numeric::Vector2f::new(1.5, 1.5),
             0.0, 0, None,
             0), vec![]),
-                   vec![vec![
-                       game_data.ref_texture(TextureID::KosuzuDotFront),
-                   ]], 0,
+                   vec![
+		       vec![game_data.ref_texture(TextureID::KosuzuDotFront)],
+		       vec![game_data.ref_texture(TextureID::KosuzuDotBack)],
+		       vec![game_data.ref_texture(TextureID::KosuzuDotRight)],
+		       vec![game_data.ref_texture(TextureID::KosuzuDotLeft)],
+		   ], 0,
                    TextureSpeedInfo::new(numeric::Vector2f::new(0.0, 0.0),
                                          SpeedBorder {
                                              positive_x: 6.0,
@@ -35,6 +38,6 @@ fn create_playable_doremy1(game_data: &GameData, camera: &numeric::Rect,
                                              positive_y: 6.0,
                                              negative_y: -6.0,
                                          }), map_position,
-		   numeric::Rect::new(0.0, 0.6, 1.0, 1.0),
+		   numeric::Rect::new(0.02, 0.6, 0.98, 1.0),
                    5)
 }
