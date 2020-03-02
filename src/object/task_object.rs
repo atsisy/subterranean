@@ -41,7 +41,7 @@ impl TaskTable {
 	       desk_rect: numeric::Rect,
 	       shelving_box_rect: numeric::Rect,
 	       t: Clock) -> Self {
-	let sight = SuzuMiniSight::new(ctx, game_data, sight_rect);
+	let sight = SuzuMiniSight::new(ctx, game_data, sight_rect, t);
         let mut desk = DeskObjects::new(ctx, game_data, desk_rect);
         
         desk.add_object(DeskObject::new(
@@ -153,32 +153,33 @@ impl TaskTable {
 
     fn apply_desk2box_point_convertion(&mut self, ctx: &mut ggez::Context, obj: &mut DeskObject) {
 	// オブジェクトの座標を取得
-	let mut obj_p = obj.get_object().get_position();
+	let mut obj_p = obj.get_object().get_center(ctx);
 	
 	// Y座標は変更せず, X座標をCanvasの右端に来るように設定
 	obj_p.x = 0.0;
-	
-        let p = self.desk_edge_to_sight_edge(ctx, obj_p);
 
 	obj.enable_small();
 
+	obj.get_object_mut().make_center(ctx, obj_p);
+
 	// 新しい座標を設定
-        obj.get_object_mut().make_center(ctx, p);
+        obj.get_object_mut().make_center(ctx, obj_p);
     }
 
     fn apply_box2desk_point_convertion(&mut self, ctx: &mut ggez::Context, obj: &mut DeskObject) {
 	// オブジェクトの座標を取得
-	let mut obj_p = obj.get_object().get_position();
+	let mut obj_p = obj.get_object().get_center(ctx);
 	
 	// Y座標は変更せず, X座標をCanvasの左端に来るように設定
 	obj_p.x = self.desk.canvas.get_drawing_size(ctx).x;
-	
-        let p = self.desk_edge_to_sight_edge(ctx, obj_p);
+	debug::debug_screen_push_text(&format!("y: {}", obj_p.y));
 
-	obj.enable_small();
+	obj.enable_large();
+
+	obj.get_object_mut().make_center(ctx, obj_p);
 
 	// 新しい座標を設定
-        obj.get_object_mut().make_center(ctx, p);
+        obj.get_object_mut().make_center(ctx, obj_p);
     }
 
     ///
@@ -281,8 +282,8 @@ impl TaskTable {
 	self.desk.add_customer_object_vec(converted);
     }
 
-    pub fn update(&mut self, ctx: &mut ggez::Context, _: &GameData, t: Clock) {
-	self.sight.update(ctx, t);
+    pub fn update(&mut self, ctx: &mut ggez::Context, game_data: &GameData, t: Clock) {
+	self.sight.update(ctx, game_data, t);
 	self.desk.update(ctx, t);
 	self.shelving_box.update(ctx, t);
 	self.check_sight_drop_to_desk(ctx, t);
@@ -314,7 +315,12 @@ impl TaskTable {
 		0.0, 0, None, t),
 	    vec![effect::appear_bale_down_from_top(50, t), effect::fade_in(50, t)]);
 	new_silhouette.set_alpha(0.0);
-	self.sight.replace_character_silhouette(new_silhouette, info.borrower.to_string());
+	self.sight.silhouette_new_customer_update(
+	    ctx,
+	    new_silhouette, info.borrower.to_string(),
+	    CustomerDialogue::new(vec!["こんにちは".to_string(),
+				       "この本貸してください".to_string()],
+				  vec![100, 100]), t);
     }
 
     fn start_returning_customer_event(&mut self,
@@ -339,7 +345,12 @@ impl TaskTable {
 		0.0, 0, None, t),
 	    vec![effect::appear_bale_down_from_top(50, t), effect::fade_in(50, t)]);
 	new_silhouette.set_alpha(0.0);
-	self.sight.replace_character_silhouette(new_silhouette, info.borrower.to_string());
+	self.sight.silhouette_new_customer_update(
+	    ctx,
+	    new_silhouette, info.borrower.to_string(),
+	    CustomerDialogue::new(vec!["こんにちは".to_string(),
+				       "本の返却お願いします".to_string()],
+				  vec![100, 100]), t);
     }
 
     fn start_copying_request_event(&mut self,
@@ -373,7 +384,12 @@ impl TaskTable {
 	self.desk.add_customer_object(paper_obj);
 	
 	new_silhouette.set_alpha(0.0);
-	self.sight.replace_character_silhouette(new_silhouette, info.customer.to_string());
+	self.sight.silhouette_new_customer_update(
+	    ctx,
+	    new_silhouette, info.customer.to_string(),
+	    CustomerDialogue::new(vec!["こんにちは".to_string(),
+				       "この本の写本 お願いできますか".to_string()],
+				  vec![100, 100]), t);
     }
 
     pub fn start_customer_event(&mut self,

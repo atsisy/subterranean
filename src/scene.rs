@@ -134,8 +134,8 @@ impl SceneManager for NullScene {
 /// run_time時に実行される処理
 ///
 pub struct DelayEvent<T> {
-    run_time: Clock,
-    func: Box<dyn FnOnce(&mut T, &mut ggez::Context, &GameData) -> ()>,
+    pub run_time: Clock,
+    pub func: Box<dyn FnOnce(&mut T, &mut ggez::Context, &GameData) -> ()>,
 }
 
 impl<T> DelayEvent<T> {
