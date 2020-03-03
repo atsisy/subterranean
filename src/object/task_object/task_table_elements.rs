@@ -2458,15 +2458,13 @@ impl TextBalloon {
 
         let vtext_size = vtext.get_drawing_size(ctx);
 
-        debug::debug_screen_push_text(&format!("{:?}", vtext_size));
-
         vtext.make_center(
             ctx,
             numeric::Point2f::new((vtext_size.x + 80.0) / 2.0, (vtext_size.y + 60.0) / 2.0),
         );
 
         let ellipse = shape::Ellipse::new(
-            numeric::Point2f::new((vtext_size.x + 80.0) / 2.0, (vtext_size.y + 60.0) / 2.0),
+            numeric::Point2f::new((vtext_size.x + 100.0) / 2.0, (vtext_size.y + 60.0) / 2.0),
             (vtext_size.x + 60.0) / 2.0,
             (vtext_size.y + 50.0) / 2.0,
             0.1,
@@ -2474,7 +2472,7 @@ impl TextBalloon {
             ggraphics::Color::from_rgba_u32(0xffffeeff),
         );
         let ellipse_outer = shape::Ellipse::new(
-            numeric::Point2f::new((vtext_size.x + 80.0) / 2.0, (vtext_size.y + 60.0) / 2.0),
+            numeric::Point2f::new((vtext_size.x + 100.0) / 2.0, (vtext_size.y + 60.0) / 2.0),
             ((vtext_size.x + 60.0) / 2.0) + 5.0,
             ((vtext_size.y + 50.0) / 2.0) + 5.0,
             0.1,
@@ -2498,10 +2496,8 @@ impl TextBalloon {
         self.text.replace_text(text.to_string());
         let vtext_size = self.text.get_drawing_size(ctx);
 
-        debug::debug_screen_push_text(&format!("{:?}", vtext_size));
-
         self.balloon_inner = shape::Ellipse::new(
-            numeric::Point2f::new((vtext_size.x + 80.0) / 2.0, (vtext_size.y + 60.0) / 2.0),
+            numeric::Point2f::new((vtext_size.x + 100.0) / 2.0, (vtext_size.y + 60.0) / 2.0),
             (vtext_size.x + 60.0) / 2.0,
             (vtext_size.y + 50.0) / 2.0,
             0.1,
@@ -2509,13 +2505,18 @@ impl TextBalloon {
             ggraphics::Color::from_rgba_u32(0xffffeeff),
         );
         self.balloon_outer = shape::Ellipse::new(
-            numeric::Point2f::new((vtext_size.x + 80.0) / 2.0, (vtext_size.y + 60.0) / 2.0),
+            numeric::Point2f::new((vtext_size.x + 100.0) / 2.0, (vtext_size.y + 60.0) / 2.0),
             ((vtext_size.x + 60.0) / 2.0) + 5.0,
             ((vtext_size.y + 50.0) / 2.0) + 5.0,
             0.1,
             ggraphics::DrawMode::fill(),
             ggraphics::Color::from_rgba_u32(0x371905ff),
         );
+
+	self.text.make_center(
+            ctx,
+	    numeric::Point2f::new((vtext_size.x + 100.0) / 2.0, (vtext_size.y + 60.0) / 2.0),
+	);
 
         self.update_mesh(ctx);
     }
@@ -2566,7 +2567,6 @@ impl TextureObject for TextBalloon {
     }
 
     fn set_alpha(&mut self, alpha: f32) {
-        debug::debug_screen_push_text(&format!("balloon alpha: {}", alpha));
         self.text.set_alpha(alpha);
         self.balloon_inner.set_alpha(alpha);
         self.balloon_outer.set_alpha(alpha);
