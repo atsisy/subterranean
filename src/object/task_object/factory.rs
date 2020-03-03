@@ -2,7 +2,7 @@ use torifune::core::Clock;
 
 use crate::core::util;
 use crate::core::*;
-use crate::object::task_object::task_table_elements::*;
+use crate::object::task_object::tt_sub_component::*;
 use crate::object::task_object::*;
 
 pub fn create_dobj_random(

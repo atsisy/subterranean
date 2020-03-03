@@ -10,11 +10,12 @@ use super::*;
 use crate::object::Clickable;
 
 use crate::core::{GameData, MouseActionRecord, MouseInformation, TextureID};
-use crate::object::task_object::task_table_elements::*;
 use crate::object::task_object::*;
 use crate::scene::{SceneID, SceneTransition};
 
 use crate::object::task_result_object::*;
+use crate::object::task_object::tt_sub_component::*;
+use crate::object::task_object::tt_main_component::*;
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum TaskSceneStatus {

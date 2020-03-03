@@ -10,7 +10,7 @@ use torifune::numeric;
 use crate::core::{BookInformation, GameData};
 use crate::scene::*;
 
-use crate::object::task_object::task_table_elements::CopyingRequestInformation;
+use crate::object::task_object::tt_sub_component::CopyingRequestInformation;
 use crate::scene::shop_scene::ShopScene;
 use suzuna_sub_scene::TaskResultScene;
 use suzuna_sub_scene::TaskScene;

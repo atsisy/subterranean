@@ -1,5 +1,6 @@
 pub mod factory;
-pub mod task_table_elements;
+pub mod tt_sub_component;
+pub mod tt_main_component;
 
 use std::rc::Rc;
 
@@ -19,7 +20,8 @@ use torifune::impl_texture_object_for_wrapped;
 use torifune::numeric;
 
 use crate::object::{effect, move_fn};
-use task_table_elements::*;
+use tt_sub_component::*;
+use tt_main_component::*;
 
 use super::Clickable;
 use crate::core::{GameData, TextureID};
