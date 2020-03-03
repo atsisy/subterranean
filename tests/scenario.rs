@@ -13,7 +13,11 @@ fn check_scenario_parsing() {
 
     for elem in array {
         let table = elem.as_table().unwrap();
-        println!("fpc = {}, text = {}", table["fpc"].as_integer().unwrap(), table["text"].as_str().unwrap());
+        println!(
+            "fpc = {}, text = {}",
+            table["fpc"].as_integer().unwrap(),
+            table["text"].as_str().unwrap()
+        );
     }
 
     let tachie_array = root["using-tachie"].as_array().unwrap();

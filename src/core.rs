@@ -1,27 +1,27 @@
 pub mod map_parser;
 pub mod util;
 
-use ggez::*;
 use ggez::graphics as ggraphics;
+use ggez::*;
 
-use torifune::core::Clock;
-use torifune::device as tdev;
-use torifune::numeric;
-use torifune::hash;
 use tdev::ProgramableKey;
-use torifune::graphics::object::sub_screen::SubScreen;
-use torifune::graphics::object::sub_screen;
-use torifune::graphics::DrawableComponent;
-use torifune::graphics::object::{FontInformation, TextureObject};
+use torifune::core::Clock;
 use torifune::debug;
+use torifune::device as tdev;
+use torifune::graphics::object::sub_screen;
+use torifune::graphics::object::sub_screen::SubScreen;
+use torifune::graphics::object::{FontInformation, TextureObject};
+use torifune::graphics::DrawableComponent;
+use torifune::hash;
+use torifune::numeric;
 
 use ggez::input as ginput;
 use ggez::input::keyboard::*;
 use ginput::mouse::MouseButton;
 
-use std::rc::Rc;
 use std::collections::HashMap;
 use std::collections::VecDeque;
+use std::rc::Rc;
 use std::str::FromStr;
 
 use crate::scene;
@@ -104,24 +104,24 @@ impl FromStr for TextureID {
             "MiddleBook1" => Ok(Self::MiddleBook1),
             "MiddleBook2" => Ok(Self::MiddleBook2),
             "MiddleBook3" => Ok(Self::MiddleBook3),
-	    "Wood1" => Ok(Self::Wood1),
-	    "WafuTexture1" => Ok(Self::WafuTexture1),
-	    "WafuTexture2" => Ok(Self::WafuTexture2),
-	    "Chobo1" => Ok(Self::Chobo1),
-	    "ChoicePanel1" => Ok(Self::ChoicePanel1),
-	    "ChoicePanel2" => Ok(Self::ChoicePanel2),
-	    "ChoicePanel3" => Ok(Self::ChoicePanel3),
-	    "ChoicePanel4" => Ok(Self::ChoicePanel4),
-	    "ChoicePanel5" => Ok(Self::ChoicePanel5),
-	    "JunkoTachieDefault" => Ok(Self::JunkoTachieDefault),
-	    "SightBackground1" => Ok(Self::SightBackground1),
-	    "ArrowRight" => Ok(Self::ArrowRight),
-	    "ArrowLeft" => Ok(Self::ArrowLeft),
-	    "KosuzuDotFront" => Ok(Self::KosuzuDotFront),
-	    "KosuzuDotBack" => Ok(Self::KosuzuDotBack),
-	    "KosuzuDotRight" => Ok(Self::KosuzuDotRight),
-	    "KosuzuDotLeft" => Ok(Self::KosuzuDotLeft),
-            _ => Err(())
+            "Wood1" => Ok(Self::Wood1),
+            "WafuTexture1" => Ok(Self::WafuTexture1),
+            "WafuTexture2" => Ok(Self::WafuTexture2),
+            "Chobo1" => Ok(Self::Chobo1),
+            "ChoicePanel1" => Ok(Self::ChoicePanel1),
+            "ChoicePanel2" => Ok(Self::ChoicePanel2),
+            "ChoicePanel3" => Ok(Self::ChoicePanel3),
+            "ChoicePanel4" => Ok(Self::ChoicePanel4),
+            "ChoicePanel5" => Ok(Self::ChoicePanel5),
+            "JunkoTachieDefault" => Ok(Self::JunkoTachieDefault),
+            "SightBackground1" => Ok(Self::SightBackground1),
+            "ArrowRight" => Ok(Self::ArrowRight),
+            "ArrowLeft" => Ok(Self::ArrowLeft),
+            "KosuzuDotFront" => Ok(Self::KosuzuDotFront),
+            "KosuzuDotBack" => Ok(Self::KosuzuDotBack),
+            "KosuzuDotRight" => Ok(Self::KosuzuDotRight),
+            "KosuzuDotLeft" => Ok(Self::KosuzuDotLeft),
+            _ => Err(()),
         }
     }
 }
@@ -143,23 +143,23 @@ impl TextureID {
             11 => Some(Self::MiddleBook2),
             12 => Some(Self::MiddleBook3),
             13 => Some(Self::Wood1),
-	    14 => Some(Self::WafuTexture1),
-	    15 => Some(Self::WafuTexture2),
-	    16 => Some(Self::Chobo1),
-	    17 => Some(Self::ChoicePanel1),
-	    18 => Some(Self::ChoicePanel2),
-	    19 => Some(Self::ChoicePanel3),
-	    20 => Some(Self::ChoicePanel4),
-	    21 => Some(Self::ChoicePanel5),
-	    22 => Some(Self::JunkoTachieDefault),
-	    23 => Some(Self::SightBackground1),
-	    24 => Some(Self::ArrowRight),
-	    25 => Some(Self::ArrowLeft),
-	    26 => Some(Self::KosuzuDotFront),
-	    27 => Some(Self::KosuzuDotBack),
-	    28 => Some(Self::KosuzuDotRight),
-	    29 => Some(Self::KosuzuDotLeft),
-            _ => None
+            14 => Some(Self::WafuTexture1),
+            15 => Some(Self::WafuTexture2),
+            16 => Some(Self::Chobo1),
+            17 => Some(Self::ChoicePanel1),
+            18 => Some(Self::ChoicePanel2),
+            19 => Some(Self::ChoicePanel3),
+            20 => Some(Self::ChoicePanel4),
+            21 => Some(Self::ChoicePanel5),
+            22 => Some(Self::JunkoTachieDefault),
+            23 => Some(Self::SightBackground1),
+            24 => Some(Self::ArrowRight),
+            25 => Some(Self::ArrowLeft),
+            26 => Some(Self::KosuzuDotFront),
+            27 => Some(Self::KosuzuDotBack),
+            28 => Some(Self::KosuzuDotRight),
+            29 => Some(Self::KosuzuDotLeft),
+            _ => None,
         }
     }
 }
@@ -170,9 +170,11 @@ impl TextureID {
     }
 }
 
-pub const LARGE_BOOK_TEXTURE: [TextureID; 3] = [TextureID::LargeBook1,
-                                              TextureID::LargeBook2,
-                                              TextureID::LargeBook3];
+pub const LARGE_BOOK_TEXTURE: [TextureID; 3] = [
+    TextureID::LargeBook1,
+    TextureID::LargeBook2,
+    TextureID::LargeBook3,
+];
 
 #[derive(Debug, Deserialize, Clone)]
 pub struct BookInformation {
@@ -200,14 +202,14 @@ pub struct BookShelfInformation {
 
 impl BookShelfInformation {
     pub fn new(begin: u16, end: u16) -> Self {
-	BookShelfInformation {
-	    billing_number_begin: begin,
-	    billing_number_end: end,
-	}
+        BookShelfInformation {
+            billing_number_begin: begin,
+            billing_number_end: end,
+        }
     }
 
     pub fn contains_number(&self, inquire_number: u16) -> bool {
-	self.billing_number_begin <= inquire_number && inquire_number <= self.billing_number_end
+        self.billing_number_begin <= inquire_number && inquire_number <= self.billing_number_end
     }
 }
 
@@ -226,7 +228,6 @@ pub struct RawConfigFile {
     customers_name: Vec<String>,
     books_information: Vec<BookInformation>,
     map_information: Vec<MapConstractData>,
-    
 }
 
 impl RawConfigFile {
@@ -235,7 +236,7 @@ impl RawConfigFile {
             Ok(s) => s,
             Err(e) => panic!("Failed to read file: {}", e),
         };
-        
+
         let raw_data: Result<RawConfigFile, toml::de::Error> = toml::from_str(&s);
         match raw_data {
             Ok(p) => p,
@@ -258,7 +259,7 @@ impl GameData {
 
         let mut textures = Vec::new();
         let mut fonts = Vec::new();
-        
+
         for texture_path in &src_file.texture_paths {
             print!("Loading texture {}...", texture_path);
             textures.push(Rc::new(ggraphics::Image::new(ctx, texture_path).unwrap()));
@@ -272,14 +273,14 @@ impl GameData {
         }
 
         println!("{:?}", src_file.books_information);
-	println!("{:?}", src_file.map_information);
+        println!("{:?}", src_file.map_information);
 
         GameData {
             textures: textures,
             fonts: fonts,
             customers_name: src_file.customers_name,
             books_information: src_file.books_information,
-	    map_data: src_file.map_information,
+            map_data: src_file.map_information,
         }
     }
 
@@ -298,20 +299,26 @@ impl GameData {
     }
 
     pub fn get_map_data(&self, _id: u32) -> Option<MapConstractData> {
-	for map_data in &self.map_data {
-	    println!("FIXME!!");
-	    return Some(map_data.clone())
-	}
+        for map_data in &self.map_data {
+            println!("FIXME!!");
+            return Some(map_data.clone());
+        }
 
-	None
+        None
     }
 
     pub fn book_random_select(&self) -> &BookInformation {
-        &self.books_information.get(rand::random::<usize>() % self.books_information.len()).unwrap()
+        &self
+            .books_information
+            .get(rand::random::<usize>() % self.books_information.len())
+            .unwrap()
     }
 
     pub fn customer_random_select(&self) -> &str {
-        &self.customers_name.get(rand::random::<usize>() % self.customers_name.len()).unwrap()
+        &self
+            .customers_name
+            .get(rand::random::<usize>() % self.customers_name.len())
+            .unwrap()
     }
 }
 
@@ -323,16 +330,13 @@ pub struct MouseActionRecord {
 
 impl MouseActionRecord {
     fn new(point: numeric::Point2f, t: Clock) -> MouseActionRecord {
-        MouseActionRecord {
-            point: point,
-            t: t
-        }
+        MouseActionRecord { point: point, t: t }
     }
 
     fn new_empty() -> MouseActionRecord {
         MouseActionRecord {
             point: numeric::Point2f::new(0.0, 0.0),
-            t: 0
+            t: 0,
         }
     }
 }
@@ -346,24 +350,33 @@ pub struct MouseInformation {
 }
 
 impl MouseInformation {
-
     pub fn new() -> MouseInformation {
         MouseInformation {
-            last_clicked: hash![(MouseButton::Left, MouseActionRecord::new_empty()),
-                                (MouseButton::Right, MouseActionRecord::new_empty()),
-                                (MouseButton::Middle, MouseActionRecord::new_empty())],
-            last_dragged: hash![(MouseButton::Left, MouseActionRecord::new_empty()),
-                                (MouseButton::Right, MouseActionRecord::new_empty()),
-                                (MouseButton::Middle, MouseActionRecord::new_empty())],
-	    last_down: hash![(MouseButton::Left, MouseActionRecord::new_empty()),
-				(MouseButton::Right, MouseActionRecord::new_empty()),
-                             (MouseButton::Middle, MouseActionRecord::new_empty())],
-	    last_up: hash![(MouseButton::Left, MouseActionRecord::new_empty()),
-			     (MouseButton::Right, MouseActionRecord::new_empty()),
-                             (MouseButton::Middle, MouseActionRecord::new_empty())],
-            dragging: hash![(MouseButton::Left, false),
-                            (MouseButton::Right, false),
-                            (MouseButton::Middle, false)]
+            last_clicked: hash![
+                (MouseButton::Left, MouseActionRecord::new_empty()),
+                (MouseButton::Right, MouseActionRecord::new_empty()),
+                (MouseButton::Middle, MouseActionRecord::new_empty())
+            ],
+            last_dragged: hash![
+                (MouseButton::Left, MouseActionRecord::new_empty()),
+                (MouseButton::Right, MouseActionRecord::new_empty()),
+                (MouseButton::Middle, MouseActionRecord::new_empty())
+            ],
+            last_down: hash![
+                (MouseButton::Left, MouseActionRecord::new_empty()),
+                (MouseButton::Right, MouseActionRecord::new_empty()),
+                (MouseButton::Middle, MouseActionRecord::new_empty())
+            ],
+            last_up: hash![
+                (MouseButton::Left, MouseActionRecord::new_empty()),
+                (MouseButton::Right, MouseActionRecord::new_empty()),
+                (MouseButton::Middle, MouseActionRecord::new_empty())
+            ],
+            dragging: hash![
+                (MouseButton::Left, false),
+                (MouseButton::Right, false),
+                (MouseButton::Middle, false)
+            ],
         }
     }
 
@@ -375,7 +388,11 @@ impl MouseInformation {
     }
 
     pub fn set_last_clicked(&mut self, button: MouseButton, point: numeric::Point2f, t: Clock) {
-        if self.last_clicked.insert(button, MouseActionRecord::new(point, t)) == None {
+        if self
+            .last_clicked
+            .insert(button, MouseActionRecord::new(point, t))
+            == None
+        {
             panic!("No such a mouse button")
         }
     }
@@ -388,11 +405,15 @@ impl MouseInformation {
     }
 
     pub fn set_last_dragged(&mut self, button: MouseButton, point: numeric::Point2f, t: Clock) {
-        if self.last_dragged.insert(button, MouseActionRecord::new(point, t)) == None {
+        if self
+            .last_dragged
+            .insert(button, MouseActionRecord::new(point, t))
+            == None
+        {
             panic!("No such a mouse button")
         }
     }
-    
+
     pub fn get_last_down(&self, button: MouseButton) -> numeric::Point2f {
         match self.last_down.get(&button) {
             Some(x) => x.point,
@@ -401,11 +422,15 @@ impl MouseInformation {
     }
 
     pub fn set_last_down(&mut self, button: MouseButton, point: numeric::Point2f, t: Clock) {
-        if self.last_down.insert(button, MouseActionRecord::new(point, t)) == None {
+        if self
+            .last_down
+            .insert(button, MouseActionRecord::new(point, t))
+            == None
+        {
             panic!("No such a mouse button")
         }
     }
-    
+
     pub fn get_last_up(&self, button: MouseButton) -> numeric::Point2f {
         match self.last_up.get(&button) {
             Some(x) => x.point,
@@ -414,7 +439,11 @@ impl MouseInformation {
     }
 
     pub fn set_last_up(&mut self, button: MouseButton, point: numeric::Point2f, t: Clock) {
-        if self.last_up.insert(button, MouseActionRecord::new(point, t)) == None {
+        if self
+            .last_up
+            .insert(button, MouseActionRecord::new(point, t))
+            == None
+        {
             panic!("No such a mouse button")
         }
     }
@@ -439,17 +468,17 @@ struct SceneStack<'a> {
 
 impl<'a> SceneStack<'a> {
     pub fn new() -> SceneStack<'a> {
-	SceneStack {
-	    stack: VecDeque::new(),
-	}
+        SceneStack {
+            stack: VecDeque::new(),
+        }
     }
 
     pub fn push(&mut self, scene: Box<dyn scene::SceneManager + 'a>) {
-	self.stack.push_back(scene);
+        self.stack.push_back(scene);
     }
 
     pub fn pop(&mut self) -> Option<Box<dyn scene::SceneManager + 'a>> {
-	self.stack.pop_back()
+        self.stack.pop_back()
     }
 }
 
@@ -462,151 +491,188 @@ struct SceneController<'a> {
 }
 
 impl<'a> SceneController<'a> {
-
     pub fn new(ctx: &mut ggez::Context, game_data: &'a GameData) -> SceneController<'a> {
-	let window_size = ggraphics::drawable_size(ctx);
+        let window_size = ggraphics::drawable_size(ctx);
 
-	let mut root_screen = SubScreen::new(ctx, numeric::Rect::new(0.0, 0.0, 1366.0, 768.0),
-					     0, ggraphics::Color::from_rgba_u32(0));
+        let mut root_screen = SubScreen::new(
+            ctx,
+            numeric::Rect::new(0.0, 0.0, 1366.0, 768.0),
+            0,
+            ggraphics::Color::from_rgba_u32(0),
+        );
 
-	root_screen.fit_scale(ctx, numeric::Vector2f::new(window_size.0.round(), window_size.1.round()));
+        root_screen.fit_scale(
+            ctx,
+            numeric::Vector2f::new(window_size.0.round(), window_size.1.round()),
+        );
 
-	debug::debug_screen_init(ctx, numeric::Rect::new(940.0, 0.0, 420.0, 300.0),
-				 FontInformation::new(game_data.get_font(FontID::DEFAULT),
-						      numeric::Vector2f::new(12.0, 12.0),
-						      ggraphics::Color::from_rgba_u32(0xffffffa0)
-				 ));
-	
-	
+        debug::debug_screen_init(
+            ctx,
+            numeric::Rect::new(940.0, 0.0, 420.0, 300.0),
+            FontInformation::new(
+                game_data.get_font(FontID::DEFAULT),
+                numeric::Vector2f::new(12.0, 12.0),
+                ggraphics::Color::from_rgba_u32(0xffffffa0),
+            ),
+        );
+
         SceneController {
             //current_scene: Box::new(scene::work_scene::WorkScene::new(ctx, game_data, 0)),
-	    //current_scene: Box::new(scene::scenario_scene::ScenarioScene::new(ctx, game_data, 0)),
-	    //current_scene: Box::new(scene::shop_scene::ShopScene::new(ctx, game_data, 0)),
-	    current_scene: Box::new(scene::suzuna_scene::SuzunaScene::new(ctx, game_data, 0)),
-	    scene_stack: SceneStack::new(),
+            //current_scene: Box::new(scene::scenario_scene::ScenarioScene::new(ctx, game_data, 0)),
+            //current_scene: Box::new(scene::shop_scene::ShopScene::new(ctx, game_data, 0)),
+            current_scene: Box::new(scene::suzuna_scene::SuzunaScene::new(ctx, game_data, 0)),
+            scene_stack: SceneStack::new(),
             key_map: tdev::ProgramableGenericKey::new(),
-	    global_clock: 0,
-	    root_screen: root_screen,
+            global_clock: 0,
+            root_screen: root_screen,
         }
     }
-    
-    fn switch_scene_with_swap(&mut self,
-                    ctx: &mut ggez::Context,
-                    game_data: &'a GameData,
-                    next_scene_id: scene::SceneID) {
+
+    fn switch_scene_with_swap(
+        &mut self,
+        ctx: &mut ggez::Context,
+        game_data: &'a GameData,
+        next_scene_id: scene::SceneID,
+    ) {
         if next_scene_id == scene::SceneID::MainDesk {
-            self.current_scene = Box::new(scene::suzuna_scene::suzuna_sub_scene::TaskScene::new(ctx, game_data));
+            self.current_scene = Box::new(scene::suzuna_scene::suzuna_sub_scene::TaskScene::new(
+                ctx, game_data,
+            ));
         } else if next_scene_id == scene::SceneID::SuzunaShop {
             self.current_scene = Box::new(scene::shop_scene::ShopScene::new(ctx, game_data, 0));
         } else if next_scene_id == scene::SceneID::Null {
             self.current_scene = Box::new(scene::NullScene::new());
         }
     }
-    
-    fn switch_scene_with_stacking(&mut self,
-				  ctx: &mut ggez::Context,
-				  game_data: &'a GameData,
-				  next_scene_id: scene::SceneID) {
-	let next_scene: Option<Box<dyn scene::SceneManager + 'a>> = if next_scene_id == scene::SceneID::MainDesk {
-            Some(Box::new(scene::suzuna_scene::suzuna_sub_scene::TaskScene::new(ctx, game_data)))
-        } else if next_scene_id == scene::SceneID::SuzunaShop {
-            Some(Box::new(scene::shop_scene::ShopScene::new(ctx, game_data, 0)))
-        } else if next_scene_id == scene::SceneID::Null {
-            Some(Box::new(scene::NullScene::new()))
-        } else {
-	    None
-	};
 
-	if let Some(mut scene) = next_scene {
-	    std::mem::swap(&mut self.current_scene, &mut scene);
-	    self.scene_stack.push(scene);
-	}
+    fn switch_scene_with_stacking(
+        &mut self,
+        ctx: &mut ggez::Context,
+        game_data: &'a GameData,
+        next_scene_id: scene::SceneID,
+    ) {
+        let next_scene: Option<Box<dyn scene::SceneManager + 'a>> =
+            if next_scene_id == scene::SceneID::MainDesk {
+                Some(Box::new(
+                    scene::suzuna_scene::suzuna_sub_scene::TaskScene::new(ctx, game_data),
+                ))
+            } else if next_scene_id == scene::SceneID::SuzunaShop {
+                Some(Box::new(scene::shop_scene::ShopScene::new(
+                    ctx, game_data, 0,
+                )))
+            } else if next_scene_id == scene::SceneID::Null {
+                Some(Box::new(scene::NullScene::new()))
+            } else {
+                None
+            };
+
+        if let Some(mut scene) = next_scene {
+            std::mem::swap(&mut self.current_scene, &mut scene);
+            self.scene_stack.push(scene);
+        }
     }
-    
+
     fn switch_scene_with_popping(&mut self) {
-	if let Some(scene) = self.scene_stack.pop() {
-	    self.current_scene = scene;
-	} else {
-	    eprintln!("Scene Stack is Empty!!");
-	}
+        if let Some(scene) = self.scene_stack.pop() {
+            self.current_scene = scene;
+        } else {
+            eprintln!("Scene Stack is Empty!!");
+        }
     }
-    
+
     fn run_pre_process(&mut self, ctx: &mut ggez::Context, game_data: &GameData) {
         self.current_scene.pre_process(ctx, game_data);
     }
 
     fn run_drawing_process(&mut self, ctx: &mut ggez::Context) {
-	sub_screen::stack_screen(ctx, &self.root_screen);
-	
+        sub_screen::stack_screen(ctx, &self.root_screen);
+
         self.current_scene.drawing_process(ctx);
-	
-	debug::debug_screen_draw(ctx);
-	
-	sub_screen::pop_screen(ctx);
+
+        debug::debug_screen_draw(ctx);
+
+        sub_screen::pop_screen(ctx);
         self.root_screen.draw(ctx).unwrap();
     }
 
     fn run_post_process(&mut self, ctx: &mut ggez::Context, game_data: &'a GameData) {
         match self.current_scene.post_process(ctx, game_data) {
             scene::SceneTransition::Keep => (),
-	    scene::SceneTransition::Reset => println!("FIXME!!"),
-	    scene::SceneTransition::SwapTransition => self.switch_scene_with_swap(ctx, game_data, self.current_scene.transition()),
+            scene::SceneTransition::Reset => println!("FIXME!!"),
+            scene::SceneTransition::SwapTransition => {
+                self.switch_scene_with_swap(ctx, game_data, self.current_scene.transition())
+            }
             scene::SceneTransition::StackingTransition => {
-		self.switch_scene_with_stacking(ctx, game_data, self.current_scene.transition());
-	    },
-	    scene::SceneTransition::PoppingTransition => {
-		self.switch_scene_with_popping();
-	    },
-	}
+                self.switch_scene_with_stacking(ctx, game_data, self.current_scene.transition());
+            }
+            scene::SceneTransition::PoppingTransition => {
+                self.switch_scene_with_popping();
+            }
+        }
 
-	if self.global_clock % 120 == 0 {
-	    println!("fps: {}", ggez::timer::fps(ctx));
-	}
-	self.global_clock += 1;
+        if self.global_clock % 120 == 0 {
+            println!("fps: {}", ggez::timer::fps(ctx));
+        }
+        self.global_clock += 1;
     }
 
-    fn key_down_event(&mut self,
-                      ctx: &mut Context,
-                      game_data: &GameData,
-                      keycode: KeyCode,
-                      _keymods: KeyMods,
-                      _repeat: bool) {
+    fn key_down_event(
+        &mut self,
+        ctx: &mut Context,
+        game_data: &GameData,
+        keycode: KeyCode,
+        _keymods: KeyMods,
+        _repeat: bool,
+    ) {
         if keycode == KeyCode::Escape {
             std::process::exit(0);
         }
-        self.current_scene.key_down_event(ctx, game_data, self.key_map.real_to_virtual(keycode));
-    }
-    
-    fn key_up_event(&mut self,
-                    ctx: &mut Context,
-                    game_data: &GameData,
-                    keycode: KeyCode,
-                    _keymods: KeyMods,){
-        self.current_scene.key_up_event(ctx, game_data, self.key_map.real_to_virtual(keycode));
+        self.current_scene
+            .key_down_event(ctx, game_data, self.key_map.real_to_virtual(keycode));
     }
 
-    fn mouse_motion_event(&mut self,
-                          ctx: &mut ggez::Context,
-                          game_data: &GameData,
-                          point: numeric::Point2f,
-                          offset: numeric::Vector2f){
-        self.current_scene.mouse_motion_event(ctx, game_data, point, offset);
+    fn key_up_event(
+        &mut self,
+        ctx: &mut Context,
+        game_data: &GameData,
+        keycode: KeyCode,
+        _keymods: KeyMods,
+    ) {
+        self.current_scene
+            .key_up_event(ctx, game_data, self.key_map.real_to_virtual(keycode));
     }
 
-    fn mouse_button_down_event(&mut self,
-                               ctx: &mut ggez::Context,
-                               game_data: &GameData,
-                               button: ginput::mouse::MouseButton,
-                               point: numeric::Point2f){
-        self.current_scene.mouse_button_down_event(ctx, game_data, button, point);
+    fn mouse_motion_event(
+        &mut self,
+        ctx: &mut ggez::Context,
+        game_data: &GameData,
+        point: numeric::Point2f,
+        offset: numeric::Vector2f,
+    ) {
+        self.current_scene
+            .mouse_motion_event(ctx, game_data, point, offset);
     }
-    
-    fn mouse_button_up_event(&mut self,
-                             ctx: &mut ggez::Context,
-                             game_data: &GameData,
-                             button: ginput::mouse::MouseButton,
-                             point: numeric::Point2f){
-        self.current_scene.mouse_button_up_event(ctx, game_data, button, point);
+
+    fn mouse_button_down_event(
+        &mut self,
+        ctx: &mut ggez::Context,
+        game_data: &GameData,
+        button: ginput::mouse::MouseButton,
+        point: numeric::Point2f,
+    ) {
+        self.current_scene
+            .mouse_button_down_event(ctx, game_data, button, point);
+    }
+
+    fn mouse_button_up_event(
+        &mut self,
+        ctx: &mut ggez::Context,
+        game_data: &GameData,
+        button: ginput::mouse::MouseButton,
+        point: numeric::Point2f,
+    ) {
+        self.current_scene
+            .mouse_button_up_event(ctx, game_data, button, point);
     }
 }
 
@@ -619,9 +685,8 @@ pub struct State<'data> {
 
 impl<'data> ggez::event::EventHandler for State<'data> {
     fn update(&mut self, ctx: &mut Context) -> GameResult<()> {
-
         self.scene_controller.run_pre_process(ctx, self.game_data);
-        
+
         self.clock += 1;
         if (self.clock % 100) == 0 {
             self.fps = timer::fps(ctx);
@@ -629,16 +694,16 @@ impl<'data> ggez::event::EventHandler for State<'data> {
 
         Ok(())
     }
-    
+
     fn draw(&mut self, ctx: &mut Context) -> GameResult<()> {
         graphics::clear(ctx, [0.0, 0.0, 0.0, 0.0].into());
 
         self.scene_controller.run_drawing_process(ctx);
-        
+
         graphics::present(ctx)?;
 
         self.scene_controller.run_post_process(ctx, self.game_data);
-        
+
         Ok(())
     }
 
@@ -647,30 +712,24 @@ impl<'data> ggez::event::EventHandler for State<'data> {
         ctx: &mut ggez::Context,
         keycode: KeyCode,
         keymods: KeyMods,
-        repeat: bool) {
-        self.scene_controller.key_down_event(ctx, self.game_data, keycode, keymods, repeat);
+        repeat: bool,
+    ) {
+        self.scene_controller
+            .key_down_event(ctx, self.game_data, keycode, keymods, repeat);
     }
 
-    fn key_up_event(
-        &mut self,
-        ctx: &mut ggez::Context,
-        keycode: KeyCode,
-        keymods: KeyMods) {
-        self.scene_controller.key_up_event(ctx, self.game_data, keycode, keymods);
+    fn key_up_event(&mut self, ctx: &mut ggez::Context, keycode: KeyCode, keymods: KeyMods) {
+        self.scene_controller
+            .key_up_event(ctx, self.game_data, keycode, keymods);
     }
 
-    fn mouse_motion_event(
-        &mut self,
-        ctx: &mut Context,
-        x: f32,
-        y: f32,
-        dx: f32,
-        dy: f32) {
+    fn mouse_motion_event(&mut self, ctx: &mut Context, x: f32, y: f32, dx: f32, dy: f32) {
         self.scene_controller.mouse_motion_event(
             ctx,
             self.game_data,
             numeric::Point2f::new(x, y),
-            numeric::Vector2f::new(dx, dy));
+            numeric::Vector2f::new(dx, dy),
+        );
     }
 
     fn mouse_button_down_event(
@@ -678,8 +737,14 @@ impl<'data> ggez::event::EventHandler for State<'data> {
         ctx: &mut Context,
         button: ginput::mouse::MouseButton,
         x: f32,
-        y: f32) {
-        self.scene_controller.mouse_button_down_event(ctx, self.game_data, button, numeric::Point2f::new(x, y));
+        y: f32,
+    ) {
+        self.scene_controller.mouse_button_down_event(
+            ctx,
+            self.game_data,
+            button,
+            numeric::Point2f::new(x, y),
+        );
     }
 
     fn mouse_button_up_event(
@@ -687,8 +752,14 @@ impl<'data> ggez::event::EventHandler for State<'data> {
         ctx: &mut Context,
         button: ginput::mouse::MouseButton,
         x: f32,
-        y: f32) {
-        self.scene_controller.mouse_button_up_event(ctx, self.game_data, button, numeric::Point2f::new(x, y));
+        y: f32,
+    ) {
+        self.scene_controller.mouse_button_up_event(
+            ctx,
+            self.game_data,
+            button,
+            numeric::Point2f::new(x, y),
+        );
     }
 }
 
@@ -700,8 +771,7 @@ impl<'data> State<'data> {
             game_data: game_data,
             scene_controller: SceneController::new(ctx, game_data),
         };
-        
+
         Ok(s)
     }
-
 }

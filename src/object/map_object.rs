@@ -1,20 +1,19 @@
-use std::rc::Rc;
 use std::collections::HashMap;
+use std::rc::Rc;
 use std::str::FromStr;
 
 use ggez::graphics as ggraphics;
 
 use torifune::core::Clock;
 use torifune::distance;
-use torifune::numeric;
-use torifune::graphics::*;
 use torifune::graphics::object::*;
-use torifune::debug;
+use torifune::graphics::*;
+use torifune::numeric;
 
 use crate::core::map_parser as mp;
+use crate::core::{BookInformation, BookShelfInformation};
 use crate::object::collision::*;
 use crate::scene::SceneID;
-use crate::core::{BookInformation, BookShelfInformation};
 
 ///
 /// ある範囲内に速さを収めたい時に使用する構造体
@@ -60,8 +59,7 @@ pub struct TextureSpeedInfo {
 }
 
 impl TextureSpeedInfo {
-    pub fn new(speed: numeric::Vector2f, border: SpeedBorder)
-               -> TextureSpeedInfo {
+    pub fn new(speed: numeric::Vector2f, border: SpeedBorder) -> TextureSpeedInfo {
         TextureSpeedInfo {
             speed: speed,
             speed_border: border,
@@ -119,23 +117,26 @@ impl SeqTexture {
         self.index = 0;
     }
 
-    pub fn current_frame(&self) -> Rc<ggraphics::Image> {        
+    pub fn current_frame(&self) -> Rc<ggraphics::Image> {
         self.textures[self.index % self.textures.len()].clone()
     }
-    
-    pub fn next_frame(&mut self, t: AnimationType) -> Result<Rc<ggraphics::Image>, AnimationStatus> {
+
+    pub fn next_frame(
+        &mut self,
+        t: AnimationType,
+    ) -> Result<Rc<ggraphics::Image>, AnimationStatus> {
         self.index += 1;
-        
+
         match t {
             AnimationType::OneShot | AnimationType::Times(_, _) => {
                 if self.index == self.textures.len() {
                     return Err(AnimationStatus::OneLoopFinish);
                 }
-            },
+            }
             _ => (),
         }
 
-        return Ok(self.current_frame())
+        return Ok(self.current_frame());
     }
 }
 
@@ -149,9 +150,17 @@ pub struct TextureAnimation {
 }
 
 impl TextureAnimation {
-    pub fn new(obj: SimpleObject, textures: Vec<Vec<Rc<ggraphics::Image>>>, mode: usize, frame_speed: Clock) -> Self {
+    pub fn new(
+        obj: SimpleObject,
+        textures: Vec<Vec<Rc<ggraphics::Image>>>,
+        mode: usize,
+        frame_speed: Clock,
+    ) -> Self {
         TextureAnimation {
-            textures: textures.iter().map(|vec| SeqTexture::new(vec.to_vec())).collect(),
+            textures: textures
+                .iter()
+                .map(|vec| SeqTexture::new(vec.to_vec()))
+                .collect(),
             current_mode: mode,
             object: obj,
             animation_type: AnimationType::Loop,
@@ -179,7 +188,7 @@ impl TextureAnimation {
         match self.textures[self.current_mode].next_frame(self.animation_type) {
             // アニメーションは再生中. 特に操作は行わず、ただテクスチャを切り替える
             Ok(texture) => self.get_mut_object().replace_texture(texture),
-            
+
             // アニメーションが終点に到達なんらかの処理を施す必要がある
             Err(status) => {
                 // アニメーションに関してイベントが発生. イベントの種類ごとに何ら可の処理を施す
@@ -194,7 +203,7 @@ impl TextureAnimation {
                                 // デフォルトのループに切り替える
                                 self.animation_type = AnimationType::Loop;
                                 self.current_mode = self.next_mode;
-                            },
+                            }
                             &AnimationType::Times(mut cur, lim) => {
                                 // Timesの場合
                                 // ループカウンタをインクリメントする
@@ -211,10 +220,10 @@ impl TextureAnimation {
                                     self.animation_type = AnimationType::Loop;
                                     self.current_mode = self.next_mode;
                                 }
-                            },
+                            }
                             _ => (),
                         }
-                    },
+                    }
                     _ => (),
                 }
             }
@@ -258,34 +267,47 @@ pub struct MapObject {
 }
 
 impl MapObject {
-    pub fn new(obj: SimpleObject, textures: Vec<Vec<Rc<ggraphics::Image>>>,
-               mode: usize, speed_info: TextureSpeedInfo, map_position: numeric::Point2f,
-               collision_crop: numeric::Rect, frame_speed: Clock) -> MapObject {
+    pub fn new(
+        obj: SimpleObject,
+        textures: Vec<Vec<Rc<ggraphics::Image>>>,
+        mode: usize,
+        speed_info: TextureSpeedInfo,
+        map_position: numeric::Point2f,
+        collision_crop: numeric::Rect,
+        frame_speed: Clock,
+    ) -> MapObject {
         MapObject {
             last_position: obj.get_position(),
-            map_position: TwoStepPoint { previous: map_position, current: map_position },
+            map_position: TwoStepPoint {
+                previous: map_position,
+                current: map_position,
+            },
             speed_info: speed_info,
             object: TextureAnimation::new(obj, textures, mode, frame_speed),
-	    collision_crop: collision_crop,
+            collision_crop: collision_crop,
         }
     }
 
     pub fn get_collision_area(&self, ctx: &mut ggez::Context) -> numeric::Rect {
-	let croppped_size = self.get_collision_size(ctx);
-	let drawing_size = self.obj().get_drawing_size(ctx);
-	let position = self.obj().get_position();
-	
-	numeric::Rect::new(position.x + (drawing_size.x * self.collision_crop.x),
-			   position.y + (drawing_size.y * self.collision_crop.y),
-			   croppped_size.x,
-			   croppped_size.y)
+        let croppped_size = self.get_collision_size(ctx);
+        let drawing_size = self.obj().get_drawing_size(ctx);
+        let position = self.obj().get_position();
+
+        numeric::Rect::new(
+            position.x + (drawing_size.x * self.collision_crop.x),
+            position.y + (drawing_size.y * self.collision_crop.y),
+            croppped_size.x,
+            croppped_size.y,
+        )
     }
 
     pub fn get_collision_size(&self, ctx: &mut ggez::Context) -> numeric::Vector2f {
-	let drawing_size = self.obj().get_drawing_size(ctx);
-	
-	numeric::Vector2f::new(drawing_size.x * (self.collision_crop.w - self.collision_crop.x),
-			       drawing_size.y * (self.collision_crop.h - self.collision_crop.y))
+        let drawing_size = self.obj().get_drawing_size(ctx);
+
+        numeric::Vector2f::new(
+            drawing_size.x * (self.collision_crop.w - self.collision_crop.x),
+            drawing_size.y * (self.collision_crop.h - self.collision_crop.y),
+        )
     }
 
     pub fn speed_info(&self) -> &TextureSpeedInfo {
@@ -297,13 +319,13 @@ impl MapObject {
     }
 
     pub fn change_animation_mode(&mut self, mode: usize) {
-	self.object.change_mode(mode, AnimationType::Loop, mode);
+        self.object.change_mode(mode, AnimationType::Loop, mode);
     }
 
     pub fn obj(&self) -> &SimpleObject {
         self.object.get_object()
     }
-    
+
     pub fn obj_mut(&mut self) -> &mut SimpleObject {
         self.object.get_mut_object()
     }
@@ -337,21 +359,26 @@ impl MapObject {
     /// キャラクタテクスチャの上側が衝突した場合
     /// どれだけ、テクスチャを移動させれば良いのかを返す
     ///
-    fn fix_collision_above(&mut self,
-                           _ctx: &mut ggez::Context,
-                           info: &CollisionInformation,
-                           _: Clock) -> f32 {
-        (info.object1_position.unwrap().y + info.object1_position.unwrap().h + 0.1) - info.object2_position.unwrap().y
+    fn fix_collision_above(
+        &mut self,
+        _ctx: &mut ggez::Context,
+        info: &CollisionInformation,
+        _: Clock,
+    ) -> f32 {
+        (info.object1_position.unwrap().y + info.object1_position.unwrap().h + 0.1)
+            - info.object2_position.unwrap().y
     }
 
     ///
     /// キャラクタテクスチャの下側が衝突した場合
     /// どれだけ、テクスチャを移動させれば良いのかを返す
     ///
-    fn fix_collision_bottom(&mut self,
-                            ctx: &mut ggez::Context,
-                            info: &CollisionInformation,
-                            _: Clock) -> f32 {
+    fn fix_collision_bottom(
+        &mut self,
+        ctx: &mut ggez::Context,
+        info: &CollisionInformation,
+        _: Clock,
+    ) -> f32 {
         let area = self.get_collision_size(ctx);
         info.object1_position.unwrap().y - (info.object2_position.unwrap().y + area.y) - 1.0
     }
@@ -360,10 +387,12 @@ impl MapObject {
     /// キャラクタテクスチャの右側が衝突した場合
     /// どれだけ、テクスチャを移動させれば良いのかを返す
     ///
-    fn fix_collision_right(&mut self,
-                           ctx: &mut ggez::Context,
-                           info: &CollisionInformation,
-                           _: Clock) -> f32 {
+    fn fix_collision_right(
+        &mut self,
+        ctx: &mut ggez::Context,
+        info: &CollisionInformation,
+        _: Clock,
+    ) -> f32 {
         let area = self.get_collision_size(ctx);
         (info.object1_position.unwrap().x - 2.0) - (info.object2_position.unwrap().x + area.x)
     }
@@ -372,20 +401,25 @@ impl MapObject {
     /// キャラクタテクスチャの左側が衝突した場合
     /// どれだけ、テクスチャを移動させれば良いのかを返す
     ///
-    fn fix_collision_left(&mut self,
-                           _ctx: &mut ggez::Context,
-                           info: &CollisionInformation,
-                          _t: Clock) -> f32 {
-        (info.object1_position.unwrap().x + info.object1_position.unwrap().w + 0.5) - info.object2_position.unwrap().x
-        
+    fn fix_collision_left(
+        &mut self,
+        _ctx: &mut ggez::Context,
+        info: &CollisionInformation,
+        _t: Clock,
+    ) -> f32 {
+        (info.object1_position.unwrap().x + info.object1_position.unwrap().w + 0.5)
+            - info.object2_position.unwrap().x
     }
 
     ///
     /// 垂直方向の衝突（めり込み）を修正するメソッド
     ///
-    pub fn fix_collision_vertical(&mut self, ctx: &mut ggez::Context,
-				  info: &CollisionInformation,
-                                  t: Clock) -> f32 {
+    pub fn fix_collision_vertical(
+        &mut self,
+        ctx: &mut ggez::Context,
+        info: &CollisionInformation,
+        t: Clock,
+    ) -> f32 {
         if info.center_diff.unwrap().y < 0.0 {
             return self.fix_collision_bottom(ctx, &info, t);
         } else if info.center_diff.unwrap().y > 0.0 {
@@ -398,9 +432,12 @@ impl MapObject {
     ///
     /// 水平方向の衝突（めり込み）を修正するメソッド
     ///
-    pub fn fix_collision_horizon(&mut self, ctx: &mut ggez::Context,
-                                 info: &CollisionInformation,
-                                 t: Clock)  -> f32 {
+    pub fn fix_collision_horizon(
+        &mut self,
+        ctx: &mut ggez::Context,
+        info: &CollisionInformation,
+        t: Clock,
+    ) -> f32 {
         if info.center_diff.unwrap().x < 0.0 {
             return self.fix_collision_right(ctx, &info, t);
         } else if info.center_diff.unwrap().x > 0.0 {
@@ -413,7 +450,7 @@ impl MapObject {
     pub fn update_texture(&mut self, t: Clock) {
         self.object.try_next_frame(t);
     }
-    
+
     pub fn move_map(&mut self, offset: numeric::Vector2f) {
         self.map_position.move_diff(&offset);
     }
@@ -423,18 +460,24 @@ impl MapObject {
         self.object.get_mut_object().set_position(dp);
     }
 
-    pub fn check_collision_with_character(&self, ctx: &mut ggez::Context, chara: &MapObject) -> CollisionInformation {
+    pub fn check_collision_with_character(
+        &self,
+        ctx: &mut ggez::Context,
+        chara: &MapObject,
+    ) -> CollisionInformation {
         let a1 = self.get_collision_area(ctx);
         let a2 = chara.get_collision_area(ctx);
 
         if a1.overlaps(&a2) {
-            CollisionInformation::new_collision(a1, a2,
-                                                numeric::Vector2f::new(a2.x - a1.x, a2.y - a1.y))
+            CollisionInformation::new_collision(
+                a1,
+                a2,
+                numeric::Vector2f::new(a2.x - a1.x, a2.y - a1.y),
+            )
         } else {
             CollisionInformation::new_not_collision()
         }
     }
-    
 }
 
 pub struct DamageEffect {
@@ -454,7 +497,7 @@ impl AttackCore {
             radius: radius,
         }
     }
-    
+
     pub fn distance(&self, obj: &AttackCore) -> f32 {
         distance!(self.center_position, obj.center_position)
     }
@@ -485,7 +528,7 @@ impl PlayableCharacter {
         PlayableCharacter {
             character: character,
             status: status,
-	    shelving_book: Vec::new(),
+            shelving_book: Vec::new(),
         }
     }
 
@@ -494,7 +537,7 @@ impl PlayableCharacter {
     }
 
     pub fn get_center_map_position(&self, ctx: &mut ggez::Context) -> numeric::Point2f {
-	let drawing_size = self.character.obj().get_drawing_size(ctx);
+        let drawing_size = self.character.obj().get_drawing_size(ctx);
         self.get_map_position() + numeric::Vector2f::new(drawing_size.x / 2.0, drawing_size.y / 2.0)
     }
 
@@ -507,26 +550,32 @@ impl PlayableCharacter {
     }
 
     pub fn get_shelving_book(&self) -> &Vec<BookInformation> {
-	&self.shelving_book
+        &self.shelving_book
     }
 
     pub fn get_shelving_book_mut(&mut self) -> &mut Vec<BookInformation> {
-	&mut self.shelving_book
+        &mut self.shelving_book
     }
 
     pub fn update_shelving_book(&mut self, shelving_book: Vec<BookInformation>) {
-	self.shelving_book = shelving_book;
+        self.shelving_book = shelving_book;
     }
 
-    pub fn fix_collision_horizon(&mut self, ctx: &mut ggez::Context,
-                                 info: &CollisionInformation,
-                                 t: Clock)  -> f32 {
+    pub fn fix_collision_horizon(
+        &mut self,
+        ctx: &mut ggez::Context,
+        info: &CollisionInformation,
+        t: Clock,
+    ) -> f32 {
         self.character.fix_collision_horizon(ctx, info, t)
     }
 
-    pub fn fix_collision_vertical(&mut self, ctx: &mut ggez::Context,
-                                 info: &CollisionInformation,
-                                 t: Clock)  -> f32 {
+    pub fn fix_collision_vertical(
+        &mut self,
+        ctx: &mut ggez::Context,
+        info: &CollisionInformation,
+        t: Clock,
+    ) -> f32 {
         self.character.fix_collision_vertical(ctx, info, t)
     }
 
@@ -535,26 +584,31 @@ impl PlayableCharacter {
     }
 
     pub fn move_map_current_speed_x(&mut self, border: f32) {
-	let x_speed = self.get_character_object().speed_info().get_speed().x;
-	let overflow = (self.get_map_position().x + x_speed) - border;
-	if overflow > 0.0 {
-	    self.move_map(numeric::Vector2f::new(x_speed - overflow, 0.0))
-	} else {
-	    self.move_map(numeric::Vector2f::new(x_speed, 0.0))
-	}
+        let x_speed = self.get_character_object().speed_info().get_speed().x;
+        let overflow = (self.get_map_position().x + x_speed) - border;
+        if overflow > 0.0 {
+            self.move_map(numeric::Vector2f::new(x_speed - overflow, 0.0))
+        } else {
+            self.move_map(numeric::Vector2f::new(x_speed, 0.0))
+        }
     }
 
     pub fn move_map_current_speed_y(&mut self, border: f32) {
-	let y_speed = self.get_character_object().speed_info().get_speed().y;
-	let overflow = (self.get_map_position().y + y_speed) - border;
-	if overflow > 0.0 {
-	    self.move_map(numeric::Vector2f::new(0.0, y_speed - overflow))
-	} else {
-	    self.move_map(numeric::Vector2f::new(0.0, y_speed))
-	}
+        let y_speed = self.get_character_object().speed_info().get_speed().y;
+        let overflow = (self.get_map_position().y + y_speed) - border;
+        if overflow > 0.0 {
+            self.move_map(numeric::Vector2f::new(0.0, y_speed - overflow))
+        } else {
+            self.move_map(numeric::Vector2f::new(0.0, y_speed))
+        }
     }
 
-    pub fn attack_damage_check(&mut self, ctx: &mut ggez::Context, attack_core: &AttackCore, damage: &DamageEffect) {
+    pub fn attack_damage_check(
+        &mut self,
+        ctx: &mut ggez::Context,
+        attack_core: &AttackCore,
+        damage: &DamageEffect,
+    ) {
         let center = self.get_map_position() + self.character.obj().get_center_offset(ctx);
         if distance!(center, attack_core.center_position) < attack_core.radius {
             self.status.hp -= damage.hp_damage;
@@ -563,23 +617,25 @@ impl PlayableCharacter {
     }
 
     pub fn get_speed(&self) -> numeric::Vector2f {
-	self.character.speed_info().get_speed()
+        self.character.speed_info().get_speed()
     }
 
     pub fn set_speed(&mut self, speed: numeric::Vector2f) {
-	self.character.speed_info_mut().set_speed(speed);
+        self.character.speed_info_mut().set_speed(speed);
     }
 
     pub fn set_speed_x(&mut self, speed: f32) {
-	self.character.speed_info_mut().set_speed_x(speed);
+        self.character.speed_info_mut().set_speed_x(speed);
     }
 
     pub fn set_speed_y(&mut self, speed: f32) {
-	self.character.speed_info_mut().set_speed_y(speed);
+        self.character.speed_info_mut().set_speed_y(speed);
     }
 
     pub fn reset_speed(&mut self) {
-	self.character.speed_info_mut().set_speed(numeric::Vector2f::new(0.0, 0.0));
+        self.character
+            .speed_info_mut()
+            .set_speed(numeric::Vector2f::new(0.0, 0.0));
     }
 }
 
@@ -608,15 +664,21 @@ impl GeneralCharacter {
         &mut self.character
     }
 
-    pub fn fix_collision_horizon(&mut self, ctx: &mut ggez::Context,
-                                 info: &CollisionInformation,
-                                 t: Clock)  -> f32 {
+    pub fn fix_collision_horizon(
+        &mut self,
+        ctx: &mut ggez::Context,
+        info: &CollisionInformation,
+        t: Clock,
+    ) -> f32 {
         self.character.fix_collision_horizon(ctx, info, t)
     }
 
-    pub fn fix_collision_vertical(&mut self, ctx: &mut ggez::Context,
-                                  info: &CollisionInformation,
-                                  t: Clock)  -> f32 {
+    pub fn fix_collision_vertical(
+        &mut self,
+        ctx: &mut ggez::Context,
+        info: &CollisionInformation,
+        t: Clock,
+    ) -> f32 {
         self.character.fix_collision_vertical(ctx, info, t)
     }
 
@@ -625,11 +687,17 @@ impl GeneralCharacter {
     }
 
     pub fn move_map_current_speed_x(&mut self) {
-        self.move_map(numeric::Vector2f::new(self.get_character_object().speed_info().get_speed().x, 0.0))
+        self.move_map(numeric::Vector2f::new(
+            self.get_character_object().speed_info().get_speed().x,
+            0.0,
+        ))
     }
 
     pub fn move_map_current_speed_y(&mut self) {
-        self.move_map(numeric::Vector2f::new(0.0, self.get_character_object().speed_info().get_speed().y))
+        self.move_map(numeric::Vector2f::new(
+            0.0,
+            self.get_character_object().speed_info().get_speed().y,
+        ))
     }
 
     pub fn get_collision_damage(&self) -> &DamageEffect {
@@ -637,7 +705,10 @@ impl GeneralCharacter {
     }
 
     pub fn get_attack_core(&self, ctx: &mut ggez::Context) -> AttackCore {
-        AttackCore::new(self.character.get_map_position() + self.character.obj().get_center_offset(ctx), 10.0)
+        AttackCore::new(
+            self.character.get_map_position() + self.character.obj().get_center_offset(ctx),
+            10.0,
+        )
     }
 }
 
@@ -649,13 +720,13 @@ pub enum EventTrigger {
 
 impl FromStr for EventTrigger {
     type Err = ();
-    
+
     fn from_str(trigger_str: &str) -> Result<Self, Self::Err> {
-	match trigger_str {
-	    "action" => Ok(Self::Action),
-	    "touch" => Ok(Self::Touch),
-	    _ => panic!("Error: EventTrigger::from_str"),
-	}
+        match trigger_str {
+            "action" => Ok(Self::Action),
+            "touch" => Ok(Self::Touch),
+            _ => panic!("Error: EventTrigger::from_str"),
+        }
     }
 }
 
@@ -670,20 +741,26 @@ pub struct MapTextEvent {
 
 impl MapTextEvent {
     pub fn from_toml_object(toml_script: &toml::value::Value) -> Self {
-	MapTextEvent {
-	    trigger: EventTrigger::from_str(toml_script.get("trigger").unwrap().as_str().unwrap()).unwrap(),
-	    text: toml_script.get("text").unwrap().as_str().unwrap().to_string(),
-	}
+        MapTextEvent {
+            trigger: EventTrigger::from_str(toml_script.get("trigger").unwrap().as_str().unwrap())
+                .unwrap(),
+            text: toml_script
+                .get("text")
+                .unwrap()
+                .as_str()
+                .unwrap()
+                .to_string(),
+        }
     }
 
     pub fn get_text(&self) -> &str {
-	&self.text
+        &self.text
     }
 }
 
 impl MapEvent for MapTextEvent {
     fn get_trigger_method(&self) -> EventTrigger {
-	self.trigger
+        self.trigger
     }
 }
 
@@ -694,27 +771,35 @@ pub struct MapEventSceneSwitch {
 
 impl MapEventSceneSwitch {
     pub fn new(trigger: EventTrigger, switch_scene: SceneID) -> Self {
-	MapEventSceneSwitch {
-	    trigger: trigger,
-	    switch_scene: switch_scene,
-	}
+        MapEventSceneSwitch {
+            trigger: trigger,
+            switch_scene: switch_scene,
+        }
     }
 
     pub fn from_toml_object(toml_script: &toml::value::Value) -> Self {
-	MapEventSceneSwitch {
-	    trigger: EventTrigger::from_str(toml_script.get("trigger").unwrap().as_str().unwrap()).unwrap(),
-	    switch_scene: SceneID::from_str(toml_script.get("switch-scene-id").unwrap().as_str().unwrap()).unwrap(),
-	}
+        MapEventSceneSwitch {
+            trigger: EventTrigger::from_str(toml_script.get("trigger").unwrap().as_str().unwrap())
+                .unwrap(),
+            switch_scene: SceneID::from_str(
+                toml_script
+                    .get("switch-scene-id")
+                    .unwrap()
+                    .as_str()
+                    .unwrap(),
+            )
+            .unwrap(),
+        }
     }
 
     pub fn get_switch_scene_id(&self) -> SceneID {
-	self.switch_scene
+        self.switch_scene
     }
 }
 
 impl MapEvent for MapEventSceneSwitch {
     fn get_trigger_method(&self) -> EventTrigger {
-	self.trigger
+        self.trigger
     }
 }
 
@@ -725,24 +810,31 @@ pub struct BookStoreEvent {
 
 impl BookStoreEvent {
     pub fn from_toml_object(toml_script: &toml::value::Value) -> Self {
-	let shelf_info = toml_script.get("shelf-info").unwrap().as_table().unwrap();
-	let book_shelf_info = BookShelfInformation::new(shelf_info.get("begin-number").unwrap().as_integer().unwrap() as u16,
-							shelf_info.get("end-number").unwrap().as_integer().unwrap() as u16);
-	
-	BookStoreEvent {
-	    trigger: EventTrigger::from_str(toml_script.get("trigger").unwrap().as_str().unwrap()).unwrap(),
-	    book_shelf_info: book_shelf_info,
-	}
+        let shelf_info = toml_script.get("shelf-info").unwrap().as_table().unwrap();
+        let book_shelf_info = BookShelfInformation::new(
+            shelf_info
+                .get("begin-number")
+                .unwrap()
+                .as_integer()
+                .unwrap() as u16,
+            shelf_info.get("end-number").unwrap().as_integer().unwrap() as u16,
+        );
+
+        BookStoreEvent {
+            trigger: EventTrigger::from_str(toml_script.get("trigger").unwrap().as_str().unwrap())
+                .unwrap(),
+            book_shelf_info: book_shelf_info,
+        }
     }
 
     pub fn get_book_shelf_info(&self) -> &BookShelfInformation {
-	&self.book_shelf_info
-    } 
+        &self.book_shelf_info
+    }
 }
 
 impl MapEvent for BookStoreEvent {
     fn get_trigger_method(&self) -> EventTrigger {
-	self.trigger
+        self.trigger
     }
 }
 
@@ -753,12 +845,12 @@ pub enum BuiltinEventSymbol {
 
 impl FromStr for BuiltinEventSymbol {
     type Err = ();
-    
+
     fn from_str(builtin_event_symbol: &str) -> Result<Self, Self::Err> {
-	match builtin_event_symbol {
-	    "select-shelving-book" => Ok(Self::SelectShelvingBook),
-	    _ => panic!("Error: BuiltinEventSymbol::from_str"),
-	}
+        match builtin_event_symbol {
+            "select-shelving-book" => Ok(Self::SelectShelvingBook),
+            _ => panic!("Error: BuiltinEventSymbol::from_str"),
+        }
     }
 }
 
@@ -770,21 +862,29 @@ pub struct BuiltinEvent {
 
 impl BuiltinEvent {
     pub fn from_toml_object(toml_script: &toml::value::Value) -> Self {
-	let builtin_event_info = toml_script.get("builtin-event-info").unwrap().as_table().unwrap();
-	BuiltinEvent {
-	    trigger: EventTrigger::from_str(toml_script.get("trigger").unwrap().as_str().unwrap()).unwrap(),
-	    event_symbol: BuiltinEventSymbol::from_str(builtin_event_info.get("symbol").unwrap().as_str().unwrap()).unwrap(),
-	}
+        let builtin_event_info = toml_script
+            .get("builtin-event-info")
+            .unwrap()
+            .as_table()
+            .unwrap();
+        BuiltinEvent {
+            trigger: EventTrigger::from_str(toml_script.get("trigger").unwrap().as_str().unwrap())
+                .unwrap(),
+            event_symbol: BuiltinEventSymbol::from_str(
+                builtin_event_info.get("symbol").unwrap().as_str().unwrap(),
+            )
+            .unwrap(),
+        }
     }
 
     pub fn get_event_symbol(&self) -> BuiltinEventSymbol {
-	self.event_symbol
+        self.event_symbol
     }
 }
 
 impl MapEvent for BuiltinEvent {
     fn get_trigger_method(&self) -> EventTrigger {
-	self.trigger
+        self.trigger
     }
 }
 
@@ -797,12 +897,12 @@ pub enum MapEventElement {
 
 impl MapEvent for MapEventElement {
     fn get_trigger_method(&self) -> EventTrigger {
-	match self {
+        match self {
             Self::TextEvent(text) => text.get_trigger_method(),
             Self::SwitchScene(switch_scene) => switch_scene.get_trigger_method(),
-	    Self::BookStoreEvent(book_store_event) => book_store_event.get_trigger_method(),
-	    Self::BuiltinEvent(builtin_event) => builtin_event.get_trigger_method(),
-	}
+            Self::BookStoreEvent(book_store_event) => book_store_event.get_trigger_method(),
+            Self::BuiltinEvent(builtin_event) => builtin_event.get_trigger_method(),
+        }
     }
 }
 
@@ -811,66 +911,77 @@ pub struct MapEventList {
 }
 
 impl MapEventList {
-    
     pub fn from_file(file_path: &str) -> Self {
-	let mut table = HashMap::new();
-	
-	let content = match std::fs::read_to_string(file_path) {
+        let mut table = HashMap::new();
+
+        let content = match std::fs::read_to_string(file_path) {
             Ok(c) => c,
             Err(_) => panic!("Failed to read: {}", file_path),
         };
-        
+
         let root = content.parse::<toml::Value>().unwrap();
         let array = root["event-panel"].as_array().unwrap();
 
-	for elem in array {
-	    let position_data = elem.get("position").unwrap().as_table().unwrap();
-	    let position = numeric::Point2i::new(
-		position_data.get("x").unwrap().as_integer().unwrap() as i32,
-		position_data.get("y").unwrap().as_integer().unwrap() as i32
-	    );
-	    if let Some(type_info) = elem.get("type") {
-		match type_info.as_str().unwrap() {
-		    "text" => {
-			table.insert(position, MapEventElement::TextEvent(
-			    MapTextEvent::from_toml_object(elem)));
-		    },
-		    "switch-scene" => {
-			table.insert(position, MapEventElement::SwitchScene(
-			    MapEventSceneSwitch::from_toml_object(elem)));
-		    },
-		    "book-shelf" => {
-			table.insert(position, MapEventElement::BookStoreEvent(
-			    BookStoreEvent::from_toml_object(elem)));
-		    },
-		    "builtin-event" => {
-			table.insert(position, MapEventElement::BuiltinEvent(
-			    BuiltinEvent::from_toml_object(elem)));
-		    },
-		    _ => eprintln!("Error"),
-		}
-	    } else {
-		eprintln!("Error");
-	    }
-	}
-	
-	MapEventList {
-	    event_table: table,
-	}
+        for elem in array {
+            let position_data = elem.get("position").unwrap().as_table().unwrap();
+            let position = numeric::Point2i::new(
+                position_data.get("x").unwrap().as_integer().unwrap() as i32,
+                position_data.get("y").unwrap().as_integer().unwrap() as i32,
+            );
+            if let Some(type_info) = elem.get("type") {
+                match type_info.as_str().unwrap() {
+                    "text" => {
+                        table.insert(
+                            position,
+                            MapEventElement::TextEvent(MapTextEvent::from_toml_object(elem)),
+                        );
+                    }
+                    "switch-scene" => {
+                        table.insert(
+                            position,
+                            MapEventElement::SwitchScene(MapEventSceneSwitch::from_toml_object(
+                                elem,
+                            )),
+                        );
+                    }
+                    "book-shelf" => {
+                        table.insert(
+                            position,
+                            MapEventElement::BookStoreEvent(BookStoreEvent::from_toml_object(elem)),
+                        );
+                    }
+                    "builtin-event" => {
+                        table.insert(
+                            position,
+                            MapEventElement::BuiltinEvent(BuiltinEvent::from_toml_object(elem)),
+                        );
+                    }
+                    _ => eprintln!("Error"),
+                }
+            } else {
+                eprintln!("Error");
+            }
+        }
+
+        MapEventList { event_table: table }
     }
 
     pub fn register_event(&mut self, point: numeric::Point2i, event: MapEventElement) -> &mut Self {
-	self.event_table.insert(point, event);
-	self
+        self.event_table.insert(point, event);
+        self
     }
 
-    pub fn check_event(&self, trigger: EventTrigger, point: numeric::Point2i) -> Option<&MapEventElement> {
-	if let Some(event_element) = self.event_table.get(&point) {
-	    if event_element.get_trigger_method() == trigger {
-		return Some(&event_element);
-	    }
-	}
+    pub fn check_event(
+        &self,
+        trigger: EventTrigger,
+        point: numeric::Point2i,
+    ) -> Option<&MapEventElement> {
+        if let Some(event_element) = self.event_table.get(&point) {
+            if event_element.get_trigger_method() == trigger {
+                return Some(&event_element);
+            }
+        }
 
-	None
+        None
     }
 }

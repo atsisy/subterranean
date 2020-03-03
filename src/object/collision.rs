@@ -28,9 +28,11 @@ impl CollisionInformation {
         }
     }
 
-    pub fn new_collision(obj1: ggraphics::Rect,
-                         obj2: numeric::Rect,
-                         center_diff: numeric::Vector2f) -> CollisionInformation {
+    pub fn new_collision(
+        obj1: ggraphics::Rect,
+        obj2: numeric::Rect,
+        center_diff: numeric::Vector2f,
+    ) -> CollisionInformation {
         CollisionInformation {
             collision: true,
             object1_position: Some(obj1),

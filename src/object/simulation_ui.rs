@@ -1,16 +1,16 @@
 use torifune::core::Clock;
-use torifune::numeric;
-use torifune::graphics::*;
-use torifune::graphics::object::*;
-use torifune::graphics::object::sub_screen::SubScreen;
 use torifune::graphics::object::sub_screen;
+use torifune::graphics::object::sub_screen::SubScreen;
+use torifune::graphics::object::*;
+use torifune::graphics::*;
+use torifune::numeric;
 
 use torifune::graphics::object::shape as tshape;
 
 use ggez::graphics as ggraphics;
 
-use crate::core::{TextureID, FontID, GameData};
 use super::*;
+use crate::core::{FontID, GameData, TextureID};
 
 struct Counter<T> {
     count: T,
@@ -18,9 +18,7 @@ struct Counter<T> {
 
 impl<T: Clone + Copy + std::ops::AddAssign> Counter<T> {
     pub fn new(init: T) -> Self {
-        Counter {
-            count: init,
-        }
+        Counter { count: init }
     }
 
     pub fn add(&mut self, value: T) {
@@ -43,18 +41,28 @@ struct DrawableCounter<T> {
 }
 
 impl<T: std::ops::AddAssign + Copy + std::fmt::Display> DrawableCounter<T> {
-    pub fn new(init: T, pos: numeric::Point2f, font_info: FontInformation,
-                  display_method: Box<dyn Fn(T) -> String>, t: Clock) -> Self {
+    pub fn new(
+        init: T,
+        pos: numeric::Point2f,
+        font_info: FontInformation,
+        display_method: Box<dyn Fn(T) -> String>,
+        t: Clock,
+    ) -> Self {
         DrawableCounter {
             counter: Counter::<T>::new(init),
-            text: SimpleText::new(MovableText::new(display_method(init),
-                                                   pos,
-                                                   numeric::Vector2f::new(1.0, 1.0),
-                                                   0.0,
-                                                   0,
-                                                   move_fn::halt(pos),
-                                                   font_info, t),
-                                  Vec::new()),
+            text: SimpleText::new(
+                MovableText::new(
+                    display_method(init),
+                    pos,
+                    numeric::Vector2f::new(1.0, 1.0),
+                    0.0,
+                    0,
+                    move_fn::halt(pos),
+                    font_info,
+                    t,
+                ),
+                Vec::new(),
+            ),
             display_method: display_method,
         }
     }
@@ -84,11 +92,11 @@ impl<T> DrawableComponent for DrawableCounter<T> {
     fn get_drawing_depth(&self) -> i8 {
         self.text.get_drawing_depth()
     }
-    
 }
 
-impl<T: std::fmt::Display + std::ops::AddAssign + Clone + Copy + std::ops::AddAssign> DrawableCounter<T> {
-
+impl<T: std::fmt::Display + std::ops::AddAssign + Clone + Copy + std::ops::AddAssign>
+    DrawableCounter<T>
+{
     pub fn add(&mut self, value: T) {
         self.counter.add(value);
     }
@@ -103,7 +111,9 @@ impl<T: std::fmt::Display + std::ops::AddAssign + Clone + Copy + std::ops::AddAs
 
     pub fn update_text(&mut self) {
         let value = self.get_value();
-        self.text.ref_wrapped_object_mut().replace_text(&(self.display_method)(value))
+        self.text
+            .ref_wrapped_object_mut()
+            .replace_text(&(self.display_method)(value))
     }
 }
 
@@ -118,50 +128,60 @@ struct Meter {
 }
 
 impl Meter {
-    pub fn new(pos: numeric::Point2f,
-               frame: numeric::Rect,
-               frame_color: ggraphics::Color,
-               count_frame: numeric::Rect,
-               count_color: ggraphics::Color,
-               remain_color: ggraphics::Color,
-               init: f32,
-               max: f32) -> Meter {
+    pub fn new(
+        pos: numeric::Point2f,
+        frame: numeric::Rect,
+        frame_color: ggraphics::Color,
+        count_frame: numeric::Rect,
+        count_color: ggraphics::Color,
+        remain_color: ggraphics::Color,
+        init: f32,
+        max: f32,
+    ) -> Meter {
         Meter {
             counter: Counter::<f32>::new(init),
             max: max,
             frame: tshape::Rectangle::new(
                 frame,
                 ggez::graphics::DrawMode::Fill(ggraphics::FillOptions::DEFAULT),
-                frame_color),
+                frame_color,
+            ),
             empty_fill: tshape::Rectangle::new(
                 count_frame,
                 ggez::graphics::DrawMode::Fill(ggraphics::FillOptions::DEFAULT),
-                count_color),
+                count_color,
+            ),
             count_fill: tshape::Rectangle::new(
-                numeric::Rect::new(count_frame.x, count_frame.y, count_frame.w * (init / max), count_frame.h),
+                numeric::Rect::new(
+                    count_frame.x,
+                    count_frame.y,
+                    count_frame.w * (init / max),
+                    count_frame.h,
+                ),
                 ggez::graphics::DrawMode::Fill(ggraphics::FillOptions::DEFAULT),
-                remain_color),
+                remain_color,
+            ),
             position: pos,
             drwob_essential: DrawableObjectEssential::new(true, 0),
         }
     }
 
     pub fn add(&mut self, value: f32) {
-	self.counter.add(value);
+        self.counter.add(value);
     }
 
     pub fn get_value(&self) -> f32 {
-	self.counter.get_value()
+        self.counter.get_value()
     }
 
     pub fn set_value(&mut self, value: f32) {
-	if self.get_value() < self.max {
-	    self.counter.set_value(value);
-	} else {
-	    self.counter.set_value(self.max);
-	}
+        if self.get_value() < self.max {
+            self.counter.set_value(value);
+        } else {
+            self.counter.set_value(self.max);
+        }
     }
-    
+
     pub fn update(&mut self) {
         self.count_fill.get_bounds();
     }
@@ -169,21 +189,29 @@ impl Meter {
 
 impl DrawableComponent for Meter {
     fn draw(&mut self, ctx: &mut ggez::Context) -> ggez::GameResult<()> {
-        let mesh = ggraphics::MeshBuilder::new().rectangle(
-            self.frame.get_mode(),
-            self.frame.get_bounds(),
-            self.frame.get_color()
-        ).rectangle(
-            self.empty_fill.get_mode(),
-            self.empty_fill.get_bounds(),
-            self.empty_fill.get_color()
-        ).rectangle(
-            self.count_fill.get_mode(),
-            self.count_fill.get_bounds(),
-            self.count_fill.get_color()
-        ).build(ctx)?;
+        let mesh = ggraphics::MeshBuilder::new()
+            .rectangle(
+                self.frame.get_mode(),
+                self.frame.get_bounds(),
+                self.frame.get_color(),
+            )
+            .rectangle(
+                self.empty_fill.get_mode(),
+                self.empty_fill.get_bounds(),
+                self.empty_fill.get_color(),
+            )
+            .rectangle(
+                self.count_fill.get_mode(),
+                self.count_fill.get_bounds(),
+                self.count_fill.get_color(),
+            )
+            .build(ctx)?;
 
-        ggraphics::draw(ctx, &mesh, ggraphics::DrawParam::default().dest(self.position))
+        ggraphics::draw(
+            ctx,
+            &mesh,
+            ggraphics::DrawParam::default().dest(self.position),
+        )
     }
 
     fn hide(&mut self) {
@@ -205,7 +233,6 @@ impl DrawableComponent for Meter {
     fn get_drawing_depth(&self) -> i8 {
         self.drwob_essential.drawing_depth
     }
-    
 }
 
 struct Choice {
@@ -217,31 +244,52 @@ struct Choice {
 }
 
 impl Choice {
-    pub fn new(choice_text: Vec<&str>,
-               textures: Vec<TextureID>,
-               select_tid: TextureID,
-               game_data: &GameData) -> Self {
+    pub fn new(
+        choice_text: Vec<&str>,
+        textures: Vec<TextureID>,
+        select_tid: TextureID,
+        game_data: &GameData,
+    ) -> Self {
         Choice {
-            choice_text: choice_text.iter().map(|s| SimpleText::new(
-                MovableText::new(s.to_string(),
-                                 numeric::Point2f::new(0.0, 0.0),
-                                 numeric::Vector2f::new(1.0, 1.0),
-                                 0.0,
-                                 0,
-                                 move_fn::halt(numeric::Point2f::new(0.0, 0.0)),
-                                 FontInformation::new(game_data.get_font(FontID::DEFAULT),
-                                                      numeric::Vector2f::new(24.0, 24.0),
-                                                      ggraphics::BLACK),
-                                 0), Vec::new())).collect(),
-            choice_texture: textures.iter().map(|tid| SimpleObject::new(
-                MovableUniTexture::new(
-                    game_data.ref_texture(*tid),
-                    numeric::Point2f::new(0.0, 0.0),
-                    numeric::Vector2f::new(1.0, 1.0),
-                    0.0,
-                    0,
-                    move_fn::halt(numeric::Point2f::new(0.0, 0.0)),
-                    0), Vec::new())).collect(),
+            choice_text: choice_text
+                .iter()
+                .map(|s| {
+                    SimpleText::new(
+                        MovableText::new(
+                            s.to_string(),
+                            numeric::Point2f::new(0.0, 0.0),
+                            numeric::Vector2f::new(1.0, 1.0),
+                            0.0,
+                            0,
+                            move_fn::halt(numeric::Point2f::new(0.0, 0.0)),
+                            FontInformation::new(
+                                game_data.get_font(FontID::DEFAULT),
+                                numeric::Vector2f::new(24.0, 24.0),
+                                ggraphics::BLACK,
+                            ),
+                            0,
+                        ),
+                        Vec::new(),
+                    )
+                })
+                .collect(),
+            choice_texture: textures
+                .iter()
+                .map(|tid| {
+                    SimpleObject::new(
+                        MovableUniTexture::new(
+                            game_data.ref_texture(*tid),
+                            numeric::Point2f::new(0.0, 0.0),
+                            numeric::Vector2f::new(1.0, 1.0),
+                            0.0,
+                            0,
+                            move_fn::halt(numeric::Point2f::new(0.0, 0.0)),
+                            0,
+                        ),
+                        Vec::new(),
+                    )
+                })
+                .collect(),
             selecting: SimpleObject::new(
                 MovableUniTexture::new(
                     game_data.ref_texture(select_tid),
@@ -250,18 +298,23 @@ impl Choice {
                     0.0,
                     0,
                     move_fn::halt(numeric::Point2f::new(0.0, 0.0)),
-                    0), Vec::new()),
+                    0,
+                ),
+                Vec::new(),
+            ),
             select_index: 0,
             drwob_essential: DrawableObjectEssential::new(true, 0),
         }
     }
 }
 
-
 impl DrawableComponent for Choice {
     fn draw(&mut self, ctx: &mut ggez::Context) -> ggez::GameResult<()> {
         if self.is_visible() {
-            self.choice_text.get_mut(self.select_index).unwrap().draw(ctx)?;
+            self.choice_text
+                .get_mut(self.select_index)
+                .unwrap()
+                .draw(ctx)?;
         }
         Ok(())
     }
@@ -284,7 +337,7 @@ impl DrawableComponent for Choice {
 
     fn get_drawing_depth(&self) -> i8 {
         self.drwob_essential.drawing_depth
-    }    
+    }
 }
 
 pub struct SimulationStatus {
@@ -298,30 +351,43 @@ pub struct SimulationStatus {
 impl SimulationStatus {
     pub fn new(ctx: &mut ggez::Context, pos: numeric::Rect, game_data: &GameData) -> Self {
         SimulationStatus {
-            money_counter: DrawableCounter::<u32>::new(25000 as u32, numeric::Point2f::new(0.0, 0.0),
-                                                       FontInformation::new(game_data.get_font(FontID::DEFAULT),
-                                                                            numeric::Vector2f::new(24.0, 24.0),
-                                                                            ggraphics::Color::from_rgba_u32(0xffffffff)),
-                                                       Box::new(move |count| { format!("{}円", count) }), 0),
-            tired_meter: Meter::new(numeric::Point2f::new(800.0, 10.0),
-                                    numeric::Rect::new(0.0, 0.0, 200.0, 40.0),
-                                    ggraphics::Color::from_rgba_u32(0x000000ff),
-                                    numeric::Rect::new(10.0, 10.0, 180.0, 20.0),
-                                    ggraphics::Color::from_rgba_u32(0x222222ff),
-                                    ggraphics::Color::from_rgba_u32(0xddddddff),
-                                    500.0, 1000.0),
-            choice: Choice::new(vec!["test1", "test2"],
-                                vec![TextureID::LotusBlue, TextureID::LotusPink],
-                                TextureID::LotusYellow,
-                                game_data),
+            money_counter: DrawableCounter::<u32>::new(
+                25000 as u32,
+                numeric::Point2f::new(0.0, 0.0),
+                FontInformation::new(
+                    game_data.get_font(FontID::DEFAULT),
+                    numeric::Vector2f::new(24.0, 24.0),
+                    ggraphics::Color::from_rgba_u32(0xffffffff),
+                ),
+                Box::new(move |count| format!("{}円", count)),
+                0,
+            ),
+            tired_meter: Meter::new(
+                numeric::Point2f::new(800.0, 10.0),
+                numeric::Rect::new(0.0, 0.0, 200.0, 40.0),
+                ggraphics::Color::from_rgba_u32(0x000000ff),
+                numeric::Rect::new(10.0, 10.0, 180.0, 20.0),
+                ggraphics::Color::from_rgba_u32(0x222222ff),
+                ggraphics::Color::from_rgba_u32(0xddddddff),
+                500.0,
+                1000.0,
+            ),
+            choice: Choice::new(
+                vec!["test1", "test2"],
+                vec![TextureID::LotusBlue, TextureID::LotusPink],
+                TextureID::LotusYellow,
+                game_data,
+            ),
             canvas: SubScreen::new(ctx, pos, 0, ggraphics::Color::from_rgba_u32(0xe6cde3ff)),
-	    background: MovableUniTexture::new(game_data.ref_texture(TextureID::WafuTexture2),
-					       numeric::Point2f::new(0.0, 0.0),
-					       numeric::Vector2f::new(1.0, 1.0),
-					       0.0,
-					       0,
-					       move_fn::stop(),
-					       0),
+            background: MovableUniTexture::new(
+                game_data.ref_texture(TextureID::WafuTexture2),
+                numeric::Point2f::new(0.0, 0.0),
+                numeric::Vector2f::new(1.0, 1.0),
+                0.0,
+                0,
+                move_fn::stop(),
+                0,
+            ),
         }
     }
 
@@ -333,15 +399,15 @@ impl SimulationStatus {
 impl DrawableComponent for SimulationStatus {
     fn draw(&mut self, ctx: &mut ggez::Context) -> ggez::GameResult<()> {
         if self.is_visible() {
-	    sub_screen::stack_screen(ctx, &self.canvas);
+            sub_screen::stack_screen(ctx, &self.canvas);
 
-	    self.background.draw(ctx)?;
+            self.background.draw(ctx)?;
             self.money_counter.draw(ctx)?;
             self.tired_meter.draw(ctx)?;
 
             self.choice.draw(ctx)?;
-            
-	    sub_screen::pop_screen(ctx);
+
+            sub_screen::pop_screen(ctx);
             self.canvas.draw(ctx).unwrap();
         }
         Ok(())
@@ -365,5 +431,5 @@ impl DrawableComponent for SimulationStatus {
 
     fn get_drawing_depth(&self) -> i8 {
         self.canvas.get_drawing_depth()
-    }    
+    }
 }
