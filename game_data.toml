@@ -28,7 +28,9 @@ texture_paths = [
 	      "/textures/kosuzu_front.png",
 	      "/textures/kosuzu_back.png",
 	      "/textures/kosuzu_right.png",
-	      "/textures/kosuzu_left.png"]
+	      "/textures/kosuzu_left.png",
+	      "/textures/store_button.png",
+	      "/textures/reset_button.png",]
 font_paths = ["/fonts/azuki.ttf", "/fonts/RiiT_F.ttf"]
 tileset_paths = ["./resources/maps/suzunaan/suzuna1.tmx"]
 customers_name = ["霧雨魔里沙", "稗田阿求"]

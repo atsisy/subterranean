@@ -21,8 +21,8 @@ trigger = "action"
 begin-number = 700
 end-number = 800
 [event-panel.position]
-x = 1
-y = 9
+x = 6
+y = 3
 
 [[event-panel]]
 type = "builtin-event"
