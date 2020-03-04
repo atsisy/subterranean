@@ -30,7 +30,7 @@ fn create_playable_doremy1(
     MapObject::new(
         tobj::SimpleObject::new(
             tobj::MovableUniTexture::new(
-                game_data.ref_texture(TextureID::KosuzuDotFront),
+                game_data.ref_texture(TextureID::KosuzuDotFront1),
                 mp::map_to_display(&map_position, camera),
                 numeric::Vector2f::new(1.5, 1.5),
                 0.0,
@@ -41,10 +41,17 @@ fn create_playable_doremy1(
             vec![],
         ),
         vec![
-            vec![game_data.ref_texture(TextureID::KosuzuDotFront)],
-            vec![game_data.ref_texture(TextureID::KosuzuDotBack)],
-            vec![game_data.ref_texture(TextureID::KosuzuDotRight)],
-            vec![game_data.ref_texture(TextureID::KosuzuDotLeft)],
+            vec![game_data.ref_texture(TextureID::KosuzuDotFront2),
+		 game_data.ref_texture(TextureID::KosuzuDotFront3)
+	    ],
+            vec![game_data.ref_texture(TextureID::KosuzuDotBack2),
+		 game_data.ref_texture(TextureID::KosuzuDotBack3),
+	    ],
+            vec![game_data.ref_texture(TextureID::KosuzuDotRight2),
+		 game_data.ref_texture(TextureID::KosuzuDotRight3),
+	    ],
+            vec![game_data.ref_texture(TextureID::KosuzuDotLeft2),
+		 game_data.ref_texture(TextureID::KosuzuDotLeft3)],
         ],
         0,
         TextureSpeedInfo::new(
@@ -58,6 +65,6 @@ fn create_playable_doremy1(
         ),
         map_position,
         numeric::Rect::new(0.02, 0.6, 0.98, 1.0),
-        5,
+        15,
     )
 }
