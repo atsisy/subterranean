@@ -767,7 +767,8 @@ impl SuzuMiniSightSilhouette {
                 ggraphics::Color::from_rgba_u32(0xff),
             ),
         ));
-        text_balloon.set_alpha(0.0);
+        text_balloon.hide();
+	
         SuzuMiniSightSilhouette {
             event_list: DelayEventList::new(),
             background: background,
@@ -802,9 +803,6 @@ impl SuzuMiniSightSilhouette {
             self.event_list.add(DelayEvent::new(
                 Box::new(move |silhouette, ctx, _| {
                     silhouette
-                        .text_balloon
-                        .ref_wrapped_object_mut()
-                        .ref_wrapped_object_mut()
                         .replace_text(ctx, &line);
                     silhouette
                         .text_balloon
@@ -852,6 +850,7 @@ impl SuzuMiniSightSilhouette {
             .ref_wrapped_object_mut()
             .ref_wrapped_object_mut()
             .replace_text(ctx, text);
+	self.text_balloon.appear();
     }
 
     pub fn run_hide_effect(&mut self, now: Clock) {

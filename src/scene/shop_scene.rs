@@ -725,21 +725,29 @@ impl ShopDetailMenuContents {
     pub fn detail_menu_is_open(&self) -> bool {
         self.now_appear
     }
+    
+    pub fn hide_toggle(&mut self, t: Clock) {
+	self.now_appear = false;
+        self.shelving_info.slide_hide(t);
+    }
+
+    pub fn appear_toggle(&mut self, t: Clock) {
+	self.now_appear = true;
+        self.shelving_info.slide_appear(self.appear_position, t);
+    }
 
     pub fn slide_toggle(&mut self, t: Clock) {
         match self.contents_switch {
             ShopDetailMenuSymbol::ShelvingBooks => {
                 if self.now_appear {
-                    self.now_appear = false;
-                    self.shelving_info.slide_hide(t);
+		    self.hide_toggle(t);
                 } else {
-                    self.now_appear = true;
-                    self.shelving_info.slide_appear(self.appear_position, t);
+		    self.appear_toggle(t);
                 }
-            }
+            },
             ShopDetailMenuSymbol::SuzunaMap => {
                 // まだ
-            }
+            },
             ShopDetailMenuSymbol::None => (),
         }
     }
@@ -834,6 +842,9 @@ impl ShopMenuMaster {
 
     pub fn toggle_first_menu(&mut self, t: Clock) {
         self.first_menu.slide_toggle(t);
+	if !self.first_menu_is_open() {
+	    self.detail_menu.hide_toggle(t);
+	}
     }
 
     pub fn first_menu_is_open(&self) -> bool {
@@ -1704,6 +1715,7 @@ impl SceneManager for ShopScene {
                 for shop_object in &mut self.shop_object_list {
                     shop_object.on_click(ctx, game_data, t, button, point);
                 }
+		self.start_mouse_move(ctx, point);
             }
             MouseButton::Right => {
                 self.player.reset_speed();
