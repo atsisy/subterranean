@@ -498,6 +498,7 @@ pub struct SelectStoringBookWindow {
     cell_desc: VerticalText,
     book_text: Vec<VerticalText>,
     selecting_book_index: Vec<usize>,
+    book_storable: Vec<bool>,
     book_font: FontInformation,
 }
 
@@ -541,6 +542,7 @@ impl SelectStoringBookWindow {
             ),
             book_text: Vec::new(),
             selecting_book_index: Vec::new(),
+	    book_storable: Vec::new(),
             book_font: font_info,
         };
 
@@ -553,6 +555,7 @@ impl SelectStoringBookWindow {
 		       book_shelf_info: &BookShelfInformation, book_info: &Vec<BookInformation>) {
         let window_rect = self.canvas.get_drawing_area(ctx);
         let mut text_position = numeric::Point2f::new(window_rect.w - 150.0, 50.0);
+	self.book_storable.clear();
 
         self.book_text = book_info
             .iter()
@@ -565,10 +568,13 @@ impl SelectStoringBookWindow {
                     text_position.y += 500.0;
                 }
 
+		let is_storable = book_shelf_info.contains_number(info.billing_number);
+		self.book_storable.push(is_storable);
+
                 let vtext = VerticalText::new(
                     format!(
                         "{0: <4}{1: <6}{2}",
-			if book_shelf_info.contains_number(info.billing_number) { "可" } else { "不可" },
+			if is_storable { "可" } else { "不可" },
                         number_to_jk(info.billing_number as u64),
                         info.name
                     ),
@@ -659,20 +665,22 @@ impl Clickable for SelectStoringBookWindow {
         let rpoint = self.canvas.relative_point(point);
 
         for (index, vtext) in self.book_text.iter_mut().enumerate() {
-            if vtext.get_drawing_area(ctx).contains(rpoint) {
-                // 既に選択されている場合は、削除
-                if self.selecting_book_index.contains(&index) {
-                    vtext.set_color(ggraphics::Color::from_rgba_u32(0x000000ff));
-                    self.selecting_book_index
-                        .retain(|inner_index| *inner_index != index);
-                } else {
-                    // テキストを赤に変更し、選択中のインデックスとして登録
-                    vtext.set_color(ggraphics::Color::from_rgba_u32(0xee0000ff));
-                    self.selecting_book_index.push(index);
-                }
-
-                break;
-            }
+	    if *self.book_storable.get(index).unwrap() {
+		if vtext.get_drawing_area(ctx).contains(rpoint) {
+                    // 既に選択されている場合は、削除
+                    if self.selecting_book_index.contains(&index) {
+			vtext.set_color(ggraphics::Color::from_rgba_u32(0x000000ff));
+			self.selecting_book_index
+                            .retain(|inner_index| *inner_index != index);
+                    } else {
+			// テキストを赤に変更し、選択中のインデックスとして登録
+			vtext.set_color(ggraphics::Color::from_rgba_u32(0xee0000ff));
+			self.selecting_book_index.push(index);
+                    }
+		    
+                    break;
+		}
+	    }
         }
 
         debug::debug_screen_push_text(&format!(
@@ -715,7 +723,7 @@ impl SelectStoreBookUI {
             select_book_window: SelectStoringBookWindow::new(
                 ctx,
                 game_data,
-                numeric::Rect::new(70.0, 50.0, 550.0, 600.0),
+                numeric::Rect::new(70.0, 50.0, 850.0, 600.0),
                 "配架中",
 		&book_shelf_info,
                 shelving_book.clone(),
@@ -724,7 +732,7 @@ impl SelectStoreBookUI {
 	    stored_books: Vec::new(),
             store_button: SelectButton::new(
                 ctx,
-                numeric::Rect::new(650.0, 200.0, 100.0, 50.0),
+                numeric::Rect::new(1000.0, 200.0, 100.0, 50.0),
                 Box::new(UniTexture::new(
                     game_data.ref_texture(TextureID::StoreButton),
                     numeric::Point2f::new(0.0, 0.0),
@@ -735,7 +743,7 @@ impl SelectStoreBookUI {
             ),
             reset_select_button: SelectButton::new(
                 ctx,
-                numeric::Rect::new(650.0, 500.0, 100.0, 50.0),
+                numeric::Rect::new(1000.0, 500.0, 100.0, 50.0),
                 Box::new(UniTexture::new(
                     game_data.ref_texture(TextureID::ResetButton),
                     numeric::Point2f::new(0.0, 0.0),
