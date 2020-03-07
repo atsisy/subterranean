@@ -2,6 +2,8 @@ use std::cell::RefCell;
 use std::collections::HashMap;
 use std::rc::Rc;
 
+use pathfinding::prelude::dijkstra;
+
 use ggez::graphics as ggraphics;
 use tiled;
 use torifune::numeric;
@@ -182,18 +184,29 @@ impl TileSet {
         CollisionInformation::new_not_collision()
     }
 
-    /// gidから、Tilesetのクロップ範囲を計算して返す
-    fn gid_to_crop(&self, gid: u32) -> numeric::Rect {
-        // 相対的なgid
+    pub fn gid_to_location_index(&self, gid: u32) -> numeric::Vector2u {
+	// 相対的なgid
         let r_gid = gid - self.first_gid;
 
         // 行と列を計算
         let rows = r_gid / self.tile_count.x;
         let cols = r_gid % self.tile_count.x;
 
+	numeric::Vector2u::new(cols, rows)
+    }
+
+    pub fn is_collisionable_tile(&self, gid: u32) -> bool {
+	self.contains_gid(gid) && self.collision_info.contains_key(&gid)
+    }
+
+    /// gidから、Tilesetのクロップ範囲を計算して返す
+    fn gid_to_crop(&self, gid: u32) -> numeric::Rect {
+	
+	let location = self.gid_to_location_index(gid);
+	
         numeric::Rect::new(
-            cols as f32 * self.tile_size_ratio.x, // クロップのx始点
-            rows as f32 * self.tile_size_ratio.y, // クロップのy始点
+            location.x as f32 * self.tile_size_ratio.x, // クロップのx始点
+            location.y as f32 * self.tile_size_ratio.y, // クロップのy始点
             self.tile_size_ratio.x,               // クロップの大きさ
             self.tile_size_ratio.y,
         )
@@ -209,6 +222,88 @@ impl TileSet {
 
     fn get_first_gid(&self) -> u32 {
         self.first_gid
+    }
+}
+
+#[derive(Clone, Copy)]
+pub struct CollisionMapNode {
+    pub done: bool,
+    pub cost: i32,
+}
+
+pub struct CollisionMap {
+    map: Vec<Vec<CollisionMapNode>>,
+    size: numeric::Vector2u,
+    collision_objects: Vec<numeric::Vector2u>,
+}
+
+impl CollisionMap {
+    
+    pub fn new(size: numeric::Vector2u, collision_objects: Vec<numeric::Vector2u>) -> Self {
+	CollisionMap {
+	    map: vec![vec![CollisionMapNode { done: false, cost: -1 }; size.y as usize]; size.x as usize],
+	    size: size,
+	    collision_objects: collision_objects,
+	}
+    }
+
+    pub fn not_contains(&self, position: numeric::Point2i) -> bool {
+	position.x < 0 && position.x >= self.size.x as i32
+	    && position.y < 0 && position.y >= self.size.y as i32
+    }
+
+    fn is_movable_position(&self, x: i32, y: i32) -> bool {
+	!self.not_contains(numeric::Point2i::new(x, y)) &&
+	    !self.collision_objects.contains(&numeric::Vector2u::new(x as u32, y as u32))
+    }
+
+    pub fn get(&self, position: numeric::Point2i) -> Option<&CollisionMapNode> {
+	if let Some(row) = self.map.get(position.x as usize).as_ref() {
+	    row.get(position.y as usize).as_ref();
+	}
+	
+	None
+    }
+
+    pub fn find_path(&self, start: numeric::Point2i, goal: numeric::Point2i) -> Option<Vec<numeric::Point2i>> {
+	let result = dijkstra(&start,
+			      |point| self.successors(point),
+			      |point| point.eq(&goal));
+
+	if let Some((path, _)) = result {
+	    Some(path)
+	} else {
+	    None
+	}
+    }
+
+    fn successors(&self, point: &numeric::Point2i) -> Vec<(numeric::Point2i, usize)> {
+	let mut successors_list = Vec::new();
+
+	let cand_point = numeric::Point2i::new(point.x as i32, point.y as i32 - 1);
+	if self.is_movable_position(cand_point.x, cand_point.y) {
+	    successors_list.push(cand_point);
+	}
+
+	let cand_point = numeric::Point2i::new(point.x as i32, point.y as i32 + 1);
+	if self.is_movable_position(cand_point.x, cand_point.y) {
+	    successors_list.push(cand_point);
+	}
+
+	let cand_point = numeric::Point2i::new(point.x as i32 - 1, point.y as i32);
+	if self.is_movable_position(cand_point.x, cand_point.y) {
+	    successors_list.push(cand_point);
+	}
+
+	let cand_point = numeric::Point2i::new(point.x as i32 + 1, point.y as i32);
+	if self.is_movable_position(cand_point.x, cand_point.y) {
+	    successors_list.push(cand_point);
+	}
+	
+	successors_list
+	    .into_iter()
+	    .map(|p| (p, 1))
+	    .collect()
     }
 }
 
@@ -231,6 +326,7 @@ pub struct StageObjectMap {
     tile_map: tiled::Map,
     tilesets: Vec<TileSet>,
     tilesets_batchs: HashMap<u32, ggraphics::spritebatch::SpriteBatch>,
+    collision_map: Option<CollisionMap>,
     camera: Rc<RefCell<numeric::Rect>>,
     scale: numeric::Vector2f,
     canvas: SubScreen,
@@ -269,6 +365,7 @@ impl StageObjectMap {
             tile_map: tile_map,
             tilesets: tilesets,
             tilesets_batchs: batchs,
+	    collision_map: None,
             camera: camera,
             scale: scale,
             canvas: canvas,
@@ -391,6 +488,17 @@ impl StageObjectMap {
         None
     }
 
+    /// gidが指すタイルが衝突判定ありか？
+    fn is_collisionable_tile(&self, gid: u32) -> bool {
+        for tileset in &self.tilesets {
+	    if tileset.is_collisionable_tile(gid) {
+		return true;
+	    }
+        }
+
+        false
+    }
+
     /// sprite batch処理を実際に行うメソッド
     fn update_sprite_batch(&mut self) {
         // batch処理を全てクリア
@@ -438,6 +546,61 @@ impl StageObjectMap {
                 }
             }
         }
+    }
+
+    fn search_collision_locations(&self) -> Vec<numeric::Vector2u> {
+
+	let mut collision_locations = Vec::new();
+	
+	for layer in self.tile_map.layers.iter() {
+            if !layer.visible {
+                // レイヤーが非表示設定になっていれば、衝突オブジェクトの検索を行わない
+                continue;
+            }
+
+            // 二次元のマップデータを全てbatch処理に掛ける
+            for (y, row) in layer.tiles.iter().enumerate() {
+                for (x, &tile) in row.iter().enumerate() {
+                    let gid = tile.gid;
+                    // gidが0のときは、何も配置されていない状態を表すので、描画は行わない
+                    if gid == 0 {
+                        continue;
+                    }
+
+		    if self.is_collisionable_tile(gid) {
+			collision_locations.push(numeric::Vector2u::new(x as u32, y as u32));
+		    }
+                }
+            }
+        }
+
+	collision_locations
+    }
+
+    pub fn build_collision_map(&mut self) {
+	let collision_points = self.search_collision_locations();
+	
+	self.collision_map = Some(
+	    CollisionMap::new(
+		numeric::Vector2u::new(self.tile_map.width, self.tile_map.height),
+		collision_points.clone()));
+    }
+
+    pub fn find_shortest_route(&self, start: numeric::Vector2u, goal: numeric::Vector2u) -> Option<Vec<numeric::Vector2u>> {
+	if let Some(collision_map) = self.collision_map.as_ref() {
+	    if let Some(path) = collision_map.find_path(numeric::Point2i::new(start.x as i32, start.y as i32),
+						     numeric::Point2i::new(goal.x as i32, goal.y as i32)) {
+		Some(
+		    path
+			.iter()
+    			.map(|p| numeric::Vector2u::new(p.x as u32, p.y as u32))
+    			.collect())
+	    } else {
+		None
+	    }
+	} else {
+	    None
+	}
     }
 }
 

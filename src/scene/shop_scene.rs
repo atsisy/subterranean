@@ -267,7 +267,6 @@ impl ShelvingDetailContents {
     pub fn update_contents(
         &mut self,
         game_data: &GameData,
-        task_result: &TaskResult,
         player_shelving: &Vec<BookInformation>,
     ) {
         self.book_info.clear();
@@ -715,11 +714,10 @@ impl ShopDetailMenuContents {
     pub fn update_contents(
         &mut self,
         game_data: &GameData,
-        task_result: &TaskResult,
         player_shelving: &Vec<BookInformation>,
     ) {
         self.shelving_info
-            .update_contents(game_data, task_result, player_shelving);
+            .update_contents(game_data, player_shelving);
     }
 
     pub fn detail_menu_is_open(&self) -> bool {
@@ -837,7 +835,7 @@ impl ShopMenuMaster {
     ) {
         self.first_menu.update_menu_contents(game_data, task_result);
         self.detail_menu
-            .update_contents(game_data, task_result, player_shelving);
+            .update_contents(game_data, player_shelving);
     }
 
     pub fn toggle_first_menu(&mut self, t: Clock) {
@@ -1172,6 +1170,9 @@ impl ShopScene {
 
         let character_group = CharacterGroup::new();
 
+	let mut map = MapData::new(ctx, game_data, map_id, camera.clone());
+	map.tile_map.build_collision_map();
+
         ShopScene {
             player: player,
             character_group: character_group,
@@ -1180,7 +1181,7 @@ impl ShopScene {
             key_listener: key_listener,
             task_result: TaskResult::new(),
             clock: 0,
-            map: MapData::new(ctx, game_data, map_id, camera.clone()),
+            map: map,
             shop_menu: ShopMenuMaster::new(ctx, game_data, numeric::Vector2f::new(450.0, 768.0), 0),
             dark_effect_panel: DarkEffectPanel::new(
                 ctx,
@@ -1684,7 +1685,7 @@ impl ShopScene {
         self.task_result = task_result.clone();
     }
 
-    fn try_hide_shelving_select_ui(&mut self, ctx: &mut ggez::Context, game_data: &GameData) {
+    fn try_hide_shelving_select_ui(&mut self, game_data: &GameData) {
 	let select_result = self
             .shop_special_object
             .hide_shelving_select_ui(self.get_current_clock());
@@ -1701,11 +1702,11 @@ impl ShopScene {
         }
     }
 
-    fn try_hide_storing_select_ui(&mut self, ctx: &mut ggez::Context, game_data: &GameData) {
+    fn try_hide_storing_select_ui(&mut self, game_data: &GameData) {
 	let store_result = self
             .shop_special_object
             .hide_storing_select_ui(self.get_current_clock());
-        if let Some((stored, shelving)) = store_result {
+        if let Some((_stored, shelving)) = store_result {
             self.player.update_shelving_book(shelving);
             self.shop_menu.update_contents(
                 game_data,
@@ -1746,8 +1747,8 @@ impl SceneManager for ShopScene {
                 }
             },
             tdev::VirtualKey::Action3 => {
-		self.try_hide_shelving_select_ui(ctx, game_data);
-		self.try_hide_storing_select_ui(ctx, game_data);
+		self.try_hide_shelving_select_ui(game_data);
+		self.try_hide_storing_select_ui(game_data);
             }
             _ => (),
         }
