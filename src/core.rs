@@ -566,7 +566,7 @@ impl<'a> SceneController<'a> {
     ) {
         if next_scene_id == scene::SceneID::MainDesk {
             self.current_scene = Box::new(scene::suzuna_scene::suzuna_sub_scene::TaskScene::new(
-                ctx, game_data,
+                ctx, game_data, None
             ));
         } else if next_scene_id == scene::SceneID::SuzunaShop {
             self.current_scene = Box::new(scene::shop_scene::ShopScene::new(ctx, game_data, 0));
@@ -584,7 +584,7 @@ impl<'a> SceneController<'a> {
         let next_scene: Option<Box<dyn scene::SceneManager + 'a>> =
             if next_scene_id == scene::SceneID::MainDesk {
                 Some(Box::new(
-                    scene::suzuna_scene::suzuna_sub_scene::TaskScene::new(ctx, game_data),
+                    scene::suzuna_scene::suzuna_sub_scene::TaskScene::new(ctx, game_data, None),
                 ))
             } else if next_scene_id == scene::SceneID::SuzunaShop {
                 Some(Box::new(scene::shop_scene::ShopScene::new(

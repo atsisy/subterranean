@@ -109,8 +109,9 @@ impl SuzunaSubScene {
         transition: SceneTransition,
     ) {
         if transition == SceneTransition::StackingTransition {
-            self.scene_status = SuzunaSceneStatus::DeskWork;
-            self.desk_work_scene = Some(Box::new(TaskScene::new(ctx, game_data)));
+	    let customer_request = self.shop_scene.as_mut().unwrap().pop_customer_request();
+	    self.scene_status = SuzunaSceneStatus::DeskWork;
+	    self.desk_work_scene = Some(Box::new(TaskScene::new(ctx, game_data, customer_request)));
         }
     }
 

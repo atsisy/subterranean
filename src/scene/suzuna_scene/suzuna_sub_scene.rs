@@ -14,7 +14,6 @@ use crate::object::task_object::*;
 use crate::scene::{SceneID, SceneTransition};
 
 use crate::object::task_result_object::*;
-use crate::object::task_object::tt_sub_component::*;
 use crate::object::task_object::tt_main_component::*;
 
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -33,12 +32,14 @@ pub struct TaskScene {
     event_list: DelayEventList<Self>,
     status: TaskSceneStatus,
     task_result: TaskResult,
+    customer_request: Option<CustomerRequest>,
     transition_status: SceneTransition,
     transition_scene: SceneID,
 }
 
 impl TaskScene {
-    pub fn new(ctx: &mut ggez::Context, game_data: &GameData) -> TaskScene {
+    pub fn new(ctx: &mut ggez::Context, game_data: &GameData, customer_request: Option<CustomerRequest>) -> TaskScene {
+
         TaskScene {
             task_table: TaskTable::new(
                 ctx,
@@ -55,6 +56,7 @@ impl TaskScene {
             event_list: DelayEventList::new(),
             status: TaskSceneStatus::Init,
             task_result: TaskResult::new(),
+	    customer_request: customer_request,
             transition_status: SceneTransition::Keep,
             transition_scene: SceneID::MainDesk,
         }
@@ -135,57 +137,6 @@ impl TaskScene {
                     .push(copying_request_information);
             }
         }
-
-        if self.task_result.done_works > 5 {
-            self.status = TaskSceneStatus::FinishDay;
-            self.transition_scene = SceneID::SuzunaShop;
-            self.transition_status = SceneTransition::PoppingTransition;
-            println!("done 5 works!!");
-        }
-    }
-
-    fn start_borrowing_customer_event(&mut self, game_data: &GameData) {
-        self.insert_customer_event(
-            CustomerRequest::Borrowing(BorrowingInformation::new_random(
-                game_data,
-                GensoDate::new(128, 12, 20),
-                GensoDate::new(128, 12, 20),
-            )),
-            100,
-        );
-    }
-
-    fn start_returning_customer_event(&mut self, game_data: &GameData) {
-        self.insert_customer_event(
-            CustomerRequest::Returning(ReturnBookInformation::new_random(
-                game_data,
-                GensoDate::new(128, 12, 20),
-                GensoDate::new(128, 12, 20),
-            )),
-            100,
-        );
-    }
-
-    fn start_copying_customer_event(&mut self, game_data: &GameData) {
-        self.insert_customer_event(
-            CustomerRequest::Copying(CopyingRequestInformation::new_random(
-                game_data,
-                GensoDate::new(12, 12, 12),
-                GensoDate::new(12, 12, 12),
-            )),
-            100,
-        );
-    }
-
-    fn start_customer_event(&mut self, game_data: &GameData) {
-        let random_select = rand::random::<usize>() % 3;
-        debug::debug_screen_push_text(&format!("task type: {}", random_select));
-        match random_select {
-            0 => self.start_borrowing_customer_event(game_data),
-            1 => self.start_returning_customer_event(game_data),
-            2 => self.start_copying_customer_event(game_data),
-            _ => (),
-        }
     }
 
     pub fn get_task_result(&self) -> &TaskResult {
@@ -198,6 +149,12 @@ impl TaskScene {
 
     pub fn get_task_status(&self) -> TaskSceneStatus {
         self.status
+    }
+
+    pub fn ready_to_finish_scene(&mut self) {
+	self.status = TaskSceneStatus::FinishDay;
+	self.transition_scene = SceneID::SuzunaShop;
+	self.transition_status = SceneTransition::PoppingTransition;
     }
 }
 
@@ -322,11 +279,29 @@ impl SceneManager for TaskScene {
                 }),
                 self.get_current_clock() + 30,
             );
-            self.status = TaskSceneStatus::CustomerWait;
-        }
 
+            self.status = TaskSceneStatus::CustomerWait;
+
+	    if self.customer_request.is_none() {
+		self.event_list.add_event(
+                    Box::new(|scene: &mut TaskScene, _, _| {
+			scene.ready_to_finish_scene();
+                    }),
+                    self.get_current_clock() + 150,
+		);
+	    }
+        }
+	
         if self.status == TaskSceneStatus::CustomerFree {
-            self.start_customer_event(game_data);
+
+	    if let Some(request) = &self.customer_request {
+		let cloned_request = request.clone();
+		self.insert_customer_event(
+		    cloned_request,
+		    100,
+		);
+	    }
+	    self.customer_request = None;
             self.status = TaskSceneStatus::CustomerWait;
         }
 

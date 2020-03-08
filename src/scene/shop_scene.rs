@@ -1,5 +1,6 @@
 use std::cell::RefCell;
 use std::rc::Rc;
+use std::collections::VecDeque;
 
 use torifune::device as tdev;
 use torifune::graphics::object::*;
@@ -20,6 +21,7 @@ use torifune::numeric;
 use super::*;
 use crate::core::map_parser as mp;
 use crate::core::{BookInformation, FontID, GameData, BookShelfInformation};
+use crate::object::task_object::tt_main_component::CustomerRequest;
 use crate::object::map_object::EventTrigger;
 use crate::object::map_object::*;
 use crate::object::move_fn;
@@ -1143,7 +1145,7 @@ pub struct ShopScene {
     clock: Clock,
     map: MapData,
     shop_menu: ShopMenuMaster,
-    wait_customer_flag: bool,
+    customer_request_queue: VecDeque<CustomerRequest>,
     camera: Rc<RefCell<numeric::Rect>>,
     dark_effect_panel: DarkEffectPanel,
     transition_status: SceneTransition,
@@ -1194,7 +1196,7 @@ impl ShopScene {
             clock: 0,
             map: map,
             shop_menu: ShopMenuMaster::new(ctx, game_data, numeric::Vector2f::new(450.0, 768.0), 0),
-	    wait_customer_flag: false,
+	    customer_request_queue: VecDeque::new(),
             dark_effect_panel: DarkEffectPanel::new(
                 ctx,
                 numeric::Rect::new(0.0, 0.0, 1366.0, 768.0),
@@ -1599,7 +1601,7 @@ impl ShopScene {
                     self.map.scenario_box = Some(scenario_box);
                 }
                 MapEventElement::SwitchScene(switch_scene) => {
-		    if self.wait_customer_flag {
+		    if !self.customer_request_queue.is_empty() {
 			self.transition_status = SceneTransition::StackingTransition;
 			self.transition_scene = switch_scene.get_switch_scene_id();
 		    }
@@ -1717,6 +1719,11 @@ impl ShopScene {
                 .new_effect(8, self.get_current_clock(), 200, 0);
         }
     }
+
+    pub fn pop_customer_request(&mut self) -> Option<CustomerRequest> {
+	self.customer_request_queue.pop_front()
+    }
+
 }
 
 impl SceneManager for ShopScene {
@@ -1851,7 +1858,7 @@ impl SceneManager for ShopScene {
 
 	    for customer in self.character_group.iter_mut() {
 		if let Some(request) = customer.check_rise_hand(game_data) {
-		    self.wait_customer_flag = true;
+		    self.customer_request_queue.push_back(request);
 		}
 		
 		customer.try_update_move_effect(ctx, game_data, &self.map.tile_map, numeric::Vector2u::new(4, 10), t);
