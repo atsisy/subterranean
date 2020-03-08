@@ -586,6 +586,22 @@ impl StageObjectMap {
 		collision_points.clone()));
     }
 
+    pub fn map_position_to_tile_position(&self, point: numeric::Point2f) -> Option<numeric::Vector2u> {
+	if point.x < 0.0 || point.y < 0.0 {
+	    return None;
+	}
+	
+	let tile_size = self.get_tile_size();
+	Some(numeric::Vector2u::new(((point.x / tile_size.x as f32) / self.scale.x) as u32,
+				    ((point.y / tile_size.y as f32) / self.scale.y) as u32))
+    }
+
+    pub fn tile_position_to_map_position(&self, point: numeric::Vector2u) -> numeric::Point2f {
+	let tile_size = self.get_tile_size();
+	numeric::Point2f::new((point.x * tile_size.x) as f32 * self.scale.x,
+			      (point.y * tile_size.y) as f32 * self.scale.y)
+    }
+
     pub fn find_shortest_route(&self, start: numeric::Vector2u, goal: numeric::Vector2u) -> Option<Vec<numeric::Vector2u>> {
 	if let Some(collision_map) = self.collision_map.as_ref() {
 	    if let Some(path) = collision_map.find_path(numeric::Point2i::new(start.x as i32, start.y as i32),

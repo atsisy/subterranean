@@ -31,7 +31,7 @@ use crate::scene::suzuna_scene::TaskResult;
 use number_to_jk::number_to_jk;
 
 struct CharacterGroup {
-    group: Vec<GeneralCharacter>,
+    group: Vec<CustomerCharacter>,
     drwob_essential: DrawableObjectEssential,
 }
 
@@ -44,14 +44,14 @@ impl CharacterGroup {
     }
 
     #[inline(always)]
-    pub fn add(&mut self, character: GeneralCharacter) {
+    pub fn add(&mut self, character: CustomerCharacter) {
         self.group.push(character);
     }
 
     #[inline(always)]
     pub fn remove_if<F>(&mut self, f: F)
     where
-        F: Fn(&GeneralCharacter) -> bool,
+        F: Fn(&CustomerCharacter) -> bool,
     {
         self.group.retain(|e| !f(e));
     }
@@ -101,11 +101,11 @@ impl CharacterGroup {
         });
     }
 
-    pub fn iter(&self) -> std::slice::Iter<GeneralCharacter> {
+    pub fn iter(&self) -> std::slice::Iter<CustomerCharacter> {
         self.group.iter()
     }
 
-    pub fn iter_mut(&mut self) -> std::slice::IterMut<GeneralCharacter> {
+    pub fn iter_mut(&mut self) -> std::slice::IterMut<CustomerCharacter> {
         self.group.iter_mut()
     }
 }
@@ -1156,7 +1156,7 @@ impl ShopScene {
 
         let camera = Rc::new(RefCell::new(numeric::Rect::new(0.0, 0.0, 1366.0, 768.0)));
 
-        let map_position = numeric::Point2f::new(800.0, 230.0);
+        let map_position = numeric::Point2f::new(800.0, 830.0);
 
         let player = PlayableCharacter::new(
             character_factory::create_character(
@@ -1168,8 +1168,13 @@ impl ShopScene {
             PlayerStatus { hp: 10, mp: 10.0 },
         );
 
-        let character_group = CharacterGroup::new();
-
+        let mut character_group = CharacterGroup::new();
+	character_group.add(CustomerCharacter::new(
+	    character_factory::create_character(
+		character_factory::CharacterFactoryOrder::CustomerSample,
+		game_data, &camera.borrow(), numeric::Point2f::new(1170.0, 870.0)),
+	    CustomerDestPoint::new(vec![numeric::Vector2u::new(10, 3), numeric::Vector2u::new(6, 3)])));
+	    
 	let mut map = MapData::new(ctx, game_data, map_id, camera.clone());
 	map.tile_map.build_collision_map();
 
@@ -1610,69 +1615,56 @@ impl ShopScene {
         }
     }
 
-    fn update_playable_character_texture(&mut self) {
-        let speed = self.player.get_speed();
+    fn update_playable_character_texture(&mut self, rad: f32) {
+	
+	if rad >= 45.0_f32.to_radians() && rad < 135.0_f32.to_radians() {
+	    // 上向き
+            self.player
+                .get_mut_character_object()
+                .change_animation_mode(0);
+	}
 
-        if speed.x > 0.0 {
-            if speed.y > 0.0 {
-                if speed.x.abs() < speed.y.abs() {
-                    self.player
-                        .get_mut_character_object()
-                        .change_animation_mode(0);
-                } else {
-                    self.player
-                        .get_mut_character_object()
-                        .change_animation_mode(2);
-                }
-            } else {
-                if speed.x.abs() < speed.y.abs() {
-                    self.player
-                        .get_mut_character_object()
-                        .change_animation_mode(1);
-                } else {
-                    self.player
-                        .get_mut_character_object()
-                        .change_animation_mode(2);
-                }
-            }
-        } else {
-            if speed.y > 0.0 {
-                if speed.x.abs() < speed.y.abs() {
-                    self.player
-                        .get_mut_character_object()
-                        .change_animation_mode(0);
-                } else {
-                    self.player
-                        .get_mut_character_object()
-                        .change_animation_mode(3);
-                }
-            } else {
-                if speed.x.abs() < speed.y.abs() {
-                    self.player
-                        .get_mut_character_object()
-                        .change_animation_mode(1);
-                } else {
-                    self.player
-                        .get_mut_character_object()
-                        .change_animation_mode(3);
-                }
-            }
-        }
+	if rad >= 135.0_f32.to_radians() && rad < 225.0_f32.to_radians() {
+	    // 左向き
+            self.player
+                .get_mut_character_object()
+                .change_animation_mode(3);
+	}
+
+	if rad >= 225.0_f32.to_radians() && rad < 315.0_f32.to_radians() {
+	    // 下向き
+            self.player
+                .get_mut_character_object()
+                .change_animation_mode(1);
+	}
+
+	if (rad >= 315.0_f32.to_radians() && rad <= 360.0_f32.to_radians()) ||
+	    (rad >= 0.0_f32.to_radians() && rad < 45.0_f32.to_radians()){
+		// 右向き
+                self.player
+                    .get_mut_character_object()
+                    .change_animation_mode(2);
+	}
+
     }
 
     pub fn start_mouse_move(&mut self, ctx: &mut ggez::Context, point: numeric::Point2f) {
         let current = self.player.get_character_object().obj().get_center(ctx);
         let offset = numeric::Point2f::new(point.x - current.x, point.y - current.y);
-        let rad = (offset.y / offset.x).atan();
-        let mut speed = numeric::Vector2f::new(rad.cos() * 4.0, rad.sin() * 4.0);
-
-        if offset.x < 0.0 {
-            speed.y = -speed.y;
-            speed.x = -speed.x;
-        }
-
-        self.player.set_speed(speed);
-        self.update_playable_character_texture();
+ 	let rad =
+	    if offset.x >= 0.0 {
+		if offset.y >= 0.0 {
+		    (offset.y / offset.x).atan()	
+		} else {
+		    (offset.y / offset.x).atan() + 360.0_f32.to_radians()
+		}
+	    } else {
+		(offset.y / offset.x).atan() + 180.0_f32.to_radians()
+	    };
+	let speed = numeric::Vector2f::new(rad.cos() * 4.0, rad.sin() * 4.0);
+	
+	self.player.set_speed(speed);
+        self.update_playable_character_texture(rad);
     }
 
     pub fn switched_and_restart(&mut self) {
@@ -1833,7 +1825,7 @@ impl SceneManager for ShopScene {
             _ => (),
         }
     }
-
+    
     fn pre_process(&mut self, ctx: &mut ggez::Context, game_data: &GameData) {
         let t = self.get_current_clock();
 
@@ -1847,6 +1839,11 @@ impl SceneManager for ShopScene {
                 &self.map.tile_map,
                 t,
             );
+
+	    for customer in self.character_group.iter_mut() {
+		customer.try_update_move_effect(ctx, game_data, &self.map.tile_map, t);
+		customer.get_mut_character_object().update_texture(t);
+	    }
 
             // マップ描画の準備
             self.map.tile_map.update(ctx, t);
@@ -1866,11 +1863,7 @@ impl SceneManager for ShopScene {
     fn drawing_process(&mut self, ctx: &mut ggez::Context) {
         self.map.tile_map.draw(ctx).unwrap();
 
-        self.player
-            .get_mut_character_object()
-            .obj_mut()
-            .draw(ctx)
-            .unwrap();
+	self.player.draw(ctx).unwrap();
         self.character_group.draw(ctx).unwrap();
 
         if let Some(scenario_box) = self.map.scenario_box.as_mut() {
