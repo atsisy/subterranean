@@ -16,6 +16,8 @@ use crate::core::map_parser as mp;
 use crate::core::{BookInformation, BookShelfInformation, GameData};
 use crate::object::collision::*;
 use crate::scene::{SceneID, DelayEventList};
+use crate::object::task_object::tt_main_component::CustomerRequest;
+use crate::object::task_object::tt_sub_component::{BorrowingInformation, CopyingRequestInformation, ReturnBookInformation, GensoDate};
 
 ///
 /// ある範囲内に速さを収めたい時に使用する構造体
@@ -910,8 +912,30 @@ impl CustomerCharacter {
             (event.func)(self, ctx, game_data);
         }
     }
+
+    fn generate_hold_request(&mut self, game_data: &GameData) -> CustomerRequest {
+	let random_select = rand::random::<usize>() % 3;
+        match random_select {
+            0 => CustomerRequest::Borrowing(BorrowingInformation::new_random(
+                game_data,
+                GensoDate::new(128, 12, 20),
+                GensoDate::new(128, 12, 20),
+            )),
+            1 => CustomerRequest::Returning(ReturnBookInformation::new_random(
+                game_data,
+                GensoDate::new(128, 12, 20),
+                GensoDate::new(128, 12, 20),
+            )),
+            _ => CustomerRequest::Copying(CopyingRequestInformation::new_random(
+                game_data,
+                GensoDate::new(12, 12, 12),
+                GensoDate::new(12, 12, 12),
+            )),
+        }
+    }
     
-    pub fn try_update_move_effect(&mut self, ctx: &mut ggez::Context, game_data: &GameData, map_data: &mp::StageObjectMap, t: Clock) {
+    pub fn try_update_move_effect(&mut self, ctx: &mut ggez::Context, game_data: &GameData,
+				  map_data: &mp::StageObjectMap, counter: numeric::Vector2u, t: Clock) {
 	self.flush_delay_event(ctx, game_data, t);
 	
 	match self.customer_status {
@@ -925,13 +949,29 @@ impl CustomerCharacter {
 		//  				       self.get_map_position().x, self.get_map_position().y));
 		if self.is_goal_now(ctx) {
 		    let goal = self.current_goal;
+		    
 		    debug::debug_screen_push_text(&format!("goal: {:?}", goal));
 		    self.get_mut_character_object().set_map_position_with_collision_top_offset(ctx, goal);
 		    self.customer_status = CustomerCharacterStatus::Ready;
 		    self.reset_speed();
+
+		    if map_data.map_position_to_tile_position(goal).unwrap() == counter {
+			self.customer_status = CustomerCharacterStatus::WaitOnClerk;
+		    }
 		}
+	    },
+	    CustomerCharacterStatus::WaitOnClerk => {
+		
 	    }
 	    _ => (),
+	}
+    }
+
+    pub fn check_rise_hand(&mut self, game_data: &GameData) -> Option<CustomerRequest> {
+	if self.customer_status == CustomerCharacterStatus::WaitOnClerk {
+	    Some(self.generate_hold_request(game_data))
+	} else {
+	    None
 	}
     }
 

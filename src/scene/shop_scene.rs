@@ -1143,6 +1143,7 @@ pub struct ShopScene {
     clock: Clock,
     map: MapData,
     shop_menu: ShopMenuMaster,
+    wait_customer_flag: bool,
     camera: Rc<RefCell<numeric::Rect>>,
     dark_effect_panel: DarkEffectPanel,
     transition_status: SceneTransition,
@@ -1173,7 +1174,12 @@ impl ShopScene {
 	    character_factory::create_character(
 		character_factory::CharacterFactoryOrder::CustomerSample,
 		game_data, &camera.borrow(), numeric::Point2f::new(1170.0, 870.0)),
-	    CustomerDestPoint::new(vec![numeric::Vector2u::new(10, 3), numeric::Vector2u::new(6, 3)])));
+	    CustomerDestPoint::new(
+		vec![
+		    numeric::Vector2u::new(10, 3),
+		    numeric::Vector2u::new(6, 3),
+		    numeric::Vector2u::new(4, 10)]
+	    )));
 	    
 	let mut map = MapData::new(ctx, game_data, map_id, camera.clone());
 	map.tile_map.build_collision_map();
@@ -1188,6 +1194,7 @@ impl ShopScene {
             clock: 0,
             map: map,
             shop_menu: ShopMenuMaster::new(ctx, game_data, numeric::Vector2f::new(450.0, 768.0), 0),
+	    wait_customer_flag: false,
             dark_effect_panel: DarkEffectPanel::new(
                 ctx,
                 numeric::Rect::new(0.0, 0.0, 1366.0, 768.0),
@@ -1592,8 +1599,10 @@ impl ShopScene {
                     self.map.scenario_box = Some(scenario_box);
                 }
                 MapEventElement::SwitchScene(switch_scene) => {
-                    self.transition_status = SceneTransition::StackingTransition;
-                    self.transition_scene = switch_scene.get_switch_scene_id();
+		    if self.wait_customer_flag {
+			self.transition_status = SceneTransition::StackingTransition;
+			self.transition_scene = switch_scene.get_switch_scene_id();
+		    }
                 }
                 MapEventElement::BookStoreEvent(book_store_event) => {
                     debug::debug_screen_push_text(&format!(
@@ -1841,7 +1850,11 @@ impl SceneManager for ShopScene {
             );
 
 	    for customer in self.character_group.iter_mut() {
-		customer.try_update_move_effect(ctx, game_data, &self.map.tile_map, t);
+		if let Some(request) = customer.check_rise_hand(game_data) {
+		    self.wait_customer_flag = true;
+		}
+		
+		customer.try_update_move_effect(ctx, game_data, &self.map.tile_map, numeric::Vector2u::new(4, 10), t);
 		customer.get_mut_character_object().update_texture(t);
 	    }
 
