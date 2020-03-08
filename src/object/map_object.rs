@@ -802,8 +802,6 @@ impl CustomerCharacter {
 
     fn update_animation_mode_with_rad(&mut self, rad: f32) {
 
-	debug::debug_screen_push_text("change mode!!!!!!!!!");
-	
 	if rad >= 45.0_f32.to_radians() && rad < 135.0_f32.to_radians() {
 	    // 上向き
             self.get_mut_character_object()
@@ -828,7 +826,6 @@ impl CustomerCharacter {
                 self.get_mut_character_object()
                     .change_animation_mode(2);
 	}
-
     }
 
     fn override_move_effect(&mut self, ctx: &mut ggez::Context, goal_point: numeric::Point2f) {
@@ -858,7 +855,6 @@ impl CustomerCharacter {
 	};
 
 	debug::debug_screen_push_text(&format!("goal: {}:{}, speed: {}:{}", goal_point.x, goal_point.y, speed.x, speed.y));
-	//debug::debug_screen_push_text(&format!("queue: {:?}", self.move_queue));
 	
 	self.character.speed_info_mut().set_speed(speed);
     }
