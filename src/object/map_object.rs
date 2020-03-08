@@ -751,6 +751,10 @@ impl CustomerMoveQueue {
     pub fn empty(&self) -> bool {
 	self.len() == 0
     }
+
+    pub fn clear(&mut self) {
+	self.queue.clear();
+    }
 }
 
 #[derive(Clone, Copy, PartialEq, Debug)]
@@ -767,6 +771,7 @@ pub struct CustomerCharacter {
     move_data: CustomerDestPoint,
     move_queue: CustomerMoveQueue,
     customer_status: CustomerCharacterStatus,
+    shopping_is_done: bool,
     current_goal: numeric::Point2f,
 }
 
@@ -778,17 +783,18 @@ impl CustomerCharacter {
 	    move_data: move_data,
 	    move_queue: CustomerMoveQueue::new(),
 	    customer_status: CustomerCharacterStatus::Ready,
+	    shopping_is_done: false,
 	    current_goal: numeric::Point2f::new(0.0, 0.0),
         }
     }
 
     pub fn update_current_destination(&mut self, ctx: &mut ggez::Context,
-				      map_data: &mp::StageObjectMap) -> Option<Vec<numeric::Point2f>> {
+				      map_data: &mp::StageObjectMap, dest: numeric::Vector2u) -> Option<Vec<numeric::Point2f>> {
 	if self.move_queue.empty() {
 	    let maybe_start = map_data
 		.map_position_to_tile_position(self.character.get_map_position_with_collision_top_offset(ctx));
 	    if let Some(map_start_pos) = maybe_start {
-		let maybe_route = map_data.find_shortest_route(map_start_pos, self.move_data.random_select());
+		let maybe_route = map_data.find_shortest_route(map_start_pos, dest);
 		if let Some(route) = maybe_route {
 		    return Some(
 			route
@@ -863,7 +869,7 @@ impl CustomerCharacter {
     
     fn update_move_effect(&mut self, ctx: &mut ggez::Context, map_data: &mp::StageObjectMap, t: Clock) {
 	if self.move_queue.empty() {
-	    let maybe_next_route = self.update_current_destination(ctx, map_data);
+	    let maybe_next_route = self.update_current_destination(ctx, map_data, self.move_data.random_select());
 
 	    debug::debug_screen_push_text(&format!("{:?}", maybe_next_route));
 	    
@@ -885,6 +891,19 @@ impl CustomerCharacter {
 	    self.override_move_effect(ctx, next_position);
 	    self.current_goal = next_position;
 	    self.customer_status = CustomerCharacterStatus::Moving;
+	}
+    }
+
+    pub fn set_destination_forced(&mut self, ctx: &mut ggez::Context,
+				  map_data: &mp::StageObjectMap, dest: numeric::Vector2u, t: Clock) {
+	self.move_queue.clear();
+	let maybe_next_route = self.update_current_destination(ctx, map_data, dest);
+	
+	debug::debug_screen_push_text(&format!("{:?}", maybe_next_route));
+
+	if let Some(next_route) = maybe_next_route {
+	    self.move_queue.enqueue(next_route);
+	    self.customer_status = CustomerCharacterStatus::Ready;
 	}
     }
 
@@ -955,8 +974,10 @@ impl CustomerCharacter {
 		    self.customer_status = CustomerCharacterStatus::Ready;
 		    self.reset_speed();
 
-		    if map_data.map_position_to_tile_position(goal).unwrap() == counter {
+		    if !self.shopping_is_done &&
+			map_data.map_position_to_tile_position(goal).unwrap() == counter {
 			self.customer_status = CustomerCharacterStatus::WaitOnClerk;
+			self.shopping_is_done = true;
 		    }
 		}
 	    },
@@ -967,6 +988,10 @@ impl CustomerCharacter {
 	}
     }
 
+    pub fn is_wait_on_clerk(&self) -> bool {
+	self.customer_status == CustomerCharacterStatus::WaitOnClerk
+    }
+    
     pub fn check_rise_hand(&mut self, game_data: &GameData) -> Option<CustomerRequest> {
 	if self.customer_status == CustomerCharacterStatus::WaitOnClerk {
 	    Some(self.generate_hold_request(game_data))

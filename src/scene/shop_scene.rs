@@ -51,11 +51,20 @@ impl CharacterGroup {
     }
 
     #[inline(always)]
-    pub fn remove_if<F>(&mut self, f: F)
+    pub fn remove_if<F>(&mut self, f: F) -> Vec<CustomerCharacter>
     where
         F: Fn(&CustomerCharacter) -> bool,
     {
-        self.group.retain(|e| !f(e));
+	let mut removed = Vec::new();
+
+	for index in (0..self.group.len()).rev() {
+	    if f(self.group.get(index).as_ref().unwrap()) {
+		let removed_character = self.group.swap_remove(index);
+		removed.push(removed_character);
+	    }
+	}
+
+	removed
     }
 
     pub fn len(&self) -> usize {
@@ -1146,6 +1155,7 @@ pub struct ShopScene {
     map: MapData,
     shop_menu: ShopMenuMaster,
     customer_request_queue: VecDeque<CustomerRequest>,
+    customer_queue: VecDeque<CustomerCharacter>,
     camera: Rc<RefCell<numeric::Rect>>,
     dark_effect_panel: DarkEffectPanel,
     transition_status: SceneTransition,
@@ -1197,6 +1207,7 @@ impl ShopScene {
             map: map,
             shop_menu: ShopMenuMaster::new(ctx, game_data, numeric::Vector2f::new(450.0, 768.0), 0),
 	    customer_request_queue: VecDeque::new(),
+	    customer_queue: VecDeque::new(),
             dark_effect_panel: DarkEffectPanel::new(
                 ctx,
                 numeric::Rect::new(0.0, 0.0, 1366.0, 768.0),
@@ -1601,7 +1612,12 @@ impl ShopScene {
                     self.map.scenario_box = Some(scenario_box);
                 }
                 MapEventElement::SwitchScene(switch_scene) => {
-		    if !self.customer_request_queue.is_empty() {
+		    if !self.customer_request_queue.is_empty() && !self.customer_queue.is_empty() {
+
+			let mut customer = self.customer_queue.pop_front().unwrap();
+			customer.set_destination_forced(ctx, &self.map.tile_map, numeric::Vector2u::new(15, 10), t);
+			self.character_group.add(customer);
+			
 			self.transition_status = SceneTransition::StackingTransition;
 			self.transition_scene = switch_scene.get_switch_scene_id();
 		    }
@@ -1855,12 +1871,20 @@ impl SceneManager for ShopScene {
                 &self.map.tile_map,
                 t,
             );
+	    
+	    let mut rising_customers = self.character_group.remove_if(|customer: &CustomerCharacter| {
+		customer.is_wait_on_clerk()
+	    });
 
-	    for customer in self.character_group.iter_mut() {
+	    for customer in &mut rising_customers {
 		if let Some(request) = customer.check_rise_hand(game_data) {
 		    self.customer_request_queue.push_back(request);
 		}
-		
+	    }
+
+	    self.customer_queue.extend(rising_customers);
+	    
+	    for customer in self.character_group.iter_mut() {
 		customer.try_update_move_effect(ctx, game_data, &self.map.tile_map, numeric::Vector2u::new(4, 10), t);
 		customer.get_mut_character_object().update_texture(t);
 	    }
@@ -1886,6 +1910,10 @@ impl SceneManager for ShopScene {
 	self.player.draw(ctx).unwrap();
         self.character_group.draw(ctx).unwrap();
 
+	for queued_customer in &mut self.customer_queue {
+	    queued_customer.draw(ctx).unwrap()
+	}
+	
         if let Some(scenario_box) = self.map.scenario_box.as_mut() {
             scenario_box.draw(ctx).unwrap();
         }
