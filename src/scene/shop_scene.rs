@@ -1,6 +1,7 @@
 use std::cell::RefCell;
 use std::rc::Rc;
 use std::collections::VecDeque;
+use std::cmp::PartialOrd;
 
 use torifune::device as tdev;
 use torifune::graphics::object::*;
@@ -22,7 +23,6 @@ use super::*;
 use crate::core::map_parser as mp;
 use crate::core::{BookInformation, FontID, GameData, BookShelfInformation};
 use crate::object::task_object::tt_main_component::CustomerRequest;
-use crate::object::map_object::EventTrigger;
 use crate::object::map_object::*;
 use crate::object::move_fn;
 use crate::object::scenario::*;
@@ -65,6 +65,11 @@ impl CharacterGroup {
 	}
 
 	removed
+    }
+
+    pub fn sort_by_y_position(&mut self) {
+	self.group.sort_by(
+	    |a, b| a.get_map_position().y.partial_cmp(&b.get_map_position().y).unwrap_or(std::cmp::Ordering::Equal));
     }
 
     pub fn len(&self) -> usize {
@@ -1122,6 +1127,36 @@ impl DrawableComponent for ShopSpecialObject {
     }
 }
 
+struct MapObjectDrawer<'a> {
+    ref_list: Vec<Box<&'a mut dyn OnMap>>,
+}
+
+impl<'a> MapObjectDrawer<'a> {
+    pub fn new() -> MapObjectDrawer<'a> {
+	MapObjectDrawer {
+	    ref_list: Vec::new(),
+	}
+    }
+
+    pub fn add(&mut self, onmap: &'a mut dyn OnMap) {
+	self.ref_list.push(Box::new(onmap));
+    }
+
+    pub fn sort(&mut self, ctx: &mut ggez::Context) {
+	self.ref_list.sort_by(
+	    |a, b| a.get_map_position_bottom_right(ctx).y.partial_cmp(
+		&b.get_map_position_bottom_right(ctx).y).unwrap_or(std::cmp::Ordering::Equal));
+    }
+
+    pub fn draw(&mut self, ctx: &mut ggez::Context) {
+	for obj in &mut self.ref_list {
+	    obj.draw(ctx).unwrap();
+	}
+
+	self.ref_list.clear();
+    }
+}
+
 ///
 /// # 夢の中のステージ
 ///
@@ -1615,7 +1650,7 @@ impl ShopScene {
 		    if !self.customer_request_queue.is_empty() && !self.customer_queue.is_empty() {
 
 			let mut customer = self.customer_queue.pop_front().unwrap();
-			customer.set_destination_forced(ctx, &self.map.tile_map, numeric::Vector2u::new(15, 10), t);
+			customer.set_destination_forced(ctx, &self.map.tile_map, numeric::Vector2u::new(15, 10));
 			self.character_group.add(customer);
 			
 			self.transition_status = SceneTransition::StackingTransition;
@@ -1889,6 +1924,8 @@ impl SceneManager for ShopScene {
 		customer.get_mut_character_object().update_texture(t);
 	    }
 
+	    self.character_group.sort_by_y_position();
+
             // マップ描画の準備
             self.map.tile_map.update(ctx, t);
         }
@@ -1907,12 +1944,23 @@ impl SceneManager for ShopScene {
     fn drawing_process(&mut self, ctx: &mut ggez::Context) {
         self.map.tile_map.draw(ctx).unwrap();
 
-	self.player.draw(ctx).unwrap();
+	let mut map_obj_drawer = MapObjectDrawer::new();
+	
+	map_obj_drawer.add(&mut self.player);
+	
         self.character_group.draw(ctx).unwrap();
 
-	for queued_customer in &mut self.customer_queue {
-	    queued_customer.draw(ctx).unwrap()
+	for customer in self.character_group.iter_mut() {
+	    map_obj_drawer.add(customer);
 	}
+
+	for queued_customer in &mut self.customer_queue {
+	    map_obj_drawer.add(queued_customer);
+	}
+
+	map_obj_drawer.sort(ctx);
+	map_obj_drawer.draw(ctx);
+	
 	
         if let Some(scenario_box) = self.map.scenario_box.as_mut() {
             scenario_box.draw(ctx).unwrap();

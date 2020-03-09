@@ -262,6 +262,17 @@ impl TwoStepPoint {
     }
 }
 
+pub trait OnMap : DrawableComponent {
+    // マップ上のテクスチャ描画開始地点を返す
+    fn get_map_position(&self) -> numeric::Point2f;
+
+    // マップ上のテクスチャ描画領域の右下の位置を返す
+    fn get_map_position_bottom_right(&self, ctx: &mut ggez::Context) -> numeric::Point2f;
+    
+    // マップ上のテクスチャ描画開始地点を設定する
+    fn set_map_position(&mut self, position: numeric::Point2f);
+}
+
 pub struct MapObject {
     last_position: numeric::Point2f,
     object: TextureAnimation,
@@ -361,14 +372,6 @@ impl MapObject {
 
     pub fn get_last_map_move_distance(&self) -> numeric::Vector2f {
         self.map_position.diff()
-    }
-
-    pub fn get_map_position(&self) -> numeric::Point2f {
-        self.map_position.current
-    }
-
-    pub fn set_map_position(&mut self, position: numeric::Point2f) {
-        self.map_position.update(position);
     }
 
     pub fn set_map_position_with_collision_top_offset(&mut self, ctx: &mut ggez::Context, position: numeric::Point2f) {
@@ -506,6 +509,59 @@ impl MapObject {
     }
 }
 
+impl DrawableComponent for MapObject {
+    fn draw(&mut self, ctx: &mut ggez::Context) -> ggez::GameResult<()> {
+        if self.is_visible() {
+	    self.obj_mut()
+		.draw(ctx)
+    		.unwrap();
+        }
+        Ok(())
+    }
+    
+    fn hide(&mut self) {
+	self.obj_mut()
+	    .hide()
+    }
+
+    fn appear(&mut self) {
+	self.obj_mut()
+	    .appear()
+    }
+
+    fn is_visible(&self) -> bool {
+	self.obj()
+	    .is_visible()
+    }
+
+    fn set_drawing_depth(&mut self, depth: i8) {
+	self.obj_mut()
+	    .set_drawing_depth(depth)
+    }
+
+    fn get_drawing_depth(&self) -> i8 {
+	self.obj()
+	    .get_drawing_depth()
+    }
+}
+
+impl OnMap for MapObject {
+    // マップ上のテクスチャ描画開始地点を返す
+    fn get_map_position(&self) -> numeric::Point2f {
+        self.map_position.current
+    }
+    
+    // マップ上のテクスチャ描画領域の右下の位置を返す
+    fn get_map_position_bottom_right(&self, ctx: &mut ggez::Context) -> numeric::Point2f {
+	self.get_map_position() + self.obj().get_drawing_size(ctx)
+    }
+    
+    // マップ上のテクスチャ描画開始地点を設定する
+    fn set_map_position(&mut self, position: numeric::Point2f) {
+        self.map_position.update(position);
+    }
+}
+
 pub struct DamageEffect {
     pub hp_damage: i16,
     pub mp_damage: f32,
@@ -556,10 +612,6 @@ impl PlayableCharacter {
             status: status,
             shelving_book: Vec::new(),
         }
-    }
-
-    pub fn get_map_position(&self) -> numeric::Point2f {
-        self.character.get_map_position()
     }
 
     pub fn get_center_map_position(&self, ctx: &mut ggez::Context) -> numeric::Point2f {
@@ -678,32 +730,44 @@ impl DrawableComponent for PlayableCharacter {
     
     fn hide(&mut self) {
 	self.get_mut_character_object()
-	    .obj_mut()
 	    .hide()
     }
 
     fn appear(&mut self) {
 	self.get_mut_character_object()
-	    .obj_mut()
 	    .appear()
     }
 
     fn is_visible(&self) -> bool {
 	self.get_character_object()
-	    .obj()
 	    .is_visible()
     }
 
     fn set_drawing_depth(&mut self, depth: i8) {
 	self.get_mut_character_object()
-	    .obj_mut()
 	    .set_drawing_depth(depth)
     }
 
     fn get_drawing_depth(&self) -> i8 {
 	self.get_character_object()
-	    .obj()
 	    .get_drawing_depth()
+    }
+}
+
+impl OnMap for PlayableCharacter {
+    // マップ上のテクスチャ描画開始地点を返す
+    fn get_map_position(&self) -> numeric::Point2f {
+	self.character.get_map_position()
+    }
+    
+    // マップ上のテクスチャ描画領域の右下の位置を返す
+    fn get_map_position_bottom_right(&self, ctx: &mut ggez::Context) -> numeric::Point2f {
+	self.character.get_map_position_bottom_right(ctx)
+    }
+    
+    // マップ上のテクスチャ描画開始地点を設定する
+    fn set_map_position(&mut self, position: numeric::Point2f) {
+	self.character.set_map_position(position);
     }
 }
 
@@ -895,7 +959,7 @@ impl CustomerCharacter {
     }
 
     pub fn set_destination_forced(&mut self, ctx: &mut ggez::Context,
-				  map_data: &mp::StageObjectMap, dest: numeric::Vector2u, t: Clock) {
+				  map_data: &mp::StageObjectMap, dest: numeric::Vector2u) {
 	self.move_queue.clear();
 	let maybe_next_route = self.update_current_destination(ctx, map_data, dest);
 	
@@ -1061,7 +1125,6 @@ impl DrawableComponent for CustomerCharacter {
 	    &mut ggez::Context) -> ggez::GameResult<()> {
 	if self.is_visible() {
 	    self.get_mut_character_object()
-		.obj_mut()
 		.draw(ctx)
     		.unwrap();
 	}
@@ -1070,32 +1133,44 @@ impl DrawableComponent for CustomerCharacter {
     
     fn hide(&mut self) {
 	self.get_mut_character_object()
-	    .obj_mut()
 	    .hide()
     }
 
     fn appear(&mut self) {
 	self.get_mut_character_object()
-	    .obj_mut()
 	    .appear()
     }
 
     fn is_visible(&self) -> bool {
 	self.get_character_object()
-	    .obj()
 	    .is_visible()
     }
 
     fn set_drawing_depth(&mut self, depth: i8) {
 	self.get_mut_character_object()
-	    .obj_mut()
 	    .set_drawing_depth(depth)
     }
 
     fn get_drawing_depth(&self) -> i8 {
 	self.get_character_object()
-	    .obj()
 	    .get_drawing_depth()
+    }
+}
+
+impl OnMap for CustomerCharacter {
+    // マップ上のテクスチャ描画開始地点を返す
+    fn get_map_position(&self) -> numeric::Point2f {
+	self.character.get_map_position()
+    }
+    
+    // マップ上のテクスチャ描画領域の右下の位置を返す
+    fn get_map_position_bottom_right(&self, ctx: &mut ggez::Context) -> numeric::Point2f {
+	self.character.get_map_position_bottom_right(ctx)
+    }
+    
+    // マップ上のテクスチャ描画開始地点を設定する
+    fn set_map_position(&mut self, position: numeric::Point2f) {
+	self.character.set_map_position(position);
     }
 }
 
