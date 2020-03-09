@@ -1026,10 +1026,6 @@ impl CustomerCharacter {
 		self.update_move_effect(ctx, map_data, t);
 	    },
 	    CustomerCharacterStatus::Moving => {
-		//println!("queue: {:?}", self.move_queue);
-		// debug::debug_screen_push_text(&format!("goal: {}:{}, current: {}:{}",
-		//  				       self.current_goal.x, self.current_goal.y,
-		//  				       self.get_map_position().x, self.get_map_position().y));
 		if self.is_goal_now(ctx) {
 		    let goal = self.current_goal;
 		    
@@ -1046,7 +1042,6 @@ impl CustomerCharacter {
 		}
 	    },
 	    CustomerCharacterStatus::WaitOnClerk => {
-		
 	    }
 	    _ => (),
 	}

@@ -1,9 +1,10 @@
 use std::rc::Rc;
 
 use ggez::graphics as ggraphics;
+use ggez::input::mouse::MouseButton;
 
 use sub_screen::SubScreen;
-use torifune::core::Clock;
+use torifune::core::{Clock, Updatable};
 use torifune::debug;
 use torifune::graphics::object::sub_screen;
 use torifune::graphics::object::*;
@@ -11,9 +12,13 @@ use torifune::graphics::*;
 use torifune::impl_drawable_object_for_wrapped;
 use torifune::impl_texture_object_for_wrapped;
 use torifune::numeric;
+use torifune::device::*;
 
+use crate::scene::suzuna_scene::TaskResult;
 use crate::core::{BookInformation, BookShelfInformation, FontID, GameData, TextureID};
 use crate::object::Clickable;
+use crate::object::move_fn;
+use crate::scene::DelayEventList;
 
 use number_to_jk::number_to_jk;
 
@@ -871,5 +876,914 @@ impl Clickable for SelectStoreBookUI {
         _point: numeric::Point2f,
     ) -> ggez::input::mouse::MouseCursor {
         ggez::input::mouse::MouseCursor::Default
+    }
+}
+
+///
+/// メニューに表示するやつ
+///
+pub struct ShelvingDetailContents {
+    canvas: MovableWrap<SubScreen>,
+    menu_rect: numeric::Rect,
+    title: VerticalText,
+    cell_desc: VerticalText,
+    book_info: Vec<VerticalText>,
+}
+
+impl ShelvingDetailContents {
+    pub fn new(
+        ctx: &mut ggez::Context,
+        game_data: &GameData,
+        menu_rect: numeric::Rect,
+        t: Clock,
+    ) -> Self {
+        let title = VerticalText::new(
+            "配架中".to_string(),
+            numeric::Point2f::new(menu_rect.w - 60.0, 70.0),
+            numeric::Vector2f::new(1.0, 1.0),
+            0.0,
+            0,
+            FontInformation::new(
+                game_data.get_font(FontID::JpFude1),
+                numeric::Vector2f::new(40.0, 40.0),
+                ggraphics::Color::from_rgba_u32(0xff),
+            ),
+        );
+
+        let cell_desc = VerticalText::new(
+            "請求番号\t\t表題".to_string(),
+            numeric::Point2f::new(menu_rect.w - 120.0, 150.0),
+            numeric::Vector2f::new(1.0, 1.0),
+            0.0,
+            0,
+            FontInformation::new(
+                game_data.get_font(FontID::JpFude1),
+                numeric::Vector2f::new(34.0, 34.0),
+                ggraphics::Color::from_rgba_u32(0xff),
+            ),
+        );
+
+        ShelvingDetailContents {
+            canvas: MovableWrap::new(
+                Box::new(SubScreen::new(
+                    ctx,
+                    menu_rect,
+                    0,
+                    ggraphics::Color::from_rgba_u32(0xffffffff),
+                )),
+                None,
+                t,
+            ),
+            menu_rect: menu_rect,
+            title: title,
+            cell_desc: cell_desc,
+            book_info: Vec::new(),
+        }
+    }
+
+    pub fn update_contents(
+        &mut self,
+        game_data: &GameData,
+        player_shelving: &Vec<BookInformation>,
+    ) {
+        self.book_info.clear();
+
+        let mut book_info_position = numeric::Point2f::new(self.menu_rect.w - 180.0, 150.0);
+        let book_font_information = FontInformation::new(
+            game_data.get_font(FontID::JpFude1),
+            numeric::Vector2f::new(30.0, 30.0),
+            ggraphics::Color::from_rgba_u32(0xff),
+        );
+
+        self.book_info = player_shelving
+            .iter()
+            .map(|book_info| {
+                let vtext = VerticalText::new(
+                    format!(
+                        "{0:<6}{1}",
+                        number_to_jk(book_info.billing_number as u64),
+                        &book_info.name
+                    ),
+                    book_info_position,
+                    numeric::Vector2f::new(1.0, 1.0),
+                    0.0,
+                    0,
+                    book_font_information.clone(),
+                );
+
+                book_info_position.x -= 35.0;
+
+                vtext
+            })
+            .collect();
+    }
+
+    pub fn slide_appear(&mut self, slide_position: numeric::Point2f, t: Clock) {
+        self.canvas
+            .override_move_func(move_fn::devide_distance(slide_position, 0.5), t);
+    }
+
+    pub fn slide_hide(&mut self, t: Clock) {
+        self.canvas.override_move_func(
+            move_fn::devide_distance(numeric::Point2f::new(-self.menu_rect.w, 0.0), 0.2),
+            t,
+        );
+    }
+}
+
+impl Updatable for ShelvingDetailContents {
+    fn update(&mut self, _: &ggez::Context, t: Clock) {
+        self.canvas.move_with_func(t);
+    }
+}
+
+impl DrawableComponent for ShelvingDetailContents {
+    fn draw(&mut self, ctx: &mut ggez::Context) -> ggez::GameResult<()> {
+        if self.is_visible() {
+            sub_screen::stack_screen(ctx, self.canvas.ref_wrapped_object());
+
+            self.title.draw(ctx)?;
+            self.cell_desc.draw(ctx)?;
+            for vtext in &mut self.book_info {
+                vtext.draw(ctx)?;
+            }
+
+            sub_screen::pop_screen(ctx);
+            self.canvas.draw(ctx)?;
+        }
+        Ok(())
+    }
+
+    #[inline(always)]
+    fn hide(&mut self) {
+        self.canvas.hide();
+    }
+
+    #[inline(always)]
+    fn appear(&mut self) {
+        self.canvas.appear();
+    }
+
+    #[inline(always)]
+    fn is_visible(&self) -> bool {
+        self.canvas.is_visible()
+    }
+
+    #[inline(always)]
+    fn set_drawing_depth(&mut self, depth: i8) {
+        self.canvas.set_drawing_depth(depth);
+    }
+
+    #[inline(always)]
+    fn get_drawing_depth(&self) -> i8 {
+        self.canvas.get_drawing_depth()
+    }
+}
+
+///
+/// メニューに表示するやつ
+///
+pub struct ShopMenuContents {
+    day_text: VerticalText,
+    copy_request: VerticalText,
+    copy_request_num: VerticalText,
+    wait_for_return: VerticalText,
+    wait_for_return_num: VerticalText,
+    not_shelved: VerticalText,
+    not_shelved_num: VerticalText,
+    kosuzu_level: VerticalText,
+    kosuzu_level_num: VerticalText,
+    drwob_essential: DrawableObjectEssential,
+}
+
+impl ShopMenuContents {
+    pub fn new(game_data: &GameData) -> Self {
+        let normal_scale_font = FontInformation::new(
+            game_data.get_font(FontID::JpFude1),
+            numeric::Vector2f::new(26.0, 26.0),
+            ggraphics::Color::from_rgba_u32(0x000000ff),
+        );
+
+        let large_scale_font = FontInformation::new(
+            game_data.get_font(FontID::JpFude1),
+            numeric::Vector2f::new(30.0, 30.0),
+            ggraphics::Color::from_rgba_u32(0x000000ff),
+        );
+
+        ShopMenuContents {
+            day_text: VerticalText::new(
+                format!("日付　{}月 {}日", number_to_jk(12), number_to_jk(12)),
+                numeric::Point2f::new(370.0, 50.0),
+                numeric::Vector2f::new(1.0, 1.0),
+                0.0,
+                0,
+                large_scale_font,
+            ),
+            copy_request: VerticalText::new(
+                format!("写本受注数"),
+                numeric::Point2f::new(300.0, 50.0),
+                numeric::Vector2f::new(1.0, 1.0),
+                0.0,
+                0,
+                normal_scale_font,
+            ),
+            copy_request_num: VerticalText::new(
+                format!("{}件", number_to_jk(0)),
+                numeric::Point2f::new(260.0, 150.0),
+                numeric::Vector2f::new(1.0, 1.0),
+                0.0,
+                0,
+                large_scale_font,
+            ),
+            wait_for_return: VerticalText::new(
+                format!("返却待冊数"),
+                numeric::Point2f::new(200.0, 50.0),
+                numeric::Vector2f::new(1.0, 1.0),
+                0.0,
+                0,
+                normal_scale_font,
+            ),
+            wait_for_return_num: VerticalText::new(
+                format!("{}冊", number_to_jk(0)),
+                numeric::Point2f::new(160.0, 150.0),
+                numeric::Vector2f::new(1.0, 1.0),
+                0.0,
+                0,
+                large_scale_font,
+            ),
+            not_shelved: VerticalText::new(
+                format!("未配架冊数"),
+                numeric::Point2f::new(100.0, 50.0),
+                numeric::Vector2f::new(1.0, 1.0),
+                0.0,
+                0,
+                normal_scale_font,
+            ),
+            not_shelved_num: VerticalText::new(
+                format!("{}冊", number_to_jk(0)),
+                numeric::Point2f::new(60.0, 150.0),
+                numeric::Vector2f::new(1.0, 1.0),
+                0.0,
+                0,
+                large_scale_font,
+            ),
+            kosuzu_level: VerticalText::new(
+                format!("小鈴 習熟度"),
+                numeric::Point2f::new(300.0, 350.0),
+                numeric::Vector2f::new(1.0, 1.0),
+                0.0,
+                0,
+                normal_scale_font,
+            ),
+            kosuzu_level_num: VerticalText::new(
+                format!("{}", number_to_jk(0)),
+                numeric::Point2f::new(260.0, 450.0),
+                numeric::Vector2f::new(1.0, 1.0),
+                0.0,
+                0,
+                large_scale_font,
+            ),
+            drwob_essential: DrawableObjectEssential::new(true, 0),
+        }
+    }
+
+    pub fn update_contents(&mut self, game_data: &GameData, task_result: &TaskResult) {
+        let _normal_scale_font = FontInformation::new(
+            game_data.get_font(FontID::JpFude1),
+            numeric::Vector2f::new(26.0, 26.0),
+            ggraphics::Color::from_rgba_u32(0x000000ff),
+        );
+
+        let large_scale_font = FontInformation::new(
+            game_data.get_font(FontID::JpFude1),
+            numeric::Vector2f::new(30.0, 30.0),
+            ggraphics::Color::from_rgba_u32(0x000000ff),
+        );
+
+        self.day_text = VerticalText::new(
+            format!("日付　{}月 {}日", number_to_jk(12), number_to_jk(12)),
+            numeric::Point2f::new(370.0, 50.0),
+            numeric::Vector2f::new(1.0, 1.0),
+            0.0,
+            0,
+            large_scale_font,
+        );
+
+        self.copy_request_num = VerticalText::new(
+            format!(
+                "{}件",
+                number_to_jk(task_result.remain_copy_request.len() as u64)
+            ),
+            numeric::Point2f::new(260.0, 150.0),
+            numeric::Vector2f::new(1.0, 1.0),
+            0.0,
+            0,
+            large_scale_font,
+        );
+
+        self.wait_for_return_num = VerticalText::new(
+            format!(
+                "{}冊",
+                number_to_jk(task_result.borrowing_books.len() as u64)
+            ),
+            numeric::Point2f::new(160.0, 150.0),
+            numeric::Vector2f::new(1.0, 1.0),
+            0.0,
+            0,
+            large_scale_font,
+        );
+
+        self.not_shelved_num = VerticalText::new(
+            format!(
+                "{}冊",
+                number_to_jk(task_result.not_shelved_books.len() as u64)
+            ),
+            numeric::Point2f::new(60.0, 150.0),
+            numeric::Vector2f::new(1.0, 1.0),
+            0.0,
+            0,
+            large_scale_font,
+        );
+
+        self.kosuzu_level_num = VerticalText::new(
+            format!("{}", number_to_jk((task_result.done_works / 3) as u64)),
+            numeric::Point2f::new(260.0, 450.0),
+            numeric::Vector2f::new(1.0, 1.0),
+            0.0,
+            0,
+            large_scale_font,
+        );
+    }
+}
+
+impl DrawableComponent for ShopMenuContents {
+    fn draw(&mut self, ctx: &mut ggez::Context) -> ggez::GameResult<()> {
+        if self.is_visible() {
+            self.day_text.draw(ctx).unwrap();
+
+            self.copy_request.draw(ctx).unwrap();
+            self.copy_request_num.draw(ctx).unwrap();
+
+            self.wait_for_return.draw(ctx).unwrap();
+            self.wait_for_return_num.draw(ctx).unwrap();
+
+            self.not_shelved.draw(ctx).unwrap();
+            self.not_shelved_num.draw(ctx).unwrap();
+
+            self.kosuzu_level.draw(ctx).unwrap();
+            self.kosuzu_level_num.draw(ctx).unwrap();
+        }
+
+        Ok(())
+    }
+
+    #[inline(always)]
+    fn hide(&mut self) {
+        self.drwob_essential.visible = false;
+    }
+
+    #[inline(always)]
+    fn appear(&mut self) {
+        self.drwob_essential.visible = true;
+    }
+
+    #[inline(always)]
+    fn is_visible(&self) -> bool {
+        self.drwob_essential.visible
+    }
+
+    #[inline(always)]
+    fn set_drawing_depth(&mut self, depth: i8) {
+        self.drwob_essential.drawing_depth = depth;
+    }
+
+    #[inline(always)]
+    fn get_drawing_depth(&self) -> i8 {
+        self.drwob_essential.drawing_depth
+    }
+}
+
+pub struct ShopMenu {
+    canvas: MovableWrap<SubScreen>,
+    menu_contents: ShopMenuContents,
+    menu_canvas_size: numeric::Vector2f,
+    now_appear: bool,
+}
+
+impl ShopMenu {
+    pub fn new(
+        ctx: &mut ggez::Context,
+        game_data: &GameData,
+        size: numeric::Vector2f,
+        t: Clock,
+    ) -> Self {
+        ShopMenu {
+            canvas: MovableWrap::new(
+                Box::new(SubScreen::new(
+                    ctx,
+                    numeric::Rect::new(-size.x, 0.0, size.x, size.y),
+                    0,
+                    ggraphics::Color::from_rgba_u32(0xffffffff),
+                )),
+                None,
+                t,
+            ),
+            menu_contents: ShopMenuContents::new(game_data),
+            menu_canvas_size: size,
+            now_appear: false,
+        }
+    }
+
+    pub fn slide_toggle(&mut self, t: Clock) {
+        if self.now_appear {
+            self.canvas.override_move_func(
+                move_fn::devide_distance(numeric::Point2f::new(-self.menu_canvas_size.x, 0.0), 0.5),
+                t,
+            );
+            self.now_appear = false;
+        } else {
+            self.canvas.override_move_func(
+                move_fn::devide_distance(numeric::Point2f::new(0.0, 0.0), 0.5),
+                t,
+            );
+            self.now_appear = true;
+        }
+    }
+
+    pub fn appearing_now(&self) -> bool {
+        self.now_appear
+    }
+
+    pub fn update_menu_contents(&mut self, game_data: &GameData, task_result: &TaskResult) {
+        self.menu_contents.update_contents(game_data, task_result);
+    }
+}
+
+impl Updatable for ShopMenu {
+    fn update(&mut self, _: &ggez::Context, t: Clock) {
+        self.canvas.move_with_func(t);
+    }
+}
+
+impl DrawableComponent for ShopMenu {
+    fn draw(&mut self, ctx: &mut ggez::Context) -> ggez::GameResult<()> {
+        sub_screen::stack_screen(ctx, self.canvas.ref_wrapped_object());
+
+        self.menu_contents.draw(ctx).unwrap();
+
+        sub_screen::pop_screen(ctx);
+        self.canvas.draw(ctx)
+    }
+
+    fn hide(&mut self) {
+        self.canvas.hide();
+    }
+
+    fn appear(&mut self) {
+        self.canvas.appear();
+    }
+
+    fn is_visible(&self) -> bool {
+        self.canvas.is_visible()
+    }
+
+    fn set_drawing_depth(&mut self, depth: i8) {
+        self.canvas.set_drawing_depth(depth);
+    }
+
+    fn get_drawing_depth(&self) -> i8 {
+        self.canvas.get_drawing_depth()
+    }
+}
+
+#[derive(PartialEq, Clone, Copy)]
+pub enum ShopDetailMenuSymbol {
+    ShelvingBooks = 0,
+    SuzunaMap,
+    None,
+}
+
+pub struct ShopDetailMenuContents {
+    shelving_info: ShelvingDetailContents,
+    drwob_essential: DrawableObjectEssential,
+    contents_switch: ShopDetailMenuSymbol,
+    appear_position: numeric::Point2f,
+    now_appear: bool,
+}
+
+impl ShopDetailMenuContents {
+    pub fn new(
+        ctx: &mut ggez::Context,
+        game_data: &GameData,
+        appear_position: numeric::Point2f,
+        shelving_rect: numeric::Rect,
+        t: Clock,
+    ) -> Self {
+        ShopDetailMenuContents {
+            shelving_info: ShelvingDetailContents::new(ctx, game_data, shelving_rect, t),
+            drwob_essential: DrawableObjectEssential::new(true, 0),
+            contents_switch: ShopDetailMenuSymbol::None,
+            appear_position: appear_position,
+            now_appear: false,
+        }
+    }
+
+    pub fn update_contents(
+        &mut self,
+        game_data: &GameData,
+        player_shelving: &Vec<BookInformation>,
+    ) {
+        self.shelving_info
+            .update_contents(game_data, player_shelving);
+    }
+
+    pub fn detail_menu_is_open(&self) -> bool {
+        self.now_appear
+    }
+    
+    pub fn hide_toggle(&mut self, t: Clock) {
+	self.now_appear = false;
+        self.shelving_info.slide_hide(t);
+    }
+
+    pub fn appear_toggle(&mut self, t: Clock) {
+	self.now_appear = true;
+        self.shelving_info.slide_appear(self.appear_position, t);
+    }
+
+    pub fn slide_toggle(&mut self, t: Clock) {
+        match self.contents_switch {
+            ShopDetailMenuSymbol::ShelvingBooks => {
+                if self.now_appear {
+		    self.hide_toggle(t);
+                } else {
+		    self.appear_toggle(t);
+                }
+            },
+            ShopDetailMenuSymbol::SuzunaMap => {
+                // まだ
+            },
+            ShopDetailMenuSymbol::None => (),
+        }
+    }
+
+    pub fn set_slide_contents(&mut self, contents_switch: ShopDetailMenuSymbol) {
+        self.contents_switch = contents_switch;
+    }
+}
+
+impl Updatable for ShopDetailMenuContents {
+    fn update(&mut self, ctx: &ggez::Context, t: Clock) {
+        self.shelving_info.update(ctx, t);
+    }
+}
+
+impl DrawableComponent for ShopDetailMenuContents {
+    fn draw(&mut self, ctx: &mut ggez::Context) -> ggez::GameResult<()> {
+        if self.is_visible() {
+            self.shelving_info.draw(ctx)?;
+        }
+
+        Ok(())
+    }
+
+    #[inline(always)]
+    fn hide(&mut self) {
+        self.drwob_essential.visible = false;
+    }
+
+    #[inline(always)]
+    fn appear(&mut self) {
+        self.drwob_essential.visible = true;
+    }
+
+    #[inline(always)]
+    fn is_visible(&self) -> bool {
+        self.drwob_essential.visible
+    }
+
+    #[inline(always)]
+    fn set_drawing_depth(&mut self, depth: i8) {
+        self.drwob_essential.drawing_depth = depth;
+    }
+
+    #[inline(always)]
+    fn get_drawing_depth(&self) -> i8 {
+        self.drwob_essential.drawing_depth
+    }
+}
+
+pub struct ShopMenuMaster {
+    first_menu: ShopMenu,
+    detail_menu: ShopDetailMenuContents,
+    canvas: SubScreen,
+}
+
+impl ShopMenuMaster {
+    pub fn new(
+        ctx: &mut ggez::Context,
+        game_data: &GameData,
+        first_menu_size: numeric::Vector2f,
+        t: Clock,
+    ) -> Self {
+        ShopMenuMaster {
+            first_menu: ShopMenu::new(ctx, game_data, first_menu_size, t),
+            detail_menu: ShopDetailMenuContents::new(
+                ctx,
+                game_data,
+                numeric::Point2f::new(first_menu_size.x, 0.0),
+                numeric::Rect::new(-450.0, 0.0, 450.0, 768.0),
+                t,
+            ),
+            canvas: SubScreen::new(
+                ctx,
+                numeric::Rect::new(0.0, 0.0, 1366.0, 768.0),
+                0,
+                ggraphics::Color::from_rgba_u32(0),
+            ),
+        }
+    }
+
+    pub fn update_contents(
+        &mut self,
+        game_data: &GameData,
+        task_result: &TaskResult,
+        player_shelving: &Vec<BookInformation>,
+    ) {
+        self.first_menu.update_menu_contents(game_data, task_result);
+        self.detail_menu
+            .update_contents(game_data, player_shelving);
+    }
+
+    pub fn toggle_first_menu(&mut self, t: Clock) {
+        self.first_menu.slide_toggle(t);
+	if !self.first_menu_is_open() {
+	    self.detail_menu.hide_toggle(t);
+	}
+    }
+
+    pub fn first_menu_is_open(&self) -> bool {
+        self.first_menu.appearing_now()
+    }
+
+    pub fn menu_key_action(
+        &mut self,
+        _: &mut ggez::Context,
+        _: &GameData,
+        vkey: VirtualKey,
+        t: Clock,
+    ) {
+        match vkey {
+            VirtualKey::Action3 => {
+                if self.first_menu_is_open() {
+                    debug::debug_screen_push_text("slide detail menu");
+                    self.detail_menu
+                        .set_slide_contents(ShopDetailMenuSymbol::ShelvingBooks);
+                    self.detail_menu.slide_toggle(t);
+                }
+            }
+            _ => (),
+        }
+    }
+}
+
+impl Updatable for ShopMenuMaster {
+    fn update(&mut self, ctx: &ggez::Context, t: Clock) {
+        self.first_menu.update(ctx, t);
+        self.detail_menu.update(ctx, t);
+    }
+}
+
+impl DrawableComponent for ShopMenuMaster {
+    fn draw(&mut self, ctx: &mut ggez::Context) -> ggez::GameResult<()> {
+        if self.is_visible() {
+            sub_screen::stack_screen(ctx, &self.canvas);
+
+            self.detail_menu.draw(ctx)?;
+            self.first_menu.draw(ctx)?;
+
+            sub_screen::pop_screen(ctx);
+            self.canvas.draw(ctx)?;
+        }
+
+        Ok(())
+    }
+
+    fn hide(&mut self) {
+        self.canvas.hide();
+    }
+
+    fn appear(&mut self) {
+        self.canvas.appear();
+    }
+
+    fn is_visible(&self) -> bool {
+        self.canvas.is_visible()
+    }
+
+    fn set_drawing_depth(&mut self, depth: i8) {
+        self.canvas.set_drawing_depth(depth);
+    }
+
+    fn get_drawing_depth(&self) -> i8 {
+        self.canvas.get_drawing_depth()
+    }
+}
+
+pub struct ShopSpecialObject {
+    event_list: DelayEventList<Self>,
+    shelving_select_ui: Option<MovableWrap<SelectShelvingBookUI>>,
+    storing_select_ui: Option<MovableWrap<SelectStoreBookUI>>,
+    drwob_essential: DrawableObjectEssential,
+}
+
+impl ShopSpecialObject {
+    pub fn new() -> Self {
+        ShopSpecialObject {
+            event_list: DelayEventList::new(),
+            shelving_select_ui: None,
+	    storing_select_ui: None,
+            drwob_essential: DrawableObjectEssential::new(true, 0),
+        }
+    }
+
+    pub fn show_shelving_select_ui(
+        &mut self,
+        ctx: &mut ggez::Context,
+        game_data: &GameData,
+        task_result: &TaskResult,
+        player_shelving_books: Vec<BookInformation>,
+        t: Clock,
+    ) {
+        if self.shelving_select_ui.is_none() {
+            self.shelving_select_ui = Some(MovableWrap::new(
+                Box::new(SelectShelvingBookUI::new(
+                    ctx,
+                    game_data,
+                    numeric::Rect::new(0.0, -768.0, 1366.0, 768.0),
+                    task_result.not_shelved_books.clone(),
+                    player_shelving_books,
+                )),
+                move_fn::devide_distance(numeric::Point2f::new(0.0, 0.0), 0.4),
+                t,
+            ));
+        }
+    }
+
+    pub fn show_storing_select_ui(
+        &mut self,
+        ctx: &mut ggez::Context,
+        game_data: &GameData,
+	book_shelf_info: BookShelfInformation,
+        player_shelving_books: Vec<BookInformation>,
+        t: Clock,
+    ) {
+        if self.storing_select_ui.is_none() {
+            self.storing_select_ui = Some(MovableWrap::new(
+                Box::new(SelectStoreBookUI::new(
+                    ctx,
+                    game_data,
+                    numeric::Rect::new(0.0, -768.0, 1366.0, 768.0),
+		    book_shelf_info,
+                    player_shelving_books,
+                )),
+                move_fn::devide_distance(numeric::Point2f::new(0.0, 0.0), 0.4),
+                t,
+            ));
+        }
+    }
+
+    pub fn hide_shelving_select_ui(
+        &mut self,
+        t: Clock,
+    ) -> Option<(Vec<BookInformation>, Vec<BookInformation>)> {
+        if let Some(ui) = self.shelving_select_ui.as_mut() {
+            ui.override_move_func(
+                move_fn::devide_distance(numeric::Point2f::new(0.0, -768.0), 0.4),
+                t,
+            );
+            self.event_list.add_event(
+                Box::new(|shop_special_object, _, _| {
+                    shop_special_object.shelving_select_ui = None;
+                }),
+                t + 7,
+            );
+
+            Some(ui.ref_wrapped_object().get_select_result())
+        } else {
+            None
+        }
+    }
+
+    pub fn hide_storing_select_ui(
+        &mut self,
+        t: Clock,
+    ) -> Option<(Vec<BookInformation>, Vec<BookInformation>)> {
+        if let Some(ui) = self.storing_select_ui.as_mut() {
+            ui.override_move_func(
+                move_fn::devide_distance(numeric::Point2f::new(0.0, -768.0), 0.4),
+                t,
+            );
+            self.event_list.add_event(
+                Box::new(|shop_special_object, _, _| {
+                    shop_special_object.storing_select_ui = None;
+                }),
+                t + 7,
+            );
+
+            Some(ui.ref_wrapped_object().get_storing_result())
+        } else {
+            None
+        }
+    }
+    
+    pub fn is_enable_now(&self) -> bool {
+        self.shelving_select_ui.is_some() || self.storing_select_ui.is_some()
+    }
+
+    pub fn mouse_down_action(
+        &mut self,
+        ctx: &mut ggez::Context,
+        game_data: &GameData,
+        button: MouseButton,
+        point: numeric::Point2f,
+        t: Clock,
+    ) {
+        if let Some(ui) = self.shelving_select_ui.as_mut() {
+            ui.ref_wrapped_object_mut()
+                .on_click(ctx, game_data, t, button, point);
+        }
+
+	if let Some(ui) = self.storing_select_ui.as_mut() {
+            ui.ref_wrapped_object_mut()
+                .on_click(ctx, game_data, t, button, point);
+        }
+    }
+
+    pub fn run_delay_event(&mut self, ctx: &mut ggez::Context, game_data: &GameData, t: Clock) {
+        // 最後の要素の所有権を移動
+        while let Some(event) = self.event_list.move_top() {
+            // 時間が来ていない場合は、取り出した要素をリストに戻して処理ループを抜ける
+            if event.run_time > t {
+                self.event_list.add(event);
+                break;
+            }
+
+            // 所有権を移動しているため、selfを渡してもエラーにならない
+            (event.func)(self, ctx, game_data);
+        }
+    }
+}
+
+impl Updatable for ShopSpecialObject {
+    fn update(&mut self, _: &ggez::Context, t: Clock) {
+        if let Some(ui) = self.shelving_select_ui.as_mut() {
+            ui.move_with_func(t);
+        }
+
+	if let Some(storing_ui) = self.storing_select_ui.as_mut() {
+            storing_ui.move_with_func(t);
+        }
+    }
+}
+
+impl DrawableComponent for ShopSpecialObject {
+    fn draw(&mut self, ctx: &mut ggez::Context) -> ggez::GameResult<()> {
+        if self.is_visible() {
+            if let Some(select_ui) = self.shelving_select_ui.as_mut() {
+                select_ui.draw(ctx)?;
+            }
+
+	    if let Some(store_ui) = self.storing_select_ui.as_mut() {
+                store_ui.draw(ctx)?;
+            }
+        }
+
+        Ok(())
+    }
+
+    #[inline(always)]
+    fn hide(&mut self) {
+        self.drwob_essential.visible = false;
+    }
+
+    #[inline(always)]
+    fn appear(&mut self) {
+        self.drwob_essential.visible = true;
+    }
+
+    #[inline(always)]
+    fn is_visible(&self) -> bool {
+        self.drwob_essential.visible
+    }
+
+    #[inline(always)]
+    fn set_drawing_depth(&mut self, depth: i8) {
+        self.drwob_essential.drawing_depth = depth;
+    }
+
+    #[inline(always)]
+    fn get_drawing_depth(&self) -> i8 {
+        self.drwob_essential.drawing_depth
     }
 }
