@@ -361,6 +361,9 @@ impl SelectShelvingBookUI {
         }
     }
 
+    ///
+    /// 請求番号を昇順に並べ替えるメソッド
+    ///
     fn sort_book_info_greater(&mut self) {
         self.boxed_books
             .sort_by(|a, b| a.billing_number.cmp(&b.billing_number));
@@ -368,26 +371,48 @@ impl SelectShelvingBookUI {
             .sort_by(|a, b| a.billing_number.cmp(&b.billing_number));
     }
 
+    ///
+    /// Windowに描画される内容を更新するメソッド
+    ///
     fn update_window(&mut self, ctx: &mut ggez::Context) {
+	// 請求番号でソートする
         self.sort_book_info_greater();
+
+	// 描画コンテンツを更新
         self.box_info_window.update_contents(ctx, &self.boxed_books);
         self.shelving_window
             .update_contents(ctx, &self.shelving_books);
     }
 
+    ///
+    /// 箱に入っている本を手持ちに加える処理
+    ///    
     fn move_box_to_shelving(&mut self, ctx: &mut ggez::Context) {
+	// 選択された本のインデックスを降順にソート
         self.box_info_window.sort_selecting_index_less();
+
+	// インデックスは降順でソートされているため、本のデータを後ろから取り出していくことになる
+	// したがって、インデックスをそのまま使える。
+	// 結果的に、選択された本をすべてshelving_booksに追加することができる
         for selecting_index in self.box_info_window.get_selecting_index().iter() {
             debug::debug_screen_push_text(&format!("remove book: {}", selecting_index));
             let select_book = self.boxed_books.swap_remove(*selecting_index);
             self.shelving_books.push(select_book);
         }
 
-        self.box_info_window.clear_selecting_index();
+	// 選択中データをクリア
+	self.box_info_window.clear_selecting_index();
+        self.shelving_window.clear_selecting_index();
+	
+	// Windowを更新
         self.update_window(ctx);
     }
 
+    ///
+    /// 手持ちの本を箱に戻す処理
+    ///
     fn move_shelving_to_box(&mut self, ctx: &mut ggez::Context) {
+	// 大体同じ
         self.shelving_window.sort_selecting_index_less();
         for selecting_index in self.shelving_window.get_selecting_index().iter() {
             debug::debug_screen_push_text(&format!("remove book: {}", selecting_index));
@@ -401,6 +426,10 @@ impl SelectShelvingBookUI {
         self.update_window(ctx);
     }
 
+    ///
+    /// 現在の本の所持状態を返すメソッド
+    /// タプルで(箱入り, 手持ち)の本を返す
+    ///
     pub fn get_select_result(&self) -> (Vec<BookInformation>, Vec<BookInformation>) {
         (self.boxed_books.clone(), self.shelving_books.clone())
     }
@@ -462,6 +491,8 @@ impl Clickable for SelectShelvingBookUI {
         button: ggez::input::mouse::MouseButton,
         point: numeric::Point2f,
     ) {
+	// それぞれのオブジェクトに処理を渡すだけ
+	
         let rpoint = self.canvas.relative_point(point);
 
         if self.box_info_window.contains(ctx, rpoint) {
@@ -559,6 +590,8 @@ impl SelectStoringBookWindow {
     ) {
         let window_rect = self.canvas.get_drawing_area(ctx);
         let mut text_position = numeric::Point2f::new(window_rect.w - 150.0, 50.0);
+
+	// ここには、そのインデックスの本が配架可能かどうかがboolで入る
         self.book_storable.clear();
 
         self.book_text = book_info
@@ -567,14 +600,18 @@ impl SelectStoringBookWindow {
             .map(|enumerate_data| {
                 let (index, info) = enumerate_data;
 
+		// 12冊を超える場合は、一段下に表示 (FIXME)
                 if index == 12 {
                     text_position.x = window_rect.w - 100.0;
                     text_position.y += 500.0;
                 }
 
+		// 配架可能か？
                 let is_storable = book_shelf_info.contains_number(info.billing_number);
+		// 配架可能状態をpush
                 self.book_storable.push(is_storable);
 
+		// 本情報のVerticalTextを生成
                 let vtext = VerticalText::new(
                     format!(
                         "{0: <4}{1: <6}{2}",
@@ -594,14 +631,23 @@ impl SelectStoringBookWindow {
             .collect();
     }
 
+    ///
+    /// 選択中の本のインデックスを降順でソート
+    ///
     pub fn sort_selecting_index_less(&mut self) {
         self.selecting_book_index.sort_by(|a, b| b.cmp(a));
     }
 
+    ///
+    /// 現在選択中の本のインデックスのベクトルへの参照を返す
+    ///
     pub fn get_selecting_index(&self) -> &Vec<usize> {
         &self.selecting_book_index
     }
 
+    ///
+    /// 現在選択中の本のインデックス情報をすべてクリア
+    ///
     pub fn clear_selecting_index(&mut self) {
         self.selecting_book_index.clear();
 
@@ -668,9 +714,13 @@ impl Clickable for SelectStoringBookWindow {
     ) {
         let rpoint = self.canvas.relative_point(point);
 
+	// 本情報のVerticalTextへのクリック処理
         for (index, vtext) in self.book_text.iter_mut().enumerate() {
             if *self.book_storable.get(index).unwrap() {
+
+		// 本情報をクリックしたか？
                 if vtext.contains(ctx, rpoint) {
+		    
                     // 既に選択されている場合は、削除
                     if self.selecting_book_index.contains(&index) {
                         vtext.set_color(ggraphics::Color::from_rgba_u32(0x000000ff));
@@ -970,11 +1020,17 @@ impl ShelvingDetailContents {
             .collect();
     }
 
+    ///
+    /// 移動関数を変更しスライドインするように見せる
+    ///
     pub fn slide_appear(&mut self, slide_position: numeric::Point2f, t: Clock) {
         self.canvas
             .override_move_func(move_fn::devide_distance(slide_position, 0.5), t);
     }
 
+    ///
+    /// 移動関数を変更しスライドアウトするように見せる
+    ///
     pub fn slide_hide(&mut self, t: Clock) {
         self.canvas.override_move_func(
             move_fn::devide_distance(numeric::Point2f::new(-self.menu_rect.w, 0.0), 0.2),

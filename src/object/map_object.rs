@@ -264,6 +264,9 @@ impl TwoStepPoint {
     }
 }
 
+///
+/// マップ上に描画されるオブジェクトが実装すべきトレイト
+///
 pub trait OnMap: DrawableComponent {
     // マップ上のテクスチャ描画開始地点を返す
     fn get_map_position(&self) -> numeric::Point2f;
@@ -275,6 +278,10 @@ pub trait OnMap: DrawableComponent {
     fn set_map_position(&mut self, position: numeric::Point2f);
 }
 
+///
+/// マップ上に描画するオブジェクト
+/// 基本的に、マップ上に描画するオブジェクトはこの構造体を移譲して使う
+///
 pub struct MapObject {
     last_position: numeric::Point2f,
     object: TextureAnimation,
@@ -305,6 +312,9 @@ impl MapObject {
         }
     }
 
+    ///
+    /// 当たり判定のある領域を返すメソッド
+    ///
     pub fn get_collision_area(&self, ctx: &mut ggez::Context) -> numeric::Rect {
         let croppped_size = self.get_collision_size(ctx);
         let collision_top_offset = self.get_collision_top_offset(ctx);
@@ -318,6 +328,9 @@ impl MapObject {
         )
     }
 
+    ///
+    /// 当たり判定のある領域のサイズを返すメソッド
+    ///
     pub fn get_collision_size(&self, ctx: &mut ggez::Context) -> numeric::Vector2f {
         let drawing_size = self.obj().get_drawing_size(ctx);
 
@@ -327,6 +340,9 @@ impl MapObject {
         )
     }
 
+    ///
+    /// 当たり判定のある領域のテクスチャ内のオフセット
+    ///
     fn get_collision_top_offset(&self, ctx: &mut ggez::Context) -> numeric::Vector2f {
         let drawing_size = self.obj().get_drawing_size(ctx);
 
@@ -344,6 +360,9 @@ impl MapObject {
         &mut self.speed_info
     }
 
+    ///
+    /// アニメーションモードを変更するメソッド
+    ///
     pub fn change_animation_mode(&mut self, mode: usize) {
         self.object.change_mode(mode, AnimationType::Loop, mode);
     }
@@ -377,6 +396,9 @@ impl MapObject {
         self.map_position.diff()
     }
 
+    ///
+    /// 当たり判定領域を基準としてマップ座標を更新する
+    ///
     pub fn set_map_position_with_collision_top_offset(
         &mut self,
         ctx: &mut ggez::Context,
@@ -386,6 +408,9 @@ impl MapObject {
         self.map_position.update(position - offset);
     }
 
+    ///
+    /// 当たり判定領域を基準としたマップ座標を返す
+    ///
     pub fn get_map_position_with_collision_top_offset(
         &self,
         ctx: &mut ggez::Context,
@@ -486,19 +511,31 @@ impl MapObject {
         0.0
     }
 
+    ///
+    /// テクスチャを更新する。（アニメーション）
+    ///
     pub fn update_texture(&mut self, t: Clock) {
         self.object.try_next_frame(t);
     }
 
+    ///
+    /// マップ上の座標を動かす
+    ///
     pub fn move_map(&mut self, offset: numeric::Vector2f) {
         self.map_position.move_diff(&offset);
     }
 
+    ///
+    /// マップ上の座標から、ディスプレイの描画位置を算出し、更新する
+    ///
     pub fn update_display_position(&mut self, camera: &numeric::Rect) {
         let dp = mp::map_to_display(&self.map_position.current, camera);
         self.object.get_mut_object().set_position(dp);
     }
 
+    ///
+    /// キャラクター同士の衝突情報を計算する
+    ///
     pub fn check_collision_with_character(
         &self,
         ctx: &mut ggez::Context,
@@ -602,6 +639,9 @@ pub struct PlayerStatus {
     pub mp: f32,
 }
 
+///
+/// 操作キャラクターの情報を保持
+///
 pub struct PlayableCharacter {
     character: MapObject,
     status: PlayerStatus,
@@ -824,6 +864,9 @@ pub enum CustomerCharacterStatus {
     WaitOnBookShelf,
 }
 
+///
+/// マップ上に表示するキャラクターの情報
+///
 pub struct CustomerCharacter {
     event_list: DelayEventList<Self>,
     character: MapObject,
@@ -847,18 +890,26 @@ impl CustomerCharacter {
         }
     }
 
-    pub fn update_current_destination(
+    ///
+    /// 現在のマップ位置から、指定された目的地までのルートを計算するメソッド
+    ///
+    pub fn find_route(
         &mut self,
         ctx: &mut ggez::Context,
         map_data: &mp::StageObjectMap,
         dest: numeric::Vector2u,
     ) -> Option<Vec<numeric::Point2f>> {
+        // すでに過去の目的地に到達している場合のみ新たなルートを計算する
         if self.move_queue.empty() {
+            // 現在のマップ位置がどこのタイルなのかを計算する
             let maybe_start = map_data.map_position_to_tile_position(
                 self.character
                     .get_map_position_with_collision_top_offset(ctx),
             );
+
+            // マップ位置が不正であった場合は、検索を行わない
             if let Some(map_start_pos) = maybe_start {
+                // ルートを計算し、返す
                 let maybe_route = map_data.find_shortest_route(map_start_pos, dest);
                 if let Some(route) = maybe_route {
                     return Some(
@@ -874,39 +925,42 @@ impl CustomerCharacter {
         None
     }
 
+    ///
+    /// 進行方向に応じて、アニメーションを変更する
+    ///
     fn update_animation_mode_with_rad(&mut self, rad: f32) {
         if rad >= 45.0_f32.to_radians() && rad < 135.0_f32.to_radians() {
             // 上向き
             self.get_mut_character_object().change_animation_mode(0);
-        }
-
-        if rad >= 135.0_f32.to_radians() && rad < 225.0_f32.to_radians() {
+        } else if rad >= 135.0_f32.to_radians() && rad < 225.0_f32.to_radians() {
             // 左向き
             self.get_mut_character_object().change_animation_mode(3);
-        }
-
-        if rad >= 225.0_f32.to_radians() && rad < 315.0_f32.to_radians() {
+        } else if rad >= 225.0_f32.to_radians() && rad < 315.0_f32.to_radians() {
             // 下向き
             self.get_mut_character_object().change_animation_mode(1);
-        }
-
-        if (rad >= 315.0_f32.to_radians() && rad <= 360.0_f32.to_radians())
-            || (rad >= 0.0_f32.to_radians() && rad < 45.0_f32.to_radians())
-        {
+        } else {
             // 右向き
             self.get_mut_character_object().change_animation_mode(2);
         }
     }
 
+    ///
+    /// ゴールへの適切な速度を計算・更新する
+    ///
     fn override_move_effect(&mut self, ctx: &mut ggez::Context, goal_point: numeric::Point2f) {
+	// 現在のマップ位置
         let current = self
             .get_character_object()
             .get_map_position_with_collision_top_offset(ctx);
+
+	// ゴールとのオフセット
         let offset = numeric::Point2f::new(goal_point.x - current.x, goal_point.y - current.y);
 
+	// ゴールへのオフセットから、速度を算出
         let speed = if offset.x == 0.0 && offset.y == 0.0 {
             numeric::Vector2f::new(0.0, 0.0)
         } else {
+	    // 角度を計算
             let rad = if offset.x >= 0.0 {
                 if offset.y >= 0.0 {
                     (offset.y / offset.x).atan()
@@ -916,10 +970,13 @@ impl CustomerCharacter {
             } else {
                 (offset.y / offset.x).atan() + 180.0_f32.to_radians()
             };
+
+	    // 基本的な速さは一致するようにしたいため、次のように計算する
             let speed = numeric::Vector2f::new(rad.cos() * 1.4, rad.sin() * 1.4);
 
             debug::debug_screen_push_text(&format!("rad: {}", rad.to_degrees()));
 
+	    // 向きによってアニメーションを更新
             self.update_animation_mode_with_rad(rad);
 
             speed
@@ -930,21 +987,28 @@ impl CustomerCharacter {
             goal_point.x, goal_point.y, speed.x, speed.y
         ));
 
+	// スピードを更新
         self.character.speed_info_mut().set_speed(speed);
     }
 
+    ///
+    /// 移動速度を更新する
+    ///
     fn update_move_effect(
         &mut self,
         ctx: &mut ggez::Context,
         map_data: &mp::StageObjectMap,
         t: Clock,
     ) {
+	// 移動情報キューが空（目的地に到達してる or 初めて目的地を設定する）
         if self.move_queue.empty() {
-            let maybe_next_route =
-                self.update_current_destination(ctx, map_data, self.move_data.random_select());
+	    // ルート検索
+            let maybe_next_route = self.find_route(ctx, map_data, self.move_data.random_select());
 
             debug::debug_screen_push_text(&format!("{:?}", maybe_next_route));
 
+	    // 一定時間後にルートを設定し、状態をReadyに変更する。
+	    // 移動開始するまでは、ストップ
             self.event_list.add_event(
                 Box::new(move |customer, _, _| {
                     if let Some(next_route) = maybe_next_route {
@@ -959,6 +1023,8 @@ impl CustomerCharacter {
             return ();
         }
 
+	// キューが空ではない場合
+	// 情報をキューから取り出し、速度を計算し直す
         let maybe_next_position = self.move_queue.dequeue();
         if let Some(next_position) = maybe_next_position {
             debug::debug_screen_push_text(&format!("next: {:?}", next_position));
@@ -968,17 +1034,23 @@ impl CustomerCharacter {
         }
     }
 
+    ///
+    /// 目的地を強制的に上書きし設定するメソッド
+    ///
     pub fn set_destination_forced(
         &mut self,
         ctx: &mut ggez::Context,
         map_data: &mp::StageObjectMap,
         dest: numeric::Vector2u,
     ) {
+	// 現在の移動キューをクリア
         self.move_queue.clear();
-        let maybe_next_route = self.update_current_destination(ctx, map_data, dest);
+	// 新しくルートを検索
+        let maybe_next_route = self.find_route(ctx, map_data, dest);
 
         debug::debug_screen_push_text(&format!("{:?}", maybe_next_route));
 
+	// ルートが見つかれば、その情報をキューに追加
         if let Some(next_route) = maybe_next_route {
             self.move_queue.enqueue(next_route);
             self.customer_status = CustomerCharacterStatus::Ready;
@@ -1033,6 +1105,9 @@ impl CustomerCharacter {
         }
     }
 
+    ///
+    /// 移動速度の更新が必要であれば行うメソッド
+    ///
     pub fn try_update_move_effect(
         &mut self,
         ctx: &mut ggez::Context,
@@ -1041,22 +1116,32 @@ impl CustomerCharacter {
         counter: numeric::Vector2u,
         t: Clock,
     ) {
+	// 遅延イベントを実行
         self.flush_delay_event(ctx, game_data, t);
 
         match self.customer_status {
             CustomerCharacterStatus::Ready => {
+		// 移動可能状態であれば、移動を開始する
                 self.update_move_effect(ctx, map_data, t);
             }
             CustomerCharacterStatus::Moving => {
+		// 移動中, 目的地に到着したか？
                 if self.is_goal_now(ctx) {
                     let goal = self.current_goal;
 
                     debug::debug_screen_push_text(&format!("goal: {:?}", goal));
+
+		    // 目的地でマップ位置を上書き
                     self.get_mut_character_object()
                         .set_map_position_with_collision_top_offset(ctx, goal);
+
+		    // 移動可能状態に変更
                     self.customer_status = CustomerCharacterStatus::Ready;
+
+		    // 速度もリセット
                     self.reset_speed();
 
+		    // 目的地がカウンターに設定されていた場合は、待機状態へ移行
                     if !self.shopping_is_done
                         && map_data.map_position_to_tile_position(goal).unwrap() == counter
                     {
