@@ -17,7 +17,7 @@ pub fn fade_in(required_time: Clock, start: Clock) -> GenericEffectFn {
                     obj.set_alpha(elapsed_time as f32 / required_time as f32);
                     EffectFnStatus::EffectContinue
                 } else {
-		    obj.set_alpha(1.0);
+                    obj.set_alpha(1.0);
                     EffectFnStatus::EffectFinish
                 }
             } else {
@@ -77,7 +77,7 @@ pub fn fade_out(required_time: Clock, start: Clock) -> GenericEffectFn {
                     obj.set_alpha(1.0 - (elapsed_time as f32 / required_time as f32));
                     EffectFnStatus::EffectContinue
                 } else {
-		    obj.set_alpha(0.0);
+                    obj.set_alpha(0.0);
                     EffectFnStatus::EffectFinish
                 }
             } else {

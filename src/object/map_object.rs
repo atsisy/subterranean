@@ -6,18 +6,20 @@ use std::str::FromStr;
 use ggez::graphics as ggraphics;
 
 use torifune::core::Clock;
+use torifune::debug;
 use torifune::distance;
 use torifune::graphics::object::*;
 use torifune::graphics::*;
 use torifune::numeric;
-use torifune::debug;
 
 use crate::core::map_parser as mp;
 use crate::core::{BookInformation, BookShelfInformation, GameData};
 use crate::object::collision::*;
-use crate::scene::{SceneID, DelayEventList};
 use crate::object::task_object::tt_main_component::CustomerRequest;
-use crate::object::task_object::tt_sub_component::{BorrowingInformation, CopyingRequestInformation, ReturnBookInformation, GensoDate};
+use crate::object::task_object::tt_sub_component::{
+    BorrowingInformation, CopyingRequestInformation, GensoDate, ReturnBookInformation,
+};
+use crate::scene::{DelayEventList, SceneID};
 
 ///
 /// ある範囲内に速さを収めたい時に使用する構造体
@@ -262,13 +264,13 @@ impl TwoStepPoint {
     }
 }
 
-pub trait OnMap : DrawableComponent {
+pub trait OnMap: DrawableComponent {
     // マップ上のテクスチャ描画開始地点を返す
     fn get_map_position(&self) -> numeric::Point2f;
 
     // マップ上のテクスチャ描画領域の右下の位置を返す
     fn get_map_position_bottom_right(&self, ctx: &mut ggez::Context) -> numeric::Point2f;
-    
+
     // マップ上のテクスチャ描画開始地点を設定する
     fn set_map_position(&mut self, position: numeric::Point2f);
 }
@@ -305,7 +307,7 @@ impl MapObject {
 
     pub fn get_collision_area(&self, ctx: &mut ggez::Context) -> numeric::Rect {
         let croppped_size = self.get_collision_size(ctx);
-	let collision_top_offset = self.get_collision_top_offset(ctx);
+        let collision_top_offset = self.get_collision_top_offset(ctx);
         let position = self.obj().get_position();
 
         numeric::Rect::new(
@@ -326,11 +328,12 @@ impl MapObject {
     }
 
     fn get_collision_top_offset(&self, ctx: &mut ggez::Context) -> numeric::Vector2f {
-	let drawing_size = self.obj().get_drawing_size(ctx);
-	
-	numeric::Vector2f::new(
+        let drawing_size = self.obj().get_drawing_size(ctx);
+
+        numeric::Vector2f::new(
             drawing_size.x * self.collision_crop.x,
-            drawing_size.y * self.collision_crop.y)
+            drawing_size.y * self.collision_crop.y,
+        )
     }
 
     pub fn speed_info(&self) -> &TextureSpeedInfo {
@@ -374,14 +377,21 @@ impl MapObject {
         self.map_position.diff()
     }
 
-    pub fn set_map_position_with_collision_top_offset(&mut self, ctx: &mut ggez::Context, position: numeric::Point2f) {
-	let offset = self.get_collision_top_offset(ctx);
+    pub fn set_map_position_with_collision_top_offset(
+        &mut self,
+        ctx: &mut ggez::Context,
+        position: numeric::Point2f,
+    ) {
+        let offset = self.get_collision_top_offset(ctx);
         self.map_position.update(position - offset);
     }
 
-    pub fn get_map_position_with_collision_top_offset(&self, ctx: &mut ggez::Context) -> numeric::Point2f {
-	let offset = self.get_collision_top_offset(ctx);
-	self.map_position.current + offset
+    pub fn get_map_position_with_collision_top_offset(
+        &self,
+        ctx: &mut ggez::Context,
+    ) -> numeric::Point2f {
+        let offset = self.get_collision_top_offset(ctx);
+        self.map_position.current + offset
     }
 
     ///
@@ -512,36 +522,29 @@ impl MapObject {
 impl DrawableComponent for MapObject {
     fn draw(&mut self, ctx: &mut ggez::Context) -> ggez::GameResult<()> {
         if self.is_visible() {
-	    self.obj_mut()
-		.draw(ctx)
-    		.unwrap();
+            self.obj_mut().draw(ctx).unwrap();
         }
         Ok(())
     }
-    
+
     fn hide(&mut self) {
-	self.obj_mut()
-	    .hide()
+        self.obj_mut().hide()
     }
 
     fn appear(&mut self) {
-	self.obj_mut()
-	    .appear()
+        self.obj_mut().appear()
     }
 
     fn is_visible(&self) -> bool {
-	self.obj()
-	    .is_visible()
+        self.obj().is_visible()
     }
 
     fn set_drawing_depth(&mut self, depth: i8) {
-	self.obj_mut()
-	    .set_drawing_depth(depth)
+        self.obj_mut().set_drawing_depth(depth)
     }
 
     fn get_drawing_depth(&self) -> i8 {
-	self.obj()
-	    .get_drawing_depth()
+        self.obj().get_drawing_depth()
     }
 }
 
@@ -550,12 +553,12 @@ impl OnMap for MapObject {
     fn get_map_position(&self) -> numeric::Point2f {
         self.map_position.current
     }
-    
+
     // マップ上のテクスチャ描画領域の右下の位置を返す
     fn get_map_position_bottom_right(&self, ctx: &mut ggez::Context) -> numeric::Point2f {
-	self.get_map_position() + self.obj().get_drawing_size(ctx)
+        self.get_map_position() + self.obj().get_drawing_size(ctx)
     }
-    
+
     // マップ上のテクスチャ描画開始地点を設定する
     fn set_map_position(&mut self, position: numeric::Point2f) {
         self.map_position.update(position);
@@ -720,54 +723,46 @@ impl PlayableCharacter {
 impl DrawableComponent for PlayableCharacter {
     fn draw(&mut self, ctx: &mut ggez::Context) -> ggez::GameResult<()> {
         if self.is_visible() {
-	    self.get_mut_character_object()
-		.obj_mut()
-		.draw(ctx)
-    		.unwrap();
+            self.get_mut_character_object().obj_mut().draw(ctx).unwrap();
         }
         Ok(())
     }
-    
+
     fn hide(&mut self) {
-	self.get_mut_character_object()
-	    .hide()
+        self.get_mut_character_object().hide()
     }
 
     fn appear(&mut self) {
-	self.get_mut_character_object()
-	    .appear()
+        self.get_mut_character_object().appear()
     }
 
     fn is_visible(&self) -> bool {
-	self.get_character_object()
-	    .is_visible()
+        self.get_character_object().is_visible()
     }
 
     fn set_drawing_depth(&mut self, depth: i8) {
-	self.get_mut_character_object()
-	    .set_drawing_depth(depth)
+        self.get_mut_character_object().set_drawing_depth(depth)
     }
 
     fn get_drawing_depth(&self) -> i8 {
-	self.get_character_object()
-	    .get_drawing_depth()
+        self.get_character_object().get_drawing_depth()
     }
 }
 
 impl OnMap for PlayableCharacter {
     // マップ上のテクスチャ描画開始地点を返す
     fn get_map_position(&self) -> numeric::Point2f {
-	self.character.get_map_position()
+        self.character.get_map_position()
     }
-    
+
     // マップ上のテクスチャ描画領域の右下の位置を返す
     fn get_map_position_bottom_right(&self, ctx: &mut ggez::Context) -> numeric::Point2f {
-	self.character.get_map_position_bottom_right(ctx)
+        self.character.get_map_position_bottom_right(ctx)
     }
-    
+
     // マップ上のテクスチャ描画開始地点を設定する
     fn set_map_position(&mut self, position: numeric::Point2f) {
-	self.character.set_map_position(position);
+        self.character.set_map_position(position);
     }
 }
 
@@ -777,13 +772,13 @@ pub struct CustomerDestPoint {
 
 impl CustomerDestPoint {
     pub fn new(candidates: Vec<numeric::Vector2u>) -> Self {
-	CustomerDestPoint {
-	    candidates: candidates,
-	}
+        CustomerDestPoint {
+            candidates: candidates,
+        }
     }
-    
+
     pub fn random_select(&self) -> numeric::Vector2u {
-	let random_index = rand::random::<usize>() % self.candidates.len();
+        let random_index = rand::random::<usize>() % self.candidates.len();
         *self.candidates.get(random_index).unwrap()
     }
 }
@@ -795,29 +790,29 @@ pub struct CustomerMoveQueue {
 
 impl CustomerMoveQueue {
     pub fn new() -> Self {
-	CustomerMoveQueue {
-	    queue: VecDeque::new(),
-	}
+        CustomerMoveQueue {
+            queue: VecDeque::new(),
+        }
     }
-    
+
     pub fn enqueue(&mut self, points: Vec<numeric::Point2f>) {
-	self.queue.extend(points);
-    } 
+        self.queue.extend(points);
+    }
 
     pub fn dequeue(&mut self) -> Option<numeric::Point2f> {
-	self.queue.pop_front()
+        self.queue.pop_front()
     }
 
     pub fn len(&self) -> usize {
-	self.queue.len()
+        self.queue.len()
     }
 
     pub fn empty(&self) -> bool {
-	self.len() == 0
+        self.len() == 0
     }
 
     pub fn clear(&mut self) {
-	self.queue.clear();
+        self.queue.clear();
     }
 }
 
@@ -842,133 +837,152 @@ pub struct CustomerCharacter {
 impl CustomerCharacter {
     pub fn new(character: MapObject, move_data: CustomerDestPoint) -> Self {
         CustomerCharacter {
-	    event_list: DelayEventList::new(),
+            event_list: DelayEventList::new(),
             character: character,
-	    move_data: move_data,
-	    move_queue: CustomerMoveQueue::new(),
-	    customer_status: CustomerCharacterStatus::Ready,
-	    shopping_is_done: false,
-	    current_goal: numeric::Point2f::new(0.0, 0.0),
+            move_data: move_data,
+            move_queue: CustomerMoveQueue::new(),
+            customer_status: CustomerCharacterStatus::Ready,
+            shopping_is_done: false,
+            current_goal: numeric::Point2f::new(0.0, 0.0),
         }
     }
 
-    pub fn update_current_destination(&mut self, ctx: &mut ggez::Context,
-				      map_data: &mp::StageObjectMap, dest: numeric::Vector2u) -> Option<Vec<numeric::Point2f>> {
-	if self.move_queue.empty() {
-	    let maybe_start = map_data
-		.map_position_to_tile_position(self.character.get_map_position_with_collision_top_offset(ctx));
-	    if let Some(map_start_pos) = maybe_start {
-		let maybe_route = map_data.find_shortest_route(map_start_pos, dest);
-		if let Some(route) = maybe_route {
-		    return Some(
-			route
-    			    .iter()
-			    .map(|tp| map_data.tile_position_to_map_position(*tp))
-    			    .collect())
-		}
-	    }
-	}
+    pub fn update_current_destination(
+        &mut self,
+        ctx: &mut ggez::Context,
+        map_data: &mp::StageObjectMap,
+        dest: numeric::Vector2u,
+    ) -> Option<Vec<numeric::Point2f>> {
+        if self.move_queue.empty() {
+            let maybe_start = map_data.map_position_to_tile_position(
+                self.character
+                    .get_map_position_with_collision_top_offset(ctx),
+            );
+            if let Some(map_start_pos) = maybe_start {
+                let maybe_route = map_data.find_shortest_route(map_start_pos, dest);
+                if let Some(route) = maybe_route {
+                    return Some(
+                        route
+                            .iter()
+                            .map(|tp| map_data.tile_position_to_map_position(*tp))
+                            .collect(),
+                    );
+                }
+            }
+        }
 
-	None
+        None
     }
 
     fn update_animation_mode_with_rad(&mut self, rad: f32) {
+        if rad >= 45.0_f32.to_radians() && rad < 135.0_f32.to_radians() {
+            // 上向き
+            self.get_mut_character_object().change_animation_mode(0);
+        }
 
-	if rad >= 45.0_f32.to_radians() && rad < 135.0_f32.to_radians() {
-	    // 上向き
-            self.get_mut_character_object()
-                .change_animation_mode(0);
-	}
+        if rad >= 135.0_f32.to_radians() && rad < 225.0_f32.to_radians() {
+            // 左向き
+            self.get_mut_character_object().change_animation_mode(3);
+        }
 
-	if rad >= 135.0_f32.to_radians() && rad < 225.0_f32.to_radians() {
-	    // 左向き
-            self.get_mut_character_object()
-                .change_animation_mode(3);
-	}
+        if rad >= 225.0_f32.to_radians() && rad < 315.0_f32.to_radians() {
+            // 下向き
+            self.get_mut_character_object().change_animation_mode(1);
+        }
 
-	if rad >= 225.0_f32.to_radians() && rad < 315.0_f32.to_radians() {
-	    // 下向き
-            self.get_mut_character_object()
-                .change_animation_mode(1);
-	}
-
-	if (rad >= 315.0_f32.to_radians() && rad <= 360.0_f32.to_radians()) ||
-	    (rad >= 0.0_f32.to_radians() && rad < 45.0_f32.to_radians()){
-		// 右向き
-                self.get_mut_character_object()
-                    .change_animation_mode(2);
-	}
+        if (rad >= 315.0_f32.to_radians() && rad <= 360.0_f32.to_radians())
+            || (rad >= 0.0_f32.to_radians() && rad < 45.0_f32.to_radians())
+        {
+            // 右向き
+            self.get_mut_character_object().change_animation_mode(2);
+        }
     }
 
     fn override_move_effect(&mut self, ctx: &mut ggez::Context, goal_point: numeric::Point2f) {
-	let current = self.get_character_object().get_map_position_with_collision_top_offset(ctx);
+        let current = self
+            .get_character_object()
+            .get_map_position_with_collision_top_offset(ctx);
         let offset = numeric::Point2f::new(goal_point.x - current.x, goal_point.y - current.y);
 
-	let speed = if offset.x == 0.0 && offset.y == 0.0 {
-	    numeric::Vector2f::new(0.0, 0.0)
-	} else {
-	    let rad =
-		if offset.x >= 0.0 {
-		    if offset.y >= 0.0 {
-			(offset.y / offset.x).atan()	
-		    } else {
-			(offset.y / offset.x).atan() + 360.0_f32.to_radians()
-		    }
-		} else {
-		    (offset.y / offset.x).atan() + 180.0_f32.to_radians()
-		};
-	    let speed = numeric::Vector2f::new(rad.cos() * 1.4, rad.sin() * 1.4);
-	    
-	    debug::debug_screen_push_text(&format!("rad: {}", rad.to_degrees()));
+        let speed = if offset.x == 0.0 && offset.y == 0.0 {
+            numeric::Vector2f::new(0.0, 0.0)
+        } else {
+            let rad = if offset.x >= 0.0 {
+                if offset.y >= 0.0 {
+                    (offset.y / offset.x).atan()
+                } else {
+                    (offset.y / offset.x).atan() + 360.0_f32.to_radians()
+                }
+            } else {
+                (offset.y / offset.x).atan() + 180.0_f32.to_radians()
+            };
+            let speed = numeric::Vector2f::new(rad.cos() * 1.4, rad.sin() * 1.4);
 
-	    self.update_animation_mode_with_rad(rad);
+            debug::debug_screen_push_text(&format!("rad: {}", rad.to_degrees()));
 
-	    speed
-	};
+            self.update_animation_mode_with_rad(rad);
 
-	debug::debug_screen_push_text(&format!("goal: {}:{}, speed: {}:{}", goal_point.x, goal_point.y, speed.x, speed.y));
-	
-	self.character.speed_info_mut().set_speed(speed);
-    }
-    
-    fn update_move_effect(&mut self, ctx: &mut ggez::Context, map_data: &mp::StageObjectMap, t: Clock) {
-	if self.move_queue.empty() {
-	    let maybe_next_route = self.update_current_destination(ctx, map_data, self.move_data.random_select());
+            speed
+        };
 
-	    debug::debug_screen_push_text(&format!("{:?}", maybe_next_route));
-	    
-	    self.event_list.add_event(
-		Box::new(move |customer, _, _| {
-		    if let Some(next_route) = maybe_next_route {
-			customer.move_queue.enqueue(next_route);
-			customer.customer_status = CustomerCharacterStatus::Ready;
-		    }
-		}), t + 100);
-	    
-	    self.customer_status = CustomerCharacterStatus::WaitOnBookShelf;
-	    return ();
-	}
+        debug::debug_screen_push_text(&format!(
+            "goal: {}:{}, speed: {}:{}",
+            goal_point.x, goal_point.y, speed.x, speed.y
+        ));
 
-	let maybe_next_position = self.move_queue.dequeue();
-	if let Some(next_position) = maybe_next_position {
-	    debug::debug_screen_push_text(&format!("next: {:?}", next_position));
-	    self.override_move_effect(ctx, next_position);
-	    self.current_goal = next_position;
-	    self.customer_status = CustomerCharacterStatus::Moving;
-	}
+        self.character.speed_info_mut().set_speed(speed);
     }
 
-    pub fn set_destination_forced(&mut self, ctx: &mut ggez::Context,
-				  map_data: &mp::StageObjectMap, dest: numeric::Vector2u) {
-	self.move_queue.clear();
-	let maybe_next_route = self.update_current_destination(ctx, map_data, dest);
-	
-	debug::debug_screen_push_text(&format!("{:?}", maybe_next_route));
+    fn update_move_effect(
+        &mut self,
+        ctx: &mut ggez::Context,
+        map_data: &mp::StageObjectMap,
+        t: Clock,
+    ) {
+        if self.move_queue.empty() {
+            let maybe_next_route =
+                self.update_current_destination(ctx, map_data, self.move_data.random_select());
 
-	if let Some(next_route) = maybe_next_route {
-	    self.move_queue.enqueue(next_route);
-	    self.customer_status = CustomerCharacterStatus::Ready;
-	}
+            debug::debug_screen_push_text(&format!("{:?}", maybe_next_route));
+
+            self.event_list.add_event(
+                Box::new(move |customer, _, _| {
+                    if let Some(next_route) = maybe_next_route {
+                        customer.move_queue.enqueue(next_route);
+                        customer.customer_status = CustomerCharacterStatus::Ready;
+                    }
+                }),
+                t + 100,
+            );
+
+            self.customer_status = CustomerCharacterStatus::WaitOnBookShelf;
+            return ();
+        }
+
+        let maybe_next_position = self.move_queue.dequeue();
+        if let Some(next_position) = maybe_next_position {
+            debug::debug_screen_push_text(&format!("next: {:?}", next_position));
+            self.override_move_effect(ctx, next_position);
+            self.current_goal = next_position;
+            self.customer_status = CustomerCharacterStatus::Moving;
+        }
+    }
+
+    pub fn set_destination_forced(
+        &mut self,
+        ctx: &mut ggez::Context,
+        map_data: &mp::StageObjectMap,
+        dest: numeric::Vector2u,
+    ) {
+        self.move_queue.clear();
+        let maybe_next_route = self.update_current_destination(ctx, map_data, dest);
+
+        debug::debug_screen_push_text(&format!("{:?}", maybe_next_route));
+
+        if let Some(next_route) = maybe_next_route {
+            self.move_queue.enqueue(next_route);
+            self.customer_status = CustomerCharacterStatus::Ready;
+        }
     }
 
     pub fn reset_speed(&mut self) {
@@ -978,26 +992,28 @@ impl CustomerCharacter {
     }
 
     fn is_goal_now(&mut self, ctx: &mut ggez::Context) -> bool {
-	let current = self.get_character_object().get_map_position_with_collision_top_offset(ctx);
-	distance!(current, self.current_goal) < 1.5
+        let current = self
+            .get_character_object()
+            .get_map_position_with_collision_top_offset(ctx);
+        distance!(current, self.current_goal) < 1.5
     }
 
     fn flush_delay_event(&mut self, ctx: &mut ggez::Context, game_data: &GameData, t: Clock) {
-	// 最後の要素の所有権を移動
+        // 最後の要素の所有権を移動
         while let Some(event) = self.event_list.move_top() {
             // 時間が来ていない場合は、取り出した要素をリストに戻して処理ループを抜ける
             if event.run_time > t {
                 self.event_list.add(event);
                 break;
             }
-	    
+
             // 所有権を移動しているため、selfを渡してもエラーにならない
             (event.func)(self, ctx, game_data);
         }
     }
 
     fn generate_hold_request(&mut self, game_data: &GameData) -> CustomerRequest {
-	let random_select = rand::random::<usize>() % 3;
+        let random_select = rand::random::<usize>() % 3;
         match random_select {
             0 => CustomerRequest::Borrowing(BorrowingInformation::new_random(
                 game_data,
@@ -1016,47 +1032,54 @@ impl CustomerCharacter {
             )),
         }
     }
-    
-    pub fn try_update_move_effect(&mut self, ctx: &mut ggez::Context, game_data: &GameData,
-				  map_data: &mp::StageObjectMap, counter: numeric::Vector2u, t: Clock) {
-	self.flush_delay_event(ctx, game_data, t);
-	
-	match self.customer_status {
-	    CustomerCharacterStatus::Ready => {
-		self.update_move_effect(ctx, map_data, t);
-	    },
-	    CustomerCharacterStatus::Moving => {
-		if self.is_goal_now(ctx) {
-		    let goal = self.current_goal;
-		    
-		    debug::debug_screen_push_text(&format!("goal: {:?}", goal));
-		    self.get_mut_character_object().set_map_position_with_collision_top_offset(ctx, goal);
-		    self.customer_status = CustomerCharacterStatus::Ready;
-		    self.reset_speed();
 
-		    if !self.shopping_is_done &&
-			map_data.map_position_to_tile_position(goal).unwrap() == counter {
-			self.customer_status = CustomerCharacterStatus::WaitOnClerk;
-			self.shopping_is_done = true;
-		    }
-		}
-	    },
-	    CustomerCharacterStatus::WaitOnClerk => {
-	    }
-	    _ => (),
-	}
+    pub fn try_update_move_effect(
+        &mut self,
+        ctx: &mut ggez::Context,
+        game_data: &GameData,
+        map_data: &mp::StageObjectMap,
+        counter: numeric::Vector2u,
+        t: Clock,
+    ) {
+        self.flush_delay_event(ctx, game_data, t);
+
+        match self.customer_status {
+            CustomerCharacterStatus::Ready => {
+                self.update_move_effect(ctx, map_data, t);
+            }
+            CustomerCharacterStatus::Moving => {
+                if self.is_goal_now(ctx) {
+                    let goal = self.current_goal;
+
+                    debug::debug_screen_push_text(&format!("goal: {:?}", goal));
+                    self.get_mut_character_object()
+                        .set_map_position_with_collision_top_offset(ctx, goal);
+                    self.customer_status = CustomerCharacterStatus::Ready;
+                    self.reset_speed();
+
+                    if !self.shopping_is_done
+                        && map_data.map_position_to_tile_position(goal).unwrap() == counter
+                    {
+                        self.customer_status = CustomerCharacterStatus::WaitOnClerk;
+                        self.shopping_is_done = true;
+                    }
+                }
+            }
+            CustomerCharacterStatus::WaitOnClerk => {}
+            _ => (),
+        }
     }
 
     pub fn is_wait_on_clerk(&self) -> bool {
-	self.customer_status == CustomerCharacterStatus::WaitOnClerk
+        self.customer_status == CustomerCharacterStatus::WaitOnClerk
     }
-    
+
     pub fn check_rise_hand(&mut self, game_data: &GameData) -> Option<CustomerRequest> {
-	if self.customer_status == CustomerCharacterStatus::WaitOnClerk {
-	    Some(self.generate_hold_request(game_data))
-	} else {
-	    None
-	}
+        if self.customer_status == CustomerCharacterStatus::WaitOnClerk {
+            Some(self.generate_hold_request(game_data))
+        } else {
+            None
+        }
     }
 
     pub fn get_map_position(&self) -> numeric::Point2f {
@@ -1116,56 +1139,48 @@ impl CustomerCharacter {
 }
 
 impl DrawableComponent for CustomerCharacter {
-    fn draw(&mut self, ctx:
-	    &mut ggez::Context) -> ggez::GameResult<()> {
-	if self.is_visible() {
-	    self.get_mut_character_object()
-		.draw(ctx)
-    		.unwrap();
-	}
-	Ok(())
+    fn draw(&mut self, ctx: &mut ggez::Context) -> ggez::GameResult<()> {
+        if self.is_visible() {
+            self.get_mut_character_object().draw(ctx).unwrap();
+        }
+        Ok(())
     }
-    
+
     fn hide(&mut self) {
-	self.get_mut_character_object()
-	    .hide()
+        self.get_mut_character_object().hide()
     }
 
     fn appear(&mut self) {
-	self.get_mut_character_object()
-	    .appear()
+        self.get_mut_character_object().appear()
     }
 
     fn is_visible(&self) -> bool {
-	self.get_character_object()
-	    .is_visible()
+        self.get_character_object().is_visible()
     }
 
     fn set_drawing_depth(&mut self, depth: i8) {
-	self.get_mut_character_object()
-	    .set_drawing_depth(depth)
+        self.get_mut_character_object().set_drawing_depth(depth)
     }
 
     fn get_drawing_depth(&self) -> i8 {
-	self.get_character_object()
-	    .get_drawing_depth()
+        self.get_character_object().get_drawing_depth()
     }
 }
 
 impl OnMap for CustomerCharacter {
     // マップ上のテクスチャ描画開始地点を返す
     fn get_map_position(&self) -> numeric::Point2f {
-	self.character.get_map_position()
+        self.character.get_map_position()
     }
-    
+
     // マップ上のテクスチャ描画領域の右下の位置を返す
     fn get_map_position_bottom_right(&self, ctx: &mut ggez::Context) -> numeric::Point2f {
-	self.character.get_map_position_bottom_right(ctx)
+        self.character.get_map_position_bottom_right(ctx)
     }
-    
+
     // マップ上のテクスチャ描画開始地点を設定する
     fn set_map_position(&mut self, position: numeric::Point2f) {
-	self.character.set_map_position(position);
+        self.character.set_map_position(position);
     }
 }
 

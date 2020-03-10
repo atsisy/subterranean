@@ -474,17 +474,11 @@ impl Clickable for SelectShelvingBookUI {
                 .on_click(ctx, game_data, clock, button, rpoint);
         }
 
-        if self
-            .move_box_to_shelving_button
-            .contains(ctx, point)
-        {
+        if self.move_box_to_shelving_button.contains(ctx, point) {
             self.move_box_to_shelving(ctx);
         }
 
-        if self
-            .move_shelving_to_box_button
-            .contains(ctx, rpoint)
-        {
+        if self.move_shelving_to_box_button.contains(ctx, rpoint) {
             self.move_shelving_to_box(ctx);
         }
     }
@@ -854,18 +848,12 @@ impl Clickable for SelectStoreBookUI {
     ) {
         let rpoint = self.canvas.relative_point(point);
 
-        if self
-            .select_book_window
-            .contains(ctx, rpoint)
-        {
+        if self.select_book_window.contains(ctx, rpoint) {
             self.select_book_window
                 .on_click(ctx, game_data, clock, button, rpoint);
         }
 
-        if self
-            .reset_select_button
-            .contains(ctx, rpoint)
-        {
+        if self.reset_select_button.contains(ctx, rpoint) {
             self.select_book_window.clear_selecting_index();
         }
 

@@ -23,17 +23,22 @@ fn create_playable_doremy1(
             vec![],
         ),
         vec![
-            vec![game_data.ref_texture(TextureID::KosuzuDotFront2),
-		 game_data.ref_texture(TextureID::KosuzuDotFront3)
-	    ],
-            vec![game_data.ref_texture(TextureID::KosuzuDotBack2),
-		 game_data.ref_texture(TextureID::KosuzuDotBack3),
-	    ],
-            vec![game_data.ref_texture(TextureID::KosuzuDotRight2),
-		 game_data.ref_texture(TextureID::KosuzuDotRight3),
-	    ],
-            vec![game_data.ref_texture(TextureID::KosuzuDotLeft2),
-		 game_data.ref_texture(TextureID::KosuzuDotLeft3)],
+            vec![
+                game_data.ref_texture(TextureID::KosuzuDotFront2),
+                game_data.ref_texture(TextureID::KosuzuDotFront3),
+            ],
+            vec![
+                game_data.ref_texture(TextureID::KosuzuDotBack2),
+                game_data.ref_texture(TextureID::KosuzuDotBack3),
+            ],
+            vec![
+                game_data.ref_texture(TextureID::KosuzuDotRight2),
+                game_data.ref_texture(TextureID::KosuzuDotRight3),
+            ],
+            vec![
+                game_data.ref_texture(TextureID::KosuzuDotLeft2),
+                game_data.ref_texture(TextureID::KosuzuDotLeft3),
+            ],
         ],
         0,
         TextureSpeedInfo::new(
@@ -70,17 +75,22 @@ fn create_customer_sample(
             vec![],
         ),
         vec![
-            vec![game_data.ref_texture(TextureID::KosuzuDotFront2),
-		 game_data.ref_texture(TextureID::KosuzuDotFront3)
-	    ],
-            vec![game_data.ref_texture(TextureID::KosuzuDotBack2),
-		 game_data.ref_texture(TextureID::KosuzuDotBack3),
-	    ],
-            vec![game_data.ref_texture(TextureID::KosuzuDotRight2),
-		 game_data.ref_texture(TextureID::KosuzuDotRight3),
-	    ],
-            vec![game_data.ref_texture(TextureID::KosuzuDotLeft2),
-		 game_data.ref_texture(TextureID::KosuzuDotLeft3)],
+            vec![
+                game_data.ref_texture(TextureID::KosuzuDotFront2),
+                game_data.ref_texture(TextureID::KosuzuDotFront3),
+            ],
+            vec![
+                game_data.ref_texture(TextureID::KosuzuDotBack2),
+                game_data.ref_texture(TextureID::KosuzuDotBack3),
+            ],
+            vec![
+                game_data.ref_texture(TextureID::KosuzuDotRight2),
+                game_data.ref_texture(TextureID::KosuzuDotRight3),
+            ],
+            vec![
+                game_data.ref_texture(TextureID::KosuzuDotLeft2),
+                game_data.ref_texture(TextureID::KosuzuDotLeft3),
+            ],
         ],
         0,
         TextureSpeedInfo::new(
@@ -113,9 +123,9 @@ pub fn create_character(
     match order {
         CharacterFactoryOrder::PlayableDoremy1 => {
             create_playable_doremy1(game_data, camera, map_position)
-        },
-	CharacterFactoryOrder::CustomerSample => {
-	    create_customer_sample(game_data, camera, map_position)
-	},
+        }
+        CharacterFactoryOrder::CustomerSample => {
+            create_customer_sample(game_data, camera, map_position)
+        }
     }
 }

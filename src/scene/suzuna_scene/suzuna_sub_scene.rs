@@ -13,8 +13,8 @@ use crate::core::{GameData, MouseActionRecord, MouseInformation, TextureID};
 use crate::object::task_object::*;
 use crate::scene::{SceneID, SceneTransition};
 
-use crate::object::task_result_object::*;
 use crate::object::task_object::tt_main_component::*;
+use crate::object::task_result_object::*;
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum TaskSceneStatus {
@@ -38,8 +38,11 @@ pub struct TaskScene {
 }
 
 impl TaskScene {
-    pub fn new(ctx: &mut ggez::Context, game_data: &GameData, customer_request: Option<CustomerRequest>) -> TaskScene {
-
+    pub fn new(
+        ctx: &mut ggez::Context,
+        game_data: &GameData,
+        customer_request: Option<CustomerRequest>,
+    ) -> TaskScene {
         TaskScene {
             task_table: TaskTable::new(
                 ctx,
@@ -56,7 +59,7 @@ impl TaskScene {
             event_list: DelayEventList::new(),
             status: TaskSceneStatus::Init,
             task_result: TaskResult::new(),
-	    customer_request: customer_request,
+            customer_request: customer_request,
             transition_status: SceneTransition::Keep,
             transition_scene: SceneID::MainDesk,
         }
@@ -152,9 +155,9 @@ impl TaskScene {
     }
 
     pub fn ready_to_finish_scene(&mut self) {
-	self.status = TaskSceneStatus::FinishDay;
-	self.transition_scene = SceneID::SuzunaShop;
-	self.transition_status = SceneTransition::PoppingTransition;
+        self.status = TaskSceneStatus::FinishDay;
+        self.transition_scene = SceneID::SuzunaShop;
+        self.transition_status = SceneTransition::PoppingTransition;
     }
 }
 
@@ -273,7 +276,9 @@ impl SceneManager for TaskScene {
             debug::debug_screen_push_text(&format!("register delay process!!"));
             self.event_list.add_event(
                 Box::new(|scene: &mut TaskScene, _, _| {
-                    scene.task_table.finish_customer_event(scene.get_current_clock());
+                    scene
+                        .task_table
+                        .finish_customer_event(scene.get_current_clock());
                     debug::debug_screen_push_text(&format!("run delay process!! finish!!"));
                     scene.status = TaskSceneStatus::CustomerFree;
                 }),
@@ -282,26 +287,22 @@ impl SceneManager for TaskScene {
 
             self.status = TaskSceneStatus::CustomerWait;
 
-	    if self.customer_request.is_none() {
-		self.event_list.add_event(
+            if self.customer_request.is_none() {
+                self.event_list.add_event(
                     Box::new(|scene: &mut TaskScene, _, _| {
-			scene.ready_to_finish_scene();
+                        scene.ready_to_finish_scene();
                     }),
                     self.get_current_clock() + 150,
-		);
-	    }
+                );
+            }
         }
-	
-        if self.status == TaskSceneStatus::CustomerFree {
 
-	    if let Some(request) = &self.customer_request {
-		let cloned_request = request.clone();
-		self.insert_customer_event(
-		    cloned_request,
-		    100,
-		);
-	    }
-	    self.customer_request = None;
+        if self.status == TaskSceneStatus::CustomerFree {
+            if let Some(request) = &self.customer_request {
+                let cloned_request = request.clone();
+                self.insert_customer_event(cloned_request, 100);
+            }
+            self.customer_request = None;
             self.status = TaskSceneStatus::CustomerWait;
         }
 

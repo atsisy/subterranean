@@ -619,10 +619,10 @@ impl TextBalloon {
             ggraphics::Color::from_rgba_u32(0x371905ff),
         );
 
-	self.text.make_center(
+        self.text.make_center(
             ctx,
-	    numeric::Point2f::new((vtext_size.x + 100.0) / 2.0, (vtext_size.y + 60.0) / 2.0),
-	);
+            numeric::Point2f::new((vtext_size.x + 100.0) / 2.0, (vtext_size.y + 60.0) / 2.0),
+        );
 
         self.update_mesh(ctx);
     }
@@ -768,7 +768,7 @@ impl SuzuMiniSightSilhouette {
             ),
         ));
         text_balloon.hide();
-	
+
         SuzuMiniSightSilhouette {
             event_list: DelayEventList::new(),
             background: background,
@@ -802,8 +802,7 @@ impl SuzuMiniSightSilhouette {
             delay_time += self.customer_dialogue.get_current_time_step();
             self.event_list.add(DelayEvent::new(
                 Box::new(move |silhouette, ctx, _| {
-                    silhouette
-                        .replace_text(ctx, &line);
+                    silhouette.replace_text(ctx, &line);
                     silhouette
                         .text_balloon
                         .add_effect(vec![effect::fade_in(20, t + delay_time)]);
@@ -850,7 +849,7 @@ impl SuzuMiniSightSilhouette {
             .ref_wrapped_object_mut()
             .ref_wrapped_object_mut()
             .replace_text(ctx, text);
-	self.text_balloon.appear();
+        self.text_balloon.appear();
     }
 
     pub fn run_hide_effect(&mut self, now: Clock) {
@@ -1561,22 +1560,28 @@ pub struct RingRingEffect {
 
 impl RingRingEffect {
     pub fn new(ctx: &mut ggez::Context, pos: numeric::Point2f) -> Self {
-	let ring = shape::Circle::new(pos, 200.0, 20.0, ggraphics::DrawMode::fill(), ggraphics::Color::from_rgb_u32(0xffff00ff));
-	let mut mesh_builder = ggraphics::MeshBuilder::new();
-	ring.add_to_builder(&mut mesh_builder);
-	
-	RingRingEffect {
-	    ring: ring,
-	    mesh: mesh_builder.build(ctx).unwrap(),
-	    drwob_essential: DrawableObjectEssential::new(true, 0),
-	}
+        let ring = shape::Circle::new(
+            pos,
+            200.0,
+            20.0,
+            ggraphics::DrawMode::fill(),
+            ggraphics::Color::from_rgb_u32(0xffff00ff),
+        );
+        let mut mesh_builder = ggraphics::MeshBuilder::new();
+        ring.add_to_builder(&mut mesh_builder);
+
+        RingRingEffect {
+            ring: ring,
+            mesh: mesh_builder.build(ctx).unwrap(),
+            drwob_essential: DrawableObjectEssential::new(true, 0),
+        }
     }
 }
 
 impl DrawableComponent for RingRingEffect {
     fn draw(&mut self, ctx: &mut ggez::Context) -> ggez::GameResult<()> {
         if self.is_visible() {
-	    ggraphics::draw(ctx, &self.mesh, ggraphics::DrawParam::default()).unwrap();
+            ggraphics::draw(ctx, &self.mesh, ggraphics::DrawParam::default()).unwrap();
         }
         Ok(())
     }

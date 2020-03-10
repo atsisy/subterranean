@@ -26,6 +26,7 @@ pub enum SceneID {
     MainDesk,
     Scenario,
     SuzunaShop,
+    DayResult,
 }
 
 impl FromStr for SceneID {
@@ -36,6 +37,7 @@ impl FromStr for SceneID {
             "MainDesk" => Ok(Self::MainDesk),
             "Scenario" => Ok(Self::Scenario),
             "SuzunaShop" => Ok(Self::SuzunaShop),
+            "WorkResult" => Ok(Self::DayResult),
             _ => panic!("Error: EventTrigger::from_str"),
         }
     }

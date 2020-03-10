@@ -109,9 +109,23 @@ impl SuzunaSubScene {
         transition: SceneTransition,
     ) {
         if transition == SceneTransition::StackingTransition {
-	    let customer_request = self.shop_scene.as_mut().unwrap().pop_customer_request();
-	    self.scene_status = SuzunaSceneStatus::DeskWork;
-	    self.desk_work_scene = Some(Box::new(TaskScene::new(ctx, game_data, customer_request)));
+            let customer_request = self.shop_scene.as_mut().unwrap().pop_customer_request();
+            self.scene_status = SuzunaSceneStatus::DeskWork;
+            self.desk_work_scene = Some(Box::new(TaskScene::new(ctx, game_data, customer_request)));
+        }
+    }
+
+    fn switch_shop_to_day_result(
+        &mut self,
+        ctx: &mut ggez::Context,
+        game_data: &GameData,
+        transition: SceneTransition,
+    ) {
+        if transition == SceneTransition::SwapTransition {
+            let task_result = self.shop_scene.as_mut().unwrap().current_task_result();
+            self.scene_status = SuzunaSceneStatus::DayResult;
+            self.day_result_scene =
+                Some(Box::new(TaskResultScene::new(ctx, game_data, task_result)));
         }
     }
 
@@ -431,6 +445,12 @@ impl SceneManager for SuzunaScene {
                         self.sub_scene
                             .switch_shop_to_deskwork(ctx, game_data, transition_status);
                     }
+                }
+
+                if self.sub_scene.get_shop_scene_mut().unwrap().transition() == SceneID::DayResult {
+                    debug::debug_screen_push_text("switch shop -> result");
+                    self.sub_scene
+                        .switch_shop_to_day_result(ctx, game_data, transition_status);
                 }
             }
             SuzunaSceneStatus::DeskWork => {

@@ -1,7 +1,7 @@
 use std::cell::RefCell;
-use std::rc::Rc;
-use std::collections::VecDeque;
 use std::cmp::PartialOrd;
+use std::collections::VecDeque;
+use std::rc::Rc;
 
 use torifune::device as tdev;
 use torifune::graphics::object::*;
@@ -20,10 +20,10 @@ use torifune::numeric;
 use super::*;
 use crate::core::map_parser as mp;
 use crate::core::{FontID, GameData};
-use crate::object::task_object::tt_main_component::CustomerRequest;
 use crate::object::map_object::*;
 use crate::object::scenario::*;
 use crate::object::shop_object::*;
+use crate::object::task_object::tt_main_component::CustomerRequest;
 use crate::object::*;
 use crate::scene::suzuna_scene::TaskResult;
 
@@ -50,21 +50,25 @@ impl CharacterGroup {
     where
         F: Fn(&CustomerCharacter) -> bool,
     {
-	let mut removed = Vec::new();
+        let mut removed = Vec::new();
 
-	for index in (0..self.group.len()).rev() {
-	    if f(self.group.get(index).as_ref().unwrap()) {
-		let removed_character = self.group.swap_remove(index);
-		removed.push(removed_character);
-	    }
-	}
+        for index in (0..self.group.len()).rev() {
+            if f(self.group.get(index).as_ref().unwrap()) {
+                let removed_character = self.group.swap_remove(index);
+                removed.push(removed_character);
+            }
+        }
 
-	removed
+        removed
     }
 
     pub fn sort_by_y_position(&mut self) {
-	self.group.sort_by(
-	    |a, b| a.get_map_position().y.partial_cmp(&b.get_map_position().y).unwrap_or(std::cmp::Ordering::Equal));
+        self.group.sort_by(|a, b| {
+            a.get_map_position()
+                .y
+                .partial_cmp(&b.get_map_position().y)
+                .unwrap_or(std::cmp::Ordering::Equal)
+        });
     }
 
     pub fn len(&self) -> usize {
@@ -78,13 +82,9 @@ impl CharacterGroup {
         tile_map: &mp::StageObjectMap,
         t: Clock,
     ) {
-        self.group
-	    .iter_mut()
-	    .for_each(|customer| 
-		      ShopScene::customer_move_and_collision_check(ctx,
-								   customer,
-								   camera,
-								   tile_map, t) );
+        self.group.iter_mut().for_each(|customer| {
+            ShopScene::customer_move_and_collision_check(ctx, customer, camera, tile_map, t)
+        });
     }
 
     pub fn iter(&self) -> std::slice::Iter<CustomerCharacter> {
@@ -194,27 +194,30 @@ struct MapObjectDrawer<'a> {
 
 impl<'a> MapObjectDrawer<'a> {
     pub fn new() -> MapObjectDrawer<'a> {
-	MapObjectDrawer {
-	    ref_list: Vec::new(),
-	}
+        MapObjectDrawer {
+            ref_list: Vec::new(),
+        }
     }
 
     pub fn add(&mut self, onmap: &'a mut dyn OnMap) {
-	self.ref_list.push(Box::new(onmap));
+        self.ref_list.push(Box::new(onmap));
     }
 
     pub fn sort(&mut self, ctx: &mut ggez::Context) {
-	self.ref_list.sort_by(
-	    |a, b| a.get_map_position_bottom_right(ctx).y.partial_cmp(
-		&b.get_map_position_bottom_right(ctx).y).unwrap_or(std::cmp::Ordering::Equal));
+        self.ref_list.sort_by(|a, b| {
+            a.get_map_position_bottom_right(ctx)
+                .y
+                .partial_cmp(&b.get_map_position_bottom_right(ctx).y)
+                .unwrap_or(std::cmp::Ordering::Equal)
+        });
     }
 
     pub fn draw(&mut self, ctx: &mut ggez::Context) {
-	for obj in &mut self.ref_list {
-	    obj.draw(ctx).unwrap();
-	}
+        for obj in &mut self.ref_list {
+            obj.draw(ctx).unwrap();
+        }
 
-	self.ref_list.clear();
+        self.ref_list.clear();
     }
 }
 
@@ -225,36 +228,40 @@ struct ShopClock {
 
 impl ShopClock {
     pub fn new(hour: u8, minute: u8) -> Self {
-	ShopClock {
-	    hour: hour,
-	    minute: minute,
-	}
+        ShopClock {
+            hour: hour,
+            minute: minute,
+        }
     }
 
     pub fn add_minute(&mut self, minute: u8) {
-	self.minute += minute;
+        self.minute += minute;
 
-	self.add_hour(self.minute / 60);
-	
-	self.minute = self.minute % 60;
+        self.add_hour(self.minute / 60);
+
+        self.minute = self.minute % 60;
     }
 
     pub fn add_hour(&mut self, hour: u8) {
-	self.hour += hour;
-	self.hour = self.hour % 24;
+        self.hour += hour;
+        self.hour = self.hour % 24;
     }
 
     pub fn is_past(&self, hour: u8, minute: u8) -> bool {
-	match self.hour.cmp(&hour) {
-	    std::cmp::Ordering::Greater => true,
-	    std::cmp::Ordering::Equal => {
-		match self.minute.cmp(&minute) {
-		    std::cmp::Ordering::Greater => true,
-		    _ => false,
-		}
-	    },
-	    std::cmp::Ordering::Less => false,
-	}
+        match self.hour.cmp(&hour) {
+            std::cmp::Ordering::Greater => true,
+            std::cmp::Ordering::Equal => match self.minute.cmp(&minute) {
+                std::cmp::Ordering::Greater => true,
+                _ => false,
+            },
+            std::cmp::Ordering::Less => false,
+        }
+    }
+}
+
+impl std::fmt::Display for ShopClock {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        write!(f, "({}:{})", self.hour, self.minute)
     }
 }
 
@@ -319,19 +326,22 @@ impl ShopScene {
         );
 
         let mut character_group = CharacterGroup::new();
-	character_group.add(CustomerCharacter::new(
-	    character_factory::create_character(
-		character_factory::CharacterFactoryOrder::CustomerSample,
-		game_data, &camera.borrow(), numeric::Point2f::new(1170.0, 870.0)),
-	    CustomerDestPoint::new(
-		vec![
-		    numeric::Vector2u::new(10, 3),
-		    numeric::Vector2u::new(6, 3),
-		    numeric::Vector2u::new(4, 10)]
-	    )));
-	    
-	let mut map = MapData::new(ctx, game_data, map_id, camera.clone());
-	map.tile_map.build_collision_map();
+        character_group.add(CustomerCharacter::new(
+            character_factory::create_character(
+                character_factory::CharacterFactoryOrder::CustomerSample,
+                game_data,
+                &camera.borrow(),
+                numeric::Point2f::new(1170.0, 870.0),
+            ),
+            CustomerDestPoint::new(vec![
+                numeric::Vector2u::new(10, 3),
+                numeric::Vector2u::new(6, 3),
+                numeric::Vector2u::new(4, 10),
+            ]),
+        ));
+
+        let mut map = MapData::new(ctx, game_data, map_id, camera.clone());
+        map.tile_map.build_collision_map();
 
         ShopScene {
             player: player,
@@ -341,11 +351,11 @@ impl ShopScene {
             key_listener: key_listener,
             task_result: TaskResult::new(),
             clock: 0,
-	    shop_clock: ShopClock::new(8, 0),
+            shop_clock: ShopClock::new(8, 0),
             map: map,
             shop_menu: ShopMenuMaster::new(ctx, game_data, numeric::Vector2f::new(450.0, 768.0), 0),
-	    customer_request_queue: VecDeque::new(),
-	    customer_queue: VecDeque::new(),
+            customer_request_queue: VecDeque::new(),
+            customer_queue: VecDeque::new(),
             dark_effect_panel: DarkEffectPanel::new(
                 ctx,
                 numeric::Rect::new(0.0, 0.0, 1366.0, 768.0),
@@ -446,38 +456,30 @@ impl ShopScene {
         self.player.set_speed_y(4.0);
     }
 
-    pub fn customer_move_and_collision_check(ctx: &mut ggez::Context,
-					     customer: &mut CustomerCharacter,
-					     camera: &numeric::Rect,
-					     tile_map: &mp::StageObjectMap,
-					     t: Clock) {
-	customer.move_map_current_speed_y();
-	
+    pub fn customer_move_and_collision_check(
+        ctx: &mut ggez::Context,
+        customer: &mut CustomerCharacter,
+        camera: &numeric::Rect,
+        tile_map: &mp::StageObjectMap,
+        t: Clock,
+    ) {
+        customer.move_map_current_speed_y();
+
         // 当たり判定の前に描画位置を決定しないとバグる。この仕様も直すべき
         customer
             .get_mut_character_object()
             .update_display_position(camera);
-	
-        ShopScene::check_collision_vertical(
-            ctx,
-            customer.get_mut_character_object(),
-            tile_map,
-            t,
-        );
+
+        ShopScene::check_collision_vertical(ctx, customer.get_mut_character_object(), tile_map, t);
         customer
             .get_mut_character_object()
             .update_display_position(camera);
-	
+
         customer.move_map_current_speed_x();
         customer
             .get_mut_character_object()
             .update_display_position(camera);
-        ShopScene::check_collision_horizon(
-            ctx,
-            customer.get_mut_character_object(),
-            tile_map,
-            t,
-        );
+        ShopScene::check_collision_horizon(ctx, customer.get_mut_character_object(), tile_map, t);
         customer
             .get_mut_character_object()
             .update_display_position(camera);
@@ -787,27 +789,33 @@ impl ShopScene {
                     self.map.scenario_box = Some(scenario_box);
                 }
                 MapEventElement::SwitchScene(switch_scene) => {
-		    if !self.customer_request_queue.is_empty() && !self.customer_queue.is_empty() {
+                    if !self.customer_request_queue.is_empty() && !self.customer_queue.is_empty() {
+                        let mut customer = self.customer_queue.pop_front().unwrap();
+                        customer.set_destination_forced(
+                            ctx,
+                            &self.map.tile_map,
+                            numeric::Vector2u::new(15, 10),
+                        );
+                        self.character_group.add(customer);
 
-			let mut customer = self.customer_queue.pop_front().unwrap();
-			customer.set_destination_forced(ctx, &self.map.tile_map, numeric::Vector2u::new(15, 10));
-			self.character_group.add(customer);
-			
-			self.transition_status = SceneTransition::StackingTransition;
-			self.transition_scene = switch_scene.get_switch_scene_id();
-		    }
+                        self.transition_status = SceneTransition::StackingTransition;
+                        self.transition_scene = switch_scene.get_switch_scene_id();
+                    }
                 }
                 MapEventElement::BookStoreEvent(book_store_event) => {
                     debug::debug_screen_push_text(&format!(
                         "book store event: {:?}",
                         book_store_event.get_book_shelf_info()
                     ));
-		    self.dark_effect_panel
-			.new_effect(8, self.get_current_clock(), 0, 200);
-		    self.shop_special_object.show_storing_select_ui(ctx, game_data,
-								    book_store_event.get_book_shelf_info().clone(),
-								    self.player.get_shelving_book().clone(),
-								    t);
+                    self.dark_effect_panel
+                        .new_effect(8, self.get_current_clock(), 0, 200);
+                    self.shop_special_object.show_storing_select_ui(
+                        ctx,
+                        game_data,
+                        book_store_event.get_book_shelf_info().clone(),
+                        self.player.get_shelving_book().clone(),
+                        t,
+                    );
                 }
                 MapEventElement::BuiltinEvent(builtin_event) => {
                     let builtin_event = builtin_event.clone();
@@ -818,54 +826,52 @@ impl ShopScene {
     }
 
     fn update_playable_character_texture(&mut self, rad: f32) {
-	
-	if rad >= 45.0_f32.to_radians() && rad < 135.0_f32.to_radians() {
-	    // 上向き
+        if rad >= 45.0_f32.to_radians() && rad < 135.0_f32.to_radians() {
+            // 上向き
             self.player
                 .get_mut_character_object()
                 .change_animation_mode(0);
-	}
+        }
 
-	if rad >= 135.0_f32.to_radians() && rad < 225.0_f32.to_radians() {
-	    // 左向き
+        if rad >= 135.0_f32.to_radians() && rad < 225.0_f32.to_radians() {
+            // 左向き
             self.player
                 .get_mut_character_object()
                 .change_animation_mode(3);
-	}
+        }
 
-	if rad >= 225.0_f32.to_radians() && rad < 315.0_f32.to_radians() {
-	    // 下向き
+        if rad >= 225.0_f32.to_radians() && rad < 315.0_f32.to_radians() {
+            // 下向き
             self.player
                 .get_mut_character_object()
                 .change_animation_mode(1);
-	}
+        }
 
-	if (rad >= 315.0_f32.to_radians() && rad <= 360.0_f32.to_radians()) ||
-	    (rad >= 0.0_f32.to_radians() && rad < 45.0_f32.to_radians()){
-		// 右向き
-                self.player
-                    .get_mut_character_object()
-                    .change_animation_mode(2);
-	}
-
+        if (rad >= 315.0_f32.to_radians() && rad <= 360.0_f32.to_radians())
+            || (rad >= 0.0_f32.to_radians() && rad < 45.0_f32.to_radians())
+        {
+            // 右向き
+            self.player
+                .get_mut_character_object()
+                .change_animation_mode(2);
+        }
     }
 
     pub fn start_mouse_move(&mut self, ctx: &mut ggez::Context, point: numeric::Point2f) {
         let current = self.player.get_character_object().obj().get_center(ctx);
         let offset = numeric::Point2f::new(point.x - current.x, point.y - current.y);
- 	let rad =
-	    if offset.x >= 0.0 {
-		if offset.y >= 0.0 {
-		    (offset.y / offset.x).atan()	
-		} else {
-		    (offset.y / offset.x).atan() + 360.0_f32.to_radians()
-		}
-	    } else {
-		(offset.y / offset.x).atan() + 180.0_f32.to_radians()
-	    };
-	let speed = numeric::Vector2f::new(rad.cos() * 4.0, rad.sin() * 4.0);
-	
-	self.player.set_speed(speed);
+        let rad = if offset.x >= 0.0 {
+            if offset.y >= 0.0 {
+                (offset.y / offset.x).atan()
+            } else {
+                (offset.y / offset.x).atan() + 360.0_f32.to_radians()
+            }
+        } else {
+            (offset.y / offset.x).atan() + 180.0_f32.to_radians()
+        };
+        let speed = numeric::Vector2f::new(rad.cos() * 4.0, rad.sin() * 4.0);
+
+        self.player.set_speed(speed);
         self.update_playable_character_texture(rad);
     }
 
@@ -879,8 +885,12 @@ impl ShopScene {
         self.task_result = task_result.clone();
     }
 
+    pub fn current_task_result(&self) -> TaskResult {
+        self.task_result.clone()
+    }
+
     fn try_hide_shelving_select_ui(&mut self, game_data: &GameData) {
-	let select_result = self
+        let select_result = self
             .shop_special_object
             .hide_shelving_select_ui(self.get_current_clock());
         if let Some((boxed, shelving)) = select_result {
@@ -890,14 +900,14 @@ impl ShopScene {
                 game_data,
                 &self.task_result,
                 self.player.get_shelving_book(),
-                    );
+            );
             self.dark_effect_panel
                 .new_effect(8, self.get_current_clock(), 200, 0);
         }
     }
 
     fn try_hide_storing_select_ui(&mut self, game_data: &GameData) {
-	let store_result = self
+        let store_result = self
             .shop_special_object
             .hide_storing_select_ui(self.get_current_clock());
         if let Some((_stored, shelving)) = store_result {
@@ -905,26 +915,30 @@ impl ShopScene {
             self.shop_menu.update_contents(
                 game_data,
                 &self.task_result,
-                self.player.get_shelving_book());
+                self.player.get_shelving_book(),
+            );
             self.dark_effect_panel
                 .new_effect(8, self.get_current_clock(), 200, 0);
         }
     }
 
     pub fn pop_customer_request(&mut self) -> Option<CustomerRequest> {
-	self.customer_request_queue.pop_front()
+        self.customer_request_queue.pop_front()
     }
 
     pub fn update_shop_clock_regular(&mut self) {
-	if self.get_current_clock() % 60 == 0 {
-	    self.shop_clock.add_minute(1);
-	}
+        if self.get_current_clock() % 50 == 0 {
+            debug::debug_screen_push_text(&format!("{}", self.shop_clock));
+            self.shop_clock.add_minute(1);
+        }
     }
 
     pub fn check_shop_clock_regular(&mut self) {
-	if self.shop_clock.is_past(18, 0) {
-	    debug::debug_screen_push_text("Today's work is done");
-	}
+        if self.shop_clock.is_past(18, 0) {
+            self.transition_status = SceneTransition::SwapTransition;
+            self.transition_scene = SceneID::DayResult;
+            debug::debug_screen_push_text("Today's work is done");
+        }
     }
 }
 
@@ -945,7 +959,7 @@ impl SceneManager for ShopScene {
                     debug::debug_screen_push_text("OK");
                     self.check_event_panel_onmap(ctx, game_data, EventTrigger::Action);
                 }
-            },
+            }
             tdev::VirtualKey::Action2 => {
                 self.shop_menu.toggle_first_menu(self.get_current_clock());
                 if self.shop_menu.first_menu_is_open() {
@@ -955,10 +969,10 @@ impl SceneManager for ShopScene {
                     self.dark_effect_panel
                         .new_effect(8, self.get_current_clock(), 200, 0);
                 }
-            },
+            }
             tdev::VirtualKey::Action3 => {
-		self.try_hide_shelving_select_ui(game_data);
-		self.try_hide_storing_select_ui(game_data);
+                self.try_hide_shelving_select_ui(game_data);
+                self.try_hide_storing_select_ui(game_data);
             }
             _ => (),
         }
@@ -1012,7 +1026,7 @@ impl SceneManager for ShopScene {
                 for shop_object in &mut self.shop_object_list {
                     shop_object.on_click(ctx, game_data, t, button, point);
                 }
-		self.start_mouse_move(ctx, point);
+                self.start_mouse_move(ctx, point);
             }
             MouseButton::Right => {
                 self.player.reset_speed();
@@ -1043,7 +1057,7 @@ impl SceneManager for ShopScene {
             _ => (),
         }
     }
-    
+
     fn pre_process(&mut self, ctx: &mut ggez::Context, game_data: &GameData) {
         let t = self.get_current_clock();
 
@@ -1057,44 +1071,58 @@ impl SceneManager for ShopScene {
                 &self.map.tile_map,
                 t,
             );
-	    
-	    let mut rising_customers = self.character_group.remove_if(|customer: &CustomerCharacter| {
-		customer.is_wait_on_clerk()
-	    });
 
-	    for customer in &mut rising_customers {
-		if let Some(request) = customer.check_rise_hand(game_data) {
-		    self.customer_request_queue.push_back(request);
-		}
-	    }
+            let mut rising_customers = self
+                .character_group
+                .remove_if(|customer: &CustomerCharacter| customer.is_wait_on_clerk());
 
-	    self.customer_queue.extend(rising_customers);
-	    
-	    for customer in self.character_group.iter_mut() {
-		customer.try_update_move_effect(ctx, game_data, &self.map.tile_map, numeric::Vector2u::new(4, 10), t);
-		customer.get_mut_character_object().update_texture(t);
-	    }
+            for customer in &mut rising_customers {
+                if let Some(request) = customer.check_rise_hand(game_data) {
+                    self.customer_request_queue.push_back(request);
+                }
+            }
 
-	    for customer in &mut self.customer_queue {
-		Self::customer_move_and_collision_check(ctx,
-							customer,
-							&self.camera.borrow(),
-							&self.map.tile_map,
-							t);
-		customer.try_update_move_effect(ctx, game_data, &self.map.tile_map, numeric::Vector2u::new(4, 10), t);
-		customer.get_mut_character_object().update_texture(t);
-	    }
+            self.customer_queue.extend(rising_customers);
 
-	    self.character_group.sort_by_y_position();
+            for customer in self.character_group.iter_mut() {
+                customer.try_update_move_effect(
+                    ctx,
+                    game_data,
+                    &self.map.tile_map,
+                    numeric::Vector2u::new(4, 10),
+                    t,
+                );
+                customer.get_mut_character_object().update_texture(t);
+            }
+
+            for customer in &mut self.customer_queue {
+                Self::customer_move_and_collision_check(
+                    ctx,
+                    customer,
+                    &self.camera.borrow(),
+                    &self.map.tile_map,
+                    t,
+                );
+                customer.try_update_move_effect(
+                    ctx,
+                    game_data,
+                    &self.map.tile_map,
+                    numeric::Vector2u::new(4, 10),
+                    t,
+                );
+                customer.get_mut_character_object().update_texture(t);
+            }
+
+            self.character_group.sort_by_y_position();
 
             // マップ描画の準備
             self.map.tile_map.update(ctx, t);
         }
 
-	// 時刻の更新
-	self.update_shop_clock_regular();
-	self.check_shop_clock_regular();
-	
+        // 時刻の更新
+        self.update_shop_clock_regular();
+        self.check_shop_clock_regular();
+
         // 暗転の描画
         self.dark_effect_panel.run_effect(ctx, t);
 
@@ -1109,24 +1137,23 @@ impl SceneManager for ShopScene {
     fn drawing_process(&mut self, ctx: &mut ggez::Context) {
         self.map.tile_map.draw(ctx).unwrap();
 
-	let mut map_obj_drawer = MapObjectDrawer::new();
-	
-	map_obj_drawer.add(&mut self.player);
-	
+        let mut map_obj_drawer = MapObjectDrawer::new();
+
+        map_obj_drawer.add(&mut self.player);
+
         self.character_group.draw(ctx).unwrap();
 
-	for customer in self.character_group.iter_mut() {
-	    map_obj_drawer.add(customer);
-	}
+        for customer in self.character_group.iter_mut() {
+            map_obj_drawer.add(customer);
+        }
 
-	for queued_customer in &mut self.customer_queue {
-	    map_obj_drawer.add(queued_customer);
-	}
+        for queued_customer in &mut self.customer_queue {
+            map_obj_drawer.add(queued_customer);
+        }
 
-	map_obj_drawer.sort(ctx);
-	map_obj_drawer.draw(ctx);
-	
-	
+        map_obj_drawer.sort(ctx);
+        map_obj_drawer.draw(ctx);
+
         if let Some(scenario_box) = self.map.scenario_box.as_mut() {
             scenario_box.draw(ctx).unwrap();
         }
