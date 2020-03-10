@@ -6,22 +6,25 @@ use ggez::input::mouse::MouseButton;
 use sub_screen::SubScreen;
 use torifune::core::{Clock, Updatable};
 use torifune::debug;
+use torifune::device::*;
 use torifune::graphics::object::sub_screen;
 use torifune::graphics::object::*;
 use torifune::graphics::*;
 use torifune::impl_drawable_object_for_wrapped;
 use torifune::impl_texture_object_for_wrapped;
 use torifune::numeric;
-use torifune::device::*;
 
-use crate::scene::suzuna_scene::TaskResult;
 use crate::core::{BookInformation, BookShelfInformation, FontID, GameData, TextureID};
-use crate::object::Clickable;
 use crate::object::move_fn;
+use crate::object::Clickable;
+use crate::scene::suzuna_scene::TaskResult;
 use crate::scene::DelayEventList;
 
 use number_to_jk::number_to_jk;
 
+///
+/// # ボタンみたいなものを表示する構造体
+///
 pub struct SelectButton {
     canvas: SubScreen,
     button_texture: Box<dyn TextureObject>,
@@ -263,7 +266,7 @@ impl Clickable for SelectBookWindow {
         let rpoint = self.canvas.relative_point(point);
 
         for (index, vtext) in self.book_text.iter_mut().enumerate() {
-            if vtext.get_drawing_area(ctx).contains(rpoint) {
+            if vtext.contains(ctx, rpoint) {
                 // 既に選択されている場合は、削除
                 if self.selecting_book_index.contains(&index) {
                     vtext.set_color(ggraphics::Color::from_rgba_u32(0x000000ff));
@@ -461,28 +464,26 @@ impl Clickable for SelectShelvingBookUI {
     ) {
         let rpoint = self.canvas.relative_point(point);
 
-        if self.box_info_window.get_drawing_area(ctx).contains(rpoint) {
+        if self.box_info_window.contains(ctx, rpoint) {
             self.box_info_window
                 .on_click(ctx, game_data, clock, button, rpoint);
         }
 
-        if self.shelving_window.get_drawing_area(ctx).contains(rpoint) {
+        if self.shelving_window.contains(ctx, rpoint) {
             self.shelving_window
                 .on_click(ctx, game_data, clock, button, rpoint);
         }
 
         if self
             .move_box_to_shelving_button
-            .get_drawing_area(ctx)
-            .contains(rpoint)
+            .contains(ctx, point)
         {
             self.move_box_to_shelving(ctx);
         }
 
         if self
             .move_shelving_to_box_button
-            .get_drawing_area(ctx)
-            .contains(rpoint)
+            .contains(ctx, rpoint)
         {
             self.move_shelving_to_box(ctx);
         }
@@ -513,7 +514,7 @@ impl SelectStoringBookWindow {
         game_data: &GameData,
         window_rect: numeric::Rect,
         title: &str,
-	book_shelf_info: &BookShelfInformation,
+        book_shelf_info: &BookShelfInformation,
         book_info: Vec<BookInformation>,
     ) -> Self {
         let font_info = FontInformation::new(
@@ -547,7 +548,7 @@ impl SelectStoringBookWindow {
             ),
             book_text: Vec::new(),
             selecting_book_index: Vec::new(),
-	    book_storable: Vec::new(),
+            book_storable: Vec::new(),
             book_font: font_info,
         };
 
@@ -556,11 +557,15 @@ impl SelectStoringBookWindow {
         window
     }
 
-    fn update_contents(&mut self, ctx: &mut ggez::Context,
-		       book_shelf_info: &BookShelfInformation, book_info: &Vec<BookInformation>) {
+    fn update_contents(
+        &mut self,
+        ctx: &mut ggez::Context,
+        book_shelf_info: &BookShelfInformation,
+        book_info: &Vec<BookInformation>,
+    ) {
         let window_rect = self.canvas.get_drawing_area(ctx);
         let mut text_position = numeric::Point2f::new(window_rect.w - 150.0, 50.0);
-	self.book_storable.clear();
+        self.book_storable.clear();
 
         self.book_text = book_info
             .iter()
@@ -573,13 +578,13 @@ impl SelectStoringBookWindow {
                     text_position.y += 500.0;
                 }
 
-		let is_storable = book_shelf_info.contains_number(info.billing_number);
-		self.book_storable.push(is_storable);
+                let is_storable = book_shelf_info.contains_number(info.billing_number);
+                self.book_storable.push(is_storable);
 
                 let vtext = VerticalText::new(
                     format!(
                         "{0: <4}{1: <6}{2}",
-			if is_storable { "可" } else { "不可" },
+                        if is_storable { "可" } else { "不可" },
                         number_to_jk(info.billing_number as u64),
                         info.name
                     ),
@@ -606,8 +611,8 @@ impl SelectStoringBookWindow {
     pub fn clear_selecting_index(&mut self) {
         self.selecting_book_index.clear();
 
-	for vtext in self.book_text.iter_mut() {
-	    vtext.set_color(ggraphics::Color::from_rgba_u32(0x000000ff));
+        for vtext in self.book_text.iter_mut() {
+            vtext.set_color(ggraphics::Color::from_rgba_u32(0x000000ff));
         }
     }
 }
@@ -670,22 +675,22 @@ impl Clickable for SelectStoringBookWindow {
         let rpoint = self.canvas.relative_point(point);
 
         for (index, vtext) in self.book_text.iter_mut().enumerate() {
-	    if *self.book_storable.get(index).unwrap() {
-		if vtext.get_drawing_area(ctx).contains(rpoint) {
+            if *self.book_storable.get(index).unwrap() {
+                if vtext.contains(ctx, rpoint) {
                     // 既に選択されている場合は、削除
                     if self.selecting_book_index.contains(&index) {
-			vtext.set_color(ggraphics::Color::from_rgba_u32(0x000000ff));
-			self.selecting_book_index
+                        vtext.set_color(ggraphics::Color::from_rgba_u32(0x000000ff));
+                        self.selecting_book_index
                             .retain(|inner_index| *inner_index != index);
                     } else {
-			// テキストを赤に変更し、選択中のインデックスとして登録
-			vtext.set_color(ggraphics::Color::from_rgba_u32(0xee0000ff));
-			self.selecting_book_index.push(index);
+                        // テキストを赤に変更し、選択中のインデックスとして登録
+                        vtext.set_color(ggraphics::Color::from_rgba_u32(0xee0000ff));
+                        self.selecting_book_index.push(index);
                     }
-		    
+
                     break;
-		}
-	    }
+                }
+            }
         }
 
         debug::debug_screen_push_text(&format!(
@@ -718,7 +723,7 @@ impl SelectStoreBookUI {
         ctx: &mut ggez::Context,
         game_data: &GameData,
         ui_rect: numeric::Rect,
-	book_shelf_info: BookShelfInformation,
+        book_shelf_info: BookShelfInformation,
         mut shelving_book: Vec<BookInformation>,
     ) -> Self {
         shelving_book.sort_by(|a, b| a.billing_number.cmp(&b.billing_number));
@@ -730,11 +735,11 @@ impl SelectStoreBookUI {
                 game_data,
                 numeric::Rect::new(70.0, 50.0, 850.0, 600.0),
                 "配架中",
-		&book_shelf_info,
+                &book_shelf_info,
                 shelving_book.clone(),
             ),
             shelving_books: shelving_book,
-	    stored_books: Vec::new(),
+            stored_books: Vec::new(),
             store_button: SelectButton::new(
                 ctx,
                 numeric::Rect::new(1000.0, 200.0, 100.0, 50.0),
@@ -757,7 +762,7 @@ impl SelectStoreBookUI {
                     0,
                 )),
             ),
-	    book_shelf_info: book_shelf_info,
+            book_shelf_info: book_shelf_info,
         }
     }
 
@@ -768,7 +773,8 @@ impl SelectStoreBookUI {
 
     fn update_window(&mut self, ctx: &mut ggez::Context) {
         self.sort_book_info_greater();
-        self.select_book_window.update_contents(ctx, &self.book_shelf_info, &self.shelving_books);
+        self.select_book_window
+            .update_contents(ctx, &self.book_shelf_info, &self.shelving_books);
     }
 
     fn store_shelving_books(&mut self, ctx: &mut ggez::Context) {
@@ -776,7 +782,7 @@ impl SelectStoreBookUI {
         for selecting_index in self.select_book_window.get_selecting_index().iter() {
             debug::debug_screen_push_text(&format!("remove book: {}", selecting_index));
             let returned = self.shelving_books.swap_remove(*selecting_index);
-	    self.stored_books.push(returned);
+            self.stored_books.push(returned);
         }
 
         self.update_window(ctx);
@@ -787,7 +793,7 @@ impl SelectStoreBookUI {
     /// (返却済み, 配架中)
     ///
     pub fn get_storing_result(&self) -> (Vec<BookInformation>, Vec<BookInformation>) {
-	(self.stored_books.clone(), self.shelving_books.clone())
+        (self.stored_books.clone(), self.shelving_books.clone())
     }
 }
 
@@ -848,25 +854,23 @@ impl Clickable for SelectStoreBookUI {
     ) {
         let rpoint = self.canvas.relative_point(point);
 
-        if self.select_book_window.get_drawing_area(ctx).contains(rpoint) {
+        if self
+            .select_book_window
+            .contains(ctx, rpoint)
+        {
             self.select_book_window
                 .on_click(ctx, game_data, clock, button, rpoint);
         }
 
         if self
             .reset_select_button
-            .get_drawing_area(ctx)
-            .contains(rpoint)
+            .contains(ctx, rpoint)
         {
-	    self.select_book_window.clear_selecting_index();
+            self.select_book_window.clear_selecting_index();
         }
 
-        if self
-            .store_button
-            .get_drawing_area(ctx)
-            .contains(rpoint)
-        {
-	    self.store_shelving_books(ctx);
+        if self.store_button.contains(ctx, rpoint) {
+            self.store_shelving_books(ctx);
         }
     }
 
@@ -1400,14 +1404,14 @@ impl ShopDetailMenuContents {
     pub fn detail_menu_is_open(&self) -> bool {
         self.now_appear
     }
-    
+
     pub fn hide_toggle(&mut self, t: Clock) {
-	self.now_appear = false;
+        self.now_appear = false;
         self.shelving_info.slide_hide(t);
     }
 
     pub fn appear_toggle(&mut self, t: Clock) {
-	self.now_appear = true;
+        self.now_appear = true;
         self.shelving_info.slide_appear(self.appear_position, t);
     }
 
@@ -1415,14 +1419,14 @@ impl ShopDetailMenuContents {
         match self.contents_switch {
             ShopDetailMenuSymbol::ShelvingBooks => {
                 if self.now_appear {
-		    self.hide_toggle(t);
+                    self.hide_toggle(t);
                 } else {
-		    self.appear_toggle(t);
+                    self.appear_toggle(t);
                 }
-            },
+            }
             ShopDetailMenuSymbol::SuzunaMap => {
                 // まだ
-            },
+            }
             ShopDetailMenuSymbol::None => (),
         }
     }
@@ -1511,15 +1515,14 @@ impl ShopMenuMaster {
         player_shelving: &Vec<BookInformation>,
     ) {
         self.first_menu.update_menu_contents(game_data, task_result);
-        self.detail_menu
-            .update_contents(game_data, player_shelving);
+        self.detail_menu.update_contents(game_data, player_shelving);
     }
 
     pub fn toggle_first_menu(&mut self, t: Clock) {
         self.first_menu.slide_toggle(t);
-	if !self.first_menu_is_open() {
-	    self.detail_menu.hide_toggle(t);
-	}
+        if !self.first_menu_is_open() {
+            self.detail_menu.hide_toggle(t);
+        }
     }
 
     pub fn first_menu_is_open(&self) -> bool {
@@ -1602,7 +1605,7 @@ impl ShopSpecialObject {
         ShopSpecialObject {
             event_list: DelayEventList::new(),
             shelving_select_ui: None,
-	    storing_select_ui: None,
+            storing_select_ui: None,
             drwob_essential: DrawableObjectEssential::new(true, 0),
         }
     }
@@ -1634,7 +1637,7 @@ impl ShopSpecialObject {
         &mut self,
         ctx: &mut ggez::Context,
         game_data: &GameData,
-	book_shelf_info: BookShelfInformation,
+        book_shelf_info: BookShelfInformation,
         player_shelving_books: Vec<BookInformation>,
         t: Clock,
     ) {
@@ -1644,7 +1647,7 @@ impl ShopSpecialObject {
                     ctx,
                     game_data,
                     numeric::Rect::new(0.0, -768.0, 1366.0, 768.0),
-		    book_shelf_info,
+                    book_shelf_info,
                     player_shelving_books,
                 )),
                 move_fn::devide_distance(numeric::Point2f::new(0.0, 0.0), 0.4),
@@ -1696,7 +1699,7 @@ impl ShopSpecialObject {
             None
         }
     }
-    
+
     pub fn is_enable_now(&self) -> bool {
         self.shelving_select_ui.is_some() || self.storing_select_ui.is_some()
     }
@@ -1714,7 +1717,7 @@ impl ShopSpecialObject {
                 .on_click(ctx, game_data, t, button, point);
         }
 
-	if let Some(ui) = self.storing_select_ui.as_mut() {
+        if let Some(ui) = self.storing_select_ui.as_mut() {
             ui.ref_wrapped_object_mut()
                 .on_click(ctx, game_data, t, button, point);
         }
@@ -1741,7 +1744,7 @@ impl Updatable for ShopSpecialObject {
             ui.move_with_func(t);
         }
 
-	if let Some(storing_ui) = self.storing_select_ui.as_mut() {
+        if let Some(storing_ui) = self.storing_select_ui.as_mut() {
             storing_ui.move_with_func(t);
         }
     }
@@ -1754,7 +1757,7 @@ impl DrawableComponent for ShopSpecialObject {
                 select_ui.draw(ctx)?;
             }
 
-	    if let Some(store_ui) = self.storing_select_ui.as_mut() {
+            if let Some(store_ui) = self.storing_select_ui.as_mut() {
                 store_ui.draw(ctx)?;
             }
         }
