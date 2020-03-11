@@ -184,10 +184,12 @@ impl TextureAnimation {
     }
 
     pub fn change_mode(&mut self, mode: usize, animation_type: AnimationType, next_mode: usize) {
-        self.current_mode = mode;
-        self.next_mode = next_mode;
-        self.animation_type = animation_type;
-        self.textures[self.current_mode].reset();
+	if self.current_mode != mode {
+            self.current_mode = mode;
+            self.next_mode = next_mode;
+            self.animation_type = animation_type;
+            self.textures[self.current_mode].reset();
+	}
     }
 
     fn next_frame(&mut self) {
@@ -862,6 +864,7 @@ pub enum CustomerCharacterStatus {
     Moving,
     WaitOnClerk,
     WaitOnBookShelf,
+    GotOut,
 }
 
 ///
@@ -1105,6 +1108,40 @@ impl CustomerCharacter {
         }
     }
 
+    fn check_been_counter(
+	&mut self,
+        map_data: &mp::StageObjectMap,
+	current_pos: numeric::Point2f,
+        counter: numeric::Vector2u) {
+	
+	// 目的地がカウンターに設定されていた場合は、待機状態へ移行
+        if !self.shopping_is_done
+            && map_data.map_position_to_tile_position(current_pos).unwrap() == counter
+        {
+	    self.character.change_animation_mode(3);
+            self.customer_status = CustomerCharacterStatus::WaitOnClerk;
+            self.shopping_is_done = true;
+        }
+    }
+
+    fn check_get_out(
+	&mut self,
+        map_data: &mp::StageObjectMap,
+	current_pos: numeric::Point2f,
+        exit: numeric::Vector2u) {
+	
+	// 目的地が出口に設定されていた場合は、待機状態へ移行
+        if self.shopping_is_done
+            && map_data.map_position_to_tile_position(current_pos).unwrap() == exit
+        {
+            self.customer_status = CustomerCharacterStatus::GotOut;
+        }
+    }
+
+    pub fn is_got_out(&self) -> bool {
+	self.customer_status == CustomerCharacterStatus::GotOut
+    }
+    
     ///
     /// 移動速度の更新が必要であれば行うメソッド
     ///
@@ -1114,6 +1151,7 @@ impl CustomerCharacter {
         game_data: &GameData,
         map_data: &mp::StageObjectMap,
         counter: numeric::Vector2u,
+	exit: numeric::Vector2u,
         t: Clock,
     ) {
 	// 遅延イベントを実行
@@ -1141,13 +1179,11 @@ impl CustomerCharacter {
 		    // 速度もリセット
                     self.reset_speed();
 
-		    // 目的地がカウンターに設定されていた場合は、待機状態へ移行
-                    if !self.shopping_is_done
-                        && map_data.map_position_to_tile_position(goal).unwrap() == counter
-                    {
-                        self.customer_status = CustomerCharacterStatus::WaitOnClerk;
-                        self.shopping_is_done = true;
-                    }
+		    // カウンターに到達したかチェック
+		    self.check_been_counter(map_data, goal, counter);
+
+		    // カウンターに到達したかチェック
+		    self.check_get_out(map_data, goal, exit);
                 }
             }
             CustomerCharacterStatus::WaitOnClerk => {}

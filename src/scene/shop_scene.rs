@@ -46,7 +46,7 @@ impl CharacterGroup {
     }
 
     #[inline(always)]
-    pub fn remove_if<F>(&mut self, f: F) -> Vec<CustomerCharacter>
+    pub fn drain_remove_if<F>(&mut self, f: F) -> Vec<CustomerCharacter>
     where
         F: Fn(&CustomerCharacter) -> bool,
     {
@@ -60,6 +60,14 @@ impl CharacterGroup {
         }
 
         removed
+    }
+
+    #[inline(always)]
+    pub fn remove_if<F>(&mut self, f: F)
+    where
+        F: Fn(&CustomerCharacter) -> bool,
+    {
+	self.group.retain(|c| !f(c));
     }
 
     pub fn sort_by_y_position(&mut self) {
@@ -940,6 +948,24 @@ impl ShopScene {
             debug::debug_screen_push_text("Today's work is done");
         }
     }
+
+    fn random_add_customer(&mut self, game_data: &GameData) {
+	if self.shop_clock.minute % 10 == 0 && rand::random::<usize>() % 150 == 0 {
+	    self.character_group.add(CustomerCharacter::new(
+		character_factory::create_character(
+                character_factory::CharacterFactoryOrder::CustomerSample,
+                game_data,
+                &self.camera.borrow(),
+                numeric::Point2f::new(1200.0, 870.0),
+            ),
+            CustomerDestPoint::new(vec![
+                numeric::Vector2u::new(10, 3),
+                numeric::Vector2u::new(6, 3),
+                numeric::Vector2u::new(4, 10),
+            ]),
+        ));
+	}
+    }
 }
 
 impl SceneManager for ShopScene {
@@ -1062,6 +1088,7 @@ impl SceneManager for ShopScene {
         let t = self.get_current_clock();
 
         if !self.shop_menu.first_menu_is_open() && !self.shop_special_object.is_enable_now() {
+	    self.random_add_customer(game_data);
             self.move_playable_character(ctx, t);
             self.check_event_panel_onmap(ctx, game_data, EventTrigger::Touch);
 
@@ -1074,7 +1101,7 @@ impl SceneManager for ShopScene {
 
             let mut rising_customers = self
                 .character_group
-                .remove_if(|customer: &CustomerCharacter| customer.is_wait_on_clerk());
+                .drain_remove_if(|customer: &CustomerCharacter| customer.is_wait_on_clerk());
 
             for customer in &mut rising_customers {
                 if let Some(request) = customer.check_rise_hand(game_data) {
@@ -1090,6 +1117,7 @@ impl SceneManager for ShopScene {
                     game_data,
                     &self.map.tile_map,
                     numeric::Vector2u::new(4, 10),
+		    numeric::Vector2u::new(15, 10),
                     t,
                 );
                 customer.get_mut_character_object().update_texture(t);
@@ -1108,10 +1136,13 @@ impl SceneManager for ShopScene {
                     game_data,
                     &self.map.tile_map,
                     numeric::Vector2u::new(4, 10),
+		    numeric::Vector2u::new(15, 10),
                     t,
                 );
                 customer.get_mut_character_object().update_texture(t);
             }
+
+	    self.character_group.remove_if(|c| c.is_got_out());
 
             self.character_group.sort_by_y_position();
 
