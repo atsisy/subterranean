@@ -87,7 +87,7 @@ impl SceneManager for CopyingScene {
 
     fn mouse_motion_event(
         &mut self,
-        _: &mut ggez::Context,
+        ctx: &mut ggez::Context,
         _: &GameData,
         point: numeric::Point2f,
         _: numeric::Vector2f,
@@ -95,6 +95,7 @@ impl SceneManager for CopyingScene {
         if self.mouse_info.is_dragging(MouseButton::Left) {
             self.mouse_info
                 .set_last_dragged(MouseButton::Left, point, self.get_current_clock());
+            self.hangi.dragging_handler(ctx, point);
         }
     }
 
@@ -116,7 +117,7 @@ impl SceneManager for CopyingScene {
 
     fn mouse_button_up_event(
         &mut self,
-        _: &mut ggez::Context,
+        ctx: &mut ggez::Context,
         _: &GameData,
         button: MouseButton,
         point: numeric::Point2f,
@@ -124,6 +125,7 @@ impl SceneManager for CopyingScene {
         self.mouse_info.update_dragging(button, false);
         self.mouse_info
             .set_last_up(button, point, self.get_current_clock());
+        self.hangi.release_handler(ctx);
     }
 
     fn pre_process(&mut self, ctx: &mut ggez::Context, game_data: &GameData) {
