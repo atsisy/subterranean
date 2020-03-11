@@ -966,6 +966,11 @@ impl ShopScene {
         ));
 	}
     }
+
+    fn transition_to_copy_scene(&mut self) {
+	self.transition_status = SceneTransition::StackingTransition;
+        self.transition_scene = SceneID::Copying;
+    }
 }
 
 impl SceneManager for ShopScene {
@@ -985,7 +990,7 @@ impl SceneManager for ShopScene {
                     debug::debug_screen_push_text("OK");
                     self.check_event_panel_onmap(ctx, game_data, EventTrigger::Action);
                 }
-            }
+            },
             tdev::VirtualKey::Action2 => {
                 self.shop_menu.toggle_first_menu(self.get_current_clock());
                 if self.shop_menu.first_menu_is_open() {
@@ -995,10 +1000,13 @@ impl SceneManager for ShopScene {
                     self.dark_effect_panel
                         .new_effect(8, self.get_current_clock(), 200, 0);
                 }
-            }
+            },
             tdev::VirtualKey::Action3 => {
                 self.try_hide_shelving_select_ui(game_data);
                 self.try_hide_storing_select_ui(game_data);
+            },
+	    tdev::VirtualKey::Action4 => {
+		self.transition_to_copy_scene();
             }
             _ => (),
         }

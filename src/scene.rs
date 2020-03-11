@@ -27,6 +27,7 @@ pub enum SceneID {
     Scenario,
     SuzunaShop,
     DayResult,
+    Copying,
 }
 
 impl FromStr for SceneID {
