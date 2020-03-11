@@ -1,5 +1,6 @@
 pub mod character_factory;
 pub mod collision;
+pub mod copy_scene_object;
 pub mod effect;
 pub mod map_object;
 pub mod move_fn;
@@ -8,7 +9,6 @@ pub mod shop_object;
 pub mod simulation_ui;
 pub mod task_object;
 pub mod task_result_object;
-pub mod copy_scene_object;
 
 use std::rc::Rc;
 

@@ -1,6 +1,6 @@
-pub mod task_scene;
-pub mod task_result_scene;
 pub mod copy_scene;
+pub mod task_result_scene;
+pub mod task_scene;
 
 use ggez::input::mouse::MouseButton;
 use torifune::core::*;
@@ -12,9 +12,9 @@ use crate::scene::*;
 
 use crate::scene::shop_scene::ShopScene;
 
-use task_scene::*;
-use task_result_scene::*;
 use copy_scene::*;
+use task_result_scene::*;
+use task_scene::*;
 
 #[derive(PartialEq, Clone, Copy)]
 pub enum SuzunaSceneStatus {
@@ -105,11 +105,7 @@ impl SuzunaSubScene {
     ) {
         if transition == SceneTransition::StackingTransition {
             self.scene_status = SuzunaSceneStatus::Copying;
-            self.copying_scene = Some(Box::new(CopyingScene::new(
-                ctx,
-                game_data,
-                Vec::new(),
-            )));
+            self.copying_scene = Some(Box::new(CopyingScene::new(ctx, game_data, Vec::new())));
         }
     }
 }

@@ -9,8 +9,8 @@ use torifune::graphics::*;
 use super::super::*;
 
 use crate::core::{GameData, MouseInformation, TextureID};
-use crate::scene::{SceneID, SceneTransition};
 use crate::object::task_result_object::*;
+use crate::scene::{SceneID, SceneTransition};
 
 pub struct TaskResultScene {
     clock: Clock,

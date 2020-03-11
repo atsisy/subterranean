@@ -67,7 +67,7 @@ impl CharacterGroup {
     where
         F: Fn(&CustomerCharacter) -> bool,
     {
-	self.group.retain(|c| !f(c));
+        self.group.retain(|c| !f(c));
     }
 
     pub fn sort_by_y_position(&mut self) {
@@ -950,25 +950,25 @@ impl ShopScene {
     }
 
     fn random_add_customer(&mut self, game_data: &GameData) {
-	if self.shop_clock.minute % 10 == 0 && rand::random::<usize>() % 150 == 0 {
-	    self.character_group.add(CustomerCharacter::new(
-		character_factory::create_character(
-                character_factory::CharacterFactoryOrder::CustomerSample,
-                game_data,
-                &self.camera.borrow(),
-                numeric::Point2f::new(1200.0, 870.0),
-            ),
-            CustomerDestPoint::new(vec![
-                numeric::Vector2u::new(10, 3),
-                numeric::Vector2u::new(6, 3),
-                numeric::Vector2u::new(4, 10),
-            ]),
-        ));
-	}
+        if self.shop_clock.minute % 10 == 0 && rand::random::<usize>() % 150 == 0 {
+            self.character_group.add(CustomerCharacter::new(
+                character_factory::create_character(
+                    character_factory::CharacterFactoryOrder::CustomerSample,
+                    game_data,
+                    &self.camera.borrow(),
+                    numeric::Point2f::new(1200.0, 870.0),
+                ),
+                CustomerDestPoint::new(vec![
+                    numeric::Vector2u::new(10, 3),
+                    numeric::Vector2u::new(6, 3),
+                    numeric::Vector2u::new(4, 10),
+                ]),
+            ));
+        }
     }
 
     fn transition_to_copy_scene(&mut self) {
-	self.transition_status = SceneTransition::StackingTransition;
+        self.transition_status = SceneTransition::StackingTransition;
         self.transition_scene = SceneID::Copying;
     }
 }
@@ -990,7 +990,7 @@ impl SceneManager for ShopScene {
                     debug::debug_screen_push_text("OK");
                     self.check_event_panel_onmap(ctx, game_data, EventTrigger::Action);
                 }
-            },
+            }
             tdev::VirtualKey::Action2 => {
                 self.shop_menu.toggle_first_menu(self.get_current_clock());
                 if self.shop_menu.first_menu_is_open() {
@@ -1000,13 +1000,13 @@ impl SceneManager for ShopScene {
                     self.dark_effect_panel
                         .new_effect(8, self.get_current_clock(), 200, 0);
                 }
-            },
+            }
             tdev::VirtualKey::Action3 => {
                 self.try_hide_shelving_select_ui(game_data);
                 self.try_hide_storing_select_ui(game_data);
-            },
-	    tdev::VirtualKey::Action4 => {
-		self.transition_to_copy_scene();
+            }
+            tdev::VirtualKey::Action4 => {
+                self.transition_to_copy_scene();
             }
             _ => (),
         }
@@ -1096,7 +1096,7 @@ impl SceneManager for ShopScene {
         let t = self.get_current_clock();
 
         if !self.shop_menu.first_menu_is_open() && !self.shop_special_object.is_enable_now() {
-	    self.random_add_customer(game_data);
+            self.random_add_customer(game_data);
             self.move_playable_character(ctx, t);
             self.check_event_panel_onmap(ctx, game_data, EventTrigger::Touch);
 
@@ -1125,7 +1125,7 @@ impl SceneManager for ShopScene {
                     game_data,
                     &self.map.tile_map,
                     numeric::Vector2u::new(4, 10),
-		    numeric::Vector2u::new(15, 10),
+                    numeric::Vector2u::new(15, 10),
                     t,
                 );
                 customer.get_mut_character_object().update_texture(t);
@@ -1144,13 +1144,13 @@ impl SceneManager for ShopScene {
                     game_data,
                     &self.map.tile_map,
                     numeric::Vector2u::new(4, 10),
-		    numeric::Vector2u::new(15, 10),
+                    numeric::Vector2u::new(15, 10),
                     t,
                 );
                 customer.get_mut_character_object().update_texture(t);
             }
 
-	    self.character_group.remove_if(|c| c.is_got_out());
+            self.character_group.remove_if(|c| c.is_got_out());
 
             self.character_group.sort_by_y_position();
 

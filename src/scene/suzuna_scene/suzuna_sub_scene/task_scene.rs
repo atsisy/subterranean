@@ -14,7 +14,6 @@ use crate::scene::{SceneID, SceneTransition};
 
 use crate::object::task_object::tt_main_component::*;
 
-
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum TaskSceneStatus {
     Init,
@@ -329,4 +328,3 @@ impl SceneManager for TaskScene {
         self.clock += 1;
     }
 }
-

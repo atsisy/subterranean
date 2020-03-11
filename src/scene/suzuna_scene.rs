@@ -96,7 +96,7 @@ impl SuzunaScene {
         if self.sub_scene.get_shop_scene_mut().unwrap().transition() == SceneID::Copying {
             debug::debug_screen_push_text("switch shop -> copying");
             self.sub_scene
-		.switch_shop_to_copying(ctx, game_data, transition_status);
+                .switch_shop_to_copying(ctx, game_data, transition_status);
         }
     }
 }
@@ -187,8 +187,7 @@ impl SceneManager for SuzunaScene {
             SuzunaSceneStatus::DayResult => {
                 debug::debug_screen_push_text("Implement Result!!!!!!!!!!!!!");
             }
-            SuzunaSceneStatus::Copying => {
-            }
+            SuzunaSceneStatus::Copying => {}
         }
 
         SceneTransition::Keep

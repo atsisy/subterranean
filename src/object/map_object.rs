@@ -184,12 +184,12 @@ impl TextureAnimation {
     }
 
     pub fn change_mode(&mut self, mode: usize, animation_type: AnimationType, next_mode: usize) {
-	if self.current_mode != mode {
+        if self.current_mode != mode {
             self.current_mode = mode;
             self.next_mode = next_mode;
             self.animation_type = animation_type;
             self.textures[self.current_mode].reset();
-	}
+        }
     }
 
     fn next_frame(&mut self) {
@@ -951,19 +951,19 @@ impl CustomerCharacter {
     /// ゴールへの適切な速度を計算・更新する
     ///
     fn override_move_effect(&mut self, ctx: &mut ggez::Context, goal_point: numeric::Point2f) {
-	// 現在のマップ位置
+        // 現在のマップ位置
         let current = self
             .get_character_object()
             .get_map_position_with_collision_top_offset(ctx);
 
-	// ゴールとのオフセット
+        // ゴールとのオフセット
         let offset = numeric::Point2f::new(goal_point.x - current.x, goal_point.y - current.y);
 
-	// ゴールへのオフセットから、速度を算出
+        // ゴールへのオフセットから、速度を算出
         let speed = if offset.x == 0.0 && offset.y == 0.0 {
             numeric::Vector2f::new(0.0, 0.0)
         } else {
-	    // 角度を計算
+            // 角度を計算
             let rad = if offset.x >= 0.0 {
                 if offset.y >= 0.0 {
                     (offset.y / offset.x).atan()
@@ -974,12 +974,12 @@ impl CustomerCharacter {
                 (offset.y / offset.x).atan() + 180.0_f32.to_radians()
             };
 
-	    // 基本的な速さは一致するようにしたいため、次のように計算する
+            // 基本的な速さは一致するようにしたいため、次のように計算する
             let speed = numeric::Vector2f::new(rad.cos() * 1.4, rad.sin() * 1.4);
 
             debug::debug_screen_push_text(&format!("rad: {}", rad.to_degrees()));
 
-	    // 向きによってアニメーションを更新
+            // 向きによってアニメーションを更新
             self.update_animation_mode_with_rad(rad);
 
             speed
@@ -990,7 +990,7 @@ impl CustomerCharacter {
             goal_point.x, goal_point.y, speed.x, speed.y
         ));
 
-	// スピードを更新
+        // スピードを更新
         self.character.speed_info_mut().set_speed(speed);
     }
 
@@ -1003,15 +1003,15 @@ impl CustomerCharacter {
         map_data: &mp::StageObjectMap,
         t: Clock,
     ) {
-	// 移動情報キューが空（目的地に到達してる or 初めて目的地を設定する）
+        // 移動情報キューが空（目的地に到達してる or 初めて目的地を設定する）
         if self.move_queue.empty() {
-	    // ルート検索
+            // ルート検索
             let maybe_next_route = self.find_route(ctx, map_data, self.move_data.random_select());
 
             debug::debug_screen_push_text(&format!("{:?}", maybe_next_route));
 
-	    // 一定時間後にルートを設定し、状態をReadyに変更する。
-	    // 移動開始するまでは、ストップ
+            // 一定時間後にルートを設定し、状態をReadyに変更する。
+            // 移動開始するまでは、ストップ
             self.event_list.add_event(
                 Box::new(move |customer, _, _| {
                     if let Some(next_route) = maybe_next_route {
@@ -1026,8 +1026,8 @@ impl CustomerCharacter {
             return ();
         }
 
-	// キューが空ではない場合
-	// 情報をキューから取り出し、速度を計算し直す
+        // キューが空ではない場合
+        // 情報をキューから取り出し、速度を計算し直す
         let maybe_next_position = self.move_queue.dequeue();
         if let Some(next_position) = maybe_next_position {
             debug::debug_screen_push_text(&format!("next: {:?}", next_position));
@@ -1046,14 +1046,14 @@ impl CustomerCharacter {
         map_data: &mp::StageObjectMap,
         dest: numeric::Vector2u,
     ) {
-	// 現在の移動キューをクリア
+        // 現在の移動キューをクリア
         self.move_queue.clear();
-	// 新しくルートを検索
+        // 新しくルートを検索
         let maybe_next_route = self.find_route(ctx, map_data, dest);
 
         debug::debug_screen_push_text(&format!("{:?}", maybe_next_route));
 
-	// ルートが見つかれば、その情報をキューに追加
+        // ルートが見つかれば、その情報をキューに追加
         if let Some(next_route) = maybe_next_route {
             self.move_queue.enqueue(next_route);
             self.customer_status = CustomerCharacterStatus::Ready;
@@ -1109,28 +1109,28 @@ impl CustomerCharacter {
     }
 
     fn check_been_counter(
-	&mut self,
+        &mut self,
         map_data: &mp::StageObjectMap,
-	current_pos: numeric::Point2f,
-        counter: numeric::Vector2u) {
-	
-	// 目的地がカウンターに設定されていた場合は、待機状態へ移行
+        current_pos: numeric::Point2f,
+        counter: numeric::Vector2u,
+    ) {
+        // 目的地がカウンターに設定されていた場合は、待機状態へ移行
         if !self.shopping_is_done
             && map_data.map_position_to_tile_position(current_pos).unwrap() == counter
         {
-	    self.character.change_animation_mode(3);
+            self.character.change_animation_mode(3);
             self.customer_status = CustomerCharacterStatus::WaitOnClerk;
             self.shopping_is_done = true;
         }
     }
 
     fn check_get_out(
-	&mut self,
+        &mut self,
         map_data: &mp::StageObjectMap,
-	current_pos: numeric::Point2f,
-        exit: numeric::Vector2u) {
-	
-	// 目的地が出口に設定されていた場合は、待機状態へ移行
+        current_pos: numeric::Point2f,
+        exit: numeric::Vector2u,
+    ) {
+        // 目的地が出口に設定されていた場合は、待機状態へ移行
         if self.shopping_is_done
             && map_data.map_position_to_tile_position(current_pos).unwrap() == exit
         {
@@ -1139,9 +1139,9 @@ impl CustomerCharacter {
     }
 
     pub fn is_got_out(&self) -> bool {
-	self.customer_status == CustomerCharacterStatus::GotOut
+        self.customer_status == CustomerCharacterStatus::GotOut
     }
-    
+
     ///
     /// 移動速度の更新が必要であれば行うメソッド
     ///
@@ -1151,39 +1151,39 @@ impl CustomerCharacter {
         game_data: &GameData,
         map_data: &mp::StageObjectMap,
         counter: numeric::Vector2u,
-	exit: numeric::Vector2u,
+        exit: numeric::Vector2u,
         t: Clock,
     ) {
-	// 遅延イベントを実行
+        // 遅延イベントを実行
         self.flush_delay_event(ctx, game_data, t);
 
         match self.customer_status {
             CustomerCharacterStatus::Ready => {
-		// 移動可能状態であれば、移動を開始する
+                // 移動可能状態であれば、移動を開始する
                 self.update_move_effect(ctx, map_data, t);
             }
             CustomerCharacterStatus::Moving => {
-		// 移動中, 目的地に到着したか？
+                // 移動中, 目的地に到着したか？
                 if self.is_goal_now(ctx) {
                     let goal = self.current_goal;
 
                     debug::debug_screen_push_text(&format!("goal: {:?}", goal));
 
-		    // 目的地でマップ位置を上書き
+                    // 目的地でマップ位置を上書き
                     self.get_mut_character_object()
                         .set_map_position_with_collision_top_offset(ctx, goal);
 
-		    // 移動可能状態に変更
+                    // 移動可能状態に変更
                     self.customer_status = CustomerCharacterStatus::Ready;
 
-		    // 速度もリセット
+                    // 速度もリセット
                     self.reset_speed();
 
-		    // カウンターに到達したかチェック
-		    self.check_been_counter(map_data, goal, counter);
+                    // カウンターに到達したかチェック
+                    self.check_been_counter(map_data, goal, counter);
 
-		    // カウンターに到達したかチェック
-		    self.check_get_out(map_data, goal, exit);
+                    // カウンターに到達したかチェック
+                    self.check_get_out(map_data, goal, exit);
                 }
             }
             CustomerCharacterStatus::WaitOnClerk => {}
