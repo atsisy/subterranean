@@ -10,6 +10,7 @@ use crate::core::{GameData, MouseInformation};
 use crate::scene::{SceneID, SceneTransition};
 
 use crate::object::copy_scene_object::*;
+use crate::object::util_object::*;
 
 pub struct CopyingScene {
     clock: Clock,
@@ -18,6 +19,7 @@ pub struct CopyingScene {
     hangi: EffectableHangi,
     copy_data: Vec<CopyingRequestInformation>,
     scene_transition_status: SceneTransition,
+    table_frame: TableFrame,
 }
 
 impl CopyingScene {
@@ -37,6 +39,12 @@ impl CopyingScene {
             ),
             copy_data: copy_data,
             scene_transition_status: SceneTransition::Keep,
+            table_frame: TableFrame::new(
+                game_data,
+		numeric::Point2f::new(200.0, 200.0),
+                FrameData::new(vec![100.0, 100.0], vec![100.0, 100.0]),
+                0,
+            ),
         }
     }
 
@@ -134,6 +142,7 @@ impl SceneManager for CopyingScene {
 
     fn drawing_process(&mut self, ctx: &mut ggez::Context) {
         self.hangi.draw(ctx).unwrap();
+        self.table_frame.draw(ctx).unwrap();
     }
 
     fn post_process(&mut self, _ctx: &mut ggez::Context, _: &GameData) -> SceneTransition {

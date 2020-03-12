@@ -11,7 +11,7 @@ use torifune::device as tdev;
 use torifune::graphics::object::sub_screen;
 use torifune::graphics::object::sub_screen::SubScreen;
 use torifune::graphics::object::{FontInformation, TextureObject};
-use torifune::graphics::DrawableComponent;
+use torifune::graphics::*;
 use torifune::hash;
 use torifune::numeric;
 
@@ -200,6 +200,11 @@ impl TextureID {
     }
 }
 
+#[derive(Debug, Clone, Copy)]
+pub enum TileBatchTextureID {
+    OldStyleFrame,
+}
+
 pub const LARGE_BOOK_TEXTURE: [TextureID; 3] = [
     TextureID::LargeBook1,
     TextureID::LargeBook2,
@@ -251,6 +256,13 @@ pub struct MapConstractData {
     pub event_map_file_path: String,
 }
 
+#[derive(Debug, Deserialize, Clone)]
+pub struct SpriteBatchData {
+    pub sprite_x_size: u16,
+    pub sprite_y_size: u16,
+    pub path: String,
+}
+
 #[derive(Debug, Deserialize)]
 pub struct RawConfigFile {
     texture_paths: Vec<String>,
@@ -258,6 +270,7 @@ pub struct RawConfigFile {
     customers_name: Vec<String>,
     books_information: Vec<BookInformation>,
     map_information: Vec<MapConstractData>,
+    sprite_batch_information: Vec<SpriteBatchData>,
 }
 
 impl RawConfigFile {
@@ -278,6 +291,7 @@ impl RawConfigFile {
 pub struct GameData {
     textures: Vec<Rc<ggraphics::Image>>,
     fonts: Vec<ggraphics::Font>,
+    tile_batchs: Vec<TileBatch>,
     customers_name: Vec<String>,
     books_information: Vec<BookInformation>,
     map_data: Vec<MapConstractData>,
@@ -289,6 +303,7 @@ impl GameData {
 
         let mut textures = Vec::new();
         let mut fonts = Vec::new();
+	let mut sprite_batchs = Vec::new();
 
         for texture_path in &src_file.texture_paths {
             print!("Loading texture {}...", texture_path);
@@ -302,12 +317,25 @@ impl GameData {
             println!(" done!");
         }
 
+	for sb_data in &src_file.sprite_batch_information {
+	    print!("Loading font {}...", sb_data.path);
+            sprite_batchs.push(
+		    TileBatch::new(
+			ggraphics::Image::new(ctx, &sb_data.path).unwrap(),
+			numeric::Vector2u::new(sb_data.sprite_x_size as u32, sb_data.sprite_y_size as u32),
+			numeric::Point2f::new(0.0, 0.0),
+			0
+		    ));
+            println!(" done!");
+	}
+
         println!("{:?}", src_file.books_information);
         println!("{:?}", src_file.map_information);
 
         GameData {
             textures: textures,
             fonts: fonts,
+	    tile_batchs: sprite_batchs,
             customers_name: src_file.customers_name,
             books_information: src_file.books_information,
             map_data: src_file.map_information,
@@ -315,10 +343,13 @@ impl GameData {
     }
 
     pub fn ref_texture(&self, id: TextureID) -> Rc<ggraphics::Image> {
-        match self.textures.get(id as usize) {
-            Some(texture) => texture.clone(),
-            None => panic!("Unknown Texture ID: {}", id as i32),
-        }
+	let maybe_texture = self.textures.get(id as usize);
+
+	if let Some(texture) = maybe_texture {
+	    texture.clone()
+	} else {
+	    panic!("Unknown Texture ID: {}", id as i32)
+	}
     }
 
     pub fn get_font(&self, id: FontID) -> ggraphics::Font {
@@ -349,6 +380,16 @@ impl GameData {
             .customers_name
             .get(rand::random::<usize>() % self.customers_name.len())
             .unwrap()
+    }
+
+    pub fn ref_tile_batch(&self, id: TileBatchTextureID) -> TileBatch {
+	let maybe_tile_batch = self.tile_batchs.get(id as usize);
+	
+	if let Some(tile_batch) = maybe_tile_batch {
+	    tile_batch.clone()
+	} else {
+	    panic!("Unknown TileBatchTexture ID: {}", id as i32)
+	}
     }
 }
 

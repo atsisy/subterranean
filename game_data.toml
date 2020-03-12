@@ -60,3 +60,8 @@ name = "テスト本2"
 pages = 128
 size = "中判本"
 billing_number = 128
+
+[[sprite_batch_information]]
+sprite_x_size = 16
+sprite_y_size = 16
+path = "/tile_textures/black1.png"

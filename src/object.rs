@@ -9,6 +9,7 @@ pub mod shop_object;
 pub mod simulation_ui;
 pub mod task_object;
 pub mod task_result_object;
+pub mod util_object;
 
 use std::rc::Rc;
 
