@@ -13,6 +13,7 @@ use torifune::graphics::*;
 use torifune::impl_drawable_object_for_wrapped;
 use torifune::impl_texture_object_for_wrapped;
 use torifune::numeric;
+use torifune::roundup2f;
 
 use crate::core::BookInformation;
 use crate::object::move_fn;
@@ -527,8 +528,8 @@ impl BorrowingPaper {
         let table_frame = TableFrame::new(
             game_data,
             numeric::Point2f::new(200.0, 50.0),
-            FrameData::new(vec![500.0, 64.0], vec![64.0; 5]),
-	    numeric::Vector2f::new(0.1, 0.1),
+            FrameData::new(vec![500.0, 64.0], vec![64.0; 2]),
+            numeric::Vector2f::new(0.1, 0.1),
             0,
         );
         let borrowing = info
@@ -1036,8 +1037,8 @@ impl BorrowingRecordBookPage {
         let table_frame = TableFrame::new(
             game_data,
             numeric::Point2f::new(0.0, 0.0),
-            FrameData::new(vec![500.0, 64.0], vec![64.0; 5]),
-	    numeric::Vector2f::new(0.1, 0.1),
+            FrameData::new(vec![20.0, 100.0], vec![100.0; 3]),
+            numeric::Vector2f::new(0.25, 0.25),
             0,
         );
 
@@ -1176,13 +1177,13 @@ impl BorrowingRecordBookPage {
         let mut pos = numeric::Point2f::new(rect.w - 40.0, 30.0);
         let table_frame = TableFrame::new(
             game_data,
-            numeric::Point2f::new(0.0, 0.0),
-            FrameData::new(vec![500.0, 64.0], vec![64.0; 5]),
-	    numeric::Vector2f::new(0.1, 0.1),
+            numeric::Point2f::new(rect.w - 140.0, 30.0),
+            FrameData::new(vec![96.0, 150.0], vec![36.0; 3]),
+            numeric::Vector2f::new(0.2, 0.2),
             0,
         );
 
-        let borrower = VerticalText::new(
+        let mut borrower = VerticalText::new(
             "借りた人　".to_string(),
             pos,
             numeric::Vector2f::new(1.0, 1.0),
@@ -1194,6 +1195,13 @@ impl BorrowingRecordBookPage {
                 ggraphics::Color::from_rgba_u32(0x000000ff),
             ),
         );
+        borrower.make_center(
+            ctx,
+            roundup2f!(
+                table_frame.get_center_of(numeric::Vector2u::new(2, 0), table_frame.get_position())
+            ),
+        );
+
         pos.x -= 30.0;
 
         let book_head = VerticalText::new(

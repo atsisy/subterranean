@@ -303,7 +303,7 @@ impl GameData {
 
         let mut textures = Vec::new();
         let mut fonts = Vec::new();
-	let mut sprite_batchs = Vec::new();
+        let mut sprite_batchs = Vec::new();
 
         for texture_path in &src_file.texture_paths {
             print!("Loading texture {}...", texture_path);
@@ -317,17 +317,16 @@ impl GameData {
             println!(" done!");
         }
 
-	for sb_data in &src_file.sprite_batch_information {
-	    print!("Loading font {}...", sb_data.path);
-            sprite_batchs.push(
-		    TileBatch::new(
-			ggraphics::Image::new(ctx, &sb_data.path).unwrap(),
-			numeric::Vector2u::new(sb_data.sprite_x_size as u32, sb_data.sprite_y_size as u32),
-			numeric::Point2f::new(0.0, 0.0),
-			0
-		    ));
+        for sb_data in &src_file.sprite_batch_information {
+            print!("Loading font {}...", sb_data.path);
+            sprite_batchs.push(TileBatch::new(
+                ggraphics::Image::new(ctx, &sb_data.path).unwrap(),
+                numeric::Vector2u::new(sb_data.sprite_x_size as u32, sb_data.sprite_y_size as u32),
+                numeric::Point2f::new(0.0, 0.0),
+                0,
+            ));
             println!(" done!");
-	}
+        }
 
         println!("{:?}", src_file.books_information);
         println!("{:?}", src_file.map_information);
@@ -335,7 +334,7 @@ impl GameData {
         GameData {
             textures: textures,
             fonts: fonts,
-	    tile_batchs: sprite_batchs,
+            tile_batchs: sprite_batchs,
             customers_name: src_file.customers_name,
             books_information: src_file.books_information,
             map_data: src_file.map_information,
@@ -343,13 +342,13 @@ impl GameData {
     }
 
     pub fn ref_texture(&self, id: TextureID) -> Rc<ggraphics::Image> {
-	let maybe_texture = self.textures.get(id as usize);
+        let maybe_texture = self.textures.get(id as usize);
 
-	if let Some(texture) = maybe_texture {
-	    texture.clone()
-	} else {
-	    panic!("Unknown Texture ID: {}", id as i32)
-	}
+        if let Some(texture) = maybe_texture {
+            texture.clone()
+        } else {
+            panic!("Unknown Texture ID: {}", id as i32)
+        }
     }
 
     pub fn get_font(&self, id: FontID) -> ggraphics::Font {
@@ -383,13 +382,13 @@ impl GameData {
     }
 
     pub fn ref_tile_batch(&self, id: TileBatchTextureID) -> TileBatch {
-	let maybe_tile_batch = self.tile_batchs.get(id as usize);
-	
-	if let Some(tile_batch) = maybe_tile_batch {
-	    tile_batch.clone()
-	} else {
-	    panic!("Unknown TileBatchTexture ID: {}", id as i32)
-	}
+        let maybe_tile_batch = self.tile_batchs.get(id as usize);
+
+        if let Some(tile_batch) = maybe_tile_batch {
+            tile_batch.clone()
+        } else {
+            panic!("Unknown TileBatchTexture ID: {}", id as i32)
+        }
     }
 }
 

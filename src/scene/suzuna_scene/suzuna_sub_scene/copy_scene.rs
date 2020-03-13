@@ -41,9 +41,10 @@ impl CopyingScene {
             scene_transition_status: SceneTransition::Keep,
             table_frame: TableFrame::new(
                 game_data,
-		numeric::Point2f::new(200.0, 200.0),
-                FrameData::new(vec![64.0, 320.0], vec![64.0, 64.0, 64.0, 64.0, 64.0, 64.0, 64.0]),
-		numeric::Vector2f::new(0.2, 0.2),
+                numeric::Point2f::new(200.0, 200.0),
+                //FrameData::new(vec![64.0, 320.0], vec![64.0, 64.0, 64.0, 64.0, 64.0, 64.0, 64.0]),
+                FrameData::new(vec![150.0, 150.0], vec![56.0; 3]),
+                numeric::Vector2f::new(0.5, 0.5),
                 0,
             ),
         }
@@ -123,10 +124,14 @@ impl SceneManager for CopyingScene {
             .set_last_dragged(button, point, self.get_current_clock());
         self.mouse_info.update_dragging(button, true);
 
-	//println!("grid_position: {}", self.table_frame.get_grid_position(point));
-	let pos = self.table_frame.get_grid_position(point);
-	let dest = self.table_frame.get_position();
-	println!("grid_position: {}", self.table_frame.get_grid_topleft(pos, numeric::Vector2f::new(dest.x, dest.y)));
+        //println!("grid_position: {}", self.table_frame.get_grid_position(point));
+        let pos = self.table_frame.get_grid_position(point);
+        let dest = self.table_frame.get_position();
+        println!(
+            "grid_position: {}",
+            self.table_frame
+                .get_grid_topleft(pos, numeric::Vector2f::new(dest.x, dest.y))
+        );
     }
 
     fn mouse_button_up_event(

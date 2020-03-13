@@ -1008,6 +1008,10 @@ impl SceneManager for ShopScene {
             tdev::VirtualKey::Action4 => {
                 self.transition_to_copy_scene();
             }
+            tdev::VirtualKey::Action5 => {
+                self.transition_status = SceneTransition::StackingTransition;
+                self.transition_scene = SceneID::MainDesk;
+            }
             _ => (),
         }
 

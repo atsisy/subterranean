@@ -71,22 +71,22 @@ impl PointerLag {
     }
 
     pub fn update_mesh(&mut self, ctx: &mut ggez::Context) {
-	self.mesh = if self.lag_buffer.len() > 0 {
-	    let mut builder = ggraphics::MeshBuilder::new();
+        self.mesh = if self.lag_buffer.len() > 0 {
+            let mut builder = ggraphics::MeshBuilder::new();
             for point in &self.lag_buffer {
-		let circle = shape::Circle::new(
+                let circle = shape::Circle::new(
                     *point,
                     60.0,
                     0.1,
                     ggraphics::DrawMode::fill(),
                     ggraphics::Color::from_rgba_u32(0x2020ff80),
-		);
-		circle.add_to_builder(&mut builder);
+                );
+                circle.add_to_builder(&mut builder);
             }
             Some(builder.build(ctx).unwrap())
-	} else {
-	    None
-	}
+        } else {
+            None
+        }
     }
 }
 
