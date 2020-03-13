@@ -42,7 +42,7 @@ impl CopyingScene {
             table_frame: TableFrame::new(
                 game_data,
 		numeric::Point2f::new(200.0, 200.0),
-                FrameData::new(vec![100.0, 100.0], vec![100.0, 100.0]),
+                FrameData::new(vec![64.0, 320.0], vec![64.0, 64.0, 64.0, 64.0, 64.0, 64.0, 64.0]),
                 0,
             ),
         }
@@ -121,6 +121,11 @@ impl SceneManager for CopyingScene {
         self.mouse_info
             .set_last_dragged(button, point, self.get_current_clock());
         self.mouse_info.update_dragging(button, true);
+
+	//println!("grid_position: {}", self.table_frame.get_grid_position(point));
+	let pos = self.table_frame.get_grid_position(point);
+	let dest = self.table_frame.get_position();
+	println!("grid_position: {}", self.table_frame.get_grid_topleft(pos, numeric::Vector2f::new(dest.x, dest.y)));
     }
 
     fn mouse_button_up_event(

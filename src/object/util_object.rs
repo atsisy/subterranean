@@ -64,12 +64,134 @@ impl TableFrame {
         table_frame
     }
 
+    fn real_height(&self) -> f32 {
+	let tile_size = self.tile_batch.get_tile_size();
+	self.frame_data.height() + (((self.frame_data.each_cols_size.len() + 1) as u32 * tile_size.y) as f32)
+    }
+
+    fn real_width(&self) -> f32 {
+	let tile_size = self.tile_batch.get_tile_size();
+	self.frame_data.width() + (((self.frame_data.each_rows_size.len() + 1) as u32 * tile_size.x) as f32)
+    }
+    
+    pub fn get_grid_position(&self, point: numeric::Point2f) -> numeric::Vector2u {
+	let frame_position = self.get_position();
+	let rpoint = numeric::Point2f::new(point.x - frame_position.x, point.y - frame_position.y);
+	let mut remain = rpoint;
+	let mut grid_position = numeric::Vector2u::new(0, 0);
+	let tile_size = self.tile_batch.get_tile_size();
+
+	for size in &self.frame_data.each_rows_size {
+	    remain.x -= size + (tile_size.x as f32 * 1.5);
+	    if remain.x < 0.0 {
+		break;
+	    }
+	    grid_position.x += 1;
+	}
+
+	for size in &self.frame_data.each_cols_size {
+	    remain.y -= size + (tile_size.y as f32 * 1.5);
+	    if remain.y < 0.0 {
+		break;
+	    }
+	    grid_position.y += 1;
+	}
+
+	grid_position
+    }
+
+    pub fn get_grid_topleft(&self, grid_position: numeric::Vector2u, offset: numeric::Vector2f) -> numeric::Point2f {
+	let mut remain_grid_position = grid_position;
+	let mut top_left = numeric::Point2f::new(0.0, 0.0);
+	let tile_size = self.tile_batch.get_tile_size();
+
+	for size in &self.frame_data.each_rows_size {
+	    top_left.x += tile_size.x as f32;
+	    if remain_grid_position.x == 0 {
+		break;
+	    }
+	    top_left.x += size;
+	    remain_grid_position.x -= 1;
+	}
+
+	for size in &self.frame_data.each_cols_size {
+	    top_left.y += tile_size.y as f32;
+	    if remain_grid_position.y == 0 {
+		break;
+	    }
+	    top_left.y += size;
+	    remain_grid_position.y -= 1;
+	}
+
+	top_left + offset
+    }
+
+    fn stroke_vline_batch(&mut self, begin: numeric::Point2f) {
+	let tile_size = self.tile_batch.get_tile_size();
+	let height = self.real_height();
+
+	let mut position = begin;
+	for _ in 2..(height / tile_size.y as f32 + 0.5) as usize {
+	    position.y += tile_size.y as f32;
+            self.tile_batch.add_batch_tile_position(
+                numeric::Vector2u::new(3, 0),
+                position,
+                numeric::Vector2f::new(1.0, 1.0),
+                ggraphics::Color::from_rgb_u32(0xffffffff),
+            );
+        }
+
+	self.tile_batch.add_batch_tile_position(
+            numeric::Vector2u::new(3, 1),
+	    begin,
+            numeric::Vector2f::new(1.0, 1.0),
+            ggraphics::Color::from_rgb_u32(0xffffffff),
+        );
+
+	self.tile_batch.add_batch_tile_position(
+            numeric::Vector2u::new(3, 2),
+	    numeric::Point2f::new(begin.x, begin.y + height - tile_size.y as f32),
+            numeric::Vector2f::new(1.0, 1.0),
+            ggraphics::Color::from_rgb_u32(0xffffffff),
+        );
+    }
+
+    fn stroke_hline_batch(&mut self, begin: numeric::Point2f) {
+	let tile_size = self.tile_batch.get_tile_size();
+	let width = self.real_width();
+
+	let mut position = begin;
+	for _ in 2..(width / tile_size.y as f32 + 0.5) as usize {
+	    position.x += tile_size.x as f32;
+            self.tile_batch.add_batch_tile_position(
+                numeric::Vector2u::new(4, 0),
+                position,
+                numeric::Vector2f::new(1.0, 1.0),
+                ggraphics::Color::from_rgb_u32(0xffffffff),
+            );
+        }
+
+	self.tile_batch.add_batch_tile_position(
+            numeric::Vector2u::new(4, 1),
+	    begin,
+            numeric::Vector2f::new(1.0, 1.0),
+            ggraphics::Color::from_rgb_u32(0xffffffff),
+        );
+
+	self.tile_batch.add_batch_tile_position(
+            numeric::Vector2u::new(4, 2),
+	    numeric::Point2f::new(begin.x + width - tile_size.y as f32, begin.y),
+            numeric::Vector2f::new(1.0, 1.0),
+            ggraphics::Color::from_rgb_u32(0xffffffff),
+        );
+    }
+
     pub fn update_tile_batch(&mut self) {
         self.tile_batch.clear_batch();
 
-        let width = self.frame_data.width();
-        let height = self.frame_data.height();
         let tile_size = self.tile_batch.get_tile_size();
+	let width = self.real_width();
+	let height = self.real_height();
 
         let mut top_dest_pos = numeric::Point2f::new(tile_size.x as f32, 0.0);
         let mut bottom_dest_pos = numeric::Point2f::new(tile_size.x as f32, height - 16.0);
@@ -82,30 +204,26 @@ impl TableFrame {
             );
 
             self.tile_batch.add_batch_tile_position(
-                numeric::Vector2u::new(1, 0),
+                numeric::Vector2u::new(1, 2),
                 bottom_dest_pos,
                 numeric::Vector2f::new(1.0, 1.0),
                 ggraphics::Color::from_rgb_u32(0xffffffff),
             );
             top_dest_pos.x += tile_size.x as f32;
             bottom_dest_pos.x += tile_size.x as f32;
-
-            println!("{}:{}", top_dest_pos.x, top_dest_pos.y);
-            println!("{}:{}", bottom_dest_pos.x, bottom_dest_pos.y);
         }
-
+	
         let mut left_dest_pos = numeric::Point2f::new(0.0, tile_size.y as f32);
         let mut right_dest_pos = numeric::Point2f::new(width - 16.0, tile_size.y as f32);
-        for _ in 2..(width / tile_size.x as f32 + 0.5) as usize {
+        for _ in 2..(height / tile_size.y as f32 + 0.5) as usize {
             self.tile_batch.add_batch_tile_position(
                 numeric::Vector2u::new(0, 1),
-                left_dest_pos,
-                numeric::Vector2f::new(1.0, 1.0),
+                left_dest_pos,            numeric::Vector2f::new(1.0, 1.0),
                 ggraphics::Color::from_rgb_u32(0xffffffff),
             );
 
             self.tile_batch.add_batch_tile_position(
-                numeric::Vector2u::new(0, 1),
+                numeric::Vector2u::new(2, 1),
                 right_dest_pos,
                 numeric::Vector2f::new(1.0, 1.0),
                 ggraphics::Color::from_rgb_u32(0xffffffff),
@@ -141,6 +259,19 @@ impl TableFrame {
             numeric::Vector2f::new(1.0, 1.0),
             ggraphics::Color::from_rgb_u32(0xffffffff),
         );
+
+	let mut position = numeric::Point2f::new(0.0, 0.0);
+	for i in 0..self.frame_data.each_rows_size.len() - 1 {
+	    position.x += self.frame_data.each_rows_size.get(i).unwrap() + tile_size.x as f32;
+	    self.stroke_vline_batch(position);
+	}
+
+	let mut position = numeric::Point2f::new(0.0, 0.0);
+	for i in 0..self.frame_data.each_cols_size.len() - 1 {
+	    position.y += self.frame_data.each_cols_size.get(i).unwrap() + tile_size.y as f32;
+	    self.stroke_hline_batch(position);
+	}
+
     }
 }
 
