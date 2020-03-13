@@ -16,6 +16,7 @@ use torifune::numeric;
 
 use crate::core::BookInformation;
 use crate::object::move_fn;
+use crate::object::util_object::*;
 
 use super::Clickable;
 use crate::core::{FontID, GameData, TextureID};
@@ -503,6 +504,7 @@ impl OnDesk for OnDeskTexture {
 
 pub struct BorrowingPaper {
     title: SimpleText,
+    table_frame: TableFrame,
     borrowing: Vec<SimpleText>,
     book_head: SimpleText,
     borrower: SimpleText,
@@ -522,6 +524,13 @@ impl BorrowingPaper {
         t: Clock,
     ) -> Self {
         let mut pos = numeric::Point2f::new(210.0, 370.0);
+        let table_frame = TableFrame::new(
+            game_data,
+            numeric::Point2f::new(200.0, 50.0),
+            FrameData::new(vec![500.0, 64.0], vec![64.0; 5]),
+	    numeric::Vector2f::new(0.1, 0.1),
+            0,
+        );
         let borrowing = info
             .borrowing
             .iter()
@@ -652,6 +661,7 @@ impl BorrowingPaper {
 
         BorrowingPaper {
             title: title_text,
+            table_frame: table_frame,
             borrower: borrower,
             book_head: book_head,
             paper_texture: paper_texture,
@@ -693,6 +703,7 @@ impl DrawableComponent for BorrowingPaper {
         if self.is_visible() {
             sub_screen::stack_screen(ctx, &self.canvas);
 
+            self.table_frame.draw(ctx)?;
             self.paper_texture.draw(ctx)?;
             self.title.draw(ctx)?;
             self.book_head.draw(ctx)?;
@@ -1002,6 +1013,7 @@ impl OnDesk for CopyingRequestPaper {
 
 pub struct BorrowingRecordBookPage {
     raw_info: BorrowingInformation,
+    table_frame: TableFrame,
     borrow_book: Vec<VerticalText>,
     book_head: VerticalText,
     borrower: VerticalText,
@@ -1021,6 +1033,13 @@ impl BorrowingRecordBookPage {
         t: Clock,
     ) -> Self {
         let mut pos = numeric::Point2f::new(rect.w - 40.0, 30.0);
+        let table_frame = TableFrame::new(
+            game_data,
+            numeric::Point2f::new(0.0, 0.0),
+            FrameData::new(vec![500.0, 64.0], vec![64.0; 5]),
+	    numeric::Vector2f::new(0.1, 0.1),
+            0,
+        );
 
         let borrower = VerticalText::new(
             format!("借りた人　{}", info.borrower),
@@ -1136,6 +1155,7 @@ impl BorrowingRecordBookPage {
                 info.borrow_date,
                 info.return_date,
             ),
+            table_frame: table_frame,
             borrow_book: borrowing,
             borrower: borrower,
             book_head: book_head,
@@ -1154,6 +1174,13 @@ impl BorrowingRecordBookPage {
         t: Clock,
     ) -> Self {
         let mut pos = numeric::Point2f::new(rect.w - 40.0, 30.0);
+        let table_frame = TableFrame::new(
+            game_data,
+            numeric::Point2f::new(0.0, 0.0),
+            FrameData::new(vec![500.0, 64.0], vec![64.0; 5]),
+	    numeric::Vector2f::new(0.1, 0.1),
+            0,
+        );
 
         let borrower = VerticalText::new(
             "借りた人　".to_string(),
@@ -1248,6 +1275,7 @@ impl BorrowingRecordBookPage {
                 GensoDate::new_empty(),
                 GensoDate::new_empty(),
             ),
+            table_frame: table_frame,
             borrow_book: borrowing,
             borrower: borrower,
             book_head: book_head,
@@ -1294,6 +1322,7 @@ impl DrawableComponent for BorrowingRecordBookPage {
             sub_screen::stack_screen(ctx, &self.canvas);
 
             self.paper_texture.draw(ctx)?;
+            self.table_frame.draw(ctx)?;
             self.book_head.draw(ctx)?;
             self.borrower.draw(ctx)?;
             self.borrow_date.draw(ctx)?;

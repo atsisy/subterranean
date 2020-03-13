@@ -43,6 +43,7 @@ impl CopyingScene {
                 game_data,
 		numeric::Point2f::new(200.0, 200.0),
                 FrameData::new(vec![64.0, 320.0], vec![64.0, 64.0, 64.0, 64.0, 64.0, 64.0, 64.0]),
+		numeric::Vector2f::new(0.2, 0.2),
                 0,
             ),
         }
