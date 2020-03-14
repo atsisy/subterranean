@@ -31,6 +31,7 @@ pub struct TaskTable {
     sight: SuzuMiniSight,
     desk: DeskObjects,
     goods: Goods,
+    staging_object: Option<TaskTableStagingObject>,
     shelving_box: ShelvingBookBox,
     hold_data: HoldData,
 }
@@ -56,23 +57,19 @@ impl TaskTable {
                 numeric::Vector2f::new(0.1, 0.1),
                 0.0,
                 -1,
-            ))),
+            ), OnDeskType::Texture)),
             Box::new(OnDeskTexture::new(UniTexture::new(
                 game_data.ref_texture(TextureID::LotusPink),
                 numeric::Point2f::new(0.0, 0.0),
                 numeric::Vector2f::new(0.1, 0.1),
                 0.0,
                 -1,
-            ))),
+            ), OnDeskType::Texture)),
             1,
             DeskObjectType::SuzunaObject,
             t,
         ));
 
-        let mut record_book = Box::new(BorrowingRecordBook::new(ggraphics::Rect::new(
-            0.0, 0.0, 400.0, 290.0,
-        )));
-        record_book.add_empty_page(ctx, game_data, 0);
         let mut record_book = DeskObject::new(
             Box::new(OnDeskTexture::new(UniTexture::new(
                 game_data.ref_texture(TextureID::Chobo1),
@@ -80,8 +77,14 @@ impl TaskTable {
                 numeric::Vector2f::new(0.2, 0.2),
                 0.0,
                 -1,
-            ))),
-            record_book,
+            ), OnDeskType::BorrowingRecordBook)),
+	    Box::new(OnDeskTexture::new(UniTexture::new(
+                game_data.ref_texture(TextureID::Chobo1),
+                numeric::Point2f::new(0.0, 0.0),
+                numeric::Vector2f::new(0.5, 0.5),
+                0.0,
+                -1,
+            ), OnDeskType::BorrowingRecordBook)),
             0,
             DeskObjectType::BorrowRecordBook,
             t,
@@ -96,6 +99,7 @@ impl TaskTable {
             sight: sight,
             desk: desk,
             goods: Goods::new(ctx, game_data, goods_rect),
+	    staging_object: None,
             shelving_box: shelving_box,
             hold_data: HoldData::None,
         }
@@ -106,14 +110,23 @@ impl TaskTable {
         self.desk.select_dragging_object(ctx, rpoint);
     }
 
+    fn check_staging_object_ready(&mut self, ctx: &mut ggez::Context, game_data: &GameData, t: Clock) {
+	let maybe_staging_object = self.desk.check_staging_object(ctx, game_data, t);
+	if maybe_staging_object.is_some() {
+	    self.staging_object = maybe_staging_object;
+	}
+    }
+
     pub fn double_click_handler(
         &mut self,
         ctx: &mut ggez::Context,
         point: numeric::Point2f,
         game_data: &GameData,
+	t: Clock
     ) {
         let rpoint = self.canvas.relative_point(point);
         self.desk.double_click_handler(ctx, rpoint, game_data);
+	self.check_staging_object_ready(ctx, game_data, t);
     }
 
     pub fn dragging_handler(&mut self, point: numeric::Point2f, last: numeric::Point2f) {
@@ -434,7 +447,7 @@ impl TaskTable {
                 numeric::Vector2f::new(0.1, 0.1),
                 0.0,
                 0,
-            ))),
+            ), OnDeskType::Texture)),
             Box::new(CopyingRequestPaper::new(
                 ctx,
                 ggraphics::Rect::new(0.0, 0.0, 420.0, 350.0),
@@ -543,6 +556,10 @@ impl DrawableComponent for TaskTable {
             self.desk.draw(ctx).unwrap();
             self.goods.draw(ctx).unwrap();
             self.shelving_box.draw(ctx).unwrap();
+
+	    if let Some(staging_object) = self.staging_object.as_mut() {
+		staging_object.draw(ctx)?;
+	    }
 
             sub_screen::pop_screen(ctx);
             self.canvas.draw(ctx).unwrap();

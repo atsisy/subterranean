@@ -24,7 +24,7 @@ pub fn create_dobj_random(
             numeric::Vector2f::new(0.1, 0.1),
             0.0,
             0,
-        ))),
+        ), OnDeskType::Texture)),
         Box::new(CopyingRequestPaper::new(
             ctx,
             ggraphics::Rect::new(0.0, 0.0, 420.0, 350.0),
@@ -53,7 +53,7 @@ pub fn create_dobj_book_random(
             numeric::Vector2f::new(0.1, 0.1),
             0.0,
             0,
-        ))),
+        ), OnDeskType::Book)),
         Box::new(OnDeskBook::new(
             ctx,
             game_data,

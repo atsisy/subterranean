@@ -13,7 +13,7 @@ use torifune::graphics::object::*;
 use torifune::graphics::*;
 use torifune::impl_drawable_object_for_wrapped;
 use torifune::impl_texture_object_for_wrapped;
-use torifune::numeric;
+use torifune::{debug, numeric};
 
 use crate::object::{effect, move_fn};
 use crate::scene::*;
@@ -23,11 +23,58 @@ use crate::core::{FontID, GameData, TextureID};
 
 use super::tt_sub_component::*;
 
+
+pub enum TaskTableStagingObject {
+    BorrowingRecordBook(BorrowingRecordBook),
+}
+
+impl DrawableComponent for TaskTableStagingObject {
+    fn draw(&mut self, ctx: &mut ggez::Context) -> ggez::GameResult<()> {
+	match self {
+	    TaskTableStagingObject::BorrowingRecordBook(p) => p.draw(ctx).unwrap(),
+	}
+
+	Ok(())
+    }
+    
+    fn hide(&mut self) {
+	match self {
+	    TaskTableStagingObject::BorrowingRecordBook(p) => p.hide(),
+	}
+    }
+    
+    fn appear(&mut self) {
+	match self {
+	    TaskTableStagingObject::BorrowingRecordBook(p) => p.appear(),
+	}
+    }
+    
+    fn is_visible(&self) -> bool {
+	match self {
+	    TaskTableStagingObject::BorrowingRecordBook(p) => p.is_visible(),
+	}
+    }
+    
+    fn set_drawing_depth(&mut self, depth: i8) {
+	match self {
+	    TaskTableStagingObject::BorrowingRecordBook(p) => p.set_drawing_depth(depth),
+	}
+    }
+    
+    fn get_drawing_depth(&self) -> i8 {
+	match self {
+	    TaskTableStagingObject::BorrowingRecordBook(p) => p.get_drawing_depth(),
+	}
+    }
+    
+}
+
 pub struct DeskObjects {
     pub canvas: SubScreen,
     pub desk_objects: DeskObjectContainer,
     pub dragging: Option<DeskObject>,
     pub table_texture: SimpleObject,
+    last_double_clicked: Option<OnDeskType>,
 }
 
 impl DeskObjects {
@@ -57,6 +104,7 @@ impl DeskObjects {
                 ),
                 Vec::new(),
             ),
+	    last_double_clicked: None,
         }
     }
 
@@ -195,24 +243,47 @@ impl DeskObjects {
         {
             if obj.get_object().get_drawing_area(ctx).contains(rpoint) {
                 click_flag = true;
+		self.last_double_clicked = Some(obj.get_object().ref_wrapped_object().ref_wrapped_object().get_type());
                 break;
             }
         }
 
         if click_flag {
-            /*
-            self.desk_objects.add(
-                Box::new(CopyingRequestPaper::new(ctx, ggraphics::Rect::new(rpoint.x, rpoint.y, 420.0, 350.0), TextureID::Paper2,
-                                                  &CopyingRequestInformation::new("テスト本1".to_string(),
-                                                                                  "霧雨魔里沙".to_string(),
-                                                                                  GensoDate::new(128, 12, 8),
-                                                                                  GensoDate::new(128, 12, 8),
-                                                                                  212),
-                                                  game_data, 0))
-            );
-            */
             self.desk_objects.sort_with_depth();
         }
+    }
+
+    ///
+    /// 全画面に表示するオブジェクトが用意されているか確認するメソッド
+    /// このとき、全画面に表示する予定のオブジェクトがあれば、返り値としてそれを返す
+    ///
+    pub fn check_staging_object(&mut self, ctx: &mut ggez::Context, game_data: &GameData, t: Clock)
+				-> Option<TaskTableStagingObject>
+    {
+	// 表示する予定がある
+	if self.last_double_clicked.is_some() {
+
+	    // 表示するオブジェクトの種類を得る
+	    let stageing_object = std::mem::replace(&mut self.last_double_clicked, None).unwrap();
+
+	    // 種類ごとに表示するオブジェクトを生成
+	    match stageing_object {
+		OnDeskType::BorrowingRecordBook => {
+		    let mut record_book = BorrowingRecordBook::new(
+			ggraphics::Rect::new(
+			    150.0, 100.0, 1000.0, 550.0,
+			));
+		    record_book.add_empty_page(ctx, game_data, t);
+		    Some(TaskTableStagingObject::BorrowingRecordBook(record_book))
+		},
+		_ => {
+		    debug::debug_screen_push_text("not implement!!");
+		    None
+		},
+	    }
+	} else {
+	    None
+	}
     }
 
     pub fn add_object(&mut self, obj: DeskObject) {
@@ -497,6 +568,10 @@ impl OnDesk for TaskSilhouette {
         } else {
             HoldData::None
         }
+    }
+    
+    fn get_type(&self) -> OnDeskType {
+	OnDeskType::Silhouette
     }
 }
 
@@ -927,6 +1002,10 @@ impl OnDesk for SuzuMiniSightSilhouette {
         } else {
             HoldData::None
         }
+    }
+
+    fn get_type(&self) -> OnDeskType {
+	OnDeskType::Silhouette
     }
 }
 

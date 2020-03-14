@@ -156,6 +156,16 @@ pub enum HoldData {
     None,
 }
 
+#[derive(Clone, Copy)]
+pub enum OnDeskType {
+    Book = 0,
+    BorrowingRecordBook,
+    CopyingPaper,
+    Silhouette,
+    Goods,
+    Texture,
+}
+
 pub trait OnDesk: TextureObject + Clickable {
     fn ondesk_whose(&self) -> i32;
 
@@ -164,6 +174,8 @@ pub trait OnDesk: TextureObject + Clickable {
     fn insert_data(&mut self, _: &mut ggez::Context, _: numeric::Point2f, _: &HoldData) -> bool {
         false
     }
+
+    fn get_type(&self) -> OnDeskType;
 }
 
 pub struct DrawableCalendar {
@@ -308,15 +320,23 @@ impl OnDesk for DrawableCalendar {
     fn click_data(&self, _: &mut ggez::Context, _: numeric::Point2f) -> HoldData {
         HoldData::Date(self.date_data)
     }
+
+    fn get_type(&self) -> OnDeskType {
+	OnDeskType::Goods
+    }
 }
 
 pub struct OnDeskTexture {
     texture: UniTexture,
+    on_desk_type: OnDeskType,
 }
 
 impl OnDeskTexture {
-    pub fn new(obj: UniTexture) -> Self {
-        OnDeskTexture { texture: obj }
+    pub fn new(obj: UniTexture, on_desk_type: OnDeskType) -> Self {
+        OnDeskTexture {
+	    texture: obj,
+	    on_desk_type: on_desk_type,
+	}
     }
 }
 
@@ -370,6 +390,22 @@ impl DrawableObject for OnDeskTexture {
 
 impl TextureObject for OnDeskTexture {
     impl_texture_object_for_wrapped! {texture}
+}
+
+impl Clickable for OnDeskTexture {}
+
+impl OnDesk for OnDeskTexture {
+    fn ondesk_whose(&self) -> i32 {
+        0
+    }
+
+    fn click_data(&self, _: &mut ggez::Context, _: numeric::Point2f) -> HoldData {
+        HoldData::None
+    }
+
+    fn get_type(&self) -> OnDeskType {
+	self.on_desk_type
+    }
 }
 
 pub struct OnDeskBook {
@@ -489,17 +525,9 @@ impl OnDesk for OnDeskBook {
     fn click_data(&self, _: &mut ggez::Context, _: numeric::Point2f) -> HoldData {
         return HoldData::BookName(self.info.get_name().to_string());
     }
-}
 
-impl Clickable for OnDeskTexture {}
-
-impl OnDesk for OnDeskTexture {
-    fn ondesk_whose(&self) -> i32 {
-        0
-    }
-
-    fn click_data(&self, _: &mut ggez::Context, _: numeric::Point2f) -> HoldData {
-        HoldData::None
+    fn get_type(&self) -> OnDeskType {
+	OnDeskType::Book
     }
 }
 
@@ -1010,6 +1038,10 @@ impl OnDesk for CopyingRequestPaper {
 
         HoldData::None
     }
+
+    fn get_type(&self) -> OnDeskType {
+	OnDeskType::CopyingPaper
+    }
 }
 
 pub struct BorrowingRecordBookPage {
@@ -1018,6 +1050,7 @@ pub struct BorrowingRecordBookPage {
     books_table: TableFrame,
     borrow_book: Vec<VerticalText>,
     book_head: VerticalText,
+    book_status: VerticalText,
     borrower: VerticalText,
     borrow_date: VerticalText,
     return_date: VerticalText,
@@ -1059,7 +1092,7 @@ impl BorrowingRecordBookPage {
 		    ctx,
 		    roundup2f!(
 			page.books_table.get_center_of(numeric::Vector2u::new(5 - i as u32, 0), page.books_table.get_position())
-		    ),  
+		    ),
 		);
 		
 		vtext
@@ -1076,24 +1109,23 @@ impl BorrowingRecordBookPage {
         game_data: &GameData,
         t: Clock,
     ) -> Self {
-        let mut pos = numeric::Point2f::new(rect.w - 40.0, 30.0);
         let table_frame = TableFrame::new(
             game_data,
-            numeric::Point2f::new(rect.w - 140.0, 30.0),
-            FrameData::new(vec![96.0, 150.0], vec![32.0; 3]),
+            numeric::Point2f::new(rect.w - 200.0, 40.0),
+            FrameData::new(vec![150.0, 300.0], vec![40.0; 3]),
             numeric::Vector2f::new(0.2, 0.2),
             0,
         );
 
         let mut borrower = VerticalText::new(
-            "借りた人　".to_string(),
-            pos,
+            "借りた人".to_string(),
+            numeric::Point2f::new(0.0, 0.0),
             numeric::Vector2f::new(1.0, 1.0),
             0.0,
             0,
             FontInformation::new(
                 game_data.get_font(FontID::JpFude1),
-                numeric::Vector2f::new(16.0, 16.0),
+                numeric::Vector2f::new(24.0, 24.0),
                 ggraphics::Color::from_rgba_u32(0x000000ff),
             ),
         );
@@ -1106,13 +1138,13 @@ impl BorrowingRecordBookPage {
 
         let mut borrow_date = VerticalText::new(
             "貸出日".to_string(),
-            numeric::Point2f::new(100.0, 50.0),
+	    numeric::Point2f::new(0.0, 0.0),
             numeric::Vector2f::new(1.0, 1.0),
             0.0,
             0,
             FontInformation::new(
                 game_data.get_font(FontID::JpFude1),
-                numeric::Vector2f::new(14.0, 14.0),
+                numeric::Vector2f::new(24.0, 24.0),
                 ggraphics::Color::from_rgba_u32(0x000000ff),
             ),
         );
@@ -1125,17 +1157,16 @@ impl BorrowingRecordBookPage {
 
 	let mut return_date = VerticalText::new(
             "返却期限".to_string(),
-            numeric::Point2f::new(70.0, 50.0),
+            numeric::Point2f::new(0.0, 0.0),
             numeric::Vector2f::new(1.0, 1.0),
             0.0,
             0,
             FontInformation::new(
                 game_data.get_font(FontID::JpFude1),
-                numeric::Vector2f::new(14.0, 14.0),
+                numeric::Vector2f::new(24.0, 24.0),
                 ggraphics::Color::from_rgba_u32(0x000000ff),
             ),
         );
-
 	return_date.make_center(
 	    ctx,
             roundup2f!(
@@ -1143,25 +1174,50 @@ impl BorrowingRecordBookPage {
             ),
         );
 
-        let book_head = VerticalText::new(
-            "貸出本".to_string(),
-            pos,
+	let books_table = TableFrame::new(
+            game_data,
+            numeric::Point2f::new(rect.w - 550.0, 30.0),
+            FrameData::new(vec![380.0, 70.0], vec![40.0; 6]),
+            numeric::Vector2f::new(0.2, 0.2),
+            0,
+        );
+
+	let mut book_head = VerticalText::new(
+            "貸出本名称".to_string(),
+	    numeric::Point2f::new(0.0, 0.0),
             numeric::Vector2f::new(1.0, 1.0),
             0.0,
             0,
             FontInformation::new(
                 game_data.get_font(FontID::JpFude1),
-                numeric::Vector2f::new(18.0, 18.0),
+                numeric::Vector2f::new(24.0, 24.0),
                 ggraphics::Color::from_rgba_u32(0x000000ff),
             ),
         );
+	book_head.make_center(
+	    ctx,
+            roundup2f!(
+                books_table.get_center_of(numeric::Vector2u::new(5, 0), books_table.get_position())
+            ),
+        );
 
-	let books_table = TableFrame::new(
-            game_data,
-            numeric::Point2f::new(rect.w - 400.0, 30.0),
-            FrameData::new(vec![190.0, 56.0], vec![32.0; 6]),
-            numeric::Vector2f::new(0.2, 0.2),
+	let mut book_status = VerticalText::new(
+            "状態".to_string(),
+	    numeric::Point2f::new(0.0, 0.0),
+            numeric::Vector2f::new(1.0, 1.0),
+            0.0,
             0,
+            FontInformation::new(
+                game_data.get_font(FontID::JpFude1),
+                numeric::Vector2f::new(24.0, 24.0),
+                ggraphics::Color::from_rgba_u32(0x000000ff),
+            ),
+        );
+	book_status.make_center(
+	    ctx,
+            roundup2f!(
+                books_table.get_center_of(numeric::Vector2u::new(5, 1), books_table.get_position())
+            ),
         );
 
         let paper_texture = SimpleObject::new(
@@ -1177,9 +1233,6 @@ impl BorrowingRecordBookPage {
             Vec::new(),
         );
 
-        pos.x -= 30.0;
-
-
         BorrowingRecordBookPage {
             raw_info: BorrowingInformation::new(
                 Vec::new(),
@@ -1192,6 +1245,7 @@ impl BorrowingRecordBookPage {
             borrow_book: Vec::new(),
             borrower: borrower,
             book_head: book_head,
+	    book_status: book_status,
             paper_texture: paper_texture,
             borrow_date: borrow_date,
             return_date: return_date,
@@ -1238,6 +1292,7 @@ impl DrawableComponent for BorrowingRecordBookPage {
             self.info_table.draw(ctx)?;
 	    self.books_table.draw(ctx)?;
             self.book_head.draw(ctx)?;
+	    self.book_status.draw(ctx)?;
             self.borrower.draw(ctx)?;
             self.borrow_date.draw(ctx)?;
             self.return_date.draw(ctx)?;
@@ -1680,6 +1735,10 @@ impl OnDesk for BorrowingRecordBook {
         }
 
         insert_done_flag
+    }
+
+    fn get_type(&self) -> OnDeskType {
+	OnDeskType::BorrowingRecordBook
     }
 }
 
