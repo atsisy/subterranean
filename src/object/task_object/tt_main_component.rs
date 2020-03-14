@@ -1,10 +1,11 @@
+use std::collections::HashMap;
 use std::rc::Rc;
 
 use ggez::graphics as ggraphics;
 use ggez::input as ginput;
 use ginput::mouse::MouseCursor;
 
-use torifune::core::Clock;
+use torifune::core::{Clock, Updatable};
 use torifune::graphics::object::shape;
 use torifune::graphics::object::shape::MeshShape;
 use torifune::graphics::object::sub_screen;
@@ -15,6 +16,7 @@ use torifune::impl_drawable_object_for_wrapped;
 use torifune::impl_texture_object_for_wrapped;
 use torifune::{debug, numeric};
 
+use crate::object::util_object::*;
 use crate::object::{effect, move_fn};
 use crate::scene::*;
 
@@ -23,50 +25,48 @@ use crate::core::{FontID, GameData, TextureID};
 
 use super::tt_sub_component::*;
 
-
 pub enum TaskTableStagingObject {
     BorrowingRecordBook(BorrowingRecordBook),
 }
 
 impl DrawableComponent for TaskTableStagingObject {
     fn draw(&mut self, ctx: &mut ggez::Context) -> ggez::GameResult<()> {
-	match self {
-	    TaskTableStagingObject::BorrowingRecordBook(p) => p.draw(ctx).unwrap(),
-	}
+        match self {
+            TaskTableStagingObject::BorrowingRecordBook(p) => p.draw(ctx).unwrap(),
+        }
 
-	Ok(())
+        Ok(())
     }
-    
+
     fn hide(&mut self) {
-	match self {
-	    TaskTableStagingObject::BorrowingRecordBook(p) => p.hide(),
-	}
+        match self {
+            TaskTableStagingObject::BorrowingRecordBook(p) => p.hide(),
+        }
     }
-    
+
     fn appear(&mut self) {
-	match self {
-	    TaskTableStagingObject::BorrowingRecordBook(p) => p.appear(),
-	}
+        match self {
+            TaskTableStagingObject::BorrowingRecordBook(p) => p.appear(),
+        }
     }
-    
+
     fn is_visible(&self) -> bool {
-	match self {
-	    TaskTableStagingObject::BorrowingRecordBook(p) => p.is_visible(),
-	}
+        match self {
+            TaskTableStagingObject::BorrowingRecordBook(p) => p.is_visible(),
+        }
     }
-    
+
     fn set_drawing_depth(&mut self, depth: i8) {
-	match self {
-	    TaskTableStagingObject::BorrowingRecordBook(p) => p.set_drawing_depth(depth),
-	}
+        match self {
+            TaskTableStagingObject::BorrowingRecordBook(p) => p.set_drawing_depth(depth),
+        }
     }
-    
+
     fn get_drawing_depth(&self) -> i8 {
-	match self {
-	    TaskTableStagingObject::BorrowingRecordBook(p) => p.get_drawing_depth(),
-	}
+        match self {
+            TaskTableStagingObject::BorrowingRecordBook(p) => p.get_drawing_depth(),
+        }
     }
-    
 }
 
 pub struct DeskObjects {
@@ -104,7 +104,7 @@ impl DeskObjects {
                 ),
                 Vec::new(),
             ),
-	    last_double_clicked: None,
+            last_double_clicked: None,
         }
     }
 
@@ -243,7 +243,12 @@ impl DeskObjects {
         {
             if obj.get_object().get_drawing_area(ctx).contains(rpoint) {
                 click_flag = true;
-		self.last_double_clicked = Some(obj.get_object().ref_wrapped_object().ref_wrapped_object().get_type());
+                self.last_double_clicked = Some(
+                    obj.get_object()
+                        .ref_wrapped_object()
+                        .ref_wrapped_object()
+                        .get_type(),
+                );
                 break;
             }
         }
@@ -257,33 +262,33 @@ impl DeskObjects {
     /// 全画面に表示するオブジェクトが用意されているか確認するメソッド
     /// このとき、全画面に表示する予定のオブジェクトがあれば、返り値としてそれを返す
     ///
-    pub fn check_staging_object(&mut self, ctx: &mut ggez::Context, game_data: &GameData, t: Clock)
-				-> Option<TaskTableStagingObject>
-    {
-	// 表示する予定がある
-	if self.last_double_clicked.is_some() {
+    pub fn check_staging_object(
+        &mut self,
+        ctx: &mut ggez::Context,
+        game_data: &GameData,
+        t: Clock,
+    ) -> Option<TaskTableStagingObject> {
+        // 表示する予定がある
+        if self.last_double_clicked.is_some() {
+            // 表示するオブジェクトの種類を得る
+            let stageing_object = std::mem::replace(&mut self.last_double_clicked, None).unwrap();
 
-	    // 表示するオブジェクトの種類を得る
-	    let stageing_object = std::mem::replace(&mut self.last_double_clicked, None).unwrap();
-
-	    // 種類ごとに表示するオブジェクトを生成
-	    match stageing_object {
-		OnDeskType::BorrowingRecordBook => {
-		    let mut record_book = BorrowingRecordBook::new(
-			ggraphics::Rect::new(
-			    150.0, 100.0, 1000.0, 550.0,
-			));
-		    record_book.add_empty_page(ctx, game_data, t);
-		    Some(TaskTableStagingObject::BorrowingRecordBook(record_book))
-		},
-		_ => {
-		    debug::debug_screen_push_text("not implement!!");
-		    None
-		},
-	    }
-	} else {
-	    None
-	}
+            // 種類ごとに表示するオブジェクトを生成
+            match stageing_object {
+                OnDeskType::BorrowingRecordBook => {
+                    let mut record_book =
+                        BorrowingRecordBook::new(ggraphics::Rect::new(150.0, 100.0, 1000.0, 550.0));
+                    record_book.add_empty_page(ctx, game_data, t);
+                    Some(TaskTableStagingObject::BorrowingRecordBook(record_book))
+                }
+                _ => {
+                    debug::debug_screen_push_text("not implement!!");
+                    None
+                }
+            }
+        } else {
+            None
+        }
     }
 
     pub fn add_object(&mut self, obj: DeskObject) {
@@ -442,6 +447,269 @@ impl DrawableObject for DeskObjects {
     }
 }
 
+pub struct HoldDataVText {
+    data: HoldData,
+    vtext: VerticalText,
+}
+
+impl HoldDataVText {
+    pub fn new(
+        hold_data: HoldData,
+        position: numeric::Point2f,
+        scale: numeric::Vector2f,
+        drawing_depth: i8,
+        font_info: FontInformation,
+    ) -> Self {
+        HoldDataVText {
+            vtext: VerticalText::new(
+                hold_data.to_string(),
+                position,
+                scale,
+                0.0,
+                drawing_depth,
+                font_info,
+            ),
+            data: hold_data,
+        }
+    }
+}
+
+impl DrawableComponent for HoldDataVText {
+    fn draw(&mut self, ctx: &mut ggez::Context) -> ggez::GameResult<()> {
+        if self.vtext.is_visible() {
+            self.vtext.draw(ctx).unwrap();
+        }
+
+        Ok(())
+    }
+
+    fn hide(&mut self) {
+        self.vtext.hide();
+    }
+    fn appear(&mut self) {
+        self.vtext.appear();
+    }
+
+    fn is_visible(&self) -> bool {
+        self.vtext.is_visible()
+    }
+
+    fn set_drawing_depth(&mut self, depth: i8) {
+        self.vtext.set_drawing_depth(depth);
+    }
+
+    fn get_drawing_depth(&self) -> i8 {
+        self.vtext.get_drawing_depth()
+    }
+}
+
+impl DrawableObject for HoldDataVText {
+    impl_drawable_object_for_wrapped! {vtext}
+}
+
+impl TextureObject for HoldDataVText {
+    impl_texture_object_for_wrapped! {vtext}
+}
+
+pub struct CustomerInformationUI {
+    canvas: MovableWrap<SubScreen>,
+    table_frame: TableFrame,
+    head_text: MovableText,
+    info_hash_map: HashMap<numeric::Vector2u, HoldDataVText>,
+    ui_size: numeric::Vector2f,
+    default_position: numeric::Point2f,
+    now_appear: bool,
+}
+
+impl CustomerInformationUI {
+    pub fn new(
+        ctx: &mut ggez::Context,
+        game_data: &GameData,
+        rect: numeric::Rect,
+        t: Clock,
+    ) -> Self {
+        let table_frame = TableFrame::new(
+            game_data,
+            numeric::Point2f::new(50.0, 80.0),
+            FrameData::new(vec![150.0, 150.0], vec![40.0; 4]),
+            numeric::Vector2f::new(0.2, 0.2),
+            0,
+        );
+
+        let head_text = MovableText::new(
+            "報情客御".to_string(),
+            numeric::Point2f::new(100.0, 30.0),
+            numeric::Vector2f::new(1.0, 1.0),
+            0.0,
+            0,
+            None,
+            FontInformation::new(
+                game_data.get_font(FontID::JpFude1),
+                numeric::Vector2f::new(28.0, 28.0),
+                ggraphics::Color::from_rgba_u32(0xff),
+            ),
+            t,
+        );
+
+        CustomerInformationUI {
+            ui_size: numeric::Vector2f::new(rect.w, rect.h),
+            default_position: numeric::Point2f::new(rect.x, rect.y),
+            canvas: MovableWrap::new(
+                Box::new(SubScreen::new(
+                    ctx,
+                    rect,
+                    0,
+                    ggraphics::Color::from_rgba_u32(0xffffffff),
+                )),
+                None,
+                t,
+            ),
+            info_hash_map: HashMap::new(),
+            table_frame: table_frame,
+            head_text: head_text,
+            now_appear: false,
+        }
+    }
+
+    pub fn slide_toggle(&mut self, t: Clock) {
+        if self.now_appear {
+            self.canvas
+                .override_move_func(move_fn::devide_distance(self.default_position, 0.5), t);
+            self.now_appear = false;
+        } else {
+            self.canvas.override_move_func(
+                move_fn::devide_distance(
+                    numeric::Point2f::new(1366.0 - self.ui_size.x, self.default_position.y),
+                    0.5,
+                ),
+                t,
+            );
+            self.now_appear = true;
+        }
+    }
+
+    pub fn appearing_now(&self) -> bool {
+        self.now_appear
+    }
+
+    pub fn insert_data_in_table(
+        &mut self,
+	ctx: &mut ggez::Context,
+        game_data: &GameData,
+        position: numeric::Vector2u,
+        hold_data: HoldData,
+    ) {
+        let mut hold_data_vtext = HoldDataVText::new(
+            hold_data,
+            numeric::Point2f::new(0.0, 0.0),
+            numeric::Vector2f::new(1.0, 1.0),
+            0,
+            FontInformation::new(
+                game_data.get_font(FontID::JpFude1),
+                numeric::Vector2f::new(24.0, 24.0),
+                ggraphics::Color::from_rgba_u32(0xff),
+            ),
+        );
+
+	hold_data_vtext.make_center(ctx,
+	    self.table_frame.get_center_of(position,
+					   self.table_frame.get_position()));
+	
+        self.info_hash_map.insert(position, hold_data_vtext);
+    }
+
+    pub fn try_insert_hold_data_with_click(
+        &mut self,
+	ctx: &mut ggez::Context,
+        game_data: &GameData,
+        point: numeric::Point2f,
+        hold_data: HoldData,
+    ) -> bool {
+        let rpoint = self.canvas.ref_wrapped_object().relative_point(point);
+        let maybe_position = self.table_frame.get_grid_position(rpoint);
+
+        if let Some(position) = maybe_position {
+            self.insert_data_in_table(ctx, game_data, position, hold_data);
+            true
+        } else {
+            false
+        }
+    }
+
+    pub fn check_data_click(
+        &mut self,
+        ctx: &mut ggez::Context,
+        point: numeric::Point2f,
+    ) -> HoldData {
+        let rpoint = self.canvas.ref_wrapped_object().relative_point(point);
+        let grid_pos = self.table_frame.get_grid_position(point);
+
+        if grid_pos.is_some() && self.info_hash_map.contains_key(&grid_pos.as_ref().unwrap()) {
+            self.info_hash_map
+                .remove(grid_pos.as_ref().unwrap())
+                .unwrap()
+                .data
+                .clone()
+        } else {
+            HoldData::None
+        }
+    }
+}
+
+impl DrawableComponent for CustomerInformationUI {
+    fn draw(&mut self, ctx: &mut ggez::Context) -> ggez::GameResult<()> {
+        if self.is_visible() {
+            sub_screen::stack_screen(ctx, self.canvas.ref_wrapped_object());
+
+            self.table_frame.draw(ctx)?;
+            self.head_text.draw(ctx)?;
+
+	    for (_, customer_info) in &mut self.info_hash_map {
+		customer_info.draw(ctx)?;
+	    }
+
+            sub_screen::pop_screen(ctx);
+            self.canvas.draw(ctx).unwrap();
+        }
+
+        Ok(())
+    }
+
+    fn hide(&mut self) {
+        self.canvas.hide();
+    }
+
+    fn appear(&mut self) {
+        self.canvas.appear()
+    }
+
+    fn is_visible(&self) -> bool {
+        self.canvas.is_visible()
+    }
+
+    fn set_drawing_depth(&mut self, depth: i8) {
+        self.canvas.set_drawing_depth(depth);
+    }
+
+    fn get_drawing_depth(&self) -> i8 {
+        self.canvas.get_drawing_depth()
+    }
+}
+
+impl DrawableObject for CustomerInformationUI {
+    impl_drawable_object_for_wrapped! {canvas}
+}
+
+impl TextureObject for CustomerInformationUI {
+    impl_texture_object_for_wrapped! {canvas}
+}
+
+impl Updatable for CustomerInformationUI {
+    fn update(&mut self, _ctx: &ggez::Context, t: Clock) {
+        self.canvas.move_with_func(t);
+    }
+}
+
 struct TaskSilhouette {
     character: Option<SimpleObject>,
     name: Option<String>,
@@ -569,9 +837,9 @@ impl OnDesk for TaskSilhouette {
             HoldData::None
         }
     }
-    
+
     fn get_type(&self) -> OnDeskType {
-	OnDeskType::Silhouette
+        OnDeskType::Silhouette
     }
 }
 
@@ -1005,7 +1273,7 @@ impl OnDesk for SuzuMiniSightSilhouette {
     }
 
     fn get_type(&self) -> OnDeskType {
-	OnDeskType::Silhouette
+        OnDeskType::Silhouette
     }
 }
 

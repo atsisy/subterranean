@@ -115,7 +115,7 @@ impl TableFrame {
     ///
     /// あるPointが含まれているグリッドの位置を返す
     ///
-    pub fn get_grid_position(&self, point: numeric::Point2f) -> numeric::Vector2u {
+    pub fn get_grid_position(&self, point: numeric::Point2f) -> Option<numeric::Vector2u> {
         let frame_position = self.get_position();
         let rpoint = numeric::Point2f::new(point.x - frame_position.x, point.y - frame_position.y);
         let mut remain = rpoint;
@@ -138,7 +138,13 @@ impl TableFrame {
             grid_position.y += 1;
         }
 
-        grid_position
+        if self.frame_data.each_rows_size.len() > grid_position.x as usize
+            && self.frame_data.each_cols_size.len() > grid_position.y as usize
+        {
+            Some(grid_position)
+        } else {
+            None
+        }
     }
 
     ///

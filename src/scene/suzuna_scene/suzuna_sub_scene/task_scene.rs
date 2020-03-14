@@ -45,7 +45,7 @@ impl TaskScene {
             task_table: TaskTable::new(
                 ctx,
                 game_data,
-                numeric::Rect::new(100.0, 20.0, 1300.0, 750.0),
+                numeric::Rect::new(0.0, 0.0, 1366.0, 768.0),
                 numeric::Rect::new(0.0, 0.0, 800.0, 300.0),
                 numeric::Rect::new(800.0, 0.0, 400.0, 300.0),
                 numeric::Rect::new(0.0, 310.0, 900.0, 500.0),
@@ -162,10 +162,12 @@ impl TaskScene {
 impl SceneManager for TaskScene {
     fn key_down_event(
         &mut self,
-        _ctx: &mut ggez::Context,
+        ctx: &mut ggez::Context,
         _game_data: &GameData,
         vkey: tdev::VirtualKey,
     ) {
+        self.task_table
+            .key_event_handler(ctx, vkey, self.get_current_clock());
         match vkey {
             tdev::VirtualKey::Action1 => {
                 println!("Action1 down!");
@@ -225,7 +227,12 @@ impl SceneManager for TaskScene {
         let info: &MouseActionRecord = &self.mouse_info.last_clicked.get(&button).unwrap();
         if info.point == point {
             if (self.get_current_clock() - info.t) < 20 {
-                self.task_table.double_click_handler(ctx, point, game_data, self.get_current_clock());
+                self.task_table.double_click_handler(
+                    ctx,
+                    point,
+                    game_data,
+                    self.get_current_clock(),
+                );
             }
         }
 

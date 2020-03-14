@@ -9,8 +9,9 @@ use ggez::input as ginput;
 use ginput::mouse::MouseButton;
 use ginput::mouse::MouseCursor;
 
-use torifune::core::Clock;
+use torifune::core::{Clock, Updatable};
 use torifune::debug;
+use torifune::device::{KeyboardEvent, VirtualKey};
 use torifune::graphics::object::sub_screen;
 use torifune::graphics::object::sub_screen::SubScreen;
 use torifune::graphics::object::*;
@@ -31,6 +32,7 @@ pub struct TaskTable {
     sight: SuzuMiniSight,
     desk: DeskObjects,
     goods: Goods,
+    customer_info_ui: CustomerInformationUI,
     staging_object: Option<TaskTableStagingObject>,
     shelving_box: ShelvingBookBox,
     hold_data: HoldData,
@@ -51,40 +53,52 @@ impl TaskTable {
         let mut desk = DeskObjects::new(ctx, game_data, desk_rect);
 
         desk.add_object(DeskObject::new(
-            Box::new(OnDeskTexture::new(UniTexture::new(
-                game_data.ref_texture(TextureID::LotusPink),
-                numeric::Point2f::new(0.0, 0.0),
-                numeric::Vector2f::new(0.1, 0.1),
-                0.0,
-                -1,
-            ), OnDeskType::Texture)),
-            Box::new(OnDeskTexture::new(UniTexture::new(
-                game_data.ref_texture(TextureID::LotusPink),
-                numeric::Point2f::new(0.0, 0.0),
-                numeric::Vector2f::new(0.1, 0.1),
-                0.0,
-                -1,
-            ), OnDeskType::Texture)),
+            Box::new(OnDeskTexture::new(
+                UniTexture::new(
+                    game_data.ref_texture(TextureID::LotusPink),
+                    numeric::Point2f::new(0.0, 0.0),
+                    numeric::Vector2f::new(0.1, 0.1),
+                    0.0,
+                    -1,
+                ),
+                OnDeskType::Texture,
+            )),
+            Box::new(OnDeskTexture::new(
+                UniTexture::new(
+                    game_data.ref_texture(TextureID::LotusPink),
+                    numeric::Point2f::new(0.0, 0.0),
+                    numeric::Vector2f::new(0.1, 0.1),
+                    0.0,
+                    -1,
+                ),
+                OnDeskType::Texture,
+            )),
             1,
             DeskObjectType::SuzunaObject,
             t,
         ));
 
         let mut record_book = DeskObject::new(
-            Box::new(OnDeskTexture::new(UniTexture::new(
-                game_data.ref_texture(TextureID::Chobo1),
-                numeric::Point2f::new(0.0, 0.0),
-                numeric::Vector2f::new(0.2, 0.2),
-                0.0,
-                -1,
-            ), OnDeskType::BorrowingRecordBook)),
-	    Box::new(OnDeskTexture::new(UniTexture::new(
-                game_data.ref_texture(TextureID::Chobo1),
-                numeric::Point2f::new(0.0, 0.0),
-                numeric::Vector2f::new(0.5, 0.5),
-                0.0,
-                -1,
-            ), OnDeskType::BorrowingRecordBook)),
+            Box::new(OnDeskTexture::new(
+                UniTexture::new(
+                    game_data.ref_texture(TextureID::Chobo1),
+                    numeric::Point2f::new(0.0, 0.0),
+                    numeric::Vector2f::new(0.2, 0.2),
+                    0.0,
+                    -1,
+                ),
+                OnDeskType::BorrowingRecordBook,
+            )),
+            Box::new(OnDeskTexture::new(
+                UniTexture::new(
+                    game_data.ref_texture(TextureID::Chobo1),
+                    numeric::Point2f::new(0.0, 0.0),
+                    numeric::Vector2f::new(0.5, 0.5),
+                    0.0,
+                    -1,
+                ),
+                OnDeskType::BorrowingRecordBook,
+            )),
             0,
             DeskObjectType::BorrowRecordBook,
             t,
@@ -99,7 +113,13 @@ impl TaskTable {
             sight: sight,
             desk: desk,
             goods: Goods::new(ctx, game_data, goods_rect),
-	    staging_object: None,
+            customer_info_ui: CustomerInformationUI::new(
+                ctx,
+                game_data,
+                numeric::Rect::new(1300.0, 50.0, 600.0, 400.0),
+                0,
+            ),
+            staging_object: None,
             shelving_box: shelving_box,
             hold_data: HoldData::None,
         }
@@ -110,11 +130,16 @@ impl TaskTable {
         self.desk.select_dragging_object(ctx, rpoint);
     }
 
-    fn check_staging_object_ready(&mut self, ctx: &mut ggez::Context, game_data: &GameData, t: Clock) {
-	let maybe_staging_object = self.desk.check_staging_object(ctx, game_data, t);
-	if maybe_staging_object.is_some() {
-	    self.staging_object = maybe_staging_object;
-	}
+    fn check_staging_object_ready(
+        &mut self,
+        ctx: &mut ggez::Context,
+        game_data: &GameData,
+        t: Clock,
+    ) {
+        let maybe_staging_object = self.desk.check_staging_object(ctx, game_data, t);
+        if maybe_staging_object.is_some() {
+            self.staging_object = maybe_staging_object;
+        }
     }
 
     pub fn double_click_handler(
@@ -122,11 +147,11 @@ impl TaskTable {
         ctx: &mut ggez::Context,
         point: numeric::Point2f,
         game_data: &GameData,
-	t: Clock
+        t: Clock,
     ) {
         let rpoint = self.canvas.relative_point(point);
         self.desk.double_click_handler(ctx, rpoint, game_data);
-	self.check_staging_object_ready(ctx, game_data, t);
+        self.check_staging_object_ready(ctx, game_data, t);
     }
 
     pub fn dragging_handler(&mut self, point: numeric::Point2f, last: numeric::Point2f) {
@@ -324,6 +349,7 @@ impl TaskTable {
         self.desk.update(ctx, t);
         self.shelving_box.update(ctx, t);
         self.check_sight_drop_to_desk(ctx, t);
+        self.customer_info_ui.update(ctx, t);
     }
 
     pub fn finish_customer_event(&mut self, now: Clock) {
@@ -441,13 +467,16 @@ impl TaskTable {
             GensoDate::new(128, 12, 8),
         );
         let paper_obj = DeskObject::new(
-            Box::new(OnDeskTexture::new(UniTexture::new(
-                game_data.ref_texture(TextureID::Paper1),
-                numeric::Point2f::new(0.0, 0.0),
-                numeric::Vector2f::new(0.1, 0.1),
-                0.0,
-                0,
-            ), OnDeskType::Texture)),
+            Box::new(OnDeskTexture::new(
+                UniTexture::new(
+                    game_data.ref_texture(TextureID::Paper1),
+                    numeric::Point2f::new(0.0, 0.0),
+                    numeric::Vector2f::new(0.1, 0.1),
+                    0.0,
+                    0,
+                ),
+                OnDeskType::Texture,
+            )),
             Box::new(CopyingRequestPaper::new(
                 ctx,
                 ggraphics::Rect::new(0.0, 0.0, 420.0, 350.0),
@@ -531,6 +560,9 @@ impl TaskTable {
 
             let clicked_data = self.goods.check_data_click(ctx, point);
             self.update_hold_data_if_some(clicked_data);
+
+            let clicked_data = self.customer_info_ui.check_data_click(ctx, point);
+            self.update_hold_data_if_some(clicked_data);
         } else {
             if self.desk.check_insert_data(ctx, point, &self.hold_data) {
                 self.hold_data = HoldData::None;
@@ -545,6 +577,16 @@ impl TaskTable {
     pub fn get_shelving_box_mut(&mut self) -> &mut ShelvingBookBox {
         &mut self.shelving_box
     }
+
+    /// キーハンドラ
+    pub fn key_event_handler(&mut self, ctx: &mut ggez::Context, vkey: VirtualKey, t: Clock) {
+        match vkey {
+            VirtualKey::Action2 => {
+                self.customer_info_ui.slide_toggle(t);
+            }
+            _ => (),
+        }
+    }
 }
 
 impl DrawableComponent for TaskTable {
@@ -557,9 +599,11 @@ impl DrawableComponent for TaskTable {
             self.goods.draw(ctx).unwrap();
             self.shelving_box.draw(ctx).unwrap();
 
-	    if let Some(staging_object) = self.staging_object.as_mut() {
-		staging_object.draw(ctx)?;
-	    }
+            if let Some(staging_object) = self.staging_object.as_mut() {
+                staging_object.draw(ctx)?;
+            }
+
+            self.customer_info_ui.draw(ctx)?;
 
             sub_screen::pop_screen(ctx);
             self.canvas.draw(ctx).unwrap();
@@ -621,6 +665,17 @@ impl Clickable for TaskTable {
         let rpoint = self.canvas.relative_point(point);
         self.desk
             .button_up_handler(ctx, game_data, t, button, rpoint);
+        if self.hold_data.is_some() && self.customer_info_ui.contains(ctx, point) {
+            let is_inserted = self.customer_info_ui.try_insert_hold_data_with_click(
+		ctx,
+                game_data,
+                point,
+                self.hold_data.clone(),
+            );
+            if is_inserted {
+                self.hold_data = HoldData::None;
+            }
+        }
     }
 
     fn on_click(

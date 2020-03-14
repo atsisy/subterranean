@@ -149,11 +149,23 @@ impl ReturnBookInformation {
 ///
 /// TaskSceneでクリックしたときに取得できるデータ
 ///
+#[derive(Clone)]
 pub enum HoldData {
     BookName(String),
     CustomerName(String),
     Date(GensoDate),
     None,
+}
+
+impl ToString for HoldData {
+    fn to_string(&self) -> String {
+        match self {
+            HoldData::BookName(name) => name.to_string(),
+            HoldData::CustomerName(name) => name.to_string(),
+            HoldData::Date(date) => date.to_string(),
+            HoldData::None => "".to_string(),
+        }
+    }
 }
 
 #[derive(Clone, Copy)]
@@ -322,7 +334,7 @@ impl OnDesk for DrawableCalendar {
     }
 
     fn get_type(&self) -> OnDeskType {
-	OnDeskType::Goods
+        OnDeskType::Goods
     }
 }
 
@@ -334,9 +346,9 @@ pub struct OnDeskTexture {
 impl OnDeskTexture {
     pub fn new(obj: UniTexture, on_desk_type: OnDeskType) -> Self {
         OnDeskTexture {
-	    texture: obj,
-	    on_desk_type: on_desk_type,
-	}
+            texture: obj,
+            on_desk_type: on_desk_type,
+        }
     }
 }
 
@@ -404,7 +416,7 @@ impl OnDesk for OnDeskTexture {
     }
 
     fn get_type(&self) -> OnDeskType {
-	self.on_desk_type
+        self.on_desk_type
     }
 }
 
@@ -527,7 +539,7 @@ impl OnDesk for OnDeskBook {
     }
 
     fn get_type(&self) -> OnDeskType {
-	OnDeskType::Book
+        OnDeskType::Book
     }
 }
 
@@ -1040,7 +1052,7 @@ impl OnDesk for CopyingRequestPaper {
     }
 
     fn get_type(&self) -> OnDeskType {
-	OnDeskType::CopyingPaper
+        OnDeskType::CopyingPaper
     }
 }
 
@@ -1067,16 +1079,16 @@ impl BorrowingRecordBookPage {
         game_data: &GameData,
         t: Clock,
     ) -> Self {
-	let mut page = Self::new_empty(ctx, rect, paper_tid, game_data, t);
-	
-	page.borrow_book = info
+        let mut page = Self::new_empty(ctx, rect, paper_tid, game_data, t);
+
+        page.borrow_book = info
             .borrowing
             .iter()
             .enumerate()
             .map(|iter_data| {
-		let (i, book_info) = iter_data;
-                
-		let mut vtext = VerticalText::new(
+                let (i, book_info) = iter_data;
+
+                let mut vtext = VerticalText::new(
                     book_info.name.to_string(),
                     numeric::Point2f::new(0.0, 0.0),
                     numeric::Vector2f::new(1.0, 1.0),
@@ -1088,18 +1100,19 @@ impl BorrowingRecordBookPage {
                         ggraphics::Color::from_rgba_u32(0x000000ff),
                     ),
                 );
-		vtext.make_center(
-		    ctx,
-		    roundup2f!(
-			page.books_table.get_center_of(numeric::Vector2u::new(5 - i as u32, 0), page.books_table.get_position())
-		    ),
-		);
-		
-		vtext
+                vtext.make_center(
+                    ctx,
+                    roundup2f!(page.books_table.get_center_of(
+                        numeric::Vector2u::new(5 - i as u32, 0),
+                        page.books_table.get_position()
+                    )),
+                );
+
+                vtext
             })
             .collect();
 
-	page
+        page
     }
 
     pub fn new_empty(
@@ -1138,7 +1151,7 @@ impl BorrowingRecordBookPage {
 
         let mut borrow_date = VerticalText::new(
             "貸出日".to_string(),
-	    numeric::Point2f::new(0.0, 0.0),
+            numeric::Point2f::new(0.0, 0.0),
             numeric::Vector2f::new(1.0, 1.0),
             0.0,
             0,
@@ -1148,14 +1161,14 @@ impl BorrowingRecordBookPage {
                 ggraphics::Color::from_rgba_u32(0x000000ff),
             ),
         );
-	borrow_date.make_center(
-	    ctx,
+        borrow_date.make_center(
+            ctx,
             roundup2f!(
                 table_frame.get_center_of(numeric::Vector2u::new(1, 0), table_frame.get_position())
             ),
         );
 
-	let mut return_date = VerticalText::new(
+        let mut return_date = VerticalText::new(
             "返却期限".to_string(),
             numeric::Point2f::new(0.0, 0.0),
             numeric::Vector2f::new(1.0, 1.0),
@@ -1167,14 +1180,14 @@ impl BorrowingRecordBookPage {
                 ggraphics::Color::from_rgba_u32(0x000000ff),
             ),
         );
-	return_date.make_center(
-	    ctx,
+        return_date.make_center(
+            ctx,
             roundup2f!(
                 table_frame.get_center_of(numeric::Vector2u::new(0, 0), table_frame.get_position())
             ),
         );
 
-	let books_table = TableFrame::new(
+        let books_table = TableFrame::new(
             game_data,
             numeric::Point2f::new(rect.w - 550.0, 30.0),
             FrameData::new(vec![380.0, 70.0], vec![40.0; 6]),
@@ -1182,9 +1195,9 @@ impl BorrowingRecordBookPage {
             0,
         );
 
-	let mut book_head = VerticalText::new(
+        let mut book_head = VerticalText::new(
             "貸出本名称".to_string(),
-	    numeric::Point2f::new(0.0, 0.0),
+            numeric::Point2f::new(0.0, 0.0),
             numeric::Vector2f::new(1.0, 1.0),
             0.0,
             0,
@@ -1194,16 +1207,16 @@ impl BorrowingRecordBookPage {
                 ggraphics::Color::from_rgba_u32(0x000000ff),
             ),
         );
-	book_head.make_center(
-	    ctx,
+        book_head.make_center(
+            ctx,
             roundup2f!(
                 books_table.get_center_of(numeric::Vector2u::new(5, 0), books_table.get_position())
             ),
         );
 
-	let mut book_status = VerticalText::new(
+        let mut book_status = VerticalText::new(
             "状態".to_string(),
-	    numeric::Point2f::new(0.0, 0.0),
+            numeric::Point2f::new(0.0, 0.0),
             numeric::Vector2f::new(1.0, 1.0),
             0.0,
             0,
@@ -1213,8 +1226,8 @@ impl BorrowingRecordBookPage {
                 ggraphics::Color::from_rgba_u32(0x000000ff),
             ),
         );
-	book_status.make_center(
-	    ctx,
+        book_status.make_center(
+            ctx,
             roundup2f!(
                 books_table.get_center_of(numeric::Vector2u::new(5, 1), books_table.get_position())
             ),
@@ -1241,11 +1254,11 @@ impl BorrowingRecordBookPage {
                 GensoDate::new_empty(),
             ),
             info_table: table_frame,
-	    books_table: books_table,
+            books_table: books_table,
             borrow_book: Vec::new(),
             borrower: borrower,
             book_head: book_head,
-	    book_status: book_status,
+            book_status: book_status,
             paper_texture: paper_texture,
             borrow_date: borrow_date,
             return_date: return_date,
@@ -1290,9 +1303,9 @@ impl DrawableComponent for BorrowingRecordBookPage {
 
             self.paper_texture.draw(ctx)?;
             self.info_table.draw(ctx)?;
-	    self.books_table.draw(ctx)?;
+            self.books_table.draw(ctx)?;
             self.book_head.draw(ctx)?;
-	    self.book_status.draw(ctx)?;
+            self.book_status.draw(ctx)?;
             self.borrower.draw(ctx)?;
             self.borrow_date.draw(ctx)?;
             self.return_date.draw(ctx)?;
@@ -1738,7 +1751,7 @@ impl OnDesk for BorrowingRecordBook {
     }
 
     fn get_type(&self) -> OnDeskType {
-	OnDeskType::BorrowingRecordBook
+        OnDeskType::BorrowingRecordBook
     }
 }
 

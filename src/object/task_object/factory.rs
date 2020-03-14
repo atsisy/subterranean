@@ -18,13 +18,16 @@ pub fn create_dobj_random(
     );
 
     DeskObject::new(
-        Box::new(OnDeskTexture::new(UniTexture::new(
-            game_data.ref_texture(TextureID::select_random()),
-            numeric::Point2f::new(0.0, 0.0),
-            numeric::Vector2f::new(0.1, 0.1),
-            0.0,
-            0,
-        ), OnDeskType::Texture)),
+        Box::new(OnDeskTexture::new(
+            UniTexture::new(
+                game_data.ref_texture(TextureID::select_random()),
+                numeric::Point2f::new(0.0, 0.0),
+                numeric::Vector2f::new(0.1, 0.1),
+                0.0,
+                0,
+            ),
+            OnDeskType::Texture,
+        )),
         Box::new(CopyingRequestPaper::new(
             ctx,
             ggraphics::Rect::new(0.0, 0.0, 420.0, 350.0),
@@ -47,13 +50,16 @@ pub fn create_dobj_book_random(
 ) -> DeskObject {
     let texture = *util::random_select(LARGE_BOOK_TEXTURE.iter()).unwrap();
     DeskObject::new(
-        Box::new(OnDeskTexture::new(UniTexture::new(
-            game_data.ref_texture(texture),
-            numeric::Point2f::new(0.0, 0.0),
-            numeric::Vector2f::new(0.1, 0.1),
-            0.0,
-            0,
-        ), OnDeskType::Book)),
+        Box::new(OnDeskTexture::new(
+            UniTexture::new(
+                game_data.ref_texture(texture),
+                numeric::Point2f::new(0.0, 0.0),
+                numeric::Vector2f::new(0.1, 0.1),
+                0.0,
+                0,
+            ),
+            OnDeskType::Book,
+        )),
         Box::new(OnDeskBook::new(
             ctx,
             game_data,
