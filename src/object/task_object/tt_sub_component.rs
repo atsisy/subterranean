@@ -228,6 +228,17 @@ pub enum HoldData {
     None,
 }
 
+impl HoldData {
+    pub fn to_each_type_string(&self) -> String {
+	match self {
+	    HoldData::BookName(_) => "題目".to_string(),
+	    HoldData::CustomerName(_) => "御客氏名".to_string(),
+	    HoldData::Date(_) => "日付".to_string(),
+	    HoldData::None => "".to_string(),
+	}
+    }
+}
+
 impl ToString for HoldData {
     fn to_string(&self) -> String {
         match self {
@@ -1398,6 +1409,32 @@ impl BorrowingRecordBookPage {
         if position == numeric::Vector2u::new(2, 1) {
             match hold_data {
                 HoldData::CustomerName(name) => {
+                    let mut info = self.request_information.get_mut(&position).unwrap();
+                    info.reset(hold_data.clone());
+                    info.vtext.make_center(
+                        ctx,
+                        self.info_table
+                            .get_center_of(position, self.info_table.get_position()),
+                    );
+                }
+                _ => (),
+            }
+        } else if position == numeric::Vector2u::new(1, 1) {
+            match hold_data {
+                HoldData::Date(_) => {
+                    let mut info = self.request_information.get_mut(&position).unwrap();
+                    info.reset(hold_data.clone());
+                    info.vtext.make_center(
+                        ctx,
+                        self.info_table
+                            .get_center_of(position, self.info_table.get_position()),
+                    );
+                }
+                _ => (),
+            }
+        } else if position == numeric::Vector2u::new(0, 1) {
+            match hold_data {
+                HoldData::Date(_) => {
                     let mut info = self.request_information.get_mut(&position).unwrap();
                     info.reset(hold_data.clone());
                     info.vtext.make_center(

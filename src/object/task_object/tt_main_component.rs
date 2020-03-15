@@ -606,10 +606,7 @@ impl CustomerInformationUI {
         let maybe_position = self.table_frame.get_grid_position(rpoint);
 
         if let Some(position) = maybe_position {
-            debug::debug_screen_push_text(&format!("insert grid position: {:?}", position));
-	    debug::debug_screen_push_text(&format!("before: {}", self.info_hash_map.len()));
             self.insert_data_in_table(ctx, game_data, position, hold_data);
-	    debug::debug_screen_push_text(&format!("after: {}", self.info_hash_map.len()));
             true
         } else {
             false

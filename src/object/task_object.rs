@@ -553,7 +553,8 @@ impl TaskTable {
     ///
     /// HoldDataが取得可能な場合、取得し、self.hold_dataに上書きする
     ///
-    fn update_hold_data(&mut self, ctx: &mut ggez::Context, point: numeric::Point2f) {
+    fn update_hold_data(&mut self, ctx: &mut ggez::Context, game_data: &GameData, point: numeric::Point2f) {
+	debug::debug_screen_push_text(&format!("{}", self.hold_data.to_string()));
         if self.hold_data.is_none() {
             let clicked_data = self.desk.check_data_click(ctx, point);
             self.update_hold_data_if_some(clicked_data);
@@ -569,6 +570,25 @@ impl TaskTable {
         } else {
             if self.desk.check_insert_data(ctx, point, &self.hold_data) {
                 self.hold_data = HoldData::None;
+            }
+	    
+	    if self.customer_info_ui.contains(ctx, point) {
+		let is_inserted = self.customer_info_ui.try_insert_hold_data_with_click(
+                    ctx,
+                    game_data,
+                    point,
+                    self.hold_data.clone(),
+		);
+		
+		if is_inserted {
+                    self.hold_data = HoldData::None;
+		}
+            }
+	    
+            if let Some(staging_object) = self.staging_object.as_mut() {
+		if staging_object.insert_data(ctx, point, &self.hold_data) {
+		    self.hold_data = HoldData::None;
+		}
             }
         }
     }
@@ -649,7 +669,7 @@ impl Clickable for TaskTable {
     fn button_down(
         &mut self,
         ctx: &mut ggez::Context,
-        _: &GameData,
+        game_data: &GameData,
         _: Clock,
         _button: ggez::input::mouse::MouseButton,
         point: numeric::Point2f,
@@ -666,23 +686,11 @@ impl Clickable for TaskTable {
         point: numeric::Point2f,
     ) {
         let rpoint = self.canvas.relative_point(point);
+
+	self.update_hold_data(ctx, game_data, rpoint);
+	
         self.desk
             .button_up_handler(ctx, game_data, t, button, rpoint);
-        if self.hold_data.is_some() && self.customer_info_ui.contains(ctx, rpoint) {
-            let is_inserted = self.customer_info_ui.try_insert_hold_data_with_click(
-                ctx,
-                game_data,
-                point,
-                self.hold_data.clone(),
-            );
-            if is_inserted {
-                self.hold_data = HoldData::None;
-            }
-        }
-
-        if let Some(staging_object) = self.staging_object.as_mut() {
-            staging_object.insert_data(ctx, point, &self.hold_data);
-        }
     }
 
     fn on_click(
@@ -694,8 +702,6 @@ impl Clickable for TaskTable {
         point: numeric::Point2f,
     ) {
         if button == MouseButton::Left {
-            let rpoint = self.canvas.relative_point(point);
-            self.update_hold_data(ctx, rpoint);
             match &self.hold_data {
                 HoldData::BookName(title) => println!("{}", title),
                 HoldData::CustomerName(name) => println!("{}", name),
