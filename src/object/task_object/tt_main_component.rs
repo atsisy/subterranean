@@ -29,6 +29,21 @@ pub enum TaskTableStagingObject {
     BorrowingRecordBook(BorrowingRecordBook),
 }
 
+impl TaskTableStagingObject {
+    pub fn insert_data(
+        &mut self,
+        ctx: &mut ggez::Context,
+        point: numeric::Point2f,
+        hold_data: &HoldData,
+    ) -> bool {
+        match self {
+            TaskTableStagingObject::BorrowingRecordBook(record_book) => {
+                record_book.insert_data(ctx, point, hold_data)
+            }
+        }
+    }
+}
+
 impl DrawableComponent for TaskTableStagingObject {
     fn draw(&mut self, ctx: &mut ggez::Context) -> ggez::GameResult<()> {
         match self {
@@ -447,75 +462,12 @@ impl DrawableObject for DeskObjects {
     }
 }
 
-pub struct HoldDataVText {
-    data: HoldData,
-    vtext: VerticalText,
-}
-
-impl HoldDataVText {
-    pub fn new(
-        hold_data: HoldData,
-        position: numeric::Point2f,
-        scale: numeric::Vector2f,
-        drawing_depth: i8,
-        font_info: FontInformation,
-    ) -> Self {
-        HoldDataVText {
-            vtext: VerticalText::new(
-                hold_data.to_string(),
-                position,
-                scale,
-                0.0,
-                drawing_depth,
-                font_info,
-            ),
-            data: hold_data,
-        }
-    }
-}
-
-impl DrawableComponent for HoldDataVText {
-    fn draw(&mut self, ctx: &mut ggez::Context) -> ggez::GameResult<()> {
-        if self.vtext.is_visible() {
-            self.vtext.draw(ctx).unwrap();
-        }
-
-        Ok(())
-    }
-
-    fn hide(&mut self) {
-        self.vtext.hide();
-    }
-    fn appear(&mut self) {
-        self.vtext.appear();
-    }
-
-    fn is_visible(&self) -> bool {
-        self.vtext.is_visible()
-    }
-
-    fn set_drawing_depth(&mut self, depth: i8) {
-        self.vtext.set_drawing_depth(depth);
-    }
-
-    fn get_drawing_depth(&self) -> i8 {
-        self.vtext.get_drawing_depth()
-    }
-}
-
-impl DrawableObject for HoldDataVText {
-    impl_drawable_object_for_wrapped! {vtext}
-}
-
-impl TextureObject for HoldDataVText {
-    impl_texture_object_for_wrapped! {vtext}
-}
-
 pub struct CustomerInformationUI {
     canvas: MovableWrap<SubScreen>,
     table_frame: TableFrame,
     head_text: MovableText,
     info_hash_map: HashMap<numeric::Vector2u, HoldDataVText>,
+    header_texts: Vec<VerticalText>,
     ui_size: numeric::Vector2f,
     default_position: numeric::Point2f,
     now_appear: bool,
@@ -551,6 +503,27 @@ impl CustomerInformationUI {
             t,
         );
 
+        let mut header_texts = Vec::new();
+        let header_font = FontInformation::new(
+            game_data.get_font(FontID::JpFude1),
+            numeric::Vector2f::new(24.0, 24.0),
+            ggraphics::Color::from_rgba_u32(0xffffffff),
+        );
+
+        let mut customer_name_header = VerticalText::new(
+            "氏名".to_string(),
+            numeric::Point2f::new(0.0, 0.0),
+            numeric::Vector2f::new(1.0, 1.0),
+            0.0,
+            0,
+            header_font,
+        );
+        customer_name_header.make_center(
+            ctx,
+            table_frame.get_center_of(numeric::Vector2u::new(2, 0), table_frame.get_position()),
+        );
+        header_texts.push(customer_name_header);
+
         CustomerInformationUI {
             ui_size: numeric::Vector2f::new(rect.w, rect.h),
             default_position: numeric::Point2f::new(rect.x, rect.y),
@@ -564,6 +537,7 @@ impl CustomerInformationUI {
                 None,
                 t,
             ),
+            header_texts: header_texts,
             info_hash_map: HashMap::new(),
             table_frame: table_frame,
             head_text: head_text,
@@ -594,7 +568,7 @@ impl CustomerInformationUI {
 
     pub fn insert_data_in_table(
         &mut self,
-	ctx: &mut ggez::Context,
+        ctx: &mut ggez::Context,
         game_data: &GameData,
         position: numeric::Vector2u,
         hold_data: HoldData,
@@ -611,16 +585,19 @@ impl CustomerInformationUI {
             ),
         );
 
-	hold_data_vtext.make_center(ctx,
-	    self.table_frame.get_center_of(position,
-					   self.table_frame.get_position()));
-	
+        hold_data_vtext.make_center(
+            ctx,
+            self.table_frame
+                .get_center_of(position, self.table_frame.get_position()),
+        );
+        debug::debug_screen_push_text(&format!("hold_data: {:?}", hold_data_vtext.get_position()));
+
         self.info_hash_map.insert(position, hold_data_vtext);
     }
 
     pub fn try_insert_hold_data_with_click(
         &mut self,
-	ctx: &mut ggez::Context,
+        ctx: &mut ggez::Context,
         game_data: &GameData,
         point: numeric::Point2f,
         hold_data: HoldData,
@@ -629,7 +606,10 @@ impl CustomerInformationUI {
         let maybe_position = self.table_frame.get_grid_position(rpoint);
 
         if let Some(position) = maybe_position {
+            debug::debug_screen_push_text(&format!("insert grid position: {:?}", position));
+	    debug::debug_screen_push_text(&format!("before: {}", self.info_hash_map.len()));
             self.insert_data_in_table(ctx, game_data, position, hold_data);
+	    debug::debug_screen_push_text(&format!("after: {}", self.info_hash_map.len()));
             true
         } else {
             false
@@ -642,11 +622,11 @@ impl CustomerInformationUI {
         point: numeric::Point2f,
     ) -> HoldData {
         let rpoint = self.canvas.ref_wrapped_object().relative_point(point);
-        let grid_pos = self.table_frame.get_grid_position(point);
+        let grid_pos = self.table_frame.get_grid_position(rpoint);
 
         if grid_pos.is_some() && self.info_hash_map.contains_key(&grid_pos.as_ref().unwrap()) {
             self.info_hash_map
-                .remove(grid_pos.as_ref().unwrap())
+                .get(grid_pos.as_ref().unwrap())
                 .unwrap()
                 .data
                 .clone()
@@ -664,9 +644,13 @@ impl DrawableComponent for CustomerInformationUI {
             self.table_frame.draw(ctx)?;
             self.head_text.draw(ctx)?;
 
-	    for (_, customer_info) in &mut self.info_hash_map {
-		customer_info.draw(ctx)?;
-	    }
+            for (a, customer_info) in &mut self.info_hash_map {
+                customer_info.draw(ctx)?;
+            }
+
+            for vtext in &mut self.header_texts {
+                vtext.draw(ctx)?;
+            }
 
             sub_screen::pop_screen(ctx);
             self.canvas.draw(ctx).unwrap();

@@ -550,6 +550,9 @@ impl TaskTable {
         }
     }
 
+    ///
+    /// HoldDataが取得可能な場合、取得し、self.hold_dataに上書きする
+    ///
     fn update_hold_data(&mut self, ctx: &mut ggez::Context, point: numeric::Point2f) {
         if self.hold_data.is_none() {
             let clicked_data = self.desk.check_data_click(ctx, point);
@@ -665,9 +668,9 @@ impl Clickable for TaskTable {
         let rpoint = self.canvas.relative_point(point);
         self.desk
             .button_up_handler(ctx, game_data, t, button, rpoint);
-        if self.hold_data.is_some() && self.customer_info_ui.contains(ctx, point) {
+        if self.hold_data.is_some() && self.customer_info_ui.contains(ctx, rpoint) {
             let is_inserted = self.customer_info_ui.try_insert_hold_data_with_click(
-		ctx,
+                ctx,
                 game_data,
                 point,
                 self.hold_data.clone(),
@@ -675,6 +678,10 @@ impl Clickable for TaskTable {
             if is_inserted {
                 self.hold_data = HoldData::None;
             }
+        }
+
+        if let Some(staging_object) = self.staging_object.as_mut() {
+            staging_object.insert_data(ctx, point, &self.hold_data);
         }
     }
 

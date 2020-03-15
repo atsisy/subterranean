@@ -1,4 +1,5 @@
 use std::cmp::Ordering;
+use std::collections::HashMap;
 use std::rc::Rc;
 
 use ggez::graphics as ggraphics;
@@ -10,10 +11,11 @@ use torifune::graphics::object::sub_screen;
 use torifune::graphics::object::sub_screen::SubScreen;
 use torifune::graphics::object::*;
 use torifune::graphics::*;
+use torifune::hash;
 use torifune::impl_drawable_object_for_wrapped;
 use torifune::impl_texture_object_for_wrapped;
 use torifune::numeric;
-use torifune::roundup2f;
+use torifune::{debug, roundup2f};
 
 use crate::core::BookInformation;
 use crate::object::move_fn;
@@ -56,6 +58,75 @@ impl GensoDate {
             number_to_jk(self.day as u64)
         )
     }
+}
+
+pub struct HoldDataVText {
+    pub data: HoldData,
+    pub vtext: VerticalText,
+}
+
+impl HoldDataVText {
+    pub fn new(
+        hold_data: HoldData,
+        position: numeric::Point2f,
+        scale: numeric::Vector2f,
+        drawing_depth: i8,
+        font_info: FontInformation,
+    ) -> Self {
+        HoldDataVText {
+            vtext: VerticalText::new(
+                hold_data.to_string(),
+                position,
+                scale,
+                0.0,
+                drawing_depth,
+                font_info,
+            ),
+            data: hold_data,
+        }
+    }
+
+    pub fn reset(&mut self, hold_data: HoldData) {
+        self.data = hold_data;
+        self.vtext.replace_text(self.data.to_string());
+    }
+}
+
+impl DrawableComponent for HoldDataVText {
+    fn draw(&mut self, ctx: &mut ggez::Context) -> ggez::GameResult<()> {
+        if self.vtext.is_visible() {
+            self.vtext.draw(ctx).unwrap();
+        }
+
+        Ok(())
+    }
+
+    fn hide(&mut self) {
+        self.vtext.hide();
+    }
+    fn appear(&mut self) {
+        self.vtext.appear();
+    }
+
+    fn is_visible(&self) -> bool {
+        self.vtext.is_visible()
+    }
+
+    fn set_drawing_depth(&mut self, depth: i8) {
+        self.vtext.set_drawing_depth(depth);
+    }
+
+    fn get_drawing_depth(&self) -> i8 {
+        self.vtext.get_drawing_depth()
+    }
+}
+
+impl DrawableObject for HoldDataVText {
+    impl_drawable_object_for_wrapped! {vtext}
+}
+
+impl TextureObject for HoldDataVText {
+    impl_texture_object_for_wrapped! {vtext}
 }
 
 #[derive(Clone)]
@@ -1061,6 +1132,7 @@ pub struct BorrowingRecordBookPage {
     info_table: TableFrame,
     books_table: TableFrame,
     borrow_book: Vec<VerticalText>,
+    request_information: HashMap<numeric::Vector2u, HoldDataVText>,
     book_head: VerticalText,
     book_status: VerticalText,
     borrower: VerticalText,
@@ -1246,6 +1318,44 @@ impl BorrowingRecordBookPage {
             Vec::new(),
         );
 
+        let info_font = FontInformation::new(
+            game_data.get_font(FontID::JpFude1),
+            numeric::Vector2f::new(24.0, 24.0),
+            ggraphics::Color::from_rgba_u32(0xff),
+        );
+        let request_info_text = hash![
+            (
+                numeric::Vector2u::new(0, 1),
+                HoldDataVText::new(
+                    HoldData::None,
+                    numeric::Point2f::new(0.0, 0.0),
+                    numeric::Vector2f::new(1.0, 1.0),
+                    0,
+                    info_font.clone()
+                )
+            ),
+            (
+                numeric::Vector2u::new(1, 1),
+                HoldDataVText::new(
+                    HoldData::None,
+                    numeric::Point2f::new(0.0, 0.0),
+                    numeric::Vector2f::new(1.0, 1.0),
+                    0,
+                    info_font.clone()
+                )
+            ),
+            (
+                numeric::Vector2u::new(2, 1),
+                HoldDataVText::new(
+                    HoldData::None,
+                    numeric::Point2f::new(0.0, 0.0),
+                    numeric::Vector2f::new(1.0, 1.0),
+                    0,
+                    info_font.clone()
+                )
+            )
+        ];
+
         BorrowingRecordBookPage {
             raw_info: BorrowingInformation::new(
                 Vec::new(),
@@ -1257,6 +1367,7 @@ impl BorrowingRecordBookPage {
             books_table: books_table,
             borrow_book: Vec::new(),
             borrower: borrower,
+            request_information: request_info_text,
             book_head: book_head,
             book_status: book_status,
             paper_texture: paper_texture,
@@ -1276,6 +1387,45 @@ impl BorrowingRecordBookPage {
 
     pub fn relative_point(&self, point: numeric::Point2f) -> numeric::Point2f {
         self.canvas.relative_point(point)
+    }
+
+    pub fn try_insert_data_in_info_frame(
+        &mut self,
+        ctx: &mut ggez::Context,
+        position: numeric::Vector2u,
+        hold_data: &HoldData,
+    ) {
+        if position == numeric::Vector2u::new(2, 1) {
+            match hold_data {
+                HoldData::CustomerName(name) => {
+                    let mut info = self.request_information.get_mut(&position).unwrap();
+                    info.reset(hold_data.clone());
+                    info.vtext.make_center(
+                        ctx,
+                        self.info_table
+                            .get_center_of(position, self.info_table.get_position()),
+                    );
+                }
+                _ => (),
+            }
+        }
+    }
+
+    pub fn try_insert_data_in_borrowing_books_frame(
+        &mut self,
+        position: numeric::Vector2u,
+        hold_data: &HoldData,
+    ) {
+        match hold_data {
+            HoldData::BookName(name) => {
+                let index = self.borrow_book.len() - 1 as usize - position.x as usize;
+                self.borrow_book
+                    .get_mut(index)
+                    .unwrap()
+                    .replace_text(name.to_string());
+            }
+            _ => (),
+        }
     }
 
     pub fn replace_borrower_name(&mut self, game_data: &GameData, name: &str) -> &mut Self {
@@ -1311,6 +1461,10 @@ impl DrawableComponent for BorrowingRecordBookPage {
             self.return_date.draw(ctx)?;
 
             for d in &mut self.borrow_book {
+                d.draw(ctx)?;
+            }
+
+            for (_, d) in &mut self.request_information {
                 d.draw(ctx)?;
             }
 
@@ -1505,6 +1659,45 @@ impl BorrowingRecordBook {
         }
 
         return false;
+    }
+
+    fn try_insert_data_customer_info_frame(
+        &mut self,
+        ctx: &mut ggez::Context,
+        point: numeric::Point2f,
+        hold_data: &HoldData,
+    ) -> bool {
+        if let Some(page) = self.get_current_page_mut() {
+            let rpoint = page.relative_point(point);
+            let maybe_position = page.info_table.get_grid_position(rpoint);
+            if let Some(position) = maybe_position {
+                page.try_insert_data_in_info_frame(ctx, position, hold_data);
+                true
+            } else {
+                false
+            }
+        } else {
+            false
+        }
+    }
+
+    fn try_insert_data_borrowing_book_frame(
+        &mut self,
+        point: numeric::Point2f,
+        hold_data: &HoldData,
+    ) -> bool {
+        if let Some(page) = self.get_current_page_mut() {
+            let rpoint = page.relative_point(point);
+            let maybe_position = page.books_table.get_grid_position(rpoint);
+            if let Some(position) = maybe_position {
+                page.try_insert_data_in_borrowing_books_frame(position, hold_data);
+                true
+            } else {
+                false
+            }
+        } else {
+            false
+        }
     }
 }
 
@@ -1709,45 +1902,8 @@ impl OnDesk for BorrowingRecordBook {
     ) -> bool {
         let mut insert_done_flag = false;
 
-        if let Some(page) = self.get_current_page_mut() {
-            let rpoint = page.relative_point(point);
-            let mut hit_book_index = None;
-
-            for (index, book) in page.borrow_book.iter().enumerate() {
-                if book.get_drawing_area(ctx).contains(rpoint) {
-                    hit_book_index = Some(index);
-                }
-            }
-
-            if let Some(hit_book_index) = hit_book_index {
-                match data {
-                    HoldData::BookName(name) => {
-                        page.get_borrowing_info_mut()
-                            .borrowing
-                            .push(BookInformation {
-                                name: name.to_string(),
-                                pages: 0,
-                                size: "".to_string(),
-                                billing_number: 0,
-                            });
-                        page.borrow_book
-                            .get_mut(hit_book_index)
-                            .unwrap()
-                            .replace_text(name.to_string());
-                        insert_done_flag = true;
-                    }
-                    _ => (),
-                }
-            }
-
-            if Self::borrow_date_insert_check(ctx, rpoint, page, data)
-                || Self::borrower_customer_insert_check(ctx, rpoint, page, data)
-            {
-                return true;
-            }
-        }
-
-        insert_done_flag
+        self.try_insert_data_customer_info_frame(ctx, point, data)
+            || self.try_insert_data_borrowing_book_frame(point, data)
     }
 
     fn get_type(&self) -> OnDeskType {
