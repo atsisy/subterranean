@@ -42,6 +42,17 @@ impl TaskTableStagingObject {
             }
         }
     }
+
+    ///
+    /// 移動関数を変更しスライドアウトするように見せる
+    ///
+    pub fn slide_hide(&mut self, _t: Clock) {
+	match self {
+	    TaskTableStagingObject::BorrowingRecordBook(_) => {
+		debug::debug_screen_push_text("Implement slide hide, TaskTableStagingObject");
+	    },
+	}
+    }
 }
 
 impl DrawableComponent for TaskTableStagingObject {
@@ -613,9 +624,13 @@ impl CustomerInformationUI {
         }
     }
 
+    ///
+    /// TableFrameに含まれるHoldDataを取り出すメソッド
+    /// クリックした場所に何もない場合は、HoldData::Noneを返す
+    ///
     pub fn check_data_click(
         &mut self,
-        ctx: &mut ggez::Context,
+        _: &mut ggez::Context,
         point: numeric::Point2f,
     ) -> HoldData {
         let rpoint = self.canvas.ref_wrapped_object().relative_point(point);
@@ -641,7 +656,7 @@ impl DrawableComponent for CustomerInformationUI {
             self.table_frame.draw(ctx)?;
             self.head_text.draw(ctx)?;
 
-            for (a, customer_info) in &mut self.info_hash_map {
+            for (_, customer_info) in &mut self.info_hash_map {
                 customer_info.draw(ctx)?;
             }
 
@@ -1333,11 +1348,6 @@ impl SuzuMiniSight {
 
     pub fn unlock_object_handover(&mut self) {
         self.object_handover_lock = false;
-    }
-
-    fn check_object_drop_to_desk(&self, ctx: &mut ggez::Context, desk_obj: &DeskObject) -> bool {
-        let area = desk_obj.get_object().get_drawing_area(ctx);
-        area.y + area.h < self.canvas.get_drawing_area(ctx).h / 1.5
     }
 
     pub fn finish_customer_event(&mut self, now: Clock) {

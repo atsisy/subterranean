@@ -6,12 +6,11 @@ use std::rc::Rc;
 
 use ggez::graphics as ggraphics;
 use ggez::input as ginput;
-use ginput::mouse::MouseButton;
 use ginput::mouse::MouseCursor;
 
 use torifune::core::{Clock, Updatable};
 use torifune::debug;
-use torifune::device::{KeyboardEvent, VirtualKey};
+use torifune::device::VirtualKey;
 use torifune::graphics::object::sub_screen;
 use torifune::graphics::object::sub_screen::SubScreen;
 use torifune::graphics::object::*;
@@ -20,6 +19,7 @@ use torifune::impl_drawable_object_for_wrapped;
 use torifune::impl_texture_object_for_wrapped;
 use torifune::numeric;
 
+use crate::scene::*;
 use crate::object::{effect, move_fn};
 use tt_main_component::*;
 use tt_sub_component::*;
@@ -36,6 +36,7 @@ pub struct TaskTable {
     staging_object: Option<TaskTableStagingObject>,
     shelving_box: ShelvingBookBox,
     hold_data: HoldData,
+    event_list: DelayEventList<TaskTable>,
 }
 
 impl TaskTable {
@@ -122,9 +123,27 @@ impl TaskTable {
             staging_object: None,
             shelving_box: shelving_box,
             hold_data: HoldData::None,
+	    event_list: DelayEventList::new(),
         }
     }
+    
+    ///
+    /// 遅延処理を走らせるメソッド
+    ///
+    fn run_delay_event(&mut self, ctx: &mut ggez::Context, game_data: &GameData, t: Clock) {
+        // 最後の要素の所有権を移動
+        while let Some(event) = self.event_list.move_top() {
+            // 時間が来ていない場合は、取り出した要素をリストに戻して処理ループを抜ける
+            if event.run_time > t {
+                self.event_list.add(event);
+                break;
+            }
 
+            // 所有権を移動しているため、selfを渡してもエラーにならない
+            (event.func)(self, ctx, game_data);
+        }
+    }
+    
     fn select_dragging_object(&mut self, ctx: &mut ggez::Context, point: numeric::Point2f) {
         let rpoint = self.canvas.relative_point(point);
         self.desk.select_dragging_object(ctx, rpoint);
@@ -345,6 +364,7 @@ impl TaskTable {
     }
 
     pub fn update(&mut self, ctx: &mut ggez::Context, game_data: &GameData, t: Clock) {
+	self.run_delay_event(ctx, game_data, t);
         self.sight.update(ctx, game_data, t);
         self.desk.update(ctx, t);
         self.shelving_box.update(ctx, t);
@@ -571,7 +591,8 @@ impl TaskTable {
             if self.desk.check_insert_data(ctx, point, &self.hold_data) {
                 self.hold_data = HoldData::None;
             }
-	    
+
+	    // CustomerUIにHoldDataを挿入する
 	    if self.customer_info_ui.contains(ctx, point) {
 		let is_inserted = self.customer_info_ui.try_insert_hold_data_with_click(
                     ctx,
@@ -582,9 +603,11 @@ impl TaskTable {
 		
 		if is_inserted {
                     self.hold_data = HoldData::None;
+		    return ();
 		}
             }
-	    
+
+	    // StagingObjectにHoldDataを挿入する
             if let Some(staging_object) = self.staging_object.as_mut() {
 		if staging_object.insert_data(ctx, point, &self.hold_data) {
 		    self.hold_data = HoldData::None;
@@ -602,11 +625,17 @@ impl TaskTable {
     }
 
     /// キーハンドラ
-    pub fn key_event_handler(&mut self, ctx: &mut ggez::Context, vkey: VirtualKey, t: Clock) {
+    pub fn key_event_handler(&mut self, _: &mut ggez::Context, vkey: VirtualKey, t: Clock) {
         match vkey {
             VirtualKey::Action2 => {
                 self.customer_info_ui.slide_toggle(t);
-            }
+            },
+	    VirtualKey::Action3 => {
+		if self.staging_object.is_some() {
+		    self.staging_object.as_mut().unwrap().slide_hide(t);
+		    self.event_list.add_event(Box::new(|tt: &mut Self, _, _| tt.staging_object = None), t + 100);
+		}
+	    },
             _ => (),
         }
     }
@@ -669,7 +698,7 @@ impl Clickable for TaskTable {
     fn button_down(
         &mut self,
         ctx: &mut ggez::Context,
-        game_data: &GameData,
+        _: &GameData,
         _: Clock,
         _button: ggez::input::mouse::MouseButton,
         point: numeric::Point2f,
@@ -691,23 +720,6 @@ impl Clickable for TaskTable {
 	
         self.desk
             .button_up_handler(ctx, game_data, t, button, rpoint);
-    }
-
-    fn on_click(
-        &mut self,
-        ctx: &mut ggez::Context,
-        _: &GameData,
-        _: Clock,
-        button: ggez::input::mouse::MouseButton,
-        point: numeric::Point2f,
-    ) {
-        if button == MouseButton::Left {
-            match &self.hold_data {
-                HoldData::BookName(title) => println!("{}", title),
-                HoldData::CustomerName(name) => println!("{}", name),
-                _ => (),
-            }
-        }
     }
 
     fn clickable_status(

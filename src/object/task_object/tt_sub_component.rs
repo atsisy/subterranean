@@ -15,7 +15,7 @@ use torifune::hash;
 use torifune::impl_drawable_object_for_wrapped;
 use torifune::impl_texture_object_for_wrapped;
 use torifune::numeric;
-use torifune::{debug, roundup2f};
+use torifune::roundup2f;
 
 use crate::core::BookInformation;
 use crate::object::move_fn;
@@ -1408,8 +1408,8 @@ impl BorrowingRecordBookPage {
     ) {
         if position == numeric::Vector2u::new(2, 1) {
             match hold_data {
-                HoldData::CustomerName(name) => {
-                    let mut info = self.request_information.get_mut(&position).unwrap();
+                HoldData::CustomerName(_) => {
+                    let info = self.request_information.get_mut(&position).unwrap();
                     info.reset(hold_data.clone());
                     info.vtext.make_center(
                         ctx,
@@ -1422,7 +1422,7 @@ impl BorrowingRecordBookPage {
         } else if position == numeric::Vector2u::new(1, 1) {
             match hold_data {
                 HoldData::Date(_) => {
-                    let mut info = self.request_information.get_mut(&position).unwrap();
+                    let info = self.request_information.get_mut(&position).unwrap();
                     info.reset(hold_data.clone());
                     info.vtext.make_center(
                         ctx,
@@ -1435,7 +1435,7 @@ impl BorrowingRecordBookPage {
         } else if position == numeric::Vector2u::new(0, 1) {
             match hold_data {
                 HoldData::Date(_) => {
-                    let mut info = self.request_information.get_mut(&position).unwrap();
+                    let info = self.request_information.get_mut(&position).unwrap();
                     info.reset(hold_data.clone());
                     info.vtext.make_center(
                         ctx,
@@ -1656,46 +1656,6 @@ impl BorrowingRecordBook {
         if self.current_page > 0 {
             self.current_page -= 1;
         }
-    }
-
-    fn borrow_date_insert_check(
-        ctx: &mut ggez::Context,
-        rpoint: numeric::Point2f,
-        page: &mut BorrowingRecordBookPage,
-        data: &HoldData,
-    ) -> bool {
-        if page.borrow_date.get_drawing_area(ctx).contains(rpoint) {
-            match data {
-                HoldData::Date(date_data) => {
-                    page.borrow_date
-                        .replace_text(format!("貸出日 {}", date_data.to_string()));
-                    return true;
-                }
-                _ => (),
-            }
-        }
-
-        return false;
-    }
-
-    fn borrower_customer_insert_check(
-        ctx: &mut ggez::Context,
-        rpoint: numeric::Point2f,
-        page: &mut BorrowingRecordBookPage,
-        data: &HoldData,
-    ) -> bool {
-        if page.borrower.get_drawing_area(ctx).contains(rpoint) {
-            match data {
-                HoldData::CustomerName(customer_name) => {
-                    page.borrower
-                        .replace_text(format!("借りる人 {}", customer_name.to_string()));
-                    return true;
-                }
-                _ => (),
-            }
-        }
-
-        return false;
     }
 
     fn try_insert_data_customer_info_frame(
@@ -1937,8 +1897,7 @@ impl OnDesk for BorrowingRecordBook {
         point: numeric::Point2f,
         data: &HoldData,
     ) -> bool {
-        let mut insert_done_flag = false;
-
+	// いずれかのTableFrameにデータを挿入できた場合trueが返る
         self.try_insert_data_customer_info_frame(ctx, point, data)
             || self.try_insert_data_borrowing_book_frame(point, data)
     }
