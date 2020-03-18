@@ -614,7 +614,7 @@ impl CustomerInformationUI {
         hold_data: HoldData,
     ) -> bool {
         let rpoint = self.canvas.ref_wrapped_object().relative_point(point);
-        let maybe_position = self.table_frame.get_grid_position(rpoint);
+        let maybe_position = self.table_frame.get_grid_position(ctx, rpoint);
 
         if let Some(position) = maybe_position {
             self.insert_data_in_table(ctx, game_data, position, hold_data);
@@ -630,11 +630,11 @@ impl CustomerInformationUI {
     ///
     pub fn check_data_click(
         &mut self,
-        _: &mut ggez::Context,
+        ctx: &mut ggez::Context,
         point: numeric::Point2f,
     ) -> HoldData {
         let rpoint = self.canvas.ref_wrapped_object().relative_point(point);
-        let grid_pos = self.table_frame.get_grid_position(rpoint);
+        let grid_pos = self.table_frame.get_grid_position(ctx, rpoint);
 
         if grid_pos.is_some() && self.info_hash_map.contains_key(&grid_pos.as_ref().unwrap()) {
             self.info_hash_map

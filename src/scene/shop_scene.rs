@@ -950,7 +950,7 @@ impl ShopScene {
     }
 
     fn random_add_customer(&mut self, game_data: &GameData) {
-        if self.shop_clock.minute % 10 == 0 && rand::random::<usize>() % 150 == 0 {
+        if/* self.shop_clock.minute % 1 == 0 && */rand::random::<usize>() % 150 == 0 {
             self.character_group.add(CustomerCharacter::new(
                 character_factory::create_character(
                     character_factory::CharacterFactoryOrder::CustomerSample,

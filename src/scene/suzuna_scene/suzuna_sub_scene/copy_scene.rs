@@ -111,7 +111,7 @@ impl SceneManager for CopyingScene {
 
     fn mouse_button_down_event(
         &mut self,
-        _: &mut ggez::Context,
+        ctx: &mut ggez::Context,
         _: &GameData,
         button: MouseButton,
         point: numeric::Point2f,
@@ -125,7 +125,7 @@ impl SceneManager for CopyingScene {
         self.mouse_info.update_dragging(button, true);
 
         //println!("grid_position: {}", self.table_frame.get_grid_position(point));
-        let pos = self.table_frame.get_grid_position(point).unwrap();
+        let pos = self.table_frame.get_grid_position(ctx, point).unwrap();
         let dest = self.table_frame.get_position();
         println!(
             "grid_position: {}",

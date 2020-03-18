@@ -1,8 +1,10 @@
 use ggez::graphics as ggraphics;
 
 use torifune::graphics::*;
+use torifune::graphics::object::*;
 use torifune::impl_drawable_object_for_wrapped;
 use torifune::numeric;
+use torifune::graphics::object::tile_batch::*;
 
 use crate::core::{GameData, TileBatchTextureID};
 
@@ -65,6 +67,12 @@ impl TableFrame {
 
         table_frame
     }
+    
+    fn contains(&self, point: numeric::Point2f) -> bool {
+	let current_position = self.get_position();
+	point.x >= current_position.x && point.y >= current_position.y &&
+	    point.x <= (current_position.x + self.real_width()) && point.y <= (current_position.y + self.real_height())
+    }
 
     fn get_scaled_tile_size(&self) -> numeric::Vector2f {
         let tile_size = self.tile_batch.get_tile_size();
@@ -111,11 +119,15 @@ impl TableFrame {
         let tile_size = self.get_scaled_tile_size();
         (length / tile_size.x) as usize
     }
-
+    
     ///
     /// あるPointが含まれているグリッドの位置を返す
     ///
-    pub fn get_grid_position(&self, point: numeric::Point2f) -> Option<numeric::Vector2u> {
+    pub fn get_grid_position(&self, ctx: &mut ggez::Context, point: numeric::Point2f) -> Option<numeric::Vector2u> {
+	if !self.contains(point) {
+	    return None;
+	}
+	
         let frame_position = self.get_position();
         let rpoint = numeric::Point2f::new(point.x - frame_position.x, point.y - frame_position.y);
         let mut remain = rpoint;

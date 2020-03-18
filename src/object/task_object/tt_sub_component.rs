@@ -16,6 +16,7 @@ use torifune::impl_drawable_object_for_wrapped;
 use torifune::impl_texture_object_for_wrapped;
 use torifune::numeric;
 use torifune::roundup2f;
+use torifune::debug;
 
 use crate::core::BookInformation;
 use crate::object::move_fn;
@@ -1142,7 +1143,7 @@ pub struct BorrowingRecordBookPage {
     raw_info: BorrowingInformation,
     info_table: TableFrame,
     books_table: TableFrame,
-    borrow_book: Vec<VerticalText>,
+    borrow_book: HashMap<numeric::Vector2u, HoldDataVText>,
     request_information: HashMap<numeric::Vector2u, HoldDataVText>,
     book_head: VerticalText,
     book_status: VerticalText,
@@ -1191,7 +1192,11 @@ impl BorrowingRecordBookPage {
                     )),
                 );
 
-                vtext
+                (numeric::Vector2u::new(i as u32, 0),
+		 HoldDataVText {
+		     data: HoldData::BookName(book_info.name.to_string()),
+		     vtext: vtext
+		 })
             })
             .collect();
 
@@ -1367,6 +1372,129 @@ impl BorrowingRecordBookPage {
             )
         ];
 
+	let borrow_text = hash![
+            (
+                numeric::Vector2u::new(0, 0),
+                HoldDataVText::new(
+                    HoldData::None,
+                    numeric::Point2f::new(0.0, 0.0),
+                    numeric::Vector2f::new(1.0, 1.0),
+                    0,
+                    info_font.clone()
+                )
+            ),
+            (
+                numeric::Vector2u::new(1, 0),
+                HoldDataVText::new(
+                    HoldData::None,
+                    numeric::Point2f::new(0.0, 0.0),
+                    numeric::Vector2f::new(1.0, 1.0),
+                    0,
+                    info_font.clone()
+                )
+            ),
+            (
+                numeric::Vector2u::new(2, 0),
+                HoldDataVText::new(
+                    HoldData::None,
+                    numeric::Point2f::new(0.0, 0.0),
+                    numeric::Vector2f::new(1.0, 1.0),
+                    0,
+                    info_font.clone()
+                )
+            ),
+	    (
+                numeric::Vector2u::new(3, 0),
+                HoldDataVText::new(
+                    HoldData::None,
+                    numeric::Point2f::new(0.0, 0.0),
+                    numeric::Vector2f::new(1.0, 1.0),
+                    0,
+                    info_font.clone()
+                )
+            ),
+	    (
+                numeric::Vector2u::new(4, 0),
+                HoldDataVText::new(
+                    HoldData::None,
+                    numeric::Point2f::new(0.0, 0.0),
+                    numeric::Vector2f::new(1.0, 1.0),
+                    0,
+                    info_font.clone()
+                )
+            ),
+	    (
+                numeric::Vector2u::new(5, 0),
+                HoldDataVText::new(
+                    HoldData::None,
+                    numeric::Point2f::new(0.0, 0.0),
+                    numeric::Vector2f::new(1.0, 1.0),
+                    0,
+                    info_font.clone()
+                )
+            ),
+	    (
+                numeric::Vector2u::new(0, 1),
+                HoldDataVText::new(
+                    HoldData::None,
+                    numeric::Point2f::new(0.0, 0.0),
+                    numeric::Vector2f::new(1.0, 1.0),
+                    0,
+                    info_font.clone()
+                )
+            ),
+            (
+                numeric::Vector2u::new(1, 1),
+                HoldDataVText::new(
+                    HoldData::None,
+                    numeric::Point2f::new(0.0, 0.0),
+                    numeric::Vector2f::new(1.0, 1.0),
+                    0,
+                    info_font.clone()
+                )
+            ),
+            (
+                numeric::Vector2u::new(2, 1),
+                HoldDataVText::new(
+                    HoldData::None,
+                    numeric::Point2f::new(0.0, 0.0),
+                    numeric::Vector2f::new(1.0, 1.0),
+                    0,
+                    info_font.clone()
+                )
+            ),
+	    (
+                numeric::Vector2u::new(3, 1),
+                HoldDataVText::new(
+                    HoldData::None,
+                    numeric::Point2f::new(0.0, 0.0),
+                    numeric::Vector2f::new(1.0, 1.0),
+                    0,
+                    info_font.clone()
+                )
+            ),
+	    (
+                numeric::Vector2u::new(4, 1),
+                HoldDataVText::new(
+                    HoldData::None,
+                    numeric::Point2f::new(0.0, 0.0),
+                    numeric::Vector2f::new(1.0, 1.0),
+                    0,
+                    info_font.clone()
+                )
+            ),
+	    (
+                numeric::Vector2u::new(5, 1),
+                HoldDataVText::new(
+                    HoldData::None,
+                    numeric::Point2f::new(0.0, 0.0),
+                    numeric::Vector2f::new(1.0, 1.0),
+                    0,
+                    info_font.clone()
+                )
+            )
+        ];
+
         BorrowingRecordBookPage {
             raw_info: BorrowingInformation::new(
                 Vec::new(),
@@ -1376,7 +1504,7 @@ impl BorrowingRecordBookPage {
             ),
             info_table: table_frame,
             books_table: books_table,
-            borrow_book: Vec::new(),
+            borrow_book: borrow_text,
             borrower: borrower,
             request_information: request_info_text,
             book_head: book_head,
@@ -1450,16 +1578,20 @@ impl BorrowingRecordBookPage {
 
     pub fn try_insert_data_in_borrowing_books_frame(
         &mut self,
+	ctx: &mut ggez::Context,
         position: numeric::Vector2u,
         hold_data: &HoldData,
     ) {
         match hold_data {
             HoldData::BookName(name) => {
-                let index = self.borrow_book.len() - 1 as usize - position.x as usize;
-                self.borrow_book
-                    .get_mut(index)
-                    .unwrap()
-                    .replace_text(name.to_string());
+		println!("hold data insert: {}, {:?}", hold_data.to_string(), position);
+		let info = self.borrow_book.get_mut(&position).unwrap();
+		info.reset(hold_data.clone());
+		info.vtext.make_center(
+                    ctx,
+                    self.books_table
+                        .get_center_of(position, self.books_table.get_position()),
+		);
             }
             _ => (),
         }
@@ -1497,7 +1629,7 @@ impl DrawableComponent for BorrowingRecordBookPage {
             self.borrow_date.draw(ctx)?;
             self.return_date.draw(ctx)?;
 
-            for d in &mut self.borrow_book {
+            for (_, d) in &mut self.borrow_book {
                 d.draw(ctx)?;
             }
 
@@ -1666,7 +1798,7 @@ impl BorrowingRecordBook {
     ) -> bool {
         if let Some(page) = self.get_current_page_mut() {
             let rpoint = page.relative_point(point);
-            let maybe_position = page.info_table.get_grid_position(rpoint);
+            let maybe_position = page.info_table.get_grid_position(ctx, rpoint);
             if let Some(position) = maybe_position {
                 page.try_insert_data_in_info_frame(ctx, position, hold_data);
                 true
@@ -1680,14 +1812,16 @@ impl BorrowingRecordBook {
 
     fn try_insert_data_borrowing_book_frame(
         &mut self,
+	ctx: &mut ggez::Context,
         point: numeric::Point2f,
         hold_data: &HoldData,
     ) -> bool {
         if let Some(page) = self.get_current_page_mut() {
             let rpoint = page.relative_point(point);
-            let maybe_position = page.books_table.get_grid_position(rpoint);
+	    debug::debug_screen_push_text("insert hold_data books frame");
+            let maybe_position = page.books_table.get_grid_position(ctx, rpoint);
             if let Some(position) = maybe_position {
-                page.try_insert_data_in_borrowing_books_frame(position, hold_data);
+                page.try_insert_data_in_borrowing_books_frame(ctx, position, hold_data);
                 true
             } else {
                 false
@@ -1899,7 +2033,7 @@ impl OnDesk for BorrowingRecordBook {
     ) -> bool {
 	// いずれかのTableFrameにデータを挿入できた場合trueが返る
         self.try_insert_data_customer_info_frame(ctx, point, data)
-            || self.try_insert_data_borrowing_book_frame(point, data)
+            || self.try_insert_data_borrowing_book_frame(ctx, point, data)
     }
 
     fn get_type(&self) -> OnDeskType {

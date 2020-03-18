@@ -132,7 +132,7 @@ impl SeqTexture {
         t: AnimationType,
     ) -> Result<Rc<ggraphics::Image>, AnimationStatus> {
         self.index += 1;
-
+	
         match t {
             AnimationType::OneShot | AnimationType::Times(_, _) => {
                 if self.index == self.textures.len() {
