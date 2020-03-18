@@ -1660,7 +1660,7 @@ pub struct BorrowingRecordBook {
     pages: Vec<BorrowingRecordBookPage>,
     rect: numeric::Rect,
     current_page: usize,
-    canvas: SubScreen,
+    canvas: MovableWrap<SubScreen>,
 }
 
 impl BorrowingRecordBook {
@@ -1669,7 +1669,10 @@ impl BorrowingRecordBook {
             pages: Vec::new(),
             rect: rect,
             current_page: 0,
-	    canvas: SubScreen::new(ctx, rect, drawing_depth, ggraphics::Color::from_rgba_u32(0xffffffff)),
+	    canvas: MovableWrap::new(
+		Box::new(SubScreen::new(ctx, rect, drawing_depth, ggraphics::Color::from_rgba_u32(0xffffffff))),
+		None,
+		0),
         }
     }
 
@@ -1716,7 +1719,7 @@ impl BorrowingRecordBook {
     }
 
     pub fn relative_point(&self, point: numeric::Point2f) -> numeric::Point2f {
-        self.canvas.relative_point(point)
+        self.canvas.ref_wrapped_object().relative_point(point)
     }
 
     fn next_page(&mut self) {
@@ -1777,7 +1780,7 @@ impl DrawableComponent for BorrowingRecordBook {
     #[inline(always)]
     fn draw(&mut self, ctx: &mut ggez::Context) -> ggez::GameResult<()> {
         if self.is_visible() {
-	    sub_screen::stack_screen(ctx, &self.canvas);
+	    sub_screen::stack_screen(ctx, self.canvas.ref_wrapped_object());
 	    
             if self.pages.len() > 0 {
                 self.pages.get_mut(self.current_page).unwrap().draw(ctx)?;
@@ -1820,6 +1823,34 @@ impl TextureObject for BorrowingRecordBook {
     impl_texture_object_for_wrapped! {canvas}
 }
 
+impl HasBirthTime for BorrowingRecordBook {
+    fn get_birth_time(&self) -> Clock {
+	self.canvas.get_birth_time()
+    }
+}
+
+impl MovableObject for BorrowingRecordBook {
+    fn move_with_func(&mut self, t: Clock) {
+	self.canvas.move_with_func(t);
+    }
+    
+    fn override_move_func(&mut self,
+                          move_fn: Option<Box<dyn Fn(& dyn MovableObject, Clock) -> numeric::Point2f>>,
+                          now: Clock)
+    {
+	self.canvas.override_move_func(move_fn, now);
+    }
+    
+    fn mf_start_timing(&self) -> Clock {
+	self.canvas.mf_start_timing()
+    }
+    
+    fn is_stop(&self) -> bool {
+	self.canvas.is_stop()
+    }
+    
+}
+
 impl Clickable for BorrowingRecordBook {
     fn button_down(
         &mut self,
@@ -1841,7 +1872,7 @@ impl Clickable for BorrowingRecordBook {
     ) {
         if let Some(page) = self.get_current_page_mut() {
             let rpoint = self.relative_point(point);
-
+	    debug::debug_screen_push_text("book click!!");
             if rpoint.x < 20.0 {
                 println!("next page!!");
                 self.add_empty_page(ctx, game_data, t);
@@ -1849,8 +1880,6 @@ impl Clickable for BorrowingRecordBook {
             } else if rpoint.x > self.get_drawing_size(ctx).x - 20.0 {
                 println!("prev page!!");
                 self.prev_page();
-            } else {
-                self.button_up(ctx, game_data, t, button, point);
             }
         }
     }
