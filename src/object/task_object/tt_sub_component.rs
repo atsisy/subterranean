@@ -1151,7 +1151,7 @@ pub struct BorrowingRecordBookPage {
     borrow_date: VerticalText,
     return_date: VerticalText,
     paper_texture: SimpleObject,
-    canvas: SubScreen,
+    drwob_essential: DrawableObjectEssential,
 }
 
 impl BorrowingRecordBookPage {
@@ -1512,7 +1512,7 @@ impl BorrowingRecordBookPage {
             paper_texture: paper_texture,
             borrow_date: borrow_date,
             return_date: return_date,
-            canvas: SubScreen::new(ctx, rect, 0, ggraphics::BLACK),
+	    drwob_essential: DrawableObjectEssential::new(true, 0),
         }
     }
 
@@ -1522,10 +1522,6 @@ impl BorrowingRecordBookPage {
 
     pub fn get_borrowing_info_mut(&mut self) -> &mut BorrowingInformation {
         &mut self.raw_info
-    }
-
-    pub fn relative_point(&self, point: numeric::Point2f) -> numeric::Point2f {
-        self.canvas.relative_point(point)
     }
 
     pub fn try_insert_data_in_info_frame(
@@ -1618,8 +1614,6 @@ impl BorrowingRecordBookPage {
 impl DrawableComponent for BorrowingRecordBookPage {
     fn draw(&mut self, ctx: &mut ggez::Context) -> ggez::GameResult<()> {
         if self.is_visible() {
-            sub_screen::stack_screen(ctx, &self.canvas);
-
             self.paper_texture.draw(ctx)?;
             self.info_table.draw(ctx)?;
             self.books_table.draw(ctx)?;
@@ -1636,93 +1630,46 @@ impl DrawableComponent for BorrowingRecordBookPage {
             for (_, d) in &mut self.request_information {
                 d.draw(ctx)?;
             }
-
-            sub_screen::pop_screen(ctx);
-            self.canvas.draw(ctx).unwrap();
         }
+	
         Ok(())
     }
 
     fn hide(&mut self) {
-        self.canvas.hide()
+	self.drwob_essential.visible = false;
     }
 
     fn appear(&mut self) {
-        self.canvas.appear()
+	self.drwob_essential.visible = true;
     }
 
     fn is_visible(&self) -> bool {
-        self.canvas.is_visible()
+	self.drwob_essential.visible
     }
 
     fn set_drawing_depth(&mut self, depth: i8) {
-        self.canvas.set_drawing_depth(depth)
+	self.drwob_essential.drawing_depth = depth;
     }
 
     fn get_drawing_depth(&self) -> i8 {
-        self.canvas.get_drawing_depth()
+	self.drwob_essential.drawing_depth
     }
-}
-
-impl DrawableObject for BorrowingRecordBookPage {
-    #[inline(always)]
-    fn set_position(&mut self, pos: numeric::Point2f) {
-        self.canvas.set_position(pos);
-    }
-
-    #[inline(always)]
-    fn get_position(&self) -> numeric::Point2f {
-        self.canvas.get_position()
-    }
-
-    #[inline(always)]
-    fn move_diff(&mut self, offset: numeric::Vector2f) {
-        self.canvas.move_diff(offset)
-    }
-}
-
-impl Clickable for BorrowingRecordBookPage {
-    fn button_down(
-        &mut self,
-        _ctx: &mut ggez::Context,
-        _: &GameData,
-        _: Clock,
-        _button: ggez::input::mouse::MouseButton,
-        _point: numeric::Point2f,
-    ) {
-    }
-
-    fn button_up(
-        &mut self,
-        _ctx: &mut ggez::Context,
-        _: &GameData,
-        _: Clock,
-        _button: ggez::input::mouse::MouseButton,
-        point: numeric::Point2f,
-    ) {
-        let rpoint = self.canvas.relative_point(point);
-        println!("{:?}", rpoint);
-    }
-}
-
-impl TextureObject for BorrowingRecordBookPage {
-    impl_texture_object_for_wrapped! {canvas}
 }
 
 pub struct BorrowingRecordBook {
     pages: Vec<BorrowingRecordBookPage>,
     rect: numeric::Rect,
     current_page: usize,
-    drwob_essential: DrawableObjectEssential,
+    canvas: SubScreen,
 }
 
 impl BorrowingRecordBook {
-    pub fn new(rect: ggraphics::Rect) -> Self {
+    pub fn new(ctx: &mut ggez::Context, rect: ggraphics::Rect, drawing_depth: i8) -> Self {
         BorrowingRecordBook {
             pages: Vec::new(),
             rect: rect,
             current_page: 0,
-            drwob_essential: DrawableObjectEssential::new(true, 0),
+	    canvas: SubScreen::new(ctx, rect, drawing_depth, ggraphics::Color::from_rgba_u32(0xffffffff)),
         }
     }
 
@@ -1733,14 +1680,9 @@ impl BorrowingRecordBook {
         game_data: &GameData,
         t: Clock,
     ) -> &Self {
-        let page_rect = if let Some(page) = self.get_current_page() {
-            page.get_drawing_area(ctx)
-        } else {
-            self.rect
-        };
         self.pages.push(BorrowingRecordBookPage::new(
             ctx,
-            page_rect,
+            self.rect,
             TextureID::Paper1,
             info,
             game_data,
@@ -1755,14 +1697,9 @@ impl BorrowingRecordBook {
         game_data: &GameData,
         t: Clock,
     ) -> &Self {
-        let page_rect = if let Some(page) = self.get_current_page() {
-            page.get_drawing_area(ctx)
-        } else {
-            self.rect
-        };
         self.pages.push(BorrowingRecordBookPage::new_empty(
             ctx,
-            page_rect,
+            self.rect,
             TextureID::Paper1,
             game_data,
             t,
@@ -1776,6 +1713,10 @@ impl BorrowingRecordBook {
 
     fn get_current_page_mut(&mut self) -> Option<&mut BorrowingRecordBookPage> {
         self.pages.get_mut(self.current_page)
+    }
+
+    pub fn relative_point(&self, point: numeric::Point2f) -> numeric::Point2f {
+        self.canvas.relative_point(point)
     }
 
     fn next_page(&mut self) {
@@ -1796,8 +1737,8 @@ impl BorrowingRecordBook {
         point: numeric::Point2f,
         hold_data: &HoldData,
     ) -> bool {
+	let rpoint = self.relative_point(point);
         if let Some(page) = self.get_current_page_mut() {
-            let rpoint = page.relative_point(point);
             let maybe_position = page.info_table.get_grid_position(ctx, rpoint);
             if let Some(position) = maybe_position {
                 page.try_insert_data_in_info_frame(ctx, position, hold_data);
@@ -1816,8 +1757,8 @@ impl BorrowingRecordBook {
         point: numeric::Point2f,
         hold_data: &HoldData,
     ) -> bool {
+	let rpoint = self.relative_point(point);
         if let Some(page) = self.get_current_page_mut() {
-            let rpoint = page.relative_point(point);
 	    debug::debug_screen_push_text("insert hold_data books frame");
             let maybe_position = page.books_table.get_grid_position(ctx, rpoint);
             if let Some(position) = maybe_position {
@@ -1836,148 +1777,47 @@ impl DrawableComponent for BorrowingRecordBook {
     #[inline(always)]
     fn draw(&mut self, ctx: &mut ggez::Context) -> ggez::GameResult<()> {
         if self.is_visible() {
+	    sub_screen::stack_screen(ctx, &self.canvas);
+	    
             if self.pages.len() > 0 {
                 self.pages.get_mut(self.current_page).unwrap().draw(ctx)?;
             }
+
+	    sub_screen::pop_screen(ctx);
+            self.canvas.draw(ctx).unwrap();
         }
         Ok(())
     }
 
-    #[inline(always)]
     fn hide(&mut self) {
-        self.drwob_essential.visible = false;
+        self.canvas.hide();
     }
 
-    #[inline(always)]
     fn appear(&mut self) {
-        self.drwob_essential.visible = true;
+        self.canvas.appear();
     }
 
-    #[inline(always)]
     fn is_visible(&self) -> bool {
-        self.drwob_essential.visible
+        self.canvas.is_visible()
     }
 
-    #[inline(always)]
+    /// 描画順序を設定する
     fn set_drawing_depth(&mut self, depth: i8) {
-        self.drwob_essential.drawing_depth = depth;
+        self.canvas.set_drawing_depth(depth);
     }
 
-    #[inline(always)]
+    /// 描画順序を返す
     fn get_drawing_depth(&self) -> i8 {
-        self.drwob_essential.drawing_depth
+        self.canvas.get_drawing_depth()
     }
 }
 
 impl DrawableObject for BorrowingRecordBook {
-    #[inline(always)]
-    fn set_position(&mut self, pos: numeric::Point2f) {
-        self.rect.x = pos.x;
-        self.rect.y = pos.y;
-
-        for page in &mut self.pages {
-            page.set_position(pos);
-        }
-    }
-
-    #[inline(always)]
-    fn get_position(&self) -> numeric::Point2f {
-        self.rect.point().into()
-    }
-
-    #[inline(always)]
-    fn move_diff(&mut self, offset: numeric::Vector2f) {
-        self.rect.x += offset.x;
-        self.rect.y += offset.y;
-
-        for page in &mut self.pages {
-            page.move_diff(offset);
-        }
-    }
+    impl_drawable_object_for_wrapped! {canvas}
 }
 
 impl TextureObject for BorrowingRecordBook {
-    #[inline(always)]
-    fn set_scale(&mut self, scale: numeric::Vector2f) {
-        self.get_current_page_mut().unwrap().set_scale(scale);
-    }
-
-    #[inline(always)]
-    fn get_scale(&self) -> numeric::Vector2f {
-        self.get_current_page().unwrap().get_scale()
-    }
-
-    #[inline(always)]
-    fn set_rotation(&mut self, rad: f32) {
-        self.get_current_page_mut().unwrap().set_rotation(rad);
-    }
-
-    #[inline(always)]
-    fn get_rotation(&self) -> f32 {
-        self.get_current_page().unwrap().get_rotation()
-    }
-
-    #[inline(always)]
-    fn set_crop(&mut self, crop: ggraphics::Rect) {
-        self.get_current_page_mut().unwrap().set_crop(crop)
-    }
-
-    #[inline(always)]
-    fn get_crop(&self) -> ggraphics::Rect {
-        self.get_current_page().unwrap().get_crop()
-    }
-
-    #[inline(always)]
-    fn set_drawing_color(&mut self, color: ggraphics::Color) {
-        self.get_current_page_mut()
-            .unwrap()
-            .set_drawing_color(color)
-    }
-
-    #[inline(always)]
-    fn get_drawing_color(&self) -> ggraphics::Color {
-        self.get_current_page().unwrap().get_drawing_color()
-    }
-
-    #[inline(always)]
-    fn set_alpha(&mut self, alpha: f32) {
-        self.get_current_page_mut().unwrap().set_alpha(alpha)
-    }
-
-    #[inline(always)]
-    fn get_alpha(&self) -> f32 {
-        self.get_current_page().unwrap().get_alpha()
-    }
-
-    #[inline(always)]
-    fn set_transform_offset(&mut self, offset: numeric::Point2f) {
-        self.get_current_page_mut()
-            .unwrap()
-            .set_transform_offset(offset)
-    }
-
-    #[inline(always)]
-    fn get_transform_offset(&self) -> numeric::Point2f {
-        self.get_current_page().unwrap().get_transform_offset()
-    }
-
-    #[inline(always)]
-    fn get_texture_size(&self, ctx: &mut ggez::Context) -> numeric::Vector2f {
-        self.get_current_page().unwrap().get_texture_size(ctx)
-    }
-
-    #[inline(always)]
-    fn replace_texture(&mut self, _: Rc<ggraphics::Image>) {}
-
-    #[inline(always)]
-    fn set_color(&mut self, color: ggraphics::Color) {
-        self.get_current_page_mut().unwrap().set_color(color)
-    }
-
-    #[inline(always)]
-    fn get_color(&mut self) -> ggraphics::Color {
-        self.get_current_page_mut().unwrap().get_color()
-    }
+    impl_texture_object_for_wrapped! {canvas}
 }
 
 impl Clickable for BorrowingRecordBook {
@@ -2000,17 +1840,17 @@ impl Clickable for BorrowingRecordBook {
         point: numeric::Point2f,
     ) {
         if let Some(page) = self.get_current_page_mut() {
-            let rpoint = page.relative_point(point);
+            let rpoint = self.relative_point(point);
 
             if rpoint.x < 20.0 {
                 println!("next page!!");
                 self.add_empty_page(ctx, game_data, t);
                 self.next_page();
-            } else if rpoint.x > page.get_drawing_size(ctx).x - 20.0 {
+            } else if rpoint.x > self.get_drawing_size(ctx).x - 20.0 {
                 println!("prev page!!");
                 self.prev_page();
             } else {
-                page.button_up(ctx, game_data, t, button, point);
+                self.button_up(ctx, game_data, t, button, point);
             }
         }
     }

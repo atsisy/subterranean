@@ -37,6 +37,7 @@ pub struct TaskTable {
     shelving_box: ShelvingBookBox,
     hold_data: HoldData,
     event_list: DelayEventList<TaskTable>,
+    borrowing_record_book: BorrowingRecordBook,
 }
 
 impl TaskTable {
@@ -109,6 +110,10 @@ impl TaskTable {
 
         let shelving_box = ShelvingBookBox::new(ctx, game_data, shelving_box_rect);
 
+	let mut record_book = BorrowingRecordBook::new(ctx, ggraphics::Rect::new(150.0, -550.0, 1000.0, 550.0), 0);
+	record_book.add_empty_page(ctx, game_data, 0);
+	record_book.hide();
+
         TaskTable {
             canvas: SubScreen::new(ctx, pos, 0, ggraphics::Color::from_rgba_u32(0x00000000)),
             sight: sight,
@@ -124,6 +129,7 @@ impl TaskTable {
             shelving_box: shelving_box,
             hold_data: HoldData::None,
 	    event_list: DelayEventList::new(),
+	    borrowing_record_book: record_book,
         }
     }
     
@@ -149,18 +155,16 @@ impl TaskTable {
         self.desk.select_dragging_object(ctx, rpoint);
     }
 
-    fn check_staging_object_ready(
-        &mut self,
-        ctx: &mut ggez::Context,
-        game_data: &GameData,
-        t: Clock,
-    ) {
-        let maybe_staging_object = self.desk.check_staging_object(ctx, game_data, t);
-        if maybe_staging_object.is_some() {
-            self.staging_object = maybe_staging_object;
-        }
+    fn slide_appear_record_book(&mut self, ctx: &mut ggez::Context, game_data: &GameData) {
+	self.borrowing_record_book.appear();
+	self.borrowing_record_book.set_position(numeric::Point2f::new(150.0, 50.0));
     }
 
+    fn slide_hide_record_book(&mut self, ctx: &mut ggez::Context, game_data: &GameData) {
+	self.borrowing_record_book.hide();
+	self.borrowing_record_book.set_position(numeric::Point2f::new(0.0, -550.0));
+    }
+    
     pub fn double_click_handler(
         &mut self,
         ctx: &mut ggez::Context,
@@ -169,8 +173,18 @@ impl TaskTable {
         t: Clock,
     ) {
         let rpoint = self.canvas.relative_point(point);
-        self.desk.double_click_handler(ctx, rpoint, game_data);
-        self.check_staging_object_ready(ctx, game_data, t);
+
+	let clicked_object_type = self.desk.double_click_handler(ctx, rpoint, game_data);
+	
+	if clicked_object_type.is_some() {
+	    match clicked_object_type.unwrap() {
+		OnDeskType::BorrowingRecordBook => {
+		    debug::debug_screen_push_text("slide appear record book");
+		    self.slide_appear_record_book(ctx, game_data);
+		},
+		_ => (),
+	    }   
+	}
     }
 
     pub fn dragging_handler(&mut self, point: numeric::Point2f, last: numeric::Point2f) {
@@ -613,6 +627,13 @@ impl TaskTable {
 		    self.hold_data = HoldData::None;
 		}
             }
+
+	    // 貸出記録にHoldDataを挿入する
+	    if self.borrowing_record_book.is_visible() {
+		if self.borrowing_record_book.insert_data(ctx, point, &self.hold_data) {
+		    self.hold_data = HoldData::None;
+		}
+	    }
         }
     }
 
@@ -625,7 +646,7 @@ impl TaskTable {
     }
 
     /// キーハンドラ
-    pub fn key_event_handler(&mut self, _: &mut ggez::Context, vkey: VirtualKey, t: Clock) {
+    pub fn key_event_handler(&mut self, ctx: &mut ggez::Context, game_data: &GameData, vkey: VirtualKey, t: Clock) {
         match vkey {
             VirtualKey::Action2 => {
                 self.customer_info_ui.slide_toggle(t);
@@ -635,6 +656,8 @@ impl TaskTable {
 		    self.staging_object.as_mut().unwrap().slide_hide(t);
 		    self.event_list.add_event(Box::new(|tt: &mut Self, _, _| tt.staging_object = None), t + 100);
 		}
+
+		self.slide_hide_record_book(ctx, game_data);
 	    },
             _ => (),
         }
@@ -654,6 +677,8 @@ impl DrawableComponent for TaskTable {
             if let Some(staging_object) = self.staging_object.as_mut() {
                 staging_object.draw(ctx)?;
             }
+
+	    self.borrowing_record_book.draw(ctx)?;
 
             self.customer_info_ui.draw(ctx)?;
 

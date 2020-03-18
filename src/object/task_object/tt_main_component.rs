@@ -100,7 +100,6 @@ pub struct DeskObjects {
     pub desk_objects: DeskObjectContainer,
     pub dragging: Option<DeskObject>,
     pub table_texture: SimpleObject,
-    last_double_clicked: Option<OnDeskType>,
 }
 
 impl DeskObjects {
@@ -130,7 +129,6 @@ impl DeskObjects {
                 ),
                 Vec::new(),
             ),
-            last_double_clicked: None,
         }
     }
 
@@ -253,9 +251,10 @@ impl DeskObjects {
         ctx: &mut ggez::Context,
         point: numeric::Point2f,
         _game_data: &GameData,
-    ) {
+    ) -> Option<OnDeskType> {
         let rpoint = self.canvas.relative_point(point);
         let mut click_flag = false;
+	let mut object_type: Option<OnDeskType> = None;
 
         // オブジェクトは深度が深い順にソートされているので、
         // 逆順から検索していくことで、最も手前に表示されているオブジェクトを
@@ -269,7 +268,8 @@ impl DeskObjects {
         {
             if obj.get_object().get_drawing_area(ctx).contains(rpoint) {
                 click_flag = true;
-                self.last_double_clicked = Some(
+
+		object_type = Some(
                     obj.get_object()
                         .ref_wrapped_object()
                         .ref_wrapped_object()
@@ -282,39 +282,8 @@ impl DeskObjects {
         if click_flag {
             self.desk_objects.sort_with_depth();
         }
-    }
 
-    ///
-    /// 全画面に表示するオブジェクトが用意されているか確認するメソッド
-    /// このとき、全画面に表示する予定のオブジェクトがあれば、返り値としてそれを返す
-    ///
-    pub fn check_staging_object(
-        &mut self,
-        ctx: &mut ggez::Context,
-        game_data: &GameData,
-        t: Clock,
-    ) -> Option<TaskTableStagingObject> {
-        // 表示する予定がある
-        if self.last_double_clicked.is_some() {
-            // 表示するオブジェクトの種類を得る
-            let stageing_object = std::mem::replace(&mut self.last_double_clicked, None).unwrap();
-
-            // 種類ごとに表示するオブジェクトを生成
-            match stageing_object {
-                OnDeskType::BorrowingRecordBook => {
-                    let mut record_book =
-                        BorrowingRecordBook::new(ggraphics::Rect::new(150.0, 100.0, 1000.0, 550.0));
-                    record_book.add_empty_page(ctx, game_data, t);
-                    Some(TaskTableStagingObject::BorrowingRecordBook(record_book))
-                }
-                _ => {
-                    debug::debug_screen_push_text("not implement!!");
-                    None
-                }
-            }
-        } else {
-            None
-        }
+	object_type
     }
 
     pub fn add_object(&mut self, obj: DeskObject) {

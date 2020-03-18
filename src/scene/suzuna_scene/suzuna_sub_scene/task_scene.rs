@@ -163,11 +163,11 @@ impl SceneManager for TaskScene {
     fn key_down_event(
         &mut self,
         ctx: &mut ggez::Context,
-        _game_data: &GameData,
+        game_data: &GameData,
         vkey: tdev::VirtualKey,
     ) {
         self.task_table
-            .key_event_handler(ctx, vkey, self.get_current_clock());
+            .key_event_handler(ctx, game_data, vkey, self.get_current_clock());
         match vkey {
             tdev::VirtualKey::Action1 => {
                 println!("Action1 down!");
