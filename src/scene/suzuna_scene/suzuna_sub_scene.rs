@@ -10,7 +10,7 @@ use torifune::numeric;
 use crate::core::GameData;
 use crate::scene::*;
 
-use crate::scene::shop_scene::ShopScene;
+use crate::{object::task_object::tt_sub_component::GensoDate, scene::shop_scene::ShopScene};
 
 use copy_scene::*;
 use task_result_scene::*;
@@ -38,7 +38,7 @@ pub struct SuzunaSubScene {
 impl SuzunaSubScene {
     pub fn new(ctx: &mut ggez::Context, game_data: &GameData, map_id: u32) -> Self {
         SuzunaSubScene {
-            shop_scene: Some(Box::new(ShopScene::new(ctx, game_data, map_id))),
+            shop_scene: Some(Box::new(ShopScene::new(ctx, game_data, map_id, GensoDate::new_empty()))),
             desk_work_scene: None,
             day_result_scene: None,
             copying_scene: None,
@@ -69,9 +69,13 @@ impl SuzunaSubScene {
         transition: SceneTransition,
     ) {
         if transition == SceneTransition::StackingTransition {
-            let customer_request = self.shop_scene.as_mut().unwrap().pop_customer_request();
-            self.scene_status = SuzunaSceneStatus::DeskWork;
-            self.desk_work_scene = Some(Box::new(TaskScene::new(ctx, game_data, customer_request)));
+	    if let Some(shop_scene) = self.shop_scene.as_mut() {
+		let customer_request = shop_scene.pop_customer_request();
+		let today_date = shop_scene.get_today_date();
+		
+		self.scene_status = SuzunaSceneStatus::DeskWork;
+		self.desk_work_scene = Some(Box::new(TaskScene::new(ctx, game_data, today_date, customer_request)));
+	    }
         }
     }
 

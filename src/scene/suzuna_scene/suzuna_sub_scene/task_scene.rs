@@ -13,6 +13,7 @@ use crate::object::task_object::*;
 use crate::scene::{SceneID, SceneTransition};
 
 use crate::object::task_object::tt_main_component::*;
+use tt_sub_component::GensoDate;
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum TaskSceneStatus {
@@ -39,6 +40,7 @@ impl TaskScene {
     pub fn new(
         ctx: &mut ggez::Context,
         game_data: &GameData,
+	today_date: GensoDate,
         customer_request: Option<CustomerRequest>,
     ) -> TaskScene {
         TaskScene {
@@ -50,6 +52,7 @@ impl TaskScene {
                 numeric::Rect::new(800.0, 0.0, 400.0, 300.0),
                 numeric::Rect::new(0.0, 310.0, 900.0, 500.0),
                 numeric::Rect::new(900.0, 310.0, 500.0, 500.0),
+		today_date,
                 0,
             ),
             clock: 0,
@@ -119,6 +122,7 @@ impl TaskScene {
             CustomerRequest::Borrowing(request_information) => {
                 // 貸出本を記録
                 self.task_result.done_works += 1;
+		self.task_result.total_money += (request_information.borrowing.len() * 300) as i32;
                 self.task_result
                     .borrowing_books
                     .extend(request_information.borrowing);

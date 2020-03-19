@@ -25,7 +25,7 @@ use std::collections::VecDeque;
 use std::rc::Rc;
 use std::str::FromStr;
 
-use crate::scene;
+use crate::{object::task_object::tt_sub_component::GensoDate, scene};
 
 use std::fs;
 use std::io::{BufReader, Read};
@@ -608,11 +608,11 @@ impl<'a> SceneController<'a> {
         if next_scene_id == scene::SceneID::MainDesk {
             self.current_scene = Box::new(
                 scene::suzuna_scene::suzuna_sub_scene::task_scene::TaskScene::new(
-                    ctx, game_data, None,
+                    ctx, game_data, GensoDate::new_empty(), None,
                 ),
             );
         } else if next_scene_id == scene::SceneID::SuzunaShop {
-            self.current_scene = Box::new(scene::shop_scene::ShopScene::new(ctx, game_data, 0));
+            self.current_scene = Box::new(scene::shop_scene::ShopScene::new(ctx, game_data, 0, GensoDate::new_empty()));
         } else if next_scene_id == scene::SceneID::Null {
             self.current_scene = Box::new(scene::NullScene::new());
         }
@@ -628,12 +628,12 @@ impl<'a> SceneController<'a> {
             if next_scene_id == scene::SceneID::MainDesk {
                 Some(Box::new(
                     scene::suzuna_scene::suzuna_sub_scene::task_scene::TaskScene::new(
-                        ctx, game_data, None,
+                        ctx, game_data, GensoDate::new_empty(), None,
                     ),
                 ))
             } else if next_scene_id == scene::SceneID::SuzunaShop {
                 Some(Box::new(scene::shop_scene::ShopScene::new(
-                    ctx, game_data, 0,
+                    ctx, game_data, 0, GensoDate::new_empty()
                 )))
             } else if next_scene_id == scene::SceneID::Null {
                 Some(Box::new(scene::NullScene::new()))

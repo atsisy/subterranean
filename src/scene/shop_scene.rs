@@ -26,6 +26,7 @@ use crate::object::shop_object::*;
 use crate::object::task_object::tt_main_component::CustomerRequest;
 use crate::object::*;
 use crate::scene::suzuna_scene::TaskResult;
+use task_object::tt_sub_component::GensoDate;
 
 struct CharacterGroup {
     group: Vec<CustomerCharacter>,
@@ -304,6 +305,7 @@ pub struct ShopScene {
     task_result: TaskResult,
     clock: Clock,
     shop_clock: ShopClock,
+    today_date: GensoDate,
     map: MapData,
     shop_menu: ShopMenuMaster,
     customer_request_queue: VecDeque<CustomerRequest>,
@@ -315,7 +317,7 @@ pub struct ShopScene {
 }
 
 impl ShopScene {
-    pub fn new(ctx: &mut ggez::Context, game_data: &GameData, map_id: u32) -> ShopScene {
+    pub fn new(ctx: &mut ggez::Context, game_data: &GameData, map_id: u32, today_date: GensoDate) -> ShopScene {
         let key_listener =
             tdev::KeyboardListener::new_masked(vec![tdev::KeyInputDevice::GenericKeyboard], vec![]);
 
@@ -360,6 +362,7 @@ impl ShopScene {
             task_result: TaskResult::new(),
             clock: 0,
             shop_clock: ShopClock::new(8, 0),
+	    today_date: today_date,
             map: map,
             shop_menu: ShopMenuMaster::new(ctx, game_data, numeric::Vector2f::new(450.0, 768.0), 0),
             customer_request_queue: VecDeque::new(),
@@ -434,6 +437,10 @@ impl ShopScene {
     pub fn set_camera(&mut self, offset: numeric::Vector2f) {
         self.camera.borrow_mut().x = offset.x;
         self.camera.borrow_mut().y = offset.y;
+    }
+
+    pub fn get_today_date(&self) -> GensoDate {
+	self.today_date.clone()
     }
 
     fn right_key_handler(&mut self) {
@@ -808,6 +815,10 @@ impl ShopScene {
 
                         self.transition_status = SceneTransition::StackingTransition;
                         self.transition_scene = switch_scene.get_switch_scene_id();
+
+			if self.transition_scene == SceneID::MainDesk {
+			    self.shop_clock.add_minute(10);
+			}
                     }
                 }
                 MapEventElement::BookStoreEvent(book_store_event) => {

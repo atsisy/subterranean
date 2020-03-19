@@ -49,6 +49,7 @@ impl TaskTable {
         goods_rect: numeric::Rect,
         desk_rect: numeric::Rect,
         shelving_box_rect: numeric::Rect,
+	_today_date: GensoDate,
         t: Clock,
     ) -> Self {
         let sight = SuzuMiniSight::new(ctx, game_data, sight_rect, t);
@@ -156,7 +157,7 @@ impl TaskTable {
         self.desk.select_dragging_object(ctx, rpoint);
     }
 
-    fn slide_appear_record_book(&mut self, ctx: &mut ggez::Context, game_data: &GameData, t: Clock) {
+    fn slide_appear_record_book(&mut self, _ctx: &mut ggez::Context, _: &GameData, t: Clock) {
 	self.event_list.add_event(
             Box::new(|tt: &mut TaskTable, _, _| tt.borrowing_record_book.appear()),
             t + 30,
@@ -168,7 +169,7 @@ impl TaskTable {
         );
     }
 
-    fn slide_hide_record_book(&mut self, ctx: &mut ggez::Context, game_data: &GameData, t: Clock) {
+    fn slide_hide_record_book(&mut self, _ctx: &mut ggez::Context, _: &GameData, t: Clock) {
         self.event_list.add_event(
             Box::new(|tt: &mut TaskTable, _, _| tt.borrowing_record_book.hide()),
             t + 30,
@@ -399,7 +400,7 @@ impl TaskTable {
         self.shelving_box.update(ctx, t);
         self.check_sight_drop_to_desk(ctx, t);
         self.customer_info_ui.update(ctx, t);
-        self.borrowing_record_book.move_with_func(t);
+	self.borrowing_record_book.update(ctx, t);
     }
 
     pub fn finish_customer_event(&mut self, now: Clock) {
@@ -756,7 +757,7 @@ impl Clickable for TaskTable {
     fn button_down(
         &mut self,
         ctx: &mut ggez::Context,
-        game_data: &GameData,
+        _: &GameData,
         t: Clock,
         button: ggez::input::mouse::MouseButton,
         point: numeric::Point2f,

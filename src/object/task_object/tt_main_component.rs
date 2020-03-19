@@ -463,13 +463,13 @@ impl CustomerInformationUI {
         let table_frame = TableFrame::new(
             game_data,
             numeric::Point2f::new(50.0, 80.0),
-            FrameData::new(vec![150.0, 150.0], vec![40.0; 4]),
+            FrameData::new(vec![150.0, 150.0], vec![40.0; 8]),
             numeric::Vector2f::new(0.2, 0.2),
             0,
         );
 
         let head_text = MovableText::new(
-            "報情客御".to_string(),
+            "小鈴覚書".to_string(),
             numeric::Point2f::new(100.0, 30.0),
             numeric::Vector2f::new(1.0, 1.0),
             0.0,

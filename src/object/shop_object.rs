@@ -19,92 +19,9 @@ use crate::object::move_fn;
 use crate::object::Clickable;
 use crate::scene::suzuna_scene::TaskResult;
 use crate::scene::DelayEventList;
+use crate::object::util_object::*;
 
 use number_to_jk::number_to_jk;
-
-///
-/// # ボタンみたいなものを表示する構造体
-///
-pub struct SelectButton {
-    canvas: SubScreen,
-    button_texture: Box<dyn TextureObject>,
-    button_toggle: bool,
-}
-
-impl SelectButton {
-    pub fn new(
-        ctx: &mut ggez::Context,
-        button_rect: numeric::Rect,
-        mut texture: Box<dyn TextureObject>,
-    ) -> Self {
-        texture.set_position(numeric::Point2f::new(0.0, 0.0));
-
-        SelectButton {
-            canvas: SubScreen::new(ctx, button_rect, 0, ggraphics::Color::from_rgba_u32(0)),
-            button_texture: texture,
-            button_toggle: false,
-        }
-    }
-
-    pub fn push(&mut self) {
-        self.button_toggle = true;
-        self.button_texture
-            .set_color(ggraphics::Color::from_rgba_u32(0xffffffff));
-    }
-
-    pub fn release(&mut self) {
-        self.button_toggle = false;
-        self.button_texture
-            .set_color(ggraphics::Color::from_rgba_u32(0x888888ff));
-    }
-
-    pub fn get_button_status(&self) -> bool {
-        self.button_toggle
-    }
-}
-
-impl DrawableComponent for SelectButton {
-    fn draw(&mut self, ctx: &mut ggez::Context) -> ggez::GameResult<()> {
-        if self.is_visible() {
-            sub_screen::stack_screen(ctx, &self.canvas);
-
-            self.button_texture.draw(ctx)?;
-
-            sub_screen::pop_screen(ctx);
-            self.canvas.draw(ctx).unwrap();
-        }
-
-        Ok(())
-    }
-
-    fn hide(&mut self) {
-        self.canvas.hide();
-    }
-
-    fn appear(&mut self) {
-        self.canvas.appear();
-    }
-
-    fn is_visible(&self) -> bool {
-        self.canvas.is_visible()
-    }
-
-    fn set_drawing_depth(&mut self, depth: i8) {
-        self.canvas.set_drawing_depth(depth);
-    }
-
-    fn get_drawing_depth(&self) -> i8 {
-        self.canvas.get_drawing_depth()
-    }
-}
-
-impl DrawableObject for SelectButton {
-    impl_drawable_object_for_wrapped! {canvas}
-}
-
-impl TextureObject for SelectButton {
-    impl_texture_object_for_wrapped! {canvas}
-}
 
 pub struct SelectBookWindow {
     canvas: SubScreen,

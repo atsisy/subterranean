@@ -1,8 +1,13 @@
+use std::rc::Rc;
+
 use ggez::graphics as ggraphics;
 
+use torifune::graphics::object::sub_screen;
+use sub_screen::SubScreen;
 use torifune::graphics::*;
 use torifune::graphics::object::*;
 use torifune::impl_drawable_object_for_wrapped;
+use torifune::impl_texture_object_for_wrapped;
 use torifune::numeric;
 use torifune::graphics::object::tile_batch::*;
 
@@ -72,6 +77,15 @@ impl TableFrame {
 	let current_position = self.get_position();
 	point.x >= current_position.x && point.y >= current_position.y &&
 	    point.x <= (current_position.x + self.real_width()) && point.y <= (current_position.y + self.real_height())
+    }
+
+    fn contains_at(&self, grid_position: numeric::Vector2u, point: numeric::Point2f) -> bool {
+	let self_position = self.get_position();
+	let grid_lefttop = self.get_grid_topleft(grid_position, numeric::Vector2f::new(self_position.x, self_position.y));
+	let height = self.frame_data.each_cols_size.get(grid_position.y as usize).unwrap();
+	let width = self.frame_data.each_rows_size.get(grid_position.x as usize).unwrap();
+	let click_area = numeric::Rect::new(grid_lefttop.x, grid_lefttop.y, *width, *height);
+	click_area.contains(point)
     }
 
     fn get_scaled_tile_size(&self) -> numeric::Vector2f {
@@ -401,4 +415,89 @@ impl DrawableComponent for TableFrame {
 
 impl DrawableObject for TableFrame {
     impl_drawable_object_for_wrapped! {tile_batch}
+}
+
+
+///
+/// # ボタンみたいなものを表示する構造体
+///
+pub struct SelectButton {
+    canvas: SubScreen,
+    button_texture: Box<dyn TextureObject>,
+    button_toggle: bool,
+}
+
+impl SelectButton {
+    pub fn new(
+        ctx: &mut ggez::Context,
+        button_rect: numeric::Rect,
+        mut texture: Box<dyn TextureObject>,
+    ) -> Self {
+        texture.set_position(numeric::Point2f::new(0.0, 0.0));
+
+        SelectButton {
+            canvas: SubScreen::new(ctx, button_rect, 0, ggraphics::Color::from_rgba_u32(0)),
+            button_texture: texture,
+            button_toggle: false,
+        }
+    }
+
+    pub fn push(&mut self) {
+        self.button_toggle = true;
+        self.button_texture
+            .set_color(ggraphics::Color::from_rgba_u32(0xffffffff));
+    }
+
+    pub fn release(&mut self) {
+        self.button_toggle = false;
+        self.button_texture
+            .set_color(ggraphics::Color::from_rgba_u32(0x888888ff));
+    }
+
+    pub fn get_button_status(&self) -> bool {
+        self.button_toggle
+    }
+}
+
+impl DrawableComponent for SelectButton {
+    fn draw(&mut self, ctx: &mut ggez::Context) -> ggez::GameResult<()> {
+        if self.is_visible() {
+            sub_screen::stack_screen(ctx, &self.canvas);
+
+            self.button_texture.draw(ctx)?;
+
+            sub_screen::pop_screen(ctx);
+            self.canvas.draw(ctx).unwrap();
+        }
+
+        Ok(())
+    }
+
+    fn hide(&mut self) {
+        self.canvas.hide();
+    }
+
+    fn appear(&mut self) {
+        self.canvas.appear();
+    }
+
+    fn is_visible(&self) -> bool {
+        self.canvas.is_visible()
+    }
+
+    fn set_drawing_depth(&mut self, depth: i8) {
+        self.canvas.set_drawing_depth(depth);
+    }
+
+    fn get_drawing_depth(&self) -> i8 {
+        self.canvas.get_drawing_depth()
+    }
+}
+
+impl DrawableObject for SelectButton {
+    impl_drawable_object_for_wrapped! {canvas}
+}
+
+impl TextureObject for SelectButton {
+    impl_texture_object_for_wrapped! {canvas}
 }

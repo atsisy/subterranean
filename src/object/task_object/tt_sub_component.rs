@@ -6,7 +6,8 @@ use ggez::graphics as ggraphics;
 use ggez::input as ginput;
 use ginput::mouse::MouseCursor;
 
-use torifune::core::Clock;
+use torifune::core::{Updatable, Clock};
+use torifune::debug;
 use torifune::graphics::object::sub_screen;
 use torifune::graphics::object::sub_screen::SubScreen;
 use torifune::graphics::object::*;
@@ -16,11 +17,11 @@ use torifune::impl_drawable_object_for_wrapped;
 use torifune::impl_texture_object_for_wrapped;
 use torifune::numeric;
 use torifune::roundup2f;
-use torifune::debug;
 
 use crate::core::BookInformation;
 use crate::object::move_fn;
 use crate::object::util_object::*;
+use crate::object::effect;
 
 use super::Clickable;
 use crate::core::{FontID, GameData, TextureID};
@@ -231,12 +232,12 @@ pub enum HoldData {
 
 impl HoldData {
     pub fn to_each_type_string(&self) -> String {
-	match self {
-	    HoldData::BookName(_) => "題目".to_string(),
-	    HoldData::CustomerName(_) => "御客氏名".to_string(),
-	    HoldData::Date(_) => "日付".to_string(),
-	    HoldData::None => "".to_string(),
-	}
+        match self {
+            HoldData::BookName(_) => "題目".to_string(),
+            HoldData::CustomerName(_) => "御客氏名".to_string(),
+            HoldData::Date(_) => "日付".to_string(),
+            HoldData::None => "".to_string(),
+        }
     }
 }
 
@@ -1139,6 +1140,109 @@ impl OnDesk for CopyingRequestPaper {
     }
 }
 
+pub struct ButtonGroup {
+    buttons: Vec<SelectButton>,
+    canvas: MovableWrap<SubScreen>,
+}
+
+impl ButtonGroup {
+    pub fn new(
+        ctx: &mut ggez::Context,
+	game_data: &GameData,
+        group_rect: numeric::Rect,
+        mut button_rect: numeric::Rect,
+        padding: f32,
+        mut textures: Vec<TextureID>,
+        drawing_depth: i8,
+        t: Clock,
+    ) -> Self {
+        let mut buttons = Vec::new();
+
+        while textures.len() > 0 {
+            let texture = textures.swap_remove(0);
+            buttons.push(SelectButton::new(ctx, button_rect, Box::new(UniTexture::new(game_data.ref_texture(texture),
+										      numeric::Point2f::new(0.0, 0.0),
+										      numeric::Vector2f::new(1.0, 1.0),
+										      0.0,
+										      0))));
+            button_rect.x += button_rect.w + padding;
+        }
+
+        ButtonGroup {
+            buttons: buttons,
+            canvas: MovableWrap::new(
+                Box::new(SubScreen::new(
+                    ctx,
+                    group_rect,
+                    drawing_depth,
+                    ggraphics::Color::from_rgba_u32(0xffffffff),
+                )),
+                None,
+                t,
+            ),
+        }
+    }
+
+    pub fn click_handler(
+        &mut self,
+        ctx: &mut ggez::Context,
+        point: numeric::Point2f,
+    ) -> Option<usize> {
+        let rpoint = self.canvas.ref_wrapped_object().relative_point(point);
+        for (i, button) in self.buttons.iter().enumerate() {
+            if button.contains(ctx, rpoint) {
+                return Some(i);
+            }
+        }
+
+        None
+    }
+}
+
+impl DrawableComponent for ButtonGroup {
+    fn draw(&mut self, ctx: &mut ggez::Context) -> ggez::GameResult<()> {
+        if self.is_visible() {
+            sub_screen::stack_screen(ctx, self.canvas.ref_wrapped_object());
+
+            for button in &mut self.buttons {
+                button.draw(ctx)?;
+            }
+
+            sub_screen::pop_screen(ctx);
+            self.canvas.draw(ctx).unwrap();
+        }
+        Ok(())
+    }
+
+    fn hide(&mut self) {
+        self.canvas.hide()
+    }
+
+    fn appear(&mut self) {
+        self.canvas.appear()
+    }
+
+    fn is_visible(&self) -> bool {
+        self.canvas.is_visible()
+    }
+
+    fn set_drawing_depth(&mut self, depth: i8) {
+        self.canvas.set_drawing_depth(depth)
+    }
+
+    fn get_drawing_depth(&self) -> i8 {
+        self.canvas.get_drawing_depth()
+    }
+}
+
+impl DrawableObject for ButtonGroup {
+    impl_drawable_object_for_wrapped! {canvas}
+}
+
+impl TextureObject for ButtonGroup {
+    impl_texture_object_for_wrapped! {canvas}
+}
+
 pub struct BorrowingRecordBookPage {
     raw_info: BorrowingInformation,
     info_table: TableFrame,
@@ -1152,6 +1256,7 @@ pub struct BorrowingRecordBookPage {
     return_date: VerticalText,
     paper_texture: SimpleObject,
     drwob_essential: DrawableObjectEssential,
+    drop_down_button: Option<EffectableWrap<MovableWrap<ButtonGroup>>>,
 }
 
 impl BorrowingRecordBookPage {
@@ -1192,11 +1297,13 @@ impl BorrowingRecordBookPage {
                     )),
                 );
 
-                (numeric::Vector2u::new(i as u32, 0),
-		 HoldDataVText {
-		     data: HoldData::BookName(book_info.name.to_string()),
-		     vtext: vtext
-		 })
+                (
+                    numeric::Vector2u::new(i as u32, 0),
+                    HoldDataVText {
+                        data: HoldData::BookName(book_info.name.to_string()),
+                        vtext: vtext,
+                    },
+                )
             })
             .collect();
 
@@ -1372,7 +1479,7 @@ impl BorrowingRecordBookPage {
             )
         ];
 
-	let borrow_text = hash![
+        let borrow_text = hash![
             (
                 numeric::Vector2u::new(0, 0),
                 HoldDataVText::new(
@@ -1403,7 +1510,7 @@ impl BorrowingRecordBookPage {
                     info_font.clone()
                 )
             ),
-	    (
+            (
                 numeric::Vector2u::new(3, 0),
                 HoldDataVText::new(
                     HoldData::None,
@@ -1413,7 +1520,7 @@ impl BorrowingRecordBookPage {
                     info_font.clone()
                 )
             ),
-	    (
+            (
                 numeric::Vector2u::new(4, 0),
                 HoldDataVText::new(
                     HoldData::None,
@@ -1423,7 +1530,7 @@ impl BorrowingRecordBookPage {
                     info_font.clone()
                 )
             ),
-	    (
+            (
                 numeric::Vector2u::new(5, 0),
                 HoldDataVText::new(
                     HoldData::None,
@@ -1433,7 +1540,7 @@ impl BorrowingRecordBookPage {
                     info_font.clone()
                 )
             ),
-	    (
+            (
                 numeric::Vector2u::new(0, 1),
                 HoldDataVText::new(
                     HoldData::None,
@@ -1463,7 +1570,7 @@ impl BorrowingRecordBookPage {
                     info_font.clone()
                 )
             ),
-	    (
+            (
                 numeric::Vector2u::new(3, 1),
                 HoldDataVText::new(
                     HoldData::None,
@@ -1473,7 +1580,7 @@ impl BorrowingRecordBookPage {
                     info_font.clone()
                 )
             ),
-	    (
+            (
                 numeric::Vector2u::new(4, 1),
                 HoldDataVText::new(
                     HoldData::None,
@@ -1483,7 +1590,7 @@ impl BorrowingRecordBookPage {
                     info_font.clone()
                 )
             ),
-	    (
+            (
                 numeric::Vector2u::new(5, 1),
                 HoldDataVText::new(
                     HoldData::None,
@@ -1512,7 +1619,8 @@ impl BorrowingRecordBookPage {
             paper_texture: paper_texture,
             borrow_date: borrow_date,
             return_date: return_date,
-	    drwob_essential: DrawableObjectEssential::new(true, 0),
+            drwob_essential: DrawableObjectEssential::new(true, 0),
+	    drop_down_button: None,
         }
     }
 
@@ -1574,20 +1682,24 @@ impl BorrowingRecordBookPage {
 
     pub fn try_insert_data_in_borrowing_books_frame(
         &mut self,
-	ctx: &mut ggez::Context,
+        ctx: &mut ggez::Context,
         position: numeric::Vector2u,
         hold_data: &HoldData,
     ) {
         match hold_data {
             HoldData::BookName(name) => {
-		println!("hold data insert: {}, {:?}", hold_data.to_string(), position);
-		let info = self.borrow_book.get_mut(&position).unwrap();
-		info.reset(hold_data.clone());
-		info.vtext.make_center(
+                println!(
+                    "hold data insert: {}, {:?}",
+                    hold_data.to_string(),
+                    position
+                );
+                let info = self.borrow_book.get_mut(&position).unwrap();
+                info.reset(hold_data.clone());
+                info.vtext.make_center(
                     ctx,
                     self.books_table
                         .get_center_of(position, self.books_table.get_position()),
-		);
+                );
             }
             _ => (),
         }
@@ -1608,6 +1720,25 @@ impl BorrowingRecordBookPage {
             ),
         );
         self
+    }
+
+    fn try_show_drop_down_button(&mut self, ctx: &mut ggez::Context, game_data: &GameData, position: numeric::Point2f, t: Clock) {
+	let grid_pos = self.books_table.get_grid_position(ctx, position);
+        if grid_pos.is_some() && grid_pos.unwrap().y == 1 {
+	    let mut button_group = EffectableWrap::new(
+		MovableWrap::new(
+		    Box::new(ButtonGroup::new(
+			ctx,
+			game_data,
+			numeric::Rect::new(position.x, position.y, 200.0, 200.0),
+			numeric::Rect::new(0.0, 0.0, 70.0, 70.0),
+			20.0,
+			vec![TextureID::ChoicePanel1, TextureID::ChoicePanel2, TextureID::ChoicePanel3],
+			0,
+			t,
+		    )), None, t), vec![effect::fade_in(10, t)]);
+            self.drop_down_button = Some(button_group);
+        }
     }
 }
 
@@ -1630,29 +1761,42 @@ impl DrawableComponent for BorrowingRecordBookPage {
             for (_, d) in &mut self.request_information {
                 d.draw(ctx)?;
             }
+
+            if let Some(button_group) = self.drop_down_button.as_mut() {
+                button_group.draw(ctx)?;
+            }
         }
-	
+
         Ok(())
     }
 
     fn hide(&mut self) {
-	self.drwob_essential.visible = false;
+        self.drwob_essential.visible = false;
     }
 
     fn appear(&mut self) {
-	self.drwob_essential.visible = true;
+        self.drwob_essential.visible = true;
     }
 
     fn is_visible(&self) -> bool {
-	self.drwob_essential.visible
+        self.drwob_essential.visible
     }
 
     fn set_drawing_depth(&mut self, depth: i8) {
-	self.drwob_essential.drawing_depth = depth;
+        self.drwob_essential.drawing_depth = depth;
     }
 
     fn get_drawing_depth(&self) -> i8 {
-	self.drwob_essential.drawing_depth
+        self.drwob_essential.drawing_depth
+    }
+}
+
+impl Updatable for BorrowingRecordBookPage {
+    fn update(&mut self, ctx: &ggez::Context, t: Clock) {
+	if let Some(button_group) = self.drop_down_button.as_mut() {
+	    button_group.move_with_func(t);
+	    button_group.effect(ctx, t);
+	}
     }
 }
 
@@ -1669,10 +1813,16 @@ impl BorrowingRecordBook {
             pages: Vec::new(),
             rect: rect,
             current_page: 0,
-	    canvas: MovableWrap::new(
-		Box::new(SubScreen::new(ctx, rect, drawing_depth, ggraphics::Color::from_rgba_u32(0xffffffff))),
-		None,
-		0),
+            canvas: MovableWrap::new(
+                Box::new(SubScreen::new(
+                    ctx,
+                    rect,
+                    drawing_depth,
+                    ggraphics::Color::from_rgba_u32(0xffffffff),
+                )),
+                None,
+                0,
+            ),
         }
     }
 
@@ -1740,7 +1890,7 @@ impl BorrowingRecordBook {
         point: numeric::Point2f,
         hold_data: &HoldData,
     ) -> bool {
-	let rpoint = self.relative_point(point);
+        let rpoint = self.relative_point(point);
         if let Some(page) = self.get_current_page_mut() {
             let maybe_position = page.info_table.get_grid_position(ctx, rpoint);
             if let Some(position) = maybe_position {
@@ -1756,13 +1906,13 @@ impl BorrowingRecordBook {
 
     fn try_insert_data_borrowing_book_frame(
         &mut self,
-	ctx: &mut ggez::Context,
+        ctx: &mut ggez::Context,
         point: numeric::Point2f,
         hold_data: &HoldData,
     ) -> bool {
-	let rpoint = self.relative_point(point);
+        let rpoint = self.relative_point(point);
         if let Some(page) = self.get_current_page_mut() {
-	    debug::debug_screen_push_text("insert hold_data books frame");
+            debug::debug_screen_push_text("insert hold_data books frame");
             let maybe_position = page.books_table.get_grid_position(ctx, rpoint);
             if let Some(position) = maybe_position {
                 page.try_insert_data_in_borrowing_books_frame(ctx, position, hold_data);
@@ -1774,19 +1924,29 @@ impl BorrowingRecordBook {
             false
         }
     }
+
+    fn check_drop_down_button_open(&mut self, ctx: &mut ggez::Context, game_data: &GameData, point: numeric::Point2f, t: Clock) {
+	let rpoint = self.relative_point(point);
+        if let Some(page) = self.get_current_page_mut() {
+            let maybe_position = page.books_table.get_grid_position(ctx, rpoint);
+            if let Some(position) = maybe_position {
+		page.try_show_drop_down_button(ctx, game_data, rpoint, t);
+            }
+        }
+    }
 }
 
 impl DrawableComponent for BorrowingRecordBook {
     #[inline(always)]
     fn draw(&mut self, ctx: &mut ggez::Context) -> ggez::GameResult<()> {
         if self.is_visible() {
-	    sub_screen::stack_screen(ctx, self.canvas.ref_wrapped_object());
-	    
+            sub_screen::stack_screen(ctx, self.canvas.ref_wrapped_object());
+
             if self.pages.len() > 0 {
                 self.pages.get_mut(self.current_page).unwrap().draw(ctx)?;
             }
 
-	    sub_screen::pop_screen(ctx);
+            sub_screen::pop_screen(ctx);
             self.canvas.draw(ctx).unwrap();
         }
         Ok(())
@@ -1825,30 +1985,30 @@ impl TextureObject for BorrowingRecordBook {
 
 impl HasBirthTime for BorrowingRecordBook {
     fn get_birth_time(&self) -> Clock {
-	self.canvas.get_birth_time()
+        self.canvas.get_birth_time()
     }
 }
 
 impl MovableObject for BorrowingRecordBook {
     fn move_with_func(&mut self, t: Clock) {
-	self.canvas.move_with_func(t);
+        self.canvas.move_with_func(t);
     }
-    
-    fn override_move_func(&mut self,
-                          move_fn: Option<Box<dyn Fn(& dyn MovableObject, Clock) -> numeric::Point2f>>,
-                          now: Clock)
-    {
-	self.canvas.override_move_func(move_fn, now);
+
+    fn override_move_func(
+        &mut self,
+        move_fn: Option<Box<dyn Fn(&dyn MovableObject, Clock) -> numeric::Point2f>>,
+        now: Clock,
+    ) {
+        self.canvas.override_move_func(move_fn, now);
     }
-    
+
     fn mf_start_timing(&self) -> Clock {
-	self.canvas.mf_start_timing()
+        self.canvas.mf_start_timing()
     }
-    
+
     fn is_stop(&self) -> bool {
-	self.canvas.is_stop()
+        self.canvas.is_stop()
     }
-    
 }
 
 impl Clickable for BorrowingRecordBook {
@@ -1872,7 +2032,8 @@ impl Clickable for BorrowingRecordBook {
     ) {
         if let Some(page) = self.get_current_page_mut() {
             let rpoint = self.relative_point(point);
-	    debug::debug_screen_push_text("book click!!");
+	    self.check_drop_down_button_open(ctx, game_data, point, t);
+            debug::debug_screen_push_text("book click!!");
             if rpoint.x < 20.0 {
                 println!("next page!!");
                 self.add_empty_page(ctx, game_data, t);
@@ -1900,7 +2061,7 @@ impl OnDesk for BorrowingRecordBook {
         point: numeric::Point2f,
         data: &HoldData,
     ) -> bool {
-	// いずれかのTableFrameにデータを挿入できた場合trueが返る
+        // いずれかのTableFrameにデータを挿入できた場合trueが返る
         self.try_insert_data_customer_info_frame(ctx, point, data)
             || self.try_insert_data_borrowing_book_frame(ctx, point, data)
     }
@@ -1909,6 +2070,16 @@ impl OnDesk for BorrowingRecordBook {
         OnDeskType::BorrowingRecordBook
     }
 }
+
+impl Updatable for BorrowingRecordBook {
+    fn update(&mut self, ctx: &ggez::Context, t: Clock) {
+	self.move_with_func(t);
+	if let Some(page) = self.get_current_page_mut() {
+	    page.update(ctx, t);
+	}
+    }
+}
+
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum DeskObjectType {
