@@ -1158,14 +1158,25 @@ impl ButtonGroup {
     ) -> Self {
         let mut buttons = Vec::new();
 
+	button_rect.y += padding;
+	
         while textures.len() > 0 {
+	    button_rect.x += padding;
             let texture = textures.swap_remove(0);
-            buttons.push(SelectButton::new(ctx, button_rect, Box::new(UniTexture::new(game_data.ref_texture(texture),
-										      numeric::Point2f::new(0.0, 0.0),
-										      numeric::Vector2f::new(1.0, 1.0),
-										      0.0,
-										      0))));
-            button_rect.x += button_rect.w + padding;
+
+	    let mut button_texture = UniTexture::new(game_data.ref_texture(texture),
+						     numeric::Point2f::new(0.0, 0.0),
+						     numeric::Vector2f::new(1.0, 1.0),
+						     0.0,
+						     0);
+
+	    button_texture.fit_scale(ctx, numeric::Vector2f::new(button_rect.w, button_rect.h));
+	    
+	    let mut button = SelectButton::new(
+		ctx, button_rect, Box::new(button_texture));
+	    
+            buttons.push(button);
+            button_rect.x += button_rect.w;
         }
 
         ButtonGroup {
@@ -1730,7 +1741,7 @@ impl BorrowingRecordBookPage {
 		    Box::new(ButtonGroup::new(
 			ctx,
 			game_data,
-			numeric::Rect::new(position.x, position.y, 200.0, 200.0),
+			numeric::Rect::new(position.x, position.y, 290.0, 220.0),
 			numeric::Rect::new(0.0, 0.0, 70.0, 70.0),
 			20.0,
 			vec![TextureID::ChoicePanel1, TextureID::ChoicePanel2, TextureID::ChoicePanel3],
