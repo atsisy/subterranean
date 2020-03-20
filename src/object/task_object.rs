@@ -758,8 +758,8 @@ impl Clickable for TaskTable {
         &mut self,
         ctx: &mut ggez::Context,
         _: &GameData,
-        t: Clock,
-        button: ggez::input::mouse::MouseButton,
+        _: Clock,
+        _: ggez::input::mouse::MouseButton,
         point: numeric::Point2f,
     ) {
         self.select_dragging_object(ctx, point);

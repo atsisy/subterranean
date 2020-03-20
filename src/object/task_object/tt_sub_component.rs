@@ -1172,7 +1172,7 @@ impl ButtonGroup {
 
 	    button_texture.fit_scale(ctx, numeric::Vector2f::new(button_rect.w, button_rect.h));
 	    
-	    let mut button = SelectButton::new(
+	    let button = SelectButton::new(
 		ctx, button_rect, Box::new(button_texture));
 	    
             buttons.push(button);
@@ -1698,7 +1698,7 @@ impl BorrowingRecordBookPage {
         hold_data: &HoldData,
     ) {
         match hold_data {
-            HoldData::BookName(name) => {
+            HoldData::BookName(_) => {
                 println!(
                     "hold data insert: {}, {:?}",
                     hold_data.to_string(),
@@ -1736,7 +1736,7 @@ impl BorrowingRecordBookPage {
     fn try_show_drop_down_button(&mut self, ctx: &mut ggez::Context, game_data: &GameData, position: numeric::Point2f, t: Clock) {
 	let grid_pos = self.books_table.get_grid_position(ctx, position);
         if grid_pos.is_some() && grid_pos.unwrap().y == 1 {
-	    let mut button_group = EffectableWrap::new(
+	    let button_group = EffectableWrap::new(
 		MovableWrap::new(
 		    Box::new(ButtonGroup::new(
 			ctx,
@@ -1750,6 +1750,12 @@ impl BorrowingRecordBookPage {
 		    )), None, t), vec![effect::fade_in(10, t)]);
             self.drop_down_button = Some(button_group);
         }
+    }
+
+    fn hide_drop_down_button(&mut self, t: Clock) {
+	if let Some(button_group) = self.drop_down_button.as_mut() {
+	    button_group.add_effect(vec![effect::fade_out(10, t)]);
+	}
     }
 }
 
@@ -1939,10 +1945,7 @@ impl BorrowingRecordBook {
     fn check_drop_down_button_open(&mut self, ctx: &mut ggez::Context, game_data: &GameData, point: numeric::Point2f, t: Clock) {
 	let rpoint = self.relative_point(point);
         if let Some(page) = self.get_current_page_mut() {
-            let maybe_position = page.books_table.get_grid_position(ctx, rpoint);
-            if let Some(position) = maybe_position {
-		page.try_show_drop_down_button(ctx, game_data, rpoint, t);
-            }
+	    page.try_show_drop_down_button(ctx, game_data, rpoint, t);
         }
     }
 }
@@ -1983,6 +1986,13 @@ impl DrawableComponent for BorrowingRecordBook {
     /// 描画順序を返す
     fn get_drawing_depth(&self) -> i8 {
         self.canvas.get_drawing_depth()
+    }
+    fn virtual_key_event(&mut self, _ctx: &mut ggez::Context, _event_type: torifune::device::KeyboardEvent, _vkey: torifune::device::VirtualKey) {
+	// Nothing
+    }
+    fn mouse_button_event(&mut self, _ctx: &mut ggez::Context, _event_type: torifune::device::MouseButtonEvent,
+			  _button: ggez::event::MouseButton, _point: numeric::Point2f) {
+	// Nothing
     }
 }
 
@@ -2038,21 +2048,21 @@ impl Clickable for BorrowingRecordBook {
         ctx: &mut ggez::Context,
         game_data: &GameData,
         t: Clock,
-        button: ggez::input::mouse::MouseButton,
+        _: ggez::input::mouse::MouseButton,
         point: numeric::Point2f,
     ) {
-        if let Some(page) = self.get_current_page_mut() {
-            let rpoint = self.relative_point(point);
-	    self.check_drop_down_button_open(ctx, game_data, point, t);
-            debug::debug_screen_push_text("book click!!");
-            if rpoint.x < 20.0 {
-                println!("next page!!");
-                self.add_empty_page(ctx, game_data, t);
-                self.next_page();
-            } else if rpoint.x > self.get_drawing_size(ctx).x - 20.0 {
-                println!("prev page!!");
-                self.prev_page();
-            }
+        let rpoint = self.relative_point(point);
+	let width = self.get_drawing_size(ctx).x;
+	
+	self.check_drop_down_button_open(ctx, game_data, point, t);
+        debug::debug_screen_push_text("book click!!");
+        if rpoint.x < 20.0 && rpoint.x >= 0.0 {
+            println!("next page!!");
+            self.add_empty_page(ctx, game_data, t);
+            self.next_page();
+        } else if rpoint.x > width - 20.0 && rpoint.x <= width {
+            println!("prev page!!");
+            self.prev_page();
         }
     }
 }

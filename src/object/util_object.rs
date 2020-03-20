@@ -137,7 +137,7 @@ impl TableFrame {
     ///
     /// あるPointが含まれているグリッドの位置を返す
     ///
-    pub fn get_grid_position(&self, ctx: &mut ggez::Context, point: numeric::Point2f) -> Option<numeric::Vector2u> {
+    pub fn get_grid_position(&self, _: &mut ggez::Context, point: numeric::Point2f) -> Option<numeric::Vector2u> {
 	if !self.contains(point) {
 	    return None;
 	}
