@@ -1757,6 +1757,17 @@ impl BorrowingRecordBookPage {
 	    button_group.add_effect(vec![effect::fade_out(10, t)]);
 	}
     }
+
+    pub fn click_handler(&mut self, ctx: &mut ggez::Context, point: numeric::Point2f, t: Clock) {
+	if let Some(drop_down_button) = self.drop_down_button.as_mut() {
+	    if drop_down_button.contains(ctx, point) {
+		let clicked_index = drop_down_button.ref_wrapped_object_mut().ref_wrapped_object_mut().click_handler(ctx, point);
+		if clicked_index.is_some() {
+		    self.hide_drop_down_button(t);
+		}
+	    }
+	}
+    }
 }
 
 impl DrawableComponent for BorrowingRecordBookPage {
@@ -2053,8 +2064,16 @@ impl Clickable for BorrowingRecordBook {
     ) {
         let rpoint = self.relative_point(point);
 	let width = self.get_drawing_size(ctx).x;
+
+	// 順序注意
+	// 先にメニューに対するクリック処理を実行し、
+	// そのあとにメニュー表示処理を行う
+	if let Some(page) = self.get_current_page_mut() {
+	    page.click_handler(ctx, rpoint, t);
+	}
 	
 	self.check_drop_down_button_open(ctx, game_data, point, t);
+
         debug::debug_screen_push_text("book click!!");
         if rpoint.x < 20.0 && rpoint.x >= 0.0 {
             println!("next page!!");
