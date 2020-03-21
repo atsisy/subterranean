@@ -62,6 +62,34 @@ impl GensoDate {
     }
 }
 
+#[derive(Clone, Copy, PartialEq)]
+pub enum BookStatus {
+    Good = 0,
+    Ok,
+    Bad,
+}
+
+impl ToString for BookStatus {
+    fn to_string(&self) -> String {
+        match self {
+	    &BookStatus::Good => "良".to_string(),
+	    &BookStatus::Ok => "可".to_string(),
+	    &BookStatus::Bad => "悪".to_string(),
+        }
+    }
+}
+
+impl From<i32> for BookStatus {
+    fn from(integer: i32) -> Self {
+	match integer {
+	    0 => BookStatus::Good,
+	    1 => BookStatus::Ok,
+	    2 => BookStatus::Bad,
+	    _ => panic!("Not reserved number"),
+	}
+    }
+}
+
 pub struct HoldDataVText {
     pub data: HoldData,
     pub vtext: VerticalText,
@@ -227,6 +255,7 @@ pub enum HoldData {
     BookName(String),
     CustomerName(String),
     Date(GensoDate),
+    BookStatus(BookStatus),
     None,
 }
 
@@ -236,6 +265,7 @@ impl HoldData {
             HoldData::BookName(_) => "題目".to_string(),
             HoldData::CustomerName(_) => "御客氏名".to_string(),
             HoldData::Date(_) => "日付".to_string(),
+	    HoldData::BookStatus(_) => "状態".to_string(),
             HoldData::None => "".to_string(),
         }
     }
@@ -247,6 +277,7 @@ impl ToString for HoldData {
             HoldData::BookName(name) => name.to_string(),
             HoldData::CustomerName(name) => name.to_string(),
             HoldData::Date(date) => date.to_string(),
+	    HoldData::BookStatus(status) => status.to_string(),
             HoldData::None => "".to_string(),
         }
     }
@@ -1758,11 +1789,28 @@ impl BorrowingRecordBookPage {
 	}
     }
 
+    fn insert_book_status_data(&mut self, ctx: &mut ggez::Context, status_index: i32) {
+	let menu_position = self.drop_down_button.as_ref().unwrap().get_position();
+	let grid_position = self.books_table.get_grid_position(ctx, menu_position).unwrap();
+	let info = self.borrow_book.get_mut(&grid_position).unwrap();
+        info.reset(HoldData::BookStatus(BookStatus::from(status_index)));
+        info.vtext.make_center(
+            ctx,
+            self.books_table
+                .get_center_of(grid_position, self.books_table.get_position()),
+        );
+    }
+
     pub fn click_handler(&mut self, ctx: &mut ggez::Context, point: numeric::Point2f, t: Clock) {
 	if let Some(drop_down_button) = self.drop_down_button.as_mut() {
 	    if drop_down_button.contains(ctx, point) {
 		let clicked_index = drop_down_button.ref_wrapped_object_mut().ref_wrapped_object_mut().click_handler(ctx, point);
 		if clicked_index.is_some() {
+		    let index = clicked_index.unwrap();
+		    
+		    // ここに状態挿入処理
+		    self.insert_book_status_data(ctx, index as i32);
+		    
 		    self.hide_drop_down_button(t);
 		}
 	    }
