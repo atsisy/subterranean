@@ -47,11 +47,11 @@ impl TaskTableStagingObject {
     /// 移動関数を変更しスライドアウトするように見せる
     ///
     pub fn slide_hide(&mut self, _t: Clock) {
-	match self {
-	    TaskTableStagingObject::BorrowingRecordBook(_) => {
-		debug::debug_screen_push_text("Implement slide hide, TaskTableStagingObject");
-	    },
-	}
+        match self {
+            TaskTableStagingObject::BorrowingRecordBook(_) => {
+                debug::debug_screen_push_text("Implement slide hide, TaskTableStagingObject");
+            }
+        }
     }
 }
 
@@ -254,7 +254,7 @@ impl DeskObjects {
     ) -> Option<OnDeskType> {
         let rpoint = self.canvas.relative_point(point);
         let mut click_flag = false;
-	let mut object_type: Option<OnDeskType> = None;
+        let mut object_type: Option<OnDeskType> = None;
 
         // オブジェクトは深度が深い順にソートされているので、
         // 逆順から検索していくことで、最も手前に表示されているオブジェクトを
@@ -269,7 +269,7 @@ impl DeskObjects {
             if obj.get_object().get_drawing_area(ctx).contains(rpoint) {
                 click_flag = true;
 
-		object_type = Some(
+                object_type = Some(
                     obj.get_object()
                         .ref_wrapped_object()
                         .ref_wrapped_object()
@@ -283,7 +283,7 @@ impl DeskObjects {
             self.desk_objects.sort_with_depth();
         }
 
-	object_type
+        object_type
     }
 
     pub fn add_object(&mut self, obj: DeskObject) {
