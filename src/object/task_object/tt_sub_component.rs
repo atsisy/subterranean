@@ -1171,9 +1171,240 @@ impl OnDesk for CopyingRequestPaper {
     }
 }
 
+pub struct DropDownArea<D>
+where
+    D: DrawableComponent,
+{
+    canvas: EffectableWrap<MovableWrap<SubScreen>>,
+    drawable: D,
+}
+
+impl<D> DropDownArea<D>
+where
+    D: DrawableComponent,
+{
+    pub fn new(
+        ctx: &mut ggez::Context,
+        pos_rect: numeric::Rect,
+        drawing_depth: i8,
+        drawable: D,
+        t: Clock,
+    ) -> DropDownArea<D> {
+        DropDownArea::<D> {
+            canvas: EffectableWrap::new(
+                MovableWrap::new(
+                    Box::new(SubScreen::new(
+                        ctx,
+                        pos_rect,
+                        drawing_depth,
+                        ggraphics::Color::from_rgba_u32(0xff),
+                    )),
+                    None,
+                    t,
+                ),
+                Vec::new(),
+            ),
+            drawable: drawable,
+        }
+    }
+
+    pub fn get_component(&self) -> &D {
+	&self.drawable
+    }
+
+    pub fn get_component_mut(&mut self) -> &mut D {
+	&mut self.drawable
+    }
+}
+
+impl<D> DrawableComponent for DropDownArea<D>
+where
+    D: DrawableComponent,
+{
+    fn draw(&mut self, ctx: &mut ggez::Context) -> ggez::GameResult<()> {
+        if self.is_visible() {
+            sub_screen::stack_screen(ctx, self.canvas.ref_wrapped_object().ref_wrapped_object());
+
+            self.drawable.draw(ctx)?;
+
+            sub_screen::pop_screen(ctx);
+            self.canvas.draw(ctx).unwrap();
+        }
+        Ok(())
+    }
+
+    fn hide(&mut self) {
+        self.canvas.hide();
+    }
+
+    fn appear(&mut self) {
+        self.canvas.appear();
+    }
+
+    fn is_visible(&self) -> bool {
+        self.canvas.is_visible()
+    }
+
+    fn set_drawing_depth(&mut self, depth: i8) {
+        self.canvas.set_drawing_depth(depth);
+    }
+
+    fn get_drawing_depth(&self) -> i8 {
+        self.canvas.get_drawing_depth()
+    }
+}
+
+impl<D> Updatable for DropDownArea<D>
+where
+    D: DrawableComponent,
+{
+    fn update(&mut self, ctx: &ggez::Context, t: Clock) {
+        self.canvas.move_with_func(t);
+        self.canvas.effect(ctx, t);
+    }
+}
+
+impl<D> DrawableObject for DropDownArea<D>
+where
+    D: DrawableComponent,
+{
+    impl_drawable_object_for_wrapped! {canvas}
+}
+
+impl<D> TextureObject for DropDownArea<D>
+where
+    D: DrawableComponent,
+{
+    impl_texture_object_for_wrapped! {canvas}
+}
+
+impl<D> HasBirthTime for DropDownArea<D>
+where
+    D: DrawableComponent,
+{
+    fn get_birth_time(&self) -> Clock {
+        self.canvas.get_birth_time()
+    }
+}
+
+impl<D> MovableObject for DropDownArea<D>
+where
+    D: DrawableComponent,
+{
+    // 任意の関数に従って、座標を動かす
+    fn move_with_func(&mut self, t: Clock) {
+        self.canvas.move_with_func(t);
+    }
+
+    // 従う関数を変更する
+    fn override_move_func(
+        &mut self,
+        move_fn: Option<Box<dyn Fn(&dyn MovableObject, Clock) -> numeric::Point2f>>,
+        now: Clock,
+    ) {
+        self.canvas.override_move_func(move_fn, now);
+    }
+
+    // 動作する関数が設定された時間を返す
+    fn mf_start_timing(&self) -> Clock {
+        self.canvas.mf_start_timing()
+    }
+
+    // 現在停止しているかを返す
+    fn is_stop(&self) -> bool {
+        self.canvas.is_stop()
+    }
+}
+
+impl<D> Effectable for DropDownArea<D>
+where
+    D: DrawableComponent,
+{
+    // エフェクト処理を行う
+    fn effect(&mut self, ctx: &ggez::Context, t: Clock) {
+        self.canvas.effect(ctx, t);
+    }
+}
+
+impl<D> HasGenericEffect for DropDownArea<D>
+where
+    D: DrawableComponent,
+{
+    // 新しくエフェクトを追加するメソッド
+    fn add_effect(&mut self, effect: Vec<GenericEffectFn>) {
+        self.canvas.add_effect(effect);
+    }
+
+    fn clear_effect(&mut self) {
+        self.canvas.clear_effect();
+    }
+}
+
+impl<D> Clickable for DropDownArea<D>
+where
+    D: Clickable + DrawableComponent,
+{
+    fn button_down(
+        &mut self,
+        ctx: &mut ggez::Context,
+        game_data: &GameData,
+        t: Clock,
+        button: ggez::input::mouse::MouseButton,
+        point: numeric::Point2f,
+    ) {
+        let rpoint = self
+            .canvas
+            .ref_wrapped_object()
+            .ref_wrapped_object()
+            .relative_point(point);
+        self.drawable.button_down(ctx, game_data, t, button, rpoint);
+    }
+
+    fn button_up(
+        &mut self,
+        ctx: &mut ggez::Context,
+        game_data: &GameData,
+        t: Clock,
+        button: ggez::input::mouse::MouseButton,
+        point: numeric::Point2f,
+    ) {
+        let rpoint = self
+            .canvas
+            .ref_wrapped_object()
+            .ref_wrapped_object()
+            .relative_point(point);
+        self.drawable.button_up(ctx, game_data, t, button, rpoint);
+    }
+
+    fn on_click(
+        &mut self,
+        ctx: &mut ggez::Context,
+        game_data: &GameData,
+        t: Clock,
+        button: ggez::input::mouse::MouseButton,
+        point: numeric::Point2f,
+    ) {
+        let rpoint = self
+            .canvas
+            .ref_wrapped_object()
+            .ref_wrapped_object()
+            .relative_point(point);
+        self.drawable.on_click(ctx, game_data, t, button, rpoint);
+    }
+
+    fn clickable_status(
+        &mut self,
+        _ctx: &mut ggez::Context,
+        _point: numeric::Point2f,
+    ) -> ggez::input::mouse::MouseCursor {
+        ggez::input::mouse::MouseCursor::Default
+    }
+}
+
 pub struct ButtonGroup {
     buttons: Vec<SelectButton>,
-    canvas: MovableWrap<SubScreen>,
+    drwob_essential: DrawableObjectEssential,
+    last_clicked: Option<usize>,
 }
 
 impl ButtonGroup {
@@ -1185,7 +1416,6 @@ impl ButtonGroup {
         padding: f32,
         mut textures: Vec<TextureID>,
         drawing_depth: i8,
-        t: Clock,
     ) -> Self {
         let mut buttons = Vec::new();
 
@@ -1213,16 +1443,8 @@ impl ButtonGroup {
 
         ButtonGroup {
             buttons: buttons,
-            canvas: MovableWrap::new(
-                Box::new(SubScreen::new(
-                    ctx,
-                    group_rect,
-                    drawing_depth,
-                    ggraphics::Color::from_rgba_u32(0xffffffff),
-                )),
-                None,
-                t,
-            ),
+            drwob_essential: DrawableObjectEssential::new(true, drawing_depth),
+	    last_clicked: None,
         }
     }
 
@@ -1230,61 +1452,66 @@ impl ButtonGroup {
         &mut self,
         ctx: &mut ggez::Context,
         point: numeric::Point2f,
-    ) -> Option<usize> {
-        let rpoint = self.canvas.ref_wrapped_object().relative_point(point);
+    ) {
         for (i, button) in self.buttons.iter().enumerate() {
-            if button.contains(ctx, rpoint) {
-                return Some(i);
+            if button.contains(ctx, point) {
+                self.last_clicked = Some(i);
+		break;
             }
         }
+    }
 
-        None
+    pub fn get_last_clicked(&self) -> Option<usize> {
+	self.last_clicked
     }
 }
 
 impl DrawableComponent for ButtonGroup {
     fn draw(&mut self, ctx: &mut ggez::Context) -> ggez::GameResult<()> {
         if self.is_visible() {
-            sub_screen::stack_screen(ctx, self.canvas.ref_wrapped_object());
 
             for button in &mut self.buttons {
                 button.draw(ctx)?;
             }
-
-            sub_screen::pop_screen(ctx);
-            self.canvas.draw(ctx).unwrap();
         }
         Ok(())
     }
 
     fn hide(&mut self) {
-        self.canvas.hide()
+        self.drwob_essential.visible = false;
     }
 
     fn appear(&mut self) {
-        self.canvas.appear()
+        self.drwob_essential.visible = true;
     }
 
     fn is_visible(&self) -> bool {
-        self.canvas.is_visible()
+        self.drwob_essential.visible
     }
 
     fn set_drawing_depth(&mut self, depth: i8) {
-        self.canvas.set_drawing_depth(depth)
+        self.drwob_essential.drawing_depth = depth;
     }
 
     fn get_drawing_depth(&self) -> i8 {
-        self.canvas.get_drawing_depth()
+        self.drwob_essential.drawing_depth
     }
 }
 
-impl DrawableObject for ButtonGroup {
-    impl_drawable_object_for_wrapped! {canvas}
+impl Clickable for ButtonGroup {
+    fn on_click(
+        &mut self,
+        ctx: &mut ggez::Context,
+        game_data: &GameData,
+        t: Clock,
+        button: ggez::event::MouseButton,
+        point: numeric::Point2f,
+    ) {
+        self.click_handler(ctx, point);
+    }
 }
 
-impl TextureObject for ButtonGroup {
-    impl_texture_object_for_wrapped! {canvas}
-}
+pub type BookStatusMenu = DropDownArea<ButtonGroup>;
 
 pub struct BorrowingRecordBookPage {
     raw_info: BorrowingInformation,
@@ -1299,7 +1526,7 @@ pub struct BorrowingRecordBookPage {
     return_date: VerticalText,
     paper_texture: SimpleObject,
     drwob_essential: DrawableObjectEssential,
-    drop_down_button: Option<EffectableWrap<MovableWrap<ButtonGroup>>>,
+    drop_down_button: Option<EffectableWrap<MovableWrap<BookStatusMenu>>>,
 }
 
 impl BorrowingRecordBookPage {
@@ -1774,20 +2001,27 @@ impl BorrowingRecordBookPage {
     ) {
         let grid_pos = self.books_table.get_grid_position(ctx, position);
         if grid_pos.is_some() && grid_pos.unwrap().y == 1 {
-            let button_group = EffectableWrap::new(
+	    let button_group = ButtonGroup::new(
+                ctx,
+                game_data,
+                numeric::Rect::new(position.x, position.y, 290.0, 220.0),
+                numeric::Rect::new(0.0, 0.0, 70.0, 70.0),
+                20.0,
+                vec![
+                    TextureID::ChoicePanel1,
+                    TextureID::ChoicePanel2,
+                    TextureID::ChoicePanel3,
+                ],
+                0,
+            );
+	    
+            let button_group_area = EffectableWrap::new(
                 MovableWrap::new(
-                    Box::new(ButtonGroup::new(
+                    Box::new(DropDownArea::new(
                         ctx,
-                        game_data,
                         numeric::Rect::new(position.x, position.y, 290.0, 220.0),
-                        numeric::Rect::new(0.0, 0.0, 70.0, 70.0),
-                        20.0,
-                        vec![
-                            TextureID::ChoicePanel1,
-                            TextureID::ChoicePanel2,
-                            TextureID::ChoicePanel3,
-                        ],
                         0,
+                        button_group,
                         t,
                     )),
                     None,
@@ -1795,7 +2029,7 @@ impl BorrowingRecordBookPage {
                 ),
                 vec![effect::fade_in(10, t)],
             );
-            self.drop_down_button = Some(button_group);
+            self.drop_down_button = Some(button_group_area);
         }
     }
 
@@ -1820,15 +2054,29 @@ impl BorrowingRecordBookPage {
         );
     }
 
-    pub fn click_handler(&mut self, ctx: &mut ggez::Context, point: numeric::Point2f, t: Clock) {
+    pub fn click_handler(
+        &mut self,
+        ctx: &mut ggez::Context,
+        game_data: &GameData,
+        button: ggez::input::mouse::MouseButton,
+        point: numeric::Point2f,
+        t: Clock,
+    ) {
         if let Some(drop_down_button) = self.drop_down_button.as_mut() {
             if drop_down_button.contains(ctx, point) {
-                let clicked_index = drop_down_button
+                drop_down_button
                     .ref_wrapped_object_mut()
                     .ref_wrapped_object_mut()
-                    .click_handler(ctx, point);
-                if clicked_index.is_some() {
-                    let index = clicked_index.unwrap();
+                    .on_click(ctx, game_data, t, button, point);
+
+		let maybe_clicked = drop_down_button
+		    .ref_wrapped_object_mut()
+                    .ref_wrapped_object_mut()
+		    .get_component()
+		    .get_last_clicked();
+		
+                if maybe_clicked.is_some() {
+                    let index = maybe_clicked.unwrap();
 
                     // ここに状態挿入処理
                     self.insert_book_status_data(ctx, index as i32);
@@ -2145,7 +2393,7 @@ impl Clickable for BorrowingRecordBook {
         ctx: &mut ggez::Context,
         game_data: &GameData,
         t: Clock,
-        _: ggez::input::mouse::MouseButton,
+        button: ggez::input::mouse::MouseButton,
         point: numeric::Point2f,
     ) {
         let rpoint = self.relative_point(point);
@@ -2155,7 +2403,7 @@ impl Clickable for BorrowingRecordBook {
         // 先にメニューに対するクリック処理を実行し、
         // そのあとにメニュー表示処理を行う
         if let Some(page) = self.get_current_page_mut() {
-            page.click_handler(ctx, rpoint, t);
+            page.click_handler(ctx, game_data, button, rpoint, t);
         }
 
         self.check_drop_down_button_open(ctx, game_data, point, t);

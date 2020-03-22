@@ -299,7 +299,6 @@ impl std::fmt::Display for ShopClock {
 pub struct ShopScene {
     player: PlayableCharacter,
     character_group: CharacterGroup,
-    shop_object_list: Vec<Box<dyn Clickable>>,
     shop_special_object: ShopSpecialObject,
     key_listener: tdev::KeyboardListener,
     task_result: TaskResult,
@@ -361,7 +360,6 @@ impl ShopScene {
         ShopScene {
             player: player,
             character_group: character_group,
-            shop_object_list: Vec::new(),
             shop_special_object: ShopSpecialObject::new(),
             key_listener: key_listener,
             task_result: TaskResult::new(),
@@ -1033,10 +1031,6 @@ impl SceneManager for ShopScene {
             _ => (),
         }
 
-        for component in &mut self.shop_object_list {
-            component.virtual_key_event(ctx, KeyboardEvent::FirstPressed, vkey);
-        }
-
         self.shop_menu
             .menu_key_action(ctx, game_data, vkey, self.get_current_clock());
     }
@@ -1050,10 +1044,6 @@ impl SceneManager for ShopScene {
         match vkey {
             tdev::VirtualKey::Action1 => println!("Action1 up!"),
             _ => (),
-        }
-
-        for component in &mut self.shop_object_list {
-            component.virtual_key_event(ctx, KeyboardEvent::Typed, vkey);
         }
     }
 
@@ -1078,10 +1068,6 @@ impl SceneManager for ShopScene {
     ) {
         match button {
             MouseButton::Left => {
-                let t = self.get_current_clock();
-                for shop_object in &mut self.shop_object_list {
-                    shop_object.on_click(ctx, game_data, t, button, point);
-                }
                 self.start_mouse_move(ctx, point);
             }
             MouseButton::Right => {
@@ -1217,10 +1203,6 @@ impl SceneManager for ShopScene {
 
         if let Some(scenario_box) = self.map.scenario_box.as_mut() {
             scenario_box.draw(ctx).unwrap();
-        }
-
-        for component in &mut self.shop_object_list {
-            component.draw(ctx).unwrap();
         }
 
         self.dark_effect_panel.draw(ctx).unwrap();

@@ -27,7 +27,7 @@ use torifune::numeric;
 use crate::core::map_parser as mp;
 use crate::core::{GameData, TextureID};
 
-pub trait Clickable: TextureObject {
+pub trait Clickable {
     fn button_down(
         &mut self,
         _ctx: &mut ggez::Context,
