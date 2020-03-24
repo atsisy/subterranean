@@ -1517,6 +1517,7 @@ impl Clickable for ButtonGroup {
 
 pub type BookStatusMenu = DropDownArea<ButtonGroup>;
 
+#[derive(Clone)]
 pub struct BorrowingRecordBookPageData {
     pub borrow_book: HashMap<numeric::Vector2u, HoldData>,
     pub request_information: HashMap<numeric::Vector2u, HoldData>,

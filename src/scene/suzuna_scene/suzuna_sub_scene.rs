@@ -7,7 +7,7 @@ use torifune::core::*;
 use torifune::device::VirtualKey;
 use torifune::numeric;
 
-use crate::core::GameData;
+use crate::core::*;
 use crate::scene::*;
 
 use crate::{object::task_object::tt_sub_component::GensoDate, scene::shop_scene::ShopScene};
@@ -26,6 +26,72 @@ pub enum SuzunaSceneStatus {
     Copying,
 }
 
+pub struct ReturningRequestPool {
+    returning_request: Vec<ReturnBookInformation>,
+}
+
+impl ReturningRequestPool {
+    pub fn new() -> Self {
+        ReturningRequestPool {
+            returning_request: Vec::new(),
+        }
+    }
+
+    pub fn add_request(&mut self, borrow_info: BorrowingInformation) {
+        let returning_book_info = ReturnBookInformation::new(
+            borrow_info.borrowing.clone(),
+            &borrow_info.borrower,
+            borrow_info.borrow_date,
+            borrow_info.return_date,
+        );
+        self.returning_request.push(returning_book_info);
+    }
+}
+
+pub struct SuzunaBookPool {
+    books: Vec<BookInformation>,
+}
+
+impl SuzunaBookPool {
+    pub fn new() -> Self {
+        SuzunaBookPool { books: Vec::new() }
+    }
+
+    pub fn push_book(&mut self, book_info: BookInformation) {
+	self.books.push(book_info);
+    }
+
+    pub fn push_book_vec(&mut self, book_info_vec: Vec<BookInformation>) {
+	self.books.extend(book_info_vec);
+    }
+
+    pub fn generate_borrowing_request(
+        &mut self,
+        customer_name: String,
+        borrow_date: GensoDate,
+        return_date: GensoDate,
+    ) -> BorrowingInformation {
+        let mut borrowing_books = Vec::new();
+        for _ in 0..(rand::random::<u32>() % 5) {
+            if self.books.is_empty() {
+                break;
+            }
+
+            let book_info = self
+                .books
+                .swap_remove(rand::random::<usize>() % self.books.len());
+            borrowing_books.push(book_info);
+        }
+
+        BorrowingInformation {
+            borrowing: borrowing_books,
+            borrower: customer_name,
+            borrow_date: borrow_date,
+            return_date: return_date,
+        }
+    }
+}
+
 ///
 /// 鈴奈庵シーンのサブシーンをまとめる構造体
 ///
@@ -36,17 +102,26 @@ pub struct SuzunaSubScene {
     pub copying_scene: Option<Box<CopyingScene>>,
     scene_status: SuzunaSceneStatus,
     borrowing_record_book_data: Option<BorrowingRecordBookData>,
+    returning_request_pool: ReturningRequestPool,
+    suzuna_book_pool: SuzunaBookPool,
 }
 
 impl SuzunaSubScene {
     pub fn new(ctx: &mut ggez::Context, game_data: &GameData, map_id: u32) -> Self {
         SuzunaSubScene {
-            shop_scene: Some(Box::new(ShopScene::new(ctx, game_data, map_id, GensoDate::new_empty()))),
+            shop_scene: Some(Box::new(ShopScene::new(
+                ctx,
+                game_data,
+                map_id,
+                GensoDate::new_empty(),
+            ))),
             desk_work_scene: None,
             day_result_scene: None,
             copying_scene: None,
             scene_status: SuzunaSceneStatus::Shop,
-	    borrowing_record_book_data: None,
+            borrowing_record_book_data: None,
+            returning_request_pool: ReturningRequestPool::new(),
+	    suzuna_book_pool: SuzunaBookPool::new(),
         }
     }
 
@@ -73,14 +148,21 @@ impl SuzunaSubScene {
         transition: SceneTransition,
     ) {
         if transition == SceneTransition::StackingTransition {
-	    if let Some(shop_scene) = self.shop_scene.as_mut() {
-		let customer_request = shop_scene.pop_customer_request();
-		let record_book_data = std::mem::replace(&mut self.borrowing_record_book_data, None);
-		let today_date = shop_scene.get_today_date();
-		
-		self.scene_status = SuzunaSceneStatus::DeskWork;
-		self.desk_work_scene = Some(Box::new(TaskScene::new(ctx, game_data, today_date, customer_request, record_book_data)));
-	    }
+            if let Some(shop_scene) = self.shop_scene.as_mut() {
+                let customer_request = shop_scene.pop_customer_request();
+                let record_book_data =
+                    std::mem::replace(&mut self.borrowing_record_book_data, None);
+                let today_date = shop_scene.get_today_date();
+
+                self.scene_status = SuzunaSceneStatus::DeskWork;
+                self.desk_work_scene = Some(Box::new(TaskScene::new(
+                    ctx,
+                    game_data,
+                    today_date,
+                    customer_request,
+                    record_book_data,
+                )));
+            }
         }
     }
 
@@ -100,8 +182,13 @@ impl SuzunaSubScene {
 
     pub fn switch_deskwork_to_shop(&mut self, transition: SceneTransition) {
         if transition == SceneTransition::PoppingTransition {
-	    println!("switch!!!!!!!!!, deskwork -> shop");
-	    self.borrowing_record_book_data = Some(self.desk_work_scene.as_ref().unwrap().export_borrowing_record_book_data());
+            println!("switch!!!!!!!!!, deskwork -> shop");
+            self.borrowing_record_book_data = Some(
+                self.desk_work_scene
+                    .as_ref()
+                    .unwrap()
+                    .export_borrowing_record_book_data(),
+            );
             self.scene_status = SuzunaSceneStatus::Shop;
             self.desk_work_scene = None;
             self.shop_scene.as_mut().unwrap().switched_and_restart();

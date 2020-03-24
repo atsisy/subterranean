@@ -808,20 +808,21 @@ impl ShopScene {
                 }
                 MapEventElement::SwitchScene(switch_scene) => {
                     if !self.customer_request_queue.is_empty() && !self.customer_queue.is_empty() {
+                        self.transition_status = SceneTransition::StackingTransition;
+                        self.transition_scene = switch_scene.get_switch_scene_id();
+			
                         let mut customer = self.customer_queue.pop_front().unwrap();
                         customer.set_destination_forced(
                             ctx,
                             &self.map.tile_map,
                             numeric::Vector2u::new(15, 10),
                         );
-                        self.character_group.add(customer);
-
-                        self.transition_status = SceneTransition::StackingTransition;
-                        self.transition_scene = switch_scene.get_switch_scene_id();
-
+			
                         if self.transition_scene == SceneID::MainDesk {
                             self.shop_clock.add_minute(10);
                         }
+
+			self.character_group.add(customer);
                     }
                 }
                 MapEventElement::BookStoreEvent(book_store_event) => {
