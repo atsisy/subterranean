@@ -16,6 +16,8 @@ use copy_scene::*;
 use task_result_scene::*;
 use task_scene::*;
 
+use crate::object::task_object::tt_sub_component::*;
+
 #[derive(PartialEq, Clone, Copy)]
 pub enum SuzunaSceneStatus {
     Shop,
@@ -33,6 +35,7 @@ pub struct SuzunaSubScene {
     pub day_result_scene: Option<Box<TaskResultScene>>,
     pub copying_scene: Option<Box<CopyingScene>>,
     scene_status: SuzunaSceneStatus,
+    borrowing_record_book_data: Option<BorrowingRecordBookData>,
 }
 
 impl SuzunaSubScene {
@@ -43,6 +46,7 @@ impl SuzunaSubScene {
             day_result_scene: None,
             copying_scene: None,
             scene_status: SuzunaSceneStatus::Shop,
+	    borrowing_record_book_data: None,
         }
     }
 
@@ -71,10 +75,11 @@ impl SuzunaSubScene {
         if transition == SceneTransition::StackingTransition {
 	    if let Some(shop_scene) = self.shop_scene.as_mut() {
 		let customer_request = shop_scene.pop_customer_request();
+		let record_book_data = std::mem::replace(&mut self.borrowing_record_book_data, None);
 		let today_date = shop_scene.get_today_date();
 		
 		self.scene_status = SuzunaSceneStatus::DeskWork;
-		self.desk_work_scene = Some(Box::new(TaskScene::new(ctx, game_data, today_date, customer_request)));
+		self.desk_work_scene = Some(Box::new(TaskScene::new(ctx, game_data, today_date, customer_request, record_book_data)));
 	    }
         }
     }
@@ -95,6 +100,8 @@ impl SuzunaSubScene {
 
     pub fn switch_deskwork_to_shop(&mut self, transition: SceneTransition) {
         if transition == SceneTransition::PoppingTransition {
+	    println!("switch!!!!!!!!!, deskwork -> shop");
+	    self.borrowing_record_book_data = Some(self.desk_work_scene.as_ref().unwrap().export_borrowing_record_book_data());
             self.scene_status = SuzunaSceneStatus::Shop;
             self.desk_work_scene = None;
             self.shop_scene.as_mut().unwrap().switched_and_restart();

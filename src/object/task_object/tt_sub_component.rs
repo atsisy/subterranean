@@ -120,6 +120,10 @@ impl HoldDataVText {
         self.data = hold_data;
         self.vtext.replace_text(self.data.to_string());
     }
+
+    pub fn copy_hold_data(&self) -> HoldData {
+	self.data.clone()
+    }
 }
 
 impl DrawableComponent for HoldDataVText {
@@ -1513,8 +1517,16 @@ impl Clickable for ButtonGroup {
 
 pub type BookStatusMenu = DropDownArea<ButtonGroup>;
 
+pub struct BorrowingRecordBookPageData {
+    pub borrow_book: HashMap<numeric::Vector2u, HoldData>,
+    pub request_information: HashMap<numeric::Vector2u, HoldData>,
+}
+
+pub struct BorrowingRecordBookData {
+    pub pages_data: Vec<BorrowingRecordBookPageData>,
+}
+
 pub struct BorrowingRecordBookPage {
-    raw_info: BorrowingInformation,
     info_table: TableFrame,
     books_table: TableFrame,
     borrow_book: HashMap<numeric::Vector2u, HoldDataVText>,
@@ -1532,51 +1544,42 @@ pub struct BorrowingRecordBookPage {
 impl BorrowingRecordBookPage {
     pub fn new(
         ctx: &mut ggez::Context,
+	game_data: &GameData,
         rect: ggraphics::Rect,
         paper_tid: TextureID,
-        info: &BorrowingInformation,
-        game_data: &GameData,
+	page_data: BorrowingRecordBookPageData,
         t: Clock,
     ) -> Self {
         let mut page = Self::new_empty(ctx, rect, paper_tid, game_data, t);
 
-        page.borrow_book = info
-            .borrowing
-            .iter()
-            .enumerate()
-            .map(|iter_data| {
-                let (i, book_info) = iter_data;
+	for (position, hold_data) in page_data.borrow_book.iter() {
+	    if hold_data.is_none() {
+		continue;
+	    }
 
-                let mut vtext = VerticalText::new(
-                    book_info.name.to_string(),
-                    numeric::Point2f::new(0.0, 0.0),
-                    numeric::Vector2f::new(1.0, 1.0),
-                    0.0,
-                    0,
-                    FontInformation::new(
-                        game_data.get_font(FontID::JpFude1),
-                        numeric::Vector2f::new(18.0, 18.0),
-                        ggraphics::Color::from_rgba_u32(0x000000ff),
-                    ),
-                );
-                vtext.make_center(
-                    ctx,
-                    roundup2f!(page.books_table.get_center_of(
-                        numeric::Vector2u::new(5 - i as u32, 0),
-                        page.books_table.get_position()
-                    )),
-                );
+	    let info = page.borrow_book.get_mut(position).unwrap();
+            info.reset(hold_data.clone());
+            info.vtext.make_center(
+                ctx,
+                page.books_table
+                    .get_center_of(*position, page.books_table.get_position()),
+            );
+	}
 
-                (
-                    numeric::Vector2u::new(i as u32, 0),
-                    HoldDataVText {
-                        data: HoldData::BookName(book_info.name.to_string()),
-                        vtext: vtext,
-                    },
-                )
-            })
-            .collect();
+	for (position, hold_data) in page_data.request_information.iter() {
+	    if hold_data.is_none() {
+		continue;
+	    }
 
+	    let info = page.request_information.get_mut(position).unwrap();
+            info.reset(hold_data.clone());
+            info.vtext.make_center(
+                ctx,
+                page.info_table
+                    .get_center_of(*position, page.info_table.get_position()),
+            );
+	}
+	
         page
     }
 
@@ -1873,12 +1876,6 @@ impl BorrowingRecordBookPage {
         ];
 
         BorrowingRecordBookPage {
-            raw_info: BorrowingInformation::new(
-                Vec::new(),
-                "",
-                GensoDate::new_empty(),
-                GensoDate::new_empty(),
-            ),
             info_table: table_frame,
             books_table: books_table,
             borrow_book: borrow_text,
@@ -1892,14 +1889,6 @@ impl BorrowingRecordBookPage {
             drwob_essential: DrawableObjectEssential::new(true, 0),
             drop_down_button: None,
         }
-    }
-
-    pub fn get_borrowing_info(&self) -> &BorrowingInformation {
-        &self.raw_info
-    }
-
-    pub fn get_borrowing_info_mut(&mut self) -> &mut BorrowingInformation {
-        &mut self.raw_info
     }
 
     pub fn try_insert_data_in_info_frame(
@@ -2086,6 +2075,24 @@ impl BorrowingRecordBookPage {
             }
         }
     }
+
+    pub fn export_page_data(&self) -> BorrowingRecordBookPageData {
+	let mut borrow_book = HashMap::new();
+	let mut request_information = HashMap::new();
+
+	for (p, hold_data_vtext) in &self.borrow_book {
+	    borrow_book.insert(p.clone(), hold_data_vtext.copy_hold_data());
+	}
+
+	for (p, hold_data_vtext) in &self.request_information {
+	    request_information.insert(p.clone(), hold_data_vtext.copy_hold_data());
+	}
+	
+	BorrowingRecordBookPageData {
+	    borrow_book: borrow_book,
+	    request_information: request_information,
+	}
+    }
 }
 
 impl DrawableComponent for BorrowingRecordBookPage {
@@ -2154,9 +2161,28 @@ pub struct BorrowingRecordBook {
 }
 
 impl BorrowingRecordBook {
-    pub fn new(ctx: &mut ggez::Context, rect: ggraphics::Rect, drawing_depth: i8) -> Self {
+    pub fn new(ctx: &mut ggez::Context,
+	       game_data: &GameData,
+	       rect: ggraphics::Rect,
+	       drawing_depth: i8,
+	       mut maybe_book_data: Option<BorrowingRecordBookData>,
+	       t: Clock,
+    ) -> Self {
+	let pages = if let Some(book_data) = maybe_book_data.as_mut() {
+	    let mut pages = Vec::new();
+	    
+	    while !book_data.pages_data.is_empty() {
+		let page_data = book_data.pages_data.remove(0);
+		pages.push(BorrowingRecordBookPage::new(ctx, game_data, rect, TextureID::Paper1, page_data, t));
+	    }
+
+	    pages
+	} else {
+	    Vec::new()
+	};
+	
         BorrowingRecordBook {
-            pages: Vec::new(),
+            pages: pages,
             rect: rect,
             current_page: 0,
             canvas: MovableWrap::new(
@@ -2170,24 +2196,6 @@ impl BorrowingRecordBook {
                 0,
             ),
         }
-    }
-
-    pub fn add_page(
-        &mut self,
-        ctx: &mut ggez::Context,
-        info: &BorrowingInformation,
-        game_data: &GameData,
-        t: Clock,
-    ) -> &Self {
-        self.pages.push(BorrowingRecordBookPage::new(
-            ctx,
-            self.rect,
-            TextureID::Paper1,
-            info,
-            game_data,
-            t,
-        ));
-        self
     }
 
     pub fn add_empty_page(
@@ -2282,6 +2290,19 @@ impl BorrowingRecordBook {
         if let Some(page) = self.get_current_page_mut() {
             page.try_show_drop_down_button(ctx, game_data, rpoint, t);
         }
+    }
+
+    pub fn export_book_data(&self) -> BorrowingRecordBookData {
+	BorrowingRecordBookData {
+	    pages_data: self.pages
+    		.iter()
+    		.map(|page| page.export_page_data())
+    		.collect()
+	}
+    }
+
+    pub fn pages_length(&self) -> usize {
+	self.pages.len()
     }
 }
 

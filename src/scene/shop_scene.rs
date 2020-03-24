@@ -26,7 +26,7 @@ use crate::object::shop_object::*;
 use crate::object::task_object::tt_main_component::CustomerRequest;
 use crate::object::*;
 use crate::scene::suzuna_scene::TaskResult;
-use task_object::tt_sub_component::GensoDate;
+use task_object::tt_sub_component::*;
 
 struct CharacterGroup {
     group: Vec<CustomerCharacter>,

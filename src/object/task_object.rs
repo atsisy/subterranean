@@ -50,6 +50,7 @@ impl TaskTable {
         desk_rect: numeric::Rect,
         shelving_box_rect: numeric::Rect,
         _today_date: GensoDate,
+	record_book_data: Option<BorrowingRecordBookData>,
         t: Clock,
     ) -> Self {
         let sight = SuzuMiniSight::new(ctx, game_data, sight_rect, t);
@@ -112,8 +113,10 @@ impl TaskTable {
         let shelving_box = ShelvingBookBox::new(ctx, game_data, shelving_box_rect);
 
         let mut record_book =
-            BorrowingRecordBook::new(ctx, ggraphics::Rect::new(150.0, -550.0, 1000.0, 550.0), 0);
-        record_book.add_empty_page(ctx, game_data, 0);
+            BorrowingRecordBook::new(ctx, game_data, ggraphics::Rect::new(150.0, -550.0, 1000.0, 550.0), 0, record_book_data, t);
+	if record_book.pages_length() == 0 {
+	    record_book.add_empty_page(ctx, game_data, 0);
+	}
         record_book.hide();
 
         TaskTable {
@@ -695,6 +698,10 @@ impl TaskTable {
             }
             _ => (),
         }
+    }
+
+    pub fn export_borrowing_record_book_data(&self) -> BorrowingRecordBookData {
+	self.borrowing_record_book.export_book_data()
     }
 }
 
