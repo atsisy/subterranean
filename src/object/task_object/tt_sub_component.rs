@@ -60,6 +60,19 @@ impl GensoDate {
             number_to_jk(self.day as u64)
         )
     }
+
+    pub fn add_day(&mut self, day: u8) {
+	self.day += day;
+	if day > 31 {
+	    self.month += 1;
+	    self.day %= 31;
+	}
+
+	if self.month > 12 {
+	    self.season += 1;
+	    self.month %= 12;
+	}
+    }
 }
 
 #[derive(Clone, Copy, PartialEq)]

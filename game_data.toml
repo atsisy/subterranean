@@ -50,13 +50,61 @@ map_file_path = "./resources/maps/suzunaan/suzuna1.tmx"
 event_map_file_path = "./resources/event_map1.toml"
 
 [[books_information]]
-name = "テスト本1"
+name = "テスト本 壱"
 pages = 128
 size = "大判本"
 billing_number = 10
 
 [[books_information]]
-name = "テスト本2"
+name = "テスト本 弐"
+pages = 128
+size = "中判本"
+billing_number = 128
+
+[[books_information]]
+name = "テスト本 参"
+pages = 128
+size = "大判本"
+billing_number = 10
+
+[[books_information]]
+name = "テスト本 肆"
+pages = 128
+size = "中判本"
+billing_number = 128
+
+[[books_information]]
+name = "テスト本 伍"
+pages = 128
+size = "大判本"
+billing_number = 10
+
+[[books_information]]
+name = "テスト本 陸"
+pages = 128
+size = "中判本"
+billing_number = 128
+
+[[books_information]]
+name = "テスト本 漆"
+pages = 128
+size = "大判本"
+billing_number = 10
+
+[[books_information]]
+name = "テスト本 捌"
+pages = 128
+size = "中判本"
+billing_number = 128
+
+[[books_information]]
+name = "テスト本 玖"
+pages = 128
+size = "中判本"
+billing_number = 128
+
+[[books_information]]
+name = "テスト本 拾"
 pages = 128
 size = "中判本"
 billing_number = 128

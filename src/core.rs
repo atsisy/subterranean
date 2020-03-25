@@ -375,6 +375,10 @@ impl GameData {
             .unwrap()
     }
 
+    pub fn clone_available_books(&self) -> Vec<BookInformation> {
+	self.books_information.clone()
+    }
+
     pub fn customer_random_select(&self) -> &str {
         &self
             .customers_name
