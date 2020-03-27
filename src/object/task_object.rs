@@ -403,7 +403,7 @@ impl TaskTable {
         self.shelving_box.update(ctx, t);
         self.check_sight_drop_to_desk(ctx, t);
         self.customer_info_ui.update(ctx, t);
-        self.borrowing_record_book.update(ctx, t);
+        self.borrowing_record_book.update(ctx, game_data, t);
     }
 
     pub fn finish_customer_event(&mut self, now: Clock) {

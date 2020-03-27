@@ -22,6 +22,7 @@ use crate::core::BookInformation;
 use crate::object::effect;
 use crate::object::move_fn;
 use crate::object::util_object::*;
+use crate::scene::*;
 
 use super::Clickable;
 use crate::core::{FontID, GameData, TextureID};
@@ -1541,6 +1542,7 @@ pub struct BorrowingRecordBookData {
 }
 
 pub struct BorrowingRecordBookPage {
+    event_list: DelayEventList<Self>,
     info_table: TableFrame,
     books_table: TableFrame,
     borrow_book: HashMap<numeric::Vector2u, HoldDataVText>,
@@ -1890,6 +1892,7 @@ impl BorrowingRecordBookPage {
         ];
 
         BorrowingRecordBookPage {
+	    event_list: DelayEventList::new(),
             info_table: table_frame,
             books_table: books_table,
             borrow_book: borrow_text,
@@ -2003,6 +2006,13 @@ impl BorrowingRecordBookPage {
         t: Clock,
     ) {
         let grid_pos = self.books_table.get_grid_position(ctx, position);
+
+	// 既に表示されている場合は、メニューを消して終了
+	if self.drop_down_button.is_some() {
+	    self.hide_drop_down_button(t);
+	    return ();
+	}
+	
         if grid_pos.is_some() && grid_pos.unwrap().y == 1 {
 	    let button_group = ButtonGroup::new(
                 ctx,
@@ -2039,6 +2049,8 @@ impl BorrowingRecordBookPage {
     fn hide_drop_down_button(&mut self, t: Clock) {
         if let Some(button_group) = self.drop_down_button.as_mut() {
             button_group.add_effect(vec![effect::fade_out(10, t)]);
+	    self.event_list.add_event(
+		Box::new(|slf: &mut BorrowingRecordBookPage, _, _| slf.drop_down_button = None), t + 11);
         }
     }
 
@@ -2083,8 +2095,6 @@ impl BorrowingRecordBookPage {
 
                     // ここに状態挿入処理
                     self.insert_book_status_data(ctx, index as i32);
-
-                    self.hide_drop_down_button(t);
                 }
             }
         }
@@ -2106,6 +2116,28 @@ impl BorrowingRecordBookPage {
 	    borrow_book: borrow_book,
 	    request_information: request_information,
 	}
+    }
+
+    fn run_effect(&mut self, ctx: &mut ggez::Context, game_data: &GameData, t: Clock) {
+        while let Some(event) = self.event_list.move_top() {
+            // 時間が来ていない場合は、取り出した要素をリストに戻して処理ループを抜ける
+            if event.run_time > t {
+                self.event_list.add(event);
+                break;
+            }
+	    
+            // 所有権を移動しているため、selfを渡してもエラーにならない
+            (event.func)(self, ctx, game_data);
+        }
+    }
+
+    pub fn update(&mut self, ctx: &mut ggez::Context, game_data: &GameData, t: Clock) {
+	self.run_effect(ctx, game_data, t);
+	
+        if let Some(button_group) = self.drop_down_button.as_mut() {
+            button_group.move_with_func(t);
+            button_group.effect(ctx, t);
+        }
     }
 }
 
@@ -2155,15 +2187,6 @@ impl DrawableComponent for BorrowingRecordBookPage {
 
     fn get_drawing_depth(&self) -> i8 {
         self.drwob_essential.drawing_depth
-    }
-}
-
-impl Updatable for BorrowingRecordBookPage {
-    fn update(&mut self, ctx: &ggez::Context, t: Clock) {
-        if let Some(button_group) = self.drop_down_button.as_mut() {
-            button_group.move_with_func(t);
-            button_group.effect(ctx, t);
-        }
     }
 }
 
@@ -2293,19 +2316,6 @@ impl BorrowingRecordBook {
         }
     }
 
-    fn check_drop_down_button_open(
-        &mut self,
-        ctx: &mut ggez::Context,
-        game_data: &GameData,
-        point: numeric::Point2f,
-        t: Clock,
-    ) {
-        let rpoint = self.relative_point(point);
-        if let Some(page) = self.get_current_page_mut() {
-            page.try_show_drop_down_button(ctx, game_data, rpoint, t);
-        }
-    }
-
     pub fn export_book_data(&self) -> BorrowingRecordBookData {
 	BorrowingRecordBookData {
 	    pages_data: self.pages
@@ -2317,6 +2327,13 @@ impl BorrowingRecordBook {
 
     pub fn pages_length(&self) -> usize {
 	self.pages.len()
+    }
+
+    pub fn update(&mut self, ctx: &mut ggez::Context, game_data: &GameData, t: Clock) {
+        self.move_with_func(t);
+        if let Some(page) = self.get_current_page_mut() {
+            page.update(ctx, game_data, t);
+        }
     }
 }
 
@@ -2439,9 +2456,8 @@ impl Clickable for BorrowingRecordBook {
         // そのあとにメニュー表示処理を行う
         if let Some(page) = self.get_current_page_mut() {
             page.click_handler(ctx, game_data, button, rpoint, t);
+	    page.try_show_drop_down_button(ctx, game_data, rpoint, t);
         }
-
-        self.check_drop_down_button_open(ctx, game_data, point, t);
 
         debug::debug_screen_push_text("book click!!");
         if rpoint.x < 20.0 && rpoint.x >= 0.0 {
@@ -2477,15 +2493,6 @@ impl OnDesk for BorrowingRecordBook {
 
     fn get_type(&self) -> OnDeskType {
         OnDeskType::BorrowingRecordBook
-    }
-}
-
-impl Updatable for BorrowingRecordBook {
-    fn update(&mut self, ctx: &ggez::Context, t: Clock) {
-        self.move_with_func(t);
-        if let Some(page) = self.get_current_page_mut() {
-            page.update(ctx, t);
-        }
     }
 }
 
