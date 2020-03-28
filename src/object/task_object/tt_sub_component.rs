@@ -1260,6 +1260,132 @@ impl Clickable for BookStatusButtonGroup {
 
 pub type BookStatusMenu = DropDownArea<BookStatusButtonGroup>;
 
+pub struct BookTitleMenu {
+    raw_data: Vec<BookInformation>,
+    title_table_frame: TableFrame,
+    title_vtext: Vec<VerticalText>,
+    drwob_essential: DrawableObjectEssential,
+    last_clicked: Option<usize>,
+}
+
+impl BookTitleMenu {
+    pub fn new(
+        ctx: &mut ggez::Context,
+        game_data: &GameData,
+        book_info_data: Vec<BookInformation>,
+        drawing_depth: i8,
+    ) -> Self {
+        let mut title_vtext = Vec::new();
+
+        let font_info = FontInformation::new(
+            game_data.get_font(FontID::JpFude1),
+            numeric::Vector2f::new(32.0, 32.0),
+            ggraphics::Color::from_rgba_u32(0xff),
+        );
+
+        let title_table_frame = TableFrame::new(
+            game_data,
+            numeric::Point2f::new(10.0, 10.0),
+            FrameData::new(vec![200.0], vec![64.0; 2]),
+            numeric::Vector2f::new(0.3, 0.3),
+            0,
+        );
+
+        for (index, book_info) in book_info_data.iter().enumerate() {
+            let title_vtext_line = book_info.name.to_string();
+            let mut vtext = VerticalText::new(
+                title_vtext_line,
+                numeric::Point2f::new(0.0, 0.0),
+                numeric::Vector2f::new(1.0, 1.0),
+                0.0,
+                drawing_depth,
+                font_info,
+            );
+
+            vtext.make_center(
+                ctx,
+                roundup2f!(title_table_frame.get_center_of(
+                    numeric::Vector2u::new((book_info_data.len() - index - 1) as u32, 0),
+                    title_table_frame.get_position()
+                )),
+            );
+
+            title_vtext.push(vtext);
+        }
+
+        BookTitleMenu {
+	    raw_data: book_info_data,
+            title_table_frame: title_table_frame,
+            title_vtext: title_vtext,
+            drwob_essential: DrawableObjectEssential::new(true, drawing_depth),
+            last_clicked: None,
+        }
+    }
+
+    pub fn click_handler(&mut self, ctx: &mut ggez::Context, point: numeric::Point2f) {
+        let maybe_grid_position = self.title_table_frame.get_grid_position(ctx, point);
+        if let Some(grid_position) = maybe_grid_position {
+            self.last_clicked = Some(grid_position.x as usize);
+        }
+    }
+
+    pub fn get_last_clicked(&self) -> Option<usize> {
+        self.last_clicked
+    }
+}
+
+impl DrawableComponent for BookTitleMenu {
+    fn draw(&mut self, ctx: &mut ggez::Context) -> ggez::GameResult<()> {
+        if self.is_visible() {
+            self.title_table_frame.draw(ctx)?;
+
+            for vtext in &mut self.title_vtext {
+                vtext.draw(ctx)?;
+            }
+        }
+        Ok(())
+    }
+
+    fn hide(&mut self) {
+        self.drwob_essential.visible = false;
+    }
+
+    fn appear(&mut self) {
+        self.drwob_essential.visible = true;
+    }
+
+    fn is_visible(&self) -> bool {
+        self.drwob_essential.visible
+    }
+
+    fn set_drawing_depth(&mut self, depth: i8) {
+        self.drwob_essential.drawing_depth = depth;
+    }
+
+    fn get_drawing_depth(&self) -> i8 {
+        self.drwob_essential.drawing_depth
+    }
+}
+
+impl Clickable for BookTitleMenu {
+    fn on_click(
+        &mut self,
+        ctx: &mut ggez::Context,
+        _game_data: &GameData,
+        _t: Clock,
+        _button: ggez::event::MouseButton,
+        point: numeric::Point2f,
+    ) {
+        self.click_handler(ctx, point);
+	if let Some(menu_id) = self.last_clicked.as_ref() {
+	    println!("clicked menu, {}", menu_id);
+	    panic!("実装してくれ");
+	}
+    }
+}
+
+pub type BookTitleDropMenu = DropDownArea<BookTitleMenu>;
+
 #[derive(Clone)]
 pub struct BorrowingRecordBookPageData {
     pub borrow_book: HashMap<numeric::Vector2u, HoldData>,
