@@ -666,8 +666,8 @@ impl OnDesk for OnDeskBook {
     fn ondesk_whose(&self) -> i32 {
         0
     }
-
     fn click_data(&self, _: &mut ggez::Context, _: numeric::Point2f) -> HoldData {
+
         return HoldData::BookName(self.info.clone());
     }
 
@@ -2708,6 +2708,10 @@ impl DeskBookMenu {
 
     pub fn get_last_clicked(&self) -> Option<usize> {
         self.last_clicked
+    }
+
+    pub fn get_target_book_info(&self) -> BookInformation {
+	self.book_info.clone()
     }
 }
 

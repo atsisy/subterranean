@@ -392,7 +392,7 @@ impl DeskObjects {
         }
     }
 
-    fn do_book_menu_action(&mut self) -> bool {
+    fn do_book_menu_action(&mut self, kosuzu_memory: &mut KosuzuMemory) -> bool {
 	if let Some(book_menu) = self.desk_book_drop_menu.as_ref() {
 	    let choice_group = book_menu.get_component();
 	    let maybe_menu_id = choice_group.get_last_clicked();
@@ -403,7 +403,7 @@ impl DeskObjects {
 			panic!("ここに状態獲得の処理を記述する");
 		    },
 		    1 => {
-			panic!("ここに記憶する処理を記述する");
+			kosuzu_memory.add_book_info(choice_group.get_target_book_info());
 		    },
 		    _ => false,
 		}
@@ -420,13 +420,14 @@ impl DeskObjects {
         t: Clock,
         button: ggez::input::mouse::MouseButton,
         point: numeric::Point2f,
+	kosuzu_memory: &mut KosuzuMemory,
     ) {
         let rpoint = self.canvas.relative_point(point);
 
         if let Some(book_menu) = self.desk_book_drop_menu.as_mut() {
 	    if book_menu.contains(ctx, rpoint) {
 	        book_menu.on_click(ctx, game_data, t, button, rpoint);
-		if self.do_book_menu_action() {
+		if self.do_book_menu_action(kosuzu_memory) {
 		    return ();
 		}	
 	    }
@@ -1713,6 +1714,58 @@ impl DrawableComponent for Goods {
 
     fn get_drawing_depth(&self) -> i8 {
         self.canvas.get_drawing_depth()
+    }
+}
+
+pub struct KosuzuMemory {
+    books_info: Vec<BookInformation>,
+    customers_name: Vec<String>,
+    dates: Vec<GensoDate>,
+}
+
+impl KosuzuMemory {
+    pub fn new() -> Self {
+	KosuzuMemory {
+	    books_info: Vec::new(),
+	    customers_name: Vec::new(),
+	    dates: Vec::new(),
+	}
+    }
+
+    pub fn add_book_info(&mut self, book_info: BookInformation) {
+	self.books_info.push(book_info);
+    }
+
+    pub fn add_customer_name(&mut self, name: String) {
+	self.customers_name.push(name);
+    }
+
+    pub fn add_date(&mut self, date: GensoDate) {
+	self.dates.push(date);
+    }
+
+    pub fn get_book_info_remove(&mut self, index: usize) -> Option<BookInformation> {
+	if self.books_info.len() <= index {
+	    None
+	} else {
+	    Some(self.books_info.swap_remove(index))
+	}
+    }
+
+    pub fn get_customer_name_remove(&mut self, index: usize) -> Option<String> {
+	if self.customers_name.len() <= index {
+	    None
+	} else {
+	    Some(self.customers_name.swap_remove(index))
+	}
+    }
+
+    pub fn get_dates_remove(&mut self, index: usize) -> Option<GensoDate> {
+	if self.dates.len() <= index {
+	    None
+	} else {
+	    Some(self.dates.swap_remove(index))
+	}
     }
 }
 

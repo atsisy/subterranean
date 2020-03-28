@@ -35,6 +35,7 @@ pub struct TaskTable {
     goods: Goods,
     customer_info_ui: CustomerInformationUI,
     staging_object: Option<TaskTableStagingObject>,
+    kosuzu_memory: KosuzuMemory,
     shelving_box: ShelvingBookBox,
     hold_data: HoldData,
     event_list: DelayEventList<TaskTable>,
@@ -138,6 +139,7 @@ impl TaskTable {
                 0,
             ),
             staging_object: None,
+	    kosuzu_memory: KosuzuMemory::new(),
             shelving_box: shelving_box,
             hold_data: HoldData::None,
             event_list: DelayEventList::new(),
@@ -792,7 +794,7 @@ impl Clickable for TaskTable {
         self.update_hold_data(ctx, game_data, rpoint);
 
         self.desk
-            .button_up_handler(ctx, game_data, t, button, rpoint);
+            .button_up_handler(ctx, game_data, t, button, rpoint, &mut self.kosuzu_memory);
         self.borrowing_record_book
             .button_up(ctx, game_data, t, button, point);
     }
