@@ -1215,7 +1215,7 @@ where
                         ctx,
                         pos_rect,
                         drawing_depth,
-                        ggraphics::Color::from_rgba_u32(0xff),
+                        ggraphics::Color::from_rgba_u32(0xffffffff),
                     )),
                     None,
                     t,
@@ -1419,17 +1419,16 @@ where
     }
 }
 
-pub struct ButtonGroup {
+pub struct BookStatusButtonGroup {
     buttons: Vec<SelectButton>,
     drwob_essential: DrawableObjectEssential,
     last_clicked: Option<usize>,
 }
 
-impl ButtonGroup {
+impl BookStatusButtonGroup {
     pub fn new(
         ctx: &mut ggez::Context,
         game_data: &GameData,
-        group_rect: numeric::Rect,
         mut button_rect: numeric::Rect,
         padding: f32,
         mut textures: Vec<TextureID>,
@@ -1459,7 +1458,7 @@ impl ButtonGroup {
             button_rect.x += button_rect.w;
         }
 
-        ButtonGroup {
+        BookStatusButtonGroup {
             buttons: buttons,
             drwob_essential: DrawableObjectEssential::new(true, drawing_depth),
 	    last_clicked: None,
@@ -1484,7 +1483,7 @@ impl ButtonGroup {
     }
 }
 
-impl DrawableComponent for ButtonGroup {
+impl DrawableComponent for BookStatusButtonGroup {
     fn draw(&mut self, ctx: &mut ggez::Context) -> ggez::GameResult<()> {
         if self.is_visible() {
 
@@ -1516,20 +1515,20 @@ impl DrawableComponent for ButtonGroup {
     }
 }
 
-impl Clickable for ButtonGroup {
+impl Clickable for BookStatusButtonGroup {
     fn on_click(
         &mut self,
         ctx: &mut ggez::Context,
-        game_data: &GameData,
-        t: Clock,
-        button: ggez::event::MouseButton,
+        _game_data: &GameData,
+        _t: Clock,
+        _button: ggez::event::MouseButton,
         point: numeric::Point2f,
     ) {
         self.click_handler(ctx, point);
     }
 }
 
-pub type BookStatusMenu = DropDownArea<ButtonGroup>;
+pub type BookStatusMenu = DropDownArea<BookStatusButtonGroup>;
 
 #[derive(Clone)]
 pub struct BorrowingRecordBookPageData {
@@ -2014,10 +2013,9 @@ impl BorrowingRecordBookPage {
 	}
 	
         if grid_pos.is_some() && grid_pos.unwrap().y == 1 {
-	    let button_group = ButtonGroup::new(
+	    let button_group = BookStatusButtonGroup::new(
                 ctx,
                 game_data,
-                numeric::Rect::new(position.x, position.y, 290.0, 220.0),
                 numeric::Rect::new(0.0, 0.0, 70.0, 70.0),
                 20.0,
                 vec![
@@ -2632,39 +2630,125 @@ impl DeskObjectContainer {
     }
 }
 
-pub struct ObjectContainer<T> {
-    container: Vec<T>,
+pub struct DeskBookMenu {
+    select_table_frame: TableFrame,
+    choice_element_text: Vec<VerticalText>,
+    drwob_essential: DrawableObjectEssential,
+    last_clicked: Option<usize>,
 }
 
-impl<T> ObjectContainer<T> {
-    pub fn new() -> Self {
-        ObjectContainer {
-            container: Vec::new(),
+impl DeskBookMenu {
+    pub fn new(
+        ctx: &mut ggez::Context,
+        game_data: &GameData,
+        mut choice_text_str: Vec<String>,
+        drawing_depth: i8,
+    ) -> Self {
+        let mut choice_vtext = Vec::new();
+
+	let font_info = FontInformation::new(game_data.get_font(FontID::JpFude1),
+					     numeric::Vector2f::new(32.0, 32.0),
+					     ggraphics::Color::from_rgba_u32(0xff)
+	);
+	
+	let select_table_frame = TableFrame::new(
+            game_data,
+            numeric::Point2f::new(10.0, 10.0),
+            FrameData::new(vec![200.0], vec![64.0; 2]),
+            numeric::Vector2f::new(0.3, 0.3),
+            0,
+        );
+
+        while choice_text_str.len() > 0 {
+	    let choice_str_element = choice_text_str.swap_remove(0);
+	    let mut vtext = VerticalText::new(
+		choice_str_element,
+		numeric::Point2f::new(0.0, 0.0),
+		numeric::Vector2f::new(1.0, 1.0),
+		0.0,
+		drawing_depth,
+		font_info);
+
+	    vtext.make_center(
+		ctx,
+		roundup2f!(
+                    select_table_frame.get_center_of(
+			numeric::Vector2u::new(choice_text_str.len() as u32, 0),
+			select_table_frame.get_position())
+		),
+            );
+
+	    choice_vtext.push(vtext);
+        }
+	
+        DeskBookMenu {
+	    select_table_frame: select_table_frame,
+	    choice_element_text: choice_vtext,
+            drwob_essential: DrawableObjectEssential::new(true, drawing_depth),
+	    last_clicked: None,
         }
     }
 
-    #[inline(always)]
-    pub fn add(&mut self, obj: T) {
-        self.container.push(obj);
+    pub fn click_handler(
+        &mut self,
+        ctx: &mut ggez::Context,
+        point: numeric::Point2f,
+    ) {
+	let maybe_grid_position = self.select_table_frame.get_grid_position(ctx, point);
+	if let Some(grid_position) = maybe_grid_position {
+	    self.last_clicked = Some(grid_position.x as usize);
+	}
     }
 
-    #[inline(always)]
-    pub fn remove_if<F>(&mut self, f: F)
-    where
-        F: Fn(&T) -> bool,
-    {
-        self.container.retain(|e| !f(e));
-    }
-
-    pub fn len(&self) -> usize {
-        self.container.len()
-    }
-
-    pub fn iter(&self) -> std::slice::Iter<T> {
-        self.container.iter()
-    }
-
-    pub fn iter_mut(&mut self) -> std::slice::IterMut<T> {
-        self.container.iter_mut()
+    pub fn get_last_clicked(&self) -> Option<usize> {
+	self.last_clicked
     }
 }
+
+impl DrawableComponent for DeskBookMenu {
+    fn draw(&mut self, ctx: &mut ggez::Context) -> ggez::GameResult<()> {
+        if self.is_visible() {
+	    self.select_table_frame.draw(ctx)?;
+
+	    for vtext in &mut self.choice_element_text {
+		vtext.draw(ctx)?;
+	    }
+        }
+        Ok(())
+    }
+
+    fn hide(&mut self) {
+        self.drwob_essential.visible = false;
+    }
+
+    fn appear(&mut self) {
+        self.drwob_essential.visible = true;
+    }
+
+    fn is_visible(&self) -> bool {
+        self.drwob_essential.visible
+    }
+
+    fn set_drawing_depth(&mut self, depth: i8) {
+        self.drwob_essential.drawing_depth = depth;
+    }
+
+    fn get_drawing_depth(&self) -> i8 {
+        self.drwob_essential.drawing_depth
+    }
+}
+
+impl Clickable for DeskBookMenu {
+    fn on_click(
+        &mut self,
+        ctx: &mut ggez::Context,
+        _game_data: &GameData,
+        _t: Clock,
+        _button: ggez::event::MouseButton,
+        point: numeric::Point2f,
+    ) {
+        self.click_handler(ctx, point);
+    }
+}
+
+pub type DeskBookDropMenu = DropDownArea<DeskBookMenu>;

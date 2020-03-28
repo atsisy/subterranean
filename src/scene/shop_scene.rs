@@ -8,7 +8,7 @@ use torifune::graphics::object::*;
 
 use ggez::graphics as ggraphics;
 use ggez::input as ginput;
-use tdev::{KeyboardEvent, VirtualKey};
+use tdev::VirtualKey;
 use torifune::core::Clock;
 use torifune::core::Updatable;
 use torifune::graphics::*;
@@ -1038,7 +1038,7 @@ impl SceneManager for ShopScene {
 
     fn key_up_event(
         &mut self,
-        ctx: &mut ggez::Context,
+        _ctx: &mut ggez::Context,
         _game_data: &GameData,
         vkey: tdev::VirtualKey,
     ) {

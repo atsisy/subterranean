@@ -100,6 +100,7 @@ pub struct DeskObjects {
     pub desk_objects: DeskObjectContainer,
     pub dragging: Option<DeskObject>,
     pub table_texture: SimpleObject,
+    desk_book_drop_menu: Option<DeskBookDropMenu>,
 }
 
 impl DeskObjects {
@@ -129,6 +130,7 @@ impl DeskObjects {
                 ),
                 Vec::new(),
             ),
+	    desk_book_drop_menu: None,
         }
     }
 
@@ -339,6 +341,49 @@ impl DeskObjects {
         count + if self.dragging.is_some() { 1 } else { 0 }
     }
 
+    fn show_book_drop_down_menu(
+	&mut self,
+        ctx: &mut ggez::Context,
+        game_data: &GameData,
+	point: numeric::Point2f,
+	t: Clock,
+    ) {
+	// 既に表示されている場合は、消してすぐにreturn
+	if self.desk_book_drop_menu.is_some() {
+	    self.desk_book_drop_menu = None;
+	    return ();
+	}
+
+	let menu = DeskBookMenu::new(ctx,
+				     game_data,
+				     vec!["記憶".to_string(), "状態確認".to_string()],
+				     0);
+	
+	self.desk_book_drop_menu = Some(
+	    DropDownArea::new(ctx,
+			      numeric::Rect::new(point.x, point.y, 200.0, 300.0),
+			      0,
+			      menu,
+			      t)
+	);
+    }
+    
+    fn show_desk_object_drop_down_menu(
+	&mut self,
+        ctx: &mut ggez::Context,
+        game_data: &GameData,
+	on_desk_type: OnDeskType,
+	point: numeric::Point2f,
+	t: Clock,
+    ) {
+	match on_desk_type {
+	    OnDeskType::Book => {
+		self.show_book_drop_down_menu(ctx, game_data, point, t);
+	    },
+	    _ => (),
+	}
+    }
+    
     pub fn button_up_handler(
         &mut self,
         ctx: &mut ggez::Context,
@@ -350,11 +395,20 @@ impl DeskObjects {
         let rpoint = self.canvas.relative_point(point);
 
         for dobj in self.desk_objects.get_raw_container_mut() {
-            if dobj.get_object_mut().get_drawing_area(ctx).contains(rpoint) {
+            if dobj.get_object_mut().contains(ctx, rpoint) {
+		let on_desk_type = dobj.get_object_mut()
+		    .ref_wrapped_object()
+		    .ref_wrapped_object()
+		    .get_type();
+		
                 dobj.get_object_mut()
                     .ref_wrapped_object_mut()
                     .ref_wrapped_object_mut()
                     .button_up(ctx, game_data, t, button, rpoint);
+
+		self.show_desk_object_drop_down_menu(ctx, game_data, on_desk_type, rpoint, t);
+		
+		break;
             }
         }
     }
@@ -392,9 +446,13 @@ impl DrawableComponent for DeskObjects {
                 obj.get_object_mut().draw(ctx)?;
             }
 
-            if let Some(ref mut d) = self.dragging {
+            if let Some(d) = self.dragging.as_mut() {
                 d.get_object_mut().draw(ctx)?;
             }
+
+	    if let Some(book_menu) = self.desk_book_drop_menu.as_mut() {
+		book_menu.draw(ctx)?;
+	    }
 
             sub_screen::pop_screen(ctx);
             self.canvas.draw(ctx).unwrap();
