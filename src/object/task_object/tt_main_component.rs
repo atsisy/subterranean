@@ -404,6 +404,7 @@ impl DeskObjects {
 		    },
 		    1 => {
 			kosuzu_memory.add_book_info(choice_group.get_target_book_info());
+			true
 		    },
 		    _ => false,
 		}
