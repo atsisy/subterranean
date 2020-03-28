@@ -16,8 +16,8 @@ use copy_scene::*;
 use task_result_scene::*;
 use task_scene::*;
 
-use crate::object::task_object::tt_sub_component::*;
 use crate::object::task_object::tt_main_component::*;
+use crate::object::task_object::tt_sub_component::*;
 
 #[derive(PartialEq, Clone, Copy)]
 pub enum SuzunaSceneStatus {
@@ -33,14 +33,18 @@ pub struct ReturningRequestPool {
 
 impl ReturningRequestPool {
     pub fn new(game_data: &GameData, today: GensoDate) -> Self {
-	let mut returning_request = Vec::new();
-	let mut return_date = today.clone();
-	return_date.add_day(14);
-	
-	for _ in 0..15 {
-	    returning_request.push(ReturnBookInformation::new_random(game_data, today, return_date));
-	}
-	
+        let mut returning_request = Vec::new();
+        let mut return_date = today.clone();
+        return_date.add_day(14);
+
+        for _ in 0..15 {
+            returning_request.push(ReturnBookInformation::new_random(
+                game_data,
+                today,
+                return_date,
+            ));
+        }
+
         ReturningRequestPool {
             returning_request: returning_request,
         }
@@ -57,13 +61,16 @@ impl ReturningRequestPool {
     }
 
     pub fn select_returning_request_random(&mut self) -> Option<ReturnBookInformation> {
-	let request_len = self.returning_request.len();
-	
-	if request_len == 0 {
-	    return None;
-	}
-	
-	Some(self.returning_request.swap_remove(rand::random::<usize>() % request_len))
+        let request_len = self.returning_request.len();
+
+        if request_len == 0 {
+            return None;
+        }
+
+        Some(
+            self.returning_request
+                .swap_remove(rand::random::<usize>() % request_len),
+        )
     }
 }
 
@@ -73,15 +80,17 @@ pub struct SuzunaBookPool {
 
 impl SuzunaBookPool {
     pub fn new(game_data: &GameData) -> Self {
-        SuzunaBookPool { books: game_data.clone_available_books() }
+        SuzunaBookPool {
+            books: game_data.clone_available_books(),
+        }
     }
 
     pub fn push_book(&mut self, book_info: BookInformation) {
-	self.books.push(book_info);
+        self.books.push(book_info);
     }
 
     pub fn push_book_vec(&mut self, book_info_vec: Vec<BookInformation>) {
-	self.books.extend(book_info_vec);
+        self.books.extend(book_info_vec);
     }
 
     pub fn generate_borrowing_request(
@@ -139,8 +148,11 @@ impl SuzunaSubScene {
             copying_scene: None,
             scene_status: SuzunaSceneStatus::Shop,
             borrowing_record_book_data: None,
-            returning_request_pool: ReturningRequestPool::new(game_data, GensoDate::new(12, 12, 12)),
-	    suzuna_book_pool: SuzunaBookPool::new(game_data),
+            returning_request_pool: ReturningRequestPool::new(
+                game_data,
+                GensoDate::new(12, 12, 12),
+            ),
+            suzuna_book_pool: SuzunaBookPool::new(game_data),
         }
     }
 
@@ -168,29 +180,29 @@ impl SuzunaSubScene {
     ) {
         if transition == SceneTransition::StackingTransition {
             if let Some(shop_scene) = self.shop_scene.as_mut() {
-		// CustomerRequestを構築する上で必須な要素を取得
+                // CustomerRequestを構築する上で必須な要素を取得
                 let customer_request_hint = shop_scene.pop_customer_request();
 
-		if customer_request_hint.is_none() {
-		    return ();
-		}
+                if customer_request_hint.is_none() {
+                    return ();
+                }
 
-		// 今回のTaskSceneで扱われるCustomerRequestを構築
-		let customer_request = match customer_request_hint.as_ref().unwrap() {
-		    CustomerRequest::Borrowing(raw_info) => {
-			CustomerRequest::Borrowing(
-			self.suzuna_book_pool.generate_borrowing_request(
-			    raw_info.borrower.to_string(),
-			    raw_info.borrow_date,
-			    raw_info.return_date))
-		    },
-		    CustomerRequest::Returning(_) => {
-			CustomerRequest::Returning(
-			    self.returning_request_pool.select_returning_request_random().unwrap()
-			)
-		    },
-		    _ => return (),
-		};
+                // 今回のTaskSceneで扱われるCustomerRequestを構築
+                let customer_request = match customer_request_hint.as_ref().unwrap() {
+                    CustomerRequest::Borrowing(raw_info) => CustomerRequest::Borrowing(
+                        self.suzuna_book_pool.generate_borrowing_request(
+                            raw_info.borrower.to_string(),
+                            raw_info.borrow_date,
+                            raw_info.return_date,
+                        ),
+                    ),
+                    CustomerRequest::Returning(_) => CustomerRequest::Returning(
+                        self.returning_request_pool
+                            .select_returning_request_random()
+                            .unwrap(),
+                    ),
+                    _ => return (),
+                };
 
                 let record_book_data =
                     std::mem::replace(&mut self.borrowing_record_book_data, None);

@@ -43,7 +43,7 @@ impl TaskScene {
         game_data: &GameData,
         today_date: GensoDate,
         customer_request: Option<CustomerRequest>,
-	record_book_data: Option<BorrowingRecordBookData>,
+        record_book_data: Option<BorrowingRecordBookData>,
     ) -> TaskScene {
         TaskScene {
             task_table: TaskTable::new(
@@ -55,7 +55,7 @@ impl TaskScene {
                 numeric::Rect::new(0.0, 310.0, 900.0, 500.0),
                 numeric::Rect::new(900.0, 310.0, 500.0, 500.0),
                 today_date,
-		record_book_data,
+                record_book_data,
                 0,
             ),
             clock: 0,
@@ -166,7 +166,7 @@ impl TaskScene {
     }
 
     pub fn export_borrowing_record_book_data(&self) -> BorrowingRecordBookData {
-	self.task_table.export_borrowing_record_book_data()
+        self.task_table.export_borrowing_record_book_data()
     }
 }
 

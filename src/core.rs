@@ -10,9 +10,9 @@ use torifune::debug;
 use torifune::device as tdev;
 use torifune::graphics::object::sub_screen;
 use torifune::graphics::object::sub_screen::SubScreen;
+use torifune::graphics::object::tile_batch::*;
 use torifune::graphics::object::{FontInformation, TextureObject};
 use torifune::graphics::*;
-use torifune::graphics::object::tile_batch::*;
 use torifune::hash;
 use torifune::numeric;
 
@@ -376,7 +376,7 @@ impl GameData {
     }
 
     pub fn clone_available_books(&self) -> Vec<BookInformation> {
-	self.books_information.clone()
+        self.books_information.clone()
     }
 
     pub fn customer_random_select(&self) -> &str {
@@ -609,8 +609,13 @@ impl<'a> SceneController<'a> {
         game_data: &'a GameData,
         next_scene_id: scene::SceneID,
     ) {
-	if next_scene_id == scene::SceneID::SuzunaShop {
-            self.current_scene = Box::new(scene::shop_scene::ShopScene::new(ctx, game_data, 0, GensoDate::new_empty()));
+        if next_scene_id == scene::SceneID::SuzunaShop {
+            self.current_scene = Box::new(scene::shop_scene::ShopScene::new(
+                ctx,
+                game_data,
+                0,
+                GensoDate::new_empty(),
+            ));
         } else if next_scene_id == scene::SceneID::Null {
             self.current_scene = Box::new(scene::NullScene::new());
         }
@@ -626,12 +631,19 @@ impl<'a> SceneController<'a> {
             if next_scene_id == scene::SceneID::MainDesk {
                 Some(Box::new(
                     scene::suzuna_scene::suzuna_sub_scene::task_scene::TaskScene::new(
-                        ctx, game_data, GensoDate::new_empty(), None, None,
+                        ctx,
+                        game_data,
+                        GensoDate::new_empty(),
+                        None,
+                        None,
                     ),
                 ))
             } else if next_scene_id == scene::SceneID::SuzunaShop {
                 Some(Box::new(scene::shop_scene::ShopScene::new(
-                    ctx, game_data, 0, GensoDate::new_empty()
+                    ctx,
+                    game_data,
+                    0,
+                    GensoDate::new_empty(),
                 )))
             } else if next_scene_id == scene::SceneID::Null {
                 Some(Box::new(scene::NullScene::new()))

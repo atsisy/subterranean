@@ -16,10 +16,10 @@ use torifune::numeric;
 
 use crate::core::{BookInformation, BookShelfInformation, FontID, GameData, TextureID};
 use crate::object::move_fn;
+use crate::object::util_object::*;
 use crate::object::Clickable;
 use crate::scene::suzuna_scene::TaskResult;
 use crate::scene::DelayEventList;
-use crate::object::util_object::*;
 
 use number_to_jk::number_to_jk;
 

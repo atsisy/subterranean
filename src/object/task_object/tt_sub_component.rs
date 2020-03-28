@@ -63,16 +63,16 @@ impl GensoDate {
     }
 
     pub fn add_day(&mut self, day: u8) {
-	self.day += day;
-	if day > 31 {
-	    self.month += 1;
-	    self.day %= 31;
-	}
+        self.day += day;
+        if day > 31 {
+            self.month += 1;
+            self.day %= 31;
+        }
 
-	if self.month > 12 {
-	    self.season += 1;
-	    self.month %= 12;
-	}
+        if self.month > 12 {
+            self.season += 1;
+            self.month %= 12;
+        }
     }
 }
 
@@ -136,7 +136,7 @@ impl HoldDataVText {
     }
 
     pub fn copy_hold_data(&self) -> HoldData {
-	self.data.clone()
+        self.data.clone()
     }
 }
 
@@ -270,7 +270,7 @@ impl ReturnBookInformation {
 ///
 #[derive(Clone)]
 pub enum HoldData {
-    BookName(String),
+    BookName(BookInformation),
     CustomerName(String),
     Date(GensoDate),
     BookStatus(BookStatus),
@@ -292,7 +292,7 @@ impl HoldData {
 impl ToString for HoldData {
     fn to_string(&self) -> String {
         match self {
-            HoldData::BookName(name) => name.to_string(),
+            HoldData::BookName(book_info) => book_info.name.to_string(),
             HoldData::CustomerName(name) => name.to_string(),
             HoldData::Date(date) => date.to_string(),
             HoldData::BookStatus(status) => status.to_string(),
@@ -668,7 +668,7 @@ impl OnDesk for OnDeskBook {
     }
 
     fn click_data(&self, _: &mut ggez::Context, _: numeric::Point2f) -> HoldData {
-        return HoldData::BookName(self.info.get_name().to_string());
+        return HoldData::BookName(self.info.clone());
     }
 
     fn get_type(&self) -> OnDeskType {
@@ -1174,7 +1174,7 @@ impl OnDesk for CopyingRequestPaper {
         let rpoint = self.canvas.relative_point(point);
 
         if self.request_book.get_drawing_area(ctx).contains(rpoint) {
-            return HoldData::BookName(self.raw_info.book_info.get_name().to_string());
+            return HoldData::BookName(self.raw_info.book_info.clone());
         }
 
         if self.customer.get_drawing_area(ctx).contains(rpoint) {
@@ -1227,11 +1227,11 @@ where
     }
 
     pub fn get_component(&self) -> &D {
-	&self.drawable
+        &self.drawable
     }
 
     pub fn get_component_mut(&mut self) -> &mut D {
-	&mut self.drawable
+        &mut self.drawable
     }
 }
 
@@ -1461,32 +1461,27 @@ impl BookStatusButtonGroup {
         BookStatusButtonGroup {
             buttons: buttons,
             drwob_essential: DrawableObjectEssential::new(true, drawing_depth),
-	    last_clicked: None,
+            last_clicked: None,
         }
     }
 
-    pub fn click_handler(
-        &mut self,
-        ctx: &mut ggez::Context,
-        point: numeric::Point2f,
-    ) {
+    pub fn click_handler(&mut self, ctx: &mut ggez::Context, point: numeric::Point2f) {
         for (i, button) in self.buttons.iter().enumerate() {
             if button.contains(ctx, point) {
                 self.last_clicked = Some(i);
-		break;
+                break;
             }
         }
     }
 
     pub fn get_last_clicked(&self) -> Option<usize> {
-	self.last_clicked
+        self.last_clicked
     }
 }
 
 impl DrawableComponent for BookStatusButtonGroup {
     fn draw(&mut self, ctx: &mut ggez::Context) -> ggez::GameResult<()> {
         if self.is_visible() {
-
             for button in &mut self.buttons {
                 button.draw(ctx)?;
             }
@@ -1559,42 +1554,42 @@ pub struct BorrowingRecordBookPage {
 impl BorrowingRecordBookPage {
     pub fn new(
         ctx: &mut ggez::Context,
-	game_data: &GameData,
+        game_data: &GameData,
         rect: ggraphics::Rect,
         paper_tid: TextureID,
-	page_data: BorrowingRecordBookPageData,
+        page_data: BorrowingRecordBookPageData,
         t: Clock,
     ) -> Self {
         let mut page = Self::new_empty(ctx, rect, paper_tid, game_data, t);
 
-	for (position, hold_data) in page_data.borrow_book.iter() {
-	    if hold_data.is_none() {
-		continue;
-	    }
+        for (position, hold_data) in page_data.borrow_book.iter() {
+            if hold_data.is_none() {
+                continue;
+            }
 
-	    let info = page.borrow_book.get_mut(position).unwrap();
+            let info = page.borrow_book.get_mut(position).unwrap();
             info.reset(hold_data.clone());
             info.vtext.make_center(
                 ctx,
                 page.books_table
                     .get_center_of(*position, page.books_table.get_position()),
             );
-	}
+        }
 
-	for (position, hold_data) in page_data.request_information.iter() {
-	    if hold_data.is_none() {
-		continue;
-	    }
+        for (position, hold_data) in page_data.request_information.iter() {
+            if hold_data.is_none() {
+                continue;
+            }
 
-	    let info = page.request_information.get_mut(position).unwrap();
+            let info = page.request_information.get_mut(position).unwrap();
             info.reset(hold_data.clone());
             info.vtext.make_center(
                 ctx,
                 page.info_table
                     .get_center_of(*position, page.info_table.get_position()),
             );
-	}
-	
+        }
+
         page
     }
 
@@ -1891,7 +1886,7 @@ impl BorrowingRecordBookPage {
         ];
 
         BorrowingRecordBookPage {
-	    event_list: DelayEventList::new(),
+            event_list: DelayEventList::new(),
             info_table: table_frame,
             books_table: books_table,
             borrow_book: borrow_text,
@@ -2006,14 +2001,14 @@ impl BorrowingRecordBookPage {
     ) {
         let grid_pos = self.books_table.get_grid_position(ctx, position);
 
-	// 既に表示されている場合は、メニューを消して終了
-	if self.drop_down_button.is_some() {
-	    self.hide_drop_down_button(t);
-	    return ();
-	}
-	
+        // 既に表示されている場合は、メニューを消して終了
+        if self.drop_down_button.is_some() {
+            self.hide_drop_down_button(t);
+            return ();
+        }
+
         if grid_pos.is_some() && grid_pos.unwrap().y == 1 {
-	    let button_group = BookStatusButtonGroup::new(
+            let button_group = BookStatusButtonGroup::new(
                 ctx,
                 game_data,
                 numeric::Rect::new(0.0, 0.0, 70.0, 70.0),
@@ -2025,7 +2020,7 @@ impl BorrowingRecordBookPage {
                 ],
                 0,
             );
-	    
+
             let button_group_area = EffectableWrap::new(
                 MovableWrap::new(
                     Box::new(DropDownArea::new(
@@ -2047,8 +2042,10 @@ impl BorrowingRecordBookPage {
     fn hide_drop_down_button(&mut self, t: Clock) {
         if let Some(button_group) = self.drop_down_button.as_mut() {
             button_group.add_effect(vec![effect::fade_out(10, t)]);
-	    self.event_list.add_event(
-		Box::new(|slf: &mut BorrowingRecordBookPage, _, _| slf.drop_down_button = None), t + 11);
+            self.event_list.add_event(
+                Box::new(|slf: &mut BorrowingRecordBookPage, _, _| slf.drop_down_button = None),
+                t + 11,
+            );
         }
     }
 
@@ -2082,12 +2079,12 @@ impl BorrowingRecordBookPage {
                     .ref_wrapped_object_mut()
                     .on_click(ctx, game_data, t, button, point);
 
-		let maybe_clicked = drop_down_button
-		    .ref_wrapped_object_mut()
+                let maybe_clicked = drop_down_button
                     .ref_wrapped_object_mut()
-		    .get_component()
-		    .get_last_clicked();
-		
+                    .ref_wrapped_object_mut()
+                    .get_component()
+                    .get_last_clicked();
+
                 if maybe_clicked.is_some() {
                     let index = maybe_clicked.unwrap();
 
@@ -2099,21 +2096,21 @@ impl BorrowingRecordBookPage {
     }
 
     pub fn export_page_data(&self) -> BorrowingRecordBookPageData {
-	let mut borrow_book = HashMap::new();
-	let mut request_information = HashMap::new();
+        let mut borrow_book = HashMap::new();
+        let mut request_information = HashMap::new();
 
-	for (p, hold_data_vtext) in &self.borrow_book {
-	    borrow_book.insert(p.clone(), hold_data_vtext.copy_hold_data());
-	}
+        for (p, hold_data_vtext) in &self.borrow_book {
+            borrow_book.insert(p.clone(), hold_data_vtext.copy_hold_data());
+        }
 
-	for (p, hold_data_vtext) in &self.request_information {
-	    request_information.insert(p.clone(), hold_data_vtext.copy_hold_data());
-	}
-	
-	BorrowingRecordBookPageData {
-	    borrow_book: borrow_book,
-	    request_information: request_information,
-	}
+        for (p, hold_data_vtext) in &self.request_information {
+            request_information.insert(p.clone(), hold_data_vtext.copy_hold_data());
+        }
+
+        BorrowingRecordBookPageData {
+            borrow_book: borrow_book,
+            request_information: request_information,
+        }
     }
 
     fn run_effect(&mut self, ctx: &mut ggez::Context, game_data: &GameData, t: Clock) {
@@ -2123,15 +2120,15 @@ impl BorrowingRecordBookPage {
                 self.event_list.add(event);
                 break;
             }
-	    
+
             // 所有権を移動しているため、selfを渡してもエラーにならない
             (event.func)(self, ctx, game_data);
         }
     }
 
     pub fn update(&mut self, ctx: &mut ggez::Context, game_data: &GameData, t: Clock) {
-	self.run_effect(ctx, game_data, t);
-	
+        self.run_effect(ctx, game_data, t);
+
         if let Some(button_group) = self.drop_down_button.as_mut() {
             button_group.move_with_func(t);
             button_group.effect(ctx, t);
@@ -2196,26 +2193,34 @@ pub struct BorrowingRecordBook {
 }
 
 impl BorrowingRecordBook {
-    pub fn new(ctx: &mut ggez::Context,
-	       game_data: &GameData,
-	       rect: ggraphics::Rect,
-	       drawing_depth: i8,
-	       mut maybe_book_data: Option<BorrowingRecordBookData>,
-	       t: Clock,
+    pub fn new(
+        ctx: &mut ggez::Context,
+        game_data: &GameData,
+        rect: ggraphics::Rect,
+        drawing_depth: i8,
+        mut maybe_book_data: Option<BorrowingRecordBookData>,
+        t: Clock,
     ) -> Self {
-	let pages = if let Some(book_data) = maybe_book_data.as_mut() {
-	    let mut pages = Vec::new();
-	    
-	    while !book_data.pages_data.is_empty() {
-		let page_data = book_data.pages_data.remove(0);
-		pages.push(BorrowingRecordBookPage::new(ctx, game_data, rect, TextureID::Paper1, page_data, t));
-	    }
+        let pages = if let Some(book_data) = maybe_book_data.as_mut() {
+            let mut pages = Vec::new();
 
-	    pages
-	} else {
-	    Vec::new()
-	};
-	
+            while !book_data.pages_data.is_empty() {
+                let page_data = book_data.pages_data.remove(0);
+                pages.push(BorrowingRecordBookPage::new(
+                    ctx,
+                    game_data,
+                    rect,
+                    TextureID::Paper1,
+                    page_data,
+                    t,
+                ));
+            }
+
+            pages
+        } else {
+            Vec::new()
+        };
+
         BorrowingRecordBook {
             pages: pages,
             rect: rect,
@@ -2315,16 +2320,17 @@ impl BorrowingRecordBook {
     }
 
     pub fn export_book_data(&self) -> BorrowingRecordBookData {
-	BorrowingRecordBookData {
-	    pages_data: self.pages
-    		.iter()
-    		.map(|page| page.export_page_data())
-    		.collect()
-	}
+        BorrowingRecordBookData {
+            pages_data: self
+                .pages
+                .iter()
+                .map(|page| page.export_page_data())
+                .collect(),
+        }
     }
 
     pub fn pages_length(&self) -> usize {
-	self.pages.len()
+        self.pages.len()
     }
 
     pub fn update(&mut self, ctx: &mut ggez::Context, game_data: &GameData, t: Clock) {
@@ -2454,7 +2460,7 @@ impl Clickable for BorrowingRecordBook {
         // そのあとにメニュー表示処理を行う
         if let Some(page) = self.get_current_page_mut() {
             page.click_handler(ctx, game_data, button, rpoint, t);
-	    page.try_show_drop_down_button(ctx, game_data, rpoint, t);
+            page.try_show_drop_down_button(ctx, game_data, rpoint, t);
         }
 
         debug::debug_screen_push_text("book click!!");
@@ -2631,6 +2637,7 @@ impl DeskObjectContainer {
 }
 
 pub struct DeskBookMenu {
+    book_info: BookInformation,
     select_table_frame: TableFrame,
     choice_element_text: Vec<VerticalText>,
     drwob_essential: DrawableObjectEssential,
@@ -2641,17 +2648,19 @@ impl DeskBookMenu {
     pub fn new(
         ctx: &mut ggez::Context,
         game_data: &GameData,
+        book_info: BookInformation,
         mut choice_text_str: Vec<String>,
         drawing_depth: i8,
     ) -> Self {
         let mut choice_vtext = Vec::new();
 
-	let font_info = FontInformation::new(game_data.get_font(FontID::JpFude1),
-					     numeric::Vector2f::new(32.0, 32.0),
-					     ggraphics::Color::from_rgba_u32(0xff)
-	);
-	
-	let select_table_frame = TableFrame::new(
+        let font_info = FontInformation::new(
+            game_data.get_font(FontID::JpFude1),
+            numeric::Vector2f::new(32.0, 32.0),
+            ggraphics::Color::from_rgba_u32(0xff),
+        );
+
+        let select_table_frame = TableFrame::new(
             game_data,
             numeric::Point2f::new(10.0, 10.0),
             FrameData::new(vec![200.0], vec![64.0; 2]),
@@ -2660,59 +2669,56 @@ impl DeskBookMenu {
         );
 
         while choice_text_str.len() > 0 {
-	    let choice_str_element = choice_text_str.swap_remove(0);
-	    let mut vtext = VerticalText::new(
-		choice_str_element,
-		numeric::Point2f::new(0.0, 0.0),
-		numeric::Vector2f::new(1.0, 1.0),
-		0.0,
-		drawing_depth,
-		font_info);
-
-	    vtext.make_center(
-		ctx,
-		roundup2f!(
-                    select_table_frame.get_center_of(
-			numeric::Vector2u::new(choice_text_str.len() as u32, 0),
-			select_table_frame.get_position())
-		),
+            let choice_str_element = choice_text_str.swap_remove(0);
+            let mut vtext = VerticalText::new(
+                choice_str_element,
+                numeric::Point2f::new(0.0, 0.0),
+                numeric::Vector2f::new(1.0, 1.0),
+                0.0,
+                drawing_depth,
+                font_info,
             );
 
-	    choice_vtext.push(vtext);
+            vtext.make_center(
+                ctx,
+                roundup2f!(select_table_frame.get_center_of(
+                    numeric::Vector2u::new(choice_text_str.len() as u32, 0),
+                    select_table_frame.get_position()
+                )),
+            );
+
+            choice_vtext.push(vtext);
         }
-	
+
         DeskBookMenu {
-	    select_table_frame: select_table_frame,
-	    choice_element_text: choice_vtext,
+            book_info: book_info,
+            select_table_frame: select_table_frame,
+            choice_element_text: choice_vtext,
             drwob_essential: DrawableObjectEssential::new(true, drawing_depth),
-	    last_clicked: None,
+            last_clicked: None,
         }
     }
 
-    pub fn click_handler(
-        &mut self,
-        ctx: &mut ggez::Context,
-        point: numeric::Point2f,
-    ) {
-	let maybe_grid_position = self.select_table_frame.get_grid_position(ctx, point);
-	if let Some(grid_position) = maybe_grid_position {
-	    self.last_clicked = Some(grid_position.x as usize);
-	}
+    pub fn click_handler(&mut self, ctx: &mut ggez::Context, point: numeric::Point2f) {
+        let maybe_grid_position = self.select_table_frame.get_grid_position(ctx, point);
+        if let Some(grid_position) = maybe_grid_position {
+            self.last_clicked = Some(grid_position.x as usize);
+        }
     }
 
     pub fn get_last_clicked(&self) -> Option<usize> {
-	self.last_clicked
+        self.last_clicked
     }
 }
 
 impl DrawableComponent for DeskBookMenu {
     fn draw(&mut self, ctx: &mut ggez::Context) -> ggez::GameResult<()> {
         if self.is_visible() {
-	    self.select_table_frame.draw(ctx)?;
+            self.select_table_frame.draw(ctx)?;
 
-	    for vtext in &mut self.choice_element_text {
-		vtext.draw(ctx)?;
-	    }
+            for vtext in &mut self.choice_element_text {
+                vtext.draw(ctx)?;
+            }
         }
         Ok(())
     }
@@ -2748,6 +2754,9 @@ impl Clickable for DeskBookMenu {
         point: numeric::Point2f,
     ) {
         self.click_handler(ctx, point);
+	if let Some(menu_id) = self.last_clicked.as_ref() {
+	    println!("clicked menu, {}", menu_id);
+	}
     }
 }
 

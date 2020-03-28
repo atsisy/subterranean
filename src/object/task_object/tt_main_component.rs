@@ -21,7 +21,7 @@ use crate::object::{effect, move_fn};
 use crate::scene::*;
 
 use super::Clickable;
-use crate::core::{FontID, GameData, TextureID};
+use crate::core::{BookInformation, FontID, GameData, TextureID};
 
 use super::tt_sub_component::*;
 
@@ -130,7 +130,7 @@ impl DeskObjects {
                 ),
                 Vec::new(),
             ),
-	    desk_book_drop_menu: None,
+            desk_book_drop_menu: None,
         }
     }
 
@@ -342,48 +342,77 @@ impl DeskObjects {
     }
 
     fn show_book_drop_down_menu(
-	&mut self,
+        &mut self,
         ctx: &mut ggez::Context,
         game_data: &GameData,
-	point: numeric::Point2f,
-	t: Clock,
+        point: numeric::Point2f,
+        book_info: BookInformation,
+        t: Clock,
     ) {
-	// 既に表示されている場合は、消してすぐにreturn
-	if self.desk_book_drop_menu.is_some() {
-	    self.desk_book_drop_menu = None;
-	    return ();
-	}
+        // 既に表示されている場合は、消してすぐにreturn
+        if self.desk_book_drop_menu.is_some() {
+            self.desk_book_drop_menu = None;
+            return ();
+        }
 
-	let menu = DeskBookMenu::new(ctx,
-				     game_data,
-				     vec!["記憶".to_string(), "状態確認".to_string()],
-				     0);
-	
-	self.desk_book_drop_menu = Some(
-	    DropDownArea::new(ctx,
-			      numeric::Rect::new(point.x, point.y, 200.0, 300.0),
-			      0,
-			      menu,
-			      t)
+        let menu = DeskBookMenu::new(
+            ctx,
+            game_data,
+	    book_info,
+            vec!["記憶".to_string(), "状態確認".to_string()],
+            0,
 	);
+
+        self.desk_book_drop_menu = Some(DropDownArea::new(
+            ctx,
+            numeric::Rect::new(point.x, point.y, 200.0, 300.0),
+            0,
+            menu,
+            t,
+        ));
     }
-    
+
     fn show_desk_object_drop_down_menu(
-	&mut self,
+        &mut self,
         ctx: &mut ggez::Context,
         game_data: &GameData,
 	on_desk_type: OnDeskType,
-	point: numeric::Point2f,
-	t: Clock,
+	hold_data: HoldData,
+        point: numeric::Point2f,
+        t: Clock,
     ) {
-	match on_desk_type {
-	    OnDeskType::Book => {
-		self.show_book_drop_down_menu(ctx, game_data, point, t);
-	    },
-	    _ => (),
-	}
+        match on_desk_type {
+            OnDeskType::Book => match hold_data {
+                HoldData::BookName(info) => {
+                    self.show_book_drop_down_menu(ctx, game_data, point, info.clone(), t);
+                }
+                _ => panic!(""),
+            },
+            _ => (),
+        }
     }
-    
+
+    fn do_book_menu_action(&mut self) -> bool {
+	if let Some(book_menu) = self.desk_book_drop_menu.as_ref() {
+	    let choice_group = book_menu.get_component();
+	    let maybe_menu_id = choice_group.get_last_clicked();
+
+	    if let Some(menu_id) = maybe_menu_id {
+		return match menu_id {
+		    0 => {
+			panic!("ここに状態獲得の処理を記述する");
+		    },
+		    1 => {
+			panic!("ここに記憶する処理を記述する");
+		    },
+		    _ => false,
+		}
+	    }
+	}
+
+	false
+    }
+
     pub fn button_up_handler(
         &mut self,
         ctx: &mut ggez::Context,
@@ -394,21 +423,37 @@ impl DeskObjects {
     ) {
         let rpoint = self.canvas.relative_point(point);
 
+        if let Some(book_menu) = self.desk_book_drop_menu.as_mut() {
+	    if book_menu.contains(ctx, rpoint) {
+	        book_menu.on_click(ctx, game_data, t, button, rpoint);
+		if self.do_book_menu_action() {
+		    return ();
+		}	
+	    }
+        }
+
         for dobj in self.desk_objects.get_raw_container_mut() {
             if dobj.get_object_mut().contains(ctx, rpoint) {
-		let on_desk_type = dobj.get_object_mut()
-		    .ref_wrapped_object()
-		    .ref_wrapped_object()
-		    .get_type();
-		
                 dobj.get_object_mut()
                     .ref_wrapped_object_mut()
                     .ref_wrapped_object_mut()
                     .button_up(ctx, game_data, t, button, rpoint);
 
-		self.show_desk_object_drop_down_menu(ctx, game_data, on_desk_type, rpoint, t);
-		
-		break;
+		let dobj_ref = dobj.get_object().ref_wrapped_object().ref_wrapped_object();
+		let obj_type = dobj_ref.get_type();
+		let hold_data = dobj_ref.click_data(ctx, rpoint);
+
+		// オブジェクトの種類によってメニューを表示する
+                self.show_desk_object_drop_down_menu(
+                    ctx,
+                    game_data,
+		    obj_type,
+		    hold_data,
+                    rpoint,
+                    t,
+                );
+
+                break;
             }
         }
     }
@@ -450,9 +495,9 @@ impl DrawableComponent for DeskObjects {
                 d.get_object_mut().draw(ctx)?;
             }
 
-	    if let Some(book_menu) = self.desk_book_drop_menu.as_mut() {
-		book_menu.draw(ctx)?;
-	    }
+            if let Some(book_menu) = self.desk_book_drop_menu.as_mut() {
+                book_menu.draw(ctx)?;
+            }
 
             sub_screen::pop_screen(ctx);
             self.canvas.draw(ctx).unwrap();
