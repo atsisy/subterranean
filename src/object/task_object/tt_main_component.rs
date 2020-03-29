@@ -35,7 +35,7 @@ impl TaskTableStagingObject {
         ctx: &mut ggez::Context,
         point: numeric::Point2f,
         hold_data: &HoldData,
-	kosuzu_memory: &KosuzuMemory,
+        kosuzu_memory: &KosuzuMemory,
     ) -> bool {
         match self {
             TaskTableStagingObject::BorrowingRecordBook(record_book) => {
@@ -166,7 +166,7 @@ impl DeskObjects {
         ctx: &mut ggez::Context,
         point: numeric::Point2f,
         data: &HoldData,
-	kosuzu_memory: &KosuzuMemory,
+        kosuzu_memory: &KosuzuMemory,
     ) -> bool {
         let rpoint = self.canvas.relative_point(point);
 
@@ -360,10 +360,10 @@ impl DeskObjects {
         let menu = DeskBookMenu::new(
             ctx,
             game_data,
-	    book_info,
+            book_info,
             vec!["記憶".to_string(), "状態確認".to_string()],
             0,
-	);
+        );
 
         self.desk_book_drop_menu = Some(DropDownArea::new(
             ctx,
@@ -378,8 +378,8 @@ impl DeskObjects {
         &mut self,
         ctx: &mut ggez::Context,
         game_data: &GameData,
-	on_desk_type: OnDeskType,
-	hold_data: HoldData,
+        on_desk_type: OnDeskType,
+        hold_data: HoldData,
         point: numeric::Point2f,
         t: Clock,
     ) {
@@ -395,25 +395,25 @@ impl DeskObjects {
     }
 
     fn do_book_menu_action(&mut self, kosuzu_memory: &mut KosuzuMemory) -> bool {
-	if let Some(book_menu) = self.desk_book_drop_menu.as_ref() {
-	    let choice_group = book_menu.get_component();
-	    let maybe_menu_id = choice_group.get_last_clicked();
+        if let Some(book_menu) = self.desk_book_drop_menu.as_ref() {
+            let choice_group = book_menu.get_component();
+            let maybe_menu_id = choice_group.get_last_clicked();
 
-	    if let Some(menu_id) = maybe_menu_id {
-		return match menu_id {
-		    0 => {
-			panic!("ここに状態獲得の処理を記述する");
-		    },
-		    1 => {
-			kosuzu_memory.add_book_info(choice_group.get_target_book_info());
-			true
-		    },
-		    _ => false,
-		}
-	    }
-	}
+            if let Some(menu_id) = maybe_menu_id {
+                return match menu_id {
+                    0 => {
+                        panic!("ここに状態獲得の処理を記述する");
+                    }
+                    1 => {
+                        kosuzu_memory.add_book_info(choice_group.get_target_book_info());
+                        true
+                    }
+                    _ => false,
+                };
+            }
+        }
 
-	false
+        false
     }
 
     pub fn button_up_handler(
@@ -423,17 +423,17 @@ impl DeskObjects {
         t: Clock,
         button: ggez::input::mouse::MouseButton,
         point: numeric::Point2f,
-	kosuzu_memory: &mut KosuzuMemory,
+        kosuzu_memory: &mut KosuzuMemory,
     ) {
         let rpoint = self.canvas.relative_point(point);
 
         if let Some(book_menu) = self.desk_book_drop_menu.as_mut() {
-	    if book_menu.contains(ctx, rpoint) {
-	        book_menu.on_click(ctx, game_data, t, button, rpoint);
-		if self.do_book_menu_action(kosuzu_memory) {
-		    return ();
-		}	
-	    }
+            if book_menu.contains(ctx, rpoint) {
+                book_menu.on_click(ctx, game_data, t, button, rpoint);
+                if self.do_book_menu_action(kosuzu_memory) {
+                    return ();
+                }
+            }
         }
 
         for dobj in self.desk_objects.get_raw_container_mut() {
@@ -443,18 +443,13 @@ impl DeskObjects {
                     .ref_wrapped_object_mut()
                     .button_up(ctx, game_data, t, button, rpoint);
 
-		let dobj_ref = dobj.get_object().ref_wrapped_object().ref_wrapped_object();
-		let obj_type = dobj_ref.get_type();
-		let hold_data = dobj_ref.click_data(ctx, rpoint);
+                let dobj_ref = dobj.get_object().ref_wrapped_object().ref_wrapped_object();
+                let obj_type = dobj_ref.get_type();
+                let hold_data = dobj_ref.click_data(ctx, rpoint);
 
-		// オブジェクトの種類によってメニューを表示する
+                // オブジェクトの種類によってメニューを表示する
                 self.show_desk_object_drop_down_menu(
-                    ctx,
-                    game_data,
-		    obj_type,
-		    hold_data,
-                    rpoint,
-                    t,
+                    ctx, game_data, obj_type, hold_data, rpoint, t,
                 );
 
                 break;
@@ -1793,7 +1788,7 @@ impl ShelvingBookBox {
         ctx: &mut ggez::Context,
         point: numeric::Point2f,
         data: &HoldData,
-	kosuzu_memory: &KosuzuMemory,
+        kosuzu_memory: &KosuzuMemory,
     ) -> bool {
         let rpoint = self.canvas.relative_point(point);
 
@@ -1888,7 +1883,7 @@ impl ShelvingBookBox {
         t: Clock,
         button: ggez::input::mouse::MouseButton,
         point: numeric::Point2f,
-	kosuzu_memory: &KosuzuMemory,
+        kosuzu_memory: &KosuzuMemory,
     ) {
         let rpoint = self.canvas.relative_point(point);
 

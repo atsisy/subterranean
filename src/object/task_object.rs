@@ -40,6 +40,7 @@ pub struct TaskTable {
     hold_data: HoldData,
     event_list: DelayEventList<TaskTable>,
     borrowing_record_book: BorrowingRecordBook,
+    record_book_menu: RecordBookMenuGroup,
 }
 
 impl TaskTable {
@@ -139,11 +140,12 @@ impl TaskTable {
                 0,
             ),
             staging_object: None,
-	    kosuzu_memory: KosuzuMemory::new(),
+            kosuzu_memory: KosuzuMemory::new(),
             shelving_box: shelving_box,
             hold_data: HoldData::None,
             event_list: DelayEventList::new(),
             borrowing_record_book: record_book,
+            record_book_menu: RecordBookMenuGroup::new(0),
         }
     }
 
@@ -165,7 +167,7 @@ impl TaskTable {
     }
 
     pub fn get_kosuzu_memory(&self) -> &KosuzuMemory {
-	&self.kosuzu_memory
+        &self.kosuzu_memory
     }
 
     fn select_dragging_object(&mut self, ctx: &mut ggez::Context, point: numeric::Point2f) {
@@ -417,6 +419,7 @@ impl TaskTable {
         self.check_sight_drop_to_desk(ctx, t);
         self.customer_info_ui.update(ctx, t);
         self.borrowing_record_book.update(ctx, game_data, t);
+        self.record_book_menu.update(ctx, game_data, t);
     }
 
     pub fn finish_customer_event(&mut self, now: Clock) {
@@ -640,7 +643,10 @@ impl TaskTable {
             let clicked_data = self.customer_info_ui.check_data_click(ctx, point);
             self.update_hold_data_if_some(clicked_data);
         } else {
-            if self.desk.check_insert_data(ctx, point, &self.hold_data, &self.kosuzu_memory) {
+            if self
+                .desk
+                .check_insert_data(ctx, point, &self.hold_data, &self.kosuzu_memory)
+            {
                 self.hold_data = HoldData::None;
             }
 
@@ -668,10 +674,12 @@ impl TaskTable {
 
             // 貸出記録にHoldDataを挿入する
             if self.borrowing_record_book.is_visible() {
-                if self
-                    .borrowing_record_book
-                    .insert_data(ctx, point, &self.hold_data, &self.kosuzu_memory)
-                {
+                if self.borrowing_record_book.insert_data(
+                    ctx,
+                    point,
+                    &self.hold_data,
+                    &self.kosuzu_memory,
+                ) {
                     self.hold_data = HoldData::None;
                 }
             }
@@ -716,6 +724,78 @@ impl TaskTable {
     pub fn export_borrowing_record_book_data(&self) -> BorrowingRecordBookData {
         self.borrowing_record_book.export_book_data()
     }
+
+    fn click_record_book_menu(
+        &mut self,
+        ctx: &mut ggez::Context,
+        game_data: &GameData,
+        button: ggez::input::mouse::MouseButton,
+        point: numeric::Point2f,
+        t: Clock,
+    ) {
+        self.record_book_menu
+            .click_book_status_menu(ctx, game_data, button, point, t);
+	self.record_book_menu
+	    .click_book_title_menu(ctx, game_data, button, point, t);
+
+        if let Some(index) = self
+            .record_book_menu
+            .book_status_menu_last_clicked(ctx, game_data, button, point, t)
+        {
+            let menu_position = self
+                .record_book_menu
+                .get_book_status_menu_position()
+                .unwrap();
+            self.borrowing_record_book
+                .insert_book_status_via_choice(ctx, index, menu_position);
+        }
+
+	if let Some(book_info) = self
+            .record_book_menu
+            .book_title_menu_last_clicked(ctx, game_data, button, point, t)
+        {
+            let menu_position = self
+                .record_book_menu
+                .get_book_title_menu_position()
+                .unwrap();
+            self.borrowing_record_book
+                .insert_book_title_to_books_frame(ctx, menu_position, book_info);
+        }
+    }
+
+    fn try_show_menus(
+        &mut self,
+        ctx: &mut ggez::Context,
+        game_data: &GameData,
+        click_point: numeric::Point2f,
+        t: Clock,
+    ) {
+        // 既に表示されている場合は、メニューを消して終了
+        if self.record_book_menu.is_some_menu_opened() {
+            self.record_book_menu.close_all(t);
+            return ();
+        }
+
+        let grid_pos = self
+            .borrowing_record_book
+            .get_book_info_frame_grid_position(ctx, click_point);
+
+        if grid_pos.is_some() {
+            match grid_pos.unwrap().y {
+                0 => self.record_book_menu.show_book_title_menu(
+                    ctx,
+                    game_data,
+                    click_point,
+                    &self.kosuzu_memory,
+                    t,
+                ),
+                1 => self
+                    .record_book_menu
+                    .show_book_status_menu(ctx, game_data, click_point, t),
+                _ => (),
+            }
+        }
+    }
 }
 
 impl DrawableComponent for TaskTable {
@@ -735,6 +815,8 @@ impl DrawableComponent for TaskTable {
             self.borrowing_record_book.draw(ctx)?;
 
             self.customer_info_ui.draw(ctx)?;
+
+            self.record_book_menu.draw(ctx)?;
 
             sub_screen::pop_screen(ctx);
             self.canvas.draw(ctx).unwrap();
@@ -799,8 +881,18 @@ impl Clickable for TaskTable {
 
         self.desk
             .button_up_handler(ctx, game_data, t, button, rpoint, &mut self.kosuzu_memory);
-        self.borrowing_record_book
-            .click_handler(ctx, game_data, t, button, rpoint, &self.kosuzu_memory);
+
+        self.borrowing_record_book.click_handler(
+            ctx,
+            game_data,
+            t,
+            button,
+            rpoint,
+            &self.kosuzu_memory,
+        );
+
+        self.click_record_book_menu(ctx, game_data, button, rpoint, t);
+        self.try_show_menus(ctx, game_data, rpoint, t);
     }
 
     fn clickable_status(

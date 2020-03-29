@@ -148,7 +148,7 @@ impl TableFrame {
     }
 
     pub fn size(&self) -> numeric::Vector2f {
-	numeric::Vector2f::new(self.real_width(), self.real_height())
+        numeric::Vector2f::new(self.real_width(), self.real_height())
     }
 
     ///
@@ -386,6 +386,11 @@ impl TableFrame {
             self.frame_scale,
             ggraphics::Color::from_rgb_u32(0xffffffff),
         );
+
+        // 描画するものがなければ、垂直の線は描画しない
+        if self.frame_data.each_rows_size.is_empty() {
+            return ();
+        }
 
         //
         // 中身のグリッドを描画
