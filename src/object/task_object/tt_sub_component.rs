@@ -221,6 +221,58 @@ impl BorrowingInformation {
     }
 }
 
+pub struct KosuzuMemory {
+    books_info: Vec<BookInformation>,
+    customers_name: Vec<String>,
+    dates: Vec<GensoDate>,
+}
+
+impl KosuzuMemory {
+    pub fn new() -> Self {
+	KosuzuMemory {
+	    books_info: Vec::new(),
+	    customers_name: Vec::new(),
+	    dates: Vec::new(),
+	}
+    }
+
+    pub fn add_book_info(&mut self, book_info: BookInformation) {
+	self.books_info.push(book_info);
+    }
+
+    pub fn add_customer_name(&mut self, name: String) {
+	self.customers_name.push(name);
+    }
+
+    pub fn add_date(&mut self, date: GensoDate) {
+	self.dates.push(date);
+    }
+
+    pub fn get_book_info_remove(&mut self, index: usize) -> Option<BookInformation> {
+	if self.books_info.len() <= index {
+	    None
+	} else {
+	    Some(self.books_info.swap_remove(index))
+	}
+    }
+
+    pub fn get_customer_name_remove(&mut self, index: usize) -> Option<String> {
+	if self.customers_name.len() <= index {
+	    None
+	} else {
+	    Some(self.customers_name.swap_remove(index))
+	}
+    }
+
+    pub fn get_dates_remove(&mut self, index: usize) -> Option<GensoDate> {
+	if self.dates.len() <= index {
+	    None
+	} else {
+	    Some(self.dates.swap_remove(index))
+	}
+    }
+}
+
 #[derive(Clone)]
 pub struct ReturnBookInformation {
     pub returning: Vec<BookInformation>,
@@ -316,7 +368,7 @@ pub trait OnDesk: TextureObject + Clickable {
 
     fn click_data(&self, ctx: &mut ggez::Context, point: numeric::Point2f) -> HoldData;
 
-    fn insert_data(&mut self, _: &mut ggez::Context, _: numeric::Point2f, _: &HoldData) -> bool {
+    fn insert_data(&mut self, _: &mut ggez::Context, _: numeric::Point2f, _: &HoldData, _: &KosuzuMemory) -> bool {
         false
     }
 
@@ -1396,8 +1448,177 @@ pub struct BorrowingRecordBookData {
     pub pages_data: Vec<BorrowingRecordBookPageData>,
 }
 
-pub struct BorrowingRecordBookPage {
+pub struct RecordBookMenuGroup {
     event_list: DelayEventList<Self>,
+    book_status_menu: Option<EffectableWrap<MovableWrap<BookStatusMenu>>>,
+    drwob_essential: DrawableObjectEssential,
+}
+
+impl RecordBookMenuGroup {
+    pub fn new(drawing_depth: i8) -> Self {
+	RecordBookMenuGroup {
+	    event_list: DelayEventList::new(),
+	    book_status_menu: None,
+	    drwob_essential: DrawableObjectEssential::new(true, drawing_depth),
+	}
+    }
+
+    pub fn is_some_menu_opened(&self) -> bool {
+	self.book_status_menu.is_some()
+    }
+
+    pub fn close_book_status_menu(&mut self, t: Clock) {
+	if let Some(button_group) = self.book_status_menu.as_mut() {
+            button_group.add_effect(vec![effect::fade_out(10, t)]);
+            self.event_list.add_event(
+                Box::new(|slf: &mut RecordBookMenuGroup, _, _| slf.book_status_menu = None),
+                t + 11,
+            );
+        }
+    }
+
+    pub fn contains_book_status_menu(&self, ctx: &mut ggez::Context, point: numeric::Point2f) -> bool {
+	self.book_status_menu.is_some() && self.book_status_menu.as_ref().unwrap().contains(ctx, point)
+    }
+
+    pub fn get_book_status_menu_position(&self) -> Option<numeric::Point2f> {
+	if let Some(book_status_menu) = self.book_status_menu.as_ref() {
+	    Some(book_status_menu.get_position())
+	} else {
+	    None
+	}
+    }
+
+    pub fn click_book_status_menu(
+	&mut self,
+	ctx: &mut ggez::Context,
+	game_data: &GameData,
+	button: ggez::input::mouse::MouseButton,
+	point: numeric::Point2f,
+	t: Clock
+    ) {
+	// ボタンエリア内をクリックしていない場合は、即終了
+	if !self.contains_book_status_menu(ctx, point) {
+	    return ();
+	}
+	
+	if let Some(book_status_menu) = self.book_status_menu.as_mut() {
+	    book_status_menu
+                .ref_wrapped_object_mut()
+                .ref_wrapped_object_mut()
+                .on_click(ctx, game_data, t, button, point);
+	}
+    }
+
+    pub fn book_status_menu_last_clicked(
+	&mut self,
+	ctx: &mut ggez::Context,
+	game_data: &GameData,
+	button: ggez::input::mouse::MouseButton,
+	point: numeric::Point2f,
+	t: Clock
+    ) -> Option<usize> {
+	if let Some(book_status_menu) = self.book_status_menu.as_mut() {
+	    book_status_menu
+                .ref_wrapped_object_mut()
+                .ref_wrapped_object_mut()
+		.get_component()
+                .get_last_clicked()
+	} else {
+	    None
+	}
+    }
+    
+    pub fn close_all(&mut self, t: Clock) {
+	self.close_book_status_menu(t);
+    }
+
+    pub fn show_book_status_menu(&mut self, ctx: &mut ggez::Context, game_data: &GameData, position: numeric::Point2f, t: Clock) {
+	let button_group = BookStatusButtonGroup::new(
+            ctx,
+            game_data,
+            numeric::Rect::new(0.0, 0.0, 70.0, 70.0),
+            20.0,
+            vec![
+                TextureID::ChoicePanel1,
+                TextureID::ChoicePanel2,
+                TextureID::ChoicePanel3,
+            ],
+            0,
+        );
+	
+        let button_group_area = EffectableWrap::new(
+            MovableWrap::new(
+                Box::new(DropDownArea::new(
+                    ctx,
+                    numeric::Rect::new(position.x, position.y, 290.0, 220.0),
+                    0,
+                    button_group,
+                    t,
+                )),
+                None,
+                t,
+            ),
+            vec![effect::fade_in(10, t)],
+        );
+        self.book_status_menu = Some(button_group_area);
+    }
+
+    fn run_effect(&mut self, ctx: &mut ggez::Context, game_data: &GameData, t: Clock) {
+        while let Some(event) = self.event_list.move_top() {
+            // 時間が来ていない場合は、取り出した要素をリストに戻して処理ループを抜ける
+            if event.run_time > t {
+                self.event_list.add(event);
+                break;
+            }
+
+            // 所有権を移動しているため、selfを渡してもエラーにならない
+            (event.func)(self, ctx, game_data);
+        }
+    }
+
+    pub fn update(&mut self, ctx: &mut ggez::Context, game_data: &GameData, t: Clock) {
+	self.run_effect(ctx, game_data, t);
+
+        if let Some(book_status_menu) = self.book_status_menu.as_mut() {
+            book_status_menu.move_with_func(t);
+            book_status_menu.effect(ctx, t);
+        }
+    }
+}
+
+impl DrawableComponent for RecordBookMenuGroup {
+    fn draw(&mut self, ctx: &mut ggez::Context) -> ggez::GameResult<()> {
+        if self.is_visible() {
+	    if let Some(book_status_menu) = self.book_status_menu.as_mut() {
+		book_status_menu.draw(ctx);
+	    }
+        }
+        Ok(())
+    }
+
+    fn hide(&mut self) {
+        self.drwob_essential.visible = false;
+    }
+
+    fn appear(&mut self) {
+        self.drwob_essential.visible = true;
+    }
+
+    fn is_visible(&self) -> bool {
+        self.drwob_essential.visible
+    }
+
+    fn set_drawing_depth(&mut self, depth: i8) {
+        self.drwob_essential.drawing_depth = depth;
+    }
+
+    fn get_drawing_depth(&self) -> i8 {
+        self.drwob_essential.drawing_depth
+    }
+}
+
+pub struct BorrowingRecordBookPage {
     info_table: TableFrame,
     books_table: TableFrame,
     borrow_book: HashMap<numeric::Vector2u, HoldDataVText>,
@@ -1409,7 +1630,7 @@ pub struct BorrowingRecordBookPage {
     return_date: VerticalText,
     paper_texture: SimpleObject,
     drwob_essential: DrawableObjectEssential,
-    drop_down_button: Option<EffectableWrap<MovableWrap<BookStatusMenu>>>,
+    menu_group: RecordBookMenuGroup,
 }
 
 impl BorrowingRecordBookPage {
@@ -1747,7 +1968,6 @@ impl BorrowingRecordBookPage {
         ];
 
         BorrowingRecordBookPage {
-            event_list: DelayEventList::new(),
             info_table: table_frame,
             books_table: books_table,
             borrow_book: borrow_text,
@@ -1759,7 +1979,7 @@ impl BorrowingRecordBookPage {
             borrow_date: borrow_date,
             return_date: return_date,
             drwob_essential: DrawableObjectEssential::new(true, 0),
-            drop_down_button: None,
+	    menu_group: RecordBookMenuGroup::new(0),
         }
     }
 
@@ -1811,12 +2031,20 @@ impl BorrowingRecordBookPage {
         }
     }
 
+    ///
+    /// HoldDataを格納できればtrue, できなければfalse
+    ///
     pub fn try_insert_data_in_borrowing_books_frame(
         &mut self,
         ctx: &mut ggez::Context,
         position: numeric::Vector2u,
         hold_data: &HoldData,
-    ) {
+    ) -> bool {
+	// 本の状態は、このメソッドからは設定できない
+	if position.y == 1 {
+	    return false;
+	}
+	
         match hold_data {
             HoldData::BookName(_) => {
                 println!(
@@ -1834,6 +2062,8 @@ impl BorrowingRecordBookPage {
             }
             _ => (),
         }
+
+	true
     }
 
     pub fn replace_borrower_name(&mut self, game_data: &GameData, name: &str) -> &mut Self {
@@ -1863,55 +2093,18 @@ impl BorrowingRecordBookPage {
         let grid_pos = self.books_table.get_grid_position(ctx, position);
 
         // 既に表示されている場合は、メニューを消して終了
-        if self.drop_down_button.is_some() {
-            self.hide_drop_down_button(t);
+        if self.menu_group.is_some_menu_opened() {
+	    self.menu_group.close_all(t);
             return ();
         }
 
         if grid_pos.is_some() && grid_pos.unwrap().y == 1 {
-            let button_group = BookStatusButtonGroup::new(
-                ctx,
-                game_data,
-                numeric::Rect::new(0.0, 0.0, 70.0, 70.0),
-                20.0,
-                vec![
-                    TextureID::ChoicePanel1,
-                    TextureID::ChoicePanel2,
-                    TextureID::ChoicePanel3,
-                ],
-                0,
-            );
-
-            let button_group_area = EffectableWrap::new(
-                MovableWrap::new(
-                    Box::new(DropDownArea::new(
-                        ctx,
-                        numeric::Rect::new(position.x, position.y, 290.0, 220.0),
-                        0,
-                        button_group,
-                        t,
-                    )),
-                    None,
-                    t,
-                ),
-                vec![effect::fade_in(10, t)],
-            );
-            self.drop_down_button = Some(button_group_area);
+	    self.menu_group.show_book_status_menu(ctx, game_data, position, t);
         }
     }
 
-    fn hide_drop_down_button(&mut self, t: Clock) {
-        if let Some(button_group) = self.drop_down_button.as_mut() {
-            button_group.add_effect(vec![effect::fade_out(10, t)]);
-            self.event_list.add_event(
-                Box::new(|slf: &mut BorrowingRecordBookPage, _, _| slf.drop_down_button = None),
-                t + 11,
-            );
-        }
-    }
-
-    fn insert_book_status_data(&mut self, ctx: &mut ggez::Context, status_index: i32) {
-        let menu_position = self.drop_down_button.as_ref().unwrap().get_position();
+    fn insert_book_status_data(&mut self, ctx: &mut ggez::Context, status_index: i32, menu_position: numeric::Point2f) {
+	println!("book status insert!! data -> {}", status_index);
         let grid_position = self
             .books_table
             .get_grid_position(ctx, menu_position)
@@ -1933,27 +2126,12 @@ impl BorrowingRecordBookPage {
         point: numeric::Point2f,
         t: Clock,
     ) {
-        if let Some(drop_down_button) = self.drop_down_button.as_mut() {
-            if drop_down_button.contains(ctx, point) {
-                drop_down_button
-                    .ref_wrapped_object_mut()
-                    .ref_wrapped_object_mut()
-                    .on_click(ctx, game_data, t, button, point);
-
-                let maybe_clicked = drop_down_button
-                    .ref_wrapped_object_mut()
-                    .ref_wrapped_object_mut()
-                    .get_component()
-                    .get_last_clicked();
-
-                if maybe_clicked.is_some() {
-                    let index = maybe_clicked.unwrap();
-
-                    // ここに状態挿入処理
-                    self.insert_book_status_data(ctx, index as i32);
-                }
-            }
-        }
+	self.menu_group.click_book_status_menu(ctx, game_data, button, point, t);
+	println!("book status click handler!!");
+	if let Some(index) = self.menu_group.book_status_menu_last_clicked(ctx, game_data, button, point, t) {
+	    let menu_position = self.menu_group.get_book_status_menu_position().unwrap();
+	    self.insert_book_status_data(ctx, index as i32, menu_position);
+	}
     }
 
     pub fn export_page_data(&self) -> BorrowingRecordBookPageData {
@@ -1974,26 +2152,8 @@ impl BorrowingRecordBookPage {
         }
     }
 
-    fn run_effect(&mut self, ctx: &mut ggez::Context, game_data: &GameData, t: Clock) {
-        while let Some(event) = self.event_list.move_top() {
-            // 時間が来ていない場合は、取り出した要素をリストに戻して処理ループを抜ける
-            if event.run_time > t {
-                self.event_list.add(event);
-                break;
-            }
-
-            // 所有権を移動しているため、selfを渡してもエラーにならない
-            (event.func)(self, ctx, game_data);
-        }
-    }
-
     pub fn update(&mut self, ctx: &mut ggez::Context, game_data: &GameData, t: Clock) {
-        self.run_effect(ctx, game_data, t);
-
-        if let Some(button_group) = self.drop_down_button.as_mut() {
-            button_group.move_with_func(t);
-            button_group.effect(ctx, t);
-        }
+	self.menu_group.update(ctx, game_data, t);
     }
 }
 
@@ -2017,9 +2177,7 @@ impl DrawableComponent for BorrowingRecordBookPage {
                 d.draw(ctx)?;
             }
 
-            if let Some(button_group) = self.drop_down_button.as_mut() {
-                button_group.draw(ctx)?;
-            }
+	    self.menu_group.draw(ctx)?;
         }
 
         Ok(())
@@ -2166,12 +2324,12 @@ impl BorrowingRecordBook {
         hold_data: &HoldData,
     ) -> bool {
         let rpoint = self.relative_point(point);
+	
         if let Some(page) = self.get_current_page_mut() {
             debug::debug_screen_push_text("insert hold_data books frame");
             let maybe_position = page.books_table.get_grid_position(ctx, rpoint);
             if let Some(position) = maybe_position {
-                page.try_insert_data_in_borrowing_books_frame(ctx, position, hold_data);
-                true
+                page.try_insert_data_in_borrowing_books_frame(ctx, position, hold_data)
             } else {
                 false
             }
@@ -2350,6 +2508,7 @@ impl OnDesk for BorrowingRecordBook {
         ctx: &mut ggez::Context,
         point: numeric::Point2f,
         data: &HoldData,
+	kosuzu_memory: &KosuzuMemory,
     ) -> bool {
         // いずれかのTableFrameにデータを挿入できた場合trueが返る
         self.try_insert_data_customer_info_frame(ctx, point, data)

@@ -35,10 +35,11 @@ impl TaskTableStagingObject {
         ctx: &mut ggez::Context,
         point: numeric::Point2f,
         hold_data: &HoldData,
+	kosuzu_memory: &KosuzuMemory,
     ) -> bool {
         match self {
             TaskTableStagingObject::BorrowingRecordBook(record_book) => {
-                record_book.insert_data(ctx, point, hold_data)
+                record_book.insert_data(ctx, point, hold_data, kosuzu_memory)
             }
         }
     }
@@ -165,6 +166,7 @@ impl DeskObjects {
         ctx: &mut ggez::Context,
         point: numeric::Point2f,
         data: &HoldData,
+	kosuzu_memory: &KosuzuMemory,
     ) -> bool {
         let rpoint = self.canvas.relative_point(point);
 
@@ -178,7 +180,7 @@ impl DeskObjects {
                     .get_object_mut()
                     .ref_wrapped_object_mut()
                     .ref_wrapped_object_mut()
-                    .insert_data(ctx, rpoint, data);
+                    .insert_data(ctx, rpoint, data, kosuzu_memory);
             }
         }
 
@@ -1718,58 +1720,6 @@ impl DrawableComponent for Goods {
     }
 }
 
-pub struct KosuzuMemory {
-    books_info: Vec<BookInformation>,
-    customers_name: Vec<String>,
-    dates: Vec<GensoDate>,
-}
-
-impl KosuzuMemory {
-    pub fn new() -> Self {
-	KosuzuMemory {
-	    books_info: Vec::new(),
-	    customers_name: Vec::new(),
-	    dates: Vec::new(),
-	}
-    }
-
-    pub fn add_book_info(&mut self, book_info: BookInformation) {
-	self.books_info.push(book_info);
-    }
-
-    pub fn add_customer_name(&mut self, name: String) {
-	self.customers_name.push(name);
-    }
-
-    pub fn add_date(&mut self, date: GensoDate) {
-	self.dates.push(date);
-    }
-
-    pub fn get_book_info_remove(&mut self, index: usize) -> Option<BookInformation> {
-	if self.books_info.len() <= index {
-	    None
-	} else {
-	    Some(self.books_info.swap_remove(index))
-	}
-    }
-
-    pub fn get_customer_name_remove(&mut self, index: usize) -> Option<String> {
-	if self.customers_name.len() <= index {
-	    None
-	} else {
-	    Some(self.customers_name.swap_remove(index))
-	}
-    }
-
-    pub fn get_dates_remove(&mut self, index: usize) -> Option<GensoDate> {
-	if self.dates.len() <= index {
-	    None
-	} else {
-	    Some(self.dates.swap_remove(index))
-	}
-    }
-}
-
 #[derive(Clone)]
 pub enum CustomerRequest {
     Borrowing(BorrowingInformation),
@@ -1843,6 +1793,7 @@ impl ShelvingBookBox {
         ctx: &mut ggez::Context,
         point: numeric::Point2f,
         data: &HoldData,
+	kosuzu_memory: &KosuzuMemory,
     ) -> bool {
         let rpoint = self.canvas.relative_point(point);
 
@@ -1856,7 +1807,7 @@ impl ShelvingBookBox {
                     .get_object_mut()
                     .ref_wrapped_object_mut()
                     .ref_wrapped_object_mut()
-                    .insert_data(ctx, rpoint, data);
+                    .insert_data(ctx, rpoint, data, kosuzu_memory);
             }
         }
 
@@ -1937,6 +1888,7 @@ impl ShelvingBookBox {
         t: Clock,
         button: ggez::input::mouse::MouseButton,
         point: numeric::Point2f,
+	kosuzu_memory: &KosuzuMemory,
     ) {
         let rpoint = self.canvas.relative_point(point);
 

@@ -164,6 +164,10 @@ impl TaskTable {
         }
     }
 
+    pub fn get_kosuzu_memory(&self) -> &KosuzuMemory {
+	&self.kosuzu_memory
+    }
+
     fn select_dragging_object(&mut self, ctx: &mut ggez::Context, point: numeric::Point2f) {
         let rpoint = self.canvas.relative_point(point);
         self.desk.select_dragging_object(ctx, rpoint);
@@ -636,7 +640,7 @@ impl TaskTable {
             let clicked_data = self.customer_info_ui.check_data_click(ctx, point);
             self.update_hold_data_if_some(clicked_data);
         } else {
-            if self.desk.check_insert_data(ctx, point, &self.hold_data) {
+            if self.desk.check_insert_data(ctx, point, &self.hold_data, &self.kosuzu_memory) {
                 self.hold_data = HoldData::None;
             }
 
@@ -657,7 +661,7 @@ impl TaskTable {
 
             // StagingObjectにHoldDataを挿入する
             if let Some(staging_object) = self.staging_object.as_mut() {
-                if staging_object.insert_data(ctx, point, &self.hold_data) {
+                if staging_object.insert_data(ctx, point, &self.hold_data, &self.kosuzu_memory) {
                     self.hold_data = HoldData::None;
                 }
             }
@@ -666,7 +670,7 @@ impl TaskTable {
             if self.borrowing_record_book.is_visible() {
                 if self
                     .borrowing_record_book
-                    .insert_data(ctx, point, &self.hold_data)
+                    .insert_data(ctx, point, &self.hold_data, &self.kosuzu_memory)
                 {
                     self.hold_data = HoldData::None;
                 }
