@@ -124,7 +124,7 @@ impl TableFrame {
     ///
     /// 線の幅を含めてTableFrameの高さを返す
     ///
-    fn real_height(&self) -> f32 {
+    pub fn real_height(&self) -> f32 {
         let tile_size = self.get_scaled_tile_size();
         self.frame_data.height() + (self.frame_data.each_cols_size.len() as f32 * tile_size.y)
     }
@@ -132,7 +132,7 @@ impl TableFrame {
     ///
     /// 線の幅を含めてTableFrameの幅を返す
     ///
-    fn real_width(&self) -> f32 {
+    pub fn real_width(&self) -> f32 {
         let tile_size = self.get_scaled_tile_size();
         self.frame_data.width() + (self.frame_data.each_rows_size.len() as f32 * tile_size.x)
     }
@@ -145,6 +145,10 @@ impl TableFrame {
     fn tile_per_hline(&self, length: f32) -> usize {
         let tile_size = self.get_scaled_tile_size();
         (length / tile_size.x) as usize
+    }
+
+    pub fn size(&self) -> numeric::Vector2f {
+	numeric::Vector2f::new(self.real_width(), self.real_height())
     }
 
     ///

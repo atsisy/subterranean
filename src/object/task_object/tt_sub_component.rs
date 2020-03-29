@@ -1316,6 +1316,7 @@ pub struct BookTitleMenu {
     raw_data: Vec<BookInformation>,
     title_table_frame: TableFrame,
     title_vtext: Vec<VerticalText>,
+    header_text: VerticalText,
     drwob_essential: DrawableObjectEssential,
     last_clicked: Option<usize>,
 }
@@ -1338,7 +1339,7 @@ impl BookTitleMenu {
         let title_table_frame = TableFrame::new(
             game_data,
             numeric::Point2f::new(10.0, 10.0),
-            FrameData::new(vec![200.0], vec![64.0; 2]),
+            FrameData::new(vec![200.0], vec![64.0; book_info_data.len()]),
             numeric::Vector2f::new(0.3, 0.3),
             0,
         );
@@ -1365,12 +1366,21 @@ impl BookTitleMenu {
             title_vtext.push(vtext);
         }
 
+	let header_text = VerticalText::new(
+	    "題目一覧".to_string(),
+	    numeric::Point2f::new(title_table_frame.real_width() + 20.0, 30.0),
+	    numeric::Vector2f::new(1.0, 1.0),
+	    0.0,
+	    0,
+	    font_info);
+	
         BookTitleMenu {
 	    raw_data: book_info_data,
             title_table_frame: title_table_frame,
             title_vtext: title_vtext,
             drwob_essential: DrawableObjectEssential::new(true, drawing_depth),
             last_clicked: None,
+	    header_text: header_text,
         }
     }
 
@@ -1384,6 +1394,10 @@ impl BookTitleMenu {
     pub fn get_last_clicked(&self) -> Option<usize> {
         self.last_clicked
     }
+
+    pub fn get_title_frame_size(&self) -> numeric::Vector2f {
+	self.title_table_frame.size()
+    }
 }
 
 impl DrawableComponent for BookTitleMenu {
@@ -1394,6 +1408,8 @@ impl DrawableComponent for BookTitleMenu {
             for vtext in &mut self.title_vtext {
                 vtext.draw(ctx)?;
             }
+
+	    self.header_text.draw(ctx)?;
         }
         Ok(())
     }
@@ -1451,6 +1467,7 @@ pub struct BorrowingRecordBookData {
 pub struct RecordBookMenuGroup {
     event_list: DelayEventList<Self>,
     book_status_menu: Option<EffectableWrap<MovableWrap<BookStatusMenu>>>,
+    book_title_menu: Option<EffectableWrap<MovableWrap<BookTitleDropMenu>>>,
     drwob_essential: DrawableObjectEssential,
 }
 
@@ -1459,6 +1476,7 @@ impl RecordBookMenuGroup {
 	RecordBookMenuGroup {
 	    event_list: DelayEventList::new(),
 	    book_status_menu: None,
+	    book_title_menu: None,
 	    drwob_essential: DrawableObjectEssential::new(true, drawing_depth),
 	}
     }
@@ -1564,6 +1582,36 @@ impl RecordBookMenuGroup {
         self.book_status_menu = Some(button_group_area);
     }
 
+    pub fn show_book_title_menu(
+	&mut self,
+	ctx: &mut ggez::Context,
+	game_data: &GameData,
+	position: numeric::Point2f,
+	kosuzu_memory: &KosuzuMemory,
+	t: Clock
+    ) {
+	let book_title_menu = BookTitleMenu::new(ctx, game_data, kosuzu_memory.books_info.clone(), 0);
+
+	let frame_size = book_title_menu.get_title_frame_size();
+	
+        let book_title_menu_area = EffectableWrap::new(
+            MovableWrap::new(
+                Box::new(DropDownArea::new(
+                    ctx,
+                    numeric::Rect::new(position.x, position.y, frame_size.x + 128.0, frame_size.y + 64.0),
+                    0,
+                    book_title_menu,
+                    t,
+                )),
+                None,
+                t,
+            ),
+            vec![effect::fade_in(10, t)],
+        );
+
+	self.book_title_menu = Some(book_title_menu_area);
+    }
+
     fn run_effect(&mut self, ctx: &mut ggez::Context, game_data: &GameData, t: Clock) {
         while let Some(event) = self.event_list.move_top() {
             // 時間が来ていない場合は、取り出した要素をリストに戻して処理ループを抜ける
@@ -1584,6 +1632,11 @@ impl RecordBookMenuGroup {
             book_status_menu.move_with_func(t);
             book_status_menu.effect(ctx, t);
         }
+
+	if let Some(book_title_menu) = self.book_title_menu.as_mut() {
+	    book_title_menu.move_with_func(t);
+            book_title_menu.effect(ctx, t);
+	}
     }
 }
 
@@ -1592,6 +1645,10 @@ impl DrawableComponent for RecordBookMenuGroup {
         if self.is_visible() {
 	    if let Some(book_status_menu) = self.book_status_menu.as_mut() {
 		book_status_menu.draw(ctx);
+	    }
+
+	    if let Some(book_title_menu) = self.book_title_menu.as_mut() {
+		book_title_menu.draw(ctx)?;
 	    }
         }
         Ok(())
@@ -2103,6 +2160,27 @@ impl BorrowingRecordBookPage {
         }
     }
 
+    fn try_show_book_title_drop_down_menu(
+        &mut self,
+        ctx: &mut ggez::Context,
+        game_data: &GameData,
+        position: numeric::Point2f,
+	kosuzu_memory: &KosuzuMemory,
+        t: Clock,
+    ) {
+        let grid_pos = self.books_table.get_grid_position(ctx, position);
+
+        // 既に表示されている場合は、メニューを消して終了
+        if self.menu_group.is_some_menu_opened() {
+	    self.menu_group.close_all(t);
+            return ();
+        }
+
+        if grid_pos.is_some() && grid_pos.unwrap().y == 0 {
+	    self.menu_group.show_book_title_menu(ctx, game_data, position, kosuzu_memory, t);
+        }
+    }
+
     fn insert_book_status_data(&mut self, ctx: &mut ggez::Context, status_index: i32, menu_position: numeric::Point2f) {
 	println!("book status insert!! data -> {}", status_index);
         let grid_position = self
@@ -2348,6 +2426,38 @@ impl BorrowingRecordBook {
         }
     }
 
+    pub fn click_handler(
+	&mut self,
+	ctx: &mut ggez::Context,
+        game_data: &GameData,
+        t: Clock,
+        button: ggez::input::mouse::MouseButton,
+        point: numeric::Point2f,
+	kosuzu_memory: &KosuzuMemory,
+    ) {
+	let rpoint = self.relative_point(point);
+        let width = self.get_drawing_size(ctx).x;
+	
+        // 順序注意
+        // 先にメニューに対するクリック処理を実行し、
+        // そのあとにメニュー表示処理を行う
+        if let Some(page) = self.get_current_page_mut() {
+            page.click_handler(ctx, game_data, button, rpoint, t);
+            page.try_show_drop_down_button(ctx, game_data, rpoint, t);
+	    page.try_show_book_title_drop_down_menu(ctx, game_data, rpoint, kosuzu_memory, t);
+        }
+
+        debug::debug_screen_push_text("book click!!");
+        if rpoint.x < 20.0 && rpoint.x >= 0.0 {
+            println!("next page!!");
+            self.add_empty_page(ctx, game_data, t);
+            self.next_page();
+        } else if rpoint.x > width - 20.0 && rpoint.x <= width {
+            println!("prev page!!");
+            self.prev_page();
+        }
+    }
+
     pub fn pages_length(&self) -> usize {
         self.pages.len()
     }
@@ -2471,26 +2581,6 @@ impl Clickable for BorrowingRecordBook {
         button: ggez::input::mouse::MouseButton,
         point: numeric::Point2f,
     ) {
-        let rpoint = self.relative_point(point);
-        let width = self.get_drawing_size(ctx).x;
-
-        // 順序注意
-        // 先にメニューに対するクリック処理を実行し、
-        // そのあとにメニュー表示処理を行う
-        if let Some(page) = self.get_current_page_mut() {
-            page.click_handler(ctx, game_data, button, rpoint, t);
-            page.try_show_drop_down_button(ctx, game_data, rpoint, t);
-        }
-
-        debug::debug_screen_push_text("book click!!");
-        if rpoint.x < 20.0 && rpoint.x >= 0.0 {
-            println!("next page!!");
-            self.add_empty_page(ctx, game_data, t);
-            self.next_page();
-        } else if rpoint.x > width - 20.0 && rpoint.x <= width {
-            println!("prev page!!");
-            self.prev_page();
-        }
     }
 }
 

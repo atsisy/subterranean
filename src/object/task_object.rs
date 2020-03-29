@@ -800,7 +800,7 @@ impl Clickable for TaskTable {
         self.desk
             .button_up_handler(ctx, game_data, t, button, rpoint, &mut self.kosuzu_memory);
         self.borrowing_record_book
-            .button_up(ctx, game_data, t, button, point);
+            .click_handler(ctx, game_data, t, button, rpoint, &self.kosuzu_memory);
     }
 
     fn clickable_status(
