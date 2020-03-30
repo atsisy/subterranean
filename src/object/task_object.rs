@@ -754,11 +754,11 @@ impl TaskTable {
                 .unwrap();
             self.borrowing_record_book
                 .insert_book_status_via_choice(ctx, index, menu_position);
-
+	    
 	    return true;
         }
 
-	if let Some(book_info) = self
+	if let Some((index, book_info)) = self
             .record_book_menu
             .book_title_menu_last_clicked()
         {
@@ -768,6 +768,8 @@ impl TaskTable {
                 .unwrap();
             self.borrowing_record_book
                 .insert_book_title_to_books_frame(ctx, menu_position, book_info);
+
+	    self.kosuzu_memory.remove_book_info_at(index);
 
 	    return true;
         }

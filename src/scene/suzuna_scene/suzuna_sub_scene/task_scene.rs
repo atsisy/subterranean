@@ -237,7 +237,7 @@ impl SceneManager for TaskScene {
     ) {
         let info: &MouseActionRecord = &self.mouse_info.last_clicked.get(&button).unwrap();
         if info.point == point {
-            if (self.get_current_clock() - info.t) < 20 {
+            if (self.get_current_clock() - info.t) < 25 {
                 self.task_table.double_click_handler(
                     ctx,
                     point,

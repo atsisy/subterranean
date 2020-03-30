@@ -271,6 +271,18 @@ impl KosuzuMemory {
             Some(self.dates.swap_remove(index))
         }
     }
+
+    pub fn remove_book_info_at(&mut self, index: usize) {
+	self.books_info.remove(index);
+    }
+
+    pub fn remove_customer_name_at(&mut self, index: usize) {
+	self.customers_name.remove(index);
+    }
+
+    pub fn remove_date_at(&mut self, index: usize) {
+	self.dates.remove(index);
+    }
 }
 
 #[derive(Clone)]
@@ -1405,6 +1417,10 @@ impl BookTitleMenu {
 	}
     }
 
+    pub fn get_last_clicked_index(&self) -> Option<usize> {
+	self.last_clicked
+    }
+
     pub fn get_title_frame_size(&self) -> numeric::Vector2f {
         self.title_table_frame.size()
     }
@@ -1612,13 +1628,17 @@ impl RecordBookMenuGroup {
         }
     }
 
-    pub fn book_title_menu_last_clicked(&mut self) -> Option<BookInformation> {
+    pub fn book_title_menu_last_clicked(&mut self) -> Option<(usize, BookInformation)> {
         if let Some(book_title_menu) = self.book_title_menu.as_mut() {
-            book_title_menu
+            let component = book_title_menu
                 .ref_wrapped_object_mut()
                 .ref_wrapped_object_mut()
-                .get_component()
-                .get_last_clicked_book_info()
+                .get_component();
+	    if let Some(index) = component.get_last_clicked_index() {
+		Some((index, component.get_last_clicked_book_info().unwrap()))
+	    } else {
+		None
+	    }
         } else {
             None
         }
