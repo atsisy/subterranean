@@ -1501,6 +1501,17 @@ impl RecordBookMenuGroup {
         }
     }
 
+    pub fn close_book_title_menu(&mut self, t: Clock) {
+        if let Some(title_menu) = self.book_title_menu.as_mut() {
+            title_menu.add_effect(vec![effect::fade_out(10, t)]);
+            self.event_list.add_event(
+                Box::new(|slf: &mut RecordBookMenuGroup, _, _| slf.book_title_menu = None),
+                t + 11,
+            );
+        }
+    }
+
+
     pub fn contains_book_status_menu(
         &self,
         ctx: &mut ggez::Context,
@@ -1535,6 +1546,9 @@ impl RecordBookMenuGroup {
         }
     }
 
+    ///
+    /// メニューのエントリをクリックしていたらtrueを返し、そうでなければfalseを返す
+    ///
     pub fn click_book_status_menu(
         &mut self,
         ctx: &mut ggez::Context,
@@ -1542,10 +1556,10 @@ impl RecordBookMenuGroup {
         button: ggez::input::mouse::MouseButton,
         point: numeric::Point2f,
         t: Clock,
-    ) {
+    ) -> bool {
         // ボタンエリア内をクリックしていない場合は、即終了
         if !self.contains_book_status_menu(ctx, point) {
-            return ();
+            return false;
         }
 
         if let Some(book_status_menu) = self.book_status_menu.as_mut() {
@@ -1553,9 +1567,15 @@ impl RecordBookMenuGroup {
                 .ref_wrapped_object_mut()
                 .ref_wrapped_object_mut()
                 .on_click(ctx, game_data, t, button, point);
-        }
+	    true
+        } else {
+	    false
+	}
     }
 
+    ///
+    /// メニューのエントリをクリックしていたらtrueを返し、そうでなければfalseを返す
+    ///
     pub fn click_book_title_menu(
         &mut self,
         ctx: &mut ggez::Context,
@@ -1563,10 +1583,10 @@ impl RecordBookMenuGroup {
         button: ggez::input::mouse::MouseButton,
         point: numeric::Point2f,
         t: Clock,
-    ) {
+    ) -> bool {
         // ボタンエリア内をクリックしていない場合は、即終了
         if !self.contains_book_title_menu(ctx, point) {
-            return ();
+            return false;
         }
 
         if let Some(book_title_menu) = self.book_title_menu.as_mut() {
@@ -1574,7 +1594,10 @@ impl RecordBookMenuGroup {
                 .ref_wrapped_object_mut()
                 .ref_wrapped_object_mut()
                 .on_click(ctx, game_data, t, button, point);
-        }
+	    true
+        } else {
+	    false
+	}
     }
 
     pub fn book_status_menu_last_clicked(
@@ -1617,6 +1640,7 @@ impl RecordBookMenuGroup {
 
     pub fn close_all(&mut self, t: Clock) {
         self.close_book_status_menu(t);
+	self.close_book_title_menu(t);
     }
 
     pub fn show_book_status_menu(

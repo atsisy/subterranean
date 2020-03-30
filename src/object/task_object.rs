@@ -725,6 +725,9 @@ impl TaskTable {
         self.borrowing_record_book.export_book_data()
     }
 
+    ///
+    /// メニューのエントリをクリックしていたらtrueを返し、そうでなければfalseを返す
+    ///
     fn click_record_book_menu(
         &mut self,
         ctx: &mut ggez::Context,
@@ -732,11 +735,14 @@ impl TaskTable {
         button: ggez::input::mouse::MouseButton,
         point: numeric::Point2f,
         t: Clock,
-    ) {
-        self.record_book_menu
-            .click_book_status_menu(ctx, game_data, button, point, t);
-	self.record_book_menu
-	    .click_book_title_menu(ctx, game_data, button, point, t);
+    ) -> bool {
+        if !self.record_book_menu
+            .click_book_status_menu(ctx, game_data, button, point, t) &&
+	    !self.record_book_menu
+	    .click_book_title_menu(ctx, game_data, button, point, t) {
+		// メニューをクリックしていない場合はfalseをクリックして終了
+		return false;
+	    }
 
         if let Some(index) = self
             .record_book_menu
@@ -748,6 +754,8 @@ impl TaskTable {
                 .unwrap();
             self.borrowing_record_book
                 .insert_book_status_via_choice(ctx, index, menu_position);
+
+	    return true;
         }
 
 	if let Some(book_info) = self
@@ -760,7 +768,11 @@ impl TaskTable {
                 .unwrap();
             self.borrowing_record_book
                 .insert_book_title_to_books_frame(ctx, menu_position, book_info);
+
+	    return true;
         }
+
+	false
     }
 
     fn try_show_menus(
@@ -900,8 +912,12 @@ impl Clickable for TaskTable {
             &self.kosuzu_memory,
         );
 	
-	self.click_record_book_menu(ctx, game_data, button, rpoint, t);
-        self.try_show_menus(ctx, game_data, rpoint, t);
+	if !self.click_record_book_menu(ctx, game_data, button, rpoint, t) {
+	    // メニューをクリックしていない場合に、新しいメニュー表示処理を走らせる
+	    self.try_show_menus(ctx, game_data, rpoint, t);
+	} else {
+	    self.record_book_menu.close_all(t);
+	}
     }
     
     fn clickable_status(
