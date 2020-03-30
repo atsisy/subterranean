@@ -102,6 +102,7 @@ pub struct DeskObjects {
     pub dragging: Option<DeskObject>,
     pub table_texture: SimpleObject,
     desk_book_drop_menu: Option<DeskBookDropMenu>,
+    event_list: DelayEventList<Self>,
 }
 
 impl DeskObjects {
@@ -132,6 +133,7 @@ impl DeskObjects {
                 Vec::new(),
             ),
             desk_book_drop_menu: None,
+	    event_list: DelayEventList::new(),
         }
     }
 
@@ -187,6 +189,29 @@ impl DeskObjects {
         false
     }
 
+    fn run_event(&mut self, ctx: &mut ggez::Context, game_data: &GameData, t: Clock) {
+        while let Some(event) = self.event_list.move_top() {
+            // 時間が来ていない場合は、取り出した要素をリストに戻して処理ループを抜ける
+            if event.run_time > t {
+                self.event_list.add(event);
+                break;
+            }
+
+            // 所有権を移動しているため、selfを渡してもエラーにならない
+            (event.func)(self, ctx, game_data);
+        }
+    }
+
+    fn hide_desk_book_menu(&mut self, t: Clock) {
+	if let Some(menu) = self.desk_book_drop_menu.as_mut() {
+	    menu.add_effect(vec![effect::fade_out(10, t)]);
+	    self.event_list.add_event(
+                Box::new(|slf: &mut DeskObjects, _, _| slf.desk_book_drop_menu = None),
+                t + 11,
+            );
+	}
+    }
+    
     pub fn dragging_handler(&mut self, point: numeric::Point2f, last: numeric::Point2f) {
         if let Some(obj) = &mut self.dragging {
             obj.get_object_mut()
@@ -243,7 +268,14 @@ impl DeskObjects {
         }
     }
 
-    pub fn update(&mut self, ctx: &mut ggez::Context, t: Clock) {
+    pub fn update(&mut self, ctx: &mut ggez::Context, game_data: &GameData, t: Clock) {
+	self.run_event(ctx, game_data, t);
+
+	if let Some(menu) = self.desk_book_drop_menu.as_mut() {
+	    menu.move_with_func(t);
+	    menu.effect(ctx, t);
+	}
+	
         for p in self.desk_objects.get_raw_container_mut() {
             p.get_object_mut().move_with_func(t);
             p.get_object_mut().effect(ctx, t);
@@ -353,7 +385,7 @@ impl DeskObjects {
     ) {
         // 既に表示されている場合は、消してすぐにreturn
         if self.desk_book_drop_menu.is_some() {
-            self.desk_book_drop_menu = None;
+	    self.hide_desk_book_menu(t);
             return ();
         }
 
@@ -365,13 +397,17 @@ impl DeskObjects {
             0,
         );
 
-        self.desk_book_drop_menu = Some(DropDownArea::new(
+	let mut dd_area = DropDownArea::new(
             ctx,
             numeric::Rect::new(point.x, point.y, 200.0, 300.0),
             0,
             menu,
             t,
-        ));
+        );
+
+	dd_area.add_effect(vec![effect::fade_in(10, t)]);
+	
+        self.desk_book_drop_menu = Some(dd_area);
     }
 
     fn show_desk_object_drop_down_menu(
@@ -383,15 +419,18 @@ impl DeskObjects {
         point: numeric::Point2f,
         t: Clock,
     ) {
-        match on_desk_type {
-            OnDeskType::Book => match hold_data {
-                HoldData::BookName(info) => {
-                    self.show_book_drop_down_menu(ctx, game_data, point, info.clone(), t);
-                }
-                _ => panic!(""),
-            },
-            _ => (),
-        }
+	// ドラッグしている場合は、メニューを表示しない
+	if self.dragging.is_none() {
+            match on_desk_type {
+		OnDeskType::Book => match hold_data {
+                    HoldData::BookName(info) => {
+			self.show_book_drop_down_menu(ctx, game_data, point, info.clone(), t);
+                    }
+                    _ => panic!(""),
+		},
+		_ => (),
+            }
+	}
     }
 
     fn do_book_menu_action(&mut self, kosuzu_memory: &mut KosuzuMemory) -> bool {
@@ -416,7 +455,7 @@ impl DeskObjects {
         false
     }
 
-    pub fn button_up_handler(
+    pub fn click_handler(
         &mut self,
         ctx: &mut ggez::Context,
         game_data: &GameData,
@@ -431,6 +470,8 @@ impl DeskObjects {
             if book_menu.contains(ctx, rpoint) {
                 book_menu.on_click(ctx, game_data, t, button, rpoint);
                 if self.do_book_menu_action(kosuzu_memory) {
+		    // アクションが発生したので、メニューを消して終了
+		    self.hide_desk_book_menu(t);
                     return ();
                 }
             }

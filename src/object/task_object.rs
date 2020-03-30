@@ -414,7 +414,7 @@ impl TaskTable {
     pub fn update(&mut self, ctx: &mut ggez::Context, game_data: &GameData, t: Clock) {
         self.run_delay_event(ctx, game_data, t);
         self.sight.update(ctx, game_data, t);
-        self.desk.update(ctx, t);
+        self.desk.update(ctx, game_data, t);
         self.shelving_box.update(ctx, t);
         self.check_sight_drop_to_desk(ctx, t);
         self.customer_info_ui.update(ctx, t);
@@ -876,12 +876,21 @@ impl Clickable for TaskTable {
         point: numeric::Point2f,
     ) {
         let rpoint = self.canvas.relative_point(point);
-
         self.update_hold_data(ctx, game_data, rpoint);
+    }
 
-        self.desk
-            .button_up_handler(ctx, game_data, t, button, rpoint, &mut self.kosuzu_memory);
-
+    fn on_click(
+	&mut self,
+	ctx: &mut ggez::Context,
+	game_data: &GameData,
+	t: Clock,
+	button: ggez::input::mouse::MouseButton,
+	point: numeric::Point2f)
+    {
+	let rpoint = self.canvas.relative_point(point);
+	self.desk
+            .click_handler(ctx, game_data, t, button, rpoint, &mut self.kosuzu_memory);
+	
         self.borrowing_record_book.click_handler(
             ctx,
             game_data,
@@ -890,11 +899,11 @@ impl Clickable for TaskTable {
             rpoint,
             &self.kosuzu_memory,
         );
-
-        self.click_record_book_menu(ctx, game_data, button, rpoint, t);
+	
+	self.click_record_book_menu(ctx, game_data, button, rpoint, t);
         self.try_show_menus(ctx, game_data, rpoint, t);
     }
-
+    
     fn clickable_status(
         &mut self,
         ctx: &mut ggez::Context,
