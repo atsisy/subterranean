@@ -604,57 +604,18 @@ impl OnMap for MapObject {
     }
 }
 
-pub struct DamageEffect {
-    pub hp_damage: i16,
-    pub mp_damage: f32,
-}
-
-pub struct AttackCore {
-    center_position: numeric::Point2f,
-    radius: f32,
-}
-
-impl AttackCore {
-    pub fn new(center: numeric::Point2f, radius: f32) -> Self {
-        AttackCore {
-            center_position: center,
-            radius: radius,
-        }
-    }
-
-    pub fn distance(&self, obj: &AttackCore) -> f32 {
-        distance!(self.center_position, obj.center_position)
-    }
-
-    pub fn check_collision(&self, obj: &AttackCore) -> bool {
-        let d = self.distance(obj);
-        d < (self.radius + obj.radius)
-    }
-
-    pub fn move_diff(&mut self, offset: numeric::Vector2f) {
-        self.center_position += offset;
-    }
-}
-
-pub struct PlayerStatus {
-    pub hp: i16,
-    pub mp: f32,
-}
-
 ///
 /// 操作キャラクターの情報を保持
 ///
 pub struct PlayableCharacter {
     character: MapObject,
-    status: PlayerStatus,
     shelving_book: Vec<BookInformation>,
 }
 
 impl PlayableCharacter {
-    pub fn new(character: MapObject, status: PlayerStatus) -> Self {
+    pub fn new(character: MapObject) -> Self {
         PlayableCharacter {
             character: character,
-            status: status,
             shelving_book: Vec::new(),
         }
     }
@@ -723,19 +684,6 @@ impl PlayableCharacter {
             self.move_map(numeric::Vector2f::new(0.0, y_speed - overflow))
         } else {
             self.move_map(numeric::Vector2f::new(0.0, y_speed))
-        }
-    }
-
-    pub fn attack_damage_check(
-        &mut self,
-        ctx: &mut ggez::Context,
-        attack_core: &AttackCore,
-        damage: &DamageEffect,
-    ) {
-        let center = self.get_map_position() + self.character.obj().get_center_offset(ctx);
-        if distance!(center, attack_core.center_position) < attack_core.radius {
-            self.status.hp -= damage.hp_damage;
-            self.status.mp -= damage.mp_damage;
         }
     }
 
@@ -1249,13 +1197,6 @@ impl CustomerCharacter {
             0.0,
             self.get_character_object().speed_info().get_speed().y,
         ))
-    }
-
-    pub fn get_attack_core(&self, ctx: &mut ggez::Context) -> AttackCore {
-        AttackCore::new(
-            self.character.get_map_position() + self.character.obj().get_center_offset(ctx),
-            10.0,
-        )
     }
 }
 

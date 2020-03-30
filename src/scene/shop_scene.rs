@@ -335,8 +335,7 @@ impl ShopScene {
                 game_data,
                 &camera.borrow(),
                 map_position,
-            ),
-            PlayerStatus { hp: 10, mp: 10.0 },
+            )
         );
 
         let mut character_group = CharacterGroup::new();

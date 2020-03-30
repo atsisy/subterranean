@@ -418,7 +418,7 @@ impl TaskTable {
         self.shelving_box.update(ctx, t);
         self.check_sight_drop_to_desk(ctx, t);
         self.customer_info_ui.update(ctx, t);
-        self.borrowing_record_book.update(ctx, game_data, t);
+        self.borrowing_record_book.update(t);
         self.record_book_menu.update(ctx, game_data, t);
     }
 
@@ -746,7 +746,7 @@ impl TaskTable {
 
         if let Some(index) = self
             .record_book_menu
-            .book_status_menu_last_clicked(ctx, game_data, button, point, t)
+            .book_status_menu_last_clicked()
         {
             let menu_position = self
                 .record_book_menu
@@ -760,7 +760,7 @@ impl TaskTable {
 
 	if let Some(book_info) = self
             .record_book_menu
-            .book_title_menu_last_clicked(ctx, game_data, button, point, t)
+            .book_title_menu_last_clicked()
         {
             let menu_position = self
                 .record_book_menu
@@ -883,8 +883,8 @@ impl Clickable for TaskTable {
         &mut self,
         ctx: &mut ggez::Context,
         game_data: &GameData,
-        t: Clock,
-        button: ggez::input::mouse::MouseButton,
+        _: Clock,
+        _: ggez::input::mouse::MouseButton,
         point: numeric::Point2f,
     ) {
         let rpoint = self.canvas.relative_point(point);
@@ -907,9 +907,7 @@ impl Clickable for TaskTable {
             ctx,
             game_data,
             t,
-            button,
             rpoint,
-            &self.kosuzu_memory,
         );
 	
 	if !self.click_record_book_menu(ctx, game_data, button, rpoint, t) {

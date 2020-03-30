@@ -1924,7 +1924,7 @@ impl ShelvingBookBox {
         t: Clock,
         button: ggez::input::mouse::MouseButton,
         point: numeric::Point2f,
-        kosuzu_memory: &KosuzuMemory,
+        _: &KosuzuMemory,
     ) {
         let rpoint = self.canvas.relative_point(point);
 

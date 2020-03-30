@@ -1600,14 +1600,7 @@ impl RecordBookMenuGroup {
 	}
     }
 
-    pub fn book_status_menu_last_clicked(
-        &mut self,
-        ctx: &mut ggez::Context,
-        game_data: &GameData,
-        button: ggez::input::mouse::MouseButton,
-        point: numeric::Point2f,
-        t: Clock,
-    ) -> Option<usize> {
+    pub fn book_status_menu_last_clicked(&mut self) -> Option<usize> {
         if let Some(book_status_menu) = self.book_status_menu.as_mut() {
             book_status_menu
                 .ref_wrapped_object_mut()
@@ -1619,14 +1612,7 @@ impl RecordBookMenuGroup {
         }
     }
 
-    pub fn book_title_menu_last_clicked(
-        &mut self,
-        ctx: &mut ggez::Context,
-        game_data: &GameData,
-        button: ggez::input::mouse::MouseButton,
-        point: numeric::Point2f,
-        t: Clock,
-    ) -> Option<BookInformation> {
+    pub fn book_title_menu_last_clicked(&mut self) -> Option<BookInformation> {
         if let Some(book_title_menu) = self.book_title_menu.as_mut() {
             book_title_menu
                 .ref_wrapped_object_mut()
@@ -1748,7 +1734,7 @@ impl DrawableComponent for RecordBookMenuGroup {
     fn draw(&mut self, ctx: &mut ggez::Context) -> ggez::GameResult<()> {
         if self.is_visible() {
             if let Some(book_status_menu) = self.book_status_menu.as_mut() {
-                book_status_menu.draw(ctx);
+                book_status_menu.draw(ctx)?;
             }
 
             if let Some(book_title_menu) = self.book_title_menu.as_mut() {
@@ -2459,9 +2445,7 @@ impl BorrowingRecordBook {
         ctx: &mut ggez::Context,
         game_data: &GameData,
         t: Clock,
-        button: ggez::input::mouse::MouseButton,
         point: numeric::Point2f,
-        kosuzu_memory: &KosuzuMemory,
     ) {
         let rpoint = self.relative_point(point);
         let width = self.get_drawing_size(ctx).x;
@@ -2481,7 +2465,7 @@ impl BorrowingRecordBook {
         self.pages.len()
     }
 
-    pub fn update(&mut self, ctx: &mut ggez::Context, game_data: &GameData, t: Clock) {
+    pub fn update(&mut self, t: Clock) {
         self.move_with_func(t);
     }
 
@@ -2604,25 +2588,6 @@ impl MovableObject for BorrowingRecordBook {
 }
 
 impl Clickable for BorrowingRecordBook {
-    fn button_down(
-        &mut self,
-        _ctx: &mut ggez::Context,
-        _: &GameData,
-        _: Clock,
-        _button: ggez::input::mouse::MouseButton,
-        _point: numeric::Point2f,
-    ) {
-    }
-
-    fn button_up(
-        &mut self,
-        ctx: &mut ggez::Context,
-        game_data: &GameData,
-        t: Clock,
-        button: ggez::input::mouse::MouseButton,
-        point: numeric::Point2f,
-    ) {
-    }
 }
 
 impl OnDesk for BorrowingRecordBook {
@@ -2639,7 +2604,7 @@ impl OnDesk for BorrowingRecordBook {
         ctx: &mut ggez::Context,
         point: numeric::Point2f,
         data: &HoldData,
-        kosuzu_memory: &KosuzuMemory,
+        _: &KosuzuMemory,
     ) -> bool {
         // いずれかのTableFrameにデータを挿入できた場合trueが返る
         self.try_insert_data_customer_info_frame(ctx, point, data)
