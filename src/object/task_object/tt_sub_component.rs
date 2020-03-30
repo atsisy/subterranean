@@ -1767,7 +1767,6 @@ pub struct BorrowingRecordBookPage {
     return_date: VerticalText,
     paper_texture: SimpleObject,
     drwob_essential: DrawableObjectEssential,
-    menu_group: RecordBookMenuGroup,
 }
 
 impl BorrowingRecordBookPage {
@@ -2116,7 +2115,6 @@ impl BorrowingRecordBookPage {
             borrow_date: borrow_date,
             return_date: return_date,
             drwob_essential: DrawableObjectEssential::new(true, 0),
-            menu_group: RecordBookMenuGroup::new(0),
         }
     }
 
@@ -2213,49 +2211,6 @@ impl BorrowingRecordBookPage {
         self
     }
 
-    fn try_show_drop_down_button(
-        &mut self,
-        ctx: &mut ggez::Context,
-        game_data: &GameData,
-        position: numeric::Point2f,
-        t: Clock,
-    ) {
-        let grid_pos = self.books_table.get_grid_position(ctx, position);
-
-        // 既に表示されている場合は、メニューを消して終了
-        if self.menu_group.is_some_menu_opened() {
-            self.menu_group.close_all(t);
-            return ();
-        }
-
-        if grid_pos.is_some() && grid_pos.unwrap().y == 1 {
-            self.menu_group
-                .show_book_status_menu(ctx, game_data, position, t);
-        }
-    }
-
-    fn try_show_book_title_drop_down_menu(
-        &mut self,
-        ctx: &mut ggez::Context,
-        game_data: &GameData,
-        position: numeric::Point2f,
-        kosuzu_memory: &KosuzuMemory,
-        t: Clock,
-    ) {
-        let grid_pos = self.books_table.get_grid_position(ctx, position);
-
-        // 既に表示されている場合は、メニューを消して終了
-        if self.menu_group.is_some_menu_opened() {
-            self.menu_group.close_all(t);
-            return ();
-        }
-
-        if grid_pos.is_some() && grid_pos.unwrap().y == 0 {
-            self.menu_group
-                .show_book_title_menu(ctx, game_data, position, kosuzu_memory, t);
-        }
-    }
-
     fn insert_book_status_data(
         &mut self,
         ctx: &mut ggez::Context,
@@ -2276,26 +2231,6 @@ impl BorrowingRecordBookPage {
         );
     }
 
-    pub fn click_handler(
-        &mut self,
-        ctx: &mut ggez::Context,
-        game_data: &GameData,
-        button: ggez::input::mouse::MouseButton,
-        point: numeric::Point2f,
-        t: Clock,
-    ) {
-        self.menu_group
-            .click_book_status_menu(ctx, game_data, button, point, t);
-        println!("book status click handler!!");
-        if let Some(index) = self
-            .menu_group
-            .book_status_menu_last_clicked(ctx, game_data, button, point, t)
-        {
-            let menu_position = self.menu_group.get_book_status_menu_position().unwrap();
-            self.insert_book_status_data(ctx, index as i32, menu_position);
-        }
-    }
-
     pub fn export_page_data(&self) -> BorrowingRecordBookPageData {
         let mut borrow_book = HashMap::new();
         let mut request_information = HashMap::new();
@@ -2312,10 +2247,6 @@ impl BorrowingRecordBookPage {
             borrow_book: borrow_book,
             request_information: request_information,
         }
-    }
-
-    pub fn update(&mut self, ctx: &mut ggez::Context, game_data: &GameData, t: Clock) {
-        self.menu_group.update(ctx, game_data, t);
     }
 }
 
@@ -2338,8 +2269,6 @@ impl DrawableComponent for BorrowingRecordBookPage {
             for (_, d) in &mut self.request_information {
                 d.draw(ctx)?;
             }
-
-            self.menu_group.draw(ctx)?;
         }
 
         Ok(())
@@ -2513,15 +2442,6 @@ impl BorrowingRecordBook {
         let rpoint = self.relative_point(point);
         let width = self.get_drawing_size(ctx).x;
 
-        // 順序注意
-        // 先にメニューに対するクリック処理を実行し、
-        // そのあとにメニュー表示処理を行う
-        if let Some(page) = self.get_current_page_mut() {
-            page.click_handler(ctx, game_data, button, rpoint, t);
-            page.try_show_drop_down_button(ctx, game_data, rpoint, t);
-            page.try_show_book_title_drop_down_menu(ctx, game_data, rpoint, kosuzu_memory, t);
-        }
-
         debug::debug_screen_push_text("book click!!");
         if rpoint.x < 20.0 && rpoint.x >= 0.0 {
             println!("next page!!");
@@ -2539,9 +2459,6 @@ impl BorrowingRecordBook {
 
     pub fn update(&mut self, ctx: &mut ggez::Context, game_data: &GameData, t: Clock) {
         self.move_with_func(t);
-        if let Some(page) = self.get_current_page_mut() {
-            page.update(ctx, game_data, t);
-        }
     }
 
     pub fn get_book_info_frame_grid_position(
