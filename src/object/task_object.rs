@@ -730,7 +730,9 @@ impl TaskTable {
         if !self.record_book_menu
             .click_book_status_menu(ctx, game_data, button, point, t) &&
 	    !self.record_book_menu
-	    .click_book_title_menu(ctx, game_data, button, point, t) {
+	    .click_book_title_menu(ctx, game_data, button, point, t) &&
+	    !self.record_book_menu
+	    .click_date_menu(ctx, game_data, button, point, t) {
 		// メニューをクリックしていない場合はfalseをクリックして終了
 		return false;
 	    }
@@ -762,6 +764,20 @@ impl TaskTable {
 
 	    self.kosuzu_memory.remove_book_info_at(index);
 
+	    return true;
+        }
+
+	if let Some((index, date)) = self
+            .record_book_menu
+	    .date_menu_last_clicked()
+        {
+            let menu_position = self
+                .record_book_menu
+                .get_date_menu_position()
+                .unwrap();
+            self.borrowing_record_book
+                .insert_date_data_to_customer_info(ctx, menu_position, date);
+	    
 	    return true;
         }
 

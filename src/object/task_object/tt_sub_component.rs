@@ -1304,7 +1304,7 @@ impl BorrowingRecordBookPage {
     }
 
     ///
-    /// HoldDataを格納できればtrue, できなければfalse
+    /// Dataを格納できればtrue, できなければfalse
     ///
     pub fn try_insert_data_in_borrowing_books_frame(
         &mut self,
@@ -1331,6 +1331,34 @@ impl BorrowingRecordBookPage {
         );
     }
 
+    ///
+    /// Dataを格納できればtrue, できなければfalse
+    ///
+    pub fn try_insert_date_data_in_cutomer_info_frame(
+        &mut self,
+        ctx: &mut ggez::Context,
+        menu_position: numeric::Point2f,
+	date: GensoDate,
+    ) {
+	let grid_pos = self
+    	    .customer_info_table
+            .get_grid_position(ctx, menu_position)
+            .unwrap();
+
+        // 挿入先が日時のエントリではない
+        if !(grid_pos == numeric::Vector2u::new(0, 1) || grid_pos == numeric::Vector2u::new(1, 1)) {
+            return;
+        }
+
+	let info = self.request_information.get_mut(&grid_pos).unwrap();
+        info.reset(HoldData::Date(date));
+        info.vtext.make_center(
+            ctx,
+            self.customer_info_table
+                .get_center_of(grid_pos, self.customer_info_table.get_position()),
+        );
+    }
+    
     pub fn replace_borrower_name(&mut self, game_data: &GameData, name: &str) -> &mut Self {
         let pos = self.borrower.get_position();
         self.borrower = VerticalText::new(
@@ -1554,6 +1582,18 @@ impl BorrowingRecordBook {
 	let rpoint = self.relative_point(menu_position);
 	if let Some(page) = self.get_current_page_mut() {
 	    page.try_insert_data_in_borrowing_books_frame(ctx, rpoint, book_info);
+	}
+    }
+
+    pub fn insert_date_data_to_customer_info(
+        &mut self,
+        ctx: &mut ggez::Context,
+	menu_position: numeric::Point2f,
+	date: GensoDate,
+    ) {
+	let rpoint = self.relative_point(menu_position);
+	if let Some(page) = self.get_current_page_mut() {
+	    page.try_insert_date_data_in_cutomer_info_frame(ctx, rpoint, date);
 	}
     }
 
