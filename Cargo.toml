@@ -17,6 +17,7 @@ num = "*"
 number_to_jk = { git = "https://github.com/atsisy/number_to_jk.git" }
 tiled = { git = "https://github.com/mattyhall/rs-tiled" }
 pathfinding = "2.0.4"
+jemallocator = "0.3.2"
 
 [profile.dev]
 opt-level = 3
