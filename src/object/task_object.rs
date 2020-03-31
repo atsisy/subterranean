@@ -2,6 +2,7 @@ pub mod factory;
 pub mod record_book;
 pub mod tt_main_component;
 pub mod tt_sub_component;
+pub mod tt_menu_component;
 
 use std::rc::Rc;
 

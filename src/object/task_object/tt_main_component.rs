@@ -25,6 +25,7 @@ use super::Clickable;
 use crate::core::{BookInformation, FontID, GameData, TextureID};
 
 use super::tt_sub_component::*;
+use super::tt_menu_component::*;
 
 pub enum TaskTableStagingObject {
     BorrowingRecordBook(BorrowingRecordBook),
