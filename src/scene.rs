@@ -190,3 +190,19 @@ impl<T> DelayEventList<T> {
         self.list.len()
     }
 }
+
+#[macro_export]
+macro_rules! flush_delay_event {
+    ($slf: expr, $event_list: expr, $ctx: expr, $game_data: expr, $t: expr) => {
+	while let Some(event) = $event_list.move_top() {
+            // 時間が来ていない場合は、取り出した要素をリストに戻して処理ループを抜ける
+            if event.run_time > $t {
+                $event_list.add(event);
+                break;
+            }
+
+            // 所有権を移動しているため、selfを渡してもエラーにならない
+            (event.func)($slf, $ctx, $game_data);
+        }
+    };
+}
