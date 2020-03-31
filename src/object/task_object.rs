@@ -26,9 +26,10 @@ use crate::scene::*;
 use crate::flush_delay_event;
 use tt_main_component::*;
 use tt_sub_component::*;
+use tt_menu_component::*;
 
 use super::Clickable;
-use crate::core::{GameData, TextureID};
+use crate::core::{GameData, TextureID, GensoDate};
 
 pub struct TaskTable {
     canvas: SubScreen,
@@ -43,6 +44,7 @@ pub struct TaskTable {
     event_list: DelayEventList<TaskTable>,
     borrowing_record_book: BorrowingRecordBook,
     record_book_menu: RecordBookMenuGroup,
+    today: GensoDate,
 }
 
 impl TaskTable {
@@ -54,7 +56,7 @@ impl TaskTable {
         goods_rect: numeric::Rect,
         desk_rect: numeric::Rect,
         shelving_box_rect: numeric::Rect,
-        _today_date: GensoDate,
+        today_date: GensoDate,
         record_book_data: Option<BorrowingRecordBookData>,
         t: Clock,
     ) -> Self {
@@ -148,6 +150,7 @@ impl TaskTable {
             event_list: DelayEventList::new(),
             borrowing_record_book: record_book,
             record_book_menu: RecordBookMenuGroup::new(0),
+	    today: today_date,
         }
     }
 
@@ -822,7 +825,11 @@ impl TaskTable {
 	    if grid_pos == numeric::Vector2u::new(2, 1) {
 		self.record_book_menu
                     .show_customer_name_menu(ctx, game_data, click_point, &self.kosuzu_memory, t);
+	    } else if grid_pos == numeric::Vector2u::new(1, 1) || grid_pos == numeric::Vector2u::new(0, 1) {
+		self.record_book_menu
+		    .show_date_menu(ctx, game_data, click_point, self.today.clone(), t);
 	    }
+
 	    true
         } else {
 	    false

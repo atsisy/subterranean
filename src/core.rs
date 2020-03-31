@@ -25,12 +25,14 @@ use std::collections::VecDeque;
 use std::rc::Rc;
 use std::str::FromStr;
 
-use crate::{object::task_object::tt_sub_component::GensoDate, scene};
+use crate::scene;
 
 use std::fs;
 use std::io::{BufReader, Read};
 
 use serde::Deserialize;
+
+use number_to_jk::number_to_jk;
 
 extern crate num;
 
@@ -227,6 +229,54 @@ impl BookInformation {
 
     pub fn get_pages(&self) -> usize {
         self.pages
+    }
+}
+
+
+#[derive(Debug, Clone, Copy)]
+pub struct GensoDate {
+    pub season: u32,
+    pub month: u8,
+    pub day: u8,
+}
+
+impl GensoDate {
+    pub fn new(season: u32, month: u8, day: u8) -> Self {
+        GensoDate {
+            season: season,
+            month: month,
+            day: day,
+        }
+    }
+
+    pub fn new_empty() -> Self {
+        GensoDate {
+            season: 0,
+            month: 0,
+            day: 0,
+        }
+    }
+
+    pub fn to_string(&self) -> String {
+        format!(
+            "第{}季 {}月 {}日",
+            number_to_jk(self.season as u64),
+            number_to_jk(self.month as u64),
+            number_to_jk(self.day as u64)
+        )
+    }
+
+    pub fn add_day(&mut self, day: u8) {
+        self.day += day;
+        if day > 31 {
+            self.month += 1;
+            self.day %= 31;
+        }
+
+        if self.month > 12 {
+            self.season += 1;
+            self.month %= 12;
+        }
     }
 }
 

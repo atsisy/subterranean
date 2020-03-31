@@ -22,7 +22,7 @@ use crate::flush_delay_event;
 use crate::scene::*;
 
 use super::Clickable;
-use crate::core::{BookInformation, FontID, GameData, TextureID};
+use crate::core::{BookInformation, FontID, GameData, TextureID, GensoDate};
 
 use super::tt_sub_component::*;
 use super::tt_menu_component::*;

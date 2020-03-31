@@ -14,9 +14,76 @@ use torifune::numeric;
 
 use crate::core::BookInformation;
 use crate::object::util_object::*;
-
+use crate::object::effect;
 use super::Clickable;
-use crate::core::{FontID, GameData, TextureID};
+use crate::core::{FontID, GameData, TextureID, GensoDate};
+use crate::flush_delay_event;
+use crate::scene::*;
+
+
+pub struct KosuzuMemory {
+    books_info: Vec<BookInformation>,
+    customers_name: Vec<String>,
+    dates: Vec<GensoDate>,
+}
+
+impl KosuzuMemory {
+    pub fn new() -> Self {
+        KosuzuMemory {
+            books_info: Vec::new(),
+            customers_name: Vec::new(),
+            dates: Vec::new(),
+        }
+    }
+
+    pub fn add_book_info(&mut self, book_info: BookInformation) {
+        self.books_info.push(book_info);
+    }
+
+    pub fn add_customer_name(&mut self, name: String) {
+        self.customers_name.push(name);
+    }
+
+    pub fn add_date(&mut self, date: GensoDate) {
+        self.dates.push(date);
+    }
+
+    pub fn get_book_info_remove(&mut self, index: usize) -> Option<BookInformation> {
+        if self.books_info.len() <= index {
+            None
+        } else {
+            Some(self.books_info.swap_remove(index))
+        }
+    }
+
+    pub fn get_customer_name_remove(&mut self, index: usize) -> Option<String> {
+        if self.customers_name.len() <= index {
+            None
+        } else {
+            Some(self.customers_name.swap_remove(index))
+        }
+    }
+
+    pub fn get_dates_remove(&mut self, index: usize) -> Option<GensoDate> {
+        if self.dates.len() <= index {
+            None
+        } else {
+            Some(self.dates.swap_remove(index))
+        }
+    }
+
+    pub fn remove_book_info_at(&mut self, index: usize) {
+	self.books_info.remove(index);
+    }
+
+    pub fn remove_customer_name_at(&mut self, index: usize) {
+	self.customers_name.remove(index);
+    }
+
+    pub fn remove_date_at(&mut self, index: usize) {
+	self.dates.remove(index);
+    }
+}
 
 pub struct DropDownArea<D>
 where
@@ -594,7 +661,7 @@ impl CustomerNameMenu {
 	self.last_clicked
     }
 
-    pub fn get_title_frame_size(&self) -> numeric::Vector2f {
+    pub fn get_name_frame_size(&self) -> numeric::Vector2f {
         self.name_table_frame.size()
     }
 }
@@ -648,3 +715,700 @@ impl Clickable for CustomerNameMenu {
 }
 
 pub type CustomerNameDropMenu = DropDownArea<CustomerNameMenu>;
+
+pub struct DateMenu {
+    date_data: Vec<GensoDate>,
+    date_table_frame: TableFrame,
+    date_vtext: Vec<VerticalText>,
+    desc_vtext: Vec<VerticalText>,
+    header_text: VerticalText,
+    drwob_essential: DrawableObjectEssential,
+    last_clicked: Option<usize>,
+}
+
+impl DateMenu {
+    pub fn new(
+        ctx: &mut ggez::Context,
+        game_data: &GameData,
+	today: GensoDate,
+        drawing_depth: i8,
+    ) -> Self {
+	let mut date_data = Vec::new();
+        let mut date_vtext = Vec::new();
+	let mut desc_vtext = Vec::new();
+
+        let font_info = FontInformation::new(
+            game_data.get_font(FontID::JpFude1),
+            numeric::Vector2f::new(24.0, 24.0),
+            ggraphics::Color::from_rgba_u32(0xff),
+        );
+
+        let date_table_frame = TableFrame::new(
+            game_data,
+            numeric::Point2f::new(10.0, 10.0),
+            FrameData::new(vec![140.0, 280.0], vec![64.0; 3]),
+            numeric::Vector2f::new(0.3, 0.3),
+            0,
+        );
+
+	let mut loop_date = today.clone();
+        for index in 0..3 {
+            let name_vtext_line = loop_date.to_string();
+            let mut vtext = VerticalText::new(
+                name_vtext_line,
+                numeric::Point2f::new(0.0, 0.0),
+                numeric::Vector2f::new(1.0, 1.0),
+                0.0,
+                drawing_depth,
+                font_info,
+            );
+
+            vtext.make_center(
+                ctx,
+                roundup2f!(date_table_frame.get_center_of(
+                    numeric::Vector2u::new(index, 1),
+                    date_table_frame.get_position()
+                )),
+            );
+
+            date_vtext.push(vtext);
+	    date_data.push(loop_date.clone());
+	    loop_date.add_day(7);
+        }
+
+	for (index, s) in vec!["本日", "短期返却日", "長期返却日"].iter().enumerate() {
+            let mut vtext = VerticalText::new(
+                s.to_string(),
+                numeric::Point2f::new(0.0, 0.0),
+                numeric::Vector2f::new(1.0, 1.0),
+                0.0,
+                drawing_depth,
+                font_info,
+            );
+
+            vtext.make_center(
+                ctx,
+                roundup2f!(date_table_frame.get_center_of(
+                    numeric::Vector2u::new(index as u32, 0),
+                    date_table_frame.get_position()
+                )),
+            );
+
+            desc_vtext.push(vtext);
+        }
+
+        let header_text = VerticalText::new(
+            "日付情報".to_string(),
+            numeric::Point2f::new(date_table_frame.real_width() + 20.0, 30.0),
+            numeric::Vector2f::new(1.0, 1.0),
+            0.0,
+            0,
+            font_info,
+        );
+
+	DateMenu {
+	    date_data: date_data,
+            date_table_frame: date_table_frame,
+            date_vtext: date_vtext,
+	    desc_vtext: desc_vtext,
+            drwob_essential: DrawableObjectEssential::new(true, drawing_depth),
+            last_clicked: None,
+            header_text: header_text,
+        }
+    }
+
+    pub fn click_handler(&mut self, ctx: &mut ggez::Context, point: numeric::Point2f) {
+        let maybe_grid_position = self.date_table_frame.get_grid_position(ctx, point);
+        if let Some(grid_position) = maybe_grid_position {
+            self.last_clicked = Some(grid_position.x as usize);
+        }
+    }
+
+    pub fn get_last_clicked_book_info(&self) -> Option<GensoDate> {
+	if let Some(index) = self.last_clicked {
+	    Some(self.date_data.get(index).unwrap().clone())
+	} else {
+	    None
+	}
+    }
+
+    pub fn get_last_clicked_index(&self) -> Option<usize> {
+	self.last_clicked
+    }
+
+    pub fn get_date_frame_size(&self) -> numeric::Vector2f {
+        self.date_table_frame.size()
+    }
+}
+
+impl DrawableComponent for DateMenu {
+    fn draw(&mut self, ctx: &mut ggez::Context) -> ggez::GameResult<()> {
+        if self.is_visible() {
+            self.date_table_frame.draw(ctx)?;
+
+            for vtext in &mut self.date_vtext {
+                vtext.draw(ctx)?;
+            }
+
+	    for vtext in &mut self.desc_vtext {
+                vtext.draw(ctx)?;
+            }
+
+            self.header_text.draw(ctx)?;
+        }
+        Ok(())
+    }
+
+    fn hide(&mut self) {
+        self.drwob_essential.visible = false;
+    }
+
+    fn appear(&mut self) {
+        self.drwob_essential.visible = true;
+    }
+
+    fn is_visible(&self) -> bool {
+        self.drwob_essential.visible
+    }
+
+    fn set_drawing_depth(&mut self, depth: i8) {
+        self.drwob_essential.drawing_depth = depth;
+    }
+
+    fn get_drawing_depth(&self) -> i8 {
+        self.drwob_essential.drawing_depth
+    }
+}
+
+impl Clickable for DateMenu {
+    fn on_click(
+        &mut self,
+        ctx: &mut ggez::Context,
+        _game_data: &GameData,
+        _t: Clock,
+        _button: ggez::event::MouseButton,
+        point: numeric::Point2f,
+    ) {
+        self.click_handler(ctx, point);
+    }
+}
+
+pub type DateDropMenu = DropDownArea<DateMenu>;
+
+
+pub struct RecordBookMenuGroup {
+    event_list: DelayEventList<Self>,
+    book_status_menu: Option<EffectableWrap<MovableWrap<BookStatusMenu>>>,
+    book_title_menu: Option<EffectableWrap<MovableWrap<BookTitleDropMenu>>>,
+    customer_name_menu: Option<EffectableWrap<MovableWrap<CustomerNameDropMenu>>>,
+    date_menu: Option<EffectableWrap<MovableWrap<DateDropMenu>>>,
+    drwob_essential: DrawableObjectEssential,
+}
+
+impl RecordBookMenuGroup {
+    pub fn new(drawing_depth: i8) -> Self {
+        RecordBookMenuGroup {
+            event_list: DelayEventList::new(),
+            book_status_menu: None,
+            book_title_menu: None,
+	    customer_name_menu: None,
+	    date_menu: None,
+            drwob_essential: DrawableObjectEssential::new(true, drawing_depth),
+        }
+    }
+
+    pub fn is_some_menu_opened(&self) -> bool {
+        self.book_status_menu.is_some() ||
+	    self.book_title_menu.is_some() ||
+	    self.customer_name_menu.is_some() ||
+	    self.date_menu.is_some()
+    }
+
+    pub fn close_book_status_menu(&mut self, t: Clock) {
+        if let Some(button_group) = self.book_status_menu.as_mut() {
+            button_group.add_effect(vec![effect::fade_out(10, t)]);
+            self.event_list.add_event(
+                Box::new(|slf: &mut RecordBookMenuGroup, _, _| slf.book_status_menu = None),
+                t + 11,
+            );
+        }
+    }
+
+    pub fn close_book_title_menu(&mut self, t: Clock) {
+        if let Some(title_menu) = self.book_title_menu.as_mut() {
+            title_menu.add_effect(vec![effect::fade_out(10, t)]);
+            self.event_list.add_event(
+                Box::new(|slf: &mut RecordBookMenuGroup, _, _| slf.book_title_menu = None),
+                t + 11,
+            );
+        }
+    }
+
+    pub fn close_customer_name_menu(&mut self, t: Clock) {
+        if let Some(customer_name_menu) = self.customer_name_menu.as_mut() {
+            customer_name_menu.add_effect(vec![effect::fade_out(10, t)]);
+            self.event_list.add_event(
+                Box::new(|slf: &mut RecordBookMenuGroup, _, _| slf.customer_name_menu = None),
+                t + 11,
+            );
+        }
+    }
+
+    pub fn close_date_menu(&mut self, t: Clock) {
+        if let Some(date_menu) = self.date_menu.as_mut() {
+            date_menu.add_effect(vec![effect::fade_out(10, t)]);
+            self.event_list.add_event(
+                Box::new(|slf: &mut RecordBookMenuGroup, _, _| slf.date_menu = None),
+                t + 11,
+            );
+        }
+    }
+    
+    pub fn contains_book_status_menu(
+        &self,
+        ctx: &mut ggez::Context,
+        point: numeric::Point2f,
+    ) -> bool {
+        self.book_status_menu.is_some()
+            && self.book_status_menu.as_ref().unwrap().contains(ctx, point)
+    }
+
+    pub fn contains_book_title_menu(
+        &self,
+        ctx: &mut ggez::Context,
+        point: numeric::Point2f,
+    ) -> bool {
+        self.book_title_menu.is_some()
+            && self.book_title_menu.as_ref().unwrap().contains(ctx, point)
+    }
+
+    pub fn contains_customer_name_menu(
+        &self,
+        ctx: &mut ggez::Context,
+        point: numeric::Point2f,
+    ) -> bool {
+        self.customer_name_menu.is_some()
+            && self.customer_name_menu.as_ref().unwrap().contains(ctx, point)
+    }
+
+    pub fn contains_date_menu(
+        &self,
+        ctx: &mut ggez::Context,
+        point: numeric::Point2f,
+    ) -> bool {
+        self.date_menu.is_some()
+            && self.date_menu.as_ref().unwrap().contains(ctx, point)
+    }
+    
+    pub fn is_contains_any_menus(
+	&self,
+	ctx: &mut ggez::Context,
+	point: numeric::Point2f
+    ) -> bool {
+	self.contains_book_title_menu(ctx, point) ||
+	    self.contains_book_status_menu(ctx, point) ||
+	    self.contains_customer_name_menu(ctx, point) ||
+	    self.contains_date_menu(ctx, point)
+    }
+    
+    pub fn get_book_status_menu_position(&self) -> Option<numeric::Point2f> {
+        if let Some(book_status_menu) = self.book_status_menu.as_ref() {
+            Some(book_status_menu.get_position())
+        } else {
+            None
+        }
+    }
+
+    pub fn get_book_title_menu_position(&self) -> Option<numeric::Point2f> {
+        if let Some(book_title_menu) = self.book_title_menu.as_ref() {
+            Some(book_title_menu.get_position())
+        } else {
+            None
+        }
+    }
+
+    pub fn get_customer_name_menu_position(&self) -> Option<numeric::Point2f> {
+        if let Some(customer_name_menu) = self.customer_name_menu.as_ref() {
+            Some(customer_name_menu.get_position())
+        } else {
+            None
+        }
+    }
+
+    pub fn get_date_menu_position(&self) -> Option<numeric::Point2f> {
+        if let Some(date_menu) = self.date_menu.as_ref() {
+            Some(date_menu.get_position())
+        } else {
+            None
+        }
+    }
+
+    ///
+    /// メニューのエントリをクリックしていたらtrueを返し、そうでなければfalseを返す
+    ///
+    pub fn click_book_status_menu(
+        &mut self,
+        ctx: &mut ggez::Context,
+        game_data: &GameData,
+        button: ggez::input::mouse::MouseButton,
+        point: numeric::Point2f,
+        t: Clock,
+    ) -> bool {
+        // ボタンエリア内をクリックしていない場合は、即終了
+        if !self.contains_book_status_menu(ctx, point) {
+            return false;
+        }
+
+        if let Some(book_status_menu) = self.book_status_menu.as_mut() {
+            book_status_menu
+                .ref_wrapped_object_mut()
+                .ref_wrapped_object_mut()
+                .on_click(ctx, game_data, t, button, point);
+	    true
+        } else {
+	    false
+	}
+    }
+
+    ///
+    /// メニューのエントリをクリックしていたらtrueを返し、そうでなければfalseを返す
+    ///
+    pub fn click_book_title_menu(
+        &mut self,
+        ctx: &mut ggez::Context,
+        game_data: &GameData,
+        button: ggez::input::mouse::MouseButton,
+        point: numeric::Point2f,
+        t: Clock,
+    ) -> bool {
+        // ボタンエリア内をクリックしていない場合は、即終了
+        if !self.contains_book_title_menu(ctx, point) {
+            return false;
+        }
+
+        if let Some(book_title_menu) = self.book_title_menu.as_mut() {
+            book_title_menu
+                .ref_wrapped_object_mut()
+                .ref_wrapped_object_mut()
+                .on_click(ctx, game_data, t, button, point);
+	    true
+        } else {
+	    false
+	}
+    }
+
+    ///
+    /// メニューのエントリをクリックしていたらtrueを返し、そうでなければfalseを返す
+    ///
+    pub fn click_customer_name_menu(
+        &mut self,
+        ctx: &mut ggez::Context,
+        game_data: &GameData,
+        button: ggez::input::mouse::MouseButton,
+        point: numeric::Point2f,
+        t: Clock,
+    ) -> bool {
+        // ボタンエリア内をクリックしていない場合は、即終了
+        if !self.contains_customer_name_menu(ctx, point) {
+            return false;
+        }
+
+        if let Some(customer_name_menu) = self.customer_name_menu.as_mut() {
+            customer_name_menu
+                .ref_wrapped_object_mut()
+                .ref_wrapped_object_mut()
+                .on_click(ctx, game_data, t, button, point);
+	    true
+        } else {
+	    false
+	}
+    }
+
+    ///
+    /// メニューのエントリをクリックしていたらtrueを返し、そうでなければfalseを返す
+    ///
+    pub fn click_date_menu(
+        &mut self,
+        ctx: &mut ggez::Context,
+        game_data: &GameData,
+        button: ggez::input::mouse::MouseButton,
+        point: numeric::Point2f,
+        t: Clock,
+    ) -> bool {
+        // ボタンエリア内をクリックしていない場合は、即終了
+        if !self.contains_date_menu(ctx, point) {
+            return false;
+        }
+
+        if let Some(date_menu) = self.date_menu.as_mut() {
+            date_menu
+                .ref_wrapped_object_mut()
+                .ref_wrapped_object_mut()
+                .on_click(ctx, game_data, t, button, point);
+	    true
+        } else {
+	    false
+	}
+    }
+
+    pub fn book_status_menu_last_clicked(&mut self) -> Option<usize> {
+        if let Some(book_status_menu) = self.book_status_menu.as_mut() {
+            book_status_menu
+                .ref_wrapped_object_mut()
+                .ref_wrapped_object_mut()
+                .get_component()
+                .get_last_clicked()
+        } else {
+            None
+        }
+    }
+
+    pub fn book_title_menu_last_clicked(&mut self) -> Option<(usize, BookInformation)> {
+        if let Some(book_title_menu) = self.book_title_menu.as_mut() {
+            let component = book_title_menu
+                .ref_wrapped_object_mut()
+                .ref_wrapped_object_mut()
+                .get_component();
+	    if let Some(index) = component.get_last_clicked_index() {
+		Some((index, component.get_last_clicked_book_info().unwrap()))
+	    } else {
+		None
+	    }
+        } else {
+            None
+        }
+    }
+
+    pub fn date_menu_last_clicked(&mut self) -> Option<(usize, GensoDate)> {
+        if let Some(date_menu) = self.date_menu.as_mut() {
+            let component = date_menu
+                .ref_wrapped_object_mut()
+                .ref_wrapped_object_mut()
+                .get_component();
+	    if let Some(index) = component.get_last_clicked_index() {
+		Some((index, component.get_last_clicked_book_info().unwrap()))
+	    } else {
+		None
+	    }
+        } else {
+            None
+        }
+    }
+
+    pub fn close_all(&mut self, t: Clock) {
+        self.close_book_status_menu(t);
+	self.close_book_title_menu(t);
+	self.close_customer_name_menu(t);
+	self.close_date_menu(t);
+    }
+
+    pub fn show_book_status_menu(
+        &mut self,
+        ctx: &mut ggez::Context,
+        game_data: &GameData,
+        position: numeric::Point2f,
+        t: Clock,
+    ) {
+        let button_group = BookStatusButtonGroup::new(
+            ctx,
+            game_data,
+            numeric::Rect::new(0.0, 0.0, 70.0, 70.0),
+            20.0,
+            vec![
+                TextureID::ChoicePanel1,
+                TextureID::ChoicePanel2,
+                TextureID::ChoicePanel3,
+            ],
+            0,
+        );
+
+        let button_group_area = EffectableWrap::new(
+            MovableWrap::new(
+                Box::new(DropDownArea::new(
+                    ctx,
+                    numeric::Rect::new(position.x, position.y, 290.0, 220.0),
+                    0,
+                    button_group,
+                    t,
+                )),
+                None,
+                t,
+            ),
+            vec![effect::fade_in(10, t)],
+        );
+        self.book_status_menu = Some(button_group_area);
+    }
+
+    pub fn show_book_title_menu(
+        &mut self,
+        ctx: &mut ggez::Context,
+        game_data: &GameData,
+        position: numeric::Point2f,
+        kosuzu_memory: &KosuzuMemory,
+        t: Clock,
+    ) {
+        let book_title_menu =
+            BookTitleMenu::new(ctx, game_data, kosuzu_memory.books_info.clone(), 0);
+
+        let frame_size = book_title_menu.get_title_frame_size();
+
+        let book_title_menu_area = EffectableWrap::new(
+            MovableWrap::new(
+                Box::new(DropDownArea::new(
+                    ctx,
+                    numeric::Rect::new(
+                        position.x,
+                        position.y,
+                        frame_size.x + 128.0,
+                        frame_size.y + 64.0,
+                    ),
+                    0,
+                    book_title_menu,
+                    t,
+                )),
+                None,
+                t,
+            ),
+            vec![effect::fade_in(10, t)],
+        );
+
+        self.book_title_menu = Some(book_title_menu_area);
+    }
+
+    pub fn show_customer_name_menu(
+        &mut self,
+        ctx: &mut ggez::Context,
+        game_data: &GameData,
+        position: numeric::Point2f,
+        kosuzu_memory: &KosuzuMemory,
+        t: Clock,
+    ) {
+	let customer_name_menu = CustomerNameMenu::new(ctx, game_data, kosuzu_memory.customers_name.clone(), 0);
+
+        let frame_size = customer_name_menu.get_name_frame_size();
+
+        let customer_name_menu_area = EffectableWrap::new(
+            MovableWrap::new(
+                Box::new(DropDownArea::new(
+                    ctx,
+                    numeric::Rect::new(
+                        position.x,
+                        position.y,
+                        frame_size.x + 128.0,
+                        frame_size.y + 64.0,
+                    ),
+                    0,
+                    customer_name_menu,
+                    t,
+                )),
+                None,
+                t,
+            ),
+            vec![effect::fade_in(10, t)],
+        );
+
+        self.customer_name_menu = Some(customer_name_menu_area);
+    }
+
+    pub fn show_date_menu(
+        &mut self,
+        ctx: &mut ggez::Context,
+        game_data: &GameData,
+        position: numeric::Point2f,
+	today: GensoDate,
+        t: Clock,
+    ) {
+	let date_menu = DateMenu::new(ctx, game_data, today, 0);
+
+        let frame_size = date_menu.get_date_frame_size();
+
+        let date_menu_area = EffectableWrap::new(
+            MovableWrap::new(
+                Box::new(DropDownArea::new(
+                    ctx,
+                    numeric::Rect::new(
+                        position.x,
+                        position.y,
+                        frame_size.x + 128.0,
+                        frame_size.y + 64.0,
+                    ),
+                    0,
+                    date_menu,
+                    t,
+                )),
+                None,
+                t,
+            ),
+            vec![effect::fade_in(10, t)],
+        );
+
+        self.date_menu = Some(date_menu_area);
+    }
+
+    pub fn update(&mut self, ctx: &mut ggez::Context, game_data: &GameData, t: Clock) {
+	flush_delay_event!(self, self.event_list, ctx, game_data, t);
+
+        if let Some(book_status_menu) = self.book_status_menu.as_mut() {
+            book_status_menu.move_with_func(t);
+            book_status_menu.effect(ctx, t);
+        }
+
+        if let Some(book_title_menu) = self.book_title_menu.as_mut() {
+            book_title_menu.move_with_func(t);
+            book_title_menu.effect(ctx, t);
+        }
+
+	if let Some(customer_name_menu) = self.customer_name_menu.as_mut() {
+	    customer_name_menu.move_with_func(t);
+	    customer_name_menu.effect(ctx, t);
+        }
+
+	if let Some(date_menu) = self.date_menu.as_mut() {
+	    date_menu.move_with_func(t);
+	    date_menu.effect(ctx, t);
+        }
+    }
+}
+
+impl DrawableComponent for RecordBookMenuGroup {
+    fn draw(&mut self, ctx: &mut ggez::Context) -> ggez::GameResult<()> {
+        if self.is_visible() {
+            if let Some(book_status_menu) = self.book_status_menu.as_mut() {
+                book_status_menu.draw(ctx)?;
+            }
+
+            if let Some(book_title_menu) = self.book_title_menu.as_mut() {
+                book_title_menu.draw(ctx)?;
+            }
+
+	    if let Some(customer_name_menu) = self.customer_name_menu.as_mut() {
+		customer_name_menu.draw(ctx)?;
+            }
+
+	    if let Some(date_menu) = self.date_menu.as_mut() {
+		date_menu.draw(ctx)?;
+            }
+        }
+        Ok(())
+    }
+
+    fn hide(&mut self) {
+        self.drwob_essential.visible = false;
+    }
+
+    fn appear(&mut self) {
+        self.drwob_essential.visible = true;
+    }
+
+    fn is_visible(&self) -> bool {
+        self.drwob_essential.visible
+    }
+
+    fn set_drawing_depth(&mut self, depth: i8) {
+        self.drwob_essential.drawing_depth = depth;
+    }
+
+    fn get_drawing_depth(&self) -> i8 {
+        self.drwob_essential.drawing_depth
+    }
+}

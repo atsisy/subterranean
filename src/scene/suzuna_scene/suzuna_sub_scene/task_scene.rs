@@ -8,14 +8,13 @@ use torifune::graphics::*;
 use super::super::*;
 use crate::object::Clickable;
 
-use crate::core::{GameData, MouseActionRecord, MouseInformation};
+use crate::core::{GameData, MouseActionRecord, MouseInformation, GensoDate};
 use crate::object::task_object::*;
 use crate::scene::{SceneID, SceneTransition};
 
 use crate::object::task_object::tt_main_component::*;
 use crate::object::task_object::tt_sub_component::*;
 use crate::flush_delay_event;
-use tt_sub_component::GensoDate;
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum TaskSceneStatus {

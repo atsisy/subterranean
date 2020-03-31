@@ -19,14 +19,13 @@ use torifune::numeric;
 
 use super::*;
 use crate::core::map_parser as mp;
-use crate::core::{FontID, GameData};
+use crate::core::{FontID, GameData, GensoDate};
 use crate::object::map_object::*;
 use crate::object::scenario::*;
 use crate::object::shop_object::*;
 use crate::object::task_object::tt_main_component::CustomerRequest;
 use crate::object::*;
 use crate::scene::suzuna_scene::TaskResult;
-use task_object::tt_sub_component::*;
 
 struct CharacterGroup {
     group: Vec<CustomerCharacter>,

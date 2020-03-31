@@ -10,7 +10,7 @@ use torifune::numeric;
 use crate::core::*;
 use crate::scene::*;
 
-use crate::{object::task_object::tt_sub_component::GensoDate, scene::shop_scene::ShopScene};
+use crate::scene::shop_scene::ShopScene;
 
 use copy_scene::*;
 use task_result_scene::*;

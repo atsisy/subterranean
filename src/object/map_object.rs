@@ -13,11 +13,11 @@ use torifune::graphics::*;
 use torifune::numeric;
 
 use crate::core::map_parser as mp;
-use crate::core::{BookInformation, BookShelfInformation, GameData};
+use crate::core::{BookInformation, BookShelfInformation, GameData, GensoDate};
 use crate::object::collision::*;
 use crate::object::task_object::tt_main_component::CustomerRequest;
 use crate::object::task_object::tt_sub_component::{
-    BorrowingInformation, CopyingRequestInformation, GensoDate, ReturnBookInformation,
+    BorrowingInformation, CopyingRequestInformation, ReturnBookInformation,
 };
 use crate::flush_delay_event;
 use crate::scene::{DelayEventList, SceneID};
