@@ -26,6 +26,7 @@ use crate::scene::*;
 
 use super::Clickable;
 use crate::core::{FontID, GameData, TextureID};
+use crate::flush_delay_event;
 
 use number_to_jk::number_to_jk;
 
@@ -1476,6 +1477,155 @@ impl Clickable for BookTitleMenu {
 
 pub type BookTitleDropMenu = DropDownArea<BookTitleMenu>;
 
+
+pub struct CustomerNameMenu {
+    raw_data: Vec<String>,
+    name_table_frame: TableFrame,
+    name_vtext: Vec<VerticalText>,
+    header_text: VerticalText,
+    drwob_essential: DrawableObjectEssential,
+    last_clicked: Option<usize>,
+}
+
+impl CustomerNameMenu {
+    pub fn new(
+        ctx: &mut ggez::Context,
+        game_data: &GameData,
+        customer_name_data: Vec<String>,
+        drawing_depth: i8,
+    ) -> Self {
+        let mut title_vtext = Vec::new();
+
+        let font_info = FontInformation::new(
+            game_data.get_font(FontID::JpFude1),
+            numeric::Vector2f::new(32.0, 32.0),
+            ggraphics::Color::from_rgba_u32(0xff),
+        );
+
+        let name_table_frame = TableFrame::new(
+            game_data,
+            numeric::Point2f::new(10.0, 10.0),
+            FrameData::new(vec![250.0], vec![64.0; customer_name_data.len()]),
+            numeric::Vector2f::new(0.3, 0.3),
+            0,
+        );
+
+        for (index, name) in customer_name_data.iter().enumerate() {
+            let name_vtext_line = name.to_string();
+            let mut vtext = VerticalText::new(
+                name_vtext_line,
+                numeric::Point2f::new(0.0, 0.0),
+                numeric::Vector2f::new(1.0, 1.0),
+                0.0,
+                drawing_depth,
+                font_info,
+            );
+
+            vtext.make_center(
+                ctx,
+                roundup2f!(name_table_frame.get_center_of(
+                    numeric::Vector2u::new((customer_name_data.len() - index - 1) as u32, 0),
+                    name_table_frame.get_position()
+                )),
+            );
+
+            title_vtext.push(vtext);
+        }
+
+        let header_text = VerticalText::new(
+            "御客一覧".to_string(),
+            numeric::Point2f::new(name_table_frame.real_width() + 20.0, 30.0),
+            numeric::Vector2f::new(1.0, 1.0),
+            0.0,
+            0,
+            font_info,
+        );
+
+	CustomerNameMenu {
+            raw_data: customer_name_data,
+            name_table_frame: name_table_frame,
+            name_vtext: title_vtext,
+            drwob_essential: DrawableObjectEssential::new(true, drawing_depth),
+            last_clicked: None,
+            header_text: header_text,
+        }
+    }
+
+    pub fn click_handler(&mut self, ctx: &mut ggez::Context, point: numeric::Point2f) {
+        let maybe_grid_position = self.name_table_frame.get_grid_position(ctx, point);
+        if let Some(grid_position) = maybe_grid_position {
+            self.last_clicked = Some(grid_position.x as usize);
+        }
+    }
+
+    pub fn get_last_clicked_book_info(&self) -> Option<String> {
+	if let Some(index) = self.last_clicked {
+	    Some(self.raw_data.get(index).unwrap().clone())
+	} else {
+	    None
+	}
+    }
+
+    pub fn get_last_clicked_index(&self) -> Option<usize> {
+	self.last_clicked
+    }
+
+    pub fn get_title_frame_size(&self) -> numeric::Vector2f {
+        self.name_table_frame.size()
+    }
+}
+
+impl DrawableComponent for CustomerNameMenu {
+    fn draw(&mut self, ctx: &mut ggez::Context) -> ggez::GameResult<()> {
+        if self.is_visible() {
+            self.name_table_frame.draw(ctx)?;
+
+            for vtext in &mut self.name_vtext {
+                vtext.draw(ctx)?;
+            }
+
+            self.header_text.draw(ctx)?;
+        }
+        Ok(())
+    }
+
+    fn hide(&mut self) {
+        self.drwob_essential.visible = false;
+    }
+
+    fn appear(&mut self) {
+        self.drwob_essential.visible = true;
+    }
+
+    fn is_visible(&self) -> bool {
+        self.drwob_essential.visible
+    }
+
+    fn set_drawing_depth(&mut self, depth: i8) {
+        self.drwob_essential.drawing_depth = depth;
+    }
+
+    fn get_drawing_depth(&self) -> i8 {
+        self.drwob_essential.drawing_depth
+    }
+}
+
+impl Clickable for CustomerNameMenu {
+    fn on_click(
+        &mut self,
+        ctx: &mut ggez::Context,
+        _game_data: &GameData,
+        _t: Clock,
+        _button: ggez::event::MouseButton,
+        point: numeric::Point2f,
+    ) {
+        self.click_handler(ctx, point);
+    }
+}
+
+pub type CustomerNameDropMenu = DropDownArea<CustomerNameMenu>;
+
+
 #[derive(Clone)]
 pub struct BorrowingRecordBookPageData {
     pub borrow_book: HashMap<numeric::Vector2u, HoldData>,
@@ -1490,6 +1640,7 @@ pub struct RecordBookMenuGroup {
     event_list: DelayEventList<Self>,
     book_status_menu: Option<EffectableWrap<MovableWrap<BookStatusMenu>>>,
     book_title_menu: Option<EffectableWrap<MovableWrap<BookTitleDropMenu>>>,
+    customer_name_menu: Option<EffectableWrap<MovableWrap<CustomerNameDropMenu>>>,
     drwob_essential: DrawableObjectEssential,
 }
 
@@ -1499,12 +1650,15 @@ impl RecordBookMenuGroup {
             event_list: DelayEventList::new(),
             book_status_menu: None,
             book_title_menu: None,
+	    customer_name_menu: None,
             drwob_essential: DrawableObjectEssential::new(true, drawing_depth),
         }
     }
 
     pub fn is_some_menu_opened(&self) -> bool {
-        self.book_status_menu.is_some()
+        self.book_status_menu.is_some() ||
+	    self.book_title_menu.is_some() ||
+	    self.customer_name_menu.is_some()
     }
 
     pub fn close_book_status_menu(&mut self, t: Clock) {
@@ -1527,7 +1681,16 @@ impl RecordBookMenuGroup {
         }
     }
 
-
+    pub fn close_customer_name_menu(&mut self, t: Clock) {
+        if let Some(customer_name_menu) = self.customer_name_menu.as_mut() {
+            customer_name_menu.add_effect(vec![effect::fade_out(10, t)]);
+            self.event_list.add_event(
+                Box::new(|slf: &mut RecordBookMenuGroup, _, _| slf.customer_name_menu = None),
+                t + 11,
+            );
+        }
+    }
+    
     pub fn contains_book_status_menu(
         &self,
         ctx: &mut ggez::Context,
@@ -1546,6 +1709,25 @@ impl RecordBookMenuGroup {
             && self.book_title_menu.as_ref().unwrap().contains(ctx, point)
     }
 
+    pub fn contains_customer_name_menu(
+        &self,
+        ctx: &mut ggez::Context,
+        point: numeric::Point2f,
+    ) -> bool {
+        self.customer_name_menu.is_some()
+            && self.customer_name_menu.as_ref().unwrap().contains(ctx, point)
+    }
+
+    pub fn is_contains_any_menus(
+	&self,
+	ctx: &mut ggez::Context,
+	point: numeric::Point2f
+    ) -> bool {
+	self.contains_book_title_menu(ctx, point) ||
+	    self.contains_book_status_menu(ctx, point) ||
+	    self.contains_customer_name_menu(ctx, point)
+    }
+    
     pub fn get_book_status_menu_position(&self) -> Option<numeric::Point2f> {
         if let Some(book_status_menu) = self.book_status_menu.as_ref() {
             Some(book_status_menu.get_position())
@@ -1557,6 +1739,14 @@ impl RecordBookMenuGroup {
     pub fn get_book_title_menu_position(&self) -> Option<numeric::Point2f> {
         if let Some(book_title_menu) = self.book_title_menu.as_ref() {
             Some(book_title_menu.get_position())
+        } else {
+            None
+        }
+    }
+
+    pub fn get_customer_name_menu_position(&self) -> Option<numeric::Point2f> {
+        if let Some(customer_name_menu) = self.customer_name_menu.as_ref() {
+            Some(customer_name_menu.get_position())
         } else {
             None
         }
@@ -1616,6 +1806,33 @@ impl RecordBookMenuGroup {
 	}
     }
 
+    ///
+    /// メニューのエントリをクリックしていたらtrueを返し、そうでなければfalseを返す
+    ///
+    pub fn click_customer_name_menu(
+        &mut self,
+        ctx: &mut ggez::Context,
+        game_data: &GameData,
+        button: ggez::input::mouse::MouseButton,
+        point: numeric::Point2f,
+        t: Clock,
+    ) -> bool {
+        // ボタンエリア内をクリックしていない場合は、即終了
+        if !self.contains_customer_name_menu(ctx, point) {
+            return false;
+        }
+
+        if let Some(customer_name_menu) = self.customer_name_menu.as_mut() {
+            customer_name_menu
+                .ref_wrapped_object_mut()
+                .ref_wrapped_object_mut()
+                .on_click(ctx, game_data, t, button, point);
+	    true
+        } else {
+	    false
+	}
+    }
+
     pub fn book_status_menu_last_clicked(&mut self) -> Option<usize> {
         if let Some(book_status_menu) = self.book_status_menu.as_mut() {
             book_status_menu
@@ -1647,6 +1864,7 @@ impl RecordBookMenuGroup {
     pub fn close_all(&mut self, t: Clock) {
         self.close_book_status_menu(t);
 	self.close_book_title_menu(t);
+	self.close_customer_name_menu(t);
     }
 
     pub fn show_book_status_menu(
@@ -1722,21 +1940,43 @@ impl RecordBookMenuGroup {
         self.book_title_menu = Some(book_title_menu_area);
     }
 
-    fn run_effect(&mut self, ctx: &mut ggez::Context, game_data: &GameData, t: Clock) {
-        while let Some(event) = self.event_list.move_top() {
-            // 時間が来ていない場合は、取り出した要素をリストに戻して処理ループを抜ける
-            if event.run_time > t {
-                self.event_list.add(event);
-                break;
-            }
+    pub fn show_customer_name_menu(
+        &mut self,
+        ctx: &mut ggez::Context,
+        game_data: &GameData,
+        position: numeric::Point2f,
+        kosuzu_memory: &KosuzuMemory,
+        t: Clock,
+    ) {
+	let customer_name_menu = CustomerNameMenu::new(ctx, game_data, kosuzu_memory.customers_name.clone(), 0);
 
-            // 所有権を移動しているため、selfを渡してもエラーにならない
-            (event.func)(self, ctx, game_data);
-        }
+        let frame_size = customer_name_menu.get_title_frame_size();
+
+        let customer_name_menu_area = EffectableWrap::new(
+            MovableWrap::new(
+                Box::new(DropDownArea::new(
+                    ctx,
+                    numeric::Rect::new(
+                        position.x,
+                        position.y,
+                        frame_size.x + 128.0,
+                        frame_size.y + 64.0,
+                    ),
+                    0,
+                    customer_name_menu,
+                    t,
+                )),
+                None,
+                t,
+            ),
+            vec![effect::fade_in(10, t)],
+        );
+
+        self.customer_name_menu = Some(customer_name_menu_area);
     }
 
     pub fn update(&mut self, ctx: &mut ggez::Context, game_data: &GameData, t: Clock) {
-        self.run_effect(ctx, game_data, t);
+	flush_delay_event!(self, self.event_list, ctx, game_data, t);
 
         if let Some(book_status_menu) = self.book_status_menu.as_mut() {
             book_status_menu.move_with_func(t);
@@ -1746,6 +1986,11 @@ impl RecordBookMenuGroup {
         if let Some(book_title_menu) = self.book_title_menu.as_mut() {
             book_title_menu.move_with_func(t);
             book_title_menu.effect(ctx, t);
+        }
+
+	if let Some(customer_name_menu) = self.customer_name_menu.as_mut() {
+	    customer_name_menu.move_with_func(t);
+	    customer_name_menu.effect(ctx, t);
         }
     }
 }
@@ -1759,6 +2004,10 @@ impl DrawableComponent for RecordBookMenuGroup {
 
             if let Some(book_title_menu) = self.book_title_menu.as_mut() {
                 book_title_menu.draw(ctx)?;
+            }
+
+	    if let Some(customer_name_menu) = self.customer_name_menu.as_mut() {
+		customer_name_menu.draw(ctx)?;
             }
         }
         Ok(())
@@ -1786,7 +2035,7 @@ impl DrawableComponent for RecordBookMenuGroup {
 }
 
 pub struct BorrowingRecordBookPage {
-    info_table: TableFrame,
+    customer_info_table: TableFrame,
     books_table: TableFrame,
     borrow_book: HashMap<numeric::Vector2u, HoldDataVText>,
     request_information: HashMap<numeric::Vector2u, HoldDataVText>,
@@ -1833,8 +2082,8 @@ impl BorrowingRecordBookPage {
             info.reset(hold_data.clone());
             info.vtext.make_center(
                 ctx,
-                page.info_table
-                    .get_center_of(*position, page.info_table.get_position()),
+                page.customer_info_table
+                    .get_center_of(*position, page.customer_info_table.get_position()),
             );
         }
 
@@ -2134,7 +2383,7 @@ impl BorrowingRecordBookPage {
         ];
 
         BorrowingRecordBookPage {
-            info_table: table_frame,
+            customer_info_table: table_frame,
             books_table: books_table,
             borrow_book: borrow_text,
             borrower: borrower,
@@ -2161,8 +2410,8 @@ impl BorrowingRecordBookPage {
                     info.reset(hold_data.clone());
                     info.vtext.make_center(
                         ctx,
-                        self.info_table
-                            .get_center_of(position, self.info_table.get_position()),
+                        self.customer_info_table
+                            .get_center_of(position, self.customer_info_table.get_position()),
                     );
                 }
                 _ => (),
@@ -2174,8 +2423,8 @@ impl BorrowingRecordBookPage {
                     info.reset(hold_data.clone());
                     info.vtext.make_center(
                         ctx,
-                        self.info_table
-                            .get_center_of(position, self.info_table.get_position()),
+                        self.customer_info_table
+                            .get_center_of(position, self.customer_info_table.get_position()),
                     );
                 }
                 _ => (),
@@ -2187,8 +2436,8 @@ impl BorrowingRecordBookPage {
                     info.reset(hold_data.clone());
                     info.vtext.make_center(
                         ctx,
-                        self.info_table
-                            .get_center_of(position, self.info_table.get_position()),
+                        self.customer_info_table
+                            .get_center_of(position, self.customer_info_table.get_position()),
                     );
                 }
                 _ => (),
@@ -2284,7 +2533,7 @@ impl DrawableComponent for BorrowingRecordBookPage {
     fn draw(&mut self, ctx: &mut ggez::Context) -> ggez::GameResult<()> {
         if self.is_visible() {
             self.paper_texture.draw(ctx)?;
-            self.info_table.draw(ctx)?;
+            self.customer_info_table.draw(ctx)?;
             self.books_table.draw(ctx)?;
             self.book_head.draw(ctx)?;
             self.book_status.draw(ctx)?;
@@ -2426,7 +2675,7 @@ impl BorrowingRecordBook {
     ) -> bool {
         let rpoint = self.relative_point(point);
         if let Some(page) = self.get_current_page_mut() {
-            let maybe_position = page.info_table.get_grid_position(ctx, rpoint);
+            let maybe_position = page.customer_info_table.get_grid_position(ctx, rpoint);
             if let Some(position) = maybe_position {
                 page.try_insert_data_in_info_frame(ctx, position, hold_data);
                 true
@@ -2497,6 +2746,19 @@ impl BorrowingRecordBook {
         if let Some(page) = self.get_current_page().as_ref() {
             let page_point = self.relative_point(point);
             page.books_table.get_grid_position(ctx, page_point)
+        } else {
+            None
+        }
+    }
+
+    pub fn get_customer_info_frame_grid_position(
+        &self,
+        ctx: &mut ggez::Context,
+        point: numeric::Point2f,
+    ) -> Option<numeric::Vector2u> {
+        if let Some(page) = self.get_current_page().as_ref() {
+            let page_point = self.relative_point(point);
+            page.customer_info_table.get_grid_position(ctx, page_point)
         } else {
             None
         }

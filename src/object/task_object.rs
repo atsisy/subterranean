@@ -197,6 +197,8 @@ impl TaskTable {
             move_fn::devide_distance(numeric::Point2f::new(150.0, -550.0), 0.1),
             t,
         );
+
+	self.record_book_menu.close_all(t);
     }
 
     pub fn double_click_handler(
@@ -724,7 +726,7 @@ impl TaskTable {
     pub fn export_borrowing_record_book_data(&self) -> BorrowingRecordBookData {
         self.borrowing_record_book.export_book_data()
     }
-
+    
     ///
     /// メニューのエントリをクリックしていたらtrueを返し、そうでなければfalseを返す
     ///
@@ -777,20 +779,19 @@ impl TaskTable {
 	false
     }
 
-    fn try_show_menus(
-        &mut self,
+    ///
+    /// book_info_frameに関するメニューを表示する
+    ///
+    /// book_info_frameをクリックした場合、true, そうでなければ、false
+    ///
+    fn try_show_menus_regarding_book_info(
+	&mut self,
         ctx: &mut ggez::Context,
         game_data: &GameData,
         click_point: numeric::Point2f,
         t: Clock,
-    ) {
-        // 既に表示されている場合は、メニューを消して終了
-        if self.record_book_menu.is_some_menu_opened() {
-            self.record_book_menu.close_all(t);
-            return ();
-        }
-
-        let grid_pos = self
+    ) -> bool {
+	let grid_pos = self
             .borrowing_record_book
             .get_book_info_frame_grid_position(ctx, click_point);
 
@@ -808,7 +809,55 @@ impl TaskTable {
                     .show_book_status_menu(ctx, game_data, click_point, t),
                 _ => (),
             }
+
+	    true
+        } else {
+	    false
+	}
+    }
+
+    ///
+    /// customer_info_frameに関するメニューを表示する
+    ///
+    /// customer_info_frameをクリックした場合、true, そうでなければ、false
+    ///
+    fn try_show_menus_regarding_customer_info(
+	&mut self,
+        ctx: &mut ggez::Context,
+        game_data: &GameData,
+        click_point: numeric::Point2f,
+        t: Clock,
+    ) -> bool {
+	let maybe_grid_pos = self
+            .borrowing_record_book
+            .get_customer_info_frame_grid_position(ctx, click_point);
+
+        if let Some(grid_pos) = maybe_grid_pos {
+	    if grid_pos == numeric::Vector2u::new(2, 1) {
+		self.record_book_menu
+                    .show_customer_name_menu(ctx, game_data, click_point, &self.kosuzu_memory, t);
+	    }
+	    true
+        } else {
+	    false
+	}
+    }
+
+    fn try_show_menus(
+        &mut self,
+        ctx: &mut ggez::Context,
+        game_data: &GameData,
+        click_point: numeric::Point2f,
+        t: Clock,
+    ) {
+        // 既に表示されている場合は、メニューを消して終了
+        if self.record_book_menu.is_some_menu_opened() {
+            self.record_book_menu.close_all(t);
+            return ();
         }
+
+	self.try_show_menus_regarding_book_info(ctx, game_data, click_point, t)
+	    || self.try_show_menus_regarding_customer_info(ctx, game_data, click_point, t);
     }
 }
 
@@ -885,12 +934,17 @@ impl Clickable for TaskTable {
         &mut self,
         ctx: &mut ggez::Context,
         game_data: &GameData,
-        _: Clock,
+        t: Clock,
         _: ggez::input::mouse::MouseButton,
         point: numeric::Point2f,
     ) {
         let rpoint = self.canvas.relative_point(point);
-        self.update_hold_data(ctx, game_data, rpoint);
+	self.update_hold_data(ctx, game_data, rpoint);
+
+	// ボタンが離されたとき、メニュー外にあった場合、すべてのメニューを消す
+	if !self.record_book_menu.is_contains_any_menus(ctx, rpoint) {
+	    self.record_book_menu.close_all(t);
+	}
     }
 
     fn on_click(
