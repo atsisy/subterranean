@@ -19,6 +19,7 @@ use crate::object::task_object::tt_main_component::CustomerRequest;
 use crate::object::task_object::tt_sub_component::{
     BorrowingInformation, CopyingRequestInformation, GensoDate, ReturnBookInformation,
 };
+use crate::flush_delay_event;
 use crate::scene::{DelayEventList, SceneID};
 
 ///
@@ -1021,20 +1022,6 @@ impl CustomerCharacter {
         distance!(current, self.current_goal) < 1.5
     }
 
-    fn flush_delay_event(&mut self, ctx: &mut ggez::Context, game_data: &GameData, t: Clock) {
-        // 最後の要素の所有権を移動
-        while let Some(event) = self.event_list.move_top() {
-            // 時間が来ていない場合は、取り出した要素をリストに戻して処理ループを抜ける
-            if event.run_time > t {
-                self.event_list.add(event);
-                break;
-            }
-
-            // 所有権を移動しているため、selfを渡してもエラーにならない
-            (event.func)(self, ctx, game_data);
-        }
-    }
-
     fn generate_hold_request(&mut self, game_data: &GameData) -> CustomerRequest {
         let random_select = rand::random::<usize>() % 3;
         match random_select {
@@ -1103,7 +1090,7 @@ impl CustomerCharacter {
         t: Clock,
     ) {
         // 遅延イベントを実行
-        self.flush_delay_event(ctx, game_data, t);
+	flush_delay_event!(self, self.event_list, ctx, game_data, t);
 
         match self.customer_status {
             CustomerCharacterStatus::Ready => {

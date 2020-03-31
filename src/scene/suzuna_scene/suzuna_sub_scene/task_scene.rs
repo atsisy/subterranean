@@ -14,6 +14,7 @@ use crate::scene::{SceneID, SceneTransition};
 
 use crate::object::task_object::tt_main_component::*;
 use crate::object::task_object::tt_sub_component::*;
+use crate::flush_delay_event;
 use tt_sub_component::GensoDate;
 
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -83,23 +84,6 @@ impl TaskScene {
 
     fn unselect_dragging_object(&mut self, ctx: &mut ggez::Context, t: Clock) {
         self.task_table.unselect_dragging_object(ctx, t);
-    }
-
-    ///
-    /// 遅延処理を走らせるメソッド
-    ///
-    fn run_scene_event(&mut self, ctx: &mut ggez::Context, game_data: &GameData, t: Clock) {
-        // 最後の要素の所有権を移動
-        while let Some(event) = self.event_list.move_top() {
-            // 時間が来ていない場合は、取り出した要素をリストに戻して処理ループを抜ける
-            if event.run_time > t {
-                self.event_list.add(event);
-                break;
-            }
-
-            // 所有権を移動しているため、selfを渡してもエラーにならない
-            (event.func)(self, ctx, game_data);
-        }
     }
 
     fn insert_customer_event(&mut self, request: CustomerRequest, delay_clock: Clock) {
@@ -323,7 +307,7 @@ impl SceneManager for TaskScene {
             self.status = TaskSceneStatus::CustomerWait;
         }
 
-        self.run_scene_event(ctx, game_data, self.get_current_clock());
+	flush_delay_event!(self, self.event_list, ctx, game_data, self.get_current_clock());
     }
 
     fn drawing_process(&mut self, ctx: &mut ggez::Context) {

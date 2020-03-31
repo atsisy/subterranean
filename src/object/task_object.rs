@@ -22,6 +22,7 @@ use torifune::numeric;
 
 use crate::object::{effect, move_fn};
 use crate::scene::*;
+use crate::flush_delay_event;
 use tt_main_component::*;
 use tt_sub_component::*;
 
@@ -146,23 +147,6 @@ impl TaskTable {
             event_list: DelayEventList::new(),
             borrowing_record_book: record_book,
             record_book_menu: RecordBookMenuGroup::new(0),
-        }
-    }
-
-    ///
-    /// 遅延処理を走らせるメソッド
-    ///
-    fn run_delay_event(&mut self, ctx: &mut ggez::Context, game_data: &GameData, t: Clock) {
-        // 最後の要素の所有権を移動
-        while let Some(event) = self.event_list.move_top() {
-            // 時間が来ていない場合は、取り出した要素をリストに戻して処理ループを抜ける
-            if event.run_time > t {
-                self.event_list.add(event);
-                break;
-            }
-
-            // 所有権を移動しているため、selfを渡してもエラーにならない
-            (event.func)(self, ctx, game_data);
         }
     }
 
@@ -414,7 +398,8 @@ impl TaskTable {
     }
 
     pub fn update(&mut self, ctx: &mut ggez::Context, game_data: &GameData, t: Clock) {
-        self.run_delay_event(ctx, game_data, t);
+	flush_delay_event!(self, self.event_list, ctx, game_data, t);
+	
         self.sight.update(ctx, game_data, t);
         self.desk.update(ctx, game_data, t);
         self.shelving_box.update(ctx, t);
@@ -856,8 +841,9 @@ impl TaskTable {
             return ();
         }
 
-	self.try_show_menus_regarding_book_info(ctx, game_data, click_point, t)
-	    || self.try_show_menus_regarding_customer_info(ctx, game_data, click_point, t);
+	if !self.try_show_menus_regarding_book_info(ctx, game_data, click_point, t) {
+	    self.try_show_menus_regarding_customer_info(ctx, game_data, click_point, t);
+	}
     }
 }
 

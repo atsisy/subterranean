@@ -18,6 +18,7 @@ use torifune::{debug, numeric};
 
 use crate::object::util_object::*;
 use crate::object::{effect, move_fn};
+use crate::flush_delay_event;
 use crate::scene::*;
 
 use super::Clickable;
@@ -189,19 +190,6 @@ impl DeskObjects {
         false
     }
 
-    fn run_event(&mut self, ctx: &mut ggez::Context, game_data: &GameData, t: Clock) {
-        while let Some(event) = self.event_list.move_top() {
-            // 時間が来ていない場合は、取り出した要素をリストに戻して処理ループを抜ける
-            if event.run_time > t {
-                self.event_list.add(event);
-                break;
-            }
-
-            // 所有権を移動しているため、selfを渡してもエラーにならない
-            (event.func)(self, ctx, game_data);
-        }
-    }
-
     fn hide_desk_book_menu(&mut self, t: Clock) {
 	if let Some(menu) = self.desk_book_drop_menu.as_mut() {
 	    menu.add_effect(vec![effect::fade_out(10, t)]);
@@ -269,7 +257,7 @@ impl DeskObjects {
     }
 
     pub fn update(&mut self, ctx: &mut ggez::Context, game_data: &GameData, t: Clock) {
-	self.run_event(ctx, game_data, t);
+	flush_delay_event!(self, self.event_list, ctx, game_data, t);
 
 	if let Some(menu) = self.desk_book_drop_menu.as_mut() {
 	    menu.move_with_func(t);
@@ -1272,16 +1260,7 @@ impl SuzuMiniSightSilhouette {
     }
 
     fn run_effect(&mut self, ctx: &mut ggez::Context, game_data: &GameData, t: Clock) {
-        while let Some(event) = self.event_list.move_top() {
-            // 時間が来ていない場合は、取り出した要素をリストに戻して処理ループを抜ける
-            if event.run_time > t {
-                self.event_list.add(event);
-                break;
-            }
-
-            // 所有権を移動しているため、selfを渡してもエラーにならない
-            (event.func)(self, ctx, game_data);
-        }
+	flush_delay_event!(self, self.event_list, ctx, game_data, t);
 
         if self.silhouette.is_some() {
             self.silhouette.get_object_mut().unwrap().move_with_func(t);
