@@ -893,6 +893,311 @@ impl Clickable for DateMenu {
 
 pub type DateDropMenu = DropDownArea<DateMenu>;
 
+
+pub struct CustomerQuestionMenu {
+    question_table_frame: TableFrame,
+    question_vtext: Vec<VerticalText>,
+    header_text: VerticalText,
+    drwob_essential: DrawableObjectEssential,
+    last_clicked: Option<usize>,
+}
+
+impl CustomerQuestionMenu {
+    pub fn new(
+        ctx: &mut ggez::Context,
+        game_data: &GameData,
+        drawing_depth: i8,
+    ) -> Self {
+        let mut question_vtext = Vec::new();
+
+        let font_info = FontInformation::new(
+            game_data.get_font(FontID::JpFude1),
+            numeric::Vector2f::new(24.0, 24.0),
+            ggraphics::Color::from_rgba_u32(0xff),
+        );
+
+        let question_table_frame = TableFrame::new(
+            game_data,
+            numeric::Point2f::new(10.0, 10.0),
+            FrameData::new(vec![240.0], vec![64.0; 2]),
+            numeric::Vector2f::new(0.3, 0.3),
+            0,
+        );
+	
+        for (index, s) in vec!["御名前は", "貸出期限はどうなさいますか"].iter().enumerate() {
+            let mut vtext = VerticalText::new(
+                s.to_string(),
+                numeric::Point2f::new(0.0, 0.0),
+                numeric::Vector2f::new(1.0, 1.0),
+                0.0,
+                drawing_depth,
+                font_info,
+            );
+
+            vtext.make_center(
+                ctx,
+                roundup2f!(question_table_frame.get_center_of(
+                    numeric::Vector2u::new(index as u32, 0),
+                    question_table_frame.get_position()
+                )),
+            );
+
+	    question_vtext.push(vtext);
+        }
+	
+        let header_text = VerticalText::new(
+            "質問".to_string(),
+            numeric::Point2f::new(question_table_frame.real_width() + 20.0, 30.0),
+            numeric::Vector2f::new(1.0, 1.0),
+            0.0,
+            0,
+            font_info,
+        );
+
+        CustomerQuestionMenu {
+            question_table_frame: question_table_frame,
+            question_vtext: question_vtext,
+            drwob_essential: DrawableObjectEssential::new(true, drawing_depth),
+            last_clicked: None,
+            header_text: header_text,
+        }
+    }
+
+    pub fn click_handler(&mut self, ctx: &mut ggez::Context, point: numeric::Point2f) {
+        let maybe_grid_position = self.question_table_frame.get_grid_position(ctx, point);
+        if let Some(grid_position) = maybe_grid_position {
+            self.last_clicked = Some(grid_position.x as usize);
+        }
+    }
+
+    pub fn get_last_clicked_index(&self) -> Option<usize> {
+        self.last_clicked
+    }
+
+    pub fn get_date_frame_size(&self) -> numeric::Vector2f {
+        self.question_table_frame.size()
+    }
+}
+
+impl DrawableComponent for CustomerQuestionMenu {
+    fn draw(&mut self, ctx: &mut ggez::Context) -> ggez::GameResult<()> {
+        if self.is_visible() {
+            self.question_table_frame.draw(ctx)?;
+
+            for vtext in &mut self.question_vtext {
+                vtext.draw(ctx)?;
+            }
+
+            self.header_text.draw(ctx)?;
+        }
+        Ok(())
+    }
+
+    fn hide(&mut self) {
+        self.drwob_essential.visible = false;
+    }
+
+    fn appear(&mut self) {
+        self.drwob_essential.visible = true;
+    }
+
+    fn is_visible(&self) -> bool {
+        self.drwob_essential.visible
+    }
+
+    fn set_drawing_depth(&mut self, depth: i8) {
+        self.drwob_essential.drawing_depth = depth;
+    }
+
+    fn get_drawing_depth(&self) -> i8 {
+        self.drwob_essential.drawing_depth
+    }
+}
+
+impl Clickable for CustomerQuestionMenu {
+    fn on_click(
+        &mut self,
+        ctx: &mut ggez::Context,
+        _game_data: &GameData,
+        _t: Clock,
+        _button: ggez::event::MouseButton,
+        point: numeric::Point2f,
+    ) {
+        self.click_handler(ctx, point);
+    }
+}
+
+pub type CustomerQuestionDropMenu = DropDownArea<CustomerQuestionMenu>;
+
+
+pub struct CustomerMenuGroup {
+    event_list: DelayEventList<Self>,
+    customer_question_menu: Option<EffectableWrap<MovableWrap<CustomerQuestionDropMenu>>>,
+    drwob_essential: DrawableObjectEssential,
+}
+
+impl CustomerMenuGroup {
+    pub fn new(drawing_depth: i8) -> Self {
+        CustomerMenuGroup {
+            event_list: DelayEventList::new(),
+	    customer_question_menu: None,
+            drwob_essential: DrawableObjectEssential::new(true, drawing_depth),
+        }
+    }
+
+    pub fn is_some_menu_opened(&self) -> bool {
+	self.customer_question_menu.is_some()
+    }
+
+    pub fn close_customer_question_menu(&mut self, t: Clock) {
+        if let Some(customer_question) = self.customer_question_menu.as_mut() {
+            customer_question.add_effect(vec![effect::fade_out(10, t)]);
+            self.event_list.add_event(
+                Box::new(|slf: &mut CustomerMenuGroup, _, _| slf.customer_question_menu = None),
+                t + 11,
+            );
+        }
+    }
+
+    pub fn contains_customer_question_menu(
+        &self,
+        ctx: &mut ggez::Context,
+        point: numeric::Point2f,
+    ) -> bool {
+	self.customer_question_menu.is_some()
+            && self.customer_question_menu.as_ref().unwrap().contains(ctx, point)
+    }
+
+    pub fn is_contains_any_menus(&self, ctx: &mut ggez::Context, point: numeric::Point2f) -> bool {
+	self.contains_customer_question_menu(ctx, point)
+    }
+
+    pub fn get_customer_question_position(&self) -> Option<numeric::Point2f> {
+        if let Some(question_menu) = self.customer_question_menu.as_ref() {
+            Some(question_menu.get_position())
+        } else {
+            None
+        }
+    }
+
+    ///
+    /// メニューのエントリをクリックしていたらtrueを返し、そうでなければfalseを返す
+    ///
+    pub fn click_customer_question_menu(
+        &mut self,
+        ctx: &mut ggez::Context,
+        game_data: &GameData,
+        button: ggez::input::mouse::MouseButton,
+        point: numeric::Point2f,
+        t: Clock,
+    ) -> bool {
+        // ボタンエリア内をクリックしていない場合は、即終了
+        if !self.contains_customer_question_menu(ctx, point) {
+            return false;
+        }
+
+        if let Some(customer_question_menu) = self.customer_question_menu.as_mut() {
+            customer_question_menu
+                .ref_wrapped_object_mut()
+                .ref_wrapped_object_mut()
+                .on_click(ctx, game_data, t, button, point);
+            true
+        } else {
+            false
+        }
+    }
+
+    pub fn question_menu_last_clicked_index(&mut self) -> Option<usize> {
+        if let Some(customer_question_menu) = self.customer_question_menu.as_mut() {
+            customer_question_menu
+                .ref_wrapped_object_mut()
+                .ref_wrapped_object_mut()
+                .get_component()
+                .get_last_clicked_index()
+        } else {
+            None
+        }
+    }
+
+    pub fn close_all(&mut self, t: Clock) {
+	self.close_customer_question_menu(t);
+    }
+
+    pub fn show_customer_question_menu(
+        &mut self,
+        ctx: &mut ggez::Context,
+        game_data: &GameData,
+        position: numeric::Point2f,
+        t: Clock,
+    ) {
+        let question_menu = CustomerQuestionMenu::new(ctx, game_data, 0);
+
+        let frame_size = question_menu.get_date_frame_size();
+
+        let customer_question_menu_area = EffectableWrap::new(
+            MovableWrap::new(
+                Box::new(DropDownArea::new(
+                    ctx,
+                    numeric::Rect::new(
+                        position.x,
+                        position.y,
+                        frame_size.x + 128.0,
+                        frame_size.y + 64.0,
+                    ),
+                    0,
+                    question_menu,
+                    t,
+                )),
+                None,
+                t,
+            ),
+            vec![effect::fade_in(10, t)],
+        );
+
+        self.customer_question_menu = Some(customer_question_menu_area);
+    }
+
+    pub fn update(&mut self, ctx: &mut ggez::Context, game_data: &GameData, t: Clock) {
+        flush_delay_event!(self, self.event_list, ctx, game_data, t);
+
+        if let Some(customer_question_menu) = self.customer_question_menu.as_mut() {
+            customer_question_menu.move_with_func(t);
+            customer_question_menu.effect(ctx, t);
+        }
+    }
+}
+
+impl DrawableComponent for CustomerMenuGroup {
+    fn draw(&mut self, ctx: &mut ggez::Context) -> ggez::GameResult<()> {
+        if self.is_visible() {
+            if let Some(customer_question_menu) = self.customer_question_menu.as_mut() {
+                customer_question_menu.draw(ctx)?;
+            }
+        }
+        Ok(())
+    }
+
+    fn hide(&mut self) {
+        self.drwob_essential.visible = false;
+    }
+
+    fn appear(&mut self) {
+        self.drwob_essential.visible = true;
+    }
+
+    fn is_visible(&self) -> bool {
+        self.drwob_essential.visible
+    }
+
+    fn set_drawing_depth(&mut self, depth: i8) {
+        self.drwob_essential.drawing_depth = depth;
+    }
+
+    fn get_drawing_depth(&self) -> i8 {
+        self.drwob_essential.drawing_depth
+    }
+}
+
 pub struct RecordBookMenuGroup {
     event_list: DelayEventList<Self>,
     book_status_menu: Option<EffectableWrap<MovableWrap<BookStatusMenu>>>,
