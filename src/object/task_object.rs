@@ -867,7 +867,10 @@ impl TaskTable {
         click_point: numeric::Point2f,
         t: Clock,
     ) -> bool {
-	if self.sight.silhouette.contains(ctx, click_point) {
+	if self.sight.silhouette.contains_character_silhouette(ctx, click_point) {
+	    self.customer_silhouette_menu.show_customer_question_menu(ctx, game_data, click_point, t);
+	    true
+	} else if self.sight.silhouette.contains_text_balloon(ctx, click_point) {
 	    self.customer_silhouette_menu.show_customer_question_menu(ctx, game_data, click_point, t);
 	    true
 	} else {

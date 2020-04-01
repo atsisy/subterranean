@@ -1199,7 +1199,7 @@ impl SuzuMiniSightSilhouette {
     ) -> Self {
         let mut text_balloon = Box::new(TextBalloon::new(
             ctx,
-            numeric::Rect::new(280.0, 0.0, 200.0, 300.0),
+            numeric::Rect::new(430.0, 10.0, 200.0, 300.0),
             "",
             FontInformation::new(
                 game_data.get_font(FontID::JpFude1),
@@ -1212,7 +1212,7 @@ impl SuzuMiniSightSilhouette {
         SuzuMiniSightSilhouette {
             event_list: DelayEventList::new(),
             background: background,
-            silhouette: TaskSilhouette::new_empty(ctx, rect),
+            silhouette: TaskSilhouette::new_empty(ctx, numeric::Rect::new(100.0, 0.0, 350.0, 300.0)),
             text_balloon: EffectableWrap::new(
                 MovableWrap::new(text_balloon, None, 0),
                 vec![effect::fade_in(10, t)],
@@ -1299,6 +1299,16 @@ impl SuzuMiniSightSilhouette {
         //self.silhouette.get_object_mut().unwrap().add_effect(vec![effect::fade_out(20, now)]);
         self.text_balloon
             .add_effect(vec![effect::fade_out(20, now)]);
+    }
+
+    pub fn contains_text_balloon(&self, ctx: &mut ggez::Context, point: numeric::Point2f) -> bool {
+	let rpoint = self.canvas.relative_point(point);
+	self.text_balloon.contains(ctx, rpoint)
+    }
+
+    pub fn contains_character_silhouette(&self, ctx: &mut ggez::Context, point: numeric::Point2f) -> bool {
+	let rpoint = self.canvas.relative_point(point);
+	self.silhouette.contains(ctx, rpoint)
     }
 }
 

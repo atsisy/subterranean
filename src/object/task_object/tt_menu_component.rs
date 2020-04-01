@@ -912,7 +912,7 @@ impl CustomerQuestionMenu {
 
         let font_info = FontInformation::new(
             game_data.get_font(FontID::JpFude1),
-            numeric::Vector2f::new(24.0, 24.0),
+            numeric::Vector2f::new(26.0, 26.0),
             ggraphics::Color::from_rgba_u32(0xff),
         );
 
