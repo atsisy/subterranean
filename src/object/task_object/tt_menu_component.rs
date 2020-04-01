@@ -924,7 +924,7 @@ impl CustomerQuestionMenu {
             0,
         );
 	
-        for (index, s) in vec!["御名前は", "貸出期限はどうなさいますか"].iter().enumerate() {
+        for (index, s) in vec!["御名前は？", "返却期限は？"].iter().enumerate() {
             let mut vtext = VerticalText::new(
                 s.to_string(),
                 numeric::Point2f::new(0.0, 0.0),

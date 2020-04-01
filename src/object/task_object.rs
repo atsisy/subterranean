@@ -43,6 +43,7 @@ pub struct TaskTable {
     hold_data: HoldData,
     event_list: DelayEventList<TaskTable>,
     borrowing_record_book: BorrowingRecordBook,
+    customer_silhouette_menu: CustomerMenuGroup,
     record_book_menu: RecordBookMenuGroup,
     today: GensoDate,
 }
@@ -149,6 +150,7 @@ impl TaskTable {
             hold_data: HoldData::None,
             event_list: DelayEventList::new(),
             borrowing_record_book: record_book,
+	    customer_silhouette_menu: CustomerMenuGroup::new(0),
             record_book_menu: RecordBookMenuGroup::new(0),
             today: today_date,
         }
@@ -859,6 +861,26 @@ impl TaskTable {
         }
     }
 
+    ///
+    /// シルエットに関するメニューを表示する
+    ///
+    /// customer_menuをクリックした場合、true, そうでなければ、false
+    ///
+    fn try_show_menus_regarding_customer_silhoutte(
+        &mut self,
+        ctx: &mut ggez::Context,
+        game_data: &GameData,
+        click_point: numeric::Point2f,
+        t: Clock,
+    ) -> bool {
+	if self.sight.silhouette.contains(ctx, click_point) {
+	    self.customer_silhouette_menu.show_customer_question_menu(ctx, game_data, click_point, t);
+	    true
+	} else {
+	    false
+	}
+    }
+
     fn try_show_menus(
         &mut self,
         ctx: &mut ggez::Context,
@@ -873,7 +895,9 @@ impl TaskTable {
         }
 
         if !self.try_show_menus_regarding_book_info(ctx, game_data, click_point, t) {
-            self.try_show_menus_regarding_customer_info(ctx, game_data, click_point, t);
+            if !self.try_show_menus_regarding_customer_info(ctx, game_data, click_point, t) {
+		self.try_show_menus_regarding_customer_silhoutte(ctx, game_data, click_point, t);
+	    }
         }
     }
 }
@@ -896,6 +920,7 @@ impl DrawableComponent for TaskTable {
 
             self.customer_info_ui.draw(ctx)?;
 
+	    self.customer_silhouette_menu.draw(ctx)?;
             self.record_book_menu.draw(ctx)?;
 
             sub_screen::pop_screen(ctx);
