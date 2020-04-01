@@ -16,16 +16,16 @@ use torifune::impl_drawable_object_for_wrapped;
 use torifune::impl_texture_object_for_wrapped;
 use torifune::{debug, numeric};
 
+use crate::flush_delay_event;
 use crate::object::util_object::*;
 use crate::object::{effect, move_fn};
-use crate::flush_delay_event;
 use crate::scene::*;
 
 use super::Clickable;
-use crate::core::{BookInformation, FontID, GameData, TextureID, GensoDate};
+use crate::core::{BookInformation, FontID, GameData, GensoDate, TextureID};
 
-use super::tt_sub_component::*;
 use super::tt_menu_component::*;
+use super::tt_sub_component::*;
 
 pub enum TaskTableStagingObject {
     BorrowingRecordBook(BorrowingRecordBook),
@@ -135,7 +135,7 @@ impl DeskObjects {
                 Vec::new(),
             ),
             desk_book_drop_menu: None,
-	    event_list: DelayEventList::new(),
+            event_list: DelayEventList::new(),
         }
     }
 
@@ -192,15 +192,15 @@ impl DeskObjects {
     }
 
     fn hide_desk_book_menu(&mut self, t: Clock) {
-	if let Some(menu) = self.desk_book_drop_menu.as_mut() {
-	    menu.add_effect(vec![effect::fade_out(10, t)]);
-	    self.event_list.add_event(
+        if let Some(menu) = self.desk_book_drop_menu.as_mut() {
+            menu.add_effect(vec![effect::fade_out(10, t)]);
+            self.event_list.add_event(
                 Box::new(|slf: &mut DeskObjects, _, _| slf.desk_book_drop_menu = None),
                 t + 11,
             );
-	}
+        }
     }
-    
+
     pub fn dragging_handler(&mut self, point: numeric::Point2f, last: numeric::Point2f) {
         if let Some(obj) = &mut self.dragging {
             obj.get_object_mut()
@@ -258,13 +258,13 @@ impl DeskObjects {
     }
 
     pub fn update(&mut self, ctx: &mut ggez::Context, game_data: &GameData, t: Clock) {
-	flush_delay_event!(self, self.event_list, ctx, game_data, t);
+        flush_delay_event!(self, self.event_list, ctx, game_data, t);
 
-	if let Some(menu) = self.desk_book_drop_menu.as_mut() {
-	    menu.move_with_func(t);
-	    menu.effect(ctx, t);
-	}
-	
+        if let Some(menu) = self.desk_book_drop_menu.as_mut() {
+            menu.move_with_func(t);
+            menu.effect(ctx, t);
+        }
+
         for p in self.desk_objects.get_raw_container_mut() {
             p.get_object_mut().move_with_func(t);
             p.get_object_mut().effect(ctx, t);
@@ -374,7 +374,7 @@ impl DeskObjects {
     ) {
         // 既に表示されている場合は、消してすぐにreturn
         if self.desk_book_drop_menu.is_some() {
-	    self.hide_desk_book_menu(t);
+            self.hide_desk_book_menu(t);
             return ();
         }
 
@@ -386,7 +386,7 @@ impl DeskObjects {
             0,
         );
 
-	let mut dd_area = DropDownArea::new(
+        let mut dd_area = DropDownArea::new(
             ctx,
             numeric::Rect::new(point.x, point.y, 200.0, 300.0),
             0,
@@ -394,8 +394,8 @@ impl DeskObjects {
             t,
         );
 
-	dd_area.add_effect(vec![effect::fade_in(10, t)]);
-	
+        dd_area.add_effect(vec![effect::fade_in(10, t)]);
+
         self.desk_book_drop_menu = Some(dd_area);
     }
 
@@ -408,18 +408,18 @@ impl DeskObjects {
         point: numeric::Point2f,
         t: Clock,
     ) {
-	// ドラッグしている場合は、メニューを表示しない
-	if self.dragging.is_none() {
+        // ドラッグしている場合は、メニューを表示しない
+        if self.dragging.is_none() {
             match on_desk_type {
-		OnDeskType::Book => match hold_data {
+                OnDeskType::Book => match hold_data {
                     HoldData::BookName(info) => {
-			self.show_book_drop_down_menu(ctx, game_data, point, info.clone(), t);
+                        self.show_book_drop_down_menu(ctx, game_data, point, info.clone(), t);
                     }
                     _ => panic!(""),
-		},
-		_ => (),
+                },
+                _ => (),
             }
-	}
+        }
     }
 
     fn do_book_menu_action(&mut self, kosuzu_memory: &mut KosuzuMemory) -> bool {
@@ -459,8 +459,8 @@ impl DeskObjects {
             if book_menu.contains(ctx, rpoint) {
                 book_menu.on_click(ctx, game_data, t, button, rpoint);
                 if self.do_book_menu_action(kosuzu_memory) {
-		    // アクションが発生したので、メニューを消して終了
-		    self.hide_desk_book_menu(t);
+                    // アクションが発生したので、メニューを消して終了
+                    self.hide_desk_book_menu(t);
                     return ();
                 }
             }
@@ -1261,7 +1261,7 @@ impl SuzuMiniSightSilhouette {
     }
 
     fn run_effect(&mut self, ctx: &mut ggez::Context, game_data: &GameData, t: Clock) {
-	flush_delay_event!(self, self.event_list, ctx, game_data, t);
+        flush_delay_event!(self, self.event_list, ctx, game_data, t);
 
         if self.silhouette.is_some() {
             self.silhouette.get_object_mut().unwrap().move_with_func(t);

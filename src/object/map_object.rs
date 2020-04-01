@@ -14,12 +14,12 @@ use torifune::numeric;
 
 use crate::core::map_parser as mp;
 use crate::core::{BookInformation, BookShelfInformation, GameData, GensoDate};
+use crate::flush_delay_event;
 use crate::object::collision::*;
 use crate::object::task_object::tt_main_component::CustomerRequest;
 use crate::object::task_object::tt_sub_component::{
     BorrowingInformation, CopyingRequestInformation, ReturnBookInformation,
 };
-use crate::flush_delay_event;
 use crate::scene::{DelayEventList, SceneID};
 
 ///
@@ -1090,7 +1090,7 @@ impl CustomerCharacter {
         t: Clock,
     ) {
         // 遅延イベントを実行
-	flush_delay_event!(self, self.event_list, ctx, game_data, t);
+        flush_delay_event!(self, self.event_list, ctx, game_data, t);
 
         match self.customer_status {
             CustomerCharacterStatus::Ready => {

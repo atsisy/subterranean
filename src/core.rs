@@ -232,7 +232,6 @@ impl BookInformation {
     }
 }
 
-
 #[derive(Debug, Clone, Copy)]
 pub struct GensoDate {
     pub season: u32,

@@ -8,7 +8,7 @@ use std::path;
 use ggez::conf::{FullscreenType, WindowMode};
 use suzu::core::*;
 
-#[global_allocator] 
+#[global_allocator]
 static ALLOC: jemallocator::Jemalloc = jemallocator::Jemalloc;
 
 pub fn main() {

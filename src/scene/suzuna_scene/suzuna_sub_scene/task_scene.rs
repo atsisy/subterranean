@@ -8,13 +8,13 @@ use torifune::graphics::*;
 use super::super::*;
 use crate::object::Clickable;
 
-use crate::core::{GameData, MouseActionRecord, MouseInformation, GensoDate};
+use crate::core::{GameData, GensoDate, MouseActionRecord, MouseInformation};
 use crate::object::task_object::*;
 use crate::scene::{SceneID, SceneTransition};
 
+use crate::flush_delay_event;
 use crate::object::task_object::tt_main_component::*;
 use crate::object::task_object::tt_sub_component::*;
-use crate::flush_delay_event;
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum TaskSceneStatus {
@@ -306,7 +306,13 @@ impl SceneManager for TaskScene {
             self.status = TaskSceneStatus::CustomerWait;
         }
 
-	flush_delay_event!(self, self.event_list, ctx, game_data, self.get_current_clock());
+        flush_delay_event!(
+            self,
+            self.event_list,
+            ctx,
+            game_data,
+            self.get_current_clock()
+        );
     }
 
     fn drawing_process(&mut self, ctx: &mut ggez::Context) {

@@ -328,14 +328,12 @@ impl ShopScene {
 
         let map_position = numeric::Point2f::new(800.0, 830.0);
 
-        let player = PlayableCharacter::new(
-            character_factory::create_character(
-                character_factory::CharacterFactoryOrder::PlayableDoremy1,
-                game_data,
-                &camera.borrow(),
-                map_position,
-            )
-        );
+        let player = PlayableCharacter::new(character_factory::create_character(
+            character_factory::CharacterFactoryOrder::PlayableDoremy1,
+            game_data,
+            &camera.borrow(),
+            map_position,
+        ));
 
         let mut character_group = CharacterGroup::new();
         character_group.add(CustomerCharacter::new(

@@ -23,7 +23,7 @@ use crate::object::move_fn;
 use crate::object::util_object::*;
 
 use super::Clickable;
-use crate::core::{FontID, GameData, TextureID, GensoDate};
+use crate::core::{FontID, GameData, GensoDate, TextureID};
 
 use super::tt_menu_component::*;
 
@@ -1310,9 +1310,9 @@ impl BorrowingRecordBookPage {
         &mut self,
         ctx: &mut ggez::Context,
         menu_position: numeric::Point2f,
-	book_info: BookInformation,
+        book_info: BookInformation,
     ) {
-	let grid_pos = self
+        let grid_pos = self
             .books_table
             .get_grid_position(ctx, menu_position)
             .unwrap();
@@ -1338,10 +1338,10 @@ impl BorrowingRecordBookPage {
         &mut self,
         ctx: &mut ggez::Context,
         menu_position: numeric::Point2f,
-	date: GensoDate,
+        date: GensoDate,
     ) {
-	let grid_pos = self
-    	    .customer_info_table
+        let grid_pos = self
+            .customer_info_table
             .get_grid_position(ctx, menu_position)
             .unwrap();
 
@@ -1350,7 +1350,7 @@ impl BorrowingRecordBookPage {
             return;
         }
 
-	let info = self.request_information.get_mut(&grid_pos).unwrap();
+        let info = self.request_information.get_mut(&grid_pos).unwrap();
         info.reset(HoldData::Date(date));
         info.vtext.make_center(
             ctx,
@@ -1358,7 +1358,7 @@ impl BorrowingRecordBookPage {
                 .get_center_of(grid_pos, self.customer_info_table.get_position()),
         );
     }
-    
+
     pub fn replace_borrower_name(&mut self, game_data: &GameData, name: &str) -> &mut Self {
         let pos = self.borrower.get_position();
         self.borrower = VerticalText::new(
@@ -1576,25 +1576,25 @@ impl BorrowingRecordBook {
     pub fn insert_book_title_to_books_frame(
         &mut self,
         ctx: &mut ggez::Context,
-	menu_position: numeric::Point2f,
-	book_info: BookInformation,
+        menu_position: numeric::Point2f,
+        book_info: BookInformation,
     ) {
-	let rpoint = self.relative_point(menu_position);
-	if let Some(page) = self.get_current_page_mut() {
-	    page.try_insert_data_in_borrowing_books_frame(ctx, rpoint, book_info);
-	}
+        let rpoint = self.relative_point(menu_position);
+        if let Some(page) = self.get_current_page_mut() {
+            page.try_insert_data_in_borrowing_books_frame(ctx, rpoint, book_info);
+        }
     }
 
     pub fn insert_date_data_to_customer_info(
         &mut self,
         ctx: &mut ggez::Context,
-	menu_position: numeric::Point2f,
-	date: GensoDate,
+        menu_position: numeric::Point2f,
+        date: GensoDate,
     ) {
-	let rpoint = self.relative_point(menu_position);
-	if let Some(page) = self.get_current_page_mut() {
-	    page.try_insert_date_data_in_cutomer_info_frame(ctx, rpoint, date);
-	}
+        let rpoint = self.relative_point(menu_position);
+        if let Some(page) = self.get_current_page_mut() {
+            page.try_insert_date_data_in_cutomer_info_frame(ctx, rpoint, date);
+        }
     }
 
     pub fn export_book_data(&self) -> BorrowingRecordBookData {
@@ -1767,8 +1767,7 @@ impl MovableObject for BorrowingRecordBook {
     }
 }
 
-impl Clickable for BorrowingRecordBook {
-}
+impl Clickable for BorrowingRecordBook {}
 
 impl OnDesk for BorrowingRecordBook {
     fn ondesk_whose(&self) -> i32 {

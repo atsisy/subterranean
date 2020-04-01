@@ -5,21 +5,20 @@ use ggez::graphics as ggraphics;
 use torifune::core::{Clock, Updatable};
 use torifune::graphics::object::sub_screen;
 use torifune::graphics::object::sub_screen::SubScreen;
-use torifune::impl_drawable_object_for_wrapped;
-use torifune::impl_texture_object_for_wrapped;
 use torifune::graphics::object::*;
 use torifune::graphics::*;
-use torifune::roundup2f;
+use torifune::impl_drawable_object_for_wrapped;
+use torifune::impl_texture_object_for_wrapped;
 use torifune::numeric;
+use torifune::roundup2f;
 
-use crate::core::BookInformation;
-use crate::object::util_object::*;
-use crate::object::effect;
 use super::Clickable;
-use crate::core::{FontID, GameData, TextureID, GensoDate};
+use crate::core::BookInformation;
+use crate::core::{FontID, GameData, GensoDate, TextureID};
 use crate::flush_delay_event;
+use crate::object::effect;
+use crate::object::util_object::*;
 use crate::scene::*;
-
 
 pub struct KosuzuMemory {
     books_info: Vec<BookInformation>,
@@ -73,15 +72,15 @@ impl KosuzuMemory {
     }
 
     pub fn remove_book_info_at(&mut self, index: usize) {
-	self.books_info.remove(index);
+        self.books_info.remove(index);
     }
 
     pub fn remove_customer_name_at(&mut self, index: usize) {
-	self.customers_name.remove(index);
+        self.customers_name.remove(index);
     }
 
     pub fn remove_date_at(&mut self, index: usize) {
-	self.dates.remove(index);
+        self.dates.remove(index);
     }
 }
 
@@ -502,15 +501,15 @@ impl BookTitleMenu {
     }
 
     pub fn get_last_clicked_book_info(&self) -> Option<BookInformation> {
-	if let Some(index) = self.last_clicked {
-	    Some(self.raw_data.get(index).unwrap().clone())
-	} else {
-	    None
-	}
+        if let Some(index) = self.last_clicked {
+            Some(self.raw_data.get(index).unwrap().clone())
+        } else {
+            None
+        }
     }
 
     pub fn get_last_clicked_index(&self) -> Option<usize> {
-	self.last_clicked
+        self.last_clicked
     }
 
     pub fn get_title_frame_size(&self) -> numeric::Vector2f {
@@ -567,7 +566,6 @@ impl Clickable for BookTitleMenu {
 }
 
 pub type BookTitleDropMenu = DropDownArea<BookTitleMenu>;
-
 
 pub struct CustomerNameMenu {
     raw_data: Vec<String>,
@@ -632,7 +630,7 @@ impl CustomerNameMenu {
             font_info,
         );
 
-	CustomerNameMenu {
+        CustomerNameMenu {
             raw_data: customer_name_data,
             name_table_frame: name_table_frame,
             name_vtext: title_vtext,
@@ -650,15 +648,15 @@ impl CustomerNameMenu {
     }
 
     pub fn get_last_clicked_book_info(&self) -> Option<String> {
-	if let Some(index) = self.last_clicked {
-	    Some(self.raw_data.get(index).unwrap().clone())
-	} else {
-	    None
-	}
+        if let Some(index) = self.last_clicked {
+            Some(self.raw_data.get(index).unwrap().clone())
+        } else {
+            None
+        }
     }
 
     pub fn get_last_clicked_index(&self) -> Option<usize> {
-	self.last_clicked
+        self.last_clicked
     }
 
     pub fn get_name_frame_size(&self) -> numeric::Vector2f {
@@ -730,12 +728,12 @@ impl DateMenu {
     pub fn new(
         ctx: &mut ggez::Context,
         game_data: &GameData,
-	today: GensoDate,
+        today: GensoDate,
         drawing_depth: i8,
     ) -> Self {
-	let mut date_data = Vec::new();
+        let mut date_data = Vec::new();
         let mut date_vtext = Vec::new();
-	let mut desc_vtext = Vec::new();
+        let mut desc_vtext = Vec::new();
 
         let font_info = FontInformation::new(
             game_data.get_font(FontID::JpFude1),
@@ -751,7 +749,7 @@ impl DateMenu {
             0,
         );
 
-	let mut loop_date = today.clone();
+        let mut loop_date = today.clone();
         for index in 0..3 {
             let name_vtext_line = loop_date.to_string();
             let mut vtext = VerticalText::new(
@@ -772,11 +770,11 @@ impl DateMenu {
             );
 
             date_vtext.push(vtext);
-	    date_data.push(loop_date.clone());
-	    loop_date.add_day(7);
+            date_data.push(loop_date.clone());
+            loop_date.add_day(7);
         }
 
-	for (index, s) in vec!["本日", "短期返却日", "長期返却日"].iter().enumerate() {
+        for (index, s) in vec!["本日", "短期返却日", "長期返却日"].iter().enumerate() {
             let mut vtext = VerticalText::new(
                 s.to_string(),
                 numeric::Point2f::new(0.0, 0.0),
@@ -806,11 +804,11 @@ impl DateMenu {
             font_info,
         );
 
-	DateMenu {
-	    date_data: date_data,
+        DateMenu {
+            date_data: date_data,
             date_table_frame: date_table_frame,
             date_vtext: date_vtext,
-	    desc_vtext: desc_vtext,
+            desc_vtext: desc_vtext,
             drwob_essential: DrawableObjectEssential::new(true, drawing_depth),
             last_clicked: None,
             header_text: header_text,
@@ -825,15 +823,15 @@ impl DateMenu {
     }
 
     pub fn get_last_clicked_book_info(&self) -> Option<GensoDate> {
-	if let Some(index) = self.last_clicked {
-	    Some(self.date_data.get(index).unwrap().clone())
-	} else {
-	    None
-	}
+        if let Some(index) = self.last_clicked {
+            Some(self.date_data.get(index).unwrap().clone())
+        } else {
+            None
+        }
     }
 
     pub fn get_last_clicked_index(&self) -> Option<usize> {
-	self.last_clicked
+        self.last_clicked
     }
 
     pub fn get_date_frame_size(&self) -> numeric::Vector2f {
@@ -850,7 +848,7 @@ impl DrawableComponent for DateMenu {
                 vtext.draw(ctx)?;
             }
 
-	    for vtext in &mut self.desc_vtext {
+            for vtext in &mut self.desc_vtext {
                 vtext.draw(ctx)?;
             }
 
@@ -895,7 +893,6 @@ impl Clickable for DateMenu {
 
 pub type DateDropMenu = DropDownArea<DateMenu>;
 
-
 pub struct RecordBookMenuGroup {
     event_list: DelayEventList<Self>,
     book_status_menu: Option<EffectableWrap<MovableWrap<BookStatusMenu>>>,
@@ -911,17 +908,17 @@ impl RecordBookMenuGroup {
             event_list: DelayEventList::new(),
             book_status_menu: None,
             book_title_menu: None,
-	    customer_name_menu: None,
-	    date_menu: None,
+            customer_name_menu: None,
+            date_menu: None,
             drwob_essential: DrawableObjectEssential::new(true, drawing_depth),
         }
     }
 
     pub fn is_some_menu_opened(&self) -> bool {
-        self.book_status_menu.is_some() ||
-	    self.book_title_menu.is_some() ||
-	    self.customer_name_menu.is_some() ||
-	    self.date_menu.is_some()
+        self.book_status_menu.is_some()
+            || self.book_title_menu.is_some()
+            || self.customer_name_menu.is_some()
+            || self.date_menu.is_some()
     }
 
     pub fn close_book_status_menu(&mut self, t: Clock) {
@@ -963,7 +960,7 @@ impl RecordBookMenuGroup {
             );
         }
     }
-    
+
     pub fn contains_book_status_menu(
         &self,
         ctx: &mut ggez::Context,
@@ -988,29 +985,24 @@ impl RecordBookMenuGroup {
         point: numeric::Point2f,
     ) -> bool {
         self.customer_name_menu.is_some()
-            && self.customer_name_menu.as_ref().unwrap().contains(ctx, point)
+            && self
+                .customer_name_menu
+                .as_ref()
+                .unwrap()
+                .contains(ctx, point)
     }
 
-    pub fn contains_date_menu(
-        &self,
-        ctx: &mut ggez::Context,
-        point: numeric::Point2f,
-    ) -> bool {
-        self.date_menu.is_some()
-            && self.date_menu.as_ref().unwrap().contains(ctx, point)
+    pub fn contains_date_menu(&self, ctx: &mut ggez::Context, point: numeric::Point2f) -> bool {
+        self.date_menu.is_some() && self.date_menu.as_ref().unwrap().contains(ctx, point)
     }
-    
-    pub fn is_contains_any_menus(
-	&self,
-	ctx: &mut ggez::Context,
-	point: numeric::Point2f
-    ) -> bool {
-	self.contains_book_title_menu(ctx, point) ||
-	    self.contains_book_status_menu(ctx, point) ||
-	    self.contains_customer_name_menu(ctx, point) ||
-	    self.contains_date_menu(ctx, point)
+
+    pub fn is_contains_any_menus(&self, ctx: &mut ggez::Context, point: numeric::Point2f) -> bool {
+        self.contains_book_title_menu(ctx, point)
+            || self.contains_book_status_menu(ctx, point)
+            || self.contains_customer_name_menu(ctx, point)
+            || self.contains_date_menu(ctx, point)
     }
-    
+
     pub fn get_book_status_menu_position(&self) -> Option<numeric::Point2f> {
         if let Some(book_status_menu) = self.book_status_menu.as_ref() {
             Some(book_status_menu.get_position())
@@ -1064,10 +1056,10 @@ impl RecordBookMenuGroup {
                 .ref_wrapped_object_mut()
                 .ref_wrapped_object_mut()
                 .on_click(ctx, game_data, t, button, point);
-	    true
+            true
         } else {
-	    false
-	}
+            false
+        }
     }
 
     ///
@@ -1091,10 +1083,10 @@ impl RecordBookMenuGroup {
                 .ref_wrapped_object_mut()
                 .ref_wrapped_object_mut()
                 .on_click(ctx, game_data, t, button, point);
-	    true
+            true
         } else {
-	    false
-	}
+            false
+        }
     }
 
     ///
@@ -1118,10 +1110,10 @@ impl RecordBookMenuGroup {
                 .ref_wrapped_object_mut()
                 .ref_wrapped_object_mut()
                 .on_click(ctx, game_data, t, button, point);
-	    true
+            true
         } else {
-	    false
-	}
+            false
+        }
     }
 
     ///
@@ -1145,10 +1137,10 @@ impl RecordBookMenuGroup {
                 .ref_wrapped_object_mut()
                 .ref_wrapped_object_mut()
                 .on_click(ctx, game_data, t, button, point);
-	    true
+            true
         } else {
-	    false
-	}
+            false
+        }
     }
 
     pub fn book_status_menu_last_clicked(&mut self) -> Option<usize> {
@@ -1169,11 +1161,11 @@ impl RecordBookMenuGroup {
                 .ref_wrapped_object_mut()
                 .ref_wrapped_object_mut()
                 .get_component();
-	    if let Some(index) = component.get_last_clicked_index() {
-		Some((index, component.get_last_clicked_book_info().unwrap()))
-	    } else {
-		None
-	    }
+            if let Some(index) = component.get_last_clicked_index() {
+                Some((index, component.get_last_clicked_book_info().unwrap()))
+            } else {
+                None
+            }
         } else {
             None
         }
@@ -1185,11 +1177,11 @@ impl RecordBookMenuGroup {
                 .ref_wrapped_object_mut()
                 .ref_wrapped_object_mut()
                 .get_component();
-	    if let Some(index) = component.get_last_clicked_index() {
-		Some((index, component.get_last_clicked_book_info().unwrap()))
-	    } else {
-		None
-	    }
+            if let Some(index) = component.get_last_clicked_index() {
+                Some((index, component.get_last_clicked_book_info().unwrap()))
+            } else {
+                None
+            }
         } else {
             None
         }
@@ -1197,9 +1189,9 @@ impl RecordBookMenuGroup {
 
     pub fn close_all(&mut self, t: Clock) {
         self.close_book_status_menu(t);
-	self.close_book_title_menu(t);
-	self.close_customer_name_menu(t);
-	self.close_date_menu(t);
+        self.close_book_title_menu(t);
+        self.close_customer_name_menu(t);
+        self.close_date_menu(t);
     }
 
     pub fn show_book_status_menu(
@@ -1283,7 +1275,8 @@ impl RecordBookMenuGroup {
         kosuzu_memory: &KosuzuMemory,
         t: Clock,
     ) {
-	let customer_name_menu = CustomerNameMenu::new(ctx, game_data, kosuzu_memory.customers_name.clone(), 0);
+        let customer_name_menu =
+            CustomerNameMenu::new(ctx, game_data, kosuzu_memory.customers_name.clone(), 0);
 
         let frame_size = customer_name_menu.get_name_frame_size();
 
@@ -1315,10 +1308,10 @@ impl RecordBookMenuGroup {
         ctx: &mut ggez::Context,
         game_data: &GameData,
         position: numeric::Point2f,
-	today: GensoDate,
+        today: GensoDate,
         t: Clock,
     ) {
-	let date_menu = DateMenu::new(ctx, game_data, today, 0);
+        let date_menu = DateMenu::new(ctx, game_data, today, 0);
 
         let frame_size = date_menu.get_date_frame_size();
 
@@ -1346,7 +1339,7 @@ impl RecordBookMenuGroup {
     }
 
     pub fn update(&mut self, ctx: &mut ggez::Context, game_data: &GameData, t: Clock) {
-	flush_delay_event!(self, self.event_list, ctx, game_data, t);
+        flush_delay_event!(self, self.event_list, ctx, game_data, t);
 
         if let Some(book_status_menu) = self.book_status_menu.as_mut() {
             book_status_menu.move_with_func(t);
@@ -1358,14 +1351,14 @@ impl RecordBookMenuGroup {
             book_title_menu.effect(ctx, t);
         }
 
-	if let Some(customer_name_menu) = self.customer_name_menu.as_mut() {
-	    customer_name_menu.move_with_func(t);
-	    customer_name_menu.effect(ctx, t);
+        if let Some(customer_name_menu) = self.customer_name_menu.as_mut() {
+            customer_name_menu.move_with_func(t);
+            customer_name_menu.effect(ctx, t);
         }
 
-	if let Some(date_menu) = self.date_menu.as_mut() {
-	    date_menu.move_with_func(t);
-	    date_menu.effect(ctx, t);
+        if let Some(date_menu) = self.date_menu.as_mut() {
+            date_menu.move_with_func(t);
+            date_menu.effect(ctx, t);
         }
     }
 }
@@ -1381,12 +1374,12 @@ impl DrawableComponent for RecordBookMenuGroup {
                 book_title_menu.draw(ctx)?;
             }
 
-	    if let Some(customer_name_menu) = self.customer_name_menu.as_mut() {
-		customer_name_menu.draw(ctx)?;
+            if let Some(customer_name_menu) = self.customer_name_menu.as_mut() {
+                customer_name_menu.draw(ctx)?;
             }
 
-	    if let Some(date_menu) = self.date_menu.as_mut() {
-		date_menu.draw(ctx)?;
+            if let Some(date_menu) = self.date_menu.as_mut() {
+                date_menu.draw(ctx)?;
             }
         }
         Ok(())
