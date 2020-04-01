@@ -35,7 +35,6 @@ pub struct TaskTable {
     canvas: SubScreen,
     sight: SuzuMiniSight,
     desk: DeskObjects,
-    goods: Goods,
     customer_info_ui: CustomerInformationUI,
     staging_object: Option<TaskTableStagingObject>,
     kosuzu_memory: KosuzuMemory,
@@ -54,7 +53,6 @@ impl TaskTable {
         game_data: &GameData,
         pos: numeric::Rect,
         sight_rect: numeric::Rect,
-        goods_rect: numeric::Rect,
         desk_rect: numeric::Rect,
         shelving_box_rect: numeric::Rect,
         today_date: GensoDate,
@@ -137,7 +135,6 @@ impl TaskTable {
             canvas: SubScreen::new(ctx, pos, 0, ggraphics::Color::from_rgba_u32(0x00000000)),
             sight: sight,
             desk: desk,
-            goods: Goods::new(ctx, game_data, goods_rect),
             customer_info_ui: CustomerInformationUI::new(
                 ctx,
                 game_data,
@@ -630,9 +627,6 @@ impl TaskTable {
             let clicked_data = self.sight.check_data_click(ctx, point);
             self.update_hold_data_if_some(clicked_data);
 
-            let clicked_data = self.goods.check_data_click(ctx, point);
-            self.update_hold_data_if_some(clicked_data);
-
             let clicked_data = self.customer_info_ui.check_data_click(ctx, point);
             self.update_hold_data_if_some(clicked_data);
         } else {
@@ -909,7 +903,6 @@ impl DrawableComponent for TaskTable {
 
             self.sight.draw(ctx).unwrap();
             self.desk.draw(ctx).unwrap();
-            self.goods.draw(ctx).unwrap();
             self.shelving_box.draw(ctx).unwrap();
 
             if let Some(staging_object) = self.staging_object.as_mut() {
@@ -1026,11 +1019,6 @@ impl Clickable for TaskTable {
         }
 
         cursor_status = self.sight.check_mouse_cursor_status(ctx, rpoint);
-        if cursor_status != MouseCursor::Default {
-            return cursor_status;
-        }
-
-        cursor_status = self.goods.check_mouse_cursor_status(ctx, rpoint);
         if cursor_status != MouseCursor::Default {
             return cursor_status;
         }

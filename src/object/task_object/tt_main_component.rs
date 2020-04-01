@@ -22,7 +22,7 @@ use crate::object::{effect, move_fn};
 use crate::scene::*;
 
 use super::Clickable;
-use crate::core::{BookInformation, FontID, GameData, GensoDate, TextureID};
+use crate::core::{BookInformation, FontID, GameData, TextureID};
 
 use super::tt_menu_component::*;
 use super::tt_sub_component::*;
@@ -1283,6 +1283,18 @@ impl SuzuMiniSightSilhouette {
         self.text_balloon.appear();
     }
 
+    pub fn insert_new_balloon_phrase(&mut self, text: String, delay_time: Clock, now: Clock) {
+	self.event_list.add(DelayEvent::new(
+            Box::new(move |silhouette, ctx, _| {
+                silhouette.replace_text(ctx, &text);
+                silhouette
+                    .text_balloon
+                    .add_effect(vec![effect::fade_in(20, now + delay_time)]);
+            }),
+            now + delay_time,
+        ));
+    }
+
     pub fn run_hide_effect(&mut self, now: Clock) {
         //self.silhouette.get_object_mut().unwrap().add_effect(vec![effect::fade_out(20, now)]);
         self.text_balloon
@@ -1647,92 +1659,6 @@ impl HoldData {
             &HoldData::None => false,
             _ => true,
         }
-    }
-}
-
-pub struct Goods {
-    calendar: DrawableCalendar,
-    canvas: SubScreen,
-}
-
-impl Goods {
-    pub fn new(ctx: &mut ggez::Context, game_data: &GameData, pos_rect: numeric::Rect) -> Self {
-        Goods {
-            calendar: DrawableCalendar::new(
-                ctx,
-                game_data,
-                numeric::Rect::new(0.0, 0.0, 100.0, 100.0),
-                GensoDate::new(12, 12, 12),
-                TextureID::Paper1,
-            ),
-            canvas: SubScreen::new(
-                ctx,
-                pos_rect,
-                0,
-                ggraphics::Color::from_rgba_u32(0x00000000),
-            ),
-        }
-    }
-
-    pub fn check_data_click(
-        &mut self,
-        ctx: &mut ggez::Context,
-        point: numeric::Point2f,
-    ) -> HoldData {
-        let rpoint = self.canvas.relative_point(point);
-
-        if self.calendar.get_drawing_area(ctx).contains(rpoint) {
-            return self.calendar.click_data(ctx, rpoint);
-        }
-
-        HoldData::None
-    }
-
-    pub fn check_mouse_cursor_status(
-        &mut self,
-        ctx: &mut ggez::Context,
-        point: numeric::Point2f,
-    ) -> MouseCursor {
-        if self.canvas.get_drawing_area(ctx).contains(point) {
-            let rpoint = self.canvas.relative_point(point);
-            return self.calendar.clickable_status(ctx, rpoint);
-        }
-
-        MouseCursor::Default
-    }
-}
-
-impl DrawableComponent for Goods {
-    fn draw(&mut self, ctx: &mut ggez::Context) -> ggez::GameResult<()> {
-        if self.is_visible() {
-            sub_screen::stack_screen(ctx, &self.canvas);
-
-            self.calendar.draw(ctx)?;
-
-            sub_screen::pop_screen(ctx);
-            self.canvas.draw(ctx).unwrap();
-        }
-        Ok(())
-    }
-
-    fn hide(&mut self) {
-        self.canvas.hide()
-    }
-
-    fn appear(&mut self) {
-        self.canvas.appear()
-    }
-
-    fn is_visible(&self) -> bool {
-        self.canvas.is_visible()
-    }
-
-    fn set_drawing_depth(&mut self, depth: i8) {
-        self.canvas.set_drawing_depth(depth)
-    }
-
-    fn get_drawing_depth(&self) -> i8 {
-        self.canvas.get_drawing_depth()
     }
 }
 

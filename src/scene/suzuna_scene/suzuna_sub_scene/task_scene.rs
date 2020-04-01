@@ -51,7 +51,6 @@ impl TaskScene {
                 game_data,
                 numeric::Rect::new(0.0, 0.0, 1366.0, 768.0),
                 numeric::Rect::new(0.0, 0.0, 800.0, 300.0),
-                numeric::Rect::new(800.0, 0.0, 400.0, 300.0),
                 numeric::Rect::new(0.0, 310.0, 900.0, 500.0),
                 numeric::Rect::new(900.0, 310.0, 500.0, 500.0),
                 today_date,
