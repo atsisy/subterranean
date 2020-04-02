@@ -1310,6 +1310,7 @@ impl SuzuMiniSightSilhouette {
 	let rpoint = self.canvas.relative_point(point);
 	self.silhouette.contains(ctx, rpoint)
     }
+
 }
 
 impl DrawableComponent for SuzuMiniSightSilhouette {
@@ -1677,6 +1678,16 @@ pub enum CustomerRequest {
     Borrowing(BorrowingInformation),
     Returning(ReturnBookInformation),
     Copying(CopyingRequestInformation),
+}
+
+impl CustomerRequest {
+    pub fn get_customer_name(&self) -> String {
+	match self {
+	    CustomerRequest::Borrowing(info) => info.borrower.clone(),
+	    CustomerRequest::Returning(info) => info.borrower.clone(),
+	    CustomerRequest::Copying(info) => info.customer.clone(),
+	}
+    }
 }
 
 pub struct ShelvingBookBox {

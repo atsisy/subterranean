@@ -44,6 +44,7 @@ pub struct TaskTable {
     borrowing_record_book: BorrowingRecordBook,
     customer_silhouette_menu: CustomerMenuGroup,
     record_book_menu: RecordBookMenuGroup,
+    current_customer_request: Option<CustomerRequest>,
     today: GensoDate,
 }
 
@@ -149,6 +150,7 @@ impl TaskTable {
             borrowing_record_book: record_book,
 	    customer_silhouette_menu: CustomerMenuGroup::new(0),
             record_book_menu: RecordBookMenuGroup::new(0),
+	    current_customer_request: None,
             today: today_date,
         }
     }
@@ -410,6 +412,7 @@ impl TaskTable {
         self.customer_info_ui.update(ctx, t);
         self.borrowing_record_book.update(t);
         self.record_book_menu.update(ctx, game_data, t);
+	self.customer_silhouette_menu.update(ctx, game_data, t);
     }
 
     pub fn finish_customer_event(&mut self, now: Clock) {
@@ -587,6 +590,8 @@ impl TaskTable {
         info: CustomerRequest,
         t: Clock,
     ) {
+	self.current_customer_request = Some(info.clone());
+	
         match info {
             CustomerRequest::Borrowing(info) => {
                 self.start_borrowing_customer_event(ctx, game_data, info, t)
@@ -776,6 +781,51 @@ impl TaskTable {
     }
 
     ///
+    /// 新しく、客の名前をsightのtext_balloonに表示させる
+    ///
+    fn insert_custmer_name_phrase(&mut self, t: Clock) {
+	if let Some(customer_request) = self.current_customer_request.as_ref() {
+	    println!("replace text balloon phrase!!");
+	    let phrase_text = format!("{}です", customer_request.get_customer_name());
+	    self.sight.silhouette.insert_new_balloon_phrase(phrase_text, 20, t);
+	}
+    }
+
+    ///
+    /// メニューのエントリをクリックしていたらtrueを返し、そうでなければfalseを返す
+    ///
+    fn click_customer_silhouette_menu(
+        &mut self,
+        ctx: &mut ggez::Context,
+        game_data: &GameData,
+        button: ggez::input::mouse::MouseButton,
+        point: numeric::Point2f,
+        t: Clock,
+    ) -> bool {
+	println!("check customer_silhouette");
+        if !self
+            .customer_silhouette_menu
+	    .click_customer_question_menu(ctx, game_data, button, point, t)
+        {
+            // メニューをクリックしていない場合はfalseをクリックして終了
+	    println!("not clicked");
+            return false;
+        }
+
+        if let Some(index) = self.customer_silhouette_menu.question_menu_last_clicked_index() {
+	    match index {
+		0 => self.insert_custmer_name_phrase(t),
+		1 => panic!("Exceptin"),
+		_ => panic!("Exceptin"),
+	    }
+
+            return true;
+        }
+
+        false
+    }
+    
+    ///
     /// book_info_frameに関するメニューを表示する
     ///
     /// book_info_frameをクリックした場合、true, そうでなければ、false
@@ -891,6 +941,14 @@ impl TaskTable {
             return ();
         }
 
+	// 既に表示されている場合は、メニューを消して終了
+        if self.customer_silhouette_menu.is_some_menu_opened() {
+            self.customer_silhouette_menu.close_all(t);
+            return ();
+        }
+
+
+
         if !self.try_show_menus_regarding_book_info(ctx, game_data, click_point, t) {
             if !self.try_show_menus_regarding_customer_info(ctx, game_data, click_point, t) {
 		self.try_show_menus_regarding_customer_silhoutte(ctx, game_data, click_point, t);
@@ -983,6 +1041,10 @@ impl Clickable for TaskTable {
         if !self.record_book_menu.is_contains_any_menus(ctx, rpoint) {
             self.record_book_menu.close_all(t);
         }
+
+	if !self.customer_silhouette_menu.is_contains_any_menus(ctx, rpoint) {
+            self.customer_silhouette_menu.close_all(t);
+        }
     }
 
     fn on_click(
@@ -1000,12 +1062,14 @@ impl Clickable for TaskTable {
         self.borrowing_record_book
             .click_handler(ctx, game_data, t, rpoint);
 
-        if !self.click_record_book_menu(ctx, game_data, button, rpoint, t) {
-            // メニューをクリックしていない場合に、新しいメニュー表示処理を走らせる
-            self.try_show_menus(ctx, game_data, rpoint, t);
-        } else {
-            self.record_book_menu.close_all(t);
-        }
+        if !self.click_record_book_menu(ctx, game_data, button, rpoint, t) &&
+	    !self.click_customer_silhouette_menu(ctx, game_data, button, rpoint, t) {
+		// メニューをクリックしていない場合に、新しいメニュー表示処理を走らせる
+		self.try_show_menus(ctx, game_data, rpoint, t);
+            } else {
+		self.record_book_menu.close_all(t);
+		self.customer_silhouette_menu.close_all(t);
+            }
     }
 
     fn clickable_status(
