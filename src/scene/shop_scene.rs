@@ -337,6 +337,7 @@ impl ShopScene {
 
         let mut character_group = CharacterGroup::new();
         character_group.add(CustomerCharacter::new(
+	    game_data,
             character_factory::create_character(
                 character_factory::CharacterFactoryOrder::CustomerSample,
                 game_data,
@@ -965,6 +966,7 @@ impl ShopScene {
         /* self.shop_clock.minute % 1 == 0 && */
         rand::random::<usize>() % 150 == 0 {
             self.character_group.add(CustomerCharacter::new(
+		game_data,
                 character_factory::create_character(
                     character_factory::CharacterFactoryOrder::CustomerSample,
                     game_data,
@@ -1117,7 +1119,7 @@ impl SceneManager for ShopScene {
                 .drain_remove_if(|customer: &CustomerCharacter| customer.is_wait_on_clerk());
 
             for customer in &mut rising_customers {
-                if let Some(request) = customer.check_rise_hand(game_data) {
+                if let Some(request) = customer.check_rise_hand(game_data, self.today_date.clone()) {
                     self.customer_request_queue.push_back(request);
                 }
             }

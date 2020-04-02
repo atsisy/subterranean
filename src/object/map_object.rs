@@ -18,7 +18,7 @@ use crate::flush_delay_event;
 use crate::object::collision::*;
 use crate::object::task_object::tt_main_component::CustomerRequest;
 use crate::object::task_object::tt_sub_component::{
-    BorrowingInformation, CopyingRequestInformation, ReturnBookInformation,
+    BorrowingInformation, CopyingRequestInformation, ReturnBookInformation, RentalLimit,
 };
 use crate::scene::{DelayEventList, SceneID};
 
@@ -816,6 +816,18 @@ pub enum CustomerCharacterStatus {
     GotOut,
 }
 
+pub struct CustomerInformation {
+    pub name: String,
+}
+
+impl CustomerInformation {
+    pub fn new(name: &str) -> Self {
+	CustomerInformation {
+	    name: name.to_string(),
+	}
+    }
+}
+
 ///
 /// マップ上に表示するキャラクターの情報
 ///
@@ -827,10 +839,11 @@ pub struct CustomerCharacter {
     customer_status: CustomerCharacterStatus,
     shopping_is_done: bool,
     current_goal: numeric::Point2f,
+    customer_info: CustomerInformation,
 }
 
 impl CustomerCharacter {
-    pub fn new(character: MapObject, move_data: CustomerDestPoint) -> Self {
+    pub fn new(game_data: &GameData, character: MapObject, move_data: CustomerDestPoint) -> Self {
         CustomerCharacter {
             event_list: DelayEventList::new(),
             character: character,
@@ -839,6 +852,7 @@ impl CustomerCharacter {
             customer_status: CustomerCharacterStatus::Ready,
             shopping_is_done: false,
             current_goal: numeric::Point2f::new(0.0, 0.0),
+	    customer_info: CustomerInformation::new(game_data.customer_random_select())
         }
     }
 
@@ -1022,22 +1036,23 @@ impl CustomerCharacter {
         distance!(current, self.current_goal) < 1.5
     }
 
-    fn generate_hold_request(&mut self, game_data: &GameData) -> CustomerRequest {
+    fn generate_hold_request(&mut self, game_data: &GameData, today: GensoDate) -> CustomerRequest {
         let random_select = rand::random::<usize>() % 3;
         match random_select {
-            0 => CustomerRequest::Borrowing(BorrowingInformation::new_random(
-                game_data,
-                GensoDate::new(128, 12, 20),
-                GensoDate::new(128, 12, 20),
-            )),
+            0 => CustomerRequest::Borrowing(
+		BorrowingInformation::new(
+		    vec![game_data.book_random_select().clone()],
+		    &self.customer_info.name,
+		    today,
+		    RentalLimit::random())),
             1 => CustomerRequest::Returning(ReturnBookInformation::new_random(
                 game_data,
-                GensoDate::new(128, 12, 20),
+                today,
                 GensoDate::new(128, 12, 20),
             )),
             _ => CustomerRequest::Copying(CopyingRequestInformation::new_random(
                 game_data,
-                GensoDate::new(12, 12, 12),
+                today,
                 GensoDate::new(12, 12, 12),
             )),
         }
@@ -1130,9 +1145,9 @@ impl CustomerCharacter {
         self.customer_status == CustomerCharacterStatus::WaitOnClerk
     }
 
-    pub fn check_rise_hand(&mut self, game_data: &GameData) -> Option<CustomerRequest> {
+    pub fn check_rise_hand(&mut self, game_data: &GameData, today: GensoDate) -> Option<CustomerRequest> {
         if self.customer_status == CustomerCharacterStatus::WaitOnClerk {
-            Some(self.generate_hold_request(game_data))
+            Some(self.generate_hold_request(game_data, today))
         } else {
             None
         }

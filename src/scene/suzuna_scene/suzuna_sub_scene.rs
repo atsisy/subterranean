@@ -95,9 +95,9 @@ impl SuzunaBookPool {
 
     pub fn generate_borrowing_request(
         &mut self,
-        customer_name: String,
+        customer_name: &str,
         borrow_date: GensoDate,
-        return_date: GensoDate,
+	rental_limit: RentalLimit,
     ) -> BorrowingInformation {
         let mut borrowing_books = Vec::new();
         for _ in 0..(rand::random::<u32>() % 5) {
@@ -111,12 +111,7 @@ impl SuzunaBookPool {
             borrowing_books.push(book_info);
         }
 
-        BorrowingInformation {
-            borrowing: borrowing_books,
-            borrower: customer_name,
-            borrow_date: borrow_date,
-            return_date: return_date,
-        }
+	BorrowingInformation::new(borrowing_books, customer_name, borrow_date, rental_limit)
     }
 }
 
@@ -191,9 +186,9 @@ impl SuzunaSubScene {
                 let customer_request = match customer_request_hint.as_ref().unwrap() {
                     CustomerRequest::Borrowing(raw_info) => CustomerRequest::Borrowing(
                         self.suzuna_book_pool.generate_borrowing_request(
-                            raw_info.borrower.to_string(),
+                            &raw_info.borrower,
                             raw_info.borrow_date,
-                            raw_info.return_date,
+                            raw_info.rental_limit.clone(),
                         ),
                     ),
                     CustomerRequest::Returning(_) => CustomerRequest::Returning(

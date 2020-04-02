@@ -128,12 +128,29 @@ impl TextureObject for HoldDataVText {
     impl_texture_object_for_wrapped! {vtext}
 }
 
+#[derive(PartialEq, Clone)]
+pub enum RentalLimit {
+    ShortTerm = 0,
+    LongTerm,
+}
+
+impl RentalLimit {
+    pub fn random() -> RentalLimit {
+	match rand::random::<u32>() % 2 {
+	    0 => RentalLimit::ShortTerm,
+	    1 => RentalLimit::LongTerm,
+	    _ => panic!("Exception"),
+	}
+    }
+}
+
 #[derive(Clone)]
 pub struct BorrowingInformation {
     pub borrowing: Vec<BookInformation>,
     pub borrower: String,
     pub borrow_date: GensoDate,
     pub return_date: GensoDate,
+    pub rental_limit: RentalLimit,
 }
 
 impl BorrowingInformation {
@@ -141,34 +158,22 @@ impl BorrowingInformation {
         borrowing: Vec<BookInformation>,
         borrower: &str,
         borrow_date: GensoDate,
-        return_date: GensoDate,
+	rental_limit: RentalLimit,
     ) -> Self {
+	let mut return_date = borrow_date.clone();
+
+	match rental_limit {
+	    RentalLimit::ShortTerm => return_date.add_day(7),
+	    RentalLimit::LongTerm => return_date.add_day(14),
+	}
+	
         BorrowingInformation {
             borrowing: borrowing,
             borrower: borrower.to_string(),
-            borrow_date,
-            return_date,
+            borrow_date: borrow_date,
+            return_date: return_date,
+	    rental_limit: rental_limit,
         }
-    }
-
-    pub fn new_random(
-        game_data: &GameData,
-        borrow_date: GensoDate,
-        return_date: GensoDate,
-    ) -> Self {
-        let borrowing_num = rand::random::<u32>() % 5;
-        let mut borrow_books = Vec::new();
-
-        for _ in 0..borrowing_num {
-            borrow_books.push(game_data.book_random_select().clone());
-        }
-
-        Self::new(
-            borrow_books,
-            game_data.customer_random_select(),
-            borrow_date,
-            return_date,
-        )
     }
 }
 
