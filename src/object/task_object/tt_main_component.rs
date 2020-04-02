@@ -940,15 +940,24 @@ impl OnDesk for TaskSilhouette {
     }
 }
 
+#[derive(Clone, PartialEq)]
+pub enum TextBalloonPhraseType {
+    SimplePhrase,
+    CustomerName(String),
+    RentalLimit(RentalLimit),
+}
+
 pub struct CustomerDialogue {
     dialogue: Vec<String>,
     time_step: Vec<u64>,
+    phrase_type: Vec<TextBalloonPhraseType>,
     current_index: usize,
 }
 
 impl CustomerDialogue {
     pub fn new(dialogue: Vec<String>, time_step: Vec<u64>) -> Self {
         CustomerDialogue {
+	    phrase_type: vec![TextBalloonPhraseType::SimplePhrase; dialogue.len()],
             dialogue: dialogue,
             time_step: time_step,
             current_index: 0,
@@ -981,6 +990,7 @@ impl CustomerDialogue {
 pub struct TextBalloon {
     canvas: SubScreen,
     text: VerticalText,
+    phrase_type: TextBalloonPhraseType,
     balloon_inner: shape::Ellipse,
     balloon_outer: shape::Ellipse,
     mesh: ggraphics::Mesh,
@@ -991,6 +1001,7 @@ impl TextBalloon {
         ctx: &mut ggez::Context,
         balloon_rect: numeric::Rect,
         text: &str,
+	phrase_type: TextBalloonPhraseType,
         font_info: FontInformation,
     ) -> Self {
         let mut vtext = VerticalText::new(
@@ -1032,13 +1043,14 @@ impl TextBalloon {
         TextBalloon {
             canvas: SubScreen::new(ctx, balloon_rect, 0, ggraphics::Color::from_rgba_u32(0x00)),
             text: vtext,
+	    phrase_type: phrase_type,
             balloon_inner: ellipse,
             balloon_outer: ellipse_outer,
             mesh: mesh_builder.build(ctx).unwrap(),
         }
     }
 
-    pub fn replace_text(&mut self, ctx: &mut ggez::Context, text: &str) {
+    pub fn replace_text(&mut self, ctx: &mut ggez::Context, text: &str, phrase_type: TextBalloonPhraseType) {
         self.text.replace_text(text.to_string());
         let vtext_size = self.text.get_drawing_size(ctx);
 
@@ -1065,6 +1077,7 @@ impl TextBalloon {
         );
 
         self.update_mesh(ctx);
+	self.phrase_type = phrase_type;
     }
 
     pub fn update_mesh(&mut self, ctx: &mut ggez::Context) {
@@ -1072,6 +1085,10 @@ impl TextBalloon {
         self.balloon_inner
             .add_to_builder(self.balloon_outer.add_to_builder(&mut mesh_builder));
         self.mesh = mesh_builder.build(ctx).unwrap();
+    }
+
+    pub fn get_phrase_type(&self) -> &TextBalloonPhraseType {
+	&self.phrase_type
     }
 }
 
@@ -1201,6 +1218,7 @@ impl SuzuMiniSightSilhouette {
             ctx,
             numeric::Rect::new(430.0, 10.0, 200.0, 300.0),
             "",
+	    TextBalloonPhraseType::SimplePhrase,
             FontInformation::new(
                 game_data.get_font(FontID::JpFude1),
                 numeric::Vector2f::new(22.0, 22.0),
@@ -1226,6 +1244,10 @@ impl SuzuMiniSightSilhouette {
         self.silhouette.change_character(chara).update_name(name);
     }
 
+    pub fn get_text_balloon_phrase_type(&self) -> &TextBalloonPhraseType {
+	&self.text_balloon.ref_wrapped_object().ref_wrapped_object().get_phrase_type()
+    }
+
     pub fn new_customer_update(
         &mut self,
         _: &mut ggez::Context,
@@ -1242,7 +1264,7 @@ impl SuzuMiniSightSilhouette {
             delay_time += self.customer_dialogue.get_current_time_step();
             self.event_list.add(DelayEvent::new(
                 Box::new(move |silhouette, ctx, _| {
-                    silhouette.replace_text(ctx, &line);
+                    silhouette.replace_text(ctx, &line, TextBalloonPhraseType::SimplePhrase);
                     silhouette
                         .text_balloon
                         .add_effect(vec![effect::fade_in(20, t + delay_time)]);
@@ -1275,18 +1297,18 @@ impl SuzuMiniSightSilhouette {
         self.text_balloon.effect(ctx, t);
     }
 
-    pub fn replace_text(&mut self, ctx: &mut ggez::Context, text: &str) {
+    pub fn replace_text(&mut self, ctx: &mut ggez::Context, text: &str, phrase_type: TextBalloonPhraseType) {
         self.text_balloon
             .ref_wrapped_object_mut()
             .ref_wrapped_object_mut()
-            .replace_text(ctx, text);
+            .replace_text(ctx, text, phrase_type);
         self.text_balloon.appear();
     }
 
-    pub fn insert_new_balloon_phrase(&mut self, text: String, delay_time: Clock, now: Clock) {
+    pub fn insert_new_balloon_phrase(&mut self, text: String, phrase_type: TextBalloonPhraseType, delay_time: Clock, now: Clock) {
 	self.event_list.add(DelayEvent::new(
             Box::new(move |silhouette, ctx, _| {
-                silhouette.replace_text(ctx, &text);
+                silhouette.replace_text(ctx, &text, phrase_type);
                 silhouette
                     .text_balloon
                     .add_effect(vec![effect::fade_in(20, now + delay_time)]);

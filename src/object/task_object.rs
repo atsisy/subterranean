@@ -1,5 +1,4 @@
 pub mod factory;
-pub mod record_book;
 pub mod tt_main_component;
 pub mod tt_menu_component;
 pub mod tt_sub_component;
@@ -787,7 +786,12 @@ impl TaskTable {
 	if let Some(customer_request) = self.current_customer_request.as_ref() {
 	    println!("replace text balloon phrase!!");
 	    let phrase_text = format!("{}です", customer_request.get_customer_name());
-	    self.sight.silhouette.insert_new_balloon_phrase(phrase_text, 20, t);
+	    self.sight.silhouette.insert_new_balloon_phrase(
+		phrase_text,
+		TextBalloonPhraseType::CustomerName(customer_request.get_customer_name().clone()),
+		20,
+		t
+	    );
 	}
     }
 
@@ -805,7 +809,10 @@ impl TaskTable {
 	println!("check customer_silhouette");
         if !self
             .customer_silhouette_menu
-	    .click_customer_question_menu(ctx, game_data, button, point, t)
+	    .click_customer_question_menu(ctx, game_data, button, point, t) &&
+	    !self
+            .customer_silhouette_menu
+	    .click_remember_name_menu(ctx, game_data, button, point, t)
         {
             // メニューをクリックしていない場合はfalseをクリックして終了
 	    println!("not clicked");
@@ -816,6 +823,18 @@ impl TaskTable {
 	    match index {
 		0 => self.insert_custmer_name_phrase(t),
 		1 => panic!("Exceptin"),
+		_ => panic!("Exceptin"),
+	    }
+
+            return true;
+        }
+
+	if let Some(index) = self.customer_silhouette_menu.remember_name_clicked_index() {
+	    match index {
+		0 => {
+		    let name = self.customer_silhouette_menu.get_remembered_customer_name().unwrap();
+		    self.kosuzu_memory.add_customer_name(name);
+		},
 		_ => panic!("Exceptin"),
 	    }
 
@@ -905,6 +924,22 @@ impl TaskTable {
         }
     }
 
+    fn try_show_text_balloon_menus(
+	&mut self,
+        ctx: &mut ggez::Context,
+        game_data: &GameData,
+        click_point: numeric::Point2f,
+        t: Clock,
+    ) {
+	let phrase_type = self.sight.silhouette.get_text_balloon_phrase_type();
+
+	match phrase_type {
+	    TextBalloonPhraseType::CustomerName(name) =>
+		self.customer_silhouette_menu.show_remember_name_menu(ctx, game_data, click_point, name.clone(), t),
+	    _ => panic!("Exception"),
+	}
+    }
+
     ///
     /// シルエットに関するメニューを表示する
     ///
@@ -921,7 +956,7 @@ impl TaskTable {
 	    self.customer_silhouette_menu.show_customer_question_menu(ctx, game_data, click_point, t);
 	    true
 	} else if self.sight.silhouette.contains_text_balloon(ctx, click_point) {
-	    self.customer_silhouette_menu.show_customer_question_menu(ctx, game_data, click_point, t);
+	    self.try_show_text_balloon_menus(ctx, game_data, click_point, t);
 	    true
 	} else {
 	    false
@@ -946,8 +981,6 @@ impl TaskTable {
             self.customer_silhouette_menu.close_all(t);
             return ();
         }
-
-
 
         if !self.try_show_menus_regarding_book_info(ctx, game_data, click_point, t) {
             if !self.try_show_menus_regarding_customer_info(ctx, game_data, click_point, t) {

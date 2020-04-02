@@ -1031,6 +1031,7 @@ pub type CustomerQuestionDropMenu = DropDownArea<CustomerQuestionMenu>;
 
 
 pub struct RememberCustomerNameMenu {
+    remembered_customer_name: String,
     select_table_frame: TableFrame,
     select_vtext: Vec<VerticalText>,
     drwob_essential: DrawableObjectEssential,
@@ -1042,6 +1043,7 @@ impl RememberCustomerNameMenu {
         ctx: &mut ggez::Context,
         game_data: &GameData,
         drawing_depth: i8,
+	customer_name: String,
     ) -> Self {
         let mut select_vtext = Vec::new();
 
@@ -1085,6 +1087,7 @@ impl RememberCustomerNameMenu {
             select_vtext: select_vtext,
             drwob_essential: DrawableObjectEssential::new(true, drawing_depth),
             last_clicked: None,
+	    remembered_customer_name: customer_name,
         }
     }
 
@@ -1101,6 +1104,10 @@ impl RememberCustomerNameMenu {
 
     pub fn get_date_frame_size(&self) -> numeric::Vector2f {
         self.select_table_frame.size()
+    }
+
+    pub fn get_remembered_customer_name(&self) -> String {
+	self.remembered_customer_name.clone()
     }
 }
 
@@ -1300,7 +1307,7 @@ impl CustomerMenuGroup {
         }
     }
 
-    pub fn question_remember_name_clicked_index(&mut self) -> Option<usize> {
+    pub fn remember_name_clicked_index(&mut self) -> Option<usize> {
         if let Some(remember_name_menu) = self.remember_name_menu.as_mut() {
             remember_name_menu
                 .ref_wrapped_object_mut()
@@ -1310,6 +1317,20 @@ impl CustomerMenuGroup {
         } else {
             None
         }
+    }
+
+    pub fn get_remembered_customer_name(&self) -> Option<String> {
+	if let Some(remember_menu) = self.remember_name_menu.as_ref() {
+	    Some(
+		remember_menu
+    		    .ref_wrapped_object()
+   		    .ref_wrapped_object()
+    		    .get_component()
+    		    .get_remembered_customer_name()
+	    )
+	} else {
+	    None
+	}
     }
 
     pub fn close_all(&mut self, t: Clock) {
@@ -1356,9 +1377,10 @@ impl CustomerMenuGroup {
         ctx: &mut ggez::Context,
         game_data: &GameData,
         position: numeric::Point2f,
+	customer_name: String,
         t: Clock,
     ) {
-	let remember_name_menu = RememberCustomerNameMenu::new(ctx, game_data, 0);
+	let remember_name_menu = RememberCustomerNameMenu::new(ctx, game_data, 0, customer_name);
 
         let frame_size = remember_name_menu.get_date_frame_size();
 
