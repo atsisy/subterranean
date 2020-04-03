@@ -97,7 +97,7 @@ impl SuzunaBookPool {
         &mut self,
         customer_name: &str,
         borrow_date: GensoDate,
-	rental_limit: RentalLimit,
+        rental_limit: RentalLimit,
     ) -> BorrowingInformation {
         let mut borrowing_books = Vec::new();
         for _ in 0..(rand::random::<u32>() % 5) {
@@ -111,7 +111,7 @@ impl SuzunaBookPool {
             borrowing_books.push(book_info);
         }
 
-	BorrowingInformation::new(borrowing_books, customer_name, borrow_date, rental_limit)
+        BorrowingInformation::new(borrowing_books, customer_name, borrow_date, rental_limit)
     }
 }
 

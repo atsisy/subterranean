@@ -136,11 +136,11 @@ pub enum RentalLimit {
 
 impl RentalLimit {
     pub fn random() -> RentalLimit {
-	match rand::random::<u32>() % 2 {
-	    0 => RentalLimit::ShortTerm,
-	    1 => RentalLimit::LongTerm,
-	    _ => panic!("Exception"),
-	}
+        match rand::random::<u32>() % 2 {
+            0 => RentalLimit::ShortTerm,
+            1 => RentalLimit::LongTerm,
+            _ => panic!("Exception"),
+        }
     }
 }
 
@@ -158,21 +158,21 @@ impl BorrowingInformation {
         borrowing: Vec<BookInformation>,
         borrower: &str,
         borrow_date: GensoDate,
-	rental_limit: RentalLimit,
+        rental_limit: RentalLimit,
     ) -> Self {
-	let mut return_date = borrow_date.clone();
+        let mut return_date = borrow_date.clone();
 
-	match rental_limit {
-	    RentalLimit::ShortTerm => return_date.add_day(7),
-	    RentalLimit::LongTerm => return_date.add_day(14),
-	}
-	
+        match rental_limit {
+            RentalLimit::ShortTerm => return_date.add_day(7),
+            RentalLimit::LongTerm => return_date.add_day(14),
+        }
+
         BorrowingInformation {
             borrowing: borrowing,
             borrower: borrower.to_string(),
             borrow_date: borrow_date,
             return_date: return_date,
-	    rental_limit: rental_limit,
+            rental_limit: rental_limit,
         }
     }
 }
@@ -1221,7 +1221,7 @@ impl BorrowingRecordBookPage {
         &mut self,
         ctx: &mut ggez::Context,
         menu_position: numeric::Point2f,
-	customer_name: String,
+        customer_name: String,
     ) {
         let grid_pos = self
             .customer_info_table
@@ -1241,7 +1241,7 @@ impl BorrowingRecordBookPage {
                 .get_center_of(grid_pos, self.customer_info_table.get_position()),
         );
     }
-    
+
     pub fn replace_borrower_name(&mut self, game_data: &GameData, name: &str) -> &mut Self {
         let pos = self.borrower.get_position();
         self.borrower = VerticalText::new(
@@ -1484,7 +1484,7 @@ impl BorrowingRecordBook {
         &mut self,
         ctx: &mut ggez::Context,
         menu_position: numeric::Point2f,
-	customer_name: String,
+        customer_name: String,
     ) {
         let rpoint = self.relative_point(menu_position);
         if let Some(page) = self.get_current_page_mut() {

@@ -957,7 +957,7 @@ pub struct CustomerDialogue {
 impl CustomerDialogue {
     pub fn new(dialogue: Vec<String>, time_step: Vec<u64>) -> Self {
         CustomerDialogue {
-	    phrase_type: vec![TextBalloonPhraseType::SimplePhrase; dialogue.len()],
+            phrase_type: vec![TextBalloonPhraseType::SimplePhrase; dialogue.len()],
             dialogue: dialogue,
             time_step: time_step,
             current_index: 0,
@@ -1001,7 +1001,7 @@ impl TextBalloon {
         ctx: &mut ggez::Context,
         balloon_rect: numeric::Rect,
         text: &str,
-	phrase_type: TextBalloonPhraseType,
+        phrase_type: TextBalloonPhraseType,
         font_info: FontInformation,
     ) -> Self {
         let mut vtext = VerticalText::new(
@@ -1043,14 +1043,19 @@ impl TextBalloon {
         TextBalloon {
             canvas: SubScreen::new(ctx, balloon_rect, 0, ggraphics::Color::from_rgba_u32(0x00)),
             text: vtext,
-	    phrase_type: phrase_type,
+            phrase_type: phrase_type,
             balloon_inner: ellipse,
             balloon_outer: ellipse_outer,
             mesh: mesh_builder.build(ctx).unwrap(),
         }
     }
 
-    pub fn replace_text(&mut self, ctx: &mut ggez::Context, text: &str, phrase_type: TextBalloonPhraseType) {
+    pub fn replace_text(
+        &mut self,
+        ctx: &mut ggez::Context,
+        text: &str,
+        phrase_type: TextBalloonPhraseType,
+    ) {
         self.text.replace_text(text.to_string());
         let vtext_size = self.text.get_drawing_size(ctx);
 
@@ -1077,7 +1082,7 @@ impl TextBalloon {
         );
 
         self.update_mesh(ctx);
-	self.phrase_type = phrase_type;
+        self.phrase_type = phrase_type;
     }
 
     pub fn update_mesh(&mut self, ctx: &mut ggez::Context) {
@@ -1088,7 +1093,7 @@ impl TextBalloon {
     }
 
     pub fn get_phrase_type(&self) -> &TextBalloonPhraseType {
-	&self.phrase_type
+        &self.phrase_type
     }
 }
 
@@ -1218,7 +1223,7 @@ impl SuzuMiniSightSilhouette {
             ctx,
             numeric::Rect::new(430.0, 10.0, 200.0, 300.0),
             "",
-	    TextBalloonPhraseType::SimplePhrase,
+            TextBalloonPhraseType::SimplePhrase,
             FontInformation::new(
                 game_data.get_font(FontID::JpFude1),
                 numeric::Vector2f::new(22.0, 22.0),
@@ -1230,7 +1235,10 @@ impl SuzuMiniSightSilhouette {
         SuzuMiniSightSilhouette {
             event_list: DelayEventList::new(),
             background: background,
-            silhouette: TaskSilhouette::new_empty(ctx, numeric::Rect::new(100.0, 0.0, 350.0, 300.0)),
+            silhouette: TaskSilhouette::new_empty(
+                ctx,
+                numeric::Rect::new(100.0, 0.0, 350.0, 300.0),
+            ),
             text_balloon: EffectableWrap::new(
                 MovableWrap::new(text_balloon, None, 0),
                 vec![effect::fade_in(10, t)],
@@ -1245,7 +1253,11 @@ impl SuzuMiniSightSilhouette {
     }
 
     pub fn get_text_balloon_phrase_type(&self) -> &TextBalloonPhraseType {
-	&self.text_balloon.ref_wrapped_object().ref_wrapped_object().get_phrase_type()
+        &self
+            .text_balloon
+            .ref_wrapped_object()
+            .ref_wrapped_object()
+            .get_phrase_type()
     }
 
     pub fn new_customer_update(
@@ -1297,7 +1309,12 @@ impl SuzuMiniSightSilhouette {
         self.text_balloon.effect(ctx, t);
     }
 
-    pub fn replace_text(&mut self, ctx: &mut ggez::Context, text: &str, phrase_type: TextBalloonPhraseType) {
+    pub fn replace_text(
+        &mut self,
+        ctx: &mut ggez::Context,
+        text: &str,
+        phrase_type: TextBalloonPhraseType,
+    ) {
         self.text_balloon
             .ref_wrapped_object_mut()
             .ref_wrapped_object_mut()
@@ -1305,8 +1322,14 @@ impl SuzuMiniSightSilhouette {
         self.text_balloon.appear();
     }
 
-    pub fn insert_new_balloon_phrase(&mut self, text: String, phrase_type: TextBalloonPhraseType, delay_time: Clock, now: Clock) {
-	self.event_list.add(DelayEvent::new(
+    pub fn insert_new_balloon_phrase(
+        &mut self,
+        text: String,
+        phrase_type: TextBalloonPhraseType,
+        delay_time: Clock,
+        now: Clock,
+    ) {
+        self.event_list.add(DelayEvent::new(
             Box::new(move |silhouette, ctx, _| {
                 silhouette.replace_text(ctx, &text, phrase_type);
                 silhouette
@@ -1324,15 +1347,18 @@ impl SuzuMiniSightSilhouette {
     }
 
     pub fn contains_text_balloon(&self, ctx: &mut ggez::Context, point: numeric::Point2f) -> bool {
-	let rpoint = self.canvas.relative_point(point);
-	self.text_balloon.contains(ctx, rpoint)
+        let rpoint = self.canvas.relative_point(point);
+        self.text_balloon.contains(ctx, rpoint)
     }
 
-    pub fn contains_character_silhouette(&self, ctx: &mut ggez::Context, point: numeric::Point2f) -> bool {
-	let rpoint = self.canvas.relative_point(point);
-	self.silhouette.contains(ctx, rpoint)
+    pub fn contains_character_silhouette(
+        &self,
+        ctx: &mut ggez::Context,
+        point: numeric::Point2f,
+    ) -> bool {
+        let rpoint = self.canvas.relative_point(point);
+        self.silhouette.contains(ctx, rpoint)
     }
-
 }
 
 impl DrawableComponent for SuzuMiniSightSilhouette {
@@ -1704,11 +1730,11 @@ pub enum CustomerRequest {
 
 impl CustomerRequest {
     pub fn get_customer_name(&self) -> String {
-	match self {
-	    CustomerRequest::Borrowing(info) => info.borrower.clone(),
-	    CustomerRequest::Returning(info) => info.borrower.clone(),
-	    CustomerRequest::Copying(info) => info.customer.clone(),
-	}
+        match self {
+            CustomerRequest::Borrowing(info) => info.borrower.clone(),
+            CustomerRequest::Returning(info) => info.borrower.clone(),
+            CustomerRequest::Copying(info) => info.customer.clone(),
+        }
     }
 }
 

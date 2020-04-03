@@ -18,7 +18,7 @@ use crate::flush_delay_event;
 use crate::object::collision::*;
 use crate::object::task_object::tt_main_component::CustomerRequest;
 use crate::object::task_object::tt_sub_component::{
-    BorrowingInformation, CopyingRequestInformation, ReturnBookInformation, RentalLimit,
+    BorrowingInformation, CopyingRequestInformation, RentalLimit, ReturnBookInformation,
 };
 use crate::scene::{DelayEventList, SceneID};
 
@@ -822,9 +822,9 @@ pub struct CustomerInformation {
 
 impl CustomerInformation {
     pub fn new(name: &str) -> Self {
-	CustomerInformation {
-	    name: name.to_string(),
-	}
+        CustomerInformation {
+            name: name.to_string(),
+        }
     }
 }
 
@@ -852,7 +852,7 @@ impl CustomerCharacter {
             customer_status: CustomerCharacterStatus::Ready,
             shopping_is_done: false,
             current_goal: numeric::Point2f::new(0.0, 0.0),
-	    customer_info: CustomerInformation::new(game_data.customer_random_select())
+            customer_info: CustomerInformation::new(game_data.customer_random_select()),
         }
     }
 
@@ -1039,12 +1039,12 @@ impl CustomerCharacter {
     fn generate_hold_request(&mut self, game_data: &GameData, today: GensoDate) -> CustomerRequest {
         let random_select = rand::random::<usize>() % 3;
         match random_select {
-            0 => CustomerRequest::Borrowing(
-		BorrowingInformation::new(
-		    vec![game_data.book_random_select().clone()],
-		    &self.customer_info.name,
-		    today,
-		    RentalLimit::random())),
+            0 => CustomerRequest::Borrowing(BorrowingInformation::new(
+                vec![game_data.book_random_select().clone()],
+                &self.customer_info.name,
+                today,
+                RentalLimit::random(),
+            )),
             1 => CustomerRequest::Returning(ReturnBookInformation::new_random(
                 game_data,
                 today,
@@ -1145,7 +1145,11 @@ impl CustomerCharacter {
         self.customer_status == CustomerCharacterStatus::WaitOnClerk
     }
 
-    pub fn check_rise_hand(&mut self, game_data: &GameData, today: GensoDate) -> Option<CustomerRequest> {
+    pub fn check_rise_hand(
+        &mut self,
+        game_data: &GameData,
+        today: GensoDate,
+    ) -> Option<CustomerRequest> {
         if self.customer_status == CustomerCharacterStatus::WaitOnClerk {
             Some(self.generate_hold_request(game_data, today))
         } else {

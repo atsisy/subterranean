@@ -893,7 +893,6 @@ impl Clickable for DateMenu {
 
 pub type DateDropMenu = DropDownArea<DateMenu>;
 
-
 pub struct CustomerQuestionMenu {
     question_table_frame: TableFrame,
     question_vtext: Vec<VerticalText>,
@@ -903,11 +902,7 @@ pub struct CustomerQuestionMenu {
 }
 
 impl CustomerQuestionMenu {
-    pub fn new(
-        ctx: &mut ggez::Context,
-        game_data: &GameData,
-        drawing_depth: i8,
-    ) -> Self {
+    pub fn new(ctx: &mut ggez::Context, game_data: &GameData, drawing_depth: i8) -> Self {
         let mut question_vtext = Vec::new();
 
         let font_info = FontInformation::new(
@@ -923,7 +918,7 @@ impl CustomerQuestionMenu {
             numeric::Vector2f::new(0.3, 0.3),
             0,
         );
-	
+
         for (index, s) in vec!["御名前は？", "返却期限は？"].iter().enumerate() {
             let mut vtext = VerticalText::new(
                 s.to_string(),
@@ -942,9 +937,9 @@ impl CustomerQuestionMenu {
                 )),
             );
 
-	    question_vtext.push(vtext);
+            question_vtext.push(vtext);
         }
-	
+
         let header_text = VerticalText::new(
             "質問".to_string(),
             numeric::Point2f::new(question_table_frame.real_width() + 20.0, 30.0),
@@ -1029,7 +1024,6 @@ impl Clickable for CustomerQuestionMenu {
 
 pub type CustomerQuestionDropMenu = DropDownArea<CustomerQuestionMenu>;
 
-
 pub struct RememberCustomerNameMenu {
     remembered_customer_name: String,
     select_table_frame: TableFrame,
@@ -1043,7 +1037,7 @@ impl RememberCustomerNameMenu {
         ctx: &mut ggez::Context,
         game_data: &GameData,
         drawing_depth: i8,
-	customer_name: String,
+        customer_name: String,
     ) -> Self {
         let mut select_vtext = Vec::new();
 
@@ -1060,7 +1054,7 @@ impl RememberCustomerNameMenu {
             numeric::Vector2f::new(0.3, 0.3),
             0,
         );
-	
+
         for (index, s) in vec!["名前を記憶する"].iter().enumerate() {
             let mut vtext = VerticalText::new(
                 s.to_string(),
@@ -1079,15 +1073,15 @@ impl RememberCustomerNameMenu {
                 )),
             );
 
-	    select_vtext.push(vtext);
+            select_vtext.push(vtext);
         }
-	
+
         RememberCustomerNameMenu {
             select_table_frame: select_table_frame,
             select_vtext: select_vtext,
             drwob_essential: DrawableObjectEssential::new(true, drawing_depth),
             last_clicked: None,
-	    remembered_customer_name: customer_name,
+            remembered_customer_name: customer_name,
         }
     }
 
@@ -1107,7 +1101,7 @@ impl RememberCustomerNameMenu {
     }
 
     pub fn get_remembered_customer_name(&self) -> String {
-	self.remembered_customer_name.clone()
+        self.remembered_customer_name.clone()
     }
 }
 
@@ -1159,7 +1153,6 @@ impl Clickable for RememberCustomerNameMenu {
 
 pub type RememberCustomerNameDropMenu = DropDownArea<RememberCustomerNameMenu>;
 
-
 pub struct OkMenu {
     select_table_frame: TableFrame,
     select_vtext: Vec<VerticalText>,
@@ -1168,11 +1161,7 @@ pub struct OkMenu {
 }
 
 impl OkMenu {
-    pub fn new(
-        ctx: &mut ggez::Context,
-        game_data: &GameData,
-        drawing_depth: i8,
-    ) -> Self {
+    pub fn new(ctx: &mut ggez::Context, game_data: &GameData, drawing_depth: i8) -> Self {
         let mut select_vtext = Vec::new();
 
         let font_info = FontInformation::new(
@@ -1188,7 +1177,7 @@ impl OkMenu {
             numeric::Vector2f::new(0.3, 0.3),
             0,
         );
-	
+
         for (index, s) in vec!["確認"].iter().enumerate() {
             let mut vtext = VerticalText::new(
                 s.to_string(),
@@ -1207,9 +1196,9 @@ impl OkMenu {
                 )),
             );
 
-	    select_vtext.push(vtext);
+            select_vtext.push(vtext);
         }
-	
+
         OkMenu {
             select_table_frame: select_table_frame,
             select_vtext: select_vtext,
@@ -1282,7 +1271,6 @@ impl Clickable for OkMenu {
 
 pub type OkDropMenu = DropDownArea<OkMenu>;
 
-
 pub struct CustomerMenuGroup {
     event_list: DelayEventList<Self>,
     customer_question_menu: Option<EffectableWrap<MovableWrap<CustomerQuestionDropMenu>>>,
@@ -1295,17 +1283,17 @@ impl CustomerMenuGroup {
     pub fn new(drawing_depth: i8) -> Self {
         CustomerMenuGroup {
             event_list: DelayEventList::new(),
-	    customer_question_menu: None,
-	    remember_name_menu: None,
-	    text_balloon_ok_menu: None,
+            customer_question_menu: None,
+            remember_name_menu: None,
+            text_balloon_ok_menu: None,
             drwob_essential: DrawableObjectEssential::new(true, drawing_depth),
         }
     }
 
     pub fn is_some_menu_opened(&self) -> bool {
-	self.customer_question_menu.is_some() ||
-	    self.remember_name_menu.is_some() ||
-	    self.text_balloon_ok_menu.is_some()
+        self.customer_question_menu.is_some()
+            || self.remember_name_menu.is_some()
+            || self.text_balloon_ok_menu.is_some()
     }
 
     pub fn close_customer_question_menu(&mut self, t: Clock) {
@@ -1343,8 +1331,12 @@ impl CustomerMenuGroup {
         ctx: &mut ggez::Context,
         point: numeric::Point2f,
     ) -> bool {
-	self.customer_question_menu.is_some()
-            && self.customer_question_menu.as_ref().unwrap().contains(ctx, point)
+        self.customer_question_menu.is_some()
+            && self
+                .customer_question_menu
+                .as_ref()
+                .unwrap()
+                .contains(ctx, point)
     }
 
     pub fn contains_remember_name_menu(
@@ -1352,8 +1344,12 @@ impl CustomerMenuGroup {
         ctx: &mut ggez::Context,
         point: numeric::Point2f,
     ) -> bool {
-	self.remember_name_menu.is_some()
-            && self.remember_name_menu.as_ref().unwrap().contains(ctx, point)
+        self.remember_name_menu.is_some()
+            && self
+                .remember_name_menu
+                .as_ref()
+                .unwrap()
+                .contains(ctx, point)
     }
 
     pub fn contains_text_balloon_ok_menu(
@@ -1361,14 +1357,18 @@ impl CustomerMenuGroup {
         ctx: &mut ggez::Context,
         point: numeric::Point2f,
     ) -> bool {
-	self.text_balloon_ok_menu.is_some()
-            && self.text_balloon_ok_menu.as_ref().unwrap().contains(ctx, point)
+        self.text_balloon_ok_menu.is_some()
+            && self
+                .text_balloon_ok_menu
+                .as_ref()
+                .unwrap()
+                .contains(ctx, point)
     }
 
     pub fn is_contains_any_menus(&self, ctx: &mut ggez::Context, point: numeric::Point2f) -> bool {
-	self.contains_customer_question_menu(ctx, point) ||
-	    self.contains_remember_name_menu(ctx, point) ||
-	    self.contains_text_balloon_ok_menu(ctx, point)
+        self.contains_customer_question_menu(ctx, point)
+            || self.contains_remember_name_menu(ctx, point)
+            || self.contains_text_balloon_ok_menu(ctx, point)
     }
 
     pub fn get_customer_question_position(&self) -> Option<numeric::Point2f> {
@@ -1475,7 +1475,7 @@ impl CustomerMenuGroup {
             false
         }
     }
-    
+
     pub fn question_menu_last_clicked_index(&mut self) -> Option<usize> {
         if let Some(customer_question_menu) = self.customer_question_menu.as_mut() {
             customer_question_menu
@@ -1501,35 +1501,35 @@ impl CustomerMenuGroup {
     }
 
     pub fn get_remembered_customer_name(&self) -> Option<String> {
-	if let Some(remember_menu) = self.remember_name_menu.as_ref() {
-	    Some(
-		remember_menu
-    		    .ref_wrapped_object()
-   		    .ref_wrapped_object()
-    		    .get_component()
-    		    .get_remembered_customer_name()
-	    )
-	} else {
-	    None
-	}
+        if let Some(remember_menu) = self.remember_name_menu.as_ref() {
+            Some(
+                remember_menu
+                    .ref_wrapped_object()
+                    .ref_wrapped_object()
+                    .get_component()
+                    .get_remembered_customer_name(),
+            )
+        } else {
+            None
+        }
     }
 
     pub fn get_text_balloon_ok_index(&self) -> Option<usize> {
-	if let Some(ok_menu) = self.text_balloon_ok_menu.as_ref() {
-	    ok_menu
-    		.ref_wrapped_object()
-   		.ref_wrapped_object()
-    		.get_component()
-		.get_last_clicked_index()
-	} else {
-	    None
-	}
+        if let Some(ok_menu) = self.text_balloon_ok_menu.as_ref() {
+            ok_menu
+                .ref_wrapped_object()
+                .ref_wrapped_object()
+                .get_component()
+                .get_last_clicked_index()
+        } else {
+            None
+        }
     }
 
     pub fn close_all(&mut self, t: Clock) {
-	self.close_customer_question_menu(t);
-	self.close_remember_name_menu(t);
-	self.close_text_balloon_ok_menu(t);
+        self.close_customer_question_menu(t);
+        self.close_remember_name_menu(t);
+        self.close_text_balloon_ok_menu(t);
     }
 
     pub fn show_customer_question_menu(
@@ -1571,10 +1571,10 @@ impl CustomerMenuGroup {
         ctx: &mut ggez::Context,
         game_data: &GameData,
         position: numeric::Point2f,
-	customer_name: String,
+        customer_name: String,
         t: Clock,
     ) {
-	let remember_name_menu = RememberCustomerNameMenu::new(ctx, game_data, 0, customer_name);
+        let remember_name_menu = RememberCustomerNameMenu::new(ctx, game_data, 0, customer_name);
 
         let frame_size = remember_name_menu.get_date_frame_size();
 
@@ -1608,7 +1608,7 @@ impl CustomerMenuGroup {
         position: numeric::Point2f,
         t: Clock,
     ) {
-	let ok_menu = OkMenu::new(ctx, game_data, 0);
+        let ok_menu = OkMenu::new(ctx, game_data, 0);
 
         let frame_size = ok_menu.get_date_frame_size();
 
@@ -1643,12 +1643,12 @@ impl CustomerMenuGroup {
             customer_question_menu.effect(ctx, t);
         }
 
-	if let Some(remember_name_menu) = self.remember_name_menu.as_mut() {
+        if let Some(remember_name_menu) = self.remember_name_menu.as_mut() {
             remember_name_menu.move_with_func(t);
             remember_name_menu.effect(ctx, t);
         }
 
-	if let Some(ok_menu) = self.text_balloon_ok_menu.as_mut() {
+        if let Some(ok_menu) = self.text_balloon_ok_menu.as_mut() {
             ok_menu.move_with_func(t);
             ok_menu.effect(ctx, t);
         }
@@ -1662,11 +1662,11 @@ impl DrawableComponent for CustomerMenuGroup {
                 customer_question_menu.draw(ctx)?;
             }
 
-	    if let Some(remember_name_menu) = self.remember_name_menu.as_mut() {
+            if let Some(remember_name_menu) = self.remember_name_menu.as_mut() {
                 remember_name_menu.draw(ctx)?;
             }
 
-	    if let Some(ok_menu) = self.text_balloon_ok_menu.as_mut() {
+            if let Some(ok_menu) = self.text_balloon_ok_menu.as_mut() {
                 ok_menu.draw(ctx)?;
             }
         }

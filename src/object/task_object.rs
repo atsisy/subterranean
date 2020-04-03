@@ -147,9 +147,9 @@ impl TaskTable {
             hold_data: HoldData::None,
             event_list: DelayEventList::new(),
             borrowing_record_book: record_book,
-	    customer_silhouette_menu: CustomerMenuGroup::new(0),
+            customer_silhouette_menu: CustomerMenuGroup::new(0),
             record_book_menu: RecordBookMenuGroup::new(0),
-	    current_customer_request: None,
+            current_customer_request: None,
             today: today_date,
         }
     }
@@ -411,7 +411,7 @@ impl TaskTable {
         self.customer_info_ui.update(ctx, t);
         self.borrowing_record_book.update(t);
         self.record_book_menu.update(ctx, game_data, t);
-	self.customer_silhouette_menu.update(ctx, game_data, t);
+        self.customer_silhouette_menu.update(ctx, game_data, t);
     }
 
     pub fn finish_customer_event(&mut self, now: Clock) {
@@ -589,8 +589,8 @@ impl TaskTable {
         info: CustomerRequest,
         t: Clock,
     ) {
-	self.current_customer_request = Some(info.clone());
-	
+        self.current_customer_request = Some(info.clone());
+
         match info {
             CustomerRequest::Borrowing(info) => {
                 self.start_borrowing_customer_event(ctx, game_data, info, t)
@@ -735,10 +735,10 @@ impl TaskTable {
                 .click_book_title_menu(ctx, game_data, button, point, t)
             && !self
                 .record_book_menu
-            .click_date_menu(ctx, game_data, button, point, t)
-	    && !self
-            .record_book_menu
-            .click_customer_name_menu(ctx, game_data, button, point, t)
+                .click_date_menu(ctx, game_data, button, point, t)
+            && !self
+                .record_book_menu
+                .click_customer_name_menu(ctx, game_data, button, point, t)
         {
             // メニューをクリックしていない場合はfalseをクリックして終了
             return false;
@@ -779,8 +779,11 @@ impl TaskTable {
             return true;
         }
 
-	if let Some((_, name)) = self.record_book_menu.customer_name_menu_last_clicked() {
-            let menu_position = self.record_book_menu.get_customer_name_menu_position().unwrap();
+        if let Some((_, name)) = self.record_book_menu.customer_name_menu_last_clicked() {
+            let menu_position = self
+                .record_book_menu
+                .get_customer_name_menu_position()
+                .unwrap();
             self.borrowing_record_book
                 .insert_customer_name_data_to_customer_info(ctx, menu_position, name);
 
@@ -794,43 +797,40 @@ impl TaskTable {
     /// 新しく、客の名前をsightのtext_balloonに表示させる
     ///
     fn insert_custmer_name_phrase(&mut self, t: Clock) {
-	if let Some(customer_request) = self.current_customer_request.as_ref() {
-	    let phrase_text = format!("{}です", customer_request.get_customer_name());
-	    self.sight.silhouette.insert_new_balloon_phrase(
-		phrase_text,
-		TextBalloonPhraseType::CustomerName(customer_request.get_customer_name().clone()),
-		20,
-		t
-	    );
-	}
+        if let Some(customer_request) = self.current_customer_request.as_ref() {
+            let phrase_text = format!("{}です", customer_request.get_customer_name());
+            self.sight.silhouette.insert_new_balloon_phrase(
+                phrase_text,
+                TextBalloonPhraseType::CustomerName(customer_request.get_customer_name().clone()),
+                20,
+                t,
+            );
+        }
     }
 
     ///
     /// 新しく、客の名前をsightのtext_balloonに表示させる
     ///
     fn insert_rental_limit_phrase(&mut self, t: Clock) {
-	if let Some(customer_request) = self.current_customer_request.as_ref() {
-	    match customer_request {
-		CustomerRequest::Borrowing(info) => {
-		    let phrase_text = match info.rental_limit {
-			RentalLimit::ShortTerm => {
-			    "短期貸出でお願いします"
-			},
-			RentalLimit::LongTerm => {
-			    "長期貸出でお願いします"
-			},
-		    }.to_string();
-		    
-		    self.sight.silhouette.insert_new_balloon_phrase(
-			phrase_text,
-			TextBalloonPhraseType::RentalLimit(info.rental_limit.clone()),
-			20,
-			t
-		    );
-		},
-		_ => (),
-	    }
-	}
+        if let Some(customer_request) = self.current_customer_request.as_ref() {
+            match customer_request {
+                CustomerRequest::Borrowing(info) => {
+                    let phrase_text = match info.rental_limit {
+                        RentalLimit::ShortTerm => "短期貸出でお願いします",
+                        RentalLimit::LongTerm => "長期貸出でお願いします",
+                    }
+                    .to_string();
+
+                    self.sight.silhouette.insert_new_balloon_phrase(
+                        phrase_text,
+                        TextBalloonPhraseType::RentalLimit(info.rental_limit.clone()),
+                        20,
+                        t,
+                    );
+                }
+                _ => (),
+            }
+        }
     }
 
     ///
@@ -844,44 +844,50 @@ impl TaskTable {
         point: numeric::Point2f,
         t: Clock,
     ) -> bool {
-	println!("check customer_silhouette");
+        println!("check customer_silhouette");
         if !self
             .customer_silhouette_menu
-	    .click_customer_question_menu(ctx, game_data, button, point, t) &&
-	    !self
-            .customer_silhouette_menu
-	    .click_remember_name_menu(ctx, game_data, button, point, t)
+            .click_customer_question_menu(ctx, game_data, button, point, t)
+            && !self
+                .customer_silhouette_menu
+                .click_remember_name_menu(ctx, game_data, button, point, t)
         {
             // メニューをクリックしていない場合はfalseをクリックして終了
-	    println!("not clicked");
+            println!("not clicked");
             return false;
         }
 
-        if let Some(index) = self.customer_silhouette_menu.question_menu_last_clicked_index() {
-	    match index {
-		0 => self.insert_custmer_name_phrase(t),
-		1 => self.insert_rental_limit_phrase(t),
-		_ => panic!("Exceptin"),
-	    }
+        if let Some(index) = self
+            .customer_silhouette_menu
+            .question_menu_last_clicked_index()
+        {
+            match index {
+                0 => self.insert_custmer_name_phrase(t),
+                1 => self.insert_rental_limit_phrase(t),
+                _ => panic!("Exceptin"),
+            }
 
             return true;
         }
 
-	if let Some(index) = self.customer_silhouette_menu.remember_name_clicked_index() {
-	    match index {
-		0 => {
-		    let name = self.customer_silhouette_menu.get_remembered_customer_name().unwrap();
-		    self.kosuzu_memory.add_customer_name(name);
-		},
-		_ => panic!("Exceptin"),
-	    }
+        if let Some(index) = self.customer_silhouette_menu.remember_name_clicked_index() {
+            match index {
+                0 => {
+                    let name = self
+                        .customer_silhouette_menu
+                        .get_remembered_customer_name()
+                        .unwrap();
+                    self.kosuzu_memory.add_customer_name(name);
+                }
+                _ => panic!("Exceptin"),
+            }
 
             return true;
         }
 
         false
     }
-    
+
     ///
     /// book_info_frameに関するメニューを表示する
     ///
@@ -963,19 +969,25 @@ impl TaskTable {
     }
 
     fn try_show_text_balloon_menus(
-	&mut self,
+        &mut self,
         ctx: &mut ggez::Context,
         game_data: &GameData,
         click_point: numeric::Point2f,
         t: Clock,
     ) {
-	let phrase_type = self.sight.silhouette.get_text_balloon_phrase_type();
+        let phrase_type = self.sight.silhouette.get_text_balloon_phrase_type();
 
-	match phrase_type {
-	    TextBalloonPhraseType::CustomerName(name) =>
-		self.customer_silhouette_menu.show_remember_name_menu(ctx, game_data, click_point, name.clone(), t),
-	    _ => self.customer_silhouette_menu.show_text_balloon_ok_menu(ctx, game_data, click_point, t),
-	}
+        match phrase_type {
+            TextBalloonPhraseType::CustomerName(name) => self
+                .customer_silhouette_menu
+                .show_remember_name_menu(ctx, game_data, click_point, name.clone(), t),
+            _ => self.customer_silhouette_menu.show_text_balloon_ok_menu(
+                ctx,
+                game_data,
+                click_point,
+                t,
+            ),
+        }
     }
 
     ///
@@ -990,15 +1002,28 @@ impl TaskTable {
         click_point: numeric::Point2f,
         t: Clock,
     ) -> bool {
-	if self.sight.silhouette.contains_character_silhouette(ctx, click_point) {
-	    self.customer_silhouette_menu.show_customer_question_menu(ctx, game_data, click_point, t);
-	    true
-	} else if self.sight.silhouette.contains_text_balloon(ctx, click_point) {
-	    self.try_show_text_balloon_menus(ctx, game_data, click_point, t);
-	    true
-	} else {
-	    false
-	}
+        if self
+            .sight
+            .silhouette
+            .contains_character_silhouette(ctx, click_point)
+        {
+            self.customer_silhouette_menu.show_customer_question_menu(
+                ctx,
+                game_data,
+                click_point,
+                t,
+            );
+            true
+        } else if self
+            .sight
+            .silhouette
+            .contains_text_balloon(ctx, click_point)
+        {
+            self.try_show_text_balloon_menus(ctx, game_data, click_point, t);
+            true
+        } else {
+            false
+        }
     }
 
     fn try_show_menus(
@@ -1014,7 +1039,7 @@ impl TaskTable {
             return ();
         }
 
-	// 既に表示されている場合は、メニューを消して終了
+        // 既に表示されている場合は、メニューを消して終了
         if self.customer_silhouette_menu.is_some_menu_opened() {
             self.customer_silhouette_menu.close_all(t);
             return ();
@@ -1022,8 +1047,8 @@ impl TaskTable {
 
         if !self.try_show_menus_regarding_book_info(ctx, game_data, click_point, t) {
             if !self.try_show_menus_regarding_customer_info(ctx, game_data, click_point, t) {
-		self.try_show_menus_regarding_customer_silhoutte(ctx, game_data, click_point, t);
-	    }
+                self.try_show_menus_regarding_customer_silhoutte(ctx, game_data, click_point, t);
+            }
         }
     }
 }
@@ -1045,7 +1070,7 @@ impl DrawableComponent for TaskTable {
 
             self.customer_info_ui.draw(ctx)?;
 
-	    self.customer_silhouette_menu.draw(ctx)?;
+            self.customer_silhouette_menu.draw(ctx)?;
             self.record_book_menu.draw(ctx)?;
 
             sub_screen::pop_screen(ctx);
@@ -1113,7 +1138,10 @@ impl Clickable for TaskTable {
             self.record_book_menu.close_all(t);
         }
 
-	if !self.customer_silhouette_menu.is_contains_any_menus(ctx, rpoint) {
+        if !self
+            .customer_silhouette_menu
+            .is_contains_any_menus(ctx, rpoint)
+        {
             self.customer_silhouette_menu.close_all(t);
         }
     }
@@ -1133,14 +1161,15 @@ impl Clickable for TaskTable {
         self.borrowing_record_book
             .click_handler(ctx, game_data, t, rpoint);
 
-        if !self.click_record_book_menu(ctx, game_data, button, rpoint, t) &&
-	    !self.click_customer_silhouette_menu(ctx, game_data, button, rpoint, t) {
-		// メニューをクリックしていない場合に、新しいメニュー表示処理を走らせる
-		self.try_show_menus(ctx, game_data, rpoint, t);
-            } else {
-		self.record_book_menu.close_all(t);
-		self.customer_silhouette_menu.close_all(t);
-            }
+        if !self.click_record_book_menu(ctx, game_data, button, rpoint, t)
+            && !self.click_customer_silhouette_menu(ctx, game_data, button, rpoint, t)
+        {
+            // メニューをクリックしていない場合に、新しいメニュー表示処理を走らせる
+            self.try_show_menus(ctx, game_data, rpoint, t);
+        } else {
+            self.record_book_menu.close_all(t);
+            self.customer_silhouette_menu.close_all(t);
+        }
     }
 
     fn clickable_status(
