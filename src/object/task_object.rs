@@ -735,7 +735,10 @@ impl TaskTable {
                 .click_book_title_menu(ctx, game_data, button, point, t)
             && !self
                 .record_book_menu
-                .click_date_menu(ctx, game_data, button, point, t)
+            .click_date_menu(ctx, game_data, button, point, t)
+	    && !self
+            .record_book_menu
+            .click_customer_name_menu(ctx, game_data, button, point, t)
         {
             // メニューをクリックしていない場合はfalseをクリックして終了
             return false;
@@ -772,6 +775,14 @@ impl TaskTable {
             let menu_position = self.record_book_menu.get_date_menu_position().unwrap();
             self.borrowing_record_book
                 .insert_date_data_to_customer_info(ctx, menu_position, date);
+
+            return true;
+        }
+
+	if let Some((_, name)) = self.record_book_menu.customer_name_menu_last_clicked() {
+            let menu_position = self.record_book_menu.get_customer_name_menu_position().unwrap();
+            self.borrowing_record_book
+                .insert_customer_name_data_to_customer_info(ctx, menu_position, name);
 
             return true;
         }

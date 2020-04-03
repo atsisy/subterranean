@@ -647,7 +647,7 @@ impl CustomerNameMenu {
         }
     }
 
-    pub fn get_last_clicked_book_info(&self) -> Option<String> {
+    pub fn get_last_clicked_customer_name(&self) -> Option<String> {
         if let Some(index) = self.last_clicked {
             Some(self.raw_data.get(index).unwrap().clone())
         } else {
@@ -822,7 +822,7 @@ impl DateMenu {
         }
     }
 
-    pub fn get_last_clicked_book_info(&self) -> Option<GensoDate> {
+    pub fn get_last_clicked_genso_date(&self) -> Option<GensoDate> {
         if let Some(index) = self.last_clicked {
             Some(self.date_data.get(index).unwrap().clone())
         } else {
@@ -1972,6 +1972,22 @@ impl RecordBookMenuGroup {
         }
     }
 
+    pub fn customer_name_menu_last_clicked(&mut self) -> Option<(usize, String)> {
+        if let Some(customer_name_menu) = self.customer_name_menu.as_mut() {
+            let component = customer_name_menu
+                .ref_wrapped_object_mut()
+                .ref_wrapped_object_mut()
+                .get_component();
+            if let Some(index) = component.get_last_clicked_index() {
+                Some((index, component.get_last_clicked_customer_name().unwrap()))
+            } else {
+                None
+            }
+        } else {
+            None
+        }
+    }
+
     pub fn date_menu_last_clicked(&mut self) -> Option<(usize, GensoDate)> {
         if let Some(date_menu) = self.date_menu.as_mut() {
             let component = date_menu
@@ -1979,7 +1995,7 @@ impl RecordBookMenuGroup {
                 .ref_wrapped_object_mut()
                 .get_component();
             if let Some(index) = component.get_last_clicked_index() {
-                Some((index, component.get_last_clicked_book_info().unwrap()))
+                Some((index, component.get_last_clicked_genso_date().unwrap()))
             } else {
                 None
             }
