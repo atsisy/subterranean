@@ -784,7 +784,6 @@ impl TaskTable {
     ///
     fn insert_custmer_name_phrase(&mut self, t: Clock) {
 	if let Some(customer_request) = self.current_customer_request.as_ref() {
-	    println!("replace text balloon phrase!!");
 	    let phrase_text = format!("{}です", customer_request.get_customer_name());
 	    self.sight.silhouette.insert_new_balloon_phrase(
 		phrase_text,
@@ -792,6 +791,34 @@ impl TaskTable {
 		20,
 		t
 	    );
+	}
+    }
+
+    ///
+    /// 新しく、客の名前をsightのtext_balloonに表示させる
+    ///
+    fn insert_rental_limit_phrase(&mut self, t: Clock) {
+	if let Some(customer_request) = self.current_customer_request.as_ref() {
+	    match customer_request {
+		CustomerRequest::Borrowing(info) => {
+		    let phrase_text = match info.rental_limit {
+			RentalLimit::ShortTerm => {
+			    "短期貸出でお願いします"
+			},
+			RentalLimit::LongTerm => {
+			    "長期貸出でお願いします"
+			},
+		    }.to_string();
+		    
+		    self.sight.silhouette.insert_new_balloon_phrase(
+			phrase_text,
+			TextBalloonPhraseType::RentalLimit(info.rental_limit.clone()),
+			20,
+			t
+		    );
+		},
+		_ => (),
+	    }
 	}
     }
 
@@ -822,7 +849,7 @@ impl TaskTable {
         if let Some(index) = self.customer_silhouette_menu.question_menu_last_clicked_index() {
 	    match index {
 		0 => self.insert_custmer_name_phrase(t),
-		1 => panic!("Exceptin"),
+		1 => self.insert_rental_limit_phrase(t),
 		_ => panic!("Exceptin"),
 	    }
 
@@ -936,7 +963,7 @@ impl TaskTable {
 	match phrase_type {
 	    TextBalloonPhraseType::CustomerName(name) =>
 		self.customer_silhouette_menu.show_remember_name_menu(ctx, game_data, click_point, name.clone(), t),
-	    _ => panic!("Exception"),
+	    _ => self.customer_silhouette_menu.show_text_balloon_ok_menu(ctx, game_data, click_point, t),
 	}
     }
 
