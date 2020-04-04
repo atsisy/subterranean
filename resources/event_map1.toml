@@ -18,10 +18,60 @@ y = 10
 type = "book-shelf"
 trigger = "action"
 [event-panel.shelf-info]
-begin-number = 700
-end-number = 800
+begin-number = 1
+end-number = 2
 [event-panel.position]
 x = 6
+y = 3
+
+[[event-panel]]
+type = "book-shelf"
+trigger = "action"
+[event-panel.shelf-info]
+begin-number = 1
+end-number = 2
+[event-panel.position]
+x = 7
+y = 3
+
+[[event-panel]]
+type = "book-shelf"
+trigger = "action"
+[event-panel.shelf-info]
+begin-number = 3
+end-number = 4
+[event-panel.position]
+x = 8
+y = 3
+
+[[event-panel]]
+type = "book-shelf"
+trigger = "action"
+[event-panel.shelf-info]
+begin-number = 3
+end-number = 4
+[event-panel.position]
+x = 9
+y = 3
+
+[[event-panel]]
+type = "book-shelf"
+trigger = "action"
+[event-panel.shelf-info]
+begin-number = 5
+end-number = 6
+[event-panel.position]
+x = 10
+y = 3
+
+[[event-panel]]
+type = "book-shelf"
+trigger = "action"
+[event-panel.shelf-info]
+begin-number = 5
+end-number = 6
+[event-panel.position]
+x = 11
 y = 3
 
 [[event-panel]]

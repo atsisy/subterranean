@@ -53,61 +53,156 @@ event_map_file_path = "./resources/event_map1.toml"
 name = "テスト本 壱"
 pages = 128
 size = "大判本"
-billing_number = 10
+billing_number = 1
 
 [[books_information]]
 name = "テスト本 弐"
 pages = 128
 size = "中判本"
-billing_number = 128
+billing_number = 1
 
 [[books_information]]
 name = "テスト本 参"
 pages = 128
 size = "大判本"
-billing_number = 10
+billing_number = 1
 
 [[books_information]]
 name = "テスト本 肆"
 pages = 128
 size = "中判本"
-billing_number = 128
+billing_number = 1
 
 [[books_information]]
 name = "テスト本 伍"
 pages = 128
 size = "大判本"
-billing_number = 10
+billing_number = 1
 
 [[books_information]]
 name = "テスト本 陸"
 pages = 128
 size = "中判本"
-billing_number = 128
+billing_number = 1
 
 [[books_information]]
 name = "テスト本 漆"
 pages = 128
 size = "大判本"
-billing_number = 10
+billing_number = 1
 
 [[books_information]]
 name = "テスト本 捌"
 pages = 128
 size = "中判本"
-billing_number = 128
+billing_number = 1
 
 [[books_information]]
 name = "テスト本 玖"
 pages = 128
 size = "中判本"
-billing_number = 128
+billing_number = 1
 
 [[books_information]]
 name = "テスト本 拾"
 pages = 128
 size = "中判本"
-billing_number = 128
+billing_number = 1
+
+[[books_information]]
+name = "越中史料"
+pages = 128
+size = "中判本"
+billing_number = 2
+
+[[books_information]]
+name = "尾張名所図会"
+pages = 128
+size = "中判本"
+billing_number = 2
+
+# 啓蒙, 思想 3
+[[books_information]]
+name = "改暦弁"
+pages = 128
+size = "中判本"
+billing_number = 3
+
+[[books_information]]
+name = "善の研究"
+pages = 128
+size = "中判本"
+billing_number = 3
+
+[[books_information]]
+name = "学問のすゝめ"
+pages = 128
+size = "中判本"
+billing_number = 3
+
+# 見聞録 4
+[[books_information]]
+name = "さへづり草"
+pages = 128
+size = "中判本"
+billing_number = 4
+
+# 小説, 物語 5
+[[books_information]]
+name = "通俗伊蘇普物語"
+pages = 128
+size = "中判本"
+billing_number = 5
+
+[[books_information]]
+name = "北越奇談"
+pages = 128
+size = "中判本"
+billing_number = 5
+
+[[books_information]]
+name = "名所江戸百景"
+pages = 128
+size = "中判本"
+billing_number = 5
+
+[[books_information]]
+name = "絵本百物語"
+pages = 128
+size = "中判本"
+billing_number = 5
+
+[[books_information]]
+name = "狂歌百物語"
+pages = 128
+size = "中判本"
+billing_number = 5
+
+[[books_information]]
+name = "遠野物語"
+pages = 128
+size = "中判本"
+billing_number = 5
+
+[[books_information]]
+name = "名将言行録"
+pages = 128
+size = "中判本"
+billing_number = 5
+
+[[books_information]]
+name = "幕末百話"
+pages = 128
+size = "中判本"
+billing_number = 5
+
+# 宗教 6
+[[books_information]]
+name = "明治元訳聖書"
+pages = 128
+size = "中判本"
+billing_number = 6
+
 
 [[sprite_batch_information]]
 sprite_x_size = 16
