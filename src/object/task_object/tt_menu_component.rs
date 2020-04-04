@@ -466,7 +466,7 @@ impl BookTitleMenu {
             vtext.make_center(
                 ctx,
                 roundup2f!(title_table_frame.get_center_of(
-                    numeric::Vector2u::new((book_info_data.len() - index - 1) as u32, 0),
+                    numeric::Vector2u::new(index as u32, 0),
                     title_table_frame.get_position()
                 )),
             );
