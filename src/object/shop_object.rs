@@ -845,6 +845,7 @@ pub struct ShelvingDetailContents {
     title: VerticalText,
     cell_desc: VerticalText,
     book_info: Vec<VerticalText>,
+    background: UniTexture,
 }
 
 impl ShelvingDetailContents {
@@ -880,6 +881,14 @@ impl ShelvingDetailContents {
             ),
         );
 
+	let background = UniTexture::new(
+	    game_data.ref_texture(TextureID::MenuArt2),
+	    numeric::Point2f::new(menu_rect.w - 1366.0, 0.0),
+	    numeric::Vector2f::new(1.0, 1.0),
+	    0.0,
+	    0
+	);
+
         ShelvingDetailContents {
             canvas: MovableWrap::new(
                 Box::new(SubScreen::new(
@@ -895,6 +904,7 @@ impl ShelvingDetailContents {
             title: title,
             cell_desc: cell_desc,
             book_info: Vec::new(),
+	    background: background,
         }
     }
 
@@ -964,6 +974,8 @@ impl DrawableComponent for ShelvingDetailContents {
     fn draw(&mut self, ctx: &mut ggez::Context) -> ggez::GameResult<()> {
         if self.is_visible() {
             sub_screen::stack_screen(ctx, self.canvas.ref_wrapped_object());
+
+	    self.background.draw(ctx)?;
 
             self.title.draw(ctx)?;
             self.cell_desc.draw(ctx)?;
@@ -1229,6 +1241,7 @@ impl DrawableComponent for ShopMenuContents {
 pub struct ShopMenu {
     canvas: MovableWrap<SubScreen>,
     menu_contents: ShopMenuContents,
+    background: UniTexture,
     menu_canvas_size: numeric::Vector2f,
     now_appear: bool,
 }
@@ -1251,6 +1264,12 @@ impl ShopMenu {
                 None,
                 t,
             ),
+	    background: UniTexture::new(
+		game_data.ref_texture(TextureID::MenuArt1),
+		numeric::Point2f::new(size.x - 1366.0, 0.0),
+		numeric::Vector2f::new(1.0, 1.0),
+		0.0,
+		0),
             menu_contents: ShopMenuContents::new(game_data),
             menu_canvas_size: size,
             now_appear: false,
@@ -1292,6 +1311,7 @@ impl DrawableComponent for ShopMenu {
     fn draw(&mut self, ctx: &mut ggez::Context) -> ggez::GameResult<()> {
         sub_screen::stack_screen(ctx, self.canvas.ref_wrapped_object());
 
+	self.background.draw(ctx)?;
         self.menu_contents.draw(ctx).unwrap();
 
         sub_screen::pop_screen(ctx);

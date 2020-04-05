@@ -91,6 +91,8 @@ pub enum TextureID {
     KosuzuDotLeft3,
     StoreButton,
     ResetButton,
+    MenuArt1,
+    MenuArt2,
     Unknown,
 }
 
@@ -144,6 +146,8 @@ impl FromStr for TextureID {
             "KosuzuDotLeft3" => Ok(Self::KosuzuDotLeft3),
             "StoreButton" => Ok(Self::StoreButton),
             "ResetButton" => Ok(Self::ResetButton),
+	    "MenuArt1" => Ok(Self::MenuArt1),
+	    "MenuArt2" => Ok(Self::MenuArt2),
             _ => Err(()),
         }
     }
@@ -192,6 +196,8 @@ impl TextureID {
             37 => Some(Self::KosuzuDotLeft3),
             38 => Some(Self::StoreButton),
             39 => Some(Self::ResetButton),
+	    40 => Some(Self::MenuArt1),
+	    41 => Some(Self::MenuArt2),
             _ => None,
         }
     }
