@@ -899,9 +899,18 @@ impl ShopScene {
         self.transition_scene = SceneID::SuzunaShop;
     }
 
-    pub fn update_task_result(&mut self, game_data: &GameData, task_result: &TaskResult) {
-        self.shop_menu
-            .update_contents(game_data, task_result, self.player.get_shelving_book());
+    pub fn update_task_result(
+        &mut self,
+        ctx: &mut ggez::Context,
+        game_data: &GameData,
+        task_result: &TaskResult,
+    ) {
+        self.shop_menu.update_contents(
+            ctx,
+            game_data,
+            task_result,
+            self.player.get_shelving_book(),
+        );
         self.task_result = task_result.clone();
     }
 
@@ -909,7 +918,7 @@ impl ShopScene {
         self.task_result.clone()
     }
 
-    fn try_hide_shelving_select_ui(&mut self, game_data: &GameData) {
+    fn try_hide_shelving_select_ui(&mut self, ctx: &mut ggez::Context, game_data: &GameData) {
         let select_result = self
             .shop_special_object
             .hide_shelving_select_ui(self.get_current_clock());
@@ -917,6 +926,7 @@ impl ShopScene {
             self.task_result.not_shelved_books = boxed;
             self.player.update_shelving_book(shelving);
             self.shop_menu.update_contents(
+                ctx,
                 game_data,
                 &self.task_result,
                 self.player.get_shelving_book(),
@@ -926,13 +936,14 @@ impl ShopScene {
         }
     }
 
-    fn try_hide_storing_select_ui(&mut self, game_data: &GameData) {
+    fn try_hide_storing_select_ui(&mut self, ctx: &mut ggez::Context, game_data: &GameData) {
         let store_result = self
             .shop_special_object
             .hide_storing_select_ui(self.get_current_clock());
         if let Some((_stored, shelving)) = store_result {
             self.player.update_shelving_book(shelving);
             self.shop_menu.update_contents(
+                ctx,
                 game_data,
                 &self.task_result,
                 self.player.get_shelving_book(),
@@ -1017,8 +1028,8 @@ impl SceneManager for ShopScene {
                 }
             }
             tdev::VirtualKey::Action3 => {
-                self.try_hide_shelving_select_ui(game_data);
-                self.try_hide_storing_select_ui(game_data);
+                self.try_hide_shelving_select_ui(ctx, game_data);
+                self.try_hide_storing_select_ui(ctx, game_data);
             }
             tdev::VirtualKey::Action4 => {
                 self.transition_to_copy_scene();

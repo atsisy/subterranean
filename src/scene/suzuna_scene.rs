@@ -179,7 +179,7 @@ impl SceneManager for SuzunaScene {
                             .shop_scene
                             .as_mut()
                             .unwrap()
-                            .update_task_result(game_data, &self.task_result);
+                            .update_task_result(ctx, game_data, &self.task_result);
                         debug::debug_screen_push_text(&format!("{:?}", self.task_result));
                     }
                 }

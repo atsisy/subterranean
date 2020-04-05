@@ -832,12 +832,7 @@ impl BorrowingRecordBookPage {
             ),
         );
 
-	set_table_frame_cell_center!(
-            ctx,
-            table_frame,
-            borrower,
-            numeric::Vector2u::new(2, 0)
-        );
+        set_table_frame_cell_center!(ctx, table_frame, borrower, numeric::Vector2u::new(2, 0));
 
         let mut borrow_date = VerticalText::new(
             "貸出日".to_string(),
@@ -852,12 +847,7 @@ impl BorrowingRecordBookPage {
             ),
         );
 
-	set_table_frame_cell_center!(
-            ctx,
-            table_frame,
-            borrow_date,
-            numeric::Vector2u::new(1, 0)
-        );
+        set_table_frame_cell_center!(ctx, table_frame, borrow_date, numeric::Vector2u::new(1, 0));
 
         let mut return_date = VerticalText::new(
             "返却期限".to_string(),
@@ -872,12 +862,7 @@ impl BorrowingRecordBookPage {
             ),
         );
 
-	set_table_frame_cell_center!(
-            ctx,
-            table_frame,
-            return_date,
-            numeric::Vector2u::new(0, 0)
-        );
+        set_table_frame_cell_center!(ctx, table_frame, return_date, numeric::Vector2u::new(0, 0));
 
         let books_table = TableFrame::new(
             game_data,
@@ -900,12 +885,7 @@ impl BorrowingRecordBookPage {
             ),
         );
 
-	set_table_frame_cell_center!(
-            ctx,
-            books_table,
-            book_head,
-            numeric::Vector2u::new(5, 0)
-        );
+        set_table_frame_cell_center!(ctx, books_table, book_head, numeric::Vector2u::new(5, 0));
 
         let mut book_status = VerticalText::new(
             "状態".to_string(),
@@ -920,12 +900,7 @@ impl BorrowingRecordBookPage {
             ),
         );
 
-	set_table_frame_cell_center!(
-            ctx,
-            books_table,
-            book_status,
-            numeric::Vector2u::new(5, 1)
-        );
+        set_table_frame_cell_center!(ctx, books_table, book_status, numeric::Vector2u::new(5, 1));
 
         let paper_texture = SimpleObject::new(
             MovableUniTexture::new(
@@ -1874,11 +1849,11 @@ impl DeskBookMenu {
                 font_info,
             );
 
-	    set_table_frame_cell_center!(
-		ctx,
-		select_table_frame,
-		vtext,
-		numeric::Vector2u::new(choice_text_str.len() as u32, 0)
+            set_table_frame_cell_center!(
+                ctx,
+                select_table_frame,
+                vtext,
+                numeric::Vector2u::new(choice_text_str.len() as u32, 0)
             );
 
             choice_vtext.push(vtext);

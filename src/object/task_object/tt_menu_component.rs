@@ -782,7 +782,7 @@ impl DateMenu {
                 font_info,
             );
 
-	    set_table_frame_cell_center!(
+            set_table_frame_cell_center!(
                 ctx,
                 date_table_frame,
                 vtext,
@@ -926,9 +926,9 @@ impl CustomerQuestionMenu {
                 font_info,
             );
 
-	    set_table_frame_cell_center!(
+            set_table_frame_cell_center!(
                 ctx,
-		question_table_frame,
+                question_table_frame,
                 vtext,
                 numeric::Vector2u::new(index as u32, 0)
             );
@@ -1061,9 +1061,9 @@ impl RememberCustomerNameMenu {
                 font_info,
             );
 
-	    set_table_frame_cell_center!(
+            set_table_frame_cell_center!(
                 ctx,
-		select_table_frame,
+                select_table_frame,
                 vtext,
                 numeric::Vector2u::new(index as u32, 0)
             );
@@ -1183,7 +1183,7 @@ impl OkMenu {
                 font_info,
             );
 
-	    set_table_frame_cell_center!(
+            set_table_frame_cell_center!(
                 ctx,
                 select_table_frame,
                 vtext,

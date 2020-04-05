@@ -13,6 +13,7 @@ use torifune::graphics::*;
 use torifune::impl_drawable_object_for_wrapped;
 use torifune::impl_texture_object_for_wrapped;
 use torifune::numeric;
+use torifune::roundup2f;
 
 use crate::core::{BookInformation, BookShelfInformation, FontID, GameData, TextureID};
 use crate::object::move_fn;
@@ -20,14 +21,17 @@ use crate::object::util_object::*;
 use crate::object::Clickable;
 use crate::scene::suzuna_scene::TaskResult;
 use crate::scene::DelayEventList;
+use crate::set_table_frame_cell_center;
 
 use number_to_jk::number_to_jk;
 
 pub struct SelectBookWindow {
     canvas: SubScreen,
+    table_frame: TableFrame,
     title: VerticalText,
-    cell_desc: VerticalText,
-    book_text: Vec<VerticalText>,
+    cell_desc: Vec<VerticalText>,
+    book_title_text: Vec<VerticalText>,
+    billing_number_text: Vec<VerticalText>,
     selecting_book_index: Vec<usize>,
     book_font: FontInformation,
 }
@@ -40,10 +44,55 @@ impl SelectBookWindow {
         title: &str,
         book_info: Vec<BookInformation>,
     ) -> Self {
+        let mut table_frame = TableFrame::new(
+            game_data,
+            numeric::Point2f::new(0.0, 0.0),
+            FrameData::new(vec![140.0, 400.0], vec![42.0; book_info.len() + 1]),
+            numeric::Vector2f::new(0.3, 0.3),
+            0,
+        );
+
+	table_frame.set_position(
+	    numeric::Point2f::new(
+		window_rect.w - table_frame.real_width() - 80.0,
+		40.0,
+	    ));
+
         let font_info = FontInformation::new(
             game_data.get_font(FontID::JpFude1),
-            numeric::Vector2f::new(32.0, 32.0),
+            numeric::Vector2f::new(30.0, 30.0),
             ggraphics::Color::from_rgba_u32(0xff),
+        );
+
+        let mut cell_desc1 = VerticalText::new(
+            "請求番号".to_string(),
+            numeric::Point2f::new(0.0, 0.0),
+            numeric::Vector2f::new(1.0, 1.0),
+            0.0,
+            0,
+            font_info.clone(),
+        );
+
+        let mut cell_desc2 = VerticalText::new(
+            "題名".to_string(),
+            numeric::Point2f::new(0.0, 0.0),
+            numeric::Vector2f::new(1.0, 1.0),
+            0.0,
+            0,
+            font_info,
+        );
+
+        set_table_frame_cell_center!(
+            ctx,
+            table_frame,
+            cell_desc1,
+            numeric::Vector2u::new(book_info.len() as u32, 0)
+        );
+        set_table_frame_cell_center!(
+            ctx,
+            table_frame,
+            cell_desc2,
+            numeric::Vector2u::new(book_info.len() as u32, 1)
         );
 
         let mut window = SelectBookWindow {
@@ -55,21 +104,16 @@ impl SelectBookWindow {
             ),
             title: VerticalText::new(
                 title.to_string(),
-                numeric::Point2f::new(window_rect.w - 50.0, 50.0),
+                numeric::Point2f::new(window_rect.w - 60.0, 50.0),
                 numeric::Vector2f::new(1.0, 1.0),
                 0.0,
                 0,
                 font_info,
             ),
-            cell_desc: VerticalText::new(
-                "請求番号\t\t表題".to_string(),
-                numeric::Point2f::new(window_rect.w - 100.0, 50.0),
-                numeric::Vector2f::new(1.0, 1.0),
-                0.0,
-                0,
-                font_info,
-            ),
-            book_text: Vec::new(),
+	    table_frame: table_frame,
+            cell_desc: vec![cell_desc1, cell_desc2],
+            book_title_text: Vec::new(),
+	    billing_number_text: Vec::new(),
             selecting_book_index: Vec::new(),
             book_font: font_info,
         };
@@ -81,35 +125,43 @@ impl SelectBookWindow {
 
     fn update_contents(&mut self, ctx: &mut ggez::Context, book_info: &Vec<BookInformation>) {
         let window_rect = self.canvas.get_drawing_area(ctx);
-        let mut text_position = numeric::Point2f::new(window_rect.w - 150.0, 50.0);
 
-        self.book_text = book_info
-            .iter()
-            .enumerate()
-            .map(|enumerate_data| {
-                let (index, info) = enumerate_data;
+        for (index, info) in book_info.iter().enumerate() {
+            let mut billing_number_text = VerticalText::new(
+                number_to_jk(info.billing_number as u64),
+                numeric::Point2f::new(0.0, 0.0),
+                numeric::Vector2f::new(1.0, 1.0),
+                0.0,
+                0,
+                self.book_font.clone(),
+            );
 
-                if index == 12 {
-                    text_position.x = window_rect.w - 100.0;
-                    text_position.y += 500.0;
-                }
+            let mut book_title_text = VerticalText::new(
+                info.name.clone(),
+                numeric::Point2f::new(0.0, 0.0),
+                numeric::Vector2f::new(1.0, 1.0),
+                0.0,
+                0,
+                self.book_font.clone(),
+            );
 
-                let vtext = VerticalText::new(
-                    format!(
-                        "{0: <6}{1}",
-                        number_to_jk(info.billing_number as u64),
-                        info.name
-                    ),
-                    text_position,
-                    numeric::Vector2f::new(1.0, 1.0),
-                    0.0,
-                    0,
-                    self.book_font.clone(),
-                );
-                text_position.x -= 40.0;
-                vtext
-            })
-            .collect();
+            set_table_frame_cell_center!(
+                ctx,
+                self.table_frame,
+                billing_number_text,
+                numeric::Vector2u::new((book_info.len() - 1 - index) as u32, 0)
+            );
+
+	    set_table_frame_cell_center!(
+                ctx,
+                self.table_frame,
+                book_title_text,
+                numeric::Vector2u::new((book_info.len() - 1 - index) as u32, 1)
+            );
+
+	    self.book_title_text.push(book_title_text);
+	    self.billing_number_text.push(billing_number_text);
+        }
     }
 
     pub fn sort_selecting_index_less(&mut self) {
@@ -130,9 +182,19 @@ impl DrawableComponent for SelectBookWindow {
         if self.is_visible() {
             sub_screen::stack_screen(ctx, &self.canvas);
 
+            self.table_frame.draw(ctx)?;
+
             self.title.draw(ctx)?;
-            self.cell_desc.draw(ctx)?;
-            for vtext in &mut self.book_text {
+
+            for vtext in &mut self.cell_desc {
+                vtext.draw(ctx)?;
+            }
+
+            for vtext in &mut self.book_title_text {
+                vtext.draw(ctx)?;
+            }
+	    
+	    for vtext in &mut self.billing_number_text {
                 vtext.draw(ctx)?;
             }
 
@@ -182,7 +244,7 @@ impl Clickable for SelectBookWindow {
     ) {
         let rpoint = self.canvas.relative_point(point);
 
-        for (index, vtext) in self.book_text.iter_mut().enumerate() {
+        for (index, vtext) in self.book_title_text.iter_mut().enumerate() {
             if vtext.contains(ctx, rpoint) {
                 // 既に選択されている場合は、削除
                 if self.selecting_book_index.contains(&index) {
@@ -844,8 +906,9 @@ pub struct ShelvingDetailContents {
     menu_rect: numeric::Rect,
     book_info_frame: TableFrame,
     title: VerticalText,
-    cell_desc: VerticalText,
-    book_info: Vec<VerticalText>,
+    cell_desc: Vec<VerticalText>,
+    book_billing_number_text: Vec<VerticalText>,
+    book_title_text: Vec<VerticalText>,
     background: UniTexture,
 }
 
@@ -858,7 +921,7 @@ impl ShelvingDetailContents {
     ) -> Self {
         let title = VerticalText::new(
             "配架中".to_string(),
-            numeric::Point2f::new(menu_rect.w - 60.0, 70.0),
+            numeric::Point2f::new(menu_rect.w - 110.0, 70.0),
             numeric::Vector2f::new(1.0, 1.0),
             0.0,
             0,
@@ -869,32 +932,46 @@ impl ShelvingDetailContents {
             ),
         );
 
-        let cell_desc = VerticalText::new(
-            "請求番号\t\t表題".to_string(),
-            numeric::Point2f::new(menu_rect.w - 120.0, 150.0),
+        let frame = TableFrame::new(
+            game_data,
+            numeric::Point2f::new(25.0, 60.0),
+            FrameData::new(vec![160.0, 420.0], vec![44.0; 6]),
+            numeric::Vector2f::new(0.3, 0.3),
+            0,
+        );
+
+        let font_info = FontInformation::new(
+            game_data.get_font(FontID::JpFude1),
+            numeric::Vector2f::new(30.0, 30.0),
+            ggraphics::Color::from_rgba_u32(0xff),
+        );
+
+        let mut cell_desc1 = VerticalText::new(
+            "請求番号".to_string(),
+            numeric::Point2f::new(0.0, 0.0),
             numeric::Vector2f::new(1.0, 1.0),
             0.0,
             0,
-            FontInformation::new(
-                game_data.get_font(FontID::JpFude1),
-                numeric::Vector2f::new(34.0, 34.0),
-                ggraphics::Color::from_rgba_u32(0xff),
-            ),
+            font_info.clone(),
         );
+
+        let mut cell_desc2 = VerticalText::new(
+            "題名".to_string(),
+            numeric::Point2f::new(0.0, 0.0),
+            numeric::Vector2f::new(1.0, 1.0),
+            0.0,
+            0,
+            font_info,
+        );
+
+        set_table_frame_cell_center!(ctx, frame, cell_desc1, numeric::Vector2u::new(5, 0));
+        set_table_frame_cell_center!(ctx, frame, cell_desc2, numeric::Vector2u::new(5, 1));
 
         let background = UniTexture::new(
             game_data.ref_texture(TextureID::MenuArt2),
             numeric::Point2f::new(menu_rect.w - 1366.0, 0.0),
             numeric::Vector2f::new(1.0, 1.0),
             0.0,
-            0,
-        );
-
-        let frame = TableFrame::new(
-            game_data,
-            numeric::Point2f::new(100.0, 70.0),
-            FrameData::new(vec![128.0, 450.0], vec![40.0; 6]),
-            numeric::Vector2f::new(0.3, 0.3),
             0,
         );
 
@@ -912,47 +989,65 @@ impl ShelvingDetailContents {
             book_info_frame: frame,
             menu_rect: menu_rect,
             title: title,
-            cell_desc: cell_desc,
-            book_info: Vec::new(),
+            cell_desc: vec![cell_desc1, cell_desc2],
+            book_title_text: Vec::new(),
+            book_billing_number_text: Vec::new(),
             background: background,
         }
     }
 
     pub fn update_contents(
         &mut self,
+        ctx: &mut ggez::Context,
         game_data: &GameData,
         player_shelving: &Vec<BookInformation>,
     ) {
-        self.book_info.clear();
+        self.book_title_text.clear();
 
-        let mut book_info_position = numeric::Point2f::new(self.menu_rect.w - 180.0, 150.0);
         let book_font_information = FontInformation::new(
             game_data.get_font(FontID::JpFude1),
             numeric::Vector2f::new(30.0, 30.0),
             ggraphics::Color::from_rgba_u32(0xff),
         );
 
-        self.book_info = player_shelving
+        player_shelving
             .iter()
-            .map(|book_info| {
-                let vtext = VerticalText::new(
-                    format!(
-                        "{0:<6}{1}",
-                        number_to_jk(book_info.billing_number as u64),
-                        &book_info.name
-                    ),
-                    book_info_position,
+            .enumerate()
+            .for_each(|(index, book_info)| {
+                let mut billing_number_text = VerticalText::new(
+                    format!("{}", number_to_jk(book_info.billing_number as u64)),
+                    numeric::Point2f::new(0.0, 0.0),
                     numeric::Vector2f::new(1.0, 1.0),
                     0.0,
                     0,
                     book_font_information.clone(),
                 );
 
-                book_info_position.x -= 35.0;
+                let mut book_title_text = VerticalText::new(
+                    book_info.name.clone(),
+                    numeric::Point2f::new(0.0, 0.0),
+                    numeric::Vector2f::new(1.0, 1.0),
+                    0.0,
+                    0,
+                    book_font_information.clone(),
+                );
 
-                vtext
-            })
-            .collect();
+                set_table_frame_cell_center!(
+                    ctx,
+                    self.book_info_frame,
+                    billing_number_text,
+                    numeric::Vector2u::new((5 - index) as u32, 0)
+                );
+                set_table_frame_cell_center!(
+                    ctx,
+                    self.book_info_frame,
+                    book_title_text,
+                    numeric::Vector2u::new((5 - index) as u32, 1)
+                );
+
+                self.book_billing_number_text.push(billing_number_text);
+                self.book_title_text.push(book_title_text);
+            });
     }
 
     ///
@@ -990,8 +1085,12 @@ impl DrawableComponent for ShelvingDetailContents {
             self.book_info_frame.draw(ctx)?;
 
             self.title.draw(ctx)?;
-            self.cell_desc.draw(ctx)?;
-            for vtext in &mut self.book_info {
+
+            for vtext in &mut self.cell_desc {
+                vtext.draw(ctx)?;
+            }
+
+            for vtext in &mut self.book_title_text {
                 vtext.draw(ctx)?;
             }
 
@@ -1047,20 +1146,20 @@ impl ShopMenuContents {
     pub fn new(game_data: &GameData) -> Self {
         let normal_scale_font = FontInformation::new(
             game_data.get_font(FontID::JpFude1),
-            numeric::Vector2f::new(26.0, 26.0),
+            numeric::Vector2f::new(30.0, 30.0),
             ggraphics::Color::from_rgba_u32(0x000000ff),
         );
 
         let large_scale_font = FontInformation::new(
             game_data.get_font(FontID::JpFude1),
-            numeric::Vector2f::new(30.0, 30.0),
+            numeric::Vector2f::new(34.0, 34.0),
             ggraphics::Color::from_rgba_u32(0x000000ff),
         );
 
         ShopMenuContents {
             day_text: VerticalText::new(
                 format!("日付　{}月 {}日", number_to_jk(12), number_to_jk(12)),
-                numeric::Point2f::new(370.0, 50.0),
+                numeric::Point2f::new(350.0, 70.0),
                 numeric::Vector2f::new(1.0, 1.0),
                 0.0,
                 0,
@@ -1068,7 +1167,7 @@ impl ShopMenuContents {
             ),
             copy_request: VerticalText::new(
                 format!("写本受注数"),
-                numeric::Point2f::new(300.0, 50.0),
+                numeric::Point2f::new(275.0, 70.0),
                 numeric::Vector2f::new(1.0, 1.0),
                 0.0,
                 0,
@@ -1076,7 +1175,7 @@ impl ShopMenuContents {
             ),
             copy_request_num: VerticalText::new(
                 format!("{}件", number_to_jk(0)),
-                numeric::Point2f::new(260.0, 150.0),
+                numeric::Point2f::new(230.0, 170.0),
                 numeric::Vector2f::new(1.0, 1.0),
                 0.0,
                 0,
@@ -1084,7 +1183,7 @@ impl ShopMenuContents {
             ),
             wait_for_return: VerticalText::new(
                 format!("返却待冊数"),
-                numeric::Point2f::new(200.0, 50.0),
+                numeric::Point2f::new(175.0, 70.0),
                 numeric::Vector2f::new(1.0, 1.0),
                 0.0,
                 0,
@@ -1092,7 +1191,7 @@ impl ShopMenuContents {
             ),
             wait_for_return_num: VerticalText::new(
                 format!("{}冊", number_to_jk(0)),
-                numeric::Point2f::new(160.0, 150.0),
+                numeric::Point2f::new(130.0, 170.0),
                 numeric::Vector2f::new(1.0, 1.0),
                 0.0,
                 0,
@@ -1100,7 +1199,7 @@ impl ShopMenuContents {
             ),
             not_shelved: VerticalText::new(
                 format!("未配架冊数"),
-                numeric::Point2f::new(100.0, 50.0),
+                numeric::Point2f::new(75.0, 70.0),
                 numeric::Vector2f::new(1.0, 1.0),
                 0.0,
                 0,
@@ -1108,7 +1207,7 @@ impl ShopMenuContents {
             ),
             not_shelved_num: VerticalText::new(
                 format!("{}冊", number_to_jk(0)),
-                numeric::Point2f::new(60.0, 150.0),
+                numeric::Point2f::new(30.0, 170.0),
                 numeric::Vector2f::new(1.0, 1.0),
                 0.0,
                 0,
@@ -1116,7 +1215,7 @@ impl ShopMenuContents {
             ),
             kosuzu_level: VerticalText::new(
                 format!("小鈴 習熟度"),
-                numeric::Point2f::new(300.0, 350.0),
+                numeric::Point2f::new(275.0, 370.0),
                 numeric::Vector2f::new(1.0, 1.0),
                 0.0,
                 0,
@@ -1124,7 +1223,7 @@ impl ShopMenuContents {
             ),
             kosuzu_level_num: VerticalText::new(
                 format!("{}", number_to_jk(0)),
-                numeric::Point2f::new(260.0, 450.0),
+                numeric::Point2f::new(230.0, 470.0),
                 numeric::Vector2f::new(1.0, 1.0),
                 0.0,
                 0,
@@ -1386,11 +1485,12 @@ impl ShopDetailMenuContents {
 
     pub fn update_contents(
         &mut self,
+        ctx: &mut ggez::Context,
         game_data: &GameData,
         player_shelving: &Vec<BookInformation>,
     ) {
         self.shelving_info
-            .update_contents(game_data, player_shelving);
+            .update_contents(ctx, game_data, player_shelving);
     }
 
     pub fn detail_menu_is_open(&self) -> bool {
@@ -1502,12 +1602,14 @@ impl ShopMenuMaster {
 
     pub fn update_contents(
         &mut self,
+        ctx: &mut ggez::Context,
         game_data: &GameData,
         task_result: &TaskResult,
         player_shelving: &Vec<BookInformation>,
     ) {
         self.first_menu.update_menu_contents(game_data, task_result);
-        self.detail_menu.update_contents(game_data, player_shelving);
+        self.detail_menu
+            .update_contents(ctx, game_data, player_shelving);
     }
 
     pub fn toggle_first_menu(&mut self, t: Clock) {
