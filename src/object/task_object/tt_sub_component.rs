@@ -19,6 +19,7 @@ use torifune::roundup2f;
 use crate::core::BookInformation;
 use crate::object::move_fn;
 use crate::object::util_object::*;
+use crate::set_table_frame_cell_center;
 
 use super::Clickable;
 use crate::core::{FontID, GameData, GensoDate, TextureID};
@@ -830,11 +831,12 @@ impl BorrowingRecordBookPage {
                 ggraphics::Color::from_rgba_u32(0x000000ff),
             ),
         );
-        borrower.make_center(
+
+	set_table_frame_cell_center!(
             ctx,
-            roundup2f!(
-                table_frame.get_center_of(numeric::Vector2u::new(2, 0), table_frame.get_position())
-            ),
+            table_frame,
+            borrower,
+            numeric::Vector2u::new(2, 0)
         );
 
         let mut borrow_date = VerticalText::new(
@@ -849,11 +851,12 @@ impl BorrowingRecordBookPage {
                 ggraphics::Color::from_rgba_u32(0x000000ff),
             ),
         );
-        borrow_date.make_center(
+
+	set_table_frame_cell_center!(
             ctx,
-            roundup2f!(
-                table_frame.get_center_of(numeric::Vector2u::new(1, 0), table_frame.get_position())
-            ),
+            table_frame,
+            borrow_date,
+            numeric::Vector2u::new(1, 0)
         );
 
         let mut return_date = VerticalText::new(
@@ -868,11 +871,12 @@ impl BorrowingRecordBookPage {
                 ggraphics::Color::from_rgba_u32(0x000000ff),
             ),
         );
-        return_date.make_center(
+
+	set_table_frame_cell_center!(
             ctx,
-            roundup2f!(
-                table_frame.get_center_of(numeric::Vector2u::new(0, 0), table_frame.get_position())
-            ),
+            table_frame,
+            return_date,
+            numeric::Vector2u::new(0, 0)
         );
 
         let books_table = TableFrame::new(
@@ -895,11 +899,12 @@ impl BorrowingRecordBookPage {
                 ggraphics::Color::from_rgba_u32(0x000000ff),
             ),
         );
-        book_head.make_center(
+
+	set_table_frame_cell_center!(
             ctx,
-            roundup2f!(
-                books_table.get_center_of(numeric::Vector2u::new(5, 0), books_table.get_position())
-            ),
+            books_table,
+            book_head,
+            numeric::Vector2u::new(5, 0)
         );
 
         let mut book_status = VerticalText::new(
@@ -914,11 +919,12 @@ impl BorrowingRecordBookPage {
                 ggraphics::Color::from_rgba_u32(0x000000ff),
             ),
         );
-        book_status.make_center(
+
+	set_table_frame_cell_center!(
             ctx,
-            roundup2f!(
-                books_table.get_center_of(numeric::Vector2u::new(5, 1), books_table.get_position())
-            ),
+            books_table,
+            book_status,
+            numeric::Vector2u::new(5, 1)
         );
 
         let paper_texture = SimpleObject::new(
@@ -1868,12 +1874,11 @@ impl DeskBookMenu {
                 font_info,
             );
 
-            vtext.make_center(
-                ctx,
-                roundup2f!(select_table_frame.get_center_of(
-                    numeric::Vector2u::new(choice_text_str.len() as u32, 0),
-                    select_table_frame.get_position()
-                )),
+	    set_table_frame_cell_center!(
+		ctx,
+		select_table_frame,
+		vtext,
+		numeric::Vector2u::new(choice_text_str.len() as u32, 0)
             );
 
             choice_vtext.push(vtext);

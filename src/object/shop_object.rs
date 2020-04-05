@@ -842,6 +842,7 @@ impl Clickable for SelectStoreBookUI {
 pub struct ShelvingDetailContents {
     canvas: MovableWrap<SubScreen>,
     menu_rect: numeric::Rect,
+    book_info_frame: TableFrame,
     title: VerticalText,
     cell_desc: VerticalText,
     book_info: Vec<VerticalText>,
@@ -881,13 +882,21 @@ impl ShelvingDetailContents {
             ),
         );
 
-	let background = UniTexture::new(
-	    game_data.ref_texture(TextureID::MenuArt2),
-	    numeric::Point2f::new(menu_rect.w - 1366.0, 0.0),
-	    numeric::Vector2f::new(1.0, 1.0),
-	    0.0,
-	    0
-	);
+        let background = UniTexture::new(
+            game_data.ref_texture(TextureID::MenuArt2),
+            numeric::Point2f::new(menu_rect.w - 1366.0, 0.0),
+            numeric::Vector2f::new(1.0, 1.0),
+            0.0,
+            0,
+        );
+
+        let frame = TableFrame::new(
+            game_data,
+            numeric::Point2f::new(100.0, 70.0),
+            FrameData::new(vec![128.0, 450.0], vec![40.0; 6]),
+            numeric::Vector2f::new(0.3, 0.3),
+            0,
+        );
 
         ShelvingDetailContents {
             canvas: MovableWrap::new(
@@ -900,11 +909,12 @@ impl ShelvingDetailContents {
                 None,
                 t,
             ),
+            book_info_frame: frame,
             menu_rect: menu_rect,
             title: title,
             cell_desc: cell_desc,
             book_info: Vec::new(),
-	    background: background,
+            background: background,
         }
     }
 
@@ -975,7 +985,9 @@ impl DrawableComponent for ShelvingDetailContents {
         if self.is_visible() {
             sub_screen::stack_screen(ctx, self.canvas.ref_wrapped_object());
 
-	    self.background.draw(ctx)?;
+            self.background.draw(ctx)?;
+
+            self.book_info_frame.draw(ctx)?;
 
             self.title.draw(ctx)?;
             self.cell_desc.draw(ctx)?;
@@ -1264,12 +1276,13 @@ impl ShopMenu {
                 None,
                 t,
             ),
-	    background: UniTexture::new(
-		game_data.ref_texture(TextureID::MenuArt1),
-		numeric::Point2f::new(size.x - 1366.0, 0.0),
-		numeric::Vector2f::new(1.0, 1.0),
-		0.0,
-		0),
+            background: UniTexture::new(
+                game_data.ref_texture(TextureID::MenuArt1),
+                numeric::Point2f::new(size.x - 1366.0, 0.0),
+                numeric::Vector2f::new(1.0, 1.0),
+                0.0,
+                0,
+            ),
             menu_contents: ShopMenuContents::new(game_data),
             menu_canvas_size: size,
             now_appear: false,
@@ -1311,7 +1324,7 @@ impl DrawableComponent for ShopMenu {
     fn draw(&mut self, ctx: &mut ggez::Context) -> ggez::GameResult<()> {
         sub_screen::stack_screen(ctx, self.canvas.ref_wrapped_object());
 
-	self.background.draw(ctx)?;
+        self.background.draw(ctx)?;
         self.menu_contents.draw(ctx).unwrap();
 
         sub_screen::pop_screen(ctx);

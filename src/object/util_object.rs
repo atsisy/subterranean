@@ -443,6 +443,16 @@ impl DrawableObject for TableFrame {
     impl_drawable_object_for_wrapped! {tile_batch}
 }
 
+#[macro_export]
+macro_rules! set_table_frame_cell_center {
+    ($ctx: expr, $table_frame: expr, $obj: expr, $point: expr) => {
+        $obj.make_center(
+            $ctx,
+            roundup2f!($table_frame.get_center_of($point, $table_frame.get_position())),
+        );
+    };
+}
+
 ///
 /// # ボタンみたいなものを表示する構造体
 ///

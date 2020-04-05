@@ -19,6 +19,7 @@ use crate::flush_delay_event;
 use crate::object::effect;
 use crate::object::util_object::*;
 use crate::scene::*;
+use crate::set_table_frame_cell_center;
 
 pub struct KosuzuMemory {
     books_info: Vec<BookInformation>,
@@ -463,12 +464,11 @@ impl BookTitleMenu {
                 font_info,
             );
 
-            vtext.make_center(
+            set_table_frame_cell_center!(
                 ctx,
-                roundup2f!(title_table_frame.get_center_of(
-                    numeric::Vector2u::new(index as u32, 0),
-                    title_table_frame.get_position()
-                )),
+                title_table_frame,
+                vtext,
+                numeric::Vector2u::new(index as u32, 0)
             );
 
             title_vtext.push(vtext);
@@ -610,12 +610,11 @@ impl CustomerNameMenu {
                 font_info,
             );
 
-            vtext.make_center(
+            set_table_frame_cell_center!(
                 ctx,
-                roundup2f!(name_table_frame.get_center_of(
-                    numeric::Vector2u::new((customer_name_data.len() - index - 1) as u32, 0),
-                    name_table_frame.get_position()
-                )),
+                name_table_frame,
+                vtext,
+                numeric::Vector2u::new((customer_name_data.len() - index - 1) as u32, 0)
             );
 
             title_vtext.push(vtext);
@@ -761,12 +760,11 @@ impl DateMenu {
                 font_info,
             );
 
-            vtext.make_center(
+            set_table_frame_cell_center!(
                 ctx,
-                roundup2f!(date_table_frame.get_center_of(
-                    numeric::Vector2u::new(index, 1),
-                    date_table_frame.get_position()
-                )),
+                date_table_frame,
+                vtext,
+                numeric::Vector2u::new(index, 1)
             );
 
             date_vtext.push(vtext);
@@ -784,12 +782,11 @@ impl DateMenu {
                 font_info,
             );
 
-            vtext.make_center(
+	    set_table_frame_cell_center!(
                 ctx,
-                roundup2f!(date_table_frame.get_center_of(
-                    numeric::Vector2u::new(index as u32, 0),
-                    date_table_frame.get_position()
-                )),
+                date_table_frame,
+                vtext,
+                numeric::Vector2u::new(index as u32, 0)
             );
 
             desc_vtext.push(vtext);
@@ -929,12 +926,11 @@ impl CustomerQuestionMenu {
                 font_info,
             );
 
-            vtext.make_center(
+	    set_table_frame_cell_center!(
                 ctx,
-                roundup2f!(question_table_frame.get_center_of(
-                    numeric::Vector2u::new(index as u32, 0),
-                    question_table_frame.get_position()
-                )),
+		question_table_frame,
+                vtext,
+                numeric::Vector2u::new(index as u32, 0)
             );
 
             question_vtext.push(vtext);
@@ -1065,12 +1061,11 @@ impl RememberCustomerNameMenu {
                 font_info,
             );
 
-            vtext.make_center(
+	    set_table_frame_cell_center!(
                 ctx,
-                roundup2f!(select_table_frame.get_center_of(
-                    numeric::Vector2u::new(index as u32, 0),
-                    select_table_frame.get_position()
-                )),
+		select_table_frame,
+                vtext,
+                numeric::Vector2u::new(index as u32, 0)
             );
 
             select_vtext.push(vtext);
@@ -1188,12 +1183,11 @@ impl OkMenu {
                 font_info,
             );
 
-            vtext.make_center(
+	    set_table_frame_cell_center!(
                 ctx,
-                roundup2f!(select_table_frame.get_center_of(
-                    numeric::Vector2u::new(index as u32, 0),
-                    select_table_frame.get_position()
-                )),
+                select_table_frame,
+                vtext,
+                numeric::Vector2u::new(index as u32, 0)
             );
 
             select_vtext.push(vtext);
