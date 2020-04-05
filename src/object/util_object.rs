@@ -137,6 +137,14 @@ impl TableFrame {
         self.frame_data.width() + (self.frame_data.each_rows_size.len() as f32 * tile_size.x)
     }
 
+    pub fn get_cols(&self) -> usize {
+	self.frame_data.each_cols_size.len()
+    }
+
+    pub fn get_rows(&self) -> usize {
+	self.frame_data.each_rows_size.len()
+    }
+
     fn tile_per_vline(&self, length: f32) -> usize {
         let tile_size = self.get_scaled_tile_size();
         (length / tile_size.y) as usize
