@@ -231,6 +231,7 @@ impl DeskObjects {
                 break;
             }
         }
+	
         if drag_start {
             // 元々、最前面に表示されていたオブジェクトのdepthに設定する
             self.dragging = Some(
@@ -238,23 +239,27 @@ impl DeskObjects {
                     .get_raw_container_mut()
                     .swap_remove(dragging_object_index),
             );
+
+	    self.desk_objects.sort_with_depth();
         }
     }
 
     pub fn unselect_dragging_object(&mut self) {
-        if let Some(obj) = &mut self.dragging {
-            let min = self.desk_objects.get_minimum_depth();
-            obj.get_object_mut().set_drawing_depth(min);
+
+	for obj in self.desk_objects.get_raw_container() {
+	    print!("{},", obj.get_object().get_drawing_depth());
+	}
+
+	if self.dragging.is_some() {
+	    let mut dragged = self.release_dragging().unwrap();
+
+	    let min = self.desk_objects.get_minimum_depth();
+            dragged.get_object_mut().set_drawing_depth(min);
             self.desk_objects.change_depth_equally(1);
-        }
-        match self.dragging {
-            None => (),
-            _ => {
-                let dragged = self.release_dragging().unwrap();
-                self.desk_objects.add(dragged);
-                self.desk_objects.sort_with_depth();
-            }
-        }
+	    
+            self.desk_objects.add(dragged);
+            self.desk_objects.sort_with_depth();
+	}
     }
 
     pub fn update(&mut self, ctx: &mut ggez::Context, game_data: &GameData, t: Clock) {
@@ -466,7 +471,7 @@ impl DeskObjects {
             }
         }
 
-        for dobj in self.desk_objects.get_raw_container_mut() {
+        for dobj in self.desk_objects.get_raw_container_mut().iter_mut().rev() {
             if dobj.get_object_mut().contains(ctx, rpoint) {
                 dobj.get_object_mut()
                     .ref_wrapped_object_mut()
