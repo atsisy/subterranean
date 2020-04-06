@@ -15,7 +15,7 @@ use torifune::impl_texture_object_for_wrapped;
 use torifune::numeric;
 use torifune::roundup2f;
 
-use crate::core::{BookInformation, BookShelfInformation, FontID, GameData, TextureID};
+use crate::core::{BookInformation, BookShelfInformation, FontID, GameData, TextureID, TileBatchTextureID};
 use crate::object::move_fn;
 use crate::object::util_object::*;
 use crate::object::Clickable;
@@ -28,6 +28,7 @@ use number_to_jk::number_to_jk;
 pub struct SelectBookWindow {
     canvas: SubScreen,
     table_frame: TableFrame,
+    appearance_frame: TileBatchFrame,
     title: VerticalText,
     cell_desc: Vec<VerticalText>,
     book_title_text: Vec<VerticalText>,
@@ -57,6 +58,14 @@ impl SelectBookWindow {
 		window_rect.w - table_frame.real_width() - 80.0,
 		40.0,
 	    ));
+
+	let appr_frame = TileBatchFrame::new(
+	    game_data,
+	    TileBatchTextureID::TaishoStyle1,
+	    numeric::Rect::new(6.0, 6.0, window_rect.w - 12.0, window_rect.h - 12.0),
+	    numeric::Vector2f::new(0.6, 0.6),
+	    0
+	);
 
         let font_info = FontInformation::new(
             game_data.get_font(FontID::JpFude1),
@@ -111,6 +120,7 @@ impl SelectBookWindow {
                 font_info,
             ),
 	    table_frame: table_frame,
+	    appearance_frame: appr_frame,
             cell_desc: vec![cell_desc1, cell_desc2],
             book_title_text: Vec::new(),
 	    billing_number_text: Vec::new(),
@@ -187,6 +197,8 @@ impl DrawableComponent for SelectBookWindow {
             sub_screen::stack_screen(ctx, &self.canvas);
 
             self.table_frame.draw(ctx)?;
+
+	    self.appearance_frame.draw(ctx)?;
 
             self.title.draw(ctx)?;
 
@@ -509,6 +521,7 @@ impl Clickable for SelectShelvingBookUI {
 pub struct SelectStoringBookWindow {
     canvas: SubScreen,
     table_frame: TableFrame,
+    appearance_frame: TileBatchFrame,
     title: VerticalText,
     cell_desc: Vec<VerticalText>,
     storable_text: Vec<VerticalText>,
@@ -531,12 +544,20 @@ impl SelectStoringBookWindow {
 	let mut table_frame = TableFrame::new(
             game_data,
             numeric::Point2f::new(0.0, 0.0),
-            FrameData::new(vec![110.0, 110.0, 380.0], vec![50.0; 6]),
+            FrameData::new(vec![107.0, 107.0, 370.0], vec![50.0; 6]),
             numeric::Vector2f::new(0.3, 0.3),
             0,
 	);
 
-	table_frame.set_position(numeric::Point2f::new(window_rect.w - table_frame.real_width() - 100.0, 50.0));
+	table_frame.set_position(numeric::Point2f::new(window_rect.w - table_frame.real_width() - 130.0, 47.0));
+
+	let appr_frame = TileBatchFrame::new(
+	    game_data,
+	    TileBatchTextureID::TaishoStyle1,
+	    numeric::Rect::new(6.0, 6.0, window_rect.w - 12.0, window_rect.h - 12.0),
+	    numeric::Vector2f::new(0.6, 0.6),
+	    0
+	);
 	
         let normal_font_info = FontInformation::new(
             game_data.get_font(FontID::JpFude1),
@@ -607,10 +628,11 @@ impl SelectStoringBookWindow {
                 0,
                 ggraphics::Color::from_rgba_u32(0xeeeeeeff),
             ),
+	    appearance_frame: appr_frame,
 	    table_frame: table_frame,
             title: VerticalText::new(
                 title.to_string(),
-                numeric::Point2f::new(window_rect.w - 60.0, 50.0),
+                numeric::Point2f::new(window_rect.w - 90.0, 50.0),
                 numeric::Vector2f::new(1.0, 1.0),
                 0.0,
                 0,
@@ -737,6 +759,7 @@ impl DrawableComponent for SelectStoringBookWindow {
         if self.is_visible() {
             sub_screen::stack_screen(ctx, &self.canvas);
 
+	    self.appearance_frame.draw(ctx)?;
 	    self.table_frame.draw(ctx)?;
 	    
             self.title.draw(ctx)?;

@@ -544,3 +544,176 @@ impl DrawableObject for SelectButton {
 impl TextureObject for SelectButton {
     impl_texture_object_for_wrapped! {canvas}
 }
+
+pub struct TileBatchFrame {
+    tile_batch: TileBatch,
+    rect: numeric::Rect,
+    drwob_essential: DrawableObjectEssential,
+    frame_scale: numeric::Vector2f,
+}
+
+impl TileBatchFrame {
+    pub fn new(
+        game_data: &GameData,
+	tile_batch_texture: TileBatchTextureID,
+        rect_pos: numeric::Rect,
+        frame_scale: numeric::Vector2f,
+        draw_depth: i8,
+    ) -> Self {
+        let mut tile_batch = game_data.ref_tile_batch(tile_batch_texture);
+        tile_batch.set_position(numeric::Point2f::new(rect_pos.x, rect_pos.y));
+
+        let mut frame = TileBatchFrame {
+            tile_batch: tile_batch,
+	    rect: rect_pos,
+            drwob_essential: DrawableObjectEssential::new(true, draw_depth),
+            frame_scale: frame_scale,
+        };
+
+        frame.update_tile_batch();
+
+        frame
+    }
+    
+    ///
+    /// Tile Batchの情報を更新する
+    ///
+    pub fn update_tile_batch(&mut self) {
+        self.tile_batch.clear_batch();
+
+        let tile_size = self.get_scaled_tile_size();
+	let frame_size = self.frame_size();
+        let width = frame_size.x;
+        let height = frame_size.y;
+
+        //
+        // 水平方向の枠だけ描画
+        //
+        let mut top_dest_pos = numeric::Point2f::new(tile_size.x, 0.0);
+        let mut bottom_dest_pos =
+            numeric::Point2f::new(tile_size.x, (height - tile_size.x).round());
+        for _ in 1..self.tile_per_hline(width) {
+            self.tile_batch.add_batch_tile_position(
+                numeric::Vector2u::new(1, 0),
+                top_dest_pos,
+                self.frame_scale,
+                ggraphics::Color::from_rgb_u32(0xffffffff),
+            );
+
+            self.tile_batch.add_batch_tile_position(
+                numeric::Vector2u::new(1, 2),
+                bottom_dest_pos,
+                self.frame_scale,
+                ggraphics::Color::from_rgb_u32(0xffffffff),
+            );
+            top_dest_pos.x += tile_size.x;
+            bottom_dest_pos.x += tile_size.x;
+        }
+
+        //
+        // 垂直方向の枠だけ描画
+        //
+        let mut left_dest_pos = numeric::Point2f::new(0.0, tile_size.y);
+        let mut right_dest_pos = numeric::Point2f::new(width - tile_size.x, tile_size.y);
+        for _ in 1..self.tile_per_vline(height) {
+            self.tile_batch.add_batch_tile_position(
+                numeric::Vector2u::new(0, 1),
+                left_dest_pos,
+                self.frame_scale,
+                ggraphics::Color::from_rgb_u32(0xffffffff),
+            );
+
+            self.tile_batch.add_batch_tile_position(
+                numeric::Vector2u::new(2, 1),
+                right_dest_pos,
+                self.frame_scale,
+                ggraphics::Color::from_rgb_u32(0xffffffff),
+            );
+            left_dest_pos.y += tile_size.y;
+            right_dest_pos.y += tile_size.y;
+        }
+
+        //
+        // 枠の角を描画
+        //
+        self.tile_batch.add_batch_tile_position(
+            numeric::Vector2u::new(0, 0),
+            numeric::Point2f::new(0.0, 0.0),
+            self.frame_scale,
+            ggraphics::Color::from_rgb_u32(0xffffffff),
+        );
+
+        self.tile_batch.add_batch_tile_position(
+            numeric::Vector2u::new(2, 0),
+            numeric::Point2f::new(width - tile_size.x, 0.0),
+            self.frame_scale,
+            ggraphics::Color::from_rgb_u32(0xffffffff),
+        );
+
+        self.tile_batch.add_batch_tile_position(
+            numeric::Vector2u::new(0, 2),
+            numeric::Point2f::new(0.0, height - tile_size.y),
+            self.frame_scale,
+            ggraphics::Color::from_rgb_u32(0xffffffff),
+        );
+
+        self.tile_batch.add_batch_tile_position(
+            numeric::Vector2u::new(2, 2),
+            numeric::Point2f::new(width - tile_size.x as f32, height - tile_size.y as f32),
+            self.frame_scale,
+            ggraphics::Color::from_rgb_u32(0xffffffff),
+        );
+    }
+    
+    fn tile_per_vline(&self, length: f32) -> usize {
+        let tile_size = self.get_scaled_tile_size();
+        (length / tile_size.y) as usize
+    }
+
+    fn tile_per_hline(&self, length: f32) -> usize {
+        let tile_size = self.get_scaled_tile_size();
+        (length / tile_size.x) as usize
+    }
+
+    fn get_scaled_tile_size(&self) -> numeric::Vector2f {
+        let tile_size = self.tile_batch.get_tile_size();
+        numeric::Vector2f::new(
+            tile_size.x as f32 * self.frame_scale.x,
+            tile_size.y as f32 * self.frame_scale.y,
+        )
+    }
+
+    pub fn frame_size(&self) -> numeric::Vector2f {
+	numeric::Vector2f::new(self.rect.w, self.rect.h)
+    }
+}
+
+impl DrawableComponent for TileBatchFrame {
+    fn draw(&mut self, ctx: &mut ggez::Context) -> ggez::GameResult<()> {
+        if self.is_visible() {
+            self.tile_batch.draw(ctx).unwrap()
+        }
+
+        Ok(())
+    }
+
+    fn hide(&mut self) {
+        self.drwob_essential.visible = false;
+    }
+
+    fn appear(&mut self) {
+        self.drwob_essential.visible = true;
+    }
+
+    fn is_visible(&self) -> bool {
+        self.drwob_essential.visible
+    }
+
+    fn set_drawing_depth(&mut self, depth: i8) {
+        self.drwob_essential.drawing_depth = depth;
+    }
+
+    fn get_drawing_depth(&self) -> i8 {
+        self.drwob_essential.drawing_depth
+    }
+}

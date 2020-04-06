@@ -212,6 +212,7 @@ impl TextureID {
 #[derive(Debug, Clone, Copy)]
 pub enum TileBatchTextureID {
     OldStyleFrame,
+    TaishoStyle1,
 }
 
 pub const LARGE_BOOK_TEXTURE: [TextureID; 3] = [
