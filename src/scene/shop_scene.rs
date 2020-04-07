@@ -958,7 +958,7 @@ impl ShopScene {
     }
 
     pub fn update_shop_clock_regular(&mut self) {
-        if self.get_current_clock() % 50 == 0 {
+        if self.get_current_clock() % 40 == 0 {
             debug::debug_screen_push_text(&format!("{}", self.shop_clock));
             self.shop_clock.add_minute(1);
         }

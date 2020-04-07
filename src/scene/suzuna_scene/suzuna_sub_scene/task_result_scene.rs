@@ -18,6 +18,7 @@ pub struct TaskResultScene {
     event_list: DelayEventList<Self>,
     drawable_task_result: DrawableTaskResult,
     scene_transition_status: SceneTransition,
+    transition_scene: SceneID,
 }
 
 impl TaskResultScene {
@@ -45,6 +46,7 @@ impl TaskResultScene {
                 0,
             ),
             scene_transition_status: SceneTransition::Keep,
+	    transition_scene: SceneID::DayResult,
         }
     }
 
@@ -64,6 +66,11 @@ impl TaskResultScene {
             (event.func)(self, ctx, game_data);
         }
     }
+
+    fn ready_to_finish_scene(&mut self) {
+        self.transition_scene = SceneID::Scenario;
+        self.scene_transition_status = SceneTransition::SwapTransition;
+    }
 }
 
 impl SceneManager for TaskResultScene {
@@ -75,8 +82,7 @@ impl SceneManager for TaskResultScene {
     ) {
         match vkey {
             tdev::VirtualKey::Action1 => {
-                println!("Action1 down!");
-                self.scene_transition_status = SceneTransition::SwapTransition;
+		self.ready_to_finish_scene();
             }
             _ => (),
         }
@@ -152,7 +158,7 @@ impl SceneManager for TaskResultScene {
     }
 
     fn transition(&self) -> SceneID {
-        SceneID::MainDesk
+	self.transition_scene
     }
 
     fn get_current_clock(&self) -> Clock {
