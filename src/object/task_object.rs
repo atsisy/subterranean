@@ -9,7 +9,7 @@ use ggez::graphics as ggraphics;
 use ggez::input as ginput;
 use ginput::mouse::MouseCursor;
 
-use torifune::core::{Clock, Updatable};
+use torifune::core::{Clock};
 use torifune::debug;
 use torifune::device::VirtualKey;
 use torifune::graphics::object::sub_screen;
@@ -34,7 +34,6 @@ pub struct TaskTable {
     canvas: SubScreen,
     sight: SuzuMiniSight,
     desk: DeskObjects,
-    customer_info_ui: CustomerInformationUI,
     staging_object: Option<TaskTableStagingObject>,
     kosuzu_memory: KosuzuMemory,
     shelving_box: ShelvingBookBox,
@@ -135,12 +134,6 @@ impl TaskTable {
             canvas: SubScreen::new(ctx, pos, 0, ggraphics::Color::from_rgba_u32(0x00000000)),
             sight: sight,
             desk: desk,
-            customer_info_ui: CustomerInformationUI::new(
-                ctx,
-                game_data,
-                numeric::Rect::new(1300.0, 50.0, 600.0, 400.0),
-                0,
-            ),
             staging_object: None,
             kosuzu_memory: KosuzuMemory::new(),
             shelving_box: shelving_box,
@@ -408,7 +401,6 @@ impl TaskTable {
         self.desk.update(ctx, game_data, t);
         self.shelving_box.update(ctx, t);
         self.check_sight_drop_to_desk(ctx, t);
-        self.customer_info_ui.update(ctx, t);
         self.borrowing_record_book.update(t);
         self.record_book_menu.update(ctx, game_data, t);
         self.customer_silhouette_menu.update(ctx, game_data, t);
@@ -620,7 +612,6 @@ impl TaskTable {
     fn update_hold_data(
         &mut self,
         ctx: &mut ggez::Context,
-        game_data: &GameData,
         point: numeric::Point2f,
     ) {
         debug::debug_screen_push_text(&format!("{}", self.hold_data.to_string()));
@@ -630,30 +621,12 @@ impl TaskTable {
 
             let clicked_data = self.sight.check_data_click(ctx, point);
             self.update_hold_data_if_some(clicked_data);
-
-            let clicked_data = self.customer_info_ui.check_data_click(ctx, point);
-            self.update_hold_data_if_some(clicked_data);
         } else {
             if self
                 .desk
                 .check_insert_data(ctx, point, &self.hold_data, &self.kosuzu_memory)
             {
                 self.hold_data = HoldData::None;
-            }
-
-            // CustomerUIにHoldDataを挿入する
-            if self.customer_info_ui.contains(ctx, point) {
-                let is_inserted = self.customer_info_ui.try_insert_hold_data_with_click(
-                    ctx,
-                    game_data,
-                    point,
-                    self.hold_data.clone(),
-                );
-
-                if is_inserted {
-                    self.hold_data = HoldData::None;
-                    return ();
-                }
             }
 
             // StagingObjectにHoldDataを挿入する
@@ -694,9 +667,6 @@ impl TaskTable {
         t: Clock,
     ) {
         match vkey {
-            VirtualKey::Action2 => {
-                self.customer_info_ui.slide_toggle(t);
-            }
             VirtualKey::Action3 => {
                 if self.staging_object.is_some() {
                     self.staging_object.as_mut().unwrap().slide_hide(t);
@@ -1068,8 +1038,6 @@ impl DrawableComponent for TaskTable {
 
             self.borrowing_record_book.draw(ctx)?;
 
-            self.customer_info_ui.draw(ctx)?;
-
             self.customer_silhouette_menu.draw(ctx)?;
             self.record_book_menu.draw(ctx)?;
 
@@ -1125,13 +1093,13 @@ impl Clickable for TaskTable {
     fn button_up(
         &mut self,
         ctx: &mut ggez::Context,
-        game_data: &GameData,
+        _: &GameData,
         t: Clock,
         _: ggez::input::mouse::MouseButton,
         point: numeric::Point2f,
     ) {
         let rpoint = self.canvas.relative_point(point);
-        self.update_hold_data(ctx, game_data, rpoint);
+        self.update_hold_data(ctx, rpoint);
 
         // ボタンが離されたとき、メニュー外にあった場合、すべてのメニューを消す
         if !self.record_book_menu.is_contains_any_menus(ctx, rpoint) {
