@@ -39,15 +39,12 @@ background = "WafuTexture1"
 id = 11
 [scenario-group.tachie-data]
 
-
    [[scenario-group.choice-pattern]]
    pattern = "選択肢1"
-   jump-id = 3
+   jump-id = 2
    [[scenario-group.choice-pattern]]
    pattern = "選択肢2"
-   jump-id = 3
+   jump-id = 2
    [[scenario-group.choice-pattern]]
    pattern = "選択肢3"
-   jump-id = 3
-
-   
+   jump-id = 2
