@@ -606,50 +606,6 @@ impl TaskTable {
         }
     }
 
-    ///
-    /// HoldDataが取得可能な場合、取得し、self.hold_dataに上書きする
-    ///
-    fn update_hold_data(
-        &mut self,
-        ctx: &mut ggez::Context,
-        point: numeric::Point2f,
-    ) {
-        debug::debug_screen_push_text(&format!("{}", self.hold_data.to_string()));
-        if self.hold_data.is_none() {
-            let clicked_data = self.desk.check_data_click(ctx, point);
-            self.update_hold_data_if_some(clicked_data);
-
-            let clicked_data = self.sight.check_data_click(ctx, point);
-            self.update_hold_data_if_some(clicked_data);
-        } else {
-            if self
-                .desk
-                .check_insert_data(ctx, point, &self.hold_data, &self.kosuzu_memory)
-            {
-                self.hold_data = HoldData::None;
-            }
-
-            // StagingObjectにHoldDataを挿入する
-            if let Some(staging_object) = self.staging_object.as_mut() {
-                if staging_object.insert_data(ctx, point, &self.hold_data, &self.kosuzu_memory) {
-                    self.hold_data = HoldData::None;
-                }
-            }
-
-            // 貸出記録にHoldDataを挿入する
-            if self.borrowing_record_book.is_visible() {
-                if self.borrowing_record_book.insert_data(
-                    ctx,
-                    point,
-                    &self.hold_data,
-                    &self.kosuzu_memory,
-                ) {
-                    self.hold_data = HoldData::None;
-                }
-            }
-        }
-    }
-
     pub fn get_shelving_box(&self) -> &ShelvingBookBox {
         &self.shelving_box
     }
@@ -1099,7 +1055,6 @@ impl Clickable for TaskTable {
         point: numeric::Point2f,
     ) {
         let rpoint = self.canvas.relative_point(point);
-        self.update_hold_data(ctx, rpoint);
 
         // ボタンが離されたとき、メニュー外にあった場合、すべてのメニューを消す
         if !self.record_book_menu.is_contains_any_menus(ctx, rpoint) {

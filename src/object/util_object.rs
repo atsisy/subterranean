@@ -717,3 +717,85 @@ impl DrawableComponent for TileBatchFrame {
         self.drwob_essential.drawing_depth
     }
 }
+
+pub struct ScrollableWindow<D>
+where D: DrawableObject {
+    canvas: SubScreen,
+    scroll_rate: numeric::Vector2f,
+    drawable: D,
+}
+
+impl<D> ScrollableWindow<D>
+where D: DrawableObject {
+    pub fn new(
+	ctx: &mut ggez::Context,
+	rect: numeric::Rect,
+	drawable: D,
+	depth: i8,
+	scroll_rate: numeric::Vector2f
+    ) -> ScrollableWindow<D> {
+	ScrollableWindow::<D> {
+	    canvas: SubScreen::new(ctx, rect, depth, ggraphics::Color::from_rgba_u32(0)),
+	    scroll_rate: scroll_rate,
+	    drawable: drawable,
+	}
+    }
+
+    pub fn ref_object(&self) -> &D {
+	&self.drawable
+    }
+
+    pub fn ref_object_mut(&mut self) -> &mut D {
+	&mut self.drawable
+    }
+
+    pub fn scroll(&mut self, x: f32, y: f32) {
+	self.drawable.move_diff(numeric::Vector2f::new(self.scroll_rate.x * x, self.scroll_rate.y * y));
+    }
+}
+
+impl<D> DrawableComponent for ScrollableWindow<D>
+where D: DrawableObject {
+    fn draw(&mut self, ctx: &mut ggez::Context) -> ggez::GameResult<()> {
+        if self.is_visible() {
+            sub_screen::stack_screen(ctx, &self.canvas);
+
+	    self.drawable.draw(ctx)?;
+
+            sub_screen::pop_screen(ctx);
+            self.canvas.draw(ctx).unwrap();
+        }
+
+        Ok(())
+    }
+
+    fn hide(&mut self) {
+        self.canvas.hide();
+    }
+
+    fn appear(&mut self) {
+        self.canvas.appear();
+    }
+
+    fn is_visible(&self) -> bool {
+        self.canvas.is_visible()
+    }
+
+    fn set_drawing_depth(&mut self, depth: i8) {
+        self.canvas.set_drawing_depth(depth);
+    }
+
+    fn get_drawing_depth(&self) -> i8 {
+        self.canvas.get_drawing_depth()
+    }
+}
+
+impl<D> DrawableObject for ScrollableWindow<D>
+where D: DrawableObject {
+    impl_drawable_object_for_wrapped!{canvas}
+}
+
+impl<D> TextureObject for ScrollableWindow<D>
+where D: DrawableObject {
+    impl_texture_object_for_wrapped!{canvas}
+}

@@ -815,7 +815,7 @@ impl BorrowingRecordBookPage {
             game_data,
             numeric::Point2f::new(rect.w - 200.0, 40.0),
             FrameData::new(vec![150.0, 300.0], vec![40.0; 3]),
-            numeric::Vector2f::new(0.2, 0.2),
+            numeric::Vector2f::new(0.3, 0.3),
             0,
         );
 
@@ -861,14 +861,14 @@ impl BorrowingRecordBookPage {
                 ggraphics::Color::from_rgba_u32(0x000000ff),
             ),
         );
-
+ 
         set_table_frame_cell_center!(ctx, table_frame, return_date, numeric::Vector2u::new(0, 0));
 
         let books_table = TableFrame::new(
             game_data,
             numeric::Point2f::new(rect.w - 550.0, 30.0),
             FrameData::new(vec![380.0, 70.0], vec![40.0; 6]),
-            numeric::Vector2f::new(0.2, 0.2),
+            numeric::Vector2f::new(0.3, 0.3),
             0,
         );
 
