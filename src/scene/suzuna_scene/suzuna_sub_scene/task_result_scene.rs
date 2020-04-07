@@ -46,7 +46,7 @@ impl TaskResultScene {
                 0,
             ),
             scene_transition_status: SceneTransition::Keep,
-	    transition_scene: SceneID::DayResult,
+            transition_scene: SceneID::DayResult,
         }
     }
 
@@ -82,7 +82,7 @@ impl SceneManager for TaskResultScene {
     ) {
         match vkey {
             tdev::VirtualKey::Action1 => {
-		self.ready_to_finish_scene();
+                self.ready_to_finish_scene();
             }
             _ => (),
         }
@@ -158,7 +158,7 @@ impl SceneManager for TaskResultScene {
     }
 
     fn transition(&self) -> SceneID {
-	self.transition_scene
+        self.transition_scene
     }
 
     fn get_current_clock(&self) -> Clock {

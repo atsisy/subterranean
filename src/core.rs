@@ -666,11 +666,7 @@ impl<'a> SceneController<'a> {
         next_scene_id: scene::SceneID,
     ) {
         if next_scene_id == scene::SceneID::SuzunaShop {
-            self.current_scene = Box::new(scene::suzuna_scene::SuzunaScene::new(
-                ctx,
-                game_data,
-                0,
-            ));
+            self.current_scene = Box::new(scene::suzuna_scene::SuzunaScene::new(ctx, game_data, 0));
         } else if next_scene_id == scene::SceneID::Null {
             self.current_scene = Box::new(scene::NullScene::new());
         }
@@ -814,6 +810,23 @@ impl<'a> SceneController<'a> {
         self.current_scene
             .mouse_button_up_event(ctx, game_data, button, point);
     }
+
+    fn mouse_wheel_scroll_event(
+        &mut self,
+        ctx: &mut ggez::Context,
+        game_data: &GameData,
+        x: f32,
+        y: f32,
+    ) {
+        let point = ggez::input::mouse::position(ctx);
+        self.current_scene.mouse_wheel_event(
+            ctx,
+            game_data,
+            numeric::Point2f::new(point.x, point.y),
+            x,
+            y,
+        );
+    }
 }
 
 pub struct State<'data> {
@@ -900,6 +913,11 @@ impl<'data> ggez::event::EventHandler for State<'data> {
             button,
             numeric::Point2f::new(x, y),
         );
+    }
+
+    fn mouse_wheel_event(&mut self, ctx: &mut Context, x: f32, y: f32) {
+        self.scene_controller
+            .mouse_wheel_scroll_event(ctx, self.game_data, x, y);
     }
 }
 

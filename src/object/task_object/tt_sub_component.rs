@@ -861,7 +861,7 @@ impl BorrowingRecordBookPage {
                 ggraphics::Color::from_rgba_u32(0x000000ff),
             ),
         );
- 
+
         set_table_frame_cell_center!(ctx, table_frame, return_date, numeric::Vector2u::new(0, 0));
 
         let books_table = TableFrame::new(

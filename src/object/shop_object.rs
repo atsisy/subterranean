@@ -15,7 +15,9 @@ use torifune::impl_texture_object_for_wrapped;
 use torifune::numeric;
 use torifune::roundup2f;
 
-use crate::core::{BookInformation, BookShelfInformation, FontID, GameData, TextureID, TileBatchTextureID};
+use crate::core::{
+    BookInformation, BookShelfInformation, FontID, GameData, TextureID, TileBatchTextureID,
+};
 use crate::object::move_fn;
 use crate::object::util_object::*;
 use crate::object::Clickable;
@@ -25,26 +27,24 @@ use crate::set_table_frame_cell_center;
 
 use number_to_jk::number_to_jk;
 
-pub struct SelectBookWindow {
-    canvas: SubScreen,
+pub struct SelectBookWindowContents {
     table_frame: TableFrame,
-    appearance_frame: TileBatchFrame,
-    title: VerticalText,
     cell_desc: Vec<VerticalText>,
     book_title_text: Vec<VerticalText>,
     billing_number_text: Vec<VerticalText>,
     selecting_book_index: Vec<usize>,
     book_font: FontInformation,
+    drwob_essential: DrawableObjectEssential,
+    position: numeric::Point2f,
 }
 
-impl SelectBookWindow {
+impl SelectBookWindowContents {
     pub fn new(
         ctx: &mut ggez::Context,
         game_data: &GameData,
+        font_info: FontInformation,
         window_rect: numeric::Rect,
-        title: &str,
-        book_info: Vec<BookInformation>,
-    ) -> Self {
+    ) -> SelectBookWindowContents {
         let mut table_frame = TableFrame::new(
             game_data,
             numeric::Point2f::new(0.0, 0.0),
@@ -53,25 +53,10 @@ impl SelectBookWindow {
             0,
         );
 
-	table_frame.set_position(
-	    numeric::Point2f::new(
-		window_rect.w - table_frame.real_width() - 80.0,
-		40.0,
-	    ));
-
-	let appr_frame = TileBatchFrame::new(
-	    game_data,
-	    TileBatchTextureID::TaishoStyle1,
-	    numeric::Rect::new(6.0, 6.0, window_rect.w - 12.0, window_rect.h - 12.0),
-	    numeric::Vector2f::new(0.6, 0.6),
-	    0
-	);
-
-        let font_info = FontInformation::new(
-            game_data.get_font(FontID::JpFude1),
-            numeric::Vector2f::new(30.0, 30.0),
-            ggraphics::Color::from_rgba_u32(0xff),
-        );
+        table_frame.set_position(numeric::Point2f::new(
+            window_rect.w - table_frame.real_width() - 80.0,
+            40.0,
+        ));
 
         let mut cell_desc1 = VerticalText::new(
             "請求番号".to_string(),
@@ -104,39 +89,21 @@ impl SelectBookWindow {
             numeric::Vector2u::new((table_frame.get_rows() - 1) as u32, 1)
         );
 
-        let mut window = SelectBookWindow {
-            canvas: SubScreen::new(
-                ctx,
-                window_rect,
-                0,
-                ggraphics::Color::from_rgba_u32(0xeeeeeeff),
-            ),
-            title: VerticalText::new(
-                title.to_string(),
-                numeric::Point2f::new(window_rect.w - 60.0, 50.0),
-                numeric::Vector2f::new(1.0, 1.0),
-                0.0,
-                0,
-                font_info,
-            ),
-	    table_frame: table_frame,
-	    appearance_frame: appr_frame,
+        SelectBookWindowContents {
+            table_frame: table_frame,
             cell_desc: vec![cell_desc1, cell_desc2],
             book_title_text: Vec::new(),
-	    billing_number_text: Vec::new(),
+            billing_number_text: Vec::new(),
             selecting_book_index: Vec::new(),
             book_font: font_info,
-        };
-
-        window.update_contents(ctx, &book_info);
-
-        window
+            drwob_essential: DrawableObjectEssential::new(true, 0),
+            position: numeric::Point2f::new(0.0, 0.0),
+        }
     }
 
     fn update_contents(&mut self, ctx: &mut ggez::Context, book_info: &Vec<BookInformation>) {
-
-	self.book_title_text.clear();
-	self.billing_number_text.clear();
+        self.book_title_text.clear();
+        self.billing_number_text.clear();
 
         for (index, info) in book_info.iter().enumerate() {
             let mut billing_number_text = VerticalText::new(
@@ -157,8 +124,8 @@ impl SelectBookWindow {
                 self.book_font.clone(),
             );
 
-	    let table_pos_x = (self.table_frame.get_rows() - 2 - index) as u32;
-	    
+            let table_pos_x = (self.table_frame.get_rows() - 2 - index) as u32;
+
             set_table_frame_cell_center!(
                 ctx,
                 self.table_frame,
@@ -166,41 +133,42 @@ impl SelectBookWindow {
                 numeric::Vector2u::new(table_pos_x, 0)
             );
 
-	    set_table_frame_cell_center!(
+            set_table_frame_cell_center!(
                 ctx,
                 self.table_frame,
                 book_title_text,
                 numeric::Vector2u::new(table_pos_x, 1)
             );
 
-	    self.book_title_text.push(book_title_text);
-	    self.billing_number_text.push(billing_number_text);
+            self.book_title_text.push(book_title_text);
+            self.billing_number_text.push(billing_number_text);
         }
     }
 
-    pub fn sort_selecting_index_less(&mut self) {
-        self.selecting_book_index.sort_by(|a, b| b.cmp(a));
-    }
+    fn click_handler(&mut self, ctx: &mut ggez::Context, point: numeric::Point2f) {
+        for (index, vtext) in self.book_title_text.iter_mut().enumerate() {
+            if vtext.contains(ctx, point) {
+                // 既に選択されている場合は、削除
+                if self.selecting_book_index.contains(&index) {
+                    vtext.set_color(ggraphics::Color::from_rgba_u32(0x000000ff));
+                    self.selecting_book_index
+                        .retain(|inner_index| *inner_index != index);
+                } else {
+                    // テキストを赤に変更し、選択中のインデックスとして登録
+                    vtext.set_color(ggraphics::Color::from_rgba_u32(0xee0000ff));
+                    self.selecting_book_index.push(index);
+                }
 
-    pub fn get_selecting_index(&self) -> &Vec<usize> {
-        &self.selecting_book_index
-    }
-
-    pub fn clear_selecting_index(&mut self) {
-        self.selecting_book_index.clear();
+                break;
+            }
+        }
     }
 }
 
-impl DrawableComponent for SelectBookWindow {
+impl DrawableComponent for SelectBookWindowContents {
     fn draw(&mut self, ctx: &mut ggez::Context) -> ggez::GameResult<()> {
         if self.is_visible() {
-            sub_screen::stack_screen(ctx, &self.canvas);
-
             self.table_frame.draw(ctx)?;
-
-	    self.appearance_frame.draw(ctx)?;
-
-            self.title.draw(ctx)?;
 
             for vtext in &mut self.cell_desc {
                 vtext.draw(ctx)?;
@@ -209,10 +177,168 @@ impl DrawableComponent for SelectBookWindow {
             for vtext in &mut self.book_title_text {
                 vtext.draw(ctx)?;
             }
-	    
-	    for vtext in &mut self.billing_number_text {
+
+            for vtext in &mut self.billing_number_text {
                 vtext.draw(ctx)?;
             }
+        }
+        Ok(())
+    }
+
+    #[inline(always)]
+    fn hide(&mut self) {
+        self.drwob_essential.visible = false;
+    }
+
+    #[inline(always)]
+    fn appear(&mut self) {
+        self.drwob_essential.visible = true;
+    }
+
+    #[inline(always)]
+    fn is_visible(&self) -> bool {
+        self.drwob_essential.visible
+    }
+
+    #[inline(always)]
+    fn set_drawing_depth(&mut self, depth: i8) {
+        self.drwob_essential.drawing_depth = depth;
+    }
+
+    #[inline(always)]
+    fn get_drawing_depth(&self) -> i8 {
+        self.drwob_essential.drawing_depth
+    }
+}
+
+impl DrawableObject for SelectBookWindowContents {
+    /// offsetで指定しただけ描画位置を動かす
+    fn move_diff(&mut self, offset: numeric::Vector2f) {
+        self.table_frame.move_diff(offset);
+
+        for vtext in &mut self.cell_desc {
+            vtext.move_diff(offset);
+        }
+
+        for vtext in &mut self.book_title_text {
+            vtext.move_diff(offset);
+        }
+
+        for vtext in &mut self.billing_number_text {
+            vtext.move_diff(offset);
+        }
+
+        self.position += offset;
+    }
+}
+
+pub struct SelectBookWindow {
+    canvas: SubScreen,
+    appearance_frame: TileBatchFrame,
+    title: VerticalText,
+    contents: ScrollableWindow<SelectBookWindowContents>,
+}
+
+impl SelectBookWindow {
+    pub fn new(
+        ctx: &mut ggez::Context,
+        game_data: &GameData,
+        window_rect: numeric::Rect,
+        title: &str,
+        book_info: Vec<BookInformation>,
+    ) -> Self {
+        let appr_frame = TileBatchFrame::new(
+            game_data,
+            TileBatchTextureID::TaishoStyle1,
+            numeric::Rect::new(6.0, 6.0, window_rect.w - 12.0, window_rect.h - 12.0),
+            numeric::Vector2f::new(0.6, 0.6),
+            0,
+        );
+
+        let font_info = FontInformation::new(
+            game_data.get_font(FontID::JpFude1),
+            numeric::Vector2f::new(30.0, 30.0),
+            ggraphics::Color::from_rgba_u32(0xff),
+        );
+
+        let contents = SelectBookWindowContents::new(ctx, game_data, font_info, window_rect);
+
+        let mut window = SelectBookWindow {
+            canvas: SubScreen::new(
+                ctx,
+                window_rect,
+                0,
+                ggraphics::Color::from_rgba_u32(0xeeeeeeff),
+            ),
+            title: VerticalText::new(
+                title.to_string(),
+                numeric::Point2f::new(window_rect.w - 60.0, 50.0),
+                numeric::Vector2f::new(1.0, 1.0),
+                0.0,
+                0,
+                font_info,
+            ),
+            appearance_frame: appr_frame,
+            contents: ScrollableWindow::new(
+                ctx,
+                numeric::Rect::new(36.0, 12.0, window_rect.w - 116.0, window_rect.h - 24.0),
+                contents,
+                0,
+                numeric::Vector2f::new(15.0, 15.0),
+                ScrollDirection::Horizon,
+            ),
+        };
+
+        window.update_contents(ctx, &book_info);
+
+        window
+    }
+
+    fn update_contents(&mut self, ctx: &mut ggez::Context, book_info: &Vec<BookInformation>) {
+        self.contents
+            .ref_object_mut()
+            .update_contents(ctx, book_info);
+    }
+
+    pub fn sort_selecting_index_less(&mut self) {
+        self.contents
+            .ref_object_mut()
+            .selecting_book_index
+            .sort_by(|a, b| b.cmp(a));
+    }
+
+    pub fn get_selecting_index(&self) -> &Vec<usize> {
+        &self.contents.ref_object().selecting_book_index
+    }
+
+    pub fn clear_selecting_index(&mut self) {
+        self.contents.ref_object_mut().selecting_book_index.clear();
+    }
+
+    pub fn scroll_handler(
+        &mut self,
+        ctx: &mut ggez::Context,
+        point: numeric::Point2f,
+        x: f32,
+        y: f32,
+    ) {
+	let rpoint = self.canvas.relative_point(point);
+        if self.contents.contains(ctx, rpoint) {
+            self.contents.scroll(x, y);
+        }
+    }
+}
+
+impl DrawableComponent for SelectBookWindow {
+    fn draw(&mut self, ctx: &mut ggez::Context) -> ggez::GameResult<()> {
+        if self.is_visible() {
+            sub_screen::stack_screen(ctx, &self.canvas);
+
+            self.appearance_frame.draw(ctx)?;
+
+            self.title.draw(ctx)?;
+
+            self.contents.draw(ctx)?;
 
             sub_screen::pop_screen(ctx);
             self.canvas.draw(ctx).unwrap();
@@ -259,28 +385,7 @@ impl Clickable for SelectBookWindow {
         point: numeric::Point2f,
     ) {
         let rpoint = self.canvas.relative_point(point);
-
-        for (index, vtext) in self.book_title_text.iter_mut().enumerate() {
-            if vtext.contains(ctx, rpoint) {
-                // 既に選択されている場合は、削除
-                if self.selecting_book_index.contains(&index) {
-                    vtext.set_color(ggraphics::Color::from_rgba_u32(0x000000ff));
-                    self.selecting_book_index
-                        .retain(|inner_index| *inner_index != index);
-                } else {
-                    // テキストを赤に変更し、選択中のインデックスとして登録
-                    vtext.set_color(ggraphics::Color::from_rgba_u32(0xee0000ff));
-                    self.selecting_book_index.push(index);
-                }
-
-                break;
-            }
-        }
-
-        debug::debug_screen_push_text(&format!(
-            "window select text: {:?}",
-            self.selecting_book_index
-        ));
+        self.contents.ref_object_mut().click_handler(ctx, rpoint);
     }
 
     fn clickable_status(
@@ -428,6 +533,18 @@ impl SelectShelvingBookUI {
     pub fn get_select_result(&self) -> (Vec<BookInformation>, Vec<BookInformation>) {
         (self.boxed_books.clone(), self.shelving_books.clone())
     }
+
+    pub fn scroll_handler(
+        &mut self,
+        ctx: &mut ggez::Context,
+        point: numeric::Point2f,
+        x: f32,
+        y: f32,
+    ) {
+        let rpoint = self.canvas.relative_point(point);
+        self.box_info_window.scroll_handler(ctx, rpoint, x, y);
+        self.shelving_window.scroll_handler(ctx, rpoint, x, y);
+    }
 }
 
 impl DrawableComponent for SelectShelvingBookUI {
@@ -541,37 +658,40 @@ impl SelectStoringBookWindow {
         book_shelf_info: &BookShelfInformation,
         book_info: Vec<BookInformation>,
     ) -> Self {
-	let mut table_frame = TableFrame::new(
+        let mut table_frame = TableFrame::new(
             game_data,
             numeric::Point2f::new(0.0, 0.0),
             FrameData::new(vec![107.0, 107.0, 370.0], vec![50.0; 6]),
             numeric::Vector2f::new(0.3, 0.3),
             0,
-	);
+        );
 
-	table_frame.set_position(numeric::Point2f::new(window_rect.w - table_frame.real_width() - 130.0, 47.0));
+        table_frame.set_position(numeric::Point2f::new(
+            window_rect.w - table_frame.real_width() - 130.0,
+            47.0,
+        ));
 
-	let appr_frame = TileBatchFrame::new(
-	    game_data,
-	    TileBatchTextureID::TaishoStyle1,
-	    numeric::Rect::new(6.0, 6.0, window_rect.w - 12.0, window_rect.h - 12.0),
-	    numeric::Vector2f::new(0.6, 0.6),
-	    0
-	);
-	
+        let appr_frame = TileBatchFrame::new(
+            game_data,
+            TileBatchTextureID::TaishoStyle1,
+            numeric::Rect::new(6.0, 6.0, window_rect.w - 12.0, window_rect.h - 12.0),
+            numeric::Vector2f::new(0.6, 0.6),
+            0,
+        );
+
         let normal_font_info = FontInformation::new(
             game_data.get_font(FontID::JpFude1),
             numeric::Vector2f::new(28.0, 28.0),
             ggraphics::Color::from_rgba_u32(0xff),
         );
 
-	let header_font_info = FontInformation::new(
+        let header_font_info = FontInformation::new(
             game_data.get_font(FontID::JpFude1),
             numeric::Vector2f::new(35.0, 35.0),
             ggraphics::Color::from_rgba_u32(0xff),
         );
-	
-	let mut storable_desc_text = VerticalText::new(
+
+        let mut storable_desc_text = VerticalText::new(
             "返却可否".to_string(),
             numeric::Point2f::new(0.0, 0.0),
             numeric::Vector2f::new(1.0, 1.0),
@@ -580,7 +700,7 @@ impl SelectStoringBookWindow {
             normal_font_info,
         );
 
-	let mut number_desc_text = VerticalText::new(
+        let mut number_desc_text = VerticalText::new(
             "請求番号".to_string(),
             numeric::Point2f::new(0.0, 0.0),
             numeric::Vector2f::new(1.0, 1.0),
@@ -589,7 +709,7 @@ impl SelectStoringBookWindow {
             normal_font_info,
         );
 
-	let mut title_desc_text = VerticalText::new(
+        let mut title_desc_text = VerticalText::new(
             "表題".to_string(),
             numeric::Point2f::new(0.0, 0.0),
             numeric::Vector2f::new(1.0, 1.0),
@@ -598,29 +718,29 @@ impl SelectStoringBookWindow {
             normal_font_info,
         );
 
-	let table_pos_x = (table_frame.get_rows() - 1) as u32;
+        let table_pos_x = (table_frame.get_rows() - 1) as u32;
 
-	set_table_frame_cell_center!(
-	    ctx,
-	    table_frame,
-	    storable_desc_text,
-	    numeric::Vector2u::new(table_pos_x, 0)
-	);
+        set_table_frame_cell_center!(
+            ctx,
+            table_frame,
+            storable_desc_text,
+            numeric::Vector2u::new(table_pos_x, 0)
+        );
 
-	set_table_frame_cell_center!(
-	    ctx,
-	    table_frame,
-	    number_desc_text,
-	    numeric::Vector2u::new(table_pos_x, 1)
-	);
+        set_table_frame_cell_center!(
+            ctx,
+            table_frame,
+            number_desc_text,
+            numeric::Vector2u::new(table_pos_x, 1)
+        );
 
-	set_table_frame_cell_center!(
-	    ctx,
-	    table_frame,
-	    title_desc_text,
-	    numeric::Vector2u::new(table_pos_x, 2)
-	);
-	
+        set_table_frame_cell_center!(
+            ctx,
+            table_frame,
+            title_desc_text,
+            numeric::Vector2u::new(table_pos_x, 2)
+        );
+
         let mut window = SelectStoringBookWindow {
             canvas: SubScreen::new(
                 ctx,
@@ -628,8 +748,8 @@ impl SelectStoringBookWindow {
                 0,
                 ggraphics::Color::from_rgba_u32(0xeeeeeeff),
             ),
-	    appearance_frame: appr_frame,
-	    table_frame: table_frame,
+            appearance_frame: appr_frame,
+            table_frame: table_frame,
             title: VerticalText::new(
                 title.to_string(),
                 numeric::Point2f::new(window_rect.w - 90.0, 50.0),
@@ -639,8 +759,8 @@ impl SelectStoringBookWindow {
                 header_font_info,
             ),
             cell_desc: vec![storable_desc_text, number_desc_text, title_desc_text],
-	    billing_number_text: Vec::new(),
-	    storable_text: Vec::new(),
+            billing_number_text: Vec::new(),
+            storable_text: Vec::new(),
             book_title_text: Vec::new(),
             selecting_book_index: Vec::new(),
             book_storable: Vec::new(),
@@ -658,74 +778,73 @@ impl SelectStoringBookWindow {
         book_shelf_info: &BookShelfInformation,
         book_info: &Vec<BookInformation>,
     ) {
-	
-	self.storable_text.clear();
-	self.billing_number_text.clear();
-	self.book_title_text.clear();
+        self.storable_text.clear();
+        self.billing_number_text.clear();
+        self.book_title_text.clear();
 
         // ここには、そのインデックスの本が配架可能かどうかがboolで入る
         self.book_storable.clear();
 
-	for (index, info) in book_info.iter().enumerate() {
-	    // 配架可能か？
+        for (index, info) in book_info.iter().enumerate() {
+            // 配架可能か？
             let is_storable = book_shelf_info.contains_number(info.billing_number);
             // 配架可能状態をpush
             self.book_storable.push(is_storable);
 
-	    let mut storable_text = VerticalText::new(
-		(if is_storable { "可" } else { "不可" }).to_string(),
-		numeric::Point2f::new(0.0, 0.0),
-		numeric::Vector2f::new(1.0, 1.0),
-		0.0,
-		0,
-		self.book_font.clone(),
+            let mut storable_text = VerticalText::new(
+                (if is_storable { "可" } else { "不可" }).to_string(),
+                numeric::Point2f::new(0.0, 0.0),
+                numeric::Vector2f::new(1.0, 1.0),
+                0.0,
+                0,
+                self.book_font.clone(),
             );
 
-	    let mut number_text = VerticalText::new(
-		number_to_jk(info.billing_number as u64),
-		numeric::Point2f::new(0.0, 0.0),
-		numeric::Vector2f::new(1.0, 1.0),
-		0.0,
-		0,
-		self.book_font.clone(),
-            );
-	    
-	    let mut title_text = VerticalText::new(
-		info.name.to_string(),
-		numeric::Point2f::new(0.0, 0.0),
-		numeric::Vector2f::new(1.0, 1.0),
-		0.0,
-		0,
-		self.book_font.clone(),
+            let mut number_text = VerticalText::new(
+                number_to_jk(info.billing_number as u64),
+                numeric::Point2f::new(0.0, 0.0),
+                numeric::Vector2f::new(1.0, 1.0),
+                0.0,
+                0,
+                self.book_font.clone(),
             );
 
-	    let table_pos_x = (self.table_frame.get_rows() - 2 - index) as u32;
-	    
-	    set_table_frame_cell_center!(
-		ctx,
-		self.table_frame,
-		storable_text,
-		numeric::Vector2u::new(table_pos_x, 0)
-	    );
-	    
-	    set_table_frame_cell_center!(
-		ctx,
-		self.table_frame,
-		number_text,
-		numeric::Vector2u::new(table_pos_x, 1)
-	    );
-	    
-	    set_table_frame_cell_center!(
-		ctx,
-		self.table_frame,
-		title_text,
-		numeric::Vector2u::new(table_pos_x, 2)
-	    );
+            let mut title_text = VerticalText::new(
+                info.name.to_string(),
+                numeric::Point2f::new(0.0, 0.0),
+                numeric::Vector2f::new(1.0, 1.0),
+                0.0,
+                0,
+                self.book_font.clone(),
+            );
 
-	    self.storable_text.push(storable_text);
-	    self.billing_number_text.push(number_text);
-	    self.book_title_text.push(title_text);
-	}
+            let table_pos_x = (self.table_frame.get_rows() - 2 - index) as u32;
+
+            set_table_frame_cell_center!(
+                ctx,
+                self.table_frame,
+                storable_text,
+                numeric::Vector2u::new(table_pos_x, 0)
+            );
+
+            set_table_frame_cell_center!(
+                ctx,
+                self.table_frame,
+                number_text,
+                numeric::Vector2u::new(table_pos_x, 1)
+            );
+
+            set_table_frame_cell_center!(
+                ctx,
+                self.table_frame,
+                title_text,
+                numeric::Vector2u::new(table_pos_x, 2)
+            );
+
+            self.storable_text.push(storable_text);
+            self.billing_number_text.push(number_text);
+            self.book_title_text.push(title_text);
+        }
     }
 
     ///
@@ -759,24 +878,24 @@ impl DrawableComponent for SelectStoringBookWindow {
         if self.is_visible() {
             sub_screen::stack_screen(ctx, &self.canvas);
 
-	    self.appearance_frame.draw(ctx)?;
-	    self.table_frame.draw(ctx)?;
-	    
+            self.appearance_frame.draw(ctx)?;
+            self.table_frame.draw(ctx)?;
+
             self.title.draw(ctx)?;
 
-	    for vtext in &mut self.cell_desc {
+            for vtext in &mut self.cell_desc {
                 vtext.draw(ctx)?;
             }
-	    
+
             for vtext in &mut self.book_title_text {
                 vtext.draw(ctx)?;
             }
 
-	    for vtext in &mut self.billing_number_text {
+            for vtext in &mut self.billing_number_text {
                 vtext.draw(ctx)?;
             }
 
-	    for vtext in &mut self.storable_text {
+            for vtext in &mut self.storable_text {
                 vtext.draw(ctx)?;
             }
 
@@ -1165,7 +1284,7 @@ impl ShelvingDetailContents {
                     book_font_information.clone(),
                 );
 
-		let table_pos_x = (self.book_info_frame.get_rows() - 2 - index) as u32;
+                let table_pos_x = (self.book_info_frame.get_rows() - 2 - index) as u32;
 
                 set_table_frame_cell_center!(
                     ctx,
@@ -1229,7 +1348,7 @@ impl DrawableComponent for ShelvingDetailContents {
                 vtext.draw(ctx)?;
             }
 
-	    for vtext in &mut self.book_billing_number_text {
+            for vtext in &mut self.book_billing_number_text {
                 vtext.draw(ctx)?;
             }
 
@@ -1953,6 +2072,18 @@ impl ShopSpecialObject {
         if let Some(ui) = self.storing_select_ui.as_mut() {
             ui.ref_wrapped_object_mut()
                 .on_click(ctx, game_data, t, button, point);
+        }
+    }
+
+    pub fn mouse_wheel_scroll_action(
+        &mut self,
+        ctx: &mut ggez::Context,
+        point: numeric::Point2f,
+        x: f32,
+        y: f32,
+    ) {
+        if let Some(ui) = self.shelving_select_ui.as_mut() {
+            ui.ref_wrapped_object_mut().scroll_handler(ctx, point, x, y);
         }
     }
 

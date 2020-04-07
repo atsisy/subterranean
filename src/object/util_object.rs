@@ -138,11 +138,11 @@ impl TableFrame {
     }
 
     pub fn get_cols(&self) -> usize {
-	self.frame_data.each_cols_size.len()
+        self.frame_data.each_cols_size.len()
     }
 
     pub fn get_rows(&self) -> usize {
-	self.frame_data.each_rows_size.len()
+        self.frame_data.each_rows_size.len()
     }
 
     fn tile_per_vline(&self, length: f32) -> usize {
@@ -555,7 +555,7 @@ pub struct TileBatchFrame {
 impl TileBatchFrame {
     pub fn new(
         game_data: &GameData,
-	tile_batch_texture: TileBatchTextureID,
+        tile_batch_texture: TileBatchTextureID,
         rect_pos: numeric::Rect,
         frame_scale: numeric::Vector2f,
         draw_depth: i8,
@@ -565,7 +565,7 @@ impl TileBatchFrame {
 
         let mut frame = TileBatchFrame {
             tile_batch: tile_batch,
-	    rect: rect_pos,
+            rect: rect_pos,
             drwob_essential: DrawableObjectEssential::new(true, draw_depth),
             frame_scale: frame_scale,
         };
@@ -574,7 +574,7 @@ impl TileBatchFrame {
 
         frame
     }
-    
+
     ///
     /// Tile Batchの情報を更新する
     ///
@@ -582,7 +582,7 @@ impl TileBatchFrame {
         self.tile_batch.clear_batch();
 
         let tile_size = self.get_scaled_tile_size();
-	let frame_size = self.frame_size();
+        let frame_size = self.frame_size();
         let width = frame_size.x;
         let height = frame_size.y;
 
@@ -664,7 +664,7 @@ impl TileBatchFrame {
             ggraphics::Color::from_rgb_u32(0xffffffff),
         );
     }
-    
+
     fn tile_per_vline(&self, length: f32) -> usize {
         let tile_size = self.get_scaled_tile_size();
         (length / tile_size.y) as usize
@@ -684,7 +684,7 @@ impl TileBatchFrame {
     }
 
     pub fn frame_size(&self) -> numeric::Vector2f {
-	numeric::Vector2f::new(self.rect.w, self.rect.h)
+        numeric::Vector2f::new(self.rect.w, self.rect.h)
     }
 }
 
@@ -718,49 +718,72 @@ impl DrawableComponent for TileBatchFrame {
     }
 }
 
+pub enum ScrollDirection {
+    Vertical = 0,
+    Horizon,
+}
+
 pub struct ScrollableWindow<D>
-where D: DrawableObject {
+where
+    D: DrawableObject,
+{
     canvas: SubScreen,
     scroll_rate: numeric::Vector2f,
+    scroll_direction: ScrollDirection,
     drawable: D,
 }
 
 impl<D> ScrollableWindow<D>
-where D: DrawableObject {
+where
+    D: DrawableObject,
+{
     pub fn new(
-	ctx: &mut ggez::Context,
-	rect: numeric::Rect,
-	drawable: D,
-	depth: i8,
-	scroll_rate: numeric::Vector2f
+        ctx: &mut ggez::Context,
+        rect: numeric::Rect,
+        drawable: D,
+        depth: i8,
+        scroll_rate: numeric::Vector2f,
+        direction: ScrollDirection,
     ) -> ScrollableWindow<D> {
-	ScrollableWindow::<D> {
-	    canvas: SubScreen::new(ctx, rect, depth, ggraphics::Color::from_rgba_u32(0)),
-	    scroll_rate: scroll_rate,
-	    drawable: drawable,
-	}
+        ScrollableWindow::<D> {
+            canvas: SubScreen::new(ctx, rect, depth, ggraphics::Color::from_rgba_u32(0)),
+            scroll_rate: scroll_rate,
+            scroll_direction: direction,
+            drawable: drawable,
+        }
     }
 
     pub fn ref_object(&self) -> &D {
-	&self.drawable
+        &self.drawable
     }
 
     pub fn ref_object_mut(&mut self) -> &mut D {
-	&mut self.drawable
+        &mut self.drawable
     }
 
     pub fn scroll(&mut self, x: f32, y: f32) {
-	self.drawable.move_diff(numeric::Vector2f::new(self.scroll_rate.x * x, self.scroll_rate.y * y));
+        match self.scroll_direction {
+            ScrollDirection::Vertical => self.drawable.move_diff(numeric::Vector2f::new(
+                self.scroll_rate.x * x,
+                self.scroll_rate.y * y,
+            )),
+            ScrollDirection::Horizon => self.drawable.move_diff(numeric::Vector2f::new(
+                self.scroll_rate.x * y,
+                self.scroll_rate.y * x,
+            )),
+        }
     }
 }
 
 impl<D> DrawableComponent for ScrollableWindow<D>
-where D: DrawableObject {
+where
+    D: DrawableObject,
+{
     fn draw(&mut self, ctx: &mut ggez::Context) -> ggez::GameResult<()> {
         if self.is_visible() {
             sub_screen::stack_screen(ctx, &self.canvas);
 
-	    self.drawable.draw(ctx)?;
+            self.drawable.draw(ctx)?;
 
             sub_screen::pop_screen(ctx);
             self.canvas.draw(ctx).unwrap();
@@ -791,11 +814,15 @@ where D: DrawableObject {
 }
 
 impl<D> DrawableObject for ScrollableWindow<D>
-where D: DrawableObject {
-    impl_drawable_object_for_wrapped!{canvas}
+where
+    D: DrawableObject,
+{
+    impl_drawable_object_for_wrapped! {canvas}
 }
 
 impl<D> TextureObject for ScrollableWindow<D>
-where D: DrawableObject {
-    impl_texture_object_for_wrapped!{canvas}
+where
+    D: DrawableObject,
+{
+    impl_texture_object_for_wrapped! {canvas}
 }

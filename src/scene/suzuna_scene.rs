@@ -143,6 +143,18 @@ impl SceneManager for SuzunaScene {
             .mouse_button_up_event(ctx, game_data, button, point);
     }
 
+    fn mouse_wheel_event(
+        &mut self,
+        ctx: &mut ggez::Context,
+        game_data: &GameData,
+        point: numeric::Point2f,
+        x: f32,
+        y: f32,
+    ) {
+	self.sub_scene
+            .mouse_wheel_event(ctx, game_data, point, x, y);
+    }
+
     fn pre_process(&mut self, ctx: &mut ggez::Context, game_data: &GameData) {
         self.sub_scene.pre_process(ctx, game_data);
     }

@@ -421,6 +421,42 @@ impl SceneManager for SuzunaSubScene {
         }
     }
 
+    fn mouse_wheel_event(
+        &mut self,
+        ctx: &mut ggez::Context,
+        game_data: &GameData,
+        point: numeric::Point2f,
+        x: f32,
+        y: f32,
+    ) {
+        match self.scene_status {
+            SuzunaSceneStatus::Shop => {
+                self.shop_scene
+                    .as_mut()
+                    .unwrap()
+                    .mouse_wheel_event(ctx, game_data, point, x, y);
+            }
+            SuzunaSceneStatus::DeskWork => {
+                self.desk_work_scene
+                    .as_mut()
+                    .unwrap()
+                    .mouse_wheel_event(ctx, game_data, point, x, y);
+            }
+            SuzunaSceneStatus::DayResult => {
+                self.day_result_scene
+                    .as_mut()
+                    .unwrap()
+                    .mouse_wheel_event(ctx, game_data, point, x, y);
+            }
+            SuzunaSceneStatus::Copying => {
+                self.copying_scene
+                    .as_mut()
+                    .unwrap()
+                    .mouse_wheel_event(ctx, game_data, point, x, y);
+            }
+        }
+    }
+
     fn pre_process(&mut self, ctx: &mut ggez::Context, game_data: &GameData) {
         match self.scene_status {
             SuzunaSceneStatus::Shop => {

@@ -9,7 +9,7 @@ use ggez::graphics as ggraphics;
 use ggez::input as ginput;
 use ginput::mouse::MouseCursor;
 
-use torifune::core::{Clock};
+use torifune::core::Clock;
 use torifune::debug;
 use torifune::device::VirtualKey;
 use torifune::graphics::object::sub_screen;

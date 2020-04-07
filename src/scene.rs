@@ -88,8 +88,15 @@ pub trait SceneManager {
     ) {
     }
 
-    fn mouse_wheel_event(&mut self, _ctx: &mut ggez::Context, _game_data: &GameData, _x: f32, _y: f32)
-    {}
+    fn mouse_wheel_event(
+        &mut self,
+        _ctx: &mut ggez::Context,
+        _game_data: &GameData,
+        _point: numeric::Point2f,
+        _x: f32,
+        _y: f32,
+    ) {
+    }
 
     fn pre_process(&mut self, ctx: &mut ggez::Context, game_data: &GameData);
 

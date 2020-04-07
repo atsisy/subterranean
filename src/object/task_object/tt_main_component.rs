@@ -4,7 +4,7 @@ use ggez::graphics as ggraphics;
 use ggez::input as ginput;
 use ginput::mouse::MouseCursor;
 
-use torifune::core::{Clock};
+use torifune::core::Clock;
 use torifune::graphics::object::shape;
 use torifune::graphics::object::shape::MeshShape;
 use torifune::graphics::object::sub_screen;
@@ -229,7 +229,7 @@ impl DeskObjects {
                 break;
             }
         }
-	
+
         if drag_start {
             // 元々、最前面に表示されていたオブジェクトのdepthに設定する
             self.dragging = Some(
@@ -238,26 +238,25 @@ impl DeskObjects {
                     .swap_remove(dragging_object_index),
             );
 
-	    self.desk_objects.sort_with_depth();
+            self.desk_objects.sort_with_depth();
         }
     }
 
     pub fn unselect_dragging_object(&mut self) {
+        for obj in self.desk_objects.get_raw_container() {
+            print!("{},", obj.get_object().get_drawing_depth());
+        }
 
-	for obj in self.desk_objects.get_raw_container() {
-	    print!("{},", obj.get_object().get_drawing_depth());
-	}
+        if self.dragging.is_some() {
+            let mut dragged = self.release_dragging().unwrap();
 
-	if self.dragging.is_some() {
-	    let mut dragged = self.release_dragging().unwrap();
-
-	    let min = self.desk_objects.get_minimum_depth();
+            let min = self.desk_objects.get_minimum_depth();
             dragged.get_object_mut().set_drawing_depth(min);
             self.desk_objects.change_depth_equally(1);
-	    
+
             self.desk_objects.add(dragged);
             self.desk_objects.sort_with_depth();
-	}
+        }
     }
 
     pub fn update(&mut self, ctx: &mut ggez::Context, game_data: &GameData, t: Clock) {
