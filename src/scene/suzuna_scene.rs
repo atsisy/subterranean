@@ -151,7 +151,7 @@ impl SceneManager for SuzunaScene {
         x: f32,
         y: f32,
     ) {
-	self.sub_scene
+        self.sub_scene
             .mouse_wheel_event(ctx, game_data, point, x, y);
     }
 

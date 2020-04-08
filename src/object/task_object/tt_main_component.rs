@@ -30,20 +30,6 @@ pub enum TaskTableStagingObject {
 }
 
 impl TaskTableStagingObject {
-    pub fn insert_data(
-        &mut self,
-        ctx: &mut ggez::Context,
-        point: numeric::Point2f,
-        hold_data: &HoldData,
-        kosuzu_memory: &KosuzuMemory,
-    ) -> bool {
-        match self {
-            TaskTableStagingObject::BorrowingRecordBook(record_book) => {
-                record_book.insert_data(ctx, point, hold_data, kosuzu_memory)
-            }
-        }
-    }
-
     ///
     /// 移動関数を変更しスライドアウトするように見せる
     ///
@@ -154,7 +140,12 @@ impl DeskObjects {
         }
     }
 
-    pub fn select_dragging_object(&mut self, ctx: &mut ggez::Context, game_data: &GameData, point: numeric::Point2f) {
+    pub fn select_dragging_object(
+        &mut self,
+        ctx: &mut ggez::Context,
+        game_data: &GameData,
+        point: numeric::Point2f,
+    ) {
         let mut dragging_object_index = 0;
         let mut drag_start = false;
 
@@ -180,15 +171,18 @@ impl DeskObjects {
 
         if drag_start {
             // 元々、最前面に表示されていたオブジェクトのdepthに設定する
-	    let mut dragging = self.desk_objects
+            let mut dragging = self
+                .desk_objects
                 .get_raw_container_mut()
                 .swap_remove(dragging_object_index);
 
-	    dragging.get_object_mut().ref_wrapped_object_mut().ref_wrapped_object_mut().start_dragging(ctx, game_data);
-	    
-            self.dragging = Some(
-                dragging
-            );
+            dragging
+                .get_object_mut()
+                .ref_wrapped_object_mut()
+                .ref_wrapped_object_mut()
+                .start_dragging(ctx, game_data);
+
+            self.dragging = Some(dragging);
 
             self.desk_objects.sort_with_depth();
         }
@@ -204,7 +198,11 @@ impl DeskObjects {
 
             let min = self.desk_objects.get_minimum_depth();
             dragged.get_object_mut().set_drawing_depth(min);
-	    dragged.get_object_mut().ref_wrapped_object_mut().ref_wrapped_object_mut().finish_dragging(ctx, game_data);
+            dragged
+                .get_object_mut()
+                .ref_wrapped_object_mut()
+                .ref_wrapped_object_mut()
+                .finish_dragging(ctx, game_data);
             self.desk_objects.change_depth_equally(1);
 
             self.desk_objects.add(dragged);
@@ -430,18 +428,18 @@ impl DeskObjects {
 
                 let dobj_ref = dobj.get_object().ref_wrapped_object().ref_wrapped_object();
                 let obj_type = dobj_ref.get_type();
-                let hold_data = dobj_ref.click_data(ctx, rpoint);
+                let hold_data = dobj_ref.get_hold_data(ctx, rpoint);
 
                 // オブジェクトの種類によってメニューを表示する
                 self.show_desk_object_drop_down_menu(
                     ctx, game_data, obj_type, hold_data, rpoint, t,
                 );
 
-		return true;
+                return true;
             }
         }
 
-	return false;
+        return false;
     }
 
     pub fn check_mouse_cursor_status(
@@ -651,7 +649,7 @@ impl OnDesk for TaskSilhouette {
         0
     }
 
-    fn click_data(&self, _: &mut ggez::Context, _: numeric::Point2f) -> HoldData {
+    fn get_hold_data(&self, _: &mut ggez::Context, _: numeric::Point2f) -> HoldData {
         if let Some(name) = &self.name {
             HoldData::CustomerName(name.to_string())
         } else {
@@ -1147,9 +1145,9 @@ impl OnDesk for SuzuMiniSightSilhouette {
         0
     }
 
-    fn click_data(&self, ctx: &mut ggez::Context, point: numeric::Point2f) -> HoldData {
+    fn get_hold_data(&self, ctx: &mut ggez::Context, point: numeric::Point2f) -> HoldData {
         if self.silhouette.get_drawing_area(ctx).contains(point) {
-            self.silhouette.click_data(ctx, point)
+            self.silhouette.get_hold_data(ctx, point)
         } else {
             HoldData::None
         }
@@ -1337,7 +1335,7 @@ impl SuzuMiniSight {
     ) -> HoldData {
         let rpoint = self.canvas.relative_point(point);
 
-        self.silhouette.click_data(ctx, rpoint)
+        self.silhouette.get_hold_data(ctx, rpoint)
     }
 
     pub fn release_dragging(&mut self) -> Option<DeskObject> {
@@ -1515,38 +1513,12 @@ impl ShelvingBookBox {
                     .get_object_mut()
                     .ref_wrapped_object_mut()
                     .ref_wrapped_object_mut()
-                    .click_data(ctx, rpoint);
+                    .get_hold_data(ctx, rpoint);
                 break;
             }
         }
 
         clicked_data
-    }
-
-    pub fn check_insert_data(
-        &mut self,
-        ctx: &mut ggez::Context,
-        point: numeric::Point2f,
-        data: &HoldData,
-        kosuzu_memory: &KosuzuMemory,
-    ) -> bool {
-        let rpoint = self.canvas.relative_point(point);
-
-        // オブジェクトは深度が深い順にソートされているので、
-        // 逆順から検索していくことで、最も手前に表示されているオブジェクトを
-        // 取り出すことができる
-        for obj in self.shelved.iter_mut().rev() {
-            let contains = obj.get_object().get_drawing_area(ctx).contains(rpoint);
-            if contains {
-                return obj
-                    .get_object_mut()
-                    .ref_wrapped_object_mut()
-                    .ref_wrapped_object_mut()
-                    .insert_data(ctx, rpoint, data, kosuzu_memory);
-            }
-        }
-
-        false
     }
 
     pub fn dragging_handler(&mut self, point: numeric::Point2f, last: numeric::Point2f) {

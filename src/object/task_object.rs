@@ -37,7 +37,6 @@ pub struct TaskTable {
     staging_object: Option<TaskTableStagingObject>,
     kosuzu_memory: KosuzuMemory,
     shelving_box: ShelvingBookBox,
-    hold_data: HoldData,
     event_list: DelayEventList<TaskTable>,
     borrowing_record_book: BorrowingRecordBook,
     customer_silhouette_menu: CustomerMenuGroup,
@@ -63,7 +62,7 @@ impl TaskTable {
 
         desk.add_object(DeskObject::new(
             Box::new(OnDeskTexture::new(
-		ctx,
+                ctx,
                 UniTexture::new(
                     game_data.ref_texture(TextureID::LotusPink),
                     numeric::Point2f::new(0.0, 0.0),
@@ -74,7 +73,7 @@ impl TaskTable {
                 OnDeskType::Texture,
             )),
             Box::new(OnDeskTexture::new(
-		ctx,
+                ctx,
                 UniTexture::new(
                     game_data.ref_texture(TextureID::LotusPink),
                     numeric::Point2f::new(0.0, 0.0),
@@ -91,7 +90,7 @@ impl TaskTable {
 
         let mut record_book = DeskObject::new(
             Box::new(OnDeskTexture::new(
-		ctx,
+                ctx,
                 UniTexture::new(
                     game_data.ref_texture(TextureID::Chobo1),
                     numeric::Point2f::new(0.0, 0.0),
@@ -102,7 +101,7 @@ impl TaskTable {
                 OnDeskType::BorrowingRecordBook,
             )),
             Box::new(OnDeskTexture::new(
-		ctx,
+                ctx,
                 UniTexture::new(
                     game_data.ref_texture(TextureID::Chobo1),
                     numeric::Point2f::new(0.0, 0.0),
@@ -141,7 +140,6 @@ impl TaskTable {
             staging_object: None,
             kosuzu_memory: KosuzuMemory::new(),
             shelving_box: shelving_box,
-            hold_data: HoldData::None,
             event_list: DelayEventList::new(),
             borrowing_record_book: record_book,
             customer_silhouette_menu: CustomerMenuGroup::new(0),
@@ -155,7 +153,12 @@ impl TaskTable {
         &self.kosuzu_memory
     }
 
-    fn select_dragging_object(&mut self, ctx: &mut ggez::Context, game_data: &GameData, point: numeric::Point2f) {
+    fn select_dragging_object(
+        &mut self,
+        ctx: &mut ggez::Context,
+        game_data: &GameData,
+        point: numeric::Point2f,
+    ) {
         let rpoint = self.canvas.relative_point(point);
         self.desk.select_dragging_object(ctx, game_data, rpoint);
     }
@@ -217,7 +220,12 @@ impl TaskTable {
         self.shelving_box.dragging_handler(rpoint, rlast);
     }
 
-    pub fn unselect_dragging_object(&mut self, ctx: &mut ggez::Context, game_data: &GameData, t: Clock) {
+    pub fn unselect_dragging_object(
+        &mut self,
+        ctx: &mut ggez::Context,
+        game_data: &GameData,
+        t: Clock,
+    ) {
         self.sight.unselect_dragging_object(ctx, t);
         self.desk.unselect_dragging_object(ctx, game_data);
         self.shelving_box.unselect_dragging_object(t);
@@ -526,7 +534,7 @@ impl TaskTable {
         );
         let paper_obj = DeskObject::new(
             Box::new(OnDeskTexture::new(
-		ctx,
+                ctx,
                 UniTexture::new(
                     game_data.ref_texture(TextureID::Paper1),
                     numeric::Point2f::new(0.0, 0.0),
@@ -598,16 +606,6 @@ impl TaskTable {
             CustomerRequest::Copying(info) => {
                 self.start_copying_request_event(ctx, game_data, info, t)
             }
-        }
-    }
-
-    pub fn clear_hold_data(&mut self) {
-        self.hold_data = HoldData::None;
-    }
-
-    fn update_hold_data_if_some(&mut self, new_hold_data: HoldData) {
-        if new_hold_data.is_some() {
-            self.hold_data = new_hold_data;
         }
     }
 
@@ -1083,13 +1081,15 @@ impl Clickable for TaskTable {
         point: numeric::Point2f,
     ) {
         let rpoint = self.canvas.relative_point(point);
-	
-        if self.borrowing_record_book
-            .click_handler(ctx, game_data, t, rpoint) {
-		// クリックハンドラが呼び出されたので終了
-		return;
-	    }
-	
+
+        if self
+            .borrowing_record_book
+            .click_handler(ctx, game_data, t, rpoint)
+        {
+            // クリックハンドラが呼び出されたので終了
+            return;
+        }
+
         if !self.click_record_book_menu(ctx, game_data, button, rpoint, t)
             && !self.click_customer_silhouette_menu(ctx, game_data, button, rpoint, t)
         {
@@ -1100,11 +1100,13 @@ impl Clickable for TaskTable {
             self.customer_silhouette_menu.close_all(t);
         }
 
-	if self.desk
-            .click_handler(ctx, game_data, t, button, rpoint, &mut self.kosuzu_memory) {
-		// クリックハンドラが呼び出されたので終了
-		return;
-	    }
+        if self
+            .desk
+            .click_handler(ctx, game_data, t, button, rpoint, &mut self.kosuzu_memory)
+        {
+            // クリックハンドラが呼び出されたので終了
+            return;
+        }
     }
 
     fn clickable_status(

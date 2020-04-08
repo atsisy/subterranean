@@ -720,11 +720,11 @@ impl DrawableComponent for TileBatchFrame {
 
 pub trait Scrollable: DrawableComponent {
     fn scroll(
-	&mut self,
+        &mut self,
         ctx: &mut ggez::Context,
-	game_data: &GameData,
+        game_data: &GameData,
         point: numeric::Point2f,
-	offset: numeric::Vector2f,
+        offset: numeric::Vector2f,
     );
 }
 
@@ -771,26 +771,27 @@ where
         &mut self.drawable
     }
 
-    pub fn scroll(&mut self, ctx: &mut ggez::Context, game_data: &GameData, point: numeric::Point2f, x: f32, y: f32) {
+    pub fn scroll(
+        &mut self,
+        ctx: &mut ggez::Context,
+        game_data: &GameData,
+        point: numeric::Point2f,
+        x: f32,
+        y: f32,
+    ) {
         match self.scroll_direction {
-	    ScrollDirection::Vertical => self.drawable.scroll(
-		ctx,
-		game_data,
-		point,
-		numeric::Vector2f::new(
-		    self.scroll_rate.x * x,
-		    self.scroll_rate.y * y,
-		),
-	    ),
+            ScrollDirection::Vertical => self.drawable.scroll(
+                ctx,
+                game_data,
+                point,
+                numeric::Vector2f::new(self.scroll_rate.x * x, self.scroll_rate.y * y),
+            ),
             ScrollDirection::Horizon => self.drawable.scroll(
-		ctx,
-		game_data,
-		point,
-		numeric::Vector2f::new(
-		    self.scroll_rate.x * y,
-		    self.scroll_rate.y * x,
-		),
-	    ),
+                ctx,
+                game_data,
+                point,
+                numeric::Vector2f::new(self.scroll_rate.x * y, self.scroll_rate.y * x),
+            ),
         }
     }
 }

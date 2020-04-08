@@ -5,12 +5,12 @@ use std::rc::Rc;
 use ggez::graphics as ggraphics;
 
 use torifune::core::Clock;
+use torifune::graphics::object::shadow::*;
 use torifune::graphics::object::sub_screen;
 use torifune::graphics::object::sub_screen::SubScreen;
 use torifune::graphics::object::*;
 use torifune::graphics::*;
 use torifune::hash;
-use torifune::graphics::object::shadow::*;
 use torifune::impl_drawable_object_for_wrapped;
 use torifune::impl_texture_object_for_wrapped;
 use torifune::numeric;
@@ -271,25 +271,13 @@ pub enum OnDeskType {
 pub trait OnDesk: TextureObject + Clickable {
     fn ondesk_whose(&self) -> i32;
 
-    fn click_data(&self, ctx: &mut ggez::Context, point: numeric::Point2f) -> HoldData;
-
-    fn insert_data(
-        &mut self,
-        _: &mut ggez::Context,
-        _: numeric::Point2f,
-        _: &HoldData,
-        _: &KosuzuMemory,
-    ) -> bool {
-        false
-    }
+    fn get_hold_data(&self, ctx: &mut ggez::Context, point: numeric::Point2f) -> HoldData;
 
     fn get_type(&self) -> OnDeskType;
 
-    fn start_dragging(&mut self, _: &mut ggez::Context, _: &GameData)
-    {}
+    fn start_dragging(&mut self, _: &mut ggez::Context, _: &GameData) {}
 
-    fn finish_dragging(&mut self, _: &mut ggez::Context, _: &GameData)
-    {}
+    fn finish_dragging(&mut self, _: &mut ggez::Context, _: &GameData) {}
 }
 
 pub struct OnDeskTexture {
@@ -300,44 +288,45 @@ pub struct OnDeskTexture {
 }
 
 impl OnDeskTexture {
-    pub fn new(ctx: &mut ggez::Context, mut obj: UniTexture, on_desk_type: OnDeskType) -> Self {	
+    pub fn new(ctx: &mut ggez::Context, mut obj: UniTexture, on_desk_type: OnDeskType) -> Self {
         let area = obj.get_drawing_area(ctx);
-	obj.set_position(numeric::Point2f::new(6.0, 6.0));
-	let shadow_bounds = numeric::Rect::new(area.x, area.y, area.w + 12.0, area.h + 12.0);
-	let mut shadow = ShadowShape::new(ctx, 12.0, shadow_bounds, ggraphics::Color::from_rgba_u32(0xbb), 0);
-	
-	shadow.hide();
-		
-	let canvas = SubScreen::new(
+        obj.set_position(numeric::Point2f::new(6.0, 6.0));
+        let shadow_bounds = numeric::Rect::new(area.x, area.y, area.w + 12.0, area.h + 12.0);
+        let mut shadow = ShadowShape::new(
             ctx,
-	    shadow_bounds,
+            12.0,
+            shadow_bounds,
+            ggraphics::Color::from_rgba_u32(0xbb),
             0,
-            ggraphics::Color::from_rgba_u32(0),
         );
-	
+
+        shadow.hide();
+
+        let canvas = SubScreen::new(ctx, shadow_bounds, 0, ggraphics::Color::from_rgba_u32(0));
+
         OnDeskTexture {
             texture: obj,
-	    shadow: shadow,
+            shadow: shadow,
             on_desk_type: on_desk_type,
-	    canvas: canvas,
+            canvas: canvas,
         }
     }
 
     pub fn disable_shadow(&mut self) {
-	self.shadow.hide();
+        self.shadow.hide();
     }
 
     pub fn enable_shadow(&mut self) {
-	self.shadow.appear();
+        self.shadow.appear();
     }
 }
 
 impl DrawableComponent for OnDeskTexture {
     fn draw(&mut self, ctx: &mut ggez::Context) -> ggez::GameResult<()> {
-	if self.is_visible() {
+        if self.is_visible() {
             sub_screen::stack_screen(ctx, &self.canvas);
 
-	    self.shadow.draw(ctx)?;
+            self.shadow.draw(ctx)?;
             self.texture.draw(ctx)?;
 
             sub_screen::pop_screen(ctx);
@@ -382,7 +371,7 @@ impl OnDesk for OnDeskTexture {
         0
     }
 
-    fn click_data(&self, _: &mut ggez::Context, _: numeric::Point2f) -> HoldData {
+    fn get_hold_data(&self, _: &mut ggez::Context, _: numeric::Point2f) -> HoldData {
         HoldData::None
     }
 
@@ -391,11 +380,11 @@ impl OnDesk for OnDeskTexture {
     }
 
     fn start_dragging(&mut self, _: &mut ggez::Context, _: &GameData) {
-	self.enable_shadow();
+        self.enable_shadow();
     }
 
     fn finish_dragging(&mut self, _: &mut ggez::Context, _: &GameData) {
-	self.disable_shadow();
+        self.disable_shadow();
     }
 }
 
@@ -425,14 +414,20 @@ impl OnDeskBook {
         let book_size = book_texture.get_drawing_size(ctx);
         let book_title = info.get_name().to_string();
 
-	let shadow_bounds = numeric::Rect::new(0.0, 0.0, book_size.x + 12.0, book_size.y + 12.0);
+        let shadow_bounds = numeric::Rect::new(0.0, 0.0, book_size.x + 12.0, book_size.y + 12.0);
 
-	let mut shadow = ShadowShape::new(ctx, 12.0, shadow_bounds, ggraphics::Color::from_rgba_u32(0xbb), 0);
-	shadow.hide();
-	
-	let canvas = SubScreen::new(
+        let mut shadow = ShadowShape::new(
             ctx,
-	    shadow_bounds,
+            12.0,
+            shadow_bounds,
+            ggraphics::Color::from_rgba_u32(0xbb),
+            0,
+        );
+        shadow.hide();
+
+        let canvas = SubScreen::new(
+            ctx,
+            shadow_bounds,
             0,
             ggraphics::Color::from_rgba_u32(0x00000000),
         );
@@ -440,7 +435,7 @@ impl OnDeskBook {
         OnDeskBook {
             info: info,
             book_texture: book_texture,
-	    shadow: shadow,
+            shadow: shadow,
             title: VerticalText::new(
                 book_title,
                 numeric::Point2f::new(40.0, 30.0),
@@ -462,11 +457,11 @@ impl OnDeskBook {
     }
 
     pub fn disable_shadow(&mut self) {
-	self.shadow.hide();
+        self.shadow.hide();
     }
 
     pub fn enable_shadow(&mut self) {
-	self.shadow.appear();
+        self.shadow.appear();
     }
 }
 
@@ -475,8 +470,8 @@ impl DrawableComponent for OnDeskBook {
         if self.is_visible() {
             sub_screen::stack_screen(ctx, &self.canvas);
 
-	    self.shadow.draw(ctx)?;
-	    
+            self.shadow.draw(ctx)?;
+
             self.book_texture.draw(ctx)?;
             self.title.draw(ctx)?;
 
@@ -531,7 +526,7 @@ impl OnDesk for OnDeskBook {
     fn ondesk_whose(&self) -> i32 {
         0
     }
-    fn click_data(&self, _: &mut ggez::Context, _: numeric::Point2f) -> HoldData {
+    fn get_hold_data(&self, _: &mut ggez::Context, _: numeric::Point2f) -> HoldData {
         return HoldData::BookName(self.info.clone());
     }
 
@@ -540,11 +535,11 @@ impl OnDesk for OnDeskBook {
     }
 
     fn start_dragging(&mut self, _: &mut ggez::Context, _: &GameData) {
-	self.enable_shadow();
+        self.enable_shadow();
     }
 
     fn finish_dragging(&mut self, _: &mut ggez::Context, _: &GameData) {
-	self.disable_shadow();
+        self.disable_shadow();
     }
 }
 
@@ -777,7 +772,7 @@ impl OnDesk for CopyingRequestPaper {
         0
     }
 
-    fn click_data(&self, ctx: &mut ggez::Context, point: numeric::Point2f) -> HoldData {
+    fn get_hold_data(&self, ctx: &mut ggez::Context, point: numeric::Point2f) -> HoldData {
         let rpoint = self.canvas.relative_point(point);
 
         if self.request_book.get_drawing_area(ctx).contains(rpoint) {
@@ -1468,10 +1463,10 @@ impl BorrowingRecordBook {
     /// 存在しない場合は、falseを返す
     ///
     fn next_page(&mut self, ctx: &mut ggez::Context, game_data: &GameData, t: Clock) {
-	self.current_page += 1;
+        self.current_page += 1;
         if self.current_page >= self.pages.len() {
-	    self.add_empty_page(ctx, game_data, t);
-	}
+            self.add_empty_page(ctx, game_data, t);
+        }
     }
 
     fn prev_page(&mut self) {
@@ -1555,18 +1550,18 @@ impl BorrowingRecordBook {
     ) -> bool {
         let rpoint = self.relative_point(point);
 
-	let next_area = numeric::Rect::new(0.0, 0.0, 20.0, self.rect.h);
-	let prev_area = numeric::Rect::new(self.rect.w - 20.0, 0.0, 20.0, self.rect.h);
-	
+        let next_area = numeric::Rect::new(0.0, 0.0, 20.0, self.rect.h);
+        let prev_area = numeric::Rect::new(self.rect.w - 20.0, 0.0, 20.0, self.rect.h);
+
         if next_area.contains(rpoint) {
             self.next_page(ctx, game_data, t);
-	    return true;
+            return true;
         } else if prev_area.contains(rpoint) {
             self.prev_page();
-	    return true;
+            return true;
         }
 
-	false
+        false
     }
 
     pub fn pages_length(&self) -> usize {
@@ -1715,19 +1710,8 @@ impl OnDesk for BorrowingRecordBook {
         0
     }
 
-    fn click_data(&self, _: &mut ggez::Context, _: numeric::Point2f) -> HoldData {
+    fn get_hold_data(&self, _: &mut ggez::Context, _: numeric::Point2f) -> HoldData {
         HoldData::None
-    }
-
-    fn insert_data(
-        &mut self,
-        ctx: &mut ggez::Context,
-        point: numeric::Point2f,
-        data: &HoldData,
-        _: &KosuzuMemory,
-    ) -> bool {
-        // いずれかのTableFrameにデータを挿入できた場合trueが返る
-        self.try_insert_data_customer_info_frame(ctx, point, data)
     }
 
     fn get_type(&self) -> OnDeskType {

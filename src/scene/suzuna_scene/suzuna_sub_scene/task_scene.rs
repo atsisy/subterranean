@@ -80,7 +80,12 @@ impl TaskScene {
         self.task_table.hand_over_check(ctx, point);
     }
 
-    fn unselect_dragging_object(&mut self, ctx: &mut ggez::Context, game_data: &GameData, t: Clock) {
+    fn unselect_dragging_object(
+        &mut self,
+        ctx: &mut ggez::Context,
+        game_data: &GameData,
+        t: Clock,
+    ) {
         self.task_table.unselect_dragging_object(ctx, game_data, t);
     }
 
@@ -172,9 +177,6 @@ impl SceneManager for TaskScene {
                     Box::new(|_, _, _| println!("bbbbbbbbbb")),
                     self.get_current_clock() + 500,
                 );
-            }
-            tdev::VirtualKey::Action3 => {
-                self.task_table.clear_hold_data();
             }
             _ => (),
         }
