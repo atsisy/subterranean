@@ -208,6 +208,9 @@ impl SceneManager for TaskScene {
             self.mouse_info
                 .set_last_dragged(MouseButton::Left, point, self.get_current_clock());
         }
+
+	self.task_table.mouse_motion_handler(ctx, game_data, point, offset);
+	
         let mouse_cursor_status = self.task_table.clickable_status(ctx, point);
         ggez::input::mouse::set_cursor_type(ctx, mouse_cursor_status);
     }

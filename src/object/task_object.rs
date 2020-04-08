@@ -163,6 +163,16 @@ impl TaskTable {
         self.desk.select_dragging_object(ctx, game_data, rpoint);
     }
 
+    pub fn mouse_motion_handler(
+	&mut self,
+        ctx: &mut ggez::Context,
+        game_data: &GameData,
+        point: numeric::Point2f,
+        offset: numeric::Vector2f,
+    ) {
+	self.borrowing_record_book.mouse_motion_handler(point);
+    }
+
     fn slide_appear_record_book(&mut self, _ctx: &mut ggez::Context, _: &GameData, t: Clock) {
         self.event_list.add_event(
             Box::new(|tt: &mut TaskTable, _, _| tt.borrowing_record_book.appear()),
