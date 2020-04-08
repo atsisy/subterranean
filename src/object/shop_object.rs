@@ -39,7 +39,6 @@ pub struct SelectBookWindowContents {
 
 impl SelectBookWindowContents {
     pub fn new(
-        ctx: &mut ggez::Context,
         game_data: &GameData,
         font_info: FontInformation,
         window_rect: numeric::Rect,
@@ -272,7 +271,7 @@ impl SelectBookWindow {
             numeric::Vector2u::new(0, 1)
         );
 
-        let contents = SelectBookWindowContents::new(ctx, game_data, font_info, window_rect);
+        let contents = SelectBookWindowContents::new(game_data, font_info, window_rect);
 
         let mut window = SelectBookWindow {
             canvas: SubScreen::new(

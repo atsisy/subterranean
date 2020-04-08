@@ -5,7 +5,6 @@ use std::rc::Rc;
 use ggez::graphics as ggraphics;
 
 use torifune::core::Clock;
-use torifune::debug;
 use torifune::graphics::object::sub_screen;
 use torifune::graphics::object::sub_screen::SubScreen;
 use torifune::graphics::object::*;
@@ -1405,10 +1404,15 @@ impl BorrowingRecordBook {
         self.canvas.ref_wrapped_object().relative_point(point)
     }
 
-    fn next_page(&mut self) {
-        if self.current_page < self.pages.len() {
-            self.current_page += 1;
-        }
+    ///
+    /// 次のページが存在する場合は、ページを繰って、trueを返す
+    /// 存在しない場合は、falseを返す
+    ///
+    fn next_page(&mut self, ctx: &mut ggez::Context, game_data: &GameData, t: Clock) {
+	self.current_page += 1;
+        if self.current_page >= self.pages.len() {
+	    self.add_empty_page(ctx, game_data, t);
+	}
     }
 
     fn prev_page(&mut self) {
@@ -1489,19 +1493,21 @@ impl BorrowingRecordBook {
         game_data: &GameData,
         t: Clock,
         point: numeric::Point2f,
-    ) {
+    ) -> bool {
         let rpoint = self.relative_point(point);
-        let width = self.get_drawing_size(ctx).x;
 
-        debug::debug_screen_push_text("book click!!");
-        if rpoint.x < 20.0 && rpoint.x >= 0.0 {
-            println!("next page!!");
-            self.add_empty_page(ctx, game_data, t);
-            self.next_page();
-        } else if rpoint.x > width - 20.0 && rpoint.x <= width {
-            println!("prev page!!");
+	let next_area = numeric::Rect::new(0.0, 0.0, 20.0, self.rect.h);
+	let prev_area = numeric::Rect::new(self.rect.w - 20.0, 0.0, 20.0, self.rect.h);
+	
+        if next_area.contains(rpoint) {
+            self.next_page(ctx, game_data, t);
+	    return true;
+        } else if prev_area.contains(rpoint) {
             self.prev_page();
+	    return true;
         }
+
+	false
     }
 
     pub fn pages_length(&self) -> usize {

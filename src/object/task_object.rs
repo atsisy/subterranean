@@ -1078,12 +1078,13 @@ impl Clickable for TaskTable {
         point: numeric::Point2f,
     ) {
         let rpoint = self.canvas.relative_point(point);
-        self.desk
-            .click_handler(ctx, game_data, t, button, rpoint, &mut self.kosuzu_memory);
-
-        self.borrowing_record_book
-            .click_handler(ctx, game_data, t, rpoint);
-
+	
+        if self.borrowing_record_book
+            .click_handler(ctx, game_data, t, rpoint) {
+		// クリックハンドラが呼び出されたので終了
+		return;
+	    }
+	
         if !self.click_record_book_menu(ctx, game_data, button, rpoint, t)
             && !self.click_customer_silhouette_menu(ctx, game_data, button, rpoint, t)
         {
@@ -1093,6 +1094,12 @@ impl Clickable for TaskTable {
             self.record_book_menu.close_all(t);
             self.customer_silhouette_menu.close_all(t);
         }
+
+	if self.desk
+            .click_handler(ctx, game_data, t, button, rpoint, &mut self.kosuzu_memory) {
+		// クリックハンドラが呼び出されたので終了
+		return;
+	    }
     }
 
     fn clickable_status(

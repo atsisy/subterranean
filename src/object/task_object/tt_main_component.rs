@@ -137,58 +137,6 @@ impl DeskObjects {
         }
     }
 
-    pub fn check_data_click(
-        &mut self,
-        ctx: &mut ggez::Context,
-        point: numeric::Point2f,
-    ) -> HoldData {
-        let rpoint = self.canvas.relative_point(point);
-        let mut clicked_data = HoldData::None;
-
-        // オブジェクトは深度が深い順にソートされているので、
-        // 逆順から検索していくことで、最も手前に表示されているオブジェクトを
-        // 取り出すことができる
-        for obj in self.desk_objects.get_raw_container_mut().iter_mut().rev() {
-            let contains = obj.get_object().get_drawing_area(ctx).contains(rpoint);
-            if contains {
-                clicked_data = obj
-                    .get_object_mut()
-                    .ref_wrapped_object_mut()
-                    .ref_wrapped_object_mut()
-                    .click_data(ctx, rpoint);
-                break;
-            }
-        }
-
-        clicked_data
-    }
-
-    pub fn check_insert_data(
-        &mut self,
-        ctx: &mut ggez::Context,
-        point: numeric::Point2f,
-        data: &HoldData,
-        kosuzu_memory: &KosuzuMemory,
-    ) -> bool {
-        let rpoint = self.canvas.relative_point(point);
-
-        // オブジェクトは深度が深い順にソートされているので、
-        // 逆順から検索していくことで、最も手前に表示されているオブジェクトを
-        // 取り出すことができる
-        for obj in self.desk_objects.get_raw_container_mut().iter_mut().rev() {
-            let contains = obj.get_object().get_drawing_area(ctx).contains(rpoint);
-            if contains {
-                return obj
-                    .get_object_mut()
-                    .ref_wrapped_object_mut()
-                    .ref_wrapped_object_mut()
-                    .insert_data(ctx, rpoint, data, kosuzu_memory);
-            }
-        }
-
-        false
-    }
-
     fn hide_desk_book_menu(&mut self, t: Clock) {
         if let Some(menu) = self.desk_book_drop_menu.as_mut() {
             menu.add_effect(vec![effect::fade_out(10, t)]);
@@ -454,7 +402,7 @@ impl DeskObjects {
         button: ggez::input::mouse::MouseButton,
         point: numeric::Point2f,
         kosuzu_memory: &mut KosuzuMemory,
-    ) {
+    ) -> bool {
         let rpoint = self.canvas.relative_point(point);
 
         if let Some(book_menu) = self.desk_book_drop_menu.as_mut() {
@@ -463,7 +411,7 @@ impl DeskObjects {
                 if self.do_book_menu_action(kosuzu_memory) {
                     // アクションが発生したので、メニューを消して終了
                     self.hide_desk_book_menu(t);
-                    return ();
+                    return true;
                 }
             }
         }
@@ -484,9 +432,11 @@ impl DeskObjects {
                     ctx, game_data, obj_type, hold_data, rpoint, t,
                 );
 
-                break;
+		return true;
             }
         }
+
+	return false;
     }
 
     pub fn check_mouse_cursor_status(
