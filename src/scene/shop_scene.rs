@@ -1113,13 +1113,13 @@ impl SceneManager for ShopScene {
     fn mouse_wheel_event(
         &mut self,
         ctx: &mut ggez::Context,
-        _game_data: &GameData,
+        game_data: &GameData,
         point: numeric::Point2f,
         x: f32,
         y: f32,
     ) {
         self.shop_special_object
-            .mouse_wheel_scroll_action(ctx, point, x, y);
+            .mouse_wheel_scroll_action(ctx, game_data, point, x, y);
     }
 
     fn pre_process(&mut self, ctx: &mut ggez::Context, game_data: &GameData) {

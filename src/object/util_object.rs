@@ -718,6 +718,16 @@ impl DrawableComponent for TileBatchFrame {
     }
 }
 
+pub trait Scrollable: DrawableComponent {
+    fn scroll(
+	&mut self,
+        ctx: &mut ggez::Context,
+	game_data: &GameData,
+        point: numeric::Point2f,
+	offset: numeric::Vector2f,
+    );
+}
+
 pub enum ScrollDirection {
     Vertical = 0,
     Horizon,
@@ -725,7 +735,7 @@ pub enum ScrollDirection {
 
 pub struct ScrollableWindow<D>
 where
-    D: DrawableObject,
+    D: Scrollable,
 {
     canvas: SubScreen,
     scroll_rate: numeric::Vector2f,
@@ -735,7 +745,7 @@ where
 
 impl<D> ScrollableWindow<D>
 where
-    D: DrawableObject,
+    D: Scrollable,
 {
     pub fn new(
         ctx: &mut ggez::Context,
@@ -761,23 +771,33 @@ where
         &mut self.drawable
     }
 
-    pub fn scroll(&mut self, x: f32, y: f32) {
+    pub fn scroll(&mut self, ctx: &mut ggez::Context, game_data: &GameData, point: numeric::Point2f, x: f32, y: f32) {
         match self.scroll_direction {
-            ScrollDirection::Vertical => self.drawable.move_diff(numeric::Vector2f::new(
-                self.scroll_rate.x * x,
-                self.scroll_rate.y * y,
-            )),
-            ScrollDirection::Horizon => self.drawable.move_diff(numeric::Vector2f::new(
-                self.scroll_rate.x * y,
-                self.scroll_rate.y * x,
-            )),
+	    ScrollDirection::Vertical => self.drawable.scroll(
+		ctx,
+		game_data,
+		point,
+		numeric::Vector2f::new(
+		    self.scroll_rate.x * x,
+		    self.scroll_rate.y * y,
+		),
+	    ),
+            ScrollDirection::Horizon => self.drawable.scroll(
+		ctx,
+		game_data,
+		point,
+		numeric::Vector2f::new(
+		    self.scroll_rate.x * y,
+		    self.scroll_rate.y * x,
+		),
+	    ),
         }
     }
 }
 
 impl<D> DrawableComponent for ScrollableWindow<D>
 where
-    D: DrawableObject,
+    D: Scrollable,
 {
     fn draw(&mut self, ctx: &mut ggez::Context) -> ggez::GameResult<()> {
         if self.is_visible() {
@@ -815,14 +835,14 @@ where
 
 impl<D> DrawableObject for ScrollableWindow<D>
 where
-    D: DrawableObject,
+    D: Scrollable,
 {
     impl_drawable_object_for_wrapped! {canvas}
 }
 
 impl<D> TextureObject for ScrollableWindow<D>
 where
-    D: DrawableObject,
+    D: Scrollable,
 {
     impl_texture_object_for_wrapped! {canvas}
 }

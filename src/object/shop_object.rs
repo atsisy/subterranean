@@ -29,7 +29,6 @@ use number_to_jk::number_to_jk;
 
 pub struct SelectBookWindowContents {
     table_frame: TableFrame,
-    cell_desc: Vec<VerticalText>,
     book_title_text: Vec<VerticalText>,
     billing_number_text: Vec<VerticalText>,
     selecting_book_index: Vec<usize>,
@@ -45,53 +44,22 @@ impl SelectBookWindowContents {
         font_info: FontInformation,
         window_rect: numeric::Rect,
     ) -> SelectBookWindowContents {
+	
         let mut table_frame = TableFrame::new(
             game_data,
             numeric::Point2f::new(0.0, 0.0),
-            FrameData::new(vec![140.0, 400.0], vec![42.0; 9]),
+            FrameData::new(vec![140.0, 400.0], vec![42.0; 256]),
             numeric::Vector2f::new(0.3, 0.3),
             0,
         );
 
         table_frame.set_position(numeric::Point2f::new(
-            window_rect.w - table_frame.real_width() - 80.0,
+            window_rect.w - table_frame.real_width() - 162.0,
             40.0,
         ));
 
-        let mut cell_desc1 = VerticalText::new(
-            "請求番号".to_string(),
-            numeric::Point2f::new(0.0, 0.0),
-            numeric::Vector2f::new(1.0, 1.0),
-            0.0,
-            0,
-            font_info.clone(),
-        );
-
-        let mut cell_desc2 = VerticalText::new(
-            "題名".to_string(),
-            numeric::Point2f::new(0.0, 0.0),
-            numeric::Vector2f::new(1.0, 1.0),
-            0.0,
-            0,
-            font_info,
-        );
-
-        set_table_frame_cell_center!(
-            ctx,
-            table_frame,
-            cell_desc1,
-            numeric::Vector2u::new((table_frame.get_rows() - 1) as u32, 0)
-        );
-        set_table_frame_cell_center!(
-            ctx,
-            table_frame,
-            cell_desc2,
-            numeric::Vector2u::new((table_frame.get_rows() - 1) as u32, 1)
-        );
-
         SelectBookWindowContents {
             table_frame: table_frame,
-            cell_desc: vec![cell_desc1, cell_desc2],
             book_title_text: Vec::new(),
             billing_number_text: Vec::new(),
             selecting_book_index: Vec::new(),
@@ -170,10 +138,6 @@ impl DrawableComponent for SelectBookWindowContents {
         if self.is_visible() {
             self.table_frame.draw(ctx)?;
 
-            for vtext in &mut self.cell_desc {
-                vtext.draw(ctx)?;
-            }
-
             for vtext in &mut self.book_title_text {
                 vtext.draw(ctx)?;
             }
@@ -211,14 +175,15 @@ impl DrawableComponent for SelectBookWindowContents {
     }
 }
 
-impl DrawableObject for SelectBookWindowContents {
-    /// offsetで指定しただけ描画位置を動かす
-    fn move_diff(&mut self, offset: numeric::Vector2f) {
-        self.table_frame.move_diff(offset);
-
-        for vtext in &mut self.cell_desc {
-            vtext.move_diff(offset);
-        }
+impl Scrollable for SelectBookWindowContents {
+    fn scroll(
+	&mut self,
+	_: &mut ggez::Context,
+	_: &GameData,
+	_: numeric::Point2f,
+	offset: numeric::Vector2f
+    ) {
+	self.table_frame.move_diff(offset);
 
         for vtext in &mut self.book_title_text {
             vtext.move_diff(offset);
@@ -235,6 +200,8 @@ impl DrawableObject for SelectBookWindowContents {
 pub struct SelectBookWindow {
     canvas: SubScreen,
     appearance_frame: TileBatchFrame,
+    desc_frame: TableFrame,
+    cell_desc: Vec<VerticalText>,
     title: VerticalText,
     contents: ScrollableWindow<SelectBookWindowContents>,
 }
@@ -261,6 +228,50 @@ impl SelectBookWindow {
             ggraphics::Color::from_rgba_u32(0xff),
         );
 
+	let mut desc_frame = TableFrame::new(
+            game_data,
+            numeric::Point2f::new(0.0, 0.0),
+            FrameData::new(vec![140.0, 400.0], vec![42.0]),
+            numeric::Vector2f::new(0.3, 0.3),
+            0,
+        );
+
+	desc_frame.set_position(numeric::Point2f::new(
+            window_rect.w - desc_frame.real_width() - 80.0,
+            52.0,
+        ));
+
+	let mut cell_desc1 = VerticalText::new(
+            "請求番号".to_string(),
+            numeric::Point2f::new(0.0, 0.0),
+            numeric::Vector2f::new(1.0, 1.0),
+            0.0,
+            0,
+            font_info.clone(),
+        );
+
+        let mut cell_desc2 = VerticalText::new(
+            "題名".to_string(),
+            numeric::Point2f::new(0.0, 0.0),
+            numeric::Vector2f::new(1.0, 1.0),
+            0.0,
+            0,
+            font_info,
+        );
+
+        set_table_frame_cell_center!(
+            ctx,
+            desc_frame,
+            cell_desc1,
+            numeric::Vector2u::new(0, 0)
+        );
+        set_table_frame_cell_center!(
+            ctx,
+            desc_frame,
+            cell_desc2,
+            numeric::Vector2u::new(0, 1)
+        );
+
         let contents = SelectBookWindowContents::new(ctx, game_data, font_info, window_rect);
 
         let mut window = SelectBookWindow {
@@ -279,9 +290,11 @@ impl SelectBookWindow {
                 font_info,
             ),
             appearance_frame: appr_frame,
+	    desc_frame: desc_frame,
+	    cell_desc: vec![cell_desc1, cell_desc2],
             contents: ScrollableWindow::new(
                 ctx,
-                numeric::Rect::new(36.0, 12.0, window_rect.w - 116.0, window_rect.h - 24.0),
+                numeric::Rect::new(36.0, 12.0, window_rect.w - 160.0, window_rect.h - 24.0),
                 contents,
                 0,
                 numeric::Vector2f::new(15.0, 15.0),
@@ -318,13 +331,14 @@ impl SelectBookWindow {
     pub fn scroll_handler(
         &mut self,
         ctx: &mut ggez::Context,
+	game_data: &GameData,
         point: numeric::Point2f,
         x: f32,
         y: f32,
     ) {
 	let rpoint = self.canvas.relative_point(point);
         if self.contents.contains(ctx, rpoint) {
-            self.contents.scroll(x, y);
+            self.contents.scroll(ctx, game_data, rpoint, x, y);
         }
     }
 }
@@ -338,6 +352,12 @@ impl DrawableComponent for SelectBookWindow {
 
             self.title.draw(ctx)?;
 
+	    self.desc_frame.draw(ctx)?;
+	    
+            for vtext in &mut self.cell_desc {
+                vtext.draw(ctx)?;
+            }
+	    
             self.contents.draw(ctx)?;
 
             sub_screen::pop_screen(ctx);
@@ -537,13 +557,14 @@ impl SelectShelvingBookUI {
     pub fn scroll_handler(
         &mut self,
         ctx: &mut ggez::Context,
+	game_data: &GameData,
         point: numeric::Point2f,
         x: f32,
         y: f32,
     ) {
         let rpoint = self.canvas.relative_point(point);
-        self.box_info_window.scroll_handler(ctx, rpoint, x, y);
-        self.shelving_window.scroll_handler(ctx, rpoint, x, y);
+        self.box_info_window.scroll_handler(ctx, game_data, rpoint, x, y);
+        self.shelving_window.scroll_handler(ctx, game_data, rpoint, x, y);
     }
 }
 
@@ -2078,12 +2099,13 @@ impl ShopSpecialObject {
     pub fn mouse_wheel_scroll_action(
         &mut self,
         ctx: &mut ggez::Context,
+	game_data: &GameData,
         point: numeric::Point2f,
         x: f32,
         y: f32,
     ) {
         if let Some(ui) = self.shelving_select_ui.as_mut() {
-            ui.ref_wrapped_object_mut().scroll_handler(ctx, point, x, y);
+            ui.ref_wrapped_object_mut().scroll_handler(ctx, game_data, point, x, y);
         }
     }
 
