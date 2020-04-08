@@ -154,7 +154,7 @@ impl DeskObjects {
         }
     }
 
-    pub fn select_dragging_object(&mut self, ctx: &mut ggez::Context, point: numeric::Point2f) {
+    pub fn select_dragging_object(&mut self, ctx: &mut ggez::Context, game_data: &GameData, point: numeric::Point2f) {
         let mut dragging_object_index = 0;
         let mut drag_start = false;
 
@@ -180,17 +180,21 @@ impl DeskObjects {
 
         if drag_start {
             // 元々、最前面に表示されていたオブジェクトのdepthに設定する
+	    let mut dragging = self.desk_objects
+                .get_raw_container_mut()
+                .swap_remove(dragging_object_index);
+
+	    dragging.get_object_mut().ref_wrapped_object_mut().ref_wrapped_object_mut().start_dragging(ctx, game_data);
+	    
             self.dragging = Some(
-                self.desk_objects
-                    .get_raw_container_mut()
-                    .swap_remove(dragging_object_index),
+                dragging
             );
 
             self.desk_objects.sort_with_depth();
         }
     }
 
-    pub fn unselect_dragging_object(&mut self) {
+    pub fn unselect_dragging_object(&mut self, ctx: &mut ggez::Context, game_data: &GameData) {
         for obj in self.desk_objects.get_raw_container() {
             print!("{},", obj.get_object().get_drawing_depth());
         }
@@ -200,6 +204,7 @@ impl DeskObjects {
 
             let min = self.desk_objects.get_minimum_depth();
             dragged.get_object_mut().set_drawing_depth(min);
+	    dragged.get_object_mut().ref_wrapped_object_mut().ref_wrapped_object_mut().finish_dragging(ctx, game_data);
             self.desk_objects.change_depth_equally(1);
 
             self.desk_objects.add(dragged);

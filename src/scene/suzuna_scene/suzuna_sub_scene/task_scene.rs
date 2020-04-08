@@ -80,8 +80,8 @@ impl TaskScene {
         self.task_table.hand_over_check(ctx, point);
     }
 
-    fn unselect_dragging_object(&mut self, ctx: &mut ggez::Context, t: Clock) {
-        self.task_table.unselect_dragging_object(ctx, t);
+    fn unselect_dragging_object(&mut self, ctx: &mut ggez::Context, game_data: &GameData, t: Clock) {
+        self.task_table.unselect_dragging_object(ctx, game_data, t);
     }
 
     fn insert_customer_event(&mut self, request: CustomerRequest, delay_clock: Clock) {
@@ -250,7 +250,7 @@ impl SceneManager for TaskScene {
     ) {
         self.mouse_info.update_dragging(button, false);
         //self.paper.button_up(ctx, button, point);
-        self.unselect_dragging_object(ctx, self.get_current_clock());
+        self.unselect_dragging_object(ctx, game_data, self.get_current_clock());
 
         self.task_table
             .button_up(ctx, game_data, self.get_current_clock(), button, point);

@@ -10,6 +10,7 @@ use torifune::graphics::object::sub_screen::SubScreen;
 use torifune::graphics::object::*;
 use torifune::graphics::*;
 use torifune::hash;
+use torifune::graphics::object::shadow::*;
 use torifune::impl_drawable_object_for_wrapped;
 use torifune::impl_texture_object_for_wrapped;
 use torifune::numeric;
@@ -283,72 +284,95 @@ pub trait OnDesk: TextureObject + Clickable {
     }
 
     fn get_type(&self) -> OnDeskType;
+
+    fn start_dragging(&mut self, _: &mut ggez::Context, _: &GameData)
+    {}
+
+    fn finish_dragging(&mut self, _: &mut ggez::Context, _: &GameData)
+    {}
 }
 
 pub struct OnDeskTexture {
     texture: UniTexture,
+    shadow: ShadowShape,
     on_desk_type: OnDeskType,
+    canvas: SubScreen,
 }
 
 impl OnDeskTexture {
-    pub fn new(obj: UniTexture, on_desk_type: OnDeskType) -> Self {
+    pub fn new(ctx: &mut ggez::Context, mut obj: UniTexture, on_desk_type: OnDeskType) -> Self {	
+        let area = obj.get_drawing_area(ctx);
+	obj.set_position(numeric::Point2f::new(6.0, 6.0));
+	let shadow_bounds = numeric::Rect::new(area.x, area.y, area.w + 12.0, area.h + 12.0);
+	let mut shadow = ShadowShape::new(ctx, 12.0, shadow_bounds, ggraphics::Color::from_rgba_u32(0xbb), 0);
+	
+	shadow.hide();
+		
+	let canvas = SubScreen::new(
+            ctx,
+	    shadow_bounds,
+            0,
+            ggraphics::Color::from_rgba_u32(0),
+        );
+	
         OnDeskTexture {
             texture: obj,
+	    shadow: shadow,
             on_desk_type: on_desk_type,
+	    canvas: canvas,
         }
+    }
+
+    pub fn disable_shadow(&mut self) {
+	self.shadow.hide();
+    }
+
+    pub fn enable_shadow(&mut self) {
+	self.shadow.appear();
     }
 }
 
 impl DrawableComponent for OnDeskTexture {
     fn draw(&mut self, ctx: &mut ggez::Context) -> ggez::GameResult<()> {
-        self.texture.draw(ctx)
+	if self.is_visible() {
+            sub_screen::stack_screen(ctx, &self.canvas);
+
+	    self.shadow.draw(ctx)?;
+            self.texture.draw(ctx)?;
+
+            sub_screen::pop_screen(ctx);
+            self.canvas.draw(ctx).unwrap();
+        }
+        Ok(())
     }
 
-    #[inline(always)]
     fn hide(&mut self) {
-        self.texture.hide();
+        self.canvas.hide()
     }
 
-    #[inline(always)]
     fn appear(&mut self) {
-        self.texture.appear();
+        self.canvas.appear()
     }
 
-    #[inline(always)]
     fn is_visible(&self) -> bool {
-        self.texture.is_visible()
+        self.canvas.is_visible()
     }
 
-    #[inline(always)]
     fn set_drawing_depth(&mut self, depth: i8) {
-        self.texture.set_drawing_depth(depth);
+        self.canvas.set_drawing_depth(depth)
     }
 
-    #[inline(always)]
     fn get_drawing_depth(&self) -> i8 {
-        self.texture.get_drawing_depth()
+        self.canvas.get_drawing_depth()
     }
 }
 
 impl DrawableObject for OnDeskTexture {
-    #[inline(always)]
-    fn set_position(&mut self, pos: numeric::Point2f) {
-        self.texture.set_position(pos);
-    }
-
-    #[inline(always)]
-    fn get_position(&self) -> numeric::Point2f {
-        self.texture.get_position()
-    }
-
-    #[inline(always)]
-    fn move_diff(&mut self, offset: numeric::Vector2f) {
-        self.texture.move_diff(offset);
-    }
+    impl_drawable_object_for_wrapped! {canvas}
 }
 
 impl TextureObject for OnDeskTexture {
-    impl_texture_object_for_wrapped! {texture}
+    impl_texture_object_for_wrapped! {canvas}
 }
 
 impl Clickable for OnDeskTexture {}
@@ -365,11 +389,20 @@ impl OnDesk for OnDeskTexture {
     fn get_type(&self) -> OnDeskType {
         self.on_desk_type
     }
+
+    fn start_dragging(&mut self, _: &mut ggez::Context, _: &GameData) {
+	self.enable_shadow();
+    }
+
+    fn finish_dragging(&mut self, _: &mut ggez::Context, _: &GameData) {
+	self.disable_shadow();
+    }
 }
 
 pub struct OnDeskBook {
     info: BookInformation,
     book_texture: UniTexture,
+    shadow: ShadowShape,
     title: VerticalText,
     canvas: SubScreen,
 }
@@ -384,17 +417,30 @@ impl OnDeskBook {
         let texture = game_data.ref_texture(texture_id);
         let book_texture = UniTexture::new(
             texture,
-            numeric::Point2f::new(0.0, 0.0),
+            numeric::Point2f::new(6.0, 6.0),
             numeric::Vector2f::new(0.2, 0.2),
             0.0,
             0,
         );
-        let book_area = book_texture.get_drawing_area(ctx);
+        let book_size = book_texture.get_drawing_size(ctx);
         let book_title = info.get_name().to_string();
+
+	let shadow_bounds = numeric::Rect::new(0.0, 0.0, book_size.x + 12.0, book_size.y + 12.0);
+
+	let mut shadow = ShadowShape::new(ctx, 12.0, shadow_bounds, ggraphics::Color::from_rgba_u32(0xbb), 0);
+	shadow.hide();
+	
+	let canvas = SubScreen::new(
+            ctx,
+	    shadow_bounds,
+            0,
+            ggraphics::Color::from_rgba_u32(0x00000000),
+        );
 
         OnDeskBook {
             info: info,
             book_texture: book_texture,
+	    shadow: shadow,
             title: VerticalText::new(
                 book_title,
                 numeric::Point2f::new(40.0, 30.0),
@@ -407,17 +453,20 @@ impl OnDeskBook {
                     ggraphics::Color::from_rgba_u32(0x000000ff),
                 ),
             ),
-            canvas: SubScreen::new(
-                ctx,
-                book_area,
-                0,
-                ggraphics::Color::from_rgba_u32(0x00000000),
-            ),
+            canvas: canvas,
         }
     }
 
     pub fn get_book_info(&self) -> &BookInformation {
         &self.info
+    }
+
+    pub fn disable_shadow(&mut self) {
+	self.shadow.hide();
+    }
+
+    pub fn enable_shadow(&mut self) {
+	self.shadow.appear();
     }
 }
 
@@ -426,6 +475,8 @@ impl DrawableComponent for OnDeskBook {
         if self.is_visible() {
             sub_screen::stack_screen(ctx, &self.canvas);
 
+	    self.shadow.draw(ctx)?;
+	    
             self.book_texture.draw(ctx)?;
             self.title.draw(ctx)?;
 
@@ -486,6 +537,14 @@ impl OnDesk for OnDeskBook {
 
     fn get_type(&self) -> OnDeskType {
         OnDeskType::Book
+    }
+
+    fn start_dragging(&mut self, _: &mut ggez::Context, _: &GameData) {
+	self.enable_shadow();
+    }
+
+    fn finish_dragging(&mut self, _: &mut ggez::Context, _: &GameData) {
+	self.disable_shadow();
     }
 }
 

@@ -19,6 +19,7 @@ pub fn create_dobj_random(
 
     DeskObject::new(
         Box::new(OnDeskTexture::new(
+	    ctx,
             UniTexture::new(
                 game_data.ref_texture(TextureID::select_random()),
                 numeric::Point2f::new(0.0, 0.0),
@@ -51,6 +52,7 @@ pub fn create_dobj_book_random(
     let texture = *util::random_select(LARGE_BOOK_TEXTURE.iter()).unwrap();
     DeskObject::new(
         Box::new(OnDeskTexture::new(
+	    ctx,
             UniTexture::new(
                 game_data.ref_texture(texture),
                 numeric::Point2f::new(0.0, 0.0),

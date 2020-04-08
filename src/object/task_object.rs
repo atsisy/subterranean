@@ -63,6 +63,7 @@ impl TaskTable {
 
         desk.add_object(DeskObject::new(
             Box::new(OnDeskTexture::new(
+		ctx,
                 UniTexture::new(
                     game_data.ref_texture(TextureID::LotusPink),
                     numeric::Point2f::new(0.0, 0.0),
@@ -73,6 +74,7 @@ impl TaskTable {
                 OnDeskType::Texture,
             )),
             Box::new(OnDeskTexture::new(
+		ctx,
                 UniTexture::new(
                     game_data.ref_texture(TextureID::LotusPink),
                     numeric::Point2f::new(0.0, 0.0),
@@ -89,6 +91,7 @@ impl TaskTable {
 
         let mut record_book = DeskObject::new(
             Box::new(OnDeskTexture::new(
+		ctx,
                 UniTexture::new(
                     game_data.ref_texture(TextureID::Chobo1),
                     numeric::Point2f::new(0.0, 0.0),
@@ -99,6 +102,7 @@ impl TaskTable {
                 OnDeskType::BorrowingRecordBook,
             )),
             Box::new(OnDeskTexture::new(
+		ctx,
                 UniTexture::new(
                     game_data.ref_texture(TextureID::Chobo1),
                     numeric::Point2f::new(0.0, 0.0),
@@ -151,9 +155,9 @@ impl TaskTable {
         &self.kosuzu_memory
     }
 
-    fn select_dragging_object(&mut self, ctx: &mut ggez::Context, point: numeric::Point2f) {
+    fn select_dragging_object(&mut self, ctx: &mut ggez::Context, game_data: &GameData, point: numeric::Point2f) {
         let rpoint = self.canvas.relative_point(point);
-        self.desk.select_dragging_object(ctx, rpoint);
+        self.desk.select_dragging_object(ctx, game_data, rpoint);
     }
 
     fn slide_appear_record_book(&mut self, _ctx: &mut ggez::Context, _: &GameData, t: Clock) {
@@ -213,9 +217,9 @@ impl TaskTable {
         self.shelving_box.dragging_handler(rpoint, rlast);
     }
 
-    pub fn unselect_dragging_object(&mut self, ctx: &mut ggez::Context, t: Clock) {
+    pub fn unselect_dragging_object(&mut self, ctx: &mut ggez::Context, game_data: &GameData, t: Clock) {
         self.sight.unselect_dragging_object(ctx, t);
-        self.desk.unselect_dragging_object();
+        self.desk.unselect_dragging_object(ctx, game_data);
         self.shelving_box.unselect_dragging_object(t);
     }
 
@@ -522,6 +526,7 @@ impl TaskTable {
         );
         let paper_obj = DeskObject::new(
             Box::new(OnDeskTexture::new(
+		ctx,
                 UniTexture::new(
                     game_data.ref_texture(TextureID::Paper1),
                     numeric::Point2f::new(0.0, 0.0),
@@ -1038,12 +1043,12 @@ impl Clickable for TaskTable {
     fn button_down(
         &mut self,
         ctx: &mut ggez::Context,
-        _: &GameData,
+        game_data: &GameData,
         _: Clock,
         _: ggez::input::mouse::MouseButton,
         point: numeric::Point2f,
     ) {
-        self.select_dragging_object(ctx, point);
+        self.select_dragging_object(ctx, game_data, point);
     }
 
     fn button_up(
