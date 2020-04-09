@@ -1208,7 +1208,7 @@ impl Clickable for TaskTable {
 
         if self
             .desk
-            .click_handler(ctx, game_data, t, button, rpoint, &mut self.kosuzu_memory)
+            .click_handler(ctx, game_data, t, button, rpoint)
         {
             // クリックハンドラが呼び出されたので終了
             return;

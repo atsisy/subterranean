@@ -20,7 +20,7 @@ use crate::object::{effect, move_fn};
 use crate::scene::*;
 
 use super::Clickable;
-use crate::core::{BookInformation, FontID, GameData, TextureID};
+use crate::core::{FontID, GameData, TextureID};
 
 use super::tt_menu_component::*;
 use super::tt_sub_component::*;
@@ -87,7 +87,6 @@ pub struct DeskObjects {
     pub desk_objects: DeskObjectContainer,
     pub dragging: Option<DeskObject>,
     pub table_texture: SimpleObject,
-    desk_book_drop_menu: Option<DeskBookDropMenu>,
     event_list: DelayEventList<Self>,
 }
 
@@ -118,18 +117,7 @@ impl DeskObjects {
                 ),
                 Vec::new(),
             ),
-            desk_book_drop_menu: None,
             event_list: DelayEventList::new(),
-        }
-    }
-
-    fn hide_desk_book_menu(&mut self, t: Clock) {
-        if let Some(menu) = self.desk_book_drop_menu.as_mut() {
-            menu.add_effect(vec![effect::fade_out(10, t)]);
-            self.event_list.add_event(
-                Box::new(|slf: &mut DeskObjects, _, _| slf.desk_book_drop_menu = None),
-                t + 11,
-            );
         }
     }
 
@@ -208,11 +196,6 @@ impl DeskObjects {
 
     pub fn update(&mut self, ctx: &mut ggez::Context, game_data: &GameData, t: Clock) {
         flush_delay_event!(self, self.event_list, ctx, game_data, t);
-
-        if let Some(menu) = self.desk_book_drop_menu.as_mut() {
-            menu.move_with_func(t);
-            menu.effect(ctx, t);
-        }
 
         for p in self.desk_objects.get_raw_container_mut() {
             p.get_object_mut().move_with_func(t);
@@ -311,86 +294,6 @@ impl DeskObjects {
         count + if self.dragging.is_some() { 1 } else { 0 }
     }
 
-    fn show_book_drop_down_menu(
-        &mut self,
-        ctx: &mut ggez::Context,
-        game_data: &GameData,
-        point: numeric::Point2f,
-        book_info: BookInformation,
-        t: Clock,
-    ) {
-        // 既に表示されている場合は、消してすぐにreturn
-        if self.desk_book_drop_menu.is_some() {
-            self.hide_desk_book_menu(t);
-            return ();
-        }
-
-        let menu = DeskBookMenu::new(
-            ctx,
-            game_data,
-            book_info,
-            vec!["記憶".to_string(), "状態確認".to_string()],
-            0,
-        );
-
-        let mut dd_area = DropDownArea::new(
-            ctx,
-            numeric::Rect::new(point.x, point.y, 200.0, 300.0),
-            0,
-            menu,
-            t,
-        );
-
-        dd_area.add_effect(vec![effect::fade_in(10, t)]);
-
-        self.desk_book_drop_menu = Some(dd_area);
-    }
-
-    fn show_desk_object_drop_down_menu(
-        &mut self,
-        ctx: &mut ggez::Context,
-        game_data: &GameData,
-        on_desk_type: OnDeskType,
-        hold_data: HoldData,
-        point: numeric::Point2f,
-        t: Clock,
-    ) {
-        // ドラッグしている場合は、メニューを表示しない
-        if self.dragging.is_none() {
-            match on_desk_type {
-                OnDeskType::Book => match hold_data {
-                    HoldData::BookName(info) => {
-                        self.show_book_drop_down_menu(ctx, game_data, point, info.clone(), t);
-                    }
-                    _ => panic!(""),
-                },
-                _ => (),
-            }
-        }
-    }
-
-    fn do_book_menu_action(&mut self, kosuzu_memory: &mut KosuzuMemory) -> bool {
-        if let Some(book_menu) = self.desk_book_drop_menu.as_ref() {
-            let choice_group = book_menu.get_component();
-            let maybe_menu_id = choice_group.get_last_clicked();
-
-            if let Some(menu_id) = maybe_menu_id {
-                return match menu_id {
-                    0 => {
-                        panic!("ここに状態獲得の処理を記述する");
-                    }
-                    1 => {
-                        kosuzu_memory.add_book_info(choice_group.get_target_book_info());
-                        true
-                    }
-                    _ => false,
-                };
-            }
-        }
-
-        false
-    }
-
     pub fn click_handler(
         &mut self,
         ctx: &mut ggez::Context,
@@ -398,34 +301,13 @@ impl DeskObjects {
         t: Clock,
         button: ggez::input::mouse::MouseButton,
         point: numeric::Point2f,
-        kosuzu_memory: &mut KosuzuMemory,
     ) -> bool {
         let rpoint = self.canvas.relative_point(point);
-
-        if let Some(book_menu) = self.desk_book_drop_menu.as_mut() {
-            if book_menu.contains(ctx, rpoint) {
-                book_menu.on_click(ctx, game_data, t, button, rpoint);
-                if self.do_book_menu_action(kosuzu_memory) {
-                    // アクションが発生したので、メニューを消して終了
-                    self.hide_desk_book_menu(t);
-                    return true;
-                }
-            }
-        }
-
+	
         for dobj in self.desk_objects.get_raw_container_mut().iter_mut().rev() {
             if dobj.get_object_mut().contains(ctx, rpoint) {
                 dobj.get_object_mut()
                     .button_up(ctx, game_data, t, button, rpoint);
-
-                let dobj_ref = &dobj.get_object();
-                let obj_type = dobj_ref.get_type();
-                let hold_data = dobj_ref.get_hold_data(ctx, rpoint);
-
-                // オブジェクトの種類によってメニューを表示する
-                self.show_desk_object_drop_down_menu(
-                    ctx, game_data, obj_type, hold_data, rpoint, t,
-                );
 
                 return true;
             }
