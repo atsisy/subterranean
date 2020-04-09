@@ -9,7 +9,7 @@ use torifune::core::Clock;
 use torifune::debug;
 use torifune::distance;
 use torifune::graphics::object::*;
-use torifune::graphics::*;
+use torifune::graphics::drawable::*;
 use torifune::numeric;
 
 use crate::core::map_parser as mp;

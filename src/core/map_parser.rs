@@ -10,7 +10,7 @@ use torifune::numeric;
 
 use sub_screen::SubScreen;
 use torifune::core::*;
-use torifune::graphics as tg;
+use torifune::graphics::drawable::*;
 use torifune::graphics::object::sub_screen;
 
 use collision::prelude::*;
@@ -646,7 +646,7 @@ impl StageObjectMap {
     }
 }
 
-impl tg::DrawableComponent for StageObjectMap {
+impl DrawableComponent for StageObjectMap {
     fn draw(&mut self, ctx: &mut ggez::Context) -> ggez::GameResult<()> {
         if self.is_visible() {
             sub_screen::stack_screen(ctx, &self.canvas);
@@ -695,7 +695,7 @@ impl tg::DrawableComponent for StageObjectMap {
     }
 }
 
-impl tg::DrawableObject for StageObjectMap {}
+impl DrawableObject for StageObjectMap {}
 
 impl Updatable for StageObjectMap {
     fn update(&mut self, _ctx: &ggez::Context, _t: Clock) {

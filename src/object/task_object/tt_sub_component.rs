@@ -9,7 +9,7 @@ use torifune::graphics::object::shadow::*;
 use torifune::graphics::object::sub_screen;
 use torifune::graphics::object::sub_screen::SubScreen;
 use torifune::graphics::object::*;
-use torifune::graphics::*;
+use torifune::graphics::drawable::*;
 use torifune::hash;
 use torifune::impl_drawable_object_for_wrapped;
 use torifune::impl_texture_object_for_wrapped;
@@ -1489,7 +1489,7 @@ impl BorrowingRecordBook {
     }
 
     pub fn relative_point(&self, point: numeric::Point2f) -> numeric::Point2f {
-        self.canvas.ref_wrapped_object().relative_point(point)
+        self.canvas.relative_point(point)
     }
 
     ///

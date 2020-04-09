@@ -3,7 +3,7 @@ use std::collections::VecDeque;
 use torifune::graphics::object::sub_screen;
 use torifune::graphics::object::sub_screen::SubScreen;
 use torifune::graphics::object::*;
-use torifune::graphics::*;
+use torifune::graphics::drawable::*;
 use torifune::numeric;
 
 use torifune::impl_drawable_object_for_wrapped;

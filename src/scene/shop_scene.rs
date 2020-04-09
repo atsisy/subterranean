@@ -7,13 +7,12 @@ use torifune::device as tdev;
 use torifune::graphics::object::*;
 
 use ggez::graphics as ggraphics;
-use ggez::input as ginput;
 use tdev::VirtualKey;
 use torifune::core::Clock;
 use torifune::core::Updatable;
-use torifune::graphics::*;
+use torifune::graphics::drawable::*;
 
-use ginput::mouse::MouseButton;
+use ggez::input::mouse::MouseButton;
 use torifune::debug;
 use torifune::numeric;
 

@@ -2,7 +2,7 @@ use torifune::core::Clock;
 use torifune::graphics::object::sub_screen;
 use torifune::graphics::object::sub_screen::SubScreen;
 use torifune::graphics::object::*;
-use torifune::graphics::*;
+use torifune::graphics::drawable::*;
 use torifune::numeric;
 
 use torifune::graphics::object::shape as tshape;

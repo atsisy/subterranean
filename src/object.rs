@@ -19,7 +19,7 @@ use torifune::core::Clock;
 use torifune::graphics::object as tobj;
 use torifune::graphics::object::sub_screen::SubScreen;
 use torifune::graphics::object::*;
-use torifune::graphics::*;
+use torifune::graphics::drawable::*;
 use torifune::impl_drawable_object_for_wrapped;
 use torifune::impl_texture_object_for_wrapped;
 use torifune::numeric;

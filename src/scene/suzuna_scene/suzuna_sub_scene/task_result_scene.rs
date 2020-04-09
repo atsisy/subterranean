@@ -4,7 +4,7 @@ use torifune::device as tdev;
 use torifune::numeric;
 
 use torifune::graphics::object::*;
-use torifune::graphics::*;
+use torifune::graphics::drawable::*;
 
 use super::super::*;
 

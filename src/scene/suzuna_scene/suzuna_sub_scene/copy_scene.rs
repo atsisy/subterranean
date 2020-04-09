@@ -2,7 +2,7 @@ use torifune::core::*;
 use torifune::device as tdev;
 use torifune::numeric;
 
-use torifune::graphics::*;
+use torifune::graphics::drawable::*;
 
 use super::super::*;
 

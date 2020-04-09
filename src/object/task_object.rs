@@ -15,7 +15,7 @@ use torifune::device::VirtualKey;
 use torifune::graphics::object::sub_screen;
 use torifune::graphics::object::sub_screen::SubScreen;
 use torifune::graphics::object::*;
-use torifune::graphics::*;
+use torifune::graphics::drawable::*;
 use torifune::impl_drawable_object_for_wrapped;
 use torifune::impl_texture_object_for_wrapped;
 use torifune::numeric;
@@ -165,10 +165,10 @@ impl TaskTable {
 
     pub fn mouse_motion_handler(
 	&mut self,
-        ctx: &mut ggez::Context,
-        game_data: &GameData,
+        _: &mut ggez::Context,
+        _: &GameData,
         point: numeric::Point2f,
-        offset: numeric::Vector2f,
+        _: numeric::Vector2f,
     ) {
 	self.borrowing_record_book.mouse_motion_handler(point);
     }

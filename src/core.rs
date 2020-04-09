@@ -12,7 +12,7 @@ use torifune::graphics::object::sub_screen;
 use torifune::graphics::object::sub_screen::SubScreen;
 use torifune::graphics::object::tile_batch::*;
 use torifune::graphics::object::{FontInformation, TextureObject};
-use torifune::graphics::*;
+use torifune::graphics::drawable::*;
 use torifune::hash;
 use torifune::numeric;
 

@@ -6,7 +6,7 @@ use crate::core::GameData;
 
 use crate::object::scenario::*;
 use crate::object::simulation_ui as sui;
-use torifune::graphics::*;
+use torifune::graphics::drawable::*;
 
 use super::*;
 
