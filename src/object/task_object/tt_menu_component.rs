@@ -2252,3 +2252,298 @@ impl DrawableComponent for RecordBookMenuGroup {
         self.drwob_essential.drawing_depth
     }
 }
+
+pub struct DeskBookMenu {
+    book_info: BookInformation,
+    select_table_frame: TableFrame,
+    choice_element_text: Vec<VerticalText>,
+    drwob_essential: DrawableObjectEssential,
+    last_clicked: Option<usize>,
+}
+
+impl DeskBookMenu {
+    pub fn new(
+        ctx: &mut ggez::Context,
+        game_data: &GameData,
+        book_info: BookInformation,
+        mut choice_text_str: Vec<String>,
+        drawing_depth: i8,
+    ) -> Self {
+        let mut choice_vtext = Vec::new();
+
+        let font_info = FontInformation::new(
+            game_data.get_font(FontID::JpFude1),
+            numeric::Vector2f::new(32.0, 32.0),
+            ggraphics::Color::from_rgba_u32(0xff),
+        );
+
+        let select_table_frame = TableFrame::new(
+            game_data,
+            numeric::Point2f::new(10.0, 10.0),
+            FrameData::new(vec![200.0], vec![64.0; 2]),
+            numeric::Vector2f::new(0.3, 0.3),
+            0,
+        );
+
+        while choice_text_str.len() > 0 {
+            let choice_str_element = choice_text_str.swap_remove(0);
+            let mut vtext = VerticalText::new(
+                choice_str_element,
+                numeric::Point2f::new(0.0, 0.0),
+                numeric::Vector2f::new(1.0, 1.0),
+                0.0,
+                drawing_depth,
+                font_info,
+            );
+
+            set_table_frame_cell_center!(
+                ctx,
+                select_table_frame,
+                vtext,
+                numeric::Vector2u::new(choice_text_str.len() as u32, 0)
+            );
+
+            choice_vtext.push(vtext);
+        }
+
+        DeskBookMenu {
+            book_info: book_info,
+            select_table_frame: select_table_frame,
+            choice_element_text: choice_vtext,
+            drwob_essential: DrawableObjectEssential::new(true, drawing_depth),
+            last_clicked: None,
+        }
+    }
+
+    pub fn click_handler(&mut self, ctx: &mut ggez::Context, point: numeric::Point2f) {
+        let maybe_grid_position = self.select_table_frame.get_grid_position(ctx, point);
+        if let Some(grid_position) = maybe_grid_position {
+            self.last_clicked = Some(grid_position.x as usize);
+        }
+    }
+
+    pub fn get_last_clicked(&self) -> Option<usize> {
+        self.last_clicked
+    }
+
+    pub fn get_target_book_info(&self) -> BookInformation {
+        self.book_info.clone()
+    }
+}
+
+impl DrawableComponent for DeskBookMenu {
+    fn draw(&mut self, ctx: &mut ggez::Context) -> ggez::GameResult<()> {
+        if self.is_visible() {
+            self.select_table_frame.draw(ctx)?;
+
+            for vtext in &mut self.choice_element_text {
+                vtext.draw(ctx)?;
+            }
+        }
+        Ok(())
+    }
+
+    fn hide(&mut self) {
+        self.drwob_essential.visible = false;
+    }
+
+    fn appear(&mut self) {
+        self.drwob_essential.visible = true;
+    }
+
+    fn is_visible(&self) -> bool {
+        self.drwob_essential.visible
+    }
+
+    fn set_drawing_depth(&mut self, depth: i8) {
+        self.drwob_essential.drawing_depth = depth;
+    }
+
+    fn get_drawing_depth(&self) -> i8 {
+        self.drwob_essential.drawing_depth
+    }
+}
+
+impl Clickable for DeskBookMenu {
+    fn on_click(
+        &mut self,
+        ctx: &mut ggez::Context,
+        _game_data: &GameData,
+        _t: Clock,
+        _button: ggez::event::MouseButton,
+        point: numeric::Point2f,
+    ) {
+        self.click_handler(ctx, point);
+    }
+}
+
+pub type DeskBookDropMenu = DropDownArea<DeskBookMenu>;
+
+pub struct OnDeskMenuGroup {
+    event_list: DelayEventList<Self>,
+    desk_book_menu: Option<DeskBookDropMenu>,
+    drwob_essential: DrawableObjectEssential,
+}
+
+impl OnDeskMenuGroup {
+    pub fn new(drawing_depth: i8) -> Self {
+	OnDeskMenuGroup {
+	    event_list: DelayEventList::new(),
+	    desk_book_menu: None,
+	    drwob_essential: DrawableObjectEssential::new(true, drawing_depth),
+	}
+    }
+
+    pub fn is_some_menu_opened(&self) -> bool {
+        self.desk_book_menu.is_some()
+    }
+
+    pub fn close_desk_book_menu(&mut self, t: Clock) {
+        if let Some(desk_book_menu) = self.desk_book_menu.as_mut() {
+            desk_book_menu.add_effect(vec![effect::fade_out(10, t)]);
+            self.event_list.add_event(
+                Box::new(|slf: &mut OnDeskMenuGroup, _, _| slf.desk_book_menu = None),
+                t + 11,
+            );
+        }
+    }
+
+    pub fn contains_desk_book_menu(
+        &self,
+        ctx: &mut ggez::Context,
+        point: numeric::Point2f,
+    ) -> bool {
+        self.desk_book_menu.is_some()
+            && self.desk_book_menu.as_ref().unwrap().contains(ctx, point)
+    }
+
+    pub fn is_contains_any_menus(&self, ctx: &mut ggez::Context, point: numeric::Point2f) -> bool {
+        self.contains_desk_book_menu(ctx, point)
+    }
+
+    pub fn get_desk_book_menu_position(&self) -> Option<numeric::Point2f> {
+        if let Some(desk_book_menu) = self.desk_book_menu.as_ref() {
+            Some(desk_book_menu.get_position())
+        } else {
+            None
+        }
+    }
+
+    ///
+    /// メニューのエントリをクリックしていたらtrueを返し、そうでなければfalseを返す
+    ///
+    pub fn click_desk_book_menu(
+        &mut self,
+        ctx: &mut ggez::Context,
+        game_data: &GameData,
+        button: ggez::input::mouse::MouseButton,
+        point: numeric::Point2f,
+        t: Clock,
+    ) -> bool {
+        // ボタンエリア内をクリックしていない場合は、即終了
+        if !self.contains_desk_book_menu(ctx, point) {
+            return false;
+        }
+
+        if let Some(desk_book_menu) = self.desk_book_menu.as_mut() {
+            desk_book_menu
+                .on_click(ctx, game_data, t, button, point);
+            true
+        } else {
+            false
+        }
+    }
+
+    pub fn desk_book_menu_last_clicked(&mut self) -> Option<usize> {
+        if let Some(desk_book_menu) = self.desk_book_menu.as_mut() {
+            desk_book_menu
+                .get_component()
+                .get_last_clicked()
+        } else {
+            None
+        }
+    }
+
+    pub fn close_all(&mut self, t: Clock) {
+	self.close_desk_book_menu(t);
+    }
+    
+    pub fn show_desk_book_menu(
+        &mut self,
+        ctx: &mut ggez::Context,
+        game_data: &GameData,
+        point: numeric::Point2f,
+        book_info: BookInformation,
+        t: Clock,
+    ) {
+        let menu = DeskBookMenu::new(
+            ctx,
+            game_data,
+            book_info,
+            vec!["記憶".to_string(), "状態確認".to_string()],
+            0,
+        );
+
+        let mut dd_area = DropDownArea::new(
+            ctx,
+            numeric::Rect::new(point.x, point.y, 200.0, 300.0),
+            0,
+            menu,
+            t,
+        );
+
+        dd_area.add_effect(vec![effect::fade_in(10, t)]);
+
+        self.desk_book_menu = Some(dd_area);
+    }
+
+    pub fn update(&mut self, ctx: &mut ggez::Context, game_data: &GameData, t: Clock) {
+        flush_delay_event!(self, self.event_list, ctx, game_data, t);
+
+	if let Some(desk_book_menu) = self.desk_book_menu.as_mut() {
+	    desk_book_menu.move_with_func(t);
+	    desk_book_menu.effect(ctx, t);
+	}
+    }
+
+    pub fn get_desk_menu_target_book_info(&self) -> Option<BookInformation> {
+	if self.desk_book_menu.is_some() {
+	    Some(
+		self.desk_book_menu.as_ref().unwrap().get_component().get_target_book_info()
+	    )
+	} else {
+	    None
+	}
+    }
+}
+
+impl DrawableComponent for OnDeskMenuGroup {
+    fn draw(&mut self, ctx: &mut ggez::Context) -> ggez::GameResult<()> {
+        if self.is_visible() {
+            if let Some(desk_book_menu) = self.desk_book_menu.as_mut() {
+                desk_book_menu.draw(ctx)?;
+            }
+        }
+        Ok(())
+    }
+
+    fn hide(&mut self) {
+        self.drwob_essential.visible = false;
+    }
+
+    fn appear(&mut self) {
+        self.drwob_essential.visible = true;
+    }
+
+    fn is_visible(&self) -> bool {
+        self.drwob_essential.visible
+    }
+
+    fn set_drawing_depth(&mut self, depth: i8) {
+        self.drwob_essential.drawing_depth = depth;
+    }
+
+    fn get_drawing_depth(&self) -> i8 {
+        self.drwob_essential.drawing_depth
+    }
+}

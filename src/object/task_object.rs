@@ -40,6 +40,7 @@ pub struct TaskTable {
     event_list: DelayEventList<TaskTable>,
     borrowing_record_book: BorrowingRecordBook,
     customer_silhouette_menu: CustomerMenuGroup,
+    on_desk_menu: OnDeskMenuGroup,
     record_book_menu: RecordBookMenuGroup,
     current_customer_request: Option<CustomerRequest>,
     today: GensoDate,
@@ -144,6 +145,7 @@ impl TaskTable {
             borrowing_record_book: record_book,
             customer_silhouette_menu: CustomerMenuGroup::new(0),
             record_book_menu: RecordBookMenuGroup::new(0),
+	    on_desk_menu: OnDeskMenuGroup::new(0),
             current_customer_request: None,
             today: today_date,
         }
@@ -426,6 +428,7 @@ impl TaskTable {
         self.borrowing_record_book.update(t);
         self.record_book_menu.update(ctx, game_data, t);
         self.customer_silhouette_menu.update(ctx, game_data, t);
+	self.on_desk_menu.update(ctx, game_data, t);
     }
 
     pub fn finish_customer_event(&mut self, now: Clock) {
@@ -828,6 +831,48 @@ impl TaskTable {
     }
 
     ///
+    /// メニューのエントリをクリックしていたらtrueを返し、そうでなければfalseを返す
+    ///
+    fn click_desk_book_menu(
+        &mut self,
+        ctx: &mut ggez::Context,
+        game_data: &GameData,
+        button: ggez::input::mouse::MouseButton,
+        point: numeric::Point2f,
+        t: Clock,
+    ) -> bool {
+        if !self
+            .on_desk_menu
+            .click_desk_book_menu(ctx, game_data, button, point, t)
+        {
+            // メニューをクリックしていない場合はfalseをクリックして終了
+            println!("not clicked");
+            return false;
+        }
+
+        if let Some(index) = self
+            .on_desk_menu
+            .desk_book_menu_last_clicked()
+        {
+	    return match index {
+                0 => {
+                    panic!("ここに状態獲得の処理を記述する");
+                }
+                1 => {
+		    let book_info = self.on_desk_menu.get_desk_menu_target_book_info();
+		    if let Some(info) = book_info {
+			self.kosuzu_memory.add_book_info(info);
+		    }
+                    true
+                }
+                _ => false,
+            };
+        }
+
+        false
+    }
+    
+    ///
     /// book_info_frameに関するメニューを表示する
     ///
     /// book_info_frameをクリックした場合、true, そうでなければ、false
@@ -964,7 +1009,44 @@ impl TaskTable {
             false
         }
     }
+    
+    ///
+    /// シルエットに関するメニューを表示する
+    ///
+    /// customer_menuをクリックした場合、true, そうでなければ、false
+    ///
+    fn try_show_menus_regarding_ondesk_book_info(
+        &mut self,
+        ctx: &mut ggez::Context,
+        game_data: &GameData,
+        click_point: numeric::Point2f,
+        t: Clock,
+    ) -> bool {
+	let rpoint = self.desk.canvas.relative_point(click_point);
+	
+        for dobj in self.desk.get_desk_objects_list_mut().iter_mut().rev() {
+            if dobj.get_object_mut().contains(ctx, rpoint) {
+                let dobj_ref = &dobj.get_object();
+                let obj_type = dobj_ref.get_type();
+                let hold_data = dobj_ref.get_hold_data(ctx, rpoint);
 
+		match obj_type {
+                    OnDeskType::Book => match hold_data {
+			HoldData::BookName(info) => {
+			    self.on_desk_menu.show_desk_book_menu(ctx, game_data, rpoint, info.clone(), t);
+			}
+			_ => panic!(""),
+                    },
+                    _ => (),
+		}
+		
+                return true;
+            }
+        }
+
+	false
+    }
+    
     fn try_show_menus(
         &mut self,
         ctx: &mut ggez::Context,
@@ -984,9 +1066,16 @@ impl TaskTable {
             return ();
         }
 
+	if self.on_desk_menu.is_some_menu_opened() {
+	    self.on_desk_menu.close_all(t);
+	    return ();
+	}
+
         if !self.try_show_menus_regarding_book_info(ctx, game_data, click_point, t) {
             if !self.try_show_menus_regarding_customer_info(ctx, game_data, click_point, t) {
-                self.try_show_menus_regarding_customer_silhoutte(ctx, game_data, click_point, t);
+                if !self.try_show_menus_regarding_customer_silhoutte(ctx, game_data, click_point, t) {
+		    self.try_show_menus_regarding_ondesk_book_info(ctx, game_data, click_point, t);
+		}
             }
         }
     }
@@ -1009,6 +1098,7 @@ impl DrawableComponent for TaskTable {
 
             self.customer_silhouette_menu.draw(ctx)?;
             self.record_book_menu.draw(ctx)?;
+	    self.on_desk_menu.draw(ctx)?;
 
             sub_screen::pop_screen(ctx);
             self.canvas.draw(ctx).unwrap();
@@ -1080,6 +1170,10 @@ impl Clickable for TaskTable {
         {
             self.customer_silhouette_menu.close_all(t);
         }
+
+	if !self.on_desk_menu.is_contains_any_menus(ctx, point) {
+	    self.on_desk_menu.close_all(t);
+	}
     }
 
     fn on_click(
@@ -1102,12 +1196,14 @@ impl Clickable for TaskTable {
 
         if !self.click_record_book_menu(ctx, game_data, button, rpoint, t)
             && !self.click_customer_silhouette_menu(ctx, game_data, button, rpoint, t)
+	    && !self.click_desk_book_menu(ctx, game_data, button, point, t)
         {
             // メニューをクリックしていない場合に、新しいメニュー表示処理を走らせる
             self.try_show_menus(ctx, game_data, rpoint, t);
         } else {
             self.record_book_menu.close_all(t);
             self.customer_silhouette_menu.close_all(t);
+	    self.on_desk_menu.close_all(t);
         }
 
         if self

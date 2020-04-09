@@ -454,6 +454,14 @@ impl DeskObjects {
 
         MouseCursor::Default
     }
+
+    pub fn get_desk_objects_list(&self) -> &Vec<DeskObject> {
+	self.desk_objects.get_raw_container()
+    }
+
+    pub fn get_desk_objects_list_mut(&mut self) -> &mut Vec<DeskObject> {
+	self.desk_objects.get_raw_container_mut()
+    }
 }
 
 impl DrawableComponent for DeskObjects {
@@ -469,10 +477,6 @@ impl DrawableComponent for DeskObjects {
 
             if let Some(d) = self.dragging.as_mut() {
                 d.get_object_mut().draw(ctx)?;
-            }
-
-            if let Some(book_menu) = self.desk_book_drop_menu.as_mut() {
-                book_menu.draw(ctx)?;
             }
 
             sub_screen::pop_screen(ctx);
@@ -505,20 +509,7 @@ impl DrawableComponent for DeskObjects {
 }
 
 impl DrawableObject for DeskObjects {
-    /// 描画開始地点を設定する
-    fn set_position(&mut self, pos: numeric::Point2f) {
-        self.canvas.set_position(pos);
-    }
-
-    /// 描画開始地点を返す
-    fn get_position(&self) -> numeric::Point2f {
-        self.canvas.get_position()
-    }
-
-    /// offsetで指定しただけ描画位置を動かす
-    fn move_diff(&mut self, offset: numeric::Vector2f) {
-        self.canvas.move_diff(offset)
-    }
+    impl_drawable_object_for_wrapped!{canvas}
 }
 
 struct TaskSilhouette {
