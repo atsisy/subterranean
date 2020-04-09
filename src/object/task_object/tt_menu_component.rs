@@ -1268,9 +1268,9 @@ pub type OkDropMenu = DropDownArea<OkMenu>;
 
 pub struct CustomerMenuGroup {
     event_list: DelayEventList<Self>,
-    customer_question_menu: Option<EffectableWrap<MovableWrap<CustomerQuestionDropMenu>>>,
-    remember_name_menu: Option<EffectableWrap<MovableWrap<RememberCustomerNameDropMenu>>>,
-    text_balloon_ok_menu: Option<EffectableWrap<MovableWrap<OkDropMenu>>>,
+    customer_question_menu: Option<CustomerQuestionDropMenu>,
+    remember_name_menu: Option<RememberCustomerNameDropMenu>,
+    text_balloon_ok_menu: Option<OkDropMenu>,
     drwob_essential: DrawableObjectEssential,
 }
 
@@ -1524,25 +1524,20 @@ impl CustomerMenuGroup {
 
         let frame_size = question_menu.get_date_frame_size();
 
-        let customer_question_menu_area = EffectableWrap::new(
-            MovableWrap::new(
-                Box::new(DropDownArea::new(
-                    ctx,
-                    numeric::Rect::new(
-                        position.x,
-                        position.y,
-                        frame_size.x + 128.0,
-                        frame_size.y + 64.0,
-                    ),
-                    0,
-                    question_menu,
-                    t,
-                )),
-                None,
-                t,
+        let mut customer_question_menu_area = DropDownArea::new(
+	    ctx,
+	    numeric::Rect::new(
+                position.x,
+                position.y,
+                frame_size.x + 128.0,
+                frame_size.y + 64.0,
             ),
-            vec![effect::fade_in(10, t)],
+            0,
+            question_menu,
+            t,
         );
+
+	customer_question_menu_area.add_effect(vec![effect::fade_in(10, t)]);
 
         self.customer_question_menu = Some(customer_question_menu_area);
     }
@@ -1580,20 +1575,15 @@ impl CustomerMenuGroup {
             )
 	};
 
-        let remember_name_menu_area = EffectableWrap::new(
-            MovableWrap::new(
-                Box::new(RememberCustomerNameDropMenu::new(
-                    ctx,
-		    menu_rect,
-                    0,
-                    remember_name_menu,
-                    t,
-                )),
-                None,
-                t,
-            ),
-            vec![effect::fade_in(10, t)],
+        let mut remember_name_menu_area = RememberCustomerNameDropMenu::new(
+            ctx,
+	    menu_rect,
+            0,
+            remember_name_menu,
+            t,
         );
+
+	remember_name_menu_area.add_effect(vec![effect::fade_in(10, t)]);
 
         self.remember_name_menu = Some(remember_name_menu_area);
     }
@@ -1609,25 +1599,20 @@ impl CustomerMenuGroup {
 
         let frame_size = ok_menu.get_date_frame_size();
 
-        let ok_menu_area = EffectableWrap::new(
-            MovableWrap::new(
-                Box::new(OkDropMenu::new(
-                    ctx,
-                    numeric::Rect::new(
-                        position.x,
-                        position.y,
-                        frame_size.x + 128.0,
-                        frame_size.y + 64.0,
-                    ),
-                    0,
-                    ok_menu,
-                    t,
-                )),
-                None,
-                t,
+        let mut ok_menu_area = OkDropMenu::new(
+            ctx,
+            numeric::Rect::new(
+                position.x,
+                position.y,
+                frame_size.x + 128.0,
+                frame_size.y + 64.0,
             ),
-            vec![effect::fade_in(10, t)],
+            0,
+            ok_menu,
+            t,
         );
+
+	ok_menu_area.add_effect(vec![effect::fade_in(10, t)]);
 
         self.text_balloon_ok_menu = Some(ok_menu_area);
     }
@@ -1693,10 +1678,10 @@ impl DrawableComponent for CustomerMenuGroup {
 
 pub struct RecordBookMenuGroup {
     event_list: DelayEventList<Self>,
-    book_status_menu: Option<EffectableWrap<MovableWrap<BookStatusMenu>>>,
-    book_title_menu: Option<EffectableWrap<MovableWrap<BookTitleDropMenu>>>,
-    customer_name_menu: Option<EffectableWrap<MovableWrap<CustomerNameDropMenu>>>,
-    date_menu: Option<EffectableWrap<MovableWrap<DateDropMenu>>>,
+    book_status_menu: Option<BookStatusMenu>,
+    book_title_menu: Option<BookTitleDropMenu>,
+    customer_name_menu: Option<CustomerNameDropMenu>,
+    date_menu: Option<DateDropMenu>,
     drwob_essential: DrawableObjectEssential,
 }
 
@@ -2012,20 +1997,16 @@ impl RecordBookMenuGroup {
             0,
         );
 
-        let button_group_area = EffectableWrap::new(
-            MovableWrap::new(
-                Box::new(DropDownArea::new(
-                    ctx,
-                    numeric::Rect::new(position.x, position.y, 290.0, 220.0),
-                    0,
-                    button_group,
-                    t,
-                )),
-                None,
-                t,
-            ),
-            vec![effect::fade_in(10, t)],
+        let mut button_group_area = DropDownArea::new(
+            ctx,
+            numeric::Rect::new(position.x, position.y, 290.0, 220.0),
+            0,
+            button_group,
+            t,
         );
+
+	button_group_area.add_effect(vec![effect::fade_in(10, t)]);
+	
         self.book_status_menu = Some(button_group_area);
     }
 
@@ -2063,24 +2044,18 @@ impl RecordBookMenuGroup {
             )
 	};
 	
-        let book_title_menu_area = EffectableWrap::new(
-            MovableWrap::new(
-                Box::new(DropDownArea::new(
-                    ctx,
-                    menu_rect,
-                    0,
-                    book_title_menu,
-                    t,
-                )),
-                None,
-                t,
-            ),
-            vec![effect::fade_in(10, t)],
+        let mut book_title_menu_area = DropDownArea::new(
+            ctx,
+            menu_rect,
+            0,
+            book_title_menu,
+            t,
         );
-
+	book_title_menu_area.add_effect(vec![effect::fade_in(10, t)]);
+	
         self.book_title_menu = Some(book_title_menu_area);
     }
-
+    
     pub fn show_customer_name_menu(
         &mut self,
         ctx: &mut ggez::Context,
@@ -2115,21 +2090,15 @@ impl RecordBookMenuGroup {
             )
 	};
 
-        let customer_name_menu_area = EffectableWrap::new(
-            MovableWrap::new(
-                Box::new(DropDownArea::new(
-                    ctx,
-		    menu_rect,
-                    0,
-                    customer_name_menu,
-                    t,
-                )),
-                None,
-                t,
-            ),
-            vec![effect::fade_in(10, t)],
+        let mut customer_name_menu_area = DropDownArea::new(
+            ctx,
+	    menu_rect,
+            0,
+            customer_name_menu,
+            t,
         );
-
+	customer_name_menu_area.add_effect(vec![effect::fade_in(10, t)]);
+	
         self.customer_name_menu = Some(customer_name_menu_area);
     }
 
@@ -2167,20 +2136,14 @@ impl RecordBookMenuGroup {
 	};
 	
 
-        let date_menu_area = EffectableWrap::new(
-            MovableWrap::new(
-                Box::new(DropDownArea::new(
-                    ctx,
-		    menu_rect,
-                    0,
-                    date_menu,
-                    t,
-                )),
-                None,
-                t,
-            ),
-            vec![effect::fade_in(10, t)],
+        let mut date_menu_area = DropDownArea::new(
+            ctx,
+	    menu_rect,
+            0,
+            date_menu,
+            t,
         );
+	date_menu_area.add_effect(vec![effect::fade_in(10, t)]);
 
         self.date_menu = Some(date_menu_area);
     }
