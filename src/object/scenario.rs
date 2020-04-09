@@ -10,8 +10,9 @@ use torifune::impl_drawable_object_for_wrapped;
 use torifune::impl_texture_object_for_wrapped;
 
 use super::*;
-use crate::core::{FontID, GameData, TextureID};
+use crate::core::{FontID, GameData, TextureID, TileBatchTextureID};
 use crate::scene::SceneID;
+use crate::object::util_object::*;
 use std::str::FromStr;
 
 pub type ScenarioElementID = i32;
@@ -812,6 +813,7 @@ pub struct TextBox {
     head_line_number: u32,
     text: VecDeque<SimpleText>,
     text_box_status: TextBoxStatus,
+    appearance_frame: TileBatchFrame,
     background: SimpleObject,
     canvas: SubScreen,
 }
@@ -819,13 +821,24 @@ pub struct TextBox {
 impl TextBox {
     pub fn new(
         ctx: &mut ggez::Context,
+	game_data: &GameData,
         rect: numeric::Rect,
         mut background: SimpleObject,
+	tile_batch_texture_id: TileBatchTextureID,
         box_lines: usize,
         _t: Clock,
     ) -> Self {
         background.fit_scale(ctx, numeric::Vector2f::new(rect.w, rect.h));
         background.set_position(numeric::Point2f::new(0.0, 0.0));
+
+	let appr_frame = TileBatchFrame::new(
+	    game_data,
+	    tile_batch_texture_id,
+	    numeric::Rect::new(0.0, 0.0, rect.w, rect.h),
+	    numeric::Vector2f::new(0.8, 0.8),
+	    0
+	);
+	
         TextBox {
             box_lines: box_lines,
             buffered_text: VecDeque::new(),
@@ -833,7 +846,8 @@ impl TextBox {
             text: VecDeque::new(),
             text_box_status: TextBoxStatus::UpdatingText,
             background: background,
-            canvas: SubScreen::new(ctx, rect, 0, ggraphics::Color::from_rgba_u32(0xff00ffff)),
+	    appearance_frame: appr_frame,
+            canvas: SubScreen::new(ctx, rect, 0, ggraphics::Color::from_rgba_u32(0xffffffff)),
         }
     }
 
@@ -960,6 +974,8 @@ impl DrawableComponent for TextBox {
 
             self.background.draw(ctx)?;
 
+	    self.appearance_frame.draw(ctx)?;
+
             for d in &mut self.text {
                 d.draw(ctx)?;
             }
@@ -1019,8 +1035,10 @@ impl ScenarioBox {
         ScenarioBox {
             text_box: TextBox::new(
                 ctx,
+		game_data,
                 numeric::Rect::new(0.0, 0.0, rect.w, rect.h),
                 background,
+		TileBatchTextureID::TaishoStyle1,
                 3,
                 t,
             ),
@@ -1052,8 +1070,10 @@ impl ScenarioBox {
         let mut scenario_box = ScenarioBox {
             text_box: TextBox::new(
                 ctx,
+		game_data,
                 numeric::Rect::new(0.0, 0.0, rect.w, rect.h),
                 background,
+		TileBatchTextureID::TaishoStyle1,
                 3,
                 t,
             ),
@@ -1194,7 +1214,7 @@ impl ScenarioEvent {
             scenario_box: ScenarioBox::new(
                 ctx,
                 game_data,
-                numeric::Rect::new(20.0, 330.0, rect.w - 40.0, 270.0),
+                numeric::Rect::new(20.0, 310.0, rect.w - 40.0, 270.0),
                 t,
             ),
             canvas: SubScreen::new(ctx, rect, 0, ggraphics::Color::from_rgba_u32(0x00)),

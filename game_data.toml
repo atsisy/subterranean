@@ -3,7 +3,7 @@ texture_paths = [
               "/lotus_pink.png",
               "/lotus_blue.png",
               "/lotus_yellow.png",
-              "/text_back.png",
+              "/textures/text_back.png",
               "/textures/paper1.jpg",
               "/textures/paper2.jpg",
               "/textures/large_book1.png",
