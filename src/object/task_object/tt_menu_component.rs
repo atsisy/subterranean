@@ -13,6 +13,7 @@ use torifune::numeric;
 use torifune::roundup2f;
 
 use super::Clickable;
+use crate::core;
 use crate::core::BookInformation;
 use crate::core::{FontID, GameData, GensoDate, TextureID};
 use crate::flush_delay_event;
@@ -736,14 +737,14 @@ impl DateMenu {
 
         let font_info = FontInformation::new(
             game_data.get_font(FontID::JpFude1),
-            numeric::Vector2f::new(24.0, 24.0),
+            numeric::Vector2f::new(22.0, 22.0),
             ggraphics::Color::from_rgba_u32(0xff),
         );
 
         let date_table_frame = TableFrame::new(
             game_data,
             numeric::Point2f::new(10.0, 10.0),
-            FrameData::new(vec![140.0, 280.0], vec![64.0; 3]),
+            FrameData::new(vec![115.0, 245.0], vec![64.0; 3]),
             numeric::Vector2f::new(0.3, 0.3),
             0,
         );
@@ -1558,16 +1559,32 @@ impl CustomerMenuGroup {
 
         let frame_size = remember_name_menu.get_date_frame_size();
 
+	let menu_size = numeric::Point2f::new(
+	    frame_size.x + 96.0,
+            frame_size.y + 40.0,
+	);
+
+	let menu_rect = if (position.y + menu_size.y) as i16 <= core::WINDOW_SIZE_Y {
+	    numeric::Rect::new(
+		position.x,
+		position.y,
+		menu_size.x,
+		menu_size.y
+            )
+	} else {
+	    numeric::Rect::new(
+		position.x,
+		position.y - menu_size.y,
+		menu_size.x,
+		menu_size.y
+            )
+	};
+
         let remember_name_menu_area = EffectableWrap::new(
             MovableWrap::new(
                 Box::new(RememberCustomerNameDropMenu::new(
                     ctx,
-                    numeric::Rect::new(
-                        position.x,
-                        position.y,
-                        frame_size.x + 128.0,
-                        frame_size.y + 64.0,
-                    ),
+		    menu_rect,
                     0,
                     remember_name_menu,
                     t,
@@ -2025,16 +2042,32 @@ impl RecordBookMenuGroup {
 
         let frame_size = book_title_menu.get_title_frame_size();
 
+	let menu_size = numeric::Point2f::new(
+	    frame_size.x + 128.0,
+            frame_size.y + 64.0,
+	);
+
+	let menu_rect = if (position.y + menu_size.y) as i16 <= core::WINDOW_SIZE_Y {
+	    numeric::Rect::new(
+		position.x,
+		position.y,
+		menu_size.x,
+		menu_size.y
+            )
+	} else {
+	    numeric::Rect::new(
+		position.x,
+		position.y - menu_size.y,
+		menu_size.x,
+		menu_size.y
+            )
+	};
+	
         let book_title_menu_area = EffectableWrap::new(
             MovableWrap::new(
                 Box::new(DropDownArea::new(
                     ctx,
-                    numeric::Rect::new(
-                        position.x,
-                        position.y,
-                        frame_size.x + 128.0,
-                        frame_size.y + 64.0,
-                    ),
+                    menu_rect,
                     0,
                     book_title_menu,
                     t,
@@ -2061,16 +2094,32 @@ impl RecordBookMenuGroup {
 
         let frame_size = customer_name_menu.get_name_frame_size();
 
+	let menu_size = numeric::Point2f::new(
+	    frame_size.x + 96.0,
+            frame_size.y + 40.0,
+	);
+	
+	let menu_rect = if (position.y + menu_size.y) as i16 <= core::WINDOW_SIZE_Y {
+	    numeric::Rect::new(
+		position.x,
+		position.y,
+		menu_size.x,
+		menu_size.y
+            )
+	} else {
+	    numeric::Rect::new(
+		position.x,
+		position.y - menu_size.y,
+		menu_size.x,
+		menu_size.y
+            )
+	};
+
         let customer_name_menu_area = EffectableWrap::new(
             MovableWrap::new(
                 Box::new(DropDownArea::new(
                     ctx,
-                    numeric::Rect::new(
-                        position.x,
-                        position.y,
-                        frame_size.x + 128.0,
-                        frame_size.y + 64.0,
-                    ),
+		    menu_rect,
                     0,
                     customer_name_menu,
                     t,
@@ -2096,16 +2145,33 @@ impl RecordBookMenuGroup {
 
         let frame_size = date_menu.get_date_frame_size();
 
+	let menu_size = numeric::Point2f::new(
+	    frame_size.x + 96.0,
+            frame_size.y + 20.0,
+	);
+
+	let menu_rect = if (position.y + menu_size.y) as i16 <= core::WINDOW_SIZE_Y {
+	    numeric::Rect::new(
+		position.x,
+		position.y,
+		menu_size.x,
+		menu_size.y
+            )
+	} else {
+	    numeric::Rect::new(
+		position.x,
+		position.y - menu_size.y,
+		menu_size.x,
+		menu_size.y
+            )
+	};
+	
+
         let date_menu_area = EffectableWrap::new(
             MovableWrap::new(
                 Box::new(DropDownArea::new(
                     ctx,
-                    numeric::Rect::new(
-                        position.x,
-                        position.y,
-                        frame_size.x + 128.0,
-                        frame_size.y + 64.0,
-                    ),
+		    menu_rect,
                     0,
                     date_menu,
                     t,

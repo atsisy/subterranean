@@ -36,6 +36,9 @@ use number_to_jk::number_to_jk;
 
 extern crate num;
 
+pub const WINDOW_SIZE_X: i16 = 1366;
+pub const WINDOW_SIZE_Y: i16 = 768;
+
 fn read_whole_file(path: String) -> Result<String, String> {
     let mut file_content = String::new();
 
