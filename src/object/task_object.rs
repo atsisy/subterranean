@@ -1033,7 +1033,7 @@ impl TaskTable {
 		match obj_type {
                     OnDeskType::Book => match hold_data {
 			HoldData::BookName(info) => {
-			    self.on_desk_menu.show_desk_book_menu(ctx, game_data, rpoint, info.clone(), t);
+			    self.on_desk_menu.show_desk_book_menu(ctx, game_data, click_point, info.clone(), t);
 			}
 			_ => panic!(""),
                     },

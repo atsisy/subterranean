@@ -2329,6 +2329,10 @@ impl DeskBookMenu {
     pub fn get_target_book_info(&self) -> BookInformation {
         self.book_info.clone()
     }
+
+    pub fn get_date_frame_size(&self) -> numeric::Vector2f {
+        self.select_table_frame.size()
+    }
 }
 
 impl DrawableComponent for DeskBookMenu {
@@ -2472,7 +2476,7 @@ impl OnDeskMenuGroup {
         &mut self,
         ctx: &mut ggez::Context,
         game_data: &GameData,
-        point: numeric::Point2f,
+        position: numeric::Point2f,
         book_info: BookInformation,
         t: Clock,
     ) {
@@ -2484,9 +2488,32 @@ impl OnDeskMenuGroup {
             0,
         );
 
+	let frame_size = menu.get_date_frame_size();
+
+	let menu_size = numeric::Point2f::new(
+	    frame_size.x + 96.0,
+            frame_size.y + 40.0,
+	);
+
+	let menu_rect = if (position.y + menu_size.y) as i16 <= core::WINDOW_SIZE_Y {
+	    numeric::Rect::new(
+		position.x,
+		position.y,
+		menu_size.x,
+		menu_size.y
+            )
+	} else {
+	    numeric::Rect::new(
+		position.x,
+		position.y - menu_size.y,
+		menu_size.x,
+		menu_size.y
+            )
+	};
+
         let mut dd_area = DropDownArea::new(
             ctx,
-            numeric::Rect::new(point.x, point.y, 200.0, 300.0),
+	    menu_rect,
             0,
             menu,
             t,
