@@ -178,8 +178,6 @@ impl DeskObjects {
 
             dragging
                 .get_object_mut()
-                .ref_wrapped_object_mut()
-                .ref_wrapped_object_mut()
                 .start_dragging(ctx, game_data);
 
             self.dragging = Some(dragging);
@@ -200,8 +198,6 @@ impl DeskObjects {
             dragged.get_object_mut().set_drawing_depth(min);
             dragged
                 .get_object_mut()
-                .ref_wrapped_object_mut()
-                .ref_wrapped_object_mut()
                 .finish_dragging(ctx, game_data);
             self.desk_objects.change_depth_equally(1);
 
@@ -249,8 +245,6 @@ impl DeskObjects {
 
                 object_type = Some(
                     obj.get_object()
-                        .ref_wrapped_object()
-                        .ref_wrapped_object()
                         .get_type(),
                 );
                 break;
@@ -422,11 +416,9 @@ impl DeskObjects {
         for dobj in self.desk_objects.get_raw_container_mut().iter_mut().rev() {
             if dobj.get_object_mut().contains(ctx, rpoint) {
                 dobj.get_object_mut()
-                    .ref_wrapped_object_mut()
-                    .ref_wrapped_object_mut()
                     .button_up(ctx, game_data, t, button, rpoint);
 
-                let dobj_ref = dobj.get_object().ref_wrapped_object().ref_wrapped_object();
+                let dobj_ref = &dobj.get_object();
                 let obj_type = dobj_ref.get_type();
                 let hold_data = dobj_ref.get_hold_data(ctx, rpoint);
 
@@ -977,8 +969,6 @@ impl SuzuMiniSightSilhouette {
     pub fn get_text_balloon_phrase_type(&self) -> &TextBalloonPhraseType {
         &self
             .text_balloon
-            .ref_wrapped_object()
-            .ref_wrapped_object()
             .get_phrase_type()
     }
 
@@ -1025,8 +1015,6 @@ impl SuzuMiniSightSilhouette {
         }
 
         self.text_balloon
-            .ref_wrapped_object_mut()
-            .ref_wrapped_object_mut()
             .update_mesh(ctx);
         self.text_balloon.effect(ctx, t);
     }
@@ -1038,8 +1026,6 @@ impl SuzuMiniSightSilhouette {
         phrase_type: TextBalloonPhraseType,
     ) {
         self.text_balloon
-            .ref_wrapped_object_mut()
-            .ref_wrapped_object_mut()
             .replace_text(ctx, text, phrase_type);
         self.text_balloon.appear();
     }
@@ -1511,8 +1497,6 @@ impl ShelvingBookBox {
             if contains {
                 clicked_data = obj
                     .get_object_mut()
-                    .ref_wrapped_object_mut()
-                    .ref_wrapped_object_mut()
                     .get_hold_data(ctx, rpoint);
                 break;
             }
@@ -1602,8 +1586,6 @@ impl ShelvingBookBox {
         for dobj in &mut self.shelved {
             if dobj.get_object_mut().get_drawing_area(ctx).contains(rpoint) {
                 dobj.get_object_mut()
-                    .ref_wrapped_object_mut()
-                    .ref_wrapped_object_mut()
                     .button_up(ctx, game_data, t, button, rpoint);
             }
         }

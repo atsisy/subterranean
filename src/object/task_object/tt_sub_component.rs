@@ -1645,7 +1645,7 @@ impl BorrowingRecordBook {
     }
 
     pub fn mouse_motion_handler(&mut self, point: numeric::Point2f) {
-	let rpoint = self.canvas.ref_wrapped_object().relative_point(point);
+	let rpoint = self.canvas.relative_point(point);
 	
         let next_area = numeric::Rect::new(0.0, 0.0, 30.0, self.rect.h);
         let prev_area = numeric::Rect::new(self.rect.w - 20.0, 0.0, 30.0, self.rect.h);
@@ -1665,7 +1665,7 @@ impl DrawableComponent for BorrowingRecordBook {
     #[inline(always)]
     fn draw(&mut self, ctx: &mut ggez::Context) -> ggez::GameResult<()> {
         if self.is_visible() {
-            sub_screen::stack_screen(ctx, self.canvas.ref_wrapped_object());
+            sub_screen::stack_screen(ctx, &self.canvas);
 	    
             if self.pages.len() > 0 {
                 self.pages.get_mut(self.current_page).unwrap().draw(ctx)?;

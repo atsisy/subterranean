@@ -1343,7 +1343,7 @@ impl Updatable for ShelvingDetailContents {
 impl DrawableComponent for ShelvingDetailContents {
     fn draw(&mut self, ctx: &mut ggez::Context) -> ggez::GameResult<()> {
         if self.is_visible() {
-            sub_screen::stack_screen(ctx, self.canvas.ref_wrapped_object());
+            sub_screen::stack_screen(ctx, &self.canvas);
 
             self.background.draw(ctx)?;
 
@@ -1690,7 +1690,7 @@ impl Updatable for ShopMenu {
 
 impl DrawableComponent for ShopMenu {
     fn draw(&mut self, ctx: &mut ggez::Context) -> ggez::GameResult<()> {
-        sub_screen::stack_screen(ctx, self.canvas.ref_wrapped_object());
+        sub_screen::stack_screen(ctx, &self.canvas);
 
         self.background.draw(ctx)?;
         self.menu_contents.draw(ctx).unwrap();
@@ -2035,7 +2035,7 @@ impl ShopSpecialObject {
                 t + 7,
             );
 
-            Some(ui.ref_wrapped_object().get_select_result())
+            Some(ui.get_select_result())
         } else {
             None
         }
@@ -2057,7 +2057,7 @@ impl ShopSpecialObject {
                 t + 7,
             );
 
-            Some(ui.ref_wrapped_object().get_storing_result())
+            Some(ui.get_storing_result())
         } else {
             None
         }
@@ -2076,13 +2076,11 @@ impl ShopSpecialObject {
         t: Clock,
     ) {
         if let Some(ui) = self.shelving_select_ui.as_mut() {
-            ui.ref_wrapped_object_mut()
-                .on_click(ctx, game_data, t, button, point);
+            ui.on_click(ctx, game_data, t, button, point);
         }
 
         if let Some(ui) = self.storing_select_ui.as_mut() {
-            ui.ref_wrapped_object_mut()
-                .on_click(ctx, game_data, t, button, point);
+            ui.on_click(ctx, game_data, t, button, point);
         }
     }
 
@@ -2095,8 +2093,7 @@ impl ShopSpecialObject {
         y: f32,
     ) {
         if let Some(ui) = self.shelving_select_ui.as_mut() {
-            ui.ref_wrapped_object_mut()
-                .scroll_handler(ctx, game_data, point, x, y);
+            ui.scroll_handler(ctx, game_data, point, x, y);
         }
     }
 

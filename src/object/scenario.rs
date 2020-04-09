@@ -932,7 +932,7 @@ impl TextBox {
         let mut pos = numeric::Point2f::new(50.0, 50.0);
         for line in &mut self.text {
             line.set_position(pos);
-            pos.y += line.ref_wrapped_object_mut().get_font_scale().y;
+            pos.y += line.get_font_scale().y;
         }
 
         // 処理したセグメントの数を返す

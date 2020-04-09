@@ -137,7 +137,7 @@ where
 {
     fn draw(&mut self, ctx: &mut ggez::Context) -> ggez::GameResult<()> {
         if self.is_visible() {
-            sub_screen::stack_screen(ctx, self.canvas.ref_wrapped_object().ref_wrapped_object());
+            sub_screen::stack_screen(ctx, &self.canvas);
 
             self.drawable.draw(ctx)?;
 
@@ -268,8 +268,8 @@ where
     ) {
         let rpoint = self
             .canvas
-            .ref_wrapped_object()
-            .ref_wrapped_object()
+            
+            
             .relative_point(point);
         self.drawable.button_down(ctx, game_data, t, button, rpoint);
     }
@@ -284,8 +284,8 @@ where
     ) {
         let rpoint = self
             .canvas
-            .ref_wrapped_object()
-            .ref_wrapped_object()
+            
+            
             .relative_point(point);
         self.drawable.button_up(ctx, game_data, t, button, rpoint);
     }
@@ -300,8 +300,8 @@ where
     ) {
         let rpoint = self
             .canvas
-            .ref_wrapped_object()
-            .ref_wrapped_object()
+            
+            
             .relative_point(point);
         self.drawable.on_click(ctx, game_data, t, button, rpoint);
     }
@@ -1407,8 +1407,6 @@ impl CustomerMenuGroup {
 
         if let Some(customer_question_menu) = self.customer_question_menu.as_mut() {
             customer_question_menu
-                .ref_wrapped_object_mut()
-                .ref_wrapped_object_mut()
                 .on_click(ctx, game_data, t, button, point);
             true
         } else {
@@ -1434,8 +1432,6 @@ impl CustomerMenuGroup {
 
         if let Some(remember_name_menu) = self.remember_name_menu.as_mut() {
             remember_name_menu
-                .ref_wrapped_object_mut()
-                .ref_wrapped_object_mut()
                 .on_click(ctx, game_data, t, button, point);
             true
         } else {
@@ -1461,8 +1457,6 @@ impl CustomerMenuGroup {
 
         if let Some(ok_menu) = self.text_balloon_ok_menu.as_mut() {
             ok_menu
-                .ref_wrapped_object_mut()
-                .ref_wrapped_object_mut()
                 .on_click(ctx, game_data, t, button, point);
             true
         } else {
@@ -1473,8 +1467,6 @@ impl CustomerMenuGroup {
     pub fn question_menu_last_clicked_index(&mut self) -> Option<usize> {
         if let Some(customer_question_menu) = self.customer_question_menu.as_mut() {
             customer_question_menu
-                .ref_wrapped_object_mut()
-                .ref_wrapped_object_mut()
                 .get_component()
                 .get_last_clicked_index()
         } else {
@@ -1485,8 +1477,6 @@ impl CustomerMenuGroup {
     pub fn remember_name_clicked_index(&mut self) -> Option<usize> {
         if let Some(remember_name_menu) = self.remember_name_menu.as_mut() {
             remember_name_menu
-                .ref_wrapped_object_mut()
-                .ref_wrapped_object_mut()
                 .get_component()
                 .get_last_clicked_index()
         } else {
@@ -1498,8 +1488,6 @@ impl CustomerMenuGroup {
         if let Some(remember_menu) = self.remember_name_menu.as_ref() {
             Some(
                 remember_menu
-                    .ref_wrapped_object()
-                    .ref_wrapped_object()
                     .get_component()
                     .get_remembered_customer_name(),
             )
@@ -1511,8 +1499,6 @@ impl CustomerMenuGroup {
     pub fn get_text_balloon_ok_index(&self) -> Option<usize> {
         if let Some(ok_menu) = self.text_balloon_ok_menu.as_ref() {
             ok_menu
-                .ref_wrapped_object()
-                .ref_wrapped_object()
                 .get_component()
                 .get_last_clicked_index()
         } else {
@@ -1848,8 +1834,6 @@ impl RecordBookMenuGroup {
 
         if let Some(book_status_menu) = self.book_status_menu.as_mut() {
             book_status_menu
-                .ref_wrapped_object_mut()
-                .ref_wrapped_object_mut()
                 .on_click(ctx, game_data, t, button, point);
             true
         } else {
@@ -1875,8 +1859,6 @@ impl RecordBookMenuGroup {
 
         if let Some(book_title_menu) = self.book_title_menu.as_mut() {
             book_title_menu
-                .ref_wrapped_object_mut()
-                .ref_wrapped_object_mut()
                 .on_click(ctx, game_data, t, button, point);
             true
         } else {
@@ -1902,8 +1884,6 @@ impl RecordBookMenuGroup {
 
         if let Some(customer_name_menu) = self.customer_name_menu.as_mut() {
             customer_name_menu
-                .ref_wrapped_object_mut()
-                .ref_wrapped_object_mut()
                 .on_click(ctx, game_data, t, button, point);
             true
         } else {
@@ -1929,8 +1909,6 @@ impl RecordBookMenuGroup {
 
         if let Some(date_menu) = self.date_menu.as_mut() {
             date_menu
-                .ref_wrapped_object_mut()
-                .ref_wrapped_object_mut()
                 .on_click(ctx, game_data, t, button, point);
             true
         } else {
@@ -1941,8 +1919,6 @@ impl RecordBookMenuGroup {
     pub fn book_status_menu_last_clicked(&mut self) -> Option<usize> {
         if let Some(book_status_menu) = self.book_status_menu.as_mut() {
             book_status_menu
-                .ref_wrapped_object_mut()
-                .ref_wrapped_object_mut()
                 .get_component()
                 .get_last_clicked()
         } else {
@@ -1953,8 +1929,6 @@ impl RecordBookMenuGroup {
     pub fn book_title_menu_last_clicked(&mut self) -> Option<(usize, BookInformation)> {
         if let Some(book_title_menu) = self.book_title_menu.as_mut() {
             let component = book_title_menu
-                .ref_wrapped_object_mut()
-                .ref_wrapped_object_mut()
                 .get_component();
             if let Some(index) = component.get_last_clicked_index() {
                 Some((index, component.get_last_clicked_book_info().unwrap()))
@@ -1969,8 +1943,6 @@ impl RecordBookMenuGroup {
     pub fn customer_name_menu_last_clicked(&mut self) -> Option<(usize, String)> {
         if let Some(customer_name_menu) = self.customer_name_menu.as_mut() {
             let component = customer_name_menu
-                .ref_wrapped_object_mut()
-                .ref_wrapped_object_mut()
                 .get_component();
             if let Some(index) = component.get_last_clicked_index() {
                 Some((index, component.get_last_clicked_customer_name().unwrap()))
@@ -1985,8 +1957,6 @@ impl RecordBookMenuGroup {
     pub fn date_menu_last_clicked(&mut self) -> Option<(usize, GensoDate)> {
         if let Some(date_menu) = self.date_menu.as_mut() {
             let component = date_menu
-                .ref_wrapped_object_mut()
-                .ref_wrapped_object_mut()
                 .get_component();
             if let Some(index) = component.get_last_clicked_index() {
                 Some((index, component.get_last_clicked_genso_date().unwrap()))
