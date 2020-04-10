@@ -147,7 +147,7 @@ impl TextureObject for DrawableTaskResult {
 }
 
 impl Effectable for DrawableTaskResult {
-    fn effect(&mut self, ctx: &ggez::Context, t: Clock) {
+    fn effect(&mut self, ctx: &mut ggez::Context, t: Clock) {
         self.title_text.effect(ctx, t);
         self.done_work_text.effect(ctx, t);
         self.money_text.effect(ctx, t);

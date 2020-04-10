@@ -173,7 +173,7 @@ impl<D> Updatable for DropDownArea<D>
 where
     D: DrawableComponent,
 {
-    fn update(&mut self, ctx: &ggez::Context, t: Clock) {
+    fn update(&mut self, ctx: &mut ggez::Context, t: Clock) {
         self.canvas.move_with_func(t);
         self.canvas.effect(ctx, t);
     }
@@ -236,7 +236,7 @@ where
     D: DrawableComponent,
 {
     // エフェクト処理を行う
-    fn effect(&mut self, ctx: &ggez::Context, t: Clock) {
+    fn effect(&mut self, ctx: &mut ggez::Context, t: Clock) {
         self.canvas.effect(ctx, t);
     }
 }

@@ -1335,7 +1335,7 @@ impl ShelvingDetailContents {
 }
 
 impl Updatable for ShelvingDetailContents {
-    fn update(&mut self, _: &ggez::Context, t: Clock) {
+    fn update(&mut self, _: &mut ggez::Context, t: Clock) {
         self.canvas.move_with_func(t);
     }
 }
@@ -1683,7 +1683,7 @@ impl ShopMenu {
 }
 
 impl Updatable for ShopMenu {
-    fn update(&mut self, _: &ggez::Context, t: Clock) {
+    fn update(&mut self, _: &mut ggez::Context, t: Clock) {
         self.canvas.move_with_func(t);
     }
 }
@@ -1798,7 +1798,7 @@ impl ShopDetailMenuContents {
 }
 
 impl Updatable for ShopDetailMenuContents {
-    fn update(&mut self, ctx: &ggez::Context, t: Clock) {
+    fn update(&mut self, ctx: &mut ggez::Context, t: Clock) {
         self.shelving_info.update(ctx, t);
     }
 }
@@ -1914,7 +1914,7 @@ impl ShopMenuMaster {
 }
 
 impl Updatable for ShopMenuMaster {
-    fn update(&mut self, ctx: &ggez::Context, t: Clock) {
+    fn update(&mut self, ctx: &mut ggez::Context, t: Clock) {
         self.first_menu.update(ctx, t);
         self.detail_menu.update(ctx, t);
     }
@@ -2113,7 +2113,7 @@ impl ShopSpecialObject {
 }
 
 impl Updatable for ShopSpecialObject {
-    fn update(&mut self, _: &ggez::Context, t: Clock) {
+    fn update(&mut self, _: &mut ggez::Context, t: Clock) {
         if let Some(ui) = self.shelving_select_ui.as_mut() {
             ui.move_with_func(t);
         }

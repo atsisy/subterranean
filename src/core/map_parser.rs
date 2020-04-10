@@ -698,7 +698,7 @@ impl DrawableComponent for StageObjectMap {
 impl DrawableObject for StageObjectMap {}
 
 impl Updatable for StageObjectMap {
-    fn update(&mut self, _ctx: &ggez::Context, _t: Clock) {
+    fn update(&mut self, _ctx: &mut ggez::Context, _t: Clock) {
         self.update_sprite_batch();
     }
 }

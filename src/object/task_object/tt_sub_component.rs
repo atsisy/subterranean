@@ -1379,8 +1379,8 @@ pub struct BorrowingRecordBook {
     pages: Vec<BorrowingRecordBookPage>,
     rect: numeric::Rect,
     current_page: usize,
-    next_page_ope_mesh: shape::DrawableShape,
-    prev_page_ope_mesh: shape::DrawableShape,
+    next_page_ope_mesh: shape::DrawableShape<shape::Rectangle>,
+    prev_page_ope_mesh: shape::DrawableShape<shape::Rectangle>,
     canvas: MovableWrap<SubScreen>,
 }
 
@@ -1415,12 +1415,10 @@ impl BorrowingRecordBook {
 
 	let mut next_page_ope = shape::DrawableShape::new(
 	    ctx,
-	    shape::Shape::Rectangle(
-		shape::Rectangle::new(
-		    numeric::Rect::new(0.0, 0.0, 30.0, rect.h),
-		    ggraphics::DrawMode::fill(),
-		    ggraphics::Color::from_rgba_u32(0x80)
-		)
+	    shape::Rectangle::new(
+		numeric::Rect::new(0.0, 0.0, 30.0, rect.h),
+		ggraphics::DrawMode::fill(),
+		ggraphics::Color::from_rgba_u32(0x80)
 	    ),
 	    0,
 	    ggraphics::WHITE,
@@ -1430,12 +1428,10 @@ impl BorrowingRecordBook {
 
 	let mut prev_page_ope = shape::DrawableShape::new(
 	    ctx,
-	    shape::Shape::Rectangle(
-		shape::Rectangle::new(
-		    numeric::Rect::new(rect.w - 30.0, 0.0, 30.0, rect.h),
-		    ggraphics::DrawMode::fill(),
-		    ggraphics::Color::from_rgba_u32(0x80)
-		)
+	    shape::Rectangle::new(
+		numeric::Rect::new(rect.w - 30.0, 0.0, 30.0, rect.h),
+		ggraphics::DrawMode::fill(),
+		ggraphics::Color::from_rgba_u32(0x80)
 	    ),
 	    0,
 	    ggraphics::WHITE,

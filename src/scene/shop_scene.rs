@@ -24,7 +24,9 @@ use crate::object::scenario::*;
 use crate::object::shop_object::*;
 use crate::object::task_object::tt_main_component::CustomerRequest;
 use crate::object::*;
+use crate::object::effect_object;
 use crate::scene::suzuna_scene::TaskResult;
+use crate::flush_delay_event;
 
 struct CharacterGroup {
     group: Vec<CustomerCharacter>,
@@ -304,6 +306,7 @@ pub struct ShopScene {
     shop_clock: ShopClock,
     today_date: GensoDate,
     map: MapData,
+    event_list: DelayEventList<Self>,
     shop_menu: ShopMenuMaster,
     customer_request_queue: VecDeque<CustomerRequest>,
     customer_queue: VecDeque<CustomerCharacter>,
@@ -311,6 +314,7 @@ pub struct ShopScene {
     dark_effect_panel: DarkEffectPanel,
     transition_status: SceneTransition,
     transition_scene: SceneID,
+    scene_transition_effect: Option<effect_object::ScreenTileEffect>,
 }
 
 impl ShopScene {
@@ -363,6 +367,7 @@ impl ShopScene {
             shop_clock: ShopClock::new(8, 0),
             today_date: today_date,
             map: map,
+	    event_list: DelayEventList::new(),
             shop_menu: ShopMenuMaster::new(ctx, game_data, numeric::Vector2f::new(450.0, 768.0), 0),
             customer_request_queue: VecDeque::new(),
             customer_queue: VecDeque::new(),
@@ -374,6 +379,7 @@ impl ShopScene {
             camera: camera,
             transition_scene: SceneID::SuzunaShop,
             transition_status: SceneTransition::Keep,
+	    scene_transition_effect: None,
         }
     }
 
@@ -804,9 +810,26 @@ impl ShopScene {
                 }
                 MapEventElement::SwitchScene(switch_scene) => {
                     if !self.customer_request_queue.is_empty() && !self.customer_queue.is_empty() {
-                        self.transition_status = SceneTransition::StackingTransition;
-                        self.transition_scene = switch_scene.get_switch_scene_id();
+			let switch_scene_id = switch_scene.get_switch_scene_id();
+			self.event_list.add_event(
+			    Box::new(move |slf: &mut ShopScene, _, _| {
+				slf.transition_status = SceneTransition::StackingTransition;
+				slf.transition_scene = switch_scene_id;
+			    }),
+			    t + 20,
+			);
 
+			self.scene_transition_effect = Some(
+			    effect_object::ScreenTileEffect::new(
+				ctx,
+				game_data,
+				numeric::Rect::new(0.0, 0.0, crate::core::WINDOW_SIZE_X as f32, crate::core::WINDOW_SIZE_Y as f32),
+				20,
+				-128,
+				t
+			    )
+			);
+			    
                         let mut customer = self.customer_queue.pop_front().unwrap();
                         customer.set_destination_forced(
                             ctx,
@@ -1124,6 +1147,8 @@ impl SceneManager for ShopScene {
     fn pre_process(&mut self, ctx: &mut ggez::Context, game_data: &GameData) {
         let t = self.get_current_clock();
 
+        flush_delay_event!(self, self.event_list, ctx, game_data, t);
+
         if !self.shop_menu.first_menu_is_open() && !self.shop_special_object.is_enable_now() {
             self.random_add_customer(game_data);
             self.move_playable_character(ctx, t);
@@ -1195,6 +1220,10 @@ impl SceneManager for ShopScene {
         // 暗転の描画
         self.dark_effect_panel.run_effect(ctx, t);
 
+	if let Some(transition_effect) = self.scene_transition_effect.as_mut() {
+	    transition_effect.effect(ctx, t);
+	}
+
         // select_uiなどの更新
         self.shop_special_object.run_delay_event(ctx, game_data, t);
         self.shop_special_object.update(ctx, t);
@@ -1226,6 +1255,10 @@ impl SceneManager for ShopScene {
         if let Some(scenario_box) = self.map.scenario_box.as_mut() {
             scenario_box.draw(ctx).unwrap();
         }
+
+	if let Some(transition_effect) = self.scene_transition_effect.as_mut() {
+	    transition_effect.draw(ctx).unwrap();
+	}
 
         self.dark_effect_panel.draw(ctx).unwrap();
 
