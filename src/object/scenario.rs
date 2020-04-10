@@ -858,13 +858,15 @@ impl TextBox {
         for line in segment.slice(length).lines() {
             text_lines.push(SimpleText::new(
                 tobj::MovableText::new(
-                    line.to_string(),
-                    numeric::Point2f::new(0.0, 0.0),
-                    numeric::Vector2f::new(1.0, 1.0),
-                    0.0,
-                    0,
-                    None,
-                    segment.attribute.font_info,
+		    Box::new(tobj::UniText::new(
+			line.to_string(),
+			numeric::Point2f::new(0.0, 0.0),
+			numeric::Vector2f::new(1.0, 1.0),
+			0.0,
+			0,
+			segment.attribute.font_info,
+		    )),
+		    None,
                     0,
                 ),
                 Vec::new(),
@@ -943,13 +945,16 @@ impl TextBox {
         self.text.clear();
         self.text.push_back(SimpleText::new(
             tobj::MovableText::new(
-                text.to_string(),
-                numeric::Point2f::new(50.0, 50.0),
-                numeric::Vector2f::new(1.0, 1.0),
-                0.0,
-                0,
-                None,
-                font_info,
+		Box::new(
+		    tobj::UniText::new(
+			text.to_string(),
+			numeric::Point2f::new(50.0, 50.0),
+			numeric::Vector2f::new(1.0, 1.0),
+			0.0,
+			0,
+			font_info,
+		    )),
+		None,
                 0,
             ),
             Vec::new(),

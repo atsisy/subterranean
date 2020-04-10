@@ -52,13 +52,15 @@ impl<T: std::ops::AddAssign + Copy + std::fmt::Display> DrawableCounter<T> {
             counter: Counter::<T>::new(init),
             text: SimpleText::new(
                 MovableText::new(
-                    display_method(init),
-                    pos,
-                    numeric::Vector2f::new(1.0, 1.0),
-                    0.0,
-                    0,
-                    move_fn::halt(pos),
-                    font_info,
+		    Box::new(tobj::UniText::new(
+			display_method(init),
+			pos,
+			numeric::Vector2f::new(1.0, 1.0),
+			0.0,
+			0,
+			font_info,
+		    )),
+		    None,
                     t,
                 ),
                 Vec::new(),
@@ -255,17 +257,18 @@ impl Choice {
                 .map(|s| {
                     SimpleText::new(
                         MovableText::new(
-                            s.to_string(),
-                            numeric::Point2f::new(0.0, 0.0),
-                            numeric::Vector2f::new(1.0, 1.0),
-                            0.0,
-                            0,
-                            move_fn::halt(numeric::Point2f::new(0.0, 0.0)),
-                            FontInformation::new(
-                                game_data.get_font(FontID::DEFAULT),
-                                numeric::Vector2f::new(24.0, 24.0),
-                                ggraphics::BLACK,
-                            ),
+			    Box::new(UniText::new(
+				s.to_string(),
+				numeric::Point2f::new(0.0, 0.0),
+				numeric::Vector2f::new(1.0, 1.0),
+				0.0,
+				0,
+				FontInformation::new(
+                                    game_data.get_font(FontID::DEFAULT),
+                                    numeric::Vector2f::new(24.0, 24.0),
+                                    ggraphics::BLACK,
+				),)),
+			    None,
                             0,
                         ),
                         Vec::new(),

@@ -11,6 +11,7 @@ pub mod task_object;
 pub mod task_result_object;
 pub mod util_object;
 pub mod effect_object;
+pub mod notify;
 
 use std::rc::Rc;
 
