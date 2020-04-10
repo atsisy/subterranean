@@ -2,14 +2,15 @@ use ginput::mouse::MouseButton;
 use torifune::core::*;
 use torifune::device as tdev;
 use torifune::numeric;
-
+use torifune::graphics::object::Effectable;
 use torifune::graphics::drawable::*;
 
 use super::super::*;
 use crate::object::Clickable;
 
-use crate::core::{GameData, GensoDate, MouseActionRecord, MouseInformation};
+use crate::core::{GameData, GensoDate, MouseActionRecord, MouseInformation, TileBatchTextureID};
 use crate::object::task_object::*;
+use crate::object::effect_object;
 use crate::scene::{SceneID, SceneTransition};
 
 use crate::flush_delay_event;
@@ -35,6 +36,7 @@ pub struct TaskScene {
     customer_request: Option<CustomerRequest>,
     transition_status: SceneTransition,
     transition_scene: SceneID,
+    scene_transition_effect: Option<effect_object::ScreenTileEffect>,
 }
 
 impl TaskScene {
@@ -45,6 +47,19 @@ impl TaskScene {
         customer_request: Option<CustomerRequest>,
         record_book_data: Option<BorrowingRecordBookData>,
     ) -> TaskScene {
+	let scene_transition_effect = Some(
+	    effect_object::ScreenTileEffect::new(
+		ctx,
+		game_data,
+		TileBatchTextureID::TaishoStyle1,
+		numeric::Rect::new(0.0, 0.0, crate::core::WINDOW_SIZE_X as f32, crate::core::WINDOW_SIZE_Y as f32),
+		20,
+		effect_object::SceneTransitionEffectType::Open,
+		-128,
+		0
+	    )
+	);
+	
         TaskScene {
             task_table: TaskTable::new(
                 ctx,
@@ -65,6 +80,7 @@ impl TaskScene {
             customer_request: customer_request,
             transition_status: SceneTransition::Keep,
             transition_scene: SceneID::MainDesk,
+	    scene_transition_effect: scene_transition_effect,
         }
     }
 
@@ -271,6 +287,7 @@ impl SceneManager for TaskScene {
     }
 
     fn pre_process(&mut self, ctx: &mut ggez::Context, game_data: &GameData) {
+	let t = self.get_current_clock();
         self.task_table
             .update(ctx, game_data, self.get_current_clock());
 
@@ -288,7 +305,7 @@ impl SceneManager for TaskScene {
                 }),
                 self.get_current_clock() + 30,
             );
-
+	    
             self.status = TaskSceneStatus::CustomerWait;
 
             if self.customer_request.is_none() {
@@ -309,7 +326,11 @@ impl SceneManager for TaskScene {
             self.customer_request = None;
             self.status = TaskSceneStatus::CustomerWait;
         }
-
+	
+	if let Some(transition_effect) = self.scene_transition_effect.as_mut() {
+	    transition_effect.effect(ctx, t);
+	}
+	
         flush_delay_event!(
             self,
             self.event_list,
@@ -321,6 +342,10 @@ impl SceneManager for TaskScene {
 
     fn drawing_process(&mut self, ctx: &mut ggez::Context) {
         self.task_table.draw(ctx).unwrap();
+
+	if let Some(transition_effect) = self.scene_transition_effect.as_mut() {
+	    transition_effect.draw(ctx).unwrap();
+	}	
     }
 
     fn post_process(&mut self, _ctx: &mut ggez::Context, _: &GameData) -> SceneTransition {

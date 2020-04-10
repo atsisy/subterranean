@@ -18,7 +18,7 @@ use torifune::numeric;
 
 use super::*;
 use crate::core::map_parser as mp;
-use crate::core::{FontID, GameData, GensoDate};
+use crate::core::{FontID, GameData, GensoDate, TileBatchTextureID};
 use crate::object::map_object::*;
 use crate::object::scenario::*;
 use crate::object::shop_object::*;
@@ -27,6 +27,7 @@ use crate::object::*;
 use crate::object::effect_object;
 use crate::scene::suzuna_scene::TaskResult;
 use crate::flush_delay_event;
+use effect_object::SceneTransitionEffectType;
 
 struct CharacterGroup {
     group: Vec<CustomerCharacter>,
@@ -811,10 +812,25 @@ impl ShopScene {
                 MapEventElement::SwitchScene(switch_scene) => {
                     if !self.customer_request_queue.is_empty() && !self.customer_queue.is_empty() {
 			let switch_scene_id = switch_scene.get_switch_scene_id();
+
+			let mut customer = self.customer_queue.pop_front().unwrap();
+			customer.set_destination_forced(
+			    ctx,
+			    &self.map.tile_map,
+			    numeric::Vector2u::new(15, 10),
+			);
+			
 			self.event_list.add_event(
 			    Box::new(move |slf: &mut ShopScene, _, _| {
 				slf.transition_status = SceneTransition::StackingTransition;
 				slf.transition_scene = switch_scene_id;
+
+				slf.character_group.add(customer);
+				
+				if slf.transition_scene == SceneID::MainDesk {
+				    slf.shop_clock.add_minute(10);
+				}
+				
 			    }),
 			    t + 20,
 			);
@@ -823,25 +839,14 @@ impl ShopScene {
 			    effect_object::ScreenTileEffect::new(
 				ctx,
 				game_data,
+				TileBatchTextureID::TaishoStyle1,
 				numeric::Rect::new(0.0, 0.0, crate::core::WINDOW_SIZE_X as f32, crate::core::WINDOW_SIZE_Y as f32),
 				20,
+				SceneTransitionEffectType::Close,
 				-128,
 				t
 			    )
 			);
-			    
-                        let mut customer = self.customer_queue.pop_front().unwrap();
-                        customer.set_destination_forced(
-                            ctx,
-                            &self.map.tile_map,
-                            numeric::Vector2u::new(15, 10),
-                        );
-
-                        if self.transition_scene == SceneID::MainDesk {
-                            self.shop_clock.add_minute(10);
-                        }
-
-                        self.character_group.add(customer);
                     }
                 }
                 MapEventElement::BookStoreEvent(book_store_event) => {
