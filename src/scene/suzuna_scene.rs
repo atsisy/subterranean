@@ -186,7 +186,7 @@ impl SceneManager for SuzunaScene {
                                 .unwrap()
                                 .get_task_result(),
                         );
-                        self.sub_scene.switch_deskwork_to_shop(transition_status);
+                        self.sub_scene.switch_deskwork_to_shop(ctx, game_data, transition_status);
                         self.sub_scene
                             .shop_scene
                             .as_mut()

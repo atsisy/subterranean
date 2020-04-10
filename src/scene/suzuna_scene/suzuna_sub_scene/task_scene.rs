@@ -47,17 +47,25 @@ impl TaskScene {
         customer_request: Option<CustomerRequest>,
         record_book_data: Option<BorrowingRecordBookData>,
     ) -> TaskScene {
+	let animation_time = 30;
+	
 	let scene_transition_effect = Some(
 	    effect_object::ScreenTileEffect::new(
 		ctx,
 		game_data,
 		TileBatchTextureID::TaishoStyle1,
 		numeric::Rect::new(0.0, 0.0, crate::core::WINDOW_SIZE_X as f32, crate::core::WINDOW_SIZE_Y as f32),
-		20,
+		animation_time,
 		effect_object::SceneTransitionEffectType::Open,
 		-128,
 		0
 	    )
+	);
+
+	let mut event_list = DelayEventList::new();
+	event_list.add_event(
+	    Box::new(move |slf: &mut TaskScene, _, _| { slf.scene_transition_effect = None; }),
+	    animation_time + 1
 	);
 	
         TaskScene {
@@ -74,7 +82,7 @@ impl TaskScene {
             ),
             clock: 0,
             mouse_info: MouseInformation::new(),
-            event_list: DelayEventList::new(),
+            event_list: event_list,
             status: TaskSceneStatus::Init,
             task_result: TaskResult::new(),
             customer_request: customer_request,
@@ -162,10 +170,28 @@ impl TaskScene {
         self.status
     }
 
-    pub fn ready_to_finish_scene(&mut self) {
-        self.status = TaskSceneStatus::FinishDay;
-        self.transition_scene = SceneID::SuzunaShop;
-        self.transition_status = SceneTransition::PoppingTransition;
+    pub fn ready_to_finish_scene(&mut self, ctx: &mut ggez::Context, game_data: &GameData, t: Clock) {
+	self.status = TaskSceneStatus::FinishDay;
+	self.event_list.add_event(
+	    Box::new(move |slf: &mut TaskScene, _, _| {
+		slf.transition_scene = SceneID::SuzunaShop;
+		slf.transition_status = SceneTransition::PoppingTransition;		
+	    }),
+	    t + 31,
+	);
+	
+	self.scene_transition_effect = Some(
+	    effect_object::ScreenTileEffect::new(
+		ctx,
+		game_data,
+		TileBatchTextureID::TaishoStyle1,
+		numeric::Rect::new(0.0, 0.0, crate::core::WINDOW_SIZE_X as f32, crate::core::WINDOW_SIZE_Y as f32),
+		30,
+		effect_object::SceneTransitionEffectType::Close,
+		-128,
+		t
+	    )
+	);
     }
 
     pub fn export_borrowing_record_book_data(&self) -> BorrowingRecordBookData {
@@ -310,10 +336,10 @@ impl SceneManager for TaskScene {
 
             if self.customer_request.is_none() {
                 self.event_list.add_event(
-                    Box::new(|scene: &mut TaskScene, _, _| {
-                        scene.ready_to_finish_scene();
+                    Box::new(move |scene: &mut TaskScene, ctx, game_data| {
+                        scene.ready_to_finish_scene(ctx, game_data, scene.get_current_clock());
                     }),
-                    self.get_current_clock() + 150,
+		    t + 150,
                 );
             }
         }

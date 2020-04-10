@@ -812,27 +812,27 @@ impl ShopScene {
                 MapEventElement::SwitchScene(switch_scene) => {
                     if !self.customer_request_queue.is_empty() && !self.customer_queue.is_empty() {
 			let switch_scene_id = switch_scene.get_switch_scene_id();
-
-			let mut customer = self.customer_queue.pop_front().unwrap();
-			customer.set_destination_forced(
-			    ctx,
-			    &self.map.tile_map,
-			    numeric::Vector2u::new(15, 10),
-			);
 			
 			self.event_list.add_event(
-			    Box::new(move |slf: &mut ShopScene, _, _| {
+			    Box::new(move |slf: &mut ShopScene, ctx, _| {
 				slf.transition_status = SceneTransition::StackingTransition;
 				slf.transition_scene = switch_scene_id;
-
-				slf.character_group.add(customer);
 				
 				if slf.transition_scene == SceneID::MainDesk {
 				    slf.shop_clock.add_minute(10);
 				}
+
+				let mut customer = slf.customer_queue.pop_front().unwrap();
+
+				customer.set_destination_forced(
+				    ctx,
+				    &slf.map.tile_map,
+				    numeric::Vector2u::new(15, 10),
+				);
+				slf.character_group.add(customer);
 				
 			    }),
-			    t + 20,
+			    t + 31,
 			);
 
 			self.scene_transition_effect = Some(
@@ -841,12 +841,13 @@ impl ShopScene {
 				game_data,
 				TileBatchTextureID::TaishoStyle1,
 				numeric::Rect::new(0.0, 0.0, crate::core::WINDOW_SIZE_X as f32, crate::core::WINDOW_SIZE_Y as f32),
-				20,
+				30,
 				SceneTransitionEffectType::Close,
 				-128,
 				t
 			    )
 			);
+
                     }
                 }
                 MapEventElement::BookStoreEvent(book_store_event) => {
@@ -922,8 +923,29 @@ impl ShopScene {
         self.update_playable_character_texture(rad);
     }
 
-    pub fn switched_and_restart(&mut self) {
+    pub fn switched_and_restart(&mut self, ctx: &mut ggez::Context, game_data: &GameData) {
+	let t = self.get_current_clock();
+	let animation_time = 30;
+	
         self.transition_scene = SceneID::SuzunaShop;
+	
+	self.scene_transition_effect = Some(
+	    effect_object::ScreenTileEffect::new(
+		ctx,
+		game_data,
+		TileBatchTextureID::TaishoStyle1,
+		numeric::Rect::new(0.0, 0.0, crate::core::WINDOW_SIZE_X as f32, crate::core::WINDOW_SIZE_Y as f32),
+		animation_time,
+		SceneTransitionEffectType::Open,
+		-128,
+		t
+	    )
+	);
+
+	// self.event_list.add_event(
+	//     Box::new(move |slf: &mut ShopScene, _, _| { slf.scene_transition_effect = None; }),
+	//     animation_time + 1
+	// );
     }
 
     pub fn update_task_result(

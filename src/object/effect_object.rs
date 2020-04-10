@@ -7,7 +7,6 @@ use torifune::graphics::object::tile_batch::*;
 use torifune::graphics::object::*;
 use torifune::graphics::object::sub_screen;
 use torifune::graphics::object::sub_screen::SubScreen;
-use torifune::graphics::object::shape;
 
 use crate::core::*;
 
@@ -35,7 +34,7 @@ impl ScreenTileEffect {
 	depth: i8,
 	t: Clock,
     ) -> Self {
-	let tile_batch = game_data.ref_tile_batch(TileBatchTextureID::TaishoStyle1);
+	let tile_batch = game_data.ref_tile_batch(tile_batch_texture_id);
 	let size = tile_batch.get_tile_size();
 	
 	ScreenTileEffect {
@@ -111,7 +110,7 @@ impl DrawableComponent for ScreenTileEffect {
 }
 
 impl Effectable for  ScreenTileEffect {
-    fn effect(&mut self, ctx: &mut ggez::Context, t: Clock) {
+    fn effect(&mut self, _: &mut ggez::Context, t: Clock) {
 	self.update_batch(t);
     }
 }

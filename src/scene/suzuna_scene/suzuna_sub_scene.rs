@@ -229,7 +229,7 @@ impl SuzunaSubScene {
         }
     }
 
-    pub fn switch_deskwork_to_shop(&mut self, transition: SceneTransition) {
+    pub fn switch_deskwork_to_shop(&mut self, ctx: &mut ggez::Context, game_data: &GameData, transition: SceneTransition) {
         if transition == SceneTransition::PoppingTransition {
             println!("switch!!!!!!!!!, deskwork -> shop");
             self.borrowing_record_book_data = Some(
@@ -240,7 +240,7 @@ impl SuzunaSubScene {
             );
             self.scene_status = SuzunaSceneStatus::Shop;
             self.desk_work_scene = None;
-            self.shop_scene.as_mut().unwrap().switched_and_restart();
+            self.shop_scene.as_mut().unwrap().switched_and_restart(ctx, game_data);
         }
     }
 
