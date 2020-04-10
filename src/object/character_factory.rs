@@ -1,6 +1,7 @@
 use torifune::numeric;
 
 use super::map_object::*;
+use crate::object::util_object::*;
 use super::*;
 use crate::core::{GameData, TextureID};
 
