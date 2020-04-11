@@ -197,7 +197,7 @@ impl SceneManager for SuzunaScene {
                 }
             }
             SuzunaSceneStatus::DayResult => {
-                debug::debug_screen_push_text("Implement Result!!!!!!!!!!!!!");
+		return transition_status;
             }
             SuzunaSceneStatus::Copying => {}
         }
@@ -206,7 +206,7 @@ impl SceneManager for SuzunaScene {
     }
 
     fn transition(&self) -> SceneID {
-        SceneID::MainDesk
+	self.sub_scene.transition()
     }
 
     fn get_current_clock(&self) -> Clock {

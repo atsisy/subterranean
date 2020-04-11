@@ -668,11 +668,15 @@ impl<'a> SceneController<'a> {
         game_data: &'a GameData,
         next_scene_id: scene::SceneID,
     ) {
-        if next_scene_id == scene::SceneID::SuzunaShop {
-            self.current_scene = Box::new(scene::suzuna_scene::SuzunaScene::new(ctx, game_data, 0));
-        } else if next_scene_id == scene::SceneID::Null {
-            self.current_scene = Box::new(scene::NullScene::new());
-        }
+	match next_scene_id {
+	    scene::SceneID::SuzunaShop =>
+		self.current_scene = Box::new(scene::suzuna_scene::SuzunaScene::new(ctx, game_data, 0)),
+	    scene::SceneID::Scenario =>
+		self.current_scene = Box::new(scene::scenario_scene::ScenarioScene::new(ctx, game_data)),
+	    scene::SceneID::Null =>
+		self.current_scene = Box::new(scene::NullScene::new()),
+	    _ => (),
+	}
     }
 
     fn switch_scene_with_stacking(

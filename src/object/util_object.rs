@@ -478,6 +478,7 @@ impl SelectButton {
         mut texture: Box<dyn TextureObject>,
     ) -> Self {
         texture.set_position(numeric::Point2f::new(0.0, 0.0));
+	texture.fit_scale(ctx, numeric::Vector2f::new(button_rect.w, button_rect.h));
 
         SelectButton {
             canvas: SubScreen::new(ctx, button_rect, 0, ggraphics::Color::from_rgba_u32(0)),

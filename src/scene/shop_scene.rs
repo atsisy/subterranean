@@ -1021,7 +1021,7 @@ impl ShopScene {
     pub fn update_shop_clock_regular(&mut self, ctx: &mut ggez::Context, game_data: &GameData, t: Clock) {
         if self.get_current_clock() % 40 == 0 {
             debug::debug_screen_push_text(&format!("{}", self.shop_clock));
-            self.shop_clock.add_minute(1);
+            self.shop_clock.add_minute(60);
 
 	    if self.shop_clock.equals(12, 0) {
 		self.notification_area.insert_new_contents_generic(

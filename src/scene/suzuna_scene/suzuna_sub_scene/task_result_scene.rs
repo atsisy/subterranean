@@ -11,19 +11,21 @@ use super::super::*;
 use crate::core::{GameData, MouseInformation, TextureID};
 use crate::object::task_result_object::*;
 use crate::scene::{SceneID, SceneTransition};
+use crate::object::util_object::SelectButton;
 
 pub struct TaskResultScene {
     clock: Clock,
     mouse_info: MouseInformation,
     event_list: DelayEventList<Self>,
     drawable_task_result: DrawableTaskResult,
+    ok_button: SelectButton,
     scene_transition_status: SceneTransition,
     transition_scene: SceneID,
 }
 
 impl TaskResultScene {
     pub fn new(ctx: &mut ggez::Context, game_data: &GameData, task_result: TaskResult) -> Self {
-        let background_object = MovableUniTexture::new(
+        let mut background_object = MovableUniTexture::new(
             game_data.ref_texture(TextureID::Paper1),
             numeric::Point2f::new(0.0, 0.0),
             numeric::Vector2f::new(1.0, 1.0),
@@ -33,6 +35,23 @@ impl TaskResultScene {
             0,
         );
 
+	background_object.fit_scale(
+	    ctx,
+	    numeric::Vector2f::new(crate::core::WINDOW_SIZE_X as f32, crate::core::WINDOW_SIZE_Y as f32)
+	);
+
+	let ok_button = SelectButton::new(
+	    ctx,
+	    numeric::Rect::new(120.0, 608.0, 80.0, 80.0),
+	    Box::new(UniTexture::new(
+		game_data.ref_texture(TextureID::ChoicePanel1),
+		numeric::Point2f::new(0.0, 0.0),
+		numeric::Vector2f::new(1.0, 1.0),
+		0.0,
+		0
+	    )),
+	);
+
         TaskResultScene {
             clock: 0,
             mouse_info: MouseInformation::new(),
@@ -40,11 +59,12 @@ impl TaskResultScene {
             drawable_task_result: DrawableTaskResult::new(
                 ctx,
                 game_data,
-                numeric::Rect::new(0.0, 0.0, 1000.0, 700.0),
+                numeric::Rect::new(0.0, 0.0, 1366.0, 768.0),
                 task_result.clone(),
                 SimpleObject::new(background_object, Vec::new()),
                 0,
             ),
+	    ok_button: ok_button,
             scene_transition_status: SceneTransition::Keep,
             transition_scene: SceneID::DayResult,
         }
@@ -116,11 +136,15 @@ impl SceneManager for TaskResultScene {
 
     fn mouse_button_down_event(
         &mut self,
-        _: &mut ggez::Context,
+        ctx: &mut ggez::Context,
         _: &GameData,
         button: MouseButton,
         point: numeric::Point2f,
     ) {
+	if self.ok_button.contains(ctx, point) {
+	    self.ok_button.push();
+	}
+	
         self.mouse_info
             .set_last_clicked(button, point, self.get_current_clock());
         self.mouse_info
@@ -132,11 +156,16 @@ impl SceneManager for TaskResultScene {
 
     fn mouse_button_up_event(
         &mut self,
-        _: &mut ggez::Context,
+        ctx: &mut ggez::Context,
         _: &GameData,
         button: MouseButton,
         point: numeric::Point2f,
     ) {
+	if self.ok_button.contains(ctx, point) {
+	    self.ok_button.release();
+	    self.ready_to_finish_scene();
+	}
+	
         self.mouse_info.update_dragging(button, false);
         self.mouse_info
             .set_last_up(button, point, self.get_current_clock());
@@ -150,6 +179,7 @@ impl SceneManager for TaskResultScene {
 
     fn drawing_process(&mut self, ctx: &mut ggez::Context) {
         self.drawable_task_result.draw(ctx).unwrap();
+	self.ok_button.draw(ctx).unwrap();
     }
 
     fn post_process(&mut self, _ctx: &mut ggez::Context, _: &GameData) -> SceneTransition {
