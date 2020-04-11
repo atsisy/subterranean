@@ -17,48 +17,71 @@ pub trait NotificationContents: DrawableComponent {
     fn required_size(&self) -> numeric::Vector2f;
 }
 
-pub struct CustomerCallNotification {
+pub struct NotificationContentsData {
+    pub header_text: String,
+    pub main_text: String,
+}
+
+impl NotificationContentsData {
+    pub fn new(header_text: String, main_text: String) -> Self {
+	NotificationContentsData {
+	    header_text: header_text,
+	    main_text: main_text,
+	}
+    }
+}
+
+pub struct GeneralNotificationContents {
     main_text: VerticalText,
     header_text: UniText,
+    required_size: numeric::Vector2f,
     drwob_essential: DrawableObjectEssential,
 }
 
-impl CustomerCallNotification {
-    pub fn new(ctx: &mut ggez::Context, game_data: &GameData, depth: i8) -> Self {
-	let mut main_text = VerticalText::new(
-	    "御客様ガ呼ンデイマス".to_string(),
-	    numeric::Point2f::new(86.0, 90.0),
-	    numeric::Vector2f::new(1.0, 1.0),
-	    0.0,
-	    0,
-	    FontInformation::new(
-		game_data.get_font(FontID::JpFude1),
-		numeric::Vector2f::new(28.0, 28.0),
-		ggraphics::Color::from_rgba_u32(0xff)),
+impl GeneralNotificationContents {
+    pub fn new(ctx: &mut ggez::Context, game_data: &GameData, data: NotificationContentsData, depth: i8) -> Self {
+	let font_info = FontInformation::new(
+	    game_data.get_font(FontID::JpFude1),
+	    numeric::Vector2f::new(28.0, 28.0),
+	    ggraphics::Color::from_rgba_u32(0xff)
 	);
-
-	let mut header_text = UniText::new(
-	    "セラ知オ".to_string(),
+	
+	let mut main_text = VerticalText::new(
+	    data.main_text.to_string(),
 	    numeric::Point2f::new(0.0, 0.0),
 	    numeric::Vector2f::new(1.0, 1.0),
 	    0.0,
 	    0,
-	    FontInformation::new(
-		game_data.get_font(FontID::JpFude1),
-		numeric::Vector2f::new(28.0, 28.0),
-		ggraphics::Color::from_rgba_u32(0xff)),
+	    font_info,
 	);
-	header_text.make_center(ctx, numeric::Point2f::new(100.0, 50.0));
+
+	let mut header_text = UniText::new(
+	    data.header_text.to_string(),
+	    numeric::Point2f::new(0.0, 0.0),
+	    numeric::Vector2f::new(1.0, 1.0),
+	    0.0,
+	    0,
+	    font_info,
+	);
+
+	let size = numeric::Vector2f::new(
+	    header_text.get_drawing_size(ctx).x + 60.0,
+	    main_text.get_drawing_size(ctx).y + 120.0
+	);
+
+	header_text.make_center(ctx, numeric::Point2f::new(size.x / 2.0, 40.0));
+	main_text.make_center(ctx, numeric::Point2f::new(size.x / 2.0, (size.y / 2.0) + 10.0));
 	
-	CustomerCallNotification {
+	GeneralNotificationContents {
 	    main_text: main_text,
 	    header_text: header_text,
+	    required_size: size,
 	    drwob_essential: DrawableObjectEssential::new(true, depth),
 	}
     }
 }
 
-impl DrawableComponent for CustomerCallNotification {
+impl DrawableComponent for GeneralNotificationContents {
     fn draw(&mut self, ctx: &mut ggez::Context) -> ggez::GameResult<()> {
 	if self.is_visible() {
 	    self.main_text.draw(ctx)?;
@@ -90,9 +113,9 @@ impl DrawableComponent for CustomerCallNotification {
     }
 }
 
-impl NotificationContents for CustomerCallNotification {
+impl NotificationContents for GeneralNotificationContents {
     fn required_size(&self) -> numeric::Vector2f {
-	numeric::Vector2f::new(200.0, 400.0)
+	self.required_size
     }
 }
 

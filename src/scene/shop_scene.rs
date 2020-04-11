@@ -29,7 +29,7 @@ use crate::scene::suzuna_scene::TaskResult;
 use crate::flush_delay_event;
 use effect_object::SceneTransitionEffectType;
 use crate::object::notify;
-use notify::NotificationArea;
+use notify::*;
 
 struct CharacterGroup {
     group: Vec<CustomerCharacter>,
@@ -1051,7 +1051,14 @@ impl ShopScene {
     }
 
     fn notify_customer_calling(&mut self, ctx: &mut ggez::Context, game_data: &GameData, t: Clock) {
-	let notification = Box::new(notify::CustomerCallNotification::new(ctx, game_data, 0));
+	let notification = Box::new(
+	    notify::GeneralNotificationContents::new(
+		ctx,
+		game_data,
+		NotificationContentsData::new("セラ知オ".to_string(), "御客ガ呼ンデイマス".to_string()),
+		0
+	    )
+	);
 	self.notification_area.insert_new_contents(ctx, game_data, notification, t);
     }
 
