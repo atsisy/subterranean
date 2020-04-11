@@ -28,6 +28,8 @@ use crate::object::effect_object;
 use crate::scene::suzuna_scene::TaskResult;
 use crate::flush_delay_event;
 use effect_object::SceneTransitionEffectType;
+use crate::object::notify;
+use notify::NotificationArea;
 
 struct CharacterGroup {
     group: Vec<CustomerCharacter>,
@@ -316,6 +318,7 @@ pub struct ShopScene {
     transition_status: SceneTransition,
     transition_scene: SceneID,
     scene_transition_effect: Option<effect_object::ScreenTileEffect>,
+    notification_area: NotificationArea,
 }
 
 impl ShopScene {
@@ -381,6 +384,11 @@ impl ShopScene {
             transition_scene: SceneID::SuzunaShop,
             transition_status: SceneTransition::Keep,
 	    scene_transition_effect: None,
+	    notification_area: NotificationArea::new(
+		game_data,
+		numeric::Point2f::new((crate::core::WINDOW_SIZE_X - 20) as f32, 20.0),
+		0
+	    ),
         }
     }
 
@@ -1042,6 +1050,11 @@ impl ShopScene {
         }
     }
 
+    fn notify_customer_calling(&mut self, ctx: &mut ggez::Context, game_data: &GameData, t: Clock) {
+	let notification = Box::new(notify::CustomerCallNotification::new(ctx, game_data, 0));
+	self.notification_area.insert_new_contents(ctx, game_data, notification, t);
+    }
+
     fn transition_to_copy_scene(&mut self) {
         self.transition_status = SceneTransition::StackingTransition;
         self.transition_scene = SceneID::Copying;
@@ -1192,6 +1205,11 @@ impl SceneManager for ShopScene {
                 .character_group
                 .drain_remove_if(|customer: &CustomerCharacter| customer.is_wait_on_clerk());
 
+	    // 新しく客が列に並んだら、通知をする
+	    if !rising_customers.is_empty() {
+		self.notify_customer_calling(ctx, game_data, t);
+	    }
+	    
             for customer in &mut rising_customers {
                 if let Some(request) = customer.check_rise_hand(game_data, self.today_date.clone())
                 {
@@ -1247,6 +1265,8 @@ impl SceneManager for ShopScene {
         // 暗転の描画
         self.dark_effect_panel.run_effect(ctx, t);
 
+	self.notification_area.update(ctx, game_data, t);
+
 	if let Some(transition_effect) = self.scene_transition_effect.as_mut() {
 	    transition_effect.effect(ctx, t);
 	}
@@ -1291,6 +1311,8 @@ impl SceneManager for ShopScene {
 
         self.shop_special_object.draw(ctx).unwrap();
         self.shop_menu.draw(ctx).unwrap();
+
+	self.notification_area.draw(ctx).unwrap();
     }
 
     fn post_process(&mut self, _ctx: &mut ggez::Context, _: &GameData) -> SceneTransition {
