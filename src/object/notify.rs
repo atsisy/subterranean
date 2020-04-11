@@ -177,6 +177,17 @@ impl NotificationArea {
 	self.set_appear_animation(t);
     }
 
+    pub fn insert_new_contents_generic(
+	&mut self,
+	ctx: &mut ggez::Context,
+	game_data: &GameData,
+	generic_data: NotificationContentsData,
+	t: Clock,
+    ) {
+	let contents = Box::new(GeneralNotificationContents::new(ctx, game_data, generic_data, 0));
+	self.insert_new_contents(ctx, game_data, contents, t);
+    }
+    
     fn set_hide_animation(&mut self, t: Clock) {
 	if let Some(area) = self.area.as_mut() {
 	    area.clear_effect();

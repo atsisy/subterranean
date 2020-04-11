@@ -269,6 +269,10 @@ impl ShopClock {
             std::cmp::Ordering::Less => false,
         }
     }
+
+    pub fn equals(&self, hour: u8, minute: u8) -> bool {
+	self.hour == hour && self.minute == minute
+    }
 }
 
 impl std::fmt::Display for ShopClock {
@@ -1014,10 +1018,19 @@ impl ShopScene {
         self.customer_request_queue.pop_front()
     }
 
-    pub fn update_shop_clock_regular(&mut self) {
+    pub fn update_shop_clock_regular(&mut self, ctx: &mut ggez::Context, game_data: &GameData, t: Clock) {
         if self.get_current_clock() % 40 == 0 {
             debug::debug_screen_push_text(&format!("{}", self.shop_clock));
             self.shop_clock.add_minute(1);
+
+	    if self.shop_clock.equals(12, 0) {
+		self.notification_area.insert_new_contents_generic(
+		    ctx,
+		    game_data,
+		    NotificationContentsData::new("セラ知オ".to_string(), "十二時ヲ過ギマシタ".to_string()),
+		    t
+		);
+	    }
         }
     }
 
@@ -1266,7 +1279,7 @@ impl SceneManager for ShopScene {
         }
 
         // 時刻の更新
-        self.update_shop_clock_regular();
+        self.update_shop_clock_regular(ctx, game_data, t);
         self.check_shop_clock_regular();
 
         // 暗転の描画
