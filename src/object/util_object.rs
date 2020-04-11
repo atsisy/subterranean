@@ -4,10 +4,10 @@ use ggez::graphics as ggraphics;
 
 use sub_screen::SubScreen;
 use torifune::core::Clock;
+use torifune::graphics::drawable::*;
 use torifune::graphics::object::sub_screen;
 use torifune::graphics::object::tile_batch::*;
 use torifune::graphics::object::*;
-use torifune::graphics::drawable::*;
 use torifune::impl_drawable_object_for_wrapped;
 use torifune::impl_texture_object_for_wrapped;
 use torifune::numeric;
@@ -478,7 +478,7 @@ impl SelectButton {
         mut texture: Box<dyn TextureObject>,
     ) -> Self {
         texture.set_position(numeric::Point2f::new(0.0, 0.0));
-	texture.fit_scale(ctx, numeric::Vector2f::new(button_rect.w, button_rect.h));
+        texture.fit_scale(ctx, numeric::Vector2f::new(button_rect.w, button_rect.h));
 
         SelectButton {
             canvas: SubScreen::new(ctx, button_rect, 0, ggraphics::Color::from_rgba_u32(0)),

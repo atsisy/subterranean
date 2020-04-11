@@ -186,7 +186,8 @@ impl SceneManager for SuzunaScene {
                                 .unwrap()
                                 .get_task_result(),
                         );
-                        self.sub_scene.switch_deskwork_to_shop(ctx, game_data, transition_status);
+                        self.sub_scene
+                            .switch_deskwork_to_shop(ctx, game_data, transition_status);
                         self.sub_scene
                             .shop_scene
                             .as_mut()
@@ -197,7 +198,7 @@ impl SceneManager for SuzunaScene {
                 }
             }
             SuzunaSceneStatus::DayResult => {
-		return transition_status;
+                return transition_status;
             }
             SuzunaSceneStatus::Copying => {}
         }
@@ -206,7 +207,7 @@ impl SceneManager for SuzunaScene {
     }
 
     fn transition(&self) -> SceneID {
-	self.sub_scene.transition()
+        self.sub_scene.transition()
     }
 
     fn get_current_clock(&self) -> Clock {

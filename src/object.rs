@@ -2,26 +2,26 @@ pub mod character_factory;
 pub mod collision;
 pub mod copy_scene_object;
 pub mod effect;
+pub mod effect_object;
 pub mod map_object;
 pub mod move_fn;
+pub mod notify;
 pub mod scenario;
 pub mod shop_object;
 pub mod simulation_ui;
 pub mod task_object;
 pub mod task_result_object;
 pub mod util_object;
-pub mod effect_object;
-pub mod notify;
 
 use std::rc::Rc;
 
 use ggez::graphics as ggraphics;
 
 use torifune::core::Clock;
+use torifune::graphics::drawable::*;
 use torifune::graphics::object as tobj;
 use torifune::graphics::object::sub_screen::SubScreen;
 use torifune::graphics::object::*;
-use torifune::graphics::drawable::*;
 use torifune::impl_drawable_object_for_wrapped;
 use torifune::impl_texture_object_for_wrapped;
 use torifune::numeric;

@@ -8,8 +8,8 @@ use ggez::graphics as ggraphics;
 use torifune::core::Clock;
 use torifune::debug;
 use torifune::distance;
-use torifune::graphics::object::*;
 use torifune::graphics::drawable::*;
+use torifune::graphics::object::*;
 use torifune::numeric;
 
 use crate::core::map_parser as mp;
@@ -20,8 +20,8 @@ use crate::object::task_object::tt_main_component::CustomerRequest;
 use crate::object::task_object::tt_sub_component::{
     BorrowingInformation, CopyingRequestInformation, RentalLimit, ReturnBookInformation,
 };
-use crate::scene::{DelayEventList, SceneID};
 use crate::object::util_object::*;
+use crate::scene::{DelayEventList, SceneID};
 
 pub struct TwoStepPoint {
     pub previous: numeric::Point2f,

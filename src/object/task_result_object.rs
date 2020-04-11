@@ -3,9 +3,9 @@ use std::rc::Rc;
 use ggez::graphics as ggraphics;
 
 use torifune::core::Clock;
+use torifune::graphics::drawable::*;
 use torifune::graphics::object::sub_screen::*;
 use torifune::graphics::object::*;
-use torifune::graphics::drawable::*;
 use torifune::impl_drawable_object_for_wrapped;
 use torifune::impl_texture_object_for_wrapped;
 use torifune::numeric;

@@ -92,13 +92,13 @@ pub fn appear_bale_down_from_top(required_time: Clock, called_clock: Clock) -> G
         move |obj: &mut dyn MovableObject, _: &ggez::Context, t: Clock| {
             if called_clock <= t {
                 let elapsed_time = t - called_clock;
-		let mut current_crop = obj.get_crop();
+                let mut current_crop = obj.get_crop();
                 if elapsed_time < required_time {
                     current_crop.h = elapsed_time as f32 / required_time as f32;
                     obj.set_crop(current_crop);
                     EffectFnStatus::EffectContinue
                 } else {
-		    current_crop.h = 1.0;
+                    current_crop.h = 1.0;
                     obj.set_crop(current_crop);
                     EffectFnStatus::EffectFinish
                 }
@@ -130,14 +130,14 @@ pub fn hide_bale_down_from_top(required_time: Clock, called_clock: Clock) -> Gen
         move |obj: &mut dyn MovableObject, _: &ggez::Context, t: Clock| {
             if called_clock <= t {
                 let elapsed_time = t - called_clock;
-		let mut current_crop = obj.get_crop();
+                let mut current_crop = obj.get_crop();
                 if elapsed_time < required_time {
                     current_crop.h = 1.0 - (elapsed_time as f32 / required_time as f32);
                     obj.set_crop(current_crop);
                     EffectFnStatus::EffectContinue
                 } else {
-		    current_crop.h = 0.0;
-		    obj.set_crop(current_crop);
+                    current_crop.h = 0.0;
+                    obj.set_crop(current_crop);
                     EffectFnStatus::EffectFinish
                 }
             } else {

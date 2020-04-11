@@ -1,9 +1,9 @@
 use torifune::numeric;
 
 use super::map_object::*;
-use crate::object::util_object::*;
 use super::*;
 use crate::core::{GameData, TextureID};
+use crate::object::util_object::*;
 
 fn create_playable_doremy1(
     game_data: &GameData,

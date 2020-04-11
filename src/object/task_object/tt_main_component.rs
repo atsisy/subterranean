@@ -5,12 +5,12 @@ use ggez::input as ginput;
 use ginput::mouse::MouseCursor;
 
 use torifune::core::Clock;
+use torifune::graphics::drawable::*;
 use torifune::graphics::object::shape;
 use torifune::graphics::object::shape::MeshShape;
 use torifune::graphics::object::sub_screen;
 use torifune::graphics::object::sub_screen::SubScreen;
 use torifune::graphics::object::*;
-use torifune::graphics::drawable::*;
 use torifune::impl_drawable_object_for_wrapped;
 use torifune::impl_texture_object_for_wrapped;
 use torifune::{debug, numeric};
@@ -164,9 +164,7 @@ impl DeskObjects {
                 .get_raw_container_mut()
                 .swap_remove(dragging_object_index);
 
-            dragging
-                .get_object_mut()
-                .start_dragging(ctx, game_data);
+            dragging.get_object_mut().start_dragging(ctx, game_data);
 
             self.dragging = Some(dragging);
 
@@ -184,9 +182,7 @@ impl DeskObjects {
 
             let min = self.desk_objects.get_minimum_depth();
             dragged.get_object_mut().set_drawing_depth(min);
-            dragged
-                .get_object_mut()
-                .finish_dragging(ctx, game_data);
+            dragged.get_object_mut().finish_dragging(ctx, game_data);
             self.desk_objects.change_depth_equally(1);
 
             self.desk_objects.add(dragged);
@@ -226,10 +222,7 @@ impl DeskObjects {
             if obj.get_object().get_drawing_area(ctx).contains(rpoint) {
                 click_flag = true;
 
-                object_type = Some(
-                    obj.get_object()
-                        .get_type(),
-                );
+                object_type = Some(obj.get_object().get_type());
                 break;
             }
         }
@@ -303,7 +296,7 @@ impl DeskObjects {
         point: numeric::Point2f,
     ) -> bool {
         let rpoint = self.canvas.relative_point(point);
-	
+
         for dobj in self.desk_objects.get_raw_container_mut().iter_mut().rev() {
             if dobj.get_object_mut().contains(ctx, rpoint) {
                 dobj.get_object_mut()
@@ -338,11 +331,11 @@ impl DeskObjects {
     }
 
     pub fn get_desk_objects_list(&self) -> &Vec<DeskObject> {
-	self.desk_objects.get_raw_container()
+        self.desk_objects.get_raw_container()
     }
 
     pub fn get_desk_objects_list_mut(&mut self) -> &mut Vec<DeskObject> {
-	self.desk_objects.get_raw_container_mut()
+        self.desk_objects.get_raw_container_mut()
     }
 }
 
@@ -391,7 +384,7 @@ impl DrawableComponent for DeskObjects {
 }
 
 impl DrawableObject for DeskObjects {
-    impl_drawable_object_for_wrapped!{canvas}
+    impl_drawable_object_for_wrapped! {canvas}
 }
 
 struct TaskSilhouette {
@@ -840,9 +833,7 @@ impl SuzuMiniSightSilhouette {
     }
 
     pub fn get_text_balloon_phrase_type(&self) -> &TextBalloonPhraseType {
-        &self
-            .text_balloon
-            .get_phrase_type()
+        &self.text_balloon.get_phrase_type()
     }
 
     pub fn new_customer_update(
@@ -887,8 +878,7 @@ impl SuzuMiniSightSilhouette {
             self.silhouette.get_object_mut().unwrap().effect(ctx, t);
         }
 
-        self.text_balloon
-            .update_mesh(ctx);
+        self.text_balloon.update_mesh(ctx);
         self.text_balloon.effect(ctx, t);
     }
 
@@ -898,8 +888,7 @@ impl SuzuMiniSightSilhouette {
         text: &str,
         phrase_type: TextBalloonPhraseType,
     ) {
-        self.text_balloon
-            .replace_text(ctx, text, phrase_type);
+        self.text_balloon.replace_text(ctx, text, phrase_type);
         self.text_balloon.appear();
     }
 
@@ -1368,9 +1357,7 @@ impl ShelvingBookBox {
         for obj in self.shelved.iter_mut().rev() {
             let contains = obj.get_object().get_drawing_area(ctx).contains(rpoint);
             if contains {
-                clicked_data = obj
-                    .get_object_mut()
-                    .get_hold_data(ctx, rpoint);
+                clicked_data = obj.get_object_mut().get_hold_data(ctx, rpoint);
                 break;
             }
         }

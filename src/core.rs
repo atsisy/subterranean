@@ -8,11 +8,11 @@ use tdev::ProgramableKey;
 use torifune::core::Clock;
 use torifune::debug;
 use torifune::device as tdev;
+use torifune::graphics::drawable::*;
 use torifune::graphics::object::sub_screen;
 use torifune::graphics::object::sub_screen::SubScreen;
 use torifune::graphics::object::tile_batch::*;
 use torifune::graphics::object::{FontInformation, TextureObject};
-use torifune::graphics::drawable::*;
 use torifune::hash;
 use torifune::numeric;
 
@@ -216,6 +216,7 @@ impl TextureID {
 pub enum TileBatchTextureID {
     OldStyleFrame,
     TaishoStyle1,
+    Suzu1,
 }
 
 pub const LARGE_BOOK_TEXTURE: [TextureID; 3] = [
@@ -668,15 +669,18 @@ impl<'a> SceneController<'a> {
         game_data: &'a GameData,
         next_scene_id: scene::SceneID,
     ) {
-	match next_scene_id {
-	    scene::SceneID::SuzunaShop =>
-		self.current_scene = Box::new(scene::suzuna_scene::SuzunaScene::new(ctx, game_data, 0)),
-	    scene::SceneID::Scenario =>
-		self.current_scene = Box::new(scene::scenario_scene::ScenarioScene::new(ctx, game_data)),
-	    scene::SceneID::Null =>
-		self.current_scene = Box::new(scene::NullScene::new()),
-	    _ => (),
-	}
+        match next_scene_id {
+            scene::SceneID::SuzunaShop => {
+                self.current_scene =
+                    Box::new(scene::suzuna_scene::SuzunaScene::new(ctx, game_data, 0))
+            }
+            scene::SceneID::Scenario => {
+                self.current_scene =
+                    Box::new(scene::scenario_scene::ScenarioScene::new(ctx, game_data))
+            }
+            scene::SceneID::Null => self.current_scene = Box::new(scene::NullScene::new()),
+            _ => (),
+        }
     }
 
     fn switch_scene_with_stacking(

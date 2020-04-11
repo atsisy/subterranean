@@ -1,8 +1,8 @@
 use torifune::core::Clock;
+use torifune::graphics::drawable::*;
 use torifune::graphics::object::sub_screen;
 use torifune::graphics::object::sub_screen::SubScreen;
 use torifune::graphics::object::*;
-use torifune::graphics::drawable::*;
 use torifune::numeric;
 
 use torifune::graphics::object::shape as tshape;
@@ -52,15 +52,15 @@ impl<T: std::ops::AddAssign + Copy + std::fmt::Display> DrawableCounter<T> {
             counter: Counter::<T>::new(init),
             text: SimpleText::new(
                 MovableText::new(
-		    Box::new(tobj::UniText::new(
-			display_method(init),
-			pos,
-			numeric::Vector2f::new(1.0, 1.0),
-			0.0,
-			0,
-			font_info,
-		    )),
-		    None,
+                    Box::new(tobj::UniText::new(
+                        display_method(init),
+                        pos,
+                        numeric::Vector2f::new(1.0, 1.0),
+                        0.0,
+                        0,
+                        font_info,
+                    )),
+                    None,
                     t,
                 ),
                 Vec::new(),
@@ -113,8 +113,7 @@ impl<T: std::fmt::Display + std::ops::AddAssign + Clone + Copy + std::ops::AddAs
 
     pub fn update_text(&mut self) {
         let value = self.get_value();
-        self.text
-            .replace_text(&(self.display_method)(value))
+        self.text.replace_text(&(self.display_method)(value))
     }
 }
 
@@ -257,18 +256,19 @@ impl Choice {
                 .map(|s| {
                     SimpleText::new(
                         MovableText::new(
-			    Box::new(UniText::new(
-				s.to_string(),
-				numeric::Point2f::new(0.0, 0.0),
-				numeric::Vector2f::new(1.0, 1.0),
-				0.0,
-				0,
-				FontInformation::new(
+                            Box::new(UniText::new(
+                                s.to_string(),
+                                numeric::Point2f::new(0.0, 0.0),
+                                numeric::Vector2f::new(1.0, 1.0),
+                                0.0,
+                                0,
+                                FontInformation::new(
                                     game_data.get_font(FontID::DEFAULT),
                                     numeric::Vector2f::new(24.0, 24.0),
                                     ggraphics::BLACK,
-				),)),
-			    None,
+                                ),
+                            )),
+                            None,
                             0,
                         ),
                         Vec::new(),

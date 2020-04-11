@@ -19,16 +19,16 @@ use torifune::numeric;
 use super::*;
 use crate::core::map_parser as mp;
 use crate::core::{FontID, GameData, GensoDate, TileBatchTextureID};
+use crate::flush_delay_event;
+use crate::object::effect_object;
 use crate::object::map_object::*;
+use crate::object::notify;
 use crate::object::scenario::*;
 use crate::object::shop_object::*;
 use crate::object::task_object::tt_main_component::CustomerRequest;
 use crate::object::*;
-use crate::object::effect_object;
 use crate::scene::suzuna_scene::TaskResult;
-use crate::flush_delay_event;
 use effect_object::SceneTransitionEffectType;
-use crate::object::notify;
 use notify::*;
 
 struct CharacterGroup {
@@ -271,7 +271,7 @@ impl ShopClock {
     }
 
     pub fn equals(&self, hour: u8, minute: u8) -> bool {
-	self.hour == hour && self.minute == minute
+        self.hour == hour && self.minute == minute
     }
 }
 
@@ -375,7 +375,7 @@ impl ShopScene {
             shop_clock: ShopClock::new(8, 0),
             today_date: today_date,
             map: map,
-	    event_list: DelayEventList::new(),
+            event_list: DelayEventList::new(),
             shop_menu: ShopMenuMaster::new(ctx, game_data, numeric::Vector2f::new(450.0, 768.0), 0),
             customer_request_queue: VecDeque::new(),
             customer_queue: VecDeque::new(),
@@ -387,12 +387,12 @@ impl ShopScene {
             camera: camera,
             transition_scene: SceneID::SuzunaShop,
             transition_status: SceneTransition::Keep,
-	    scene_transition_effect: None,
-	    notification_area: NotificationArea::new(
-		game_data,
-		numeric::Point2f::new((crate::core::WINDOW_SIZE_X - 20) as f32, 20.0),
-		0
-	    ),
+            scene_transition_effect: None,
+            notification_area: NotificationArea::new(
+                game_data,
+                numeric::Point2f::new((crate::core::WINDOW_SIZE_X - 20) as f32, 20.0),
+                0,
+            ),
         }
     }
 
@@ -823,43 +823,44 @@ impl ShopScene {
                 }
                 MapEventElement::SwitchScene(switch_scene) => {
                     if !self.customer_request_queue.is_empty() && !self.customer_queue.is_empty() {
-			let switch_scene_id = switch_scene.get_switch_scene_id();
-			
-			self.event_list.add_event(
-			    Box::new(move |slf: &mut ShopScene, ctx, _| {
-				slf.transition_status = SceneTransition::StackingTransition;
-				slf.transition_scene = switch_scene_id;
-				
-				if slf.transition_scene == SceneID::MainDesk {
-				    slf.shop_clock.add_minute(10);
-				}
+                        let switch_scene_id = switch_scene.get_switch_scene_id();
 
-				let mut customer = slf.customer_queue.pop_front().unwrap();
+                        self.event_list.add_event(
+                            Box::new(move |slf: &mut ShopScene, ctx, _| {
+                                slf.transition_status = SceneTransition::StackingTransition;
+                                slf.transition_scene = switch_scene_id;
 
-				customer.set_destination_forced(
-				    ctx,
-				    &slf.map.tile_map,
-				    numeric::Vector2u::new(15, 10),
-				);
-				slf.character_group.add(customer);
-				
-			    }),
-			    t + 31,
-			);
+                                if slf.transition_scene == SceneID::MainDesk {
+                                    slf.shop_clock.add_minute(10);
+                                }
 
-			self.scene_transition_effect = Some(
-			    effect_object::ScreenTileEffect::new(
-				ctx,
-				game_data,
-				TileBatchTextureID::TaishoStyle1,
-				numeric::Rect::new(0.0, 0.0, crate::core::WINDOW_SIZE_X as f32, crate::core::WINDOW_SIZE_Y as f32),
-				30,
-				SceneTransitionEffectType::Close,
-				-128,
-				t
-			    )
-			);
+                                let mut customer = slf.customer_queue.pop_front().unwrap();
 
+                                customer.set_destination_forced(
+                                    ctx,
+                                    &slf.map.tile_map,
+                                    numeric::Vector2u::new(15, 10),
+                                );
+                                slf.character_group.add(customer);
+                            }),
+                            t + 31,
+                        );
+
+                        self.scene_transition_effect = Some(effect_object::ScreenTileEffect::new(
+                            ctx,
+                            game_data,
+                            TileBatchTextureID::Suzu1,
+                            numeric::Rect::new(
+                                0.0,
+                                0.0,
+                                crate::core::WINDOW_SIZE_X as f32,
+                                crate::core::WINDOW_SIZE_Y as f32,
+                            ),
+                            30,
+                            SceneTransitionEffectType::Close,
+                            -128,
+                            t,
+                        ));
                     }
                 }
                 MapEventElement::BookStoreEvent(book_store_event) => {
@@ -936,28 +937,31 @@ impl ShopScene {
     }
 
     pub fn switched_and_restart(&mut self, ctx: &mut ggez::Context, game_data: &GameData) {
-	let t = self.get_current_clock();
-	let animation_time = 30;
-	
-        self.transition_scene = SceneID::SuzunaShop;
-	
-	self.scene_transition_effect = Some(
-	    effect_object::ScreenTileEffect::new(
-		ctx,
-		game_data,
-		TileBatchTextureID::TaishoStyle1,
-		numeric::Rect::new(0.0, 0.0, crate::core::WINDOW_SIZE_X as f32, crate::core::WINDOW_SIZE_Y as f32),
-		animation_time,
-		SceneTransitionEffectType::Open,
-		-128,
-		t
-	    )
-	);
+        let t = self.get_current_clock();
+        let animation_time = 30;
 
-	// self.event_list.add_event(
-	//     Box::new(move |slf: &mut ShopScene, _, _| { slf.scene_transition_effect = None; }),
-	//     animation_time + 1
-	// );
+        self.transition_scene = SceneID::SuzunaShop;
+
+        self.scene_transition_effect = Some(effect_object::ScreenTileEffect::new(
+            ctx,
+            game_data,
+            TileBatchTextureID::Suzu1,
+            numeric::Rect::new(
+                0.0,
+                0.0,
+                crate::core::WINDOW_SIZE_X as f32,
+                crate::core::WINDOW_SIZE_Y as f32,
+            ),
+            animation_time,
+            SceneTransitionEffectType::Open,
+            -128,
+            t,
+        ));
+
+        // self.event_list.add_event(
+        //     Box::new(move |slf: &mut ShopScene, _, _| { slf.scene_transition_effect = None; }),
+        //     animation_time + 1
+        // );
     }
 
     pub fn update_task_result(
@@ -1018,19 +1022,27 @@ impl ShopScene {
         self.customer_request_queue.pop_front()
     }
 
-    pub fn update_shop_clock_regular(&mut self, ctx: &mut ggez::Context, game_data: &GameData, t: Clock) {
+    pub fn update_shop_clock_regular(
+        &mut self,
+        ctx: &mut ggez::Context,
+        game_data: &GameData,
+        t: Clock,
+    ) {
         if self.get_current_clock() % 40 == 0 {
             debug::debug_screen_push_text(&format!("{}", self.shop_clock));
-            self.shop_clock.add_minute(60);
+            self.shop_clock.add_minute(2);
 
-	    if self.shop_clock.equals(12, 0) {
-		self.notification_area.insert_new_contents_generic(
-		    ctx,
-		    game_data,
-		    NotificationContentsData::new("セラ知オ".to_string(), "十二時ヲ過ギマシタ".to_string()),
-		    t
-		);
-	    }
+            if self.shop_clock.equals(12, 0) {
+                self.notification_area.insert_new_contents_generic(
+                    ctx,
+                    game_data,
+                    NotificationContentsData::new(
+                        "セラ知オ".to_string(),
+                        "十二時ヲ過ギマシタ".to_string(),
+                    ),
+                    t,
+                );
+            }
         }
     }
 
@@ -1064,15 +1076,14 @@ impl ShopScene {
     }
 
     fn notify_customer_calling(&mut self, ctx: &mut ggez::Context, game_data: &GameData, t: Clock) {
-	let notification = Box::new(
-	    notify::GeneralNotificationContents::new(
-		ctx,
-		game_data,
-		NotificationContentsData::new("セラ知オ".to_string(), "御客ガ呼ンデイマス".to_string()),
-		0
-	    )
-	);
-	self.notification_area.insert_new_contents(ctx, game_data, notification, t);
+        let notification = Box::new(notify::GeneralNotificationContents::new(
+            ctx,
+            game_data,
+            NotificationContentsData::new("セラ知オ".to_string(), "御客ガ呼ンデイマス".to_string()),
+            0,
+        ));
+        self.notification_area
+            .insert_new_contents(ctx, game_data, notification, t);
     }
 
     fn transition_to_copy_scene(&mut self) {
@@ -1225,11 +1236,11 @@ impl SceneManager for ShopScene {
                 .character_group
                 .drain_remove_if(|customer: &CustomerCharacter| customer.is_wait_on_clerk());
 
-	    // 新しく客が列に並んだら、通知をする
-	    if !rising_customers.is_empty() {
-		self.notify_customer_calling(ctx, game_data, t);
-	    }
-	    
+            // 新しく客が列に並んだら、通知をする
+            if !rising_customers.is_empty() {
+                self.notify_customer_calling(ctx, game_data, t);
+            }
+
             for customer in &mut rising_customers {
                 if let Some(request) = customer.check_rise_hand(game_data, self.today_date.clone())
                 {
@@ -1285,11 +1296,11 @@ impl SceneManager for ShopScene {
         // 暗転の描画
         self.dark_effect_panel.run_effect(ctx, t);
 
-	self.notification_area.update(ctx, game_data, t);
+        self.notification_area.update(ctx, game_data, t);
 
-	if let Some(transition_effect) = self.scene_transition_effect.as_mut() {
-	    transition_effect.effect(ctx, t);
-	}
+        if let Some(transition_effect) = self.scene_transition_effect.as_mut() {
+            transition_effect.effect(ctx, t);
+        }
 
         // select_uiなどの更新
         self.shop_special_object.run_delay_event(ctx, game_data, t);
@@ -1323,16 +1334,16 @@ impl SceneManager for ShopScene {
             scenario_box.draw(ctx).unwrap();
         }
 
-	if let Some(transition_effect) = self.scene_transition_effect.as_mut() {
-	    transition_effect.draw(ctx).unwrap();
-	}
+        if let Some(transition_effect) = self.scene_transition_effect.as_mut() {
+            transition_effect.draw(ctx).unwrap();
+        }
 
         self.dark_effect_panel.draw(ctx).unwrap();
 
         self.shop_special_object.draw(ctx).unwrap();
         self.shop_menu.draw(ctx).unwrap();
 
-	self.notification_area.draw(ctx).unwrap();
+        self.notification_area.draw(ctx).unwrap();
     }
 
     fn post_process(&mut self, _ctx: &mut ggez::Context, _: &GameData) -> SceneTransition {

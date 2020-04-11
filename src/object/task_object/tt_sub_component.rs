@@ -5,11 +5,11 @@ use std::rc::Rc;
 use ggez::graphics as ggraphics;
 
 use torifune::core::Clock;
+use torifune::graphics::drawable::*;
 use torifune::graphics::object::shadow::*;
 use torifune::graphics::object::sub_screen;
 use torifune::graphics::object::sub_screen::SubScreen;
 use torifune::graphics::object::*;
-use torifune::graphics::drawable::*;
 use torifune::hash;
 use torifune::impl_drawable_object_for_wrapped;
 use torifune::impl_texture_object_for_wrapped;
@@ -1395,7 +1395,7 @@ impl BorrowingRecordBook {
     ) -> Self {
         let pages = if let Some(book_data) = maybe_book_data.as_mut() {
             let mut pages = Vec::new();
-	    
+
             while !book_data.pages_data.is_empty() {
                 let page_data = book_data.pages_data.remove(0);
                 pages.push(BorrowingRecordBookPage::new(
@@ -1413,38 +1413,38 @@ impl BorrowingRecordBook {
             Vec::new()
         };
 
-	let mut next_page_ope = shape::DrawableShape::new(
-	    ctx,
-	    shape::Rectangle::new(
-		numeric::Rect::new(0.0, 0.0, 30.0, rect.h),
-		ggraphics::DrawMode::fill(),
-		ggraphics::Color::from_rgba_u32(0x80)
-	    ),
-	    0,
-	    ggraphics::WHITE,
-	);
+        let mut next_page_ope = shape::DrawableShape::new(
+            ctx,
+            shape::Rectangle::new(
+                numeric::Rect::new(0.0, 0.0, 30.0, rect.h),
+                ggraphics::DrawMode::fill(),
+                ggraphics::Color::from_rgba_u32(0x80),
+            ),
+            0,
+            ggraphics::WHITE,
+        );
 
-	next_page_ope.hide();
+        next_page_ope.hide();
 
-	let mut prev_page_ope = shape::DrawableShape::new(
-	    ctx,
-	    shape::Rectangle::new(
-		numeric::Rect::new(rect.w - 30.0, 0.0, 30.0, rect.h),
-		ggraphics::DrawMode::fill(),
-		ggraphics::Color::from_rgba_u32(0x80)
-	    ),
-	    0,
-	    ggraphics::WHITE,
-	);
-	
-	prev_page_ope.hide();
-	
+        let mut prev_page_ope = shape::DrawableShape::new(
+            ctx,
+            shape::Rectangle::new(
+                numeric::Rect::new(rect.w - 30.0, 0.0, 30.0, rect.h),
+                ggraphics::DrawMode::fill(),
+                ggraphics::Color::from_rgba_u32(0x80),
+            ),
+            0,
+            ggraphics::WHITE,
+        );
+
+        prev_page_ope.hide();
+
         BorrowingRecordBook {
             pages: pages,
             rect: rect,
             current_page: 0,
-	    next_page_ope_mesh: next_page_ope,
-	    prev_page_ope_mesh: prev_page_ope,
+            next_page_ope_mesh: next_page_ope,
+            prev_page_ope_mesh: prev_page_ope,
             canvas: MovableWrap::new(
                 Box::new(SubScreen::new(
                     ctx,
@@ -1639,18 +1639,18 @@ impl BorrowingRecordBook {
     }
 
     pub fn mouse_motion_handler(&mut self, point: numeric::Point2f) {
-	let rpoint = self.canvas.relative_point(point);
-	
+        let rpoint = self.canvas.relative_point(point);
+
         let next_area = numeric::Rect::new(0.0, 0.0, 30.0, self.rect.h);
         let prev_area = numeric::Rect::new(self.rect.w - 20.0, 0.0, 30.0, self.rect.h);
 
-	self.next_page_ope_mesh.hide();
-	self.prev_page_ope_mesh.hide();
-	
+        self.next_page_ope_mesh.hide();
+        self.prev_page_ope_mesh.hide();
+
         if next_area.contains(rpoint) {
-	    self.next_page_ope_mesh.appear();
+            self.next_page_ope_mesh.appear();
         } else if prev_area.contains(rpoint) {
-	    self.prev_page_ope_mesh.appear();
+            self.prev_page_ope_mesh.appear();
         }
     }
 }
@@ -1660,13 +1660,13 @@ impl DrawableComponent for BorrowingRecordBook {
     fn draw(&mut self, ctx: &mut ggez::Context) -> ggez::GameResult<()> {
         if self.is_visible() {
             sub_screen::stack_screen(ctx, &self.canvas);
-	    
+
             if self.pages.len() > 0 {
                 self.pages.get_mut(self.current_page).unwrap().draw(ctx)?;
             }
 
-	    self.prev_page_ope_mesh.draw(ctx)?;
-	    self.next_page_ope_mesh.draw(ctx)?;
+            self.prev_page_ope_mesh.draw(ctx)?;
+            self.next_page_ope_mesh.draw(ctx)?;
 
             sub_screen::pop_screen(ctx);
             self.canvas.draw(ctx).unwrap();
@@ -1901,4 +1901,3 @@ impl DeskObjectContainer {
         }
     }
 }
-

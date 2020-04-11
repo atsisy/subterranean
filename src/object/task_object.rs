@@ -12,10 +12,10 @@ use ginput::mouse::MouseCursor;
 use torifune::core::Clock;
 use torifune::debug;
 use torifune::device::VirtualKey;
+use torifune::graphics::drawable::*;
 use torifune::graphics::object::sub_screen;
 use torifune::graphics::object::sub_screen::SubScreen;
 use torifune::graphics::object::*;
-use torifune::graphics::drawable::*;
 use torifune::impl_drawable_object_for_wrapped;
 use torifune::impl_texture_object_for_wrapped;
 use torifune::numeric;
@@ -145,7 +145,7 @@ impl TaskTable {
             borrowing_record_book: record_book,
             customer_silhouette_menu: CustomerMenuGroup::new(0),
             record_book_menu: RecordBookMenuGroup::new(0),
-	    on_desk_menu: OnDeskMenuGroup::new(0),
+            on_desk_menu: OnDeskMenuGroup::new(0),
             current_customer_request: None,
             today: today_date,
         }
@@ -166,13 +166,13 @@ impl TaskTable {
     }
 
     pub fn mouse_motion_handler(
-	&mut self,
+        &mut self,
         _: &mut ggez::Context,
         _: &GameData,
         point: numeric::Point2f,
         _: numeric::Vector2f,
     ) {
-	self.borrowing_record_book.mouse_motion_handler(point);
+        self.borrowing_record_book.mouse_motion_handler(point);
     }
 
     fn slide_appear_record_book(&mut self, _ctx: &mut ggez::Context, _: &GameData, t: Clock) {
@@ -428,7 +428,7 @@ impl TaskTable {
         self.borrowing_record_book.update(t);
         self.record_book_menu.update(ctx, game_data, t);
         self.customer_silhouette_menu.update(ctx, game_data, t);
-	self.on_desk_menu.update(ctx, game_data, t);
+        self.on_desk_menu.update(ctx, game_data, t);
     }
 
     pub fn finish_customer_event(&mut self, now: Clock) {
@@ -850,19 +850,16 @@ impl TaskTable {
             return false;
         }
 
-        if let Some(index) = self
-            .on_desk_menu
-            .desk_book_menu_last_clicked()
-        {
-	    return match index {
+        if let Some(index) = self.on_desk_menu.desk_book_menu_last_clicked() {
+            return match index {
                 0 => {
                     panic!("ここに状態獲得の処理を記述する");
                 }
                 1 => {
-		    let book_info = self.on_desk_menu.get_desk_menu_target_book_info();
-		    if let Some(info) = book_info {
-			self.kosuzu_memory.add_book_info(info);
-		    }
+                    let book_info = self.on_desk_menu.get_desk_menu_target_book_info();
+                    if let Some(info) = book_info {
+                        self.kosuzu_memory.add_book_info(info);
+                    }
                     true
                 }
                 _ => false,
@@ -871,7 +868,7 @@ impl TaskTable {
 
         false
     }
-    
+
     ///
     /// book_info_frameに関するメニューを表示する
     ///
@@ -1009,7 +1006,7 @@ impl TaskTable {
             false
         }
     }
-    
+
     ///
     /// シルエットに関するメニューを表示する
     ///
@@ -1022,31 +1019,37 @@ impl TaskTable {
         click_point: numeric::Point2f,
         t: Clock,
     ) -> bool {
-	let rpoint = self.desk.canvas.relative_point(click_point);
-	
+        let rpoint = self.desk.canvas.relative_point(click_point);
+
         for dobj in self.desk.get_desk_objects_list_mut().iter_mut().rev() {
             if dobj.get_object_mut().contains(ctx, rpoint) {
                 let dobj_ref = &dobj.get_object();
                 let obj_type = dobj_ref.get_type();
                 let hold_data = dobj_ref.get_hold_data(ctx, rpoint);
 
-		match obj_type {
+                match obj_type {
                     OnDeskType::Book => match hold_data {
-			HoldData::BookName(info) => {
-			    self.on_desk_menu.show_desk_book_menu(ctx, game_data, click_point, info.clone(), t);
-			}
-			_ => panic!(""),
+                        HoldData::BookName(info) => {
+                            self.on_desk_menu.show_desk_book_menu(
+                                ctx,
+                                game_data,
+                                click_point,
+                                info.clone(),
+                                t,
+                            );
+                        }
+                        _ => panic!(""),
                     },
                     _ => (),
-		}
-		
+                }
+
                 return true;
             }
         }
 
-	false
+        false
     }
-    
+
     fn try_show_menus(
         &mut self,
         ctx: &mut ggez::Context,
@@ -1066,16 +1069,17 @@ impl TaskTable {
             return ();
         }
 
-	if self.on_desk_menu.is_some_menu_opened() {
-	    self.on_desk_menu.close_all(t);
-	    return ();
-	}
+        if self.on_desk_menu.is_some_menu_opened() {
+            self.on_desk_menu.close_all(t);
+            return ();
+        }
 
         if !self.try_show_menus_regarding_book_info(ctx, game_data, click_point, t) {
             if !self.try_show_menus_regarding_customer_info(ctx, game_data, click_point, t) {
-                if !self.try_show_menus_regarding_customer_silhoutte(ctx, game_data, click_point, t) {
-		    self.try_show_menus_regarding_ondesk_book_info(ctx, game_data, click_point, t);
-		}
+                if !self.try_show_menus_regarding_customer_silhoutte(ctx, game_data, click_point, t)
+                {
+                    self.try_show_menus_regarding_ondesk_book_info(ctx, game_data, click_point, t);
+                }
             }
         }
     }
@@ -1098,7 +1102,7 @@ impl DrawableComponent for TaskTable {
 
             self.customer_silhouette_menu.draw(ctx)?;
             self.record_book_menu.draw(ctx)?;
-	    self.on_desk_menu.draw(ctx)?;
+            self.on_desk_menu.draw(ctx)?;
 
             sub_screen::pop_screen(ctx);
             self.canvas.draw(ctx).unwrap();
@@ -1171,9 +1175,9 @@ impl Clickable for TaskTable {
             self.customer_silhouette_menu.close_all(t);
         }
 
-	if !self.on_desk_menu.is_contains_any_menus(ctx, point) {
-	    self.on_desk_menu.close_all(t);
-	}
+        if !self.on_desk_menu.is_contains_any_menus(ctx, point) {
+            self.on_desk_menu.close_all(t);
+        }
     }
 
     fn on_click(
@@ -1196,20 +1200,17 @@ impl Clickable for TaskTable {
 
         if !self.click_record_book_menu(ctx, game_data, button, rpoint, t)
             && !self.click_customer_silhouette_menu(ctx, game_data, button, rpoint, t)
-	    && !self.click_desk_book_menu(ctx, game_data, button, point, t)
+            && !self.click_desk_book_menu(ctx, game_data, button, point, t)
         {
             // メニューをクリックしていない場合に、新しいメニュー表示処理を走らせる
             self.try_show_menus(ctx, game_data, rpoint, t);
         } else {
             self.record_book_menu.close_all(t);
             self.customer_silhouette_menu.close_all(t);
-	    self.on_desk_menu.close_all(t);
+            self.on_desk_menu.close_all(t);
         }
 
-        if self
-            .desk
-            .click_handler(ctx, game_data, t, button, rpoint)
-        {
+        if self.desk.click_handler(ctx, game_data, t, button, rpoint) {
             // クリックハンドラが呼び出されたので終了
             return;
         }

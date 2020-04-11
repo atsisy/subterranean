@@ -3,10 +3,10 @@ use std::rc::Rc;
 use ggez::graphics as ggraphics;
 
 use torifune::core::{Clock, Updatable};
+use torifune::graphics::drawable::*;
 use torifune::graphics::object::sub_screen;
 use torifune::graphics::object::sub_screen::SubScreen;
 use torifune::graphics::object::*;
-use torifune::graphics::drawable::*;
 use torifune::impl_drawable_object_for_wrapped;
 use torifune::impl_texture_object_for_wrapped;
 use torifune::numeric;
@@ -267,11 +267,7 @@ where
         button: ggez::input::mouse::MouseButton,
         point: numeric::Point2f,
     ) {
-        let rpoint = self
-            .canvas
-            
-            
-            .relative_point(point);
+        let rpoint = self.canvas.relative_point(point);
         self.drawable.button_down(ctx, game_data, t, button, rpoint);
     }
 
@@ -283,11 +279,7 @@ where
         button: ggez::input::mouse::MouseButton,
         point: numeric::Point2f,
     ) {
-        let rpoint = self
-            .canvas
-            
-            
-            .relative_point(point);
+        let rpoint = self.canvas.relative_point(point);
         self.drawable.button_up(ctx, game_data, t, button, rpoint);
     }
 
@@ -299,11 +291,7 @@ where
         button: ggez::input::mouse::MouseButton,
         point: numeric::Point2f,
     ) {
-        let rpoint = self
-            .canvas
-            
-            
-            .relative_point(point);
+        let rpoint = self.canvas.relative_point(point);
         self.drawable.on_click(ctx, game_data, t, button, rpoint);
     }
 
@@ -1407,8 +1395,7 @@ impl CustomerMenuGroup {
         }
 
         if let Some(customer_question_menu) = self.customer_question_menu.as_mut() {
-            customer_question_menu
-                .on_click(ctx, game_data, t, button, point);
+            customer_question_menu.on_click(ctx, game_data, t, button, point);
             true
         } else {
             false
@@ -1432,8 +1419,7 @@ impl CustomerMenuGroup {
         }
 
         if let Some(remember_name_menu) = self.remember_name_menu.as_mut() {
-            remember_name_menu
-                .on_click(ctx, game_data, t, button, point);
+            remember_name_menu.on_click(ctx, game_data, t, button, point);
             true
         } else {
             false
@@ -1457,8 +1443,7 @@ impl CustomerMenuGroup {
         }
 
         if let Some(ok_menu) = self.text_balloon_ok_menu.as_mut() {
-            ok_menu
-                .on_click(ctx, game_data, t, button, point);
+            ok_menu.on_click(ctx, game_data, t, button, point);
             true
         } else {
             false
@@ -1477,9 +1462,7 @@ impl CustomerMenuGroup {
 
     pub fn remember_name_clicked_index(&mut self) -> Option<usize> {
         if let Some(remember_name_menu) = self.remember_name_menu.as_mut() {
-            remember_name_menu
-                .get_component()
-                .get_last_clicked_index()
+            remember_name_menu.get_component().get_last_clicked_index()
         } else {
             None
         }
@@ -1487,11 +1470,7 @@ impl CustomerMenuGroup {
 
     pub fn get_remembered_customer_name(&self) -> Option<String> {
         if let Some(remember_menu) = self.remember_name_menu.as_ref() {
-            Some(
-                remember_menu
-                    .get_component()
-                    .get_remembered_customer_name(),
-            )
+            Some(remember_menu.get_component().get_remembered_customer_name())
         } else {
             None
         }
@@ -1499,9 +1478,7 @@ impl CustomerMenuGroup {
 
     pub fn get_text_balloon_ok_index(&self) -> Option<usize> {
         if let Some(ok_menu) = self.text_balloon_ok_menu.as_ref() {
-            ok_menu
-                .get_component()
-                .get_last_clicked_index()
+            ok_menu.get_component().get_last_clicked_index()
         } else {
             None
         }
@@ -1525,8 +1502,8 @@ impl CustomerMenuGroup {
         let frame_size = question_menu.get_date_frame_size();
 
         let mut customer_question_menu_area = DropDownArea::new(
-	    ctx,
-	    numeric::Rect::new(
+            ctx,
+            numeric::Rect::new(
                 position.x,
                 position.y,
                 frame_size.x + 128.0,
@@ -1537,7 +1514,7 @@ impl CustomerMenuGroup {
             t,
         );
 
-	customer_question_menu_area.add_effect(vec![effect::fade_in(10, t)]);
+        customer_question_menu_area.add_effect(vec![effect::fade_in(10, t)]);
 
         self.customer_question_menu = Some(customer_question_menu_area);
     }
@@ -1554,36 +1531,23 @@ impl CustomerMenuGroup {
 
         let frame_size = remember_name_menu.get_date_frame_size();
 
-	let menu_size = numeric::Point2f::new(
-	    frame_size.x + 96.0,
-            frame_size.y + 40.0,
-	);
+        let menu_size = numeric::Point2f::new(frame_size.x + 96.0, frame_size.y + 40.0);
 
-	let menu_rect = if (position.y + menu_size.y) as i16 <= core::WINDOW_SIZE_Y {
-	    numeric::Rect::new(
-		position.x,
-		position.y,
-		menu_size.x,
-		menu_size.y
+        let menu_rect = if (position.y + menu_size.y) as i16 <= core::WINDOW_SIZE_Y {
+            numeric::Rect::new(position.x, position.y, menu_size.x, menu_size.y)
+        } else {
+            numeric::Rect::new(
+                position.x,
+                position.y - menu_size.y,
+                menu_size.x,
+                menu_size.y,
             )
-	} else {
-	    numeric::Rect::new(
-		position.x,
-		position.y - menu_size.y,
-		menu_size.x,
-		menu_size.y
-            )
-	};
+        };
 
-        let mut remember_name_menu_area = RememberCustomerNameDropMenu::new(
-            ctx,
-	    menu_rect,
-            0,
-            remember_name_menu,
-            t,
-        );
+        let mut remember_name_menu_area =
+            RememberCustomerNameDropMenu::new(ctx, menu_rect, 0, remember_name_menu, t);
 
-	remember_name_menu_area.add_effect(vec![effect::fade_in(10, t)]);
+        remember_name_menu_area.add_effect(vec![effect::fade_in(10, t)]);
 
         self.remember_name_menu = Some(remember_name_menu_area);
     }
@@ -1612,7 +1576,7 @@ impl CustomerMenuGroup {
             t,
         );
 
-	ok_menu_area.add_effect(vec![effect::fade_in(10, t)]);
+        ok_menu_area.add_effect(vec![effect::fade_in(10, t)]);
 
         self.text_balloon_ok_menu = Some(ok_menu_area);
     }
@@ -1835,8 +1799,7 @@ impl RecordBookMenuGroup {
         }
 
         if let Some(book_status_menu) = self.book_status_menu.as_mut() {
-            book_status_menu
-                .on_click(ctx, game_data, t, button, point);
+            book_status_menu.on_click(ctx, game_data, t, button, point);
             true
         } else {
             false
@@ -1860,8 +1823,7 @@ impl RecordBookMenuGroup {
         }
 
         if let Some(book_title_menu) = self.book_title_menu.as_mut() {
-            book_title_menu
-                .on_click(ctx, game_data, t, button, point);
+            book_title_menu.on_click(ctx, game_data, t, button, point);
             true
         } else {
             false
@@ -1885,8 +1847,7 @@ impl RecordBookMenuGroup {
         }
 
         if let Some(customer_name_menu) = self.customer_name_menu.as_mut() {
-            customer_name_menu
-                .on_click(ctx, game_data, t, button, point);
+            customer_name_menu.on_click(ctx, game_data, t, button, point);
             true
         } else {
             false
@@ -1910,8 +1871,7 @@ impl RecordBookMenuGroup {
         }
 
         if let Some(date_menu) = self.date_menu.as_mut() {
-            date_menu
-                .on_click(ctx, game_data, t, button, point);
+            date_menu.on_click(ctx, game_data, t, button, point);
             true
         } else {
             false
@@ -1920,9 +1880,7 @@ impl RecordBookMenuGroup {
 
     pub fn book_status_menu_last_clicked(&mut self) -> Option<usize> {
         if let Some(book_status_menu) = self.book_status_menu.as_mut() {
-            book_status_menu
-                .get_component()
-                .get_last_clicked()
+            book_status_menu.get_component().get_last_clicked()
         } else {
             None
         }
@@ -1930,8 +1888,7 @@ impl RecordBookMenuGroup {
 
     pub fn book_title_menu_last_clicked(&mut self) -> Option<(usize, BookInformation)> {
         if let Some(book_title_menu) = self.book_title_menu.as_mut() {
-            let component = book_title_menu
-                .get_component();
+            let component = book_title_menu.get_component();
             if let Some(index) = component.get_last_clicked_index() {
                 Some((index, component.get_last_clicked_book_info().unwrap()))
             } else {
@@ -1944,8 +1901,7 @@ impl RecordBookMenuGroup {
 
     pub fn customer_name_menu_last_clicked(&mut self) -> Option<(usize, String)> {
         if let Some(customer_name_menu) = self.customer_name_menu.as_mut() {
-            let component = customer_name_menu
-                .get_component();
+            let component = customer_name_menu.get_component();
             if let Some(index) = component.get_last_clicked_index() {
                 Some((index, component.get_last_clicked_customer_name().unwrap()))
             } else {
@@ -1958,8 +1914,7 @@ impl RecordBookMenuGroup {
 
     pub fn date_menu_last_clicked(&mut self) -> Option<(usize, GensoDate)> {
         if let Some(date_menu) = self.date_menu.as_mut() {
-            let component = date_menu
-                .get_component();
+            let component = date_menu.get_component();
             if let Some(index) = component.get_last_clicked_index() {
                 Some((index, component.get_last_clicked_genso_date().unwrap()))
             } else {
@@ -2005,8 +1960,8 @@ impl RecordBookMenuGroup {
             t,
         );
 
-	button_group_area.add_effect(vec![effect::fade_in(10, t)]);
-	
+        button_group_area.add_effect(vec![effect::fade_in(10, t)]);
+
         self.book_status_menu = Some(button_group_area);
     }
 
@@ -2023,39 +1978,25 @@ impl RecordBookMenuGroup {
 
         let frame_size = book_title_menu.get_title_frame_size();
 
-	let menu_size = numeric::Point2f::new(
-	    frame_size.x + 128.0,
-            frame_size.y + 64.0,
-	);
+        let menu_size = numeric::Point2f::new(frame_size.x + 128.0, frame_size.y + 64.0);
 
-	let menu_rect = if (position.y + menu_size.y) as i16 <= core::WINDOW_SIZE_Y {
-	    numeric::Rect::new(
-		position.x,
-		position.y,
-		menu_size.x,
-		menu_size.y
+        let menu_rect = if (position.y + menu_size.y) as i16 <= core::WINDOW_SIZE_Y {
+            numeric::Rect::new(position.x, position.y, menu_size.x, menu_size.y)
+        } else {
+            numeric::Rect::new(
+                position.x,
+                position.y - menu_size.y,
+                menu_size.x,
+                menu_size.y,
             )
-	} else {
-	    numeric::Rect::new(
-		position.x,
-		position.y - menu_size.y,
-		menu_size.x,
-		menu_size.y
-            )
-	};
-	
-        let mut book_title_menu_area = DropDownArea::new(
-            ctx,
-            menu_rect,
-            0,
-            book_title_menu,
-            t,
-        );
-	book_title_menu_area.add_effect(vec![effect::fade_in(10, t)]);
-	
+        };
+
+        let mut book_title_menu_area = DropDownArea::new(ctx, menu_rect, 0, book_title_menu, t);
+        book_title_menu_area.add_effect(vec![effect::fade_in(10, t)]);
+
         self.book_title_menu = Some(book_title_menu_area);
     }
-    
+
     pub fn show_customer_name_menu(
         &mut self,
         ctx: &mut ggez::Context,
@@ -2069,36 +2010,23 @@ impl RecordBookMenuGroup {
 
         let frame_size = customer_name_menu.get_name_frame_size();
 
-	let menu_size = numeric::Point2f::new(
-	    frame_size.x + 96.0,
-            frame_size.y + 40.0,
-	);
-	
-	let menu_rect = if (position.y + menu_size.y) as i16 <= core::WINDOW_SIZE_Y {
-	    numeric::Rect::new(
-		position.x,
-		position.y,
-		menu_size.x,
-		menu_size.y
-            )
-	} else {
-	    numeric::Rect::new(
-		position.x,
-		position.y - menu_size.y,
-		menu_size.x,
-		menu_size.y
-            )
-	};
+        let menu_size = numeric::Point2f::new(frame_size.x + 96.0, frame_size.y + 40.0);
 
-        let mut customer_name_menu_area = DropDownArea::new(
-            ctx,
-	    menu_rect,
-            0,
-            customer_name_menu,
-            t,
-        );
-	customer_name_menu_area.add_effect(vec![effect::fade_in(10, t)]);
-	
+        let menu_rect = if (position.y + menu_size.y) as i16 <= core::WINDOW_SIZE_Y {
+            numeric::Rect::new(position.x, position.y, menu_size.x, menu_size.y)
+        } else {
+            numeric::Rect::new(
+                position.x,
+                position.y - menu_size.y,
+                menu_size.x,
+                menu_size.y,
+            )
+        };
+
+        let mut customer_name_menu_area =
+            DropDownArea::new(ctx, menu_rect, 0, customer_name_menu, t);
+        customer_name_menu_area.add_effect(vec![effect::fade_in(10, t)]);
+
         self.customer_name_menu = Some(customer_name_menu_area);
     }
 
@@ -2114,36 +2042,21 @@ impl RecordBookMenuGroup {
 
         let frame_size = date_menu.get_date_frame_size();
 
-	let menu_size = numeric::Point2f::new(
-	    frame_size.x + 96.0,
-            frame_size.y + 20.0,
-	);
+        let menu_size = numeric::Point2f::new(frame_size.x + 96.0, frame_size.y + 20.0);
 
-	let menu_rect = if (position.y + menu_size.y) as i16 <= core::WINDOW_SIZE_Y {
-	    numeric::Rect::new(
-		position.x,
-		position.y,
-		menu_size.x,
-		menu_size.y
+        let menu_rect = if (position.y + menu_size.y) as i16 <= core::WINDOW_SIZE_Y {
+            numeric::Rect::new(position.x, position.y, menu_size.x, menu_size.y)
+        } else {
+            numeric::Rect::new(
+                position.x,
+                position.y - menu_size.y,
+                menu_size.x,
+                menu_size.y,
             )
-	} else {
-	    numeric::Rect::new(
-		position.x,
-		position.y - menu_size.y,
-		menu_size.x,
-		menu_size.y
-            )
-	};
-	
+        };
 
-        let mut date_menu_area = DropDownArea::new(
-            ctx,
-	    menu_rect,
-            0,
-            date_menu,
-            t,
-        );
-	date_menu_area.add_effect(vec![effect::fade_in(10, t)]);
+        let mut date_menu_area = DropDownArea::new(ctx, menu_rect, 0, date_menu, t);
+        date_menu_area.add_effect(vec![effect::fade_in(10, t)]);
 
         self.date_menu = Some(date_menu_area);
     }
@@ -2354,11 +2267,11 @@ pub struct OnDeskMenuGroup {
 
 impl OnDeskMenuGroup {
     pub fn new(drawing_depth: i8) -> Self {
-	OnDeskMenuGroup {
-	    event_list: DelayEventList::new(),
-	    desk_book_menu: None,
-	    drwob_essential: DrawableObjectEssential::new(true, drawing_depth),
-	}
+        OnDeskMenuGroup {
+            event_list: DelayEventList::new(),
+            desk_book_menu: None,
+            drwob_essential: DrawableObjectEssential::new(true, drawing_depth),
+        }
     }
 
     pub fn is_some_menu_opened(&self) -> bool {
@@ -2380,8 +2293,7 @@ impl OnDeskMenuGroup {
         ctx: &mut ggez::Context,
         point: numeric::Point2f,
     ) -> bool {
-        self.desk_book_menu.is_some()
-            && self.desk_book_menu.as_ref().unwrap().contains(ctx, point)
+        self.desk_book_menu.is_some() && self.desk_book_menu.as_ref().unwrap().contains(ctx, point)
     }
 
     pub fn is_contains_any_menus(&self, ctx: &mut ggez::Context, point: numeric::Point2f) -> bool {
@@ -2413,8 +2325,7 @@ impl OnDeskMenuGroup {
         }
 
         if let Some(desk_book_menu) = self.desk_book_menu.as_mut() {
-            desk_book_menu
-                .on_click(ctx, game_data, t, button, point);
+            desk_book_menu.on_click(ctx, game_data, t, button, point);
             true
         } else {
             false
@@ -2423,18 +2334,16 @@ impl OnDeskMenuGroup {
 
     pub fn desk_book_menu_last_clicked(&mut self) -> Option<usize> {
         if let Some(desk_book_menu) = self.desk_book_menu.as_mut() {
-            desk_book_menu
-                .get_component()
-                .get_last_clicked()
+            desk_book_menu.get_component().get_last_clicked()
         } else {
             None
         }
     }
 
     pub fn close_all(&mut self, t: Clock) {
-	self.close_desk_book_menu(t);
+        self.close_desk_book_menu(t);
     }
-    
+
     pub fn show_desk_book_menu(
         &mut self,
         ctx: &mut ggez::Context,
@@ -2451,36 +2360,22 @@ impl OnDeskMenuGroup {
             0,
         );
 
-	let frame_size = menu.get_date_frame_size();
+        let frame_size = menu.get_date_frame_size();
 
-	let menu_size = numeric::Point2f::new(
-	    frame_size.x + 96.0,
-            frame_size.y + 40.0,
-	);
+        let menu_size = numeric::Point2f::new(frame_size.x + 96.0, frame_size.y + 40.0);
 
-	let menu_rect = if (position.y + menu_size.y) as i16 <= core::WINDOW_SIZE_Y {
-	    numeric::Rect::new(
-		position.x,
-		position.y,
-		menu_size.x,
-		menu_size.y
+        let menu_rect = if (position.y + menu_size.y) as i16 <= core::WINDOW_SIZE_Y {
+            numeric::Rect::new(position.x, position.y, menu_size.x, menu_size.y)
+        } else {
+            numeric::Rect::new(
+                position.x,
+                position.y - menu_size.y,
+                menu_size.x,
+                menu_size.y,
             )
-	} else {
-	    numeric::Rect::new(
-		position.x,
-		position.y - menu_size.y,
-		menu_size.x,
-		menu_size.y
-            )
-	};
+        };
 
-        let mut dd_area = DropDownArea::new(
-            ctx,
-	    menu_rect,
-            0,
-            menu,
-            t,
-        );
+        let mut dd_area = DropDownArea::new(ctx, menu_rect, 0, menu, t);
 
         dd_area.add_effect(vec![effect::fade_in(10, t)]);
 
@@ -2490,20 +2385,24 @@ impl OnDeskMenuGroup {
     pub fn update(&mut self, ctx: &mut ggez::Context, game_data: &GameData, t: Clock) {
         flush_delay_event!(self, self.event_list, ctx, game_data, t);
 
-	if let Some(desk_book_menu) = self.desk_book_menu.as_mut() {
-	    desk_book_menu.move_with_func(t);
-	    desk_book_menu.effect(ctx, t);
-	}
+        if let Some(desk_book_menu) = self.desk_book_menu.as_mut() {
+            desk_book_menu.move_with_func(t);
+            desk_book_menu.effect(ctx, t);
+        }
     }
 
     pub fn get_desk_menu_target_book_info(&self) -> Option<BookInformation> {
-	if self.desk_book_menu.is_some() {
-	    Some(
-		self.desk_book_menu.as_ref().unwrap().get_component().get_target_book_info()
-	    )
-	} else {
-	    None
-	}
+        if self.desk_book_menu.is_some() {
+            Some(
+                self.desk_book_menu
+                    .as_ref()
+                    .unwrap()
+                    .get_component()
+                    .get_target_book_info(),
+            )
+        } else {
+            None
+        }
     }
 }
 

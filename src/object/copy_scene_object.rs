@@ -5,12 +5,12 @@ use ggez::graphics as ggraphics;
 
 use torifune::debug;
 use torifune::distance;
+use torifune::graphics::drawable::*;
 use torifune::graphics::object::shape;
 use torifune::graphics::object::shape::*;
 use torifune::graphics::object::sub_screen;
 use torifune::graphics::object::sub_screen::SubScreen;
 use torifune::graphics::object::*;
-use torifune::graphics::drawable::*;
 use torifune::impl_drawable_object_for_wrapped;
 use torifune::impl_texture_object_for_wrapped;
 use torifune::numeric;
