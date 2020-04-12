@@ -10,7 +10,7 @@ use torifune::impl_drawable_object_for_wrapped;
 use torifune::impl_texture_object_for_wrapped;
 use torifune::numeric;
 
-use crate::core::{FontID, GameData};
+use crate::core::{FontID, GameData, GensoDate};
 use crate::object::effect;
 use crate::scene::suzuna_scene::TaskResult;
 
@@ -31,6 +31,7 @@ impl DrawableTaskResult {
         rect_pos: numeric::Rect,
         task_result: TaskResult,
         background: SimpleObject,
+	date: GensoDate,
         t: Clock,
     ) -> Self {
         let font_info = FontInformation::new(
@@ -43,7 +44,7 @@ impl DrawableTaskResult {
         let mut title_text = EffectableWrap::new(
             MovableWrap::new(
                 Box::new(VerticalText::new(
-                    "お仕事結果".to_string(),
+                    format!("{}のお仕事結果", date.to_string()),
                     numeric::Point2f::new(800.0, 100.0),
                     numeric::Vector2f::new(1.0, 1.0),
                     0.0,

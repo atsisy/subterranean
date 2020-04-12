@@ -43,6 +43,7 @@ texture_paths = [
 	      "/textures/menu_art2.png",]
 font_paths = ["/fonts/azuki.ttf", "/fonts/RiiT_F.ttf"]
 tileset_paths = ["./resources/maps/suzunaan/suzuna1.tmx"]
+scenario_table_path = "./resources/scenario_table.toml"
 customers_name = ["霧雨魔里沙", "稗田阿求"]
 
 [[map_information]]

@@ -127,16 +127,17 @@ pub struct SuzunaSubScene {
     borrowing_record_book_data: Option<BorrowingRecordBookData>,
     returning_request_pool: ReturningRequestPool,
     suzuna_book_pool: SuzunaBookPool,
+    date: GensoDate,
 }
 
 impl SuzunaSubScene {
-    pub fn new(ctx: &mut ggez::Context, game_data: &GameData, map_id: u32) -> Self {
+    pub fn new(ctx: &mut ggez::Context, game_data: &GameData, map_id: u32, date: GensoDate) -> Self {
         SuzunaSubScene {
             shop_scene: Some(Box::new(ShopScene::new(
                 ctx,
                 game_data,
                 map_id,
-                GensoDate::new_empty(),
+		date.clone(),
             ))),
             desk_work_scene: None,
             day_result_scene: None,
@@ -145,9 +146,10 @@ impl SuzunaSubScene {
             borrowing_record_book_data: None,
             returning_request_pool: ReturningRequestPool::new(
                 game_data,
-                GensoDate::new(12, 12, 12),
+                date.clone(),
             ),
             suzuna_book_pool: SuzunaBookPool::new(game_data),
+	    date: date,
         }
     }
 
@@ -225,7 +227,7 @@ impl SuzunaSubScene {
             let task_result = self.shop_scene.as_mut().unwrap().current_task_result();
             self.scene_status = SuzunaSceneStatus::DayResult;
             self.day_result_scene =
-                Some(Box::new(TaskResultScene::new(ctx, game_data, task_result)));
+                Some(Box::new(TaskResultScene::new(ctx, game_data, task_result, self.date.clone())));
         }
     }
 

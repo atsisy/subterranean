@@ -2,7 +2,7 @@ use torifune::core::Clock;
 use torifune::device as tdev;
 use torifune::numeric;
 
-use crate::core::GameData;
+use crate::core::{GameData, GensoDate};
 
 use crate::object::scenario::*;
 use crate::object::simulation_ui as sui;
@@ -18,11 +18,13 @@ pub struct ScenarioScene {
 }
 
 impl ScenarioScene {
-    pub fn new(ctx: &mut ggez::Context, game_data: &GameData) -> Self {
+    pub fn new(ctx: &mut ggez::Context, game_data: &GameData, date: GensoDate) -> Self {
+	let file_path = game_data.get_day_scenario_path(&date).expect("BUG");
+	
         let scenario = ScenarioEvent::new(
             ctx,
             numeric::Rect::new(0.0, 180.0, 1366.0, 600.0),
-            "./resources/scenario_parsing_test.toml",
+	    &file_path,
             game_data,
             0,
         );

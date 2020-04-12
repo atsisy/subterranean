@@ -7,7 +7,7 @@ use torifune::debug;
 use torifune::device::VirtualKey;
 use torifune::numeric;
 
-use crate::core::{BookInformation, GameData};
+use crate::core::{BookInformation, GameData, GensoDate};
 use crate::scene::*;
 
 use crate::object::task_object::tt_sub_component::CopyingRequestInformation;
@@ -65,10 +65,10 @@ pub struct SuzunaScene {
 }
 
 impl SuzunaScene {
-    pub fn new(ctx: &mut ggez::Context, game_data: &GameData, suzuna_map_id: u32) -> Self {
+    pub fn new(ctx: &mut ggez::Context, game_data: &GameData, suzuna_map_id: u32, today: GensoDate) -> Self {
         SuzunaScene {
             clock: 0,
-            sub_scene: SuzunaSubScene::new(ctx, game_data, suzuna_map_id),
+            sub_scene: SuzunaSubScene::new(ctx, game_data, suzuna_map_id, today),
             task_result: TaskResult::new(),
         }
     }

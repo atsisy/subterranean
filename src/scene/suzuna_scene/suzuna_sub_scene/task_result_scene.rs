@@ -27,7 +27,7 @@ pub struct TaskResultScene {
 }
 
 impl TaskResultScene {
-    pub fn new(ctx: &mut ggez::Context, game_data: &GameData, task_result: TaskResult) -> Self {
+    pub fn new(ctx: &mut ggez::Context, game_data: &GameData, task_result: TaskResult, date: GensoDate) -> Self {
         let mut background_object = MovableUniTexture::new(
             game_data.ref_texture(TextureID::Paper1),
             numeric::Point2f::new(0.0, 0.0),
@@ -87,6 +87,7 @@ impl TaskResultScene {
                 numeric::Rect::new(0.0, 0.0, 1366.0, 768.0),
                 task_result.clone(),
                 SimpleObject::new(background_object, Vec::new()),
+		date,
                 0,
             ),
             ok_button: ok_button,

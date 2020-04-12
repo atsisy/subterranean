@@ -243,7 +243,7 @@ impl BookInformation {
     }
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct GensoDate {
     pub season: u32,
     pub month: u8,
@@ -332,6 +332,7 @@ pub struct RawConfigFile {
     books_information: Vec<BookInformation>,
     map_information: Vec<MapConstractData>,
     sprite_batch_information: Vec<SpriteBatchData>,
+    scenario_table_path: String,
 }
 
 impl RawConfigFile {
@@ -356,6 +357,50 @@ pub struct GameData {
     customers_name: Vec<String>,
     books_information: Vec<BookInformation>,
     map_data: Vec<MapConstractData>,
+    scenario_table: ScenarioTable,
+}
+
+
+pub struct ScenarioTable {
+    scenario_table: HashMap<GensoDate, String>,
+}
+
+impl ScenarioTable {
+    pub fn new(table_toml_path: &str) -> Self {
+	let mut table = HashMap::new();
+	
+	let content = match std::fs::read_to_string(table_toml_path) {
+            Ok(c) => c,
+            Err(_) => panic!("Failed to read: {}", table_toml_path),
+        };
+	let root = content.parse::<toml::Value>().unwrap();
+        let array = root["scenario-table"].as_array().unwrap();
+	
+	for elem in array {
+            let date_data = elem.get("date").unwrap().as_table().unwrap();
+	    let genso_date = GensoDate::new(
+		date_data.get("season").unwrap().as_integer().unwrap() as u32,
+		date_data.get("month").unwrap().as_integer().unwrap() as u8,
+		date_data.get("day").unwrap().as_integer().unwrap() as u8,
+	    );
+
+	    let path = elem.get("path").unwrap().as_str().unwrap();
+
+	    table.insert(genso_date, path.to_string());
+        }
+
+	ScenarioTable {
+	    scenario_table: table,
+	}
+    }
+
+    pub fn get_day_scenario_path(&self, date: &GensoDate) -> Option<String> {
+	if let Some(s) = self.scenario_table.get(&date) {
+	    Some(s.to_string())
+	} else {
+	    None
+	}
+    }
 }
 
 impl GameData {
@@ -389,9 +434,8 @@ impl GameData {
             println!(" done!");
         }
 
-        println!("{:?}", src_file.books_information);
-        println!("{:?}", src_file.map_information);
-
+	let scenario_table = ScenarioTable::new(&src_file.scenario_table_path);
+	
         GameData {
             textures: textures,
             fonts: fonts,
@@ -399,6 +443,7 @@ impl GameData {
             customers_name: src_file.customers_name,
             books_information: src_file.books_information,
             map_data: src_file.map_information,
+	    scenario_table: scenario_table,
         }
     }
 
@@ -454,6 +499,10 @@ impl GameData {
         } else {
             panic!("Unknown TileBatchTexture ID: {}", id as i32)
         }
+    }
+
+    pub fn get_day_scenario_path(&self, date: &GensoDate) -> Option<String> {
+	self.scenario_table.get_day_scenario_path(date)
     }
 }
 
@@ -623,6 +672,7 @@ struct SceneController<'a> {
     key_map: tdev::ProgramableGenericKey,
     global_clock: u64,
     root_screen: SubScreen,
+    date: GensoDate,
 }
 
 impl<'a> SceneController<'a> {
@@ -651,15 +701,18 @@ impl<'a> SceneController<'a> {
             ),
         );
 
+	let date = GensoDate::new(112, 7, 23);
+
         SceneController {
             //current_scene: Box::new(scene::work_scene::WorkScene::new(ctx, game_data, 0)),
-            current_scene: Box::new(scene::scenario_scene::ScenarioScene::new(ctx, game_data)),
+            current_scene: Box::new(scene::scenario_scene::ScenarioScene::new(ctx, game_data, date.clone())),
             //current_scene: Box::new(scene::shop_scene::ShopScene::new(ctx, game_data, 0)),
             //current_scene: Box::new(scene::suzuna_scene::SuzunaScene::new(ctx, game_data, 0)),
             scene_stack: SceneStack::new(),
             key_map: tdev::ProgramableGenericKey::new(),
             global_clock: 0,
             root_screen: root_screen,
+	    date: date,
         }
     }
 
@@ -672,11 +725,11 @@ impl<'a> SceneController<'a> {
         match next_scene_id {
             scene::SceneID::SuzunaShop => {
                 self.current_scene =
-                    Box::new(scene::suzuna_scene::SuzunaScene::new(ctx, game_data, 0))
+                    Box::new(scene::suzuna_scene::SuzunaScene::new(ctx, game_data, 0, self.date.clone()))
             }
             scene::SceneID::Scenario => {
                 self.current_scene =
-                    Box::new(scene::scenario_scene::ScenarioScene::new(ctx, game_data))
+                    Box::new(scene::scenario_scene::ScenarioScene::new(ctx, game_data, self.date.clone()))
             }
             scene::SceneID::Null => self.current_scene = Box::new(scene::NullScene::new()),
             _ => (),
