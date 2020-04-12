@@ -8,10 +8,12 @@ use torifune::graphics::object::*;
 
 use super::super::*;
 
-use crate::core::{GameData, MouseInformation, TextureID};
+use crate::core::{GameData, MouseInformation, TextureID, TileBatchTextureID};
 use crate::object::task_result_object::*;
 use crate::object::util_object::SelectButton;
 use crate::scene::{SceneID, SceneTransition};
+use crate::object::effect_object;
+use crate::flush_delay_event;
 
 pub struct TaskResultScene {
     clock: Clock,
@@ -21,6 +23,7 @@ pub struct TaskResultScene {
     ok_button: SelectButton,
     scene_transition_status: SceneTransition,
     transition_scene: SceneID,
+    scene_transition_effect: Option<effect_object::ScreenTileEffect>,
 }
 
 impl TaskResultScene {
@@ -55,10 +58,29 @@ impl TaskResultScene {
             )),
         );
 
+	let scene_transition = Some(effect_object::ScreenTileEffect::new(
+            ctx,
+            game_data,
+            TileBatchTextureID::Suzu1,
+            numeric::Rect::new(
+                0.0,
+                0.0,
+                crate::core::WINDOW_SIZE_X as f32,
+                crate::core::WINDOW_SIZE_Y as f32,
+            ),
+            30,
+            effect_object::SceneTransitionEffectType::Open,
+            -128,
+            0,
+        ));
+
+	let mut event_list = DelayEventList::new();
+	event_list.add_event(Box::new(move |slf: &mut Self, _, _| { slf.scene_transition_effect = None; }), 31);
+	
         TaskResultScene {
             clock: 0,
             mouse_info: MouseInformation::new(),
-            event_list: DelayEventList::new(),
+            event_list: event_list,
             drawable_task_result: DrawableTaskResult::new(
                 ctx,
                 game_data,
@@ -70,29 +92,29 @@ impl TaskResultScene {
             ok_button: ok_button,
             scene_transition_status: SceneTransition::Keep,
             transition_scene: SceneID::DayResult,
+	    scene_transition_effect: scene_transition,
         }
     }
 
-    ///
-    /// 遅延処理を走らせるメソッド
-    ///
-    fn run_scene_event(&mut self, ctx: &mut ggez::Context, game_data: &GameData, t: Clock) {
-        // 最後の要素の所有権を移動
-        while let Some(event) = self.event_list.move_top() {
-            // 時間が来ていない場合は、取り出した要素をリストに戻して処理ループを抜ける
-            if event.run_time > t {
-                self.event_list.add(event);
-                break;
-            }
-
-            // 所有権を移動しているため、selfを渡してもエラーにならない
-            (event.func)(self, ctx, game_data);
-        }
-    }
-
-    fn ready_to_finish_scene(&mut self) {
+    fn ready_to_finish_scene(&mut self, ctx: &mut ggez::Context, game_data: &GameData, t: Clock) {
         self.transition_scene = SceneID::Scenario;
         self.scene_transition_status = SceneTransition::SwapTransition;
+
+        self.scene_transition_effect = Some(effect_object::ScreenTileEffect::new(
+            ctx,
+            game_data,
+            TileBatchTextureID::Suzu1,
+            numeric::Rect::new(
+                0.0,
+                0.0,
+                crate::core::WINDOW_SIZE_X as f32,
+                crate::core::WINDOW_SIZE_Y as f32,
+            ),
+            30,
+            effect_object::SceneTransitionEffectType::Close,
+            -128,
+            t,
+        ));
     }
 }
 
@@ -101,14 +123,8 @@ impl SceneManager for TaskResultScene {
         &mut self,
         _ctx: &mut ggez::Context,
         _game_data: &GameData,
-        vkey: tdev::VirtualKey,
+        _vkey: tdev::VirtualKey,
     ) {
-        match vkey {
-            tdev::VirtualKey::Action1 => {
-                self.ready_to_finish_scene();
-            }
-            _ => (),
-        }
     }
 
     fn key_up_event(
@@ -160,13 +176,15 @@ impl SceneManager for TaskResultScene {
     fn mouse_button_up_event(
         &mut self,
         ctx: &mut ggez::Context,
-        _: &GameData,
+        game_data: &GameData,
         button: MouseButton,
         point: numeric::Point2f,
     ) {
+	let t = self.get_current_clock();
+	
         if self.ok_button.contains(ctx, point) {
             self.ok_button.release();
-            self.ready_to_finish_scene();
+	    self.ready_to_finish_scene(ctx, game_data, t);
         }
 
         self.mouse_info.update_dragging(button, false);
@@ -175,14 +193,25 @@ impl SceneManager for TaskResultScene {
     }
 
     fn pre_process(&mut self, ctx: &mut ggez::Context, game_data: &GameData) {
-        self.run_scene_event(ctx, game_data, self.get_current_clock());
+	let t = self.get_current_clock();
+	
+	flush_delay_event!(self, self.event_list, ctx, game_data, t);
+	
         self.drawable_task_result
             .effect(ctx, self.get_current_clock());
+
+	if let Some(effect) = self.scene_transition_effect.as_mut() {
+	    effect.effect(ctx, t);
+	}
     }
 
     fn drawing_process(&mut self, ctx: &mut ggez::Context) {
         self.drawable_task_result.draw(ctx).unwrap();
         self.ok_button.draw(ctx).unwrap();
+
+	if let Some(effect) = self.scene_transition_effect.as_mut() {
+	    effect.draw(ctx).unwrap();
+	}
     }
 
     fn post_process(&mut self, _ctx: &mut ggez::Context, _: &GameData) -> SceneTransition {

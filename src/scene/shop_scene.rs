@@ -787,6 +787,24 @@ impl ShopScene {
         }
     }
 
+    fn scene_transition_close_effect(&mut self, ctx: &mut ggez::Context, game_data: &GameData, t: Clock) {
+	self.scene_transition_effect = Some(effect_object::ScreenTileEffect::new(
+            ctx,
+            game_data,
+            TileBatchTextureID::Suzu1,
+            numeric::Rect::new(
+                0.0,
+                0.0,
+                crate::core::WINDOW_SIZE_X as f32,
+                crate::core::WINDOW_SIZE_Y as f32,
+            ),
+            60,
+            SceneTransitionEffectType::Close,
+            -128,
+            t,
+        ));
+    }
+    
     fn check_event_panel_onmap(
         &mut self,
         ctx: &mut ggez::Context,
@@ -846,21 +864,7 @@ impl ShopScene {
                             t + 31,
                         );
 
-                        self.scene_transition_effect = Some(effect_object::ScreenTileEffect::new(
-                            ctx,
-                            game_data,
-                            TileBatchTextureID::Suzu1,
-                            numeric::Rect::new(
-                                0.0,
-                                0.0,
-                                crate::core::WINDOW_SIZE_X as f32,
-                                crate::core::WINDOW_SIZE_Y as f32,
-                            ),
-                            30,
-                            SceneTransitionEffectType::Close,
-                            -128,
-                            t,
-                        ));
+			self.scene_transition_close_effect(ctx, game_data, t);
                     }
                 }
                 MapEventElement::BookStoreEvent(book_store_event) => {
@@ -1030,7 +1034,7 @@ impl ShopScene {
     ) {
         if self.get_current_clock() % 40 == 0 {
             debug::debug_screen_push_text(&format!("{}", self.shop_clock));
-            self.shop_clock.add_minute(2);
+            self.shop_clock.add_minute(30);
 
             if self.shop_clock.equals(12, 0) {
                 self.notification_area.insert_new_contents_generic(
@@ -1046,11 +1050,18 @@ impl ShopScene {
         }
     }
 
-    pub fn check_shop_clock_regular(&mut self) {
-        if self.shop_clock.is_past(18, 0) {
-            self.transition_status = SceneTransition::SwapTransition;
-            self.transition_scene = SceneID::DayResult;
-            debug::debug_screen_push_text("Today's work is done");
+    pub fn check_shop_clock_regular(&mut self, ctx: &mut ggez::Context, game_data: &GameData, t: Clock) {
+        if self.shop_clock.equals(18, 0) {
+
+	    self.event_list.add_event(
+                Box::new(move |slf: &mut Self, _, _| {
+		    slf.transition_status = SceneTransition::SwapTransition;
+		    slf.transition_scene = SceneID::DayResult;
+		}),
+		t + 120,
+            );
+	    
+	    self.scene_transition_close_effect(ctx, game_data, t);
         }
     }
 
@@ -1291,7 +1302,7 @@ impl SceneManager for ShopScene {
 
         // 時刻の更新
         self.update_shop_clock_regular(ctx, game_data, t);
-        self.check_shop_clock_regular();
+        self.check_shop_clock_regular(ctx, game_data, t);
 
         // 暗転の描画
         self.dark_effect_panel.run_effect(ctx, t);
