@@ -39,6 +39,29 @@ extern crate num;
 pub const WINDOW_SIZE_X: i16 = 1366;
 pub const WINDOW_SIZE_Y: i16 = 768;
 
+pub struct InitialDisplay {
+    texture: Vec<ggraphics::Image>,
+    index: usize,
+}
+
+impl InitialDisplay {
+    pub fn new(ctx: &mut ggez::Context) -> Self {
+	InitialDisplay {
+	    texture: vec![ggraphics::Image::new(ctx, "/textures/sumire_logo.png").unwrap()],
+	    index: 0,
+	}
+    }
+
+    pub fn draw(&self, ctx: &mut ggez::Context) {	
+	ggraphics::clear(ctx, [0.0, 0.0, 0.0, 0.0].into());
+	let texture = self.texture.get(self.index);
+	
+	ggraphics::draw(ctx, texture.unwrap(), ggraphics::DrawParam::default()).unwrap();
+	
+        ggraphics::present(ctx).unwrap();
+    }
+}
+
 fn read_whole_file(path: String) -> Result<String, String> {
     let mut file_content = String::new();
 
@@ -290,6 +313,48 @@ impl GensoDate {
     }
 }
 
+pub struct ScenarioTable {
+    scenario_table: HashMap<GensoDate, String>,
+}
+
+impl ScenarioTable {
+    pub fn new(table_toml_path: &str) -> Self {
+	let mut table = HashMap::new();
+	
+	let content = match std::fs::read_to_string(table_toml_path) {
+            Ok(c) => c,
+            Err(_) => panic!("Failed to read: {}", table_toml_path),
+        };
+	let root = content.parse::<toml::Value>().unwrap();
+        let array = root["scenario-table"].as_array().unwrap();
+	
+	for elem in array {
+            let date_data = elem.get("date").unwrap().as_table().unwrap();
+	    let genso_date = GensoDate::new(
+		date_data.get("season").unwrap().as_integer().unwrap() as u32,
+		date_data.get("month").unwrap().as_integer().unwrap() as u8,
+		date_data.get("day").unwrap().as_integer().unwrap() as u8,
+	    );
+
+	    let path = elem.get("path").unwrap().as_str().unwrap();
+
+	    table.insert(genso_date, path.to_string());
+        }
+
+	ScenarioTable {
+	    scenario_table: table,
+	}
+    }
+
+    pub fn get_day_scenario_path(&self, date: &GensoDate) -> Option<String> {
+	if let Some(s) = self.scenario_table.get(&date) {
+	    Some(s.to_string())
+	} else {
+	    None
+	}
+    }
+}
+
 #[derive(Debug, Deserialize, Clone)]
 pub struct BookShelfInformation {
     billing_number_begin: u16,
@@ -360,51 +425,11 @@ pub struct GameData {
     scenario_table: ScenarioTable,
 }
 
-
-pub struct ScenarioTable {
-    scenario_table: HashMap<GensoDate, String>,
-}
-
-impl ScenarioTable {
-    pub fn new(table_toml_path: &str) -> Self {
-	let mut table = HashMap::new();
-	
-	let content = match std::fs::read_to_string(table_toml_path) {
-            Ok(c) => c,
-            Err(_) => panic!("Failed to read: {}", table_toml_path),
-        };
-	let root = content.parse::<toml::Value>().unwrap();
-        let array = root["scenario-table"].as_array().unwrap();
-	
-	for elem in array {
-            let date_data = elem.get("date").unwrap().as_table().unwrap();
-	    let genso_date = GensoDate::new(
-		date_data.get("season").unwrap().as_integer().unwrap() as u32,
-		date_data.get("month").unwrap().as_integer().unwrap() as u8,
-		date_data.get("day").unwrap().as_integer().unwrap() as u8,
-	    );
-
-	    let path = elem.get("path").unwrap().as_str().unwrap();
-
-	    table.insert(genso_date, path.to_string());
-        }
-
-	ScenarioTable {
-	    scenario_table: table,
-	}
-    }
-
-    pub fn get_day_scenario_path(&self, date: &GensoDate) -> Option<String> {
-	if let Some(s) = self.scenario_table.get(&date) {
-	    Some(s.to_string())
-	} else {
-	    None
-	}
-    }
-}
-
 impl GameData {
     pub fn new(ctx: &mut ggez::Context, file_path: String) -> GameData {
+	let init_display = InitialDisplay::new(ctx);
+	init_display.draw(ctx);
+	
         let src_file = RawConfigFile::new(file_path);
 
         let mut textures = Vec::new();
