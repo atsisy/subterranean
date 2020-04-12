@@ -1,3 +1,5 @@
+use std::collections::VecDeque;
+
 use ggez::graphics as ggraphics;
 
 use sub_screen::SubScreen;
@@ -13,20 +15,30 @@ use crate::object::effect;
 use crate::object::util_object::*;
 use crate::scene::*;
 
+
+#[derive(Clone, PartialEq)]
+pub enum NotificationType {
+    Time = 0,
+    CustomerCalling,
+}
+
 pub trait NotificationContents: DrawableComponent {
     fn required_size(&self) -> numeric::Vector2f;
+    fn get_notification_type(&self) -> NotificationType;
 }
 
 pub struct NotificationContentsData {
     pub header_text: String,
     pub main_text: String,
+    pub notification_type: NotificationType,
 }
 
 impl NotificationContentsData {
-    pub fn new(header_text: String, main_text: String) -> Self {
+    pub fn new(header_text: String, main_text: String, notification_type: NotificationType) -> Self {
         NotificationContentsData {
             header_text: header_text,
             main_text: main_text,
+	    notification_type: notification_type,
         }
     }
 }
@@ -35,6 +47,7 @@ pub struct GeneralNotificationContents {
     main_text: VerticalText,
     header_text: UniText,
     required_size: numeric::Vector2f,
+    notification_type: NotificationType,
     drwob_essential: DrawableObjectEssential,
 }
 
@@ -84,6 +97,7 @@ impl GeneralNotificationContents {
             main_text: main_text,
             header_text: header_text,
             required_size: size,
+	    notification_type: data.notification_type,
             drwob_essential: DrawableObjectEssential::new(true, depth),
         }
     }
@@ -124,6 +138,10 @@ impl NotificationContents for GeneralNotificationContents {
     fn required_size(&self) -> numeric::Vector2f {
         self.required_size
     }
+    
+    fn get_notification_type(&self) -> NotificationType {
+	self.notification_type.clone()
+    }
 }
 
 pub struct NotificationArea {
@@ -132,6 +150,7 @@ pub struct NotificationArea {
     appearance_frame: Option<TileBatchFrame>,
     event_list: DelayEventList<Self>,
     right_top_position: numeric::Point2f,
+    queued_contents: VecDeque<Box<dyn NotificationContents>>,
     contents: Option<Box<dyn NotificationContents>>,
     area: Option<EffectableWrap<MovableWrap<SubScreen>>>,
     drwob_essential: DrawableObjectEssential,
@@ -153,6 +172,7 @@ impl NotificationArea {
             background: texture,
             event_list: DelayEventList::new(),
             right_top_position: right_top_position,
+	    queued_contents: VecDeque::new(),
             contents: None,
             area: None,
             drwob_essential: DrawableObjectEssential::new(true, depth),
@@ -177,10 +197,26 @@ impl NotificationArea {
         contents: Box<dyn NotificationContents>,
         t: Clock,
     ) {
-        self.contents = Some(contents);
-        self.update_area_canvas(ctx, t);
-        self.new_appearance_frame(ctx, game_data);
-        self.set_appear_animation(t);
+	if self.contents.is_none() {
+	    self.contents = Some(contents);
+	    self.update_area_canvas(ctx, t);
+            self.new_appearance_frame(ctx, game_data);
+            self.set_appear_animation(t);
+	} else {
+	    // 重複した内容は通知キューに入れない
+	    let newer_type = contents.get_notification_type();
+	    let current_type = self.contents.as_ref().unwrap().get_notification_type();
+	    
+	    if current_type != newer_type {
+		for contents in &self.queued_contents {
+		    if contents.get_notification_type() == contents.get_notification_type() {
+			return;
+		    }
+		}
+		
+		self.queued_contents.push_back(contents);
+	    }
+	}
     }
 
     pub fn insert_new_contents_generic(
@@ -209,9 +245,13 @@ impl NotificationArea {
 
             let scheduled = t + self.default_animation_time;
             self.event_list.add_event(
-                Box::new(move |slf: &mut NotificationArea, _, _| {
+                Box::new(move |slf: &mut NotificationArea, ctx, game_data| {
                     slf.area = None;
                     slf.contents = None;
+		    let next = slf.queued_contents.pop_front();
+		    if let Some(next_contents) = next {
+			slf.insert_new_contents(ctx, game_data, next_contents, scheduled);
+		    }
                 }),
                 scheduled,
             );

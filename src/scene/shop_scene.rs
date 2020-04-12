@@ -1034,7 +1034,7 @@ impl ShopScene {
     ) {
         if self.get_current_clock() % 40 == 0 {
             debug::debug_screen_push_text(&format!("{}", self.shop_clock));
-            self.shop_clock.add_minute(30);
+            self.shop_clock.add_minute(2);
 
             if self.shop_clock.equals(12, 0) {
                 self.notification_area.insert_new_contents_generic(
@@ -1043,6 +1043,7 @@ impl ShopScene {
                     NotificationContentsData::new(
                         "セラ知オ".to_string(),
                         "十二時ヲ過ギマシタ".to_string(),
+			NotificationType::Time,
                     ),
                     t,
                 );
@@ -1090,7 +1091,11 @@ impl ShopScene {
         let notification = Box::new(notify::GeneralNotificationContents::new(
             ctx,
             game_data,
-            NotificationContentsData::new("セラ知オ".to_string(), "御客ガ呼ンデイマス".to_string()),
+            NotificationContentsData::new(
+		"セラ知オ".to_string(),
+		"御客ガ呼ンデイマス".to_string(),
+		NotificationType::CustomerCalling,
+	    ),
             0,
         ));
         self.notification_area
