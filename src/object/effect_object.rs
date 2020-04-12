@@ -15,12 +15,18 @@ pub enum SceneTransitionEffectType {
     Close,
 }
 
+pub enum TilingEffectType {
+    OneTile,
+    WholeTile,
+}
+
 pub struct ScreenTileEffect {
     tile_batch: TileBatch,
     effect_start: Clock,
     animation_rate: f32,
     st_effect_type: SceneTransitionEffectType,
     canvas: SubScreen,
+    tiling_effect_type: TilingEffectType,
 }
 
 impl ScreenTileEffect {
@@ -31,6 +37,7 @@ impl ScreenTileEffect {
         rect: numeric::Rect,
         animation_time: Clock,
         st_effect_type: SceneTransitionEffectType,
+	tiling_effect_type: TilingEffectType,
         depth: i8,
         t: Clock,
     ) -> Self {
@@ -42,6 +49,7 @@ impl ScreenTileEffect {
             animation_rate: animation_time as f32 / (rect.w + rect.h + size.x as f32),
             canvas: SubScreen::new(ctx, rect, depth, ggraphics::Color::from_rgba_u32(0)),
             st_effect_type: st_effect_type,
+	    tiling_effect_type: tiling_effect_type,
             effect_start: t,
         }
     }
@@ -63,8 +71,15 @@ impl ScreenTileEffect {
                     }
                 };
 
+		let tile_pos = match self.tiling_effect_type {
+		    TilingEffectType::OneTile => numeric::Vector2u::new(0, 0),
+		    TilingEffectType::WholeTile => numeric::Vector2u::new(
+			(x / size.x as i16) as u32, (y / size.y as i16) as u32
+		    ),
+		};
+		
                 self.tile_batch.add_batch_tile_position(
-                    numeric::Vector2u::new(0, 0),
+		    tile_pos,
                     numeric::Point2f::new(x as f32, y as f32),
                     numeric::Vector2f::new(1.0, 1.0),
                     ggraphics::Color::new(1.0, 1.0, 1.0, alpha),

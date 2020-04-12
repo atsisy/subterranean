@@ -220,3 +220,8 @@ path = "/tile_textures/menu_art2.png"
 sprite_x_size = 128
 sprite_y_size = 128
 path = "/tile_textures/menu_art3.png"
+
+[[sprite_batch_information]]
+sprite_x_size = 128
+sprite_y_size = 128
+path = "/tile_textures/shoji.png"

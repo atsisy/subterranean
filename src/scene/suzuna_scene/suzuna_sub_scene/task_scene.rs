@@ -52,7 +52,7 @@ impl TaskScene {
         let scene_transition_effect = Some(effect_object::ScreenTileEffect::new(
             ctx,
             game_data,
-            TileBatchTextureID::Suzu1,
+            TileBatchTextureID::Shoji,
             numeric::Rect::new(
                 0.0,
                 0.0,
@@ -61,6 +61,7 @@ impl TaskScene {
             ),
             animation_time,
             effect_object::SceneTransitionEffectType::Open,
+	    effect_object::TilingEffectType::WholeTile,
             -128,
             0,
         ));
@@ -193,7 +194,7 @@ impl TaskScene {
         self.scene_transition_effect = Some(effect_object::ScreenTileEffect::new(
             ctx,
             game_data,
-            TileBatchTextureID::Suzu1,
+            TileBatchTextureID::Shoji,
             numeric::Rect::new(
                 0.0,
                 0.0,
@@ -202,6 +203,7 @@ impl TaskScene {
             ),
             30,
             effect_object::SceneTransitionEffectType::Close,
+	    effect_object::TilingEffectType::WholeTile,
             -128,
             t,
         ));

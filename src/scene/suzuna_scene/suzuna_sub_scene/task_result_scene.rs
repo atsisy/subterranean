@@ -14,6 +14,7 @@ use crate::object::util_object::SelectButton;
 use crate::scene::{SceneID, SceneTransition};
 use crate::object::effect_object;
 use crate::flush_delay_event;
+use effect_object::TilingEffectType;
 
 pub struct TaskResultScene {
     clock: Clock,
@@ -61,7 +62,7 @@ impl TaskResultScene {
 	let scene_transition = Some(effect_object::ScreenTileEffect::new(
             ctx,
             game_data,
-            TileBatchTextureID::Suzu1,
+            TileBatchTextureID::Shoji,
             numeric::Rect::new(
                 0.0,
                 0.0,
@@ -70,6 +71,7 @@ impl TaskResultScene {
             ),
             30,
             effect_object::SceneTransitionEffectType::Open,
+	    effect_object::TilingEffectType::WholeTile,
             -128,
             0,
         ));
@@ -104,7 +106,7 @@ impl TaskResultScene {
         self.scene_transition_effect = Some(effect_object::ScreenTileEffect::new(
             ctx,
             game_data,
-            TileBatchTextureID::Suzu1,
+            TileBatchTextureID::Shoji,
             numeric::Rect::new(
                 0.0,
                 0.0,
@@ -113,6 +115,7 @@ impl TaskResultScene {
             ),
             30,
             effect_object::SceneTransitionEffectType::Close,
+	    TilingEffectType::WholeTile,
             -128,
             t,
         ));

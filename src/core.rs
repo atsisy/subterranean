@@ -240,6 +240,7 @@ pub enum TileBatchTextureID {
     OldStyleFrame,
     TaishoStyle1,
     Suzu1,
+    Shoji,
 }
 
 pub const LARGE_BOOK_TEXTURE: [TextureID; 3] = [

@@ -28,7 +28,7 @@ use crate::object::shop_object::*;
 use crate::object::task_object::tt_main_component::CustomerRequest;
 use crate::object::*;
 use crate::scene::suzuna_scene::TaskResult;
-use effect_object::SceneTransitionEffectType;
+use effect_object::{TilingEffectType, SceneTransitionEffectType};
 use notify::*;
 
 struct CharacterGroup {
@@ -791,7 +791,7 @@ impl ShopScene {
 	self.scene_transition_effect = Some(effect_object::ScreenTileEffect::new(
             ctx,
             game_data,
-            TileBatchTextureID::Suzu1,
+            TileBatchTextureID::Shoji,
             numeric::Rect::new(
                 0.0,
                 0.0,
@@ -800,6 +800,7 @@ impl ShopScene {
             ),
             60,
             SceneTransitionEffectType::Close,
+	    TilingEffectType::WholeTile,
             -128,
             t,
         ));
@@ -949,7 +950,7 @@ impl ShopScene {
         self.scene_transition_effect = Some(effect_object::ScreenTileEffect::new(
             ctx,
             game_data,
-            TileBatchTextureID::Suzu1,
+            TileBatchTextureID::Shoji,
             numeric::Rect::new(
                 0.0,
                 0.0,
@@ -958,6 +959,7 @@ impl ShopScene {
             ),
             animation_time,
             SceneTransitionEffectType::Open,
+	    TilingEffectType::WholeTile,
             -128,
             t,
         ));
