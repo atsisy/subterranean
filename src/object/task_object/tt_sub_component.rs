@@ -950,6 +950,10 @@ impl PayFrame {
 	    self.pay_money_text = Some(vtext);
 	}
     }
+
+    pub fn get_pay_frame(&self) -> &TableFrame {
+	&self.pay_frame
+    }
 }
 
 impl DrawableComponent for PayFrame {
@@ -1824,6 +1828,19 @@ impl BorrowingRecordBook {
         if let Some(page) = self.get_current_page().as_ref() {
             let page_point = self.relative_point(point);
             page.customer_info_table.get_grid_position(ctx, page_point)
+        } else {
+            None
+        }
+    }
+
+    pub fn get_payment_frame_grid_position(
+        &self,
+        ctx: &mut ggez::Context,
+        point: numeric::Point2f,
+    ) -> Option<numeric::Vector2u> {
+        if let Some(page) = self.get_current_page().as_ref() {
+            let page_point = self.relative_point(point);
+            page.pay_frame.get_pay_frame().get_grid_position(ctx, page_point)
         } else {
             None
         }

@@ -39,6 +39,7 @@ pub struct TaskTable {
     shelving_box: ShelvingBookBox,
     event_list: DelayEventList<TaskTable>,
     borrowing_record_book: BorrowingRecordBook,
+    record_book_is_staged: bool,
     customer_silhouette_menu: CustomerMenuGroup,
     on_desk_menu: OnDeskMenuGroup,
     record_book_menu: RecordBookMenuGroup,
@@ -143,6 +144,7 @@ impl TaskTable {
             shelving_box: shelving_box,
             event_list: DelayEventList::new(),
             borrowing_record_book: record_book,
+	    record_book_is_staged: false,
             customer_silhouette_menu: CustomerMenuGroup::new(0),
             record_book_menu: RecordBookMenuGroup::new(0),
             on_desk_menu: OnDeskMenuGroup::new(0),
@@ -197,6 +199,7 @@ impl TaskTable {
             move_fn::devide_distance(numeric::Point2f::new(150.0, -550.0), 0.1),
             t,
         );
+	self.record_book_is_staged = false;
 
         self.record_book_menu.close_all(t);
     }
@@ -217,6 +220,7 @@ impl TaskTable {
                 OnDeskType::BorrowingRecordBook => {
                     debug::debug_screen_push_text("slide appear record book");
                     self.slide_appear_record_book(ctx, game_data, t);
+		    self.record_book_is_staged = true;
                 }
                 _ => (),
             }
@@ -679,8 +683,11 @@ impl TaskTable {
                 .record_book_menu
                 .click_date_menu(ctx, game_data, button, point, t)
             && !self
-                .record_book_menu
-                .click_customer_name_menu(ctx, game_data, button, point, t)
+            .record_book_menu
+            .click_customer_name_menu(ctx, game_data, button, point, t)
+	    && !self
+            .record_book_menu
+            .click_payment_menu(ctx, game_data, button, point, t)
         {
             // メニューをクリックしていない場合はfalseをクリックして終了
             return false;
@@ -732,6 +739,17 @@ impl TaskTable {
                 .unwrap();
             self.borrowing_record_book
                 .insert_customer_name_data_to_customer_info(ctx, menu_position, name);
+
+            return true;
+        }
+
+	if let Some(index) = self.record_book_menu.payment_menu_last_clicked() {
+            let menu_position = self
+                .record_book_menu
+                .get_payment_menu_position()
+                .unwrap();
+
+	    println!("payment grid x: {}", index);
 
             return true;
         }
@@ -953,7 +971,39 @@ impl TaskTable {
             false
         }
     }
+    
+    ///
+    /// customer_info_frameに関するメニューを表示する
+    ///
+    /// customer_info_frameをクリックした場合、true, そうでなければ、false
+    ///
+    fn try_show_menus_regarding_record_book_payment(
+        &mut self,
+        ctx: &mut ggez::Context,
+        game_data: &GameData,
+        click_point: numeric::Point2f,
+        t: Clock,
+    ) -> bool {
+        let maybe_grid_pos = self
+            .borrowing_record_book
+            .get_payment_frame_grid_position(ctx, click_point);
 
+        if let Some(grid_pos) = maybe_grid_pos {
+            if grid_pos == numeric::Vector2u::new(0, 1) {
+		self.record_book_menu.show_payment_menu(
+		    ctx,
+		    game_data,
+		    click_point,
+		    t
+		);
+            }
+
+            true
+        } else {
+            false
+        }
+    }
+    
     fn try_show_text_balloon_menus(
         &mut self,
         ctx: &mut ggez::Context,
@@ -1081,10 +1131,12 @@ impl TaskTable {
 
         if !self.try_show_menus_regarding_book_info(ctx, game_data, click_point, t) {
             if !self.try_show_menus_regarding_customer_info(ctx, game_data, click_point, t) {
-                if !self.try_show_menus_regarding_customer_silhoutte(ctx, game_data, click_point, t)
-                {
-                    self.try_show_menus_regarding_ondesk_book_info(ctx, game_data, click_point, t);
-                }
+		if !self.try_show_menus_regarding_record_book_payment(ctx, game_data, click_point, t) {
+                    if !self.try_show_menus_regarding_customer_silhoutte(ctx, game_data, click_point, t)
+                    {
+			self.try_show_menus_regarding_ondesk_book_info(ctx, game_data, click_point, t);
+                    }
+		}
             }
         }
     }
@@ -1155,7 +1207,9 @@ impl Clickable for TaskTable {
         _: ggez::input::mouse::MouseButton,
         point: numeric::Point2f,
     ) {
-        self.select_dragging_object(ctx, game_data, point);
+	if !self.record_book_is_staged {
+	    self.select_dragging_object(ctx, game_data, point);
+	}
     }
 
     fn button_up(
@@ -1195,14 +1249,6 @@ impl Clickable for TaskTable {
     ) {
         let rpoint = self.canvas.relative_point(point);
 
-        if self
-            .borrowing_record_book
-            .click_handler(ctx, game_data, t, rpoint)
-        {
-            // クリックハンドラが呼び出されたので終了
-            return;
-        }
-
         if !self.click_record_book_menu(ctx, game_data, button, rpoint, t)
             && !self.click_customer_silhouette_menu(ctx, game_data, button, rpoint, t)
             && !self.click_desk_book_menu(ctx, game_data, button, point, t)
@@ -1215,6 +1261,14 @@ impl Clickable for TaskTable {
             self.on_desk_menu.close_all(t);
         }
 
+        if self
+            .borrowing_record_book
+            .click_handler(ctx, game_data, t, rpoint)
+        {
+            // クリックハンドラが呼び出されたので終了
+            return;
+        }
+	
         if self.desk.click_handler(ctx, game_data, t, button, rpoint) {
             // クリックハンドラが呼び出されたので終了
             return;
