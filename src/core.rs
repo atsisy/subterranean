@@ -250,7 +250,7 @@ pub const LARGE_BOOK_TEXTURE: [TextureID; 3] = [
     TextureID::LargeBook3,
 ];
 
-#[derive(Debug, Deserialize, Clone)]
+#[derive(Debug, Deserialize, Clone, PartialEq)]
 pub struct BookInformation {
     pub name: String,
     pub pages: usize,

@@ -704,6 +704,7 @@ impl TaskTable {
                 .unwrap();
             self.borrowing_record_book.insert_book_title_to_books_frame(
                 ctx,
+		game_data,
                 menu_position,
                 book_info,
             );

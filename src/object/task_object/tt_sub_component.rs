@@ -88,6 +88,10 @@ impl HoldDataVText {
     pub fn copy_hold_data(&self) -> HoldData {
         self.data.clone()
     }
+
+    pub fn is_none(&self) -> bool {
+	self.data == HoldData::None
+    }
 }
 
 impl DrawableComponent for HoldDataVText {
@@ -208,7 +212,7 @@ impl ReturnBookInformation {
 ///
 /// TaskSceneでクリックしたときに取得できるデータ
 ///
-#[derive(Clone)]
+#[derive(Clone, PartialEq)]
 pub enum HoldData {
     BookName(BookInformation),
     CustomerName(String),
@@ -790,6 +794,8 @@ pub struct PayFrame {
     rental_limit_text: Option<VerticalText>,
     borrowing_number_text: Option<VerticalText>,
     pay_money_text: Option<VerticalText>,
+    rental_limit_data: Option<RentalLimit>,
+    listed_books_number: usize,
     drwob_essential: DrawableObjectEssential,
 }
 
@@ -856,6 +862,8 @@ impl PayFrame {
 	    rental_limit_text: None,
 	    borrowing_number_text: None,
 	    pay_money_text: None,
+	    rental_limit_data: None,
+	    listed_books_number: 0,
 	    drwob_essential: DrawableObjectEssential::new(true, depth),
 	}
     }
@@ -883,6 +891,55 @@ impl PayFrame {
 	set_table_frame_cell_center!(ctx, self.pay_frame, vtext, numeric::Vector2u::new(1, 1));
 
 	self.rental_limit_text = Some(vtext);
+	self.rental_limit_data = Some(rental_limit);
+
+	self.calc_payment_money(ctx, game_data);
+    }
+
+    pub fn update_book_count(&mut self, ctx: &mut ggez::Context, game_data: &GameData, count: usize) {
+	let mut vtext = VerticalText::new(
+	    format!("{}冊", number_to_jk(count as u64)),
+	    numeric::Point2f::new(0.0, 0.0),
+	    numeric::Vector2f::new(1.0, 1.0),
+	    0.0,
+	    0,
+	    FontInformation::new(
+                game_data.get_font(FontID::JpFude1),
+                numeric::Vector2f::new(24.0, 24.0),
+                ggraphics::Color::from_rgba_u32(0x000000ff),
+	    ),
+	);
+	
+	set_table_frame_cell_center!(ctx, self.pay_frame, vtext, numeric::Vector2u::new(2, 1));
+ 
+	self.borrowing_number_text = Some(vtext);
+	self.listed_books_number = count;
+    }
+
+    fn calc_payment_money(&mut self, ctx: &mut ggez::Context, game_data: &GameData) {
+	if let Some(rental_limit) = self.rental_limit_data.as_ref() {
+	    let term_money = match rental_limit {
+		RentalLimit::LongTerm => 150,
+		RentalLimit::ShortTerm => 100,
+		_ => 0,
+	    };
+
+	    let mut vtext = VerticalText::new(
+		format!("{}円", number_to_jk((term_money * self.listed_books_number) as u64)),
+		numeric::Point2f::new(0.0, 0.0),
+		numeric::Vector2f::new(1.0, 1.0),
+		0.0,
+		0,
+		FontInformation::new(
+                    game_data.get_font(FontID::JpFude1),
+                    numeric::Vector2f::new(24.0, 24.0),
+                    ggraphics::Color::from_rgba_u32(0x000000ff),
+		),
+	    );
+	    set_table_frame_cell_center!(ctx, self.pay_frame, vtext, numeric::Vector2u::new(0, 1));
+
+	    self.pay_money_text = Some(vtext);
+	}
     }
 }
 
@@ -1327,12 +1384,19 @@ impl BorrowingRecordBookPage {
         }
     }
 
+    fn count_written_book_title(&self) -> usize {
+	self.borrow_book.iter()
+	    .map(|(_, data)| if data.is_none() { 0 } else { 1 } )
+	    .fold(0, |sum, c| sum + c )
+    }
+
     ///
     /// Dataを格納できればtrue, できなければfalse
     ///
     pub fn try_insert_data_in_borrowing_books_frame(
         &mut self,
         ctx: &mut ggez::Context,
+	game_data: &GameData,
         menu_position: numeric::Point2f,
         book_info: BookInformation,
     ) {
@@ -1353,6 +1417,8 @@ impl BorrowingRecordBookPage {
             self.books_table
                 .get_center_of(grid_pos, self.books_table.get_position()),
         );
+
+	self.pay_frame.update_book_count(ctx, game_data, self.count_written_book_title());
     }
 
     ///
@@ -1651,12 +1717,13 @@ impl BorrowingRecordBook {
     pub fn insert_book_title_to_books_frame(
         &mut self,
         ctx: &mut ggez::Context,
+	game_data: &GameData,
         menu_position: numeric::Point2f,
         book_info: BookInformation,
     ) {
         let rpoint = self.relative_point(menu_position);
         if let Some(page) = self.get_current_page_mut() {
-            page.try_insert_data_in_borrowing_books_frame(ctx, rpoint, book_info);
+            page.try_insert_data_in_borrowing_books_frame(ctx, game_data, rpoint, book_info);
         }
     }
 
