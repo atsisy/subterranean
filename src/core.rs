@@ -320,7 +320,7 @@ impl GensoDate {
 
     pub fn add_day(&mut self, day: u8) {
         self.day += day;
-        if day > 31 {
+        if self.day > 31 {
             self.month += 1;
             self.day %= 31;
         }

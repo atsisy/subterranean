@@ -855,8 +855,8 @@ impl PayFrame {
 
         set_table_frame_cell_center!(ctx, pay_frame, total, numeric::Vector2u::new(0, 0));
 	
-	
-	PayFrame {
+
+	let mut pay_frame = PayFrame {
 	    pay_frame: pay_frame,
 	    cell_desc_text: vec![borrowing_number, rental_limit, total],
 	    rental_limit_text: None,
@@ -865,7 +865,11 @@ impl PayFrame {
 	    rental_limit_data: None,
 	    listed_books_number: 0,
 	    drwob_essential: DrawableObjectEssential::new(true, depth),
-	}
+	};
+
+	pay_frame.update_book_count(ctx, game_data, 0);
+
+	pay_frame
     }
 
     pub fn update_rental_limit_text(&mut self, ctx: &mut ggez::Context, game_data: &GameData, rental_limit: RentalLimit) {
@@ -918,6 +922,11 @@ impl PayFrame {
 
     fn calc_payment_money(&mut self, ctx: &mut ggez::Context, game_data: &GameData) {
 	if let Some(rental_limit) = self.rental_limit_data.as_ref() {
+	    // 返却期限がTodayの場合は計算を行わず、終了
+	    if rental_limit == &RentalLimit::Today {
+		return;
+	    }
+	    
 	    let term_money = match rental_limit {
 		RentalLimit::LongTerm => 150,
 		RentalLimit::ShortTerm => 100,
