@@ -238,6 +238,7 @@ impl TextureID {
 #[derive(Debug, Clone, Copy)]
 pub enum TileBatchTextureID {
     OldStyleFrame,
+    RedOldStyleFrame,
     TaishoStyle1,
     Suzu1,
     Shoji,
@@ -267,6 +268,23 @@ impl BookInformation {
     }
 }
 
+#[derive(PartialEq, Clone)]
+pub enum RentalLimit {
+    ShortTerm = 0,
+    LongTerm,
+    Today,
+}
+
+impl RentalLimit {
+    pub fn random() -> RentalLimit {
+        match rand::random::<u32>() % 2 {
+            0 => RentalLimit::ShortTerm,
+            1 => RentalLimit::LongTerm,
+            _ => panic!("Exception"),
+        }
+    }
+}
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct GensoDate {
     pub season: u32,
@@ -293,7 +311,7 @@ impl GensoDate {
 
     pub fn to_string(&self) -> String {
         format!(
-            "第{}季 {}月 {}日",
+            "{}季 {}月 {}日",
             number_to_jk(self.season as u64),
             number_to_jk(self.month as u64),
             number_to_jk(self.day as u64)
@@ -311,6 +329,32 @@ impl GensoDate {
             self.season += 1;
             self.month %= 12;
         }
+    }
+
+    pub fn rental_limit_type(&self, limit: &GensoDate) -> Option<RentalLimit> {
+	let month_diff = limit.month - self.month;
+	let maybe_day_diff = if month_diff == 1 {
+	    Some(limit.day + (31 - self.day))
+	} else if month_diff == 0 {
+	    Some(limit.day - self.day)
+	} else {
+	    None
+	};
+
+	if let Some(day_diff) = maybe_day_diff {
+	    println!("day_diff: {:?}", day_diff);
+	    if day_diff == 0 {
+		Some(RentalLimit::Today)
+	    } else if day_diff == 7 {
+		Some(RentalLimit::ShortTerm)
+	    } else if day_diff == 14 {
+		Some(RentalLimit::LongTerm)
+	    } else {
+		None
+	    }
+	} else {
+	    None
+	}
     }
 }
 

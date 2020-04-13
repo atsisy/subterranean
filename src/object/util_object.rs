@@ -55,11 +55,12 @@ impl TableFrame {
     pub fn new(
         game_data: &GameData,
         position: numeric::Point2f,
+	frame_batch_texture: TileBatchTextureID,
         frame_data: FrameData,
         frame_scale: numeric::Vector2f,
         draw_depth: i8,
     ) -> Self {
-        let mut tile_batch = game_data.ref_tile_batch(TileBatchTextureID::OldStyleFrame);
+        let mut tile_batch = game_data.ref_tile_batch(frame_batch_texture);
         tile_batch.set_position(position);
 
         let mut table_frame = TableFrame {

@@ -46,6 +46,7 @@ impl SelectBookWindowContents {
         let mut table_frame = TableFrame::new(
             game_data,
             numeric::Point2f::new(0.0, 0.0),
+	    TileBatchTextureID::OldStyleFrame,
             FrameData::new(vec![140.0, 400.0], vec![42.0; 256]),
             numeric::Vector2f::new(0.3, 0.3),
             0,
@@ -229,6 +230,7 @@ impl SelectBookWindow {
         let mut desc_frame = TableFrame::new(
             game_data,
             numeric::Point2f::new(0.0, 0.0),
+	    TileBatchTextureID::OldStyleFrame,
             FrameData::new(vec![140.0, 400.0], vec![42.0]),
             numeric::Vector2f::new(0.3, 0.3),
             0,
@@ -672,6 +674,7 @@ impl SelectStoringBookWindow {
         let mut table_frame = TableFrame::new(
             game_data,
             numeric::Point2f::new(0.0, 0.0),
+	    TileBatchTextureID::OldStyleFrame,
             FrameData::new(vec![107.0, 107.0, 370.0], vec![50.0; 6]),
             numeric::Vector2f::new(0.3, 0.3),
             0,
@@ -1198,6 +1201,7 @@ impl ShelvingDetailContents {
         let frame = TableFrame::new(
             game_data,
             numeric::Point2f::new(25.0, 60.0),
+	    TileBatchTextureID::OldStyleFrame,
             FrameData::new(vec![160.0, 420.0], vec![44.0; 6]),
             numeric::Vector2f::new(0.3, 0.3),
             0,

@@ -16,7 +16,7 @@ use torifune::impl_texture_object_for_wrapped;
 use torifune::numeric;
 use torifune::roundup2f;
 
-use crate::core::BookInformation;
+use crate::core::{BookInformation, TileBatchTextureID, RentalLimit};
 use crate::object::move_fn;
 use crate::object::util_object::*;
 use crate::set_table_frame_cell_center;
@@ -127,22 +127,6 @@ impl TextureObject for HoldDataVText {
     impl_texture_object_for_wrapped! {vtext}
 }
 
-#[derive(PartialEq, Clone)]
-pub enum RentalLimit {
-    ShortTerm = 0,
-    LongTerm,
-}
-
-impl RentalLimit {
-    pub fn random() -> RentalLimit {
-        match rand::random::<u32>() % 2 {
-            0 => RentalLimit::ShortTerm,
-            1 => RentalLimit::LongTerm,
-            _ => panic!("Exception"),
-        }
-    }
-}
-
 #[derive(Clone)]
 pub struct BorrowingInformation {
     pub borrowing: Vec<BookInformation>,
@@ -162,6 +146,7 @@ impl BorrowingInformation {
         let mut return_date = borrow_date.clone();
 
         match rental_limit {
+	    RentalLimit::Today => return_date.add_day(0),
             RentalLimit::ShortTerm => return_date.add_day(7),
             RentalLimit::LongTerm => return_date.add_day(14),
         }
@@ -799,6 +784,154 @@ pub struct BorrowingRecordBookData {
     pub pages_data: Vec<BorrowingRecordBookPageData>,
 }
 
+pub struct PayFrame {
+    pay_frame: TableFrame,
+    cell_desc_text: Vec<VerticalText>,
+    rental_limit_text: Option<VerticalText>,
+    borrowing_number_text: Option<VerticalText>,
+    pay_money_text: Option<VerticalText>,
+    drwob_essential: DrawableObjectEssential,
+}
+
+impl PayFrame {
+    pub fn new(ctx: &mut ggez::Context, game_data: &GameData, position: numeric::Point2f, depth: i8) -> Self {
+	let pay_frame = TableFrame::new(
+	    game_data,
+	    position,
+	    TileBatchTextureID::RedOldStyleFrame,
+	    FrameData::new(vec![160.0, 300.0], vec![42.0; 3]),
+	    numeric::Vector2f::new(0.3, 0.3),
+	    0,
+	);
+
+        let mut borrowing_number = VerticalText::new(
+            "貸出冊数".to_string(),
+            numeric::Point2f::new(0.0, 0.0),
+            numeric::Vector2f::new(1.0, 1.0),
+            0.0,
+            0,
+            FontInformation::new(
+                game_data.get_font(FontID::JpFude1),
+                numeric::Vector2f::new(24.0, 24.0),
+                ggraphics::Color::from_rgba_u32(0x000000ff),
+            ),
+        );
+
+        set_table_frame_cell_center!(ctx, pay_frame, borrowing_number, numeric::Vector2u::new(2, 0));
+
+	let mut rental_limit = VerticalText::new(
+            "貸出期限".to_string(),
+            numeric::Point2f::new(0.0, 0.0),
+            numeric::Vector2f::new(1.0, 1.0),
+            0.0,
+            0,
+            FontInformation::new(
+                game_data.get_font(FontID::JpFude1),
+                numeric::Vector2f::new(24.0, 24.0),
+                ggraphics::Color::from_rgba_u32(0x000000ff),
+            ),
+        );
+
+        set_table_frame_cell_center!(ctx, pay_frame, rental_limit, numeric::Vector2u::new(1, 0));
+
+	let mut total = VerticalText::new(
+            "合計".to_string(),
+            numeric::Point2f::new(0.0, 0.0),
+            numeric::Vector2f::new(1.0, 1.0),
+            0.0,
+            0,
+            FontInformation::new(
+                game_data.get_font(FontID::JpFude1),
+                numeric::Vector2f::new(24.0, 24.0),
+                ggraphics::Color::from_rgba_u32(0x000000ff),
+            ),
+        );
+
+        set_table_frame_cell_center!(ctx, pay_frame, total, numeric::Vector2u::new(0, 0));
+	
+	
+	PayFrame {
+	    pay_frame: pay_frame,
+	    cell_desc_text: vec![borrowing_number, rental_limit, total],
+	    rental_limit_text: None,
+	    borrowing_number_text: None,
+	    pay_money_text: None,
+	    drwob_essential: DrawableObjectEssential::new(true, depth),
+	}
+    }
+
+    pub fn update_rental_limit_text(&mut self, ctx: &mut ggez::Context, game_data: &GameData, rental_limit: RentalLimit) {
+	let text = match rental_limit {
+	    RentalLimit::ShortTerm => "短期",
+	    RentalLimit::LongTerm => "長期",
+	    RentalLimit::Today => "",
+	}.to_string();
+
+	let mut vtext = VerticalText::new(
+	    text,
+	    numeric::Point2f::new(0.0, 0.0),
+	    numeric::Vector2f::new(1.0, 1.0),
+	    0.0,
+	    0,
+	    FontInformation::new(
+                game_data.get_font(FontID::JpFude1),
+                numeric::Vector2f::new(24.0, 24.0),
+                ggraphics::Color::from_rgba_u32(0x000000ff),
+	    ),
+	);
+	
+	set_table_frame_cell_center!(ctx, self.pay_frame, vtext, numeric::Vector2u::new(1, 1));
+
+	self.rental_limit_text = Some(vtext);
+    }
+}
+
+impl DrawableComponent for PayFrame {
+    fn draw(&mut self, ctx: &mut ggez::Context) -> ggez::GameResult<()> {
+	if self.is_visible() {
+	    self.pay_frame.draw(ctx)?;
+
+	    for vtext in &mut self.cell_desc_text {
+		vtext.draw(ctx)?;
+	    }
+
+	    if let Some(vtext) = self.borrowing_number_text.as_mut() {
+		vtext.draw(ctx)?;
+	    }
+
+	    if let Some(vtext) = self.rental_limit_text.as_mut() {
+		vtext.draw(ctx)?;
+	    }
+
+	    if let Some(vtext) = self.pay_money_text.as_mut() {
+		vtext.draw(ctx)?;
+	    }
+	}
+
+	Ok(())
+    }
+    
+    fn hide(&mut self) {
+	self.drwob_essential.visible = false;
+    }
+    
+    fn appear(&mut self) {
+	self.drwob_essential.visible = true;
+    }
+    
+    fn is_visible(&self) -> bool {
+	self.drwob_essential.visible
+    }
+    
+    fn set_drawing_depth(&mut self, depth: i8) {
+	self.drwob_essential.drawing_depth = depth;
+    }
+    
+    fn get_drawing_depth(&self) -> i8 {
+	self.drwob_essential.drawing_depth
+    }   
+}
+
 pub struct BorrowingRecordBookPage {
     customer_info_table: TableFrame,
     books_table: TableFrame,
@@ -809,6 +942,7 @@ pub struct BorrowingRecordBookPage {
     borrower: VerticalText,
     borrow_date: VerticalText,
     return_date: VerticalText,
+    pay_frame: PayFrame,
     paper_texture: SimpleObject,
     drwob_essential: DrawableObjectEssential,
 }
@@ -865,6 +999,7 @@ impl BorrowingRecordBookPage {
         let table_frame = TableFrame::new(
             game_data,
             numeric::Point2f::new(rect.w - 200.0, 40.0),
+	    TileBatchTextureID::OldStyleFrame,
             FrameData::new(vec![150.0, 300.0], vec![40.0; 3]),
             numeric::Vector2f::new(0.3, 0.3),
             0,
@@ -918,6 +1053,7 @@ impl BorrowingRecordBookPage {
         let books_table = TableFrame::new(
             game_data,
             numeric::Point2f::new(rect.w - 550.0, 30.0),
+	    TileBatchTextureID::OldStyleFrame,
             FrameData::new(vec![380.0, 70.0], vec![40.0; 6]),
             numeric::Vector2f::new(0.3, 0.3),
             0,
@@ -1137,6 +1273,7 @@ impl BorrowingRecordBookPage {
             book_status: book_status,
             paper_texture: paper_texture,
             borrow_date: borrow_date,
+	    pay_frame: PayFrame::new(ctx, game_data, numeric::Point2f::new(100.0, 40.0), 0),
             return_date: return_date,
             drwob_essential: DrawableObjectEssential::new(true, 0),
         }
@@ -1224,8 +1361,10 @@ impl BorrowingRecordBookPage {
     pub fn try_insert_date_data_in_cutomer_info_frame(
         &mut self,
         ctx: &mut ggez::Context,
+	game_data: &GameData,
         menu_position: numeric::Point2f,
         date: GensoDate,
+	rental_limit: RentalLimit,
     ) {
         let grid_pos = self
             .customer_info_table
@@ -1244,6 +1383,10 @@ impl BorrowingRecordBookPage {
             self.customer_info_table
                 .get_center_of(grid_pos, self.customer_info_table.get_position()),
         );
+
+	if grid_pos.x == 0 {
+	    self.pay_frame.update_rental_limit_text(ctx, game_data, rental_limit);
+	}
     }
 
     ///
@@ -1341,6 +1484,8 @@ impl DrawableComponent for BorrowingRecordBookPage {
             self.borrower.draw(ctx)?;
             self.borrow_date.draw(ctx)?;
             self.return_date.draw(ctx)?;
+
+	    self.pay_frame.draw(ctx)?;
 
             for (_, d) in &mut self.borrow_book {
                 d.draw(ctx)?;
@@ -1502,27 +1647,7 @@ impl BorrowingRecordBook {
             self.current_page -= 1;
         }
     }
-
-    fn try_insert_data_customer_info_frame(
-        &mut self,
-        ctx: &mut ggez::Context,
-        point: numeric::Point2f,
-        hold_data: &HoldData,
-    ) -> bool {
-        let rpoint = self.relative_point(point);
-        if let Some(page) = self.get_current_page_mut() {
-            let maybe_position = page.customer_info_table.get_grid_position(ctx, rpoint);
-            if let Some(position) = maybe_position {
-                page.try_insert_data_in_info_frame(ctx, position, hold_data);
-                true
-            } else {
-                false
-            }
-        } else {
-            false
-        }
-    }
-
+    
     pub fn insert_book_title_to_books_frame(
         &mut self,
         ctx: &mut ggez::Context,
@@ -1538,12 +1663,14 @@ impl BorrowingRecordBook {
     pub fn insert_date_data_to_customer_info(
         &mut self,
         ctx: &mut ggez::Context,
+	game_data: &GameData,
         menu_position: numeric::Point2f,
         date: GensoDate,
+	rental_limit: RentalLimit,
     ) {
         let rpoint = self.relative_point(menu_position);
         if let Some(page) = self.get_current_page_mut() {
-            page.try_insert_date_data_in_cutomer_info_frame(ctx, rpoint, date);
+            page.try_insert_date_data_in_cutomer_info_frame(ctx, game_data, rpoint, date, rental_limit);
         }
     }
 

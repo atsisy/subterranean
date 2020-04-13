@@ -28,7 +28,7 @@ use tt_menu_component::*;
 use tt_sub_component::*;
 
 use super::Clickable;
-use crate::core::{GameData, GensoDate, TextureID};
+use crate::core::{GameData, GensoDate, TextureID, RentalLimit};
 
 pub struct TaskTable {
     canvas: SubScreen,
@@ -715,9 +715,12 @@ impl TaskTable {
 
         if let Some((_, date)) = self.record_book_menu.date_menu_last_clicked() {
             let menu_position = self.record_book_menu.get_date_menu_position().unwrap();
-            self.borrowing_record_book
-                .insert_date_data_to_customer_info(ctx, menu_position, date);
-
+	    let maybe_rental_limit = self.today.rental_limit_type(&date);
+	    if let Some(rental_limit) = maybe_rental_limit {
+		self.borrowing_record_book
+                    .insert_date_data_to_customer_info(ctx, game_data, menu_position, date, rental_limit);
+	    }
+	    
             return true;
         }
 
@@ -760,6 +763,7 @@ impl TaskTable {
                     let phrase_text = match info.rental_limit {
                         RentalLimit::ShortTerm => "短期貸出でお願いします",
                         RentalLimit::LongTerm => "長期貸出でお願いします",
+			_ => "",
                     }
                     .to_string();
 

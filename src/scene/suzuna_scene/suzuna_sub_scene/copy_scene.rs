@@ -6,7 +6,7 @@ use torifune::graphics::drawable::*;
 
 use super::super::*;
 
-use crate::core::{GameData, MouseInformation};
+use crate::core::{GameData, MouseInformation, TileBatchTextureID};
 use crate::scene::{SceneID, SceneTransition};
 
 use crate::object::copy_scene_object::*;
@@ -42,6 +42,7 @@ impl CopyingScene {
             table_frame: TableFrame::new(
                 game_data,
                 numeric::Point2f::new(200.0, 200.0),
+		TileBatchTextureID::OldStyleFrame,
                 //FrameData::new(vec![64.0, 320.0], vec![64.0, 64.0, 64.0, 64.0, 64.0, 64.0, 64.0]),
                 FrameData::new(vec![150.0, 150.0], vec![56.0; 3]),
                 numeric::Vector2f::new(0.5, 0.5),

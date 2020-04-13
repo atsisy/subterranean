@@ -15,7 +15,7 @@ use torifune::roundup2f;
 use super::Clickable;
 use crate::core;
 use crate::core::BookInformation;
-use crate::core::{FontID, GameData, GensoDate, TextureID};
+use crate::core::{FontID, GameData, GensoDate, TextureID, TileBatchTextureID};
 use crate::flush_delay_event;
 use crate::object::effect;
 use crate::object::util_object::*;
@@ -91,6 +91,7 @@ where
     D: DrawableComponent,
 {
     canvas: EffectableWrap<MovableWrap<SubScreen>>,
+    click_position: numeric::Point2f,
     drawable: D,
 }
 
@@ -100,6 +101,7 @@ where
 {
     pub fn new(
         ctx: &mut ggez::Context,
+	click_position: numeric::Point2f,
         pos_rect: numeric::Rect,
         drawing_depth: i8,
         drawable: D,
@@ -119,6 +121,7 @@ where
                 ),
                 Vec::new(),
             ),
+	    click_position: click_position,
             drawable: drawable,
         }
     }
@@ -129,6 +132,10 @@ where
 
     pub fn get_component_mut(&mut self) -> &mut D {
         &mut self.drawable
+    }
+
+    pub fn get_click_position(&self) -> numeric::Point2f {
+	self.click_position
     }
 }
 
@@ -437,6 +444,7 @@ impl BookTitleMenu {
         let title_table_frame = TableFrame::new(
             game_data,
             numeric::Point2f::new(10.0, 10.0),
+	    TileBatchTextureID::OldStyleFrame,
             FrameData::new(vec![250.0], vec![64.0; book_info_data.len()]),
             numeric::Vector2f::new(0.3, 0.3),
             0,
@@ -583,6 +591,7 @@ impl CustomerNameMenu {
         let name_table_frame = TableFrame::new(
             game_data,
             numeric::Point2f::new(10.0, 10.0),
+	    TileBatchTextureID::OldStyleFrame,
             FrameData::new(vec![250.0], vec![64.0; customer_name_data.len()]),
             numeric::Vector2f::new(0.3, 0.3),
             0,
@@ -732,7 +741,8 @@ impl DateMenu {
         let date_table_frame = TableFrame::new(
             game_data,
             numeric::Point2f::new(10.0, 10.0),
-            FrameData::new(vec![115.0, 245.0], vec![64.0; 3]),
+	    TileBatchTextureID::OldStyleFrame,
+            FrameData::new(vec![125.0, 255.0], vec![64.0; 3]),
             numeric::Vector2f::new(0.3, 0.3),
             0,
         );
@@ -900,6 +910,7 @@ impl CustomerQuestionMenu {
         let question_table_frame = TableFrame::new(
             game_data,
             numeric::Point2f::new(10.0, 10.0),
+	    TileBatchTextureID::OldStyleFrame,
             FrameData::new(vec![240.0], vec![64.0; 2]),
             numeric::Vector2f::new(0.3, 0.3),
             0,
@@ -1035,6 +1046,7 @@ impl RememberCustomerNameMenu {
         let select_table_frame = TableFrame::new(
             game_data,
             numeric::Point2f::new(10.0, 10.0),
+	    TileBatchTextureID::OldStyleFrame,
             FrameData::new(vec![240.0], vec![64.0]),
             numeric::Vector2f::new(0.3, 0.3),
             0,
@@ -1157,6 +1169,7 @@ impl OkMenu {
         let select_table_frame = TableFrame::new(
             game_data,
             numeric::Point2f::new(10.0, 10.0),
+	    TileBatchTextureID::OldStyleFrame,
             FrameData::new(vec![240.0], vec![64.0]),
             numeric::Vector2f::new(0.3, 0.3),
             0,
@@ -1503,6 +1516,7 @@ impl CustomerMenuGroup {
 
         let mut customer_question_menu_area = DropDownArea::new(
             ctx,
+	    position,
             numeric::Rect::new(
                 position.x,
                 position.y,
@@ -1545,7 +1559,14 @@ impl CustomerMenuGroup {
         };
 
         let mut remember_name_menu_area =
-            RememberCustomerNameDropMenu::new(ctx, menu_rect, 0, remember_name_menu, t);
+            RememberCustomerNameDropMenu::new(
+		ctx,
+		position,
+		menu_rect,
+		0,
+		remember_name_menu,
+		t
+	    );
 
         remember_name_menu_area.add_effect(vec![effect::fade_in(10, t)]);
 
@@ -1565,6 +1586,7 @@ impl CustomerMenuGroup {
 
         let mut ok_menu_area = OkDropMenu::new(
             ctx,
+	    position,
             numeric::Rect::new(
                 position.x,
                 position.y,
@@ -1752,7 +1774,7 @@ impl RecordBookMenuGroup {
 
     pub fn get_book_status_menu_position(&self) -> Option<numeric::Point2f> {
         if let Some(book_status_menu) = self.book_status_menu.as_ref() {
-            Some(book_status_menu.get_position())
+            Some(book_status_menu.get_click_position())
         } else {
             None
         }
@@ -1760,7 +1782,7 @@ impl RecordBookMenuGroup {
 
     pub fn get_book_title_menu_position(&self) -> Option<numeric::Point2f> {
         if let Some(book_title_menu) = self.book_title_menu.as_ref() {
-            Some(book_title_menu.get_position())
+            Some(book_title_menu.get_click_position())
         } else {
             None
         }
@@ -1768,7 +1790,7 @@ impl RecordBookMenuGroup {
 
     pub fn get_customer_name_menu_position(&self) -> Option<numeric::Point2f> {
         if let Some(customer_name_menu) = self.customer_name_menu.as_ref() {
-            Some(customer_name_menu.get_position())
+            Some(customer_name_menu.get_click_position())
         } else {
             None
         }
@@ -1776,7 +1798,7 @@ impl RecordBookMenuGroup {
 
     pub fn get_date_menu_position(&self) -> Option<numeric::Point2f> {
         if let Some(date_menu) = self.date_menu.as_ref() {
-            Some(date_menu.get_position())
+            Some(date_menu.get_click_position())
         } else {
             None
         }
@@ -1954,6 +1976,7 @@ impl RecordBookMenuGroup {
 
         let mut button_group_area = DropDownArea::new(
             ctx,
+	    position,
             numeric::Rect::new(position.x, position.y, 290.0, 220.0),
             0,
             button_group,
@@ -1991,7 +2014,14 @@ impl RecordBookMenuGroup {
             )
         };
 
-        let mut book_title_menu_area = DropDownArea::new(ctx, menu_rect, 0, book_title_menu, t);
+        let mut book_title_menu_area = DropDownArea::new(
+	    ctx,
+	    position,
+	    menu_rect,
+	    0,
+	    book_title_menu,
+	    t
+	);
         book_title_menu_area.add_effect(vec![effect::fade_in(10, t)]);
 
         self.book_title_menu = Some(book_title_menu_area);
@@ -2024,7 +2054,14 @@ impl RecordBookMenuGroup {
         };
 
         let mut customer_name_menu_area =
-            DropDownArea::new(ctx, menu_rect, 0, customer_name_menu, t);
+            DropDownArea::new(
+		ctx,
+		position,
+		menu_rect,
+		0,
+		customer_name_menu,
+		t
+	    );
         customer_name_menu_area.add_effect(vec![effect::fade_in(10, t)]);
 
         self.customer_name_menu = Some(customer_name_menu_area);
@@ -2055,7 +2092,14 @@ impl RecordBookMenuGroup {
             )
         };
 
-        let mut date_menu_area = DropDownArea::new(ctx, menu_rect, 0, date_menu, t);
+        let mut date_menu_area = DropDownArea::new(
+	    ctx,
+	    position,
+	    menu_rect,
+	    0,
+	    date_menu,
+	    t
+	);
         date_menu_area.add_effect(vec![effect::fade_in(10, t)]);
 
         self.date_menu = Some(date_menu_area);
@@ -2156,6 +2200,7 @@ impl DeskBookMenu {
         let select_table_frame = TableFrame::new(
             game_data,
             numeric::Point2f::new(10.0, 10.0),
+	    TileBatchTextureID::OldStyleFrame,
             FrameData::new(vec![200.0], vec![64.0; 2]),
             numeric::Vector2f::new(0.3, 0.3),
             0,
@@ -2375,7 +2420,14 @@ impl OnDeskMenuGroup {
             )
         };
 
-        let mut dd_area = DropDownArea::new(ctx, menu_rect, 0, menu, t);
+        let mut dd_area = DropDownArea::new(
+	    ctx,
+	    position,
+	    menu_rect,
+	    0,
+	    menu,
+	    t
+	);
 
         dd_area.add_effect(vec![effect::fade_in(10, t)]);
 
