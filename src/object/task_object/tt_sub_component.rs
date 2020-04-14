@@ -817,6 +817,7 @@ pub struct BorrowingRecordBookPageData {
     pub customer_name: Option<String>,
     pub return_date: Option<GensoDate>,
     pub rental_date: Option<GensoDate>,
+    pub rental_limit: Option<RentalLimit>,
 }
 
 pub struct BorrowingRecordBookData {
@@ -953,6 +954,8 @@ impl PayFrame {
  
 	self.borrowing_number_text = Some(vtext);
 	self.listed_books_number = count;
+
+	self.calc_payment_money(ctx, game_data);
     }
 
     fn calc_payment_money(&mut self, ctx: &mut ggez::Context, game_data: &GameData) {
@@ -1115,6 +1118,12 @@ impl BorrowingRecordBookPage {
                     .get_center_of(position, page.customer_info_table.get_position()),
             );
 	}
+
+	if let Some(rental_limit) = page_data.rental_limit {
+	    page.pay_frame.update_rental_limit_text(ctx, game_data, rental_limit);
+	}
+
+	page.pay_frame.update_book_count(ctx, game_data, page_data.borrowing_book_title.len());
 	
         page
     }
@@ -1646,6 +1655,13 @@ impl BorrowingRecordBookPage {
 	} else {
 	    None
 	};
+
+	let rental_limit = if let Some(data) = self.pay_frame.rental_limit_data.as_ref() {
+	    Some(data.clone())
+	} else {
+	    None
+	};
+
 	
         BorrowingRecordBookPageData {
 	    borrowing_book_title: borrow_book_title,
@@ -1653,6 +1669,7 @@ impl BorrowingRecordBookPage {
             customer_name: customer_name,
 	    return_date: return_date,
 	    rental_date: rental_date,
+	    rental_limit: rental_limit,
         }
     }
 }
