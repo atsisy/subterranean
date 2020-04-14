@@ -44,7 +44,7 @@ texture_paths = [
 font_paths = ["/fonts/azuki.ttf", "/fonts/RiiT_F.ttf"]
 tileset_paths = ["./resources/maps/suzunaan/suzuna1.tmx"]
 scenario_table_path = "./resources/scenario_table.toml"
-customers_name = ["霧雨魔里沙", "稗田阿求"]
+customers_name = ["霧雨魔里沙", "稗田阿求", "a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k"]
 
 [[map_information]]
 id = 1

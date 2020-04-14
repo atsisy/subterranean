@@ -37,7 +37,7 @@ impl ReturningRequestPool {
         let mut return_date = today.clone();
         return_date.add_day(14);
 
-        for _ in 0..15 {
+        for _ in 0..3 {
             returning_request.push(ReturnBookInformation::new_random(
                 game_data,
                 today,
@@ -143,7 +143,9 @@ impl SuzunaSubScene {
 
 	let borrowing_record_book_data = BorrowingRecordBookData {
 	    pages_data: returning_pool.iter()
-		.map(|ret_info| BorrowingRecordBookPageData::from(ret_info))
+		.map(|ret_info| {
+		    println!("{:?}", ret_info); BorrowingRecordBookPageData::from(ret_info)
+		})
 		.collect(),
 	};
 	
@@ -205,11 +207,15 @@ impl SuzunaSubScene {
                             raw_info.rental_limit.clone(),
                         ),
                     ),
-                    CustomerRequest::Returning(_) => CustomerRequest::Returning(
-                        self.returning_request_pool
-                            .select_returning_request_random()
-                            .unwrap(),
-                    ),
+                    CustomerRequest::Returning(_) => {
+			let request = self.returning_request_pool
+			    .select_returning_request_random()
+			    .unwrap();
+			println!("{:?}", request);
+			CustomerRequest::Returning(
+                            request
+			)
+		    },
                     _ => return (),
                 };
 

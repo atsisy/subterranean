@@ -455,9 +455,9 @@ impl TaskTable {
         // 客への返却処理有効化
         self.sight.lock_object_handover();
 
-        for _ in &info.borrowing {
+        for book_info in &info.borrowing {
             let mut obj =
-                factory::create_dobj_book_random(ctx, game_data, DeskObjectType::CustomerObject, t);
+                factory::create_dobj_book(ctx, game_data, DeskObjectType::CustomerObject, book_info.clone(), t);
             obj.enable_large();
             self.desk.add_customer_object(obj);
         }
@@ -500,9 +500,9 @@ impl TaskTable {
         // 客への返却処理無効化
         self.sight.lock_object_handover();
 
-        for _ in &info.returning {
+        for book_info in &info.returning {
             let mut obj =
-                factory::create_dobj_book_random(ctx, game_data, DeskObjectType::CustomerObject, t);
+                factory::create_dobj_book(ctx, game_data, DeskObjectType::CustomerObject, book_info.clone(), t);
             obj.enable_large();
             self.desk.add_customer_object(obj);
         }

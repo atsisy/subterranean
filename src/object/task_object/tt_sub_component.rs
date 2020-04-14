@@ -169,7 +169,7 @@ impl BorrowingInformation {
     }
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct ReturnBookInformation {
     pub returning: Vec<BookInformation>,
     pub borrower: String,
