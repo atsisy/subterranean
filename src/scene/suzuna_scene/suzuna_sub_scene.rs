@@ -72,6 +72,10 @@ impl ReturningRequestPool {
                 .swap_remove(rand::random::<usize>() % request_len),
         )
     }
+
+    pub fn iter(&self) -> std::slice::Iter<ReturnBookInformation> {
+	self.returning_request.iter()
+    }
 }
 
 pub struct SuzunaBookPool {
@@ -132,6 +136,17 @@ pub struct SuzunaSubScene {
 
 impl SuzunaSubScene {
     pub fn new(ctx: &mut ggez::Context, game_data: &GameData, map_id: u32, date: GensoDate) -> Self {
+	let returning_pool = ReturningRequestPool::new(
+            game_data,
+            date.clone(),
+        );
+
+	let borrowing_record_book_data = BorrowingRecordBookData {
+	    pages_data: returning_pool.iter()
+		.map(|ret_info| BorrowingRecordBookPageData::from(ret_info))
+		.collect(),
+	};
+	
         SuzunaSubScene {
             shop_scene: Some(Box::new(ShopScene::new(
                 ctx,
@@ -143,11 +158,8 @@ impl SuzunaSubScene {
             day_result_scene: None,
             copying_scene: None,
             scene_status: SuzunaSceneStatus::Shop,
-            borrowing_record_book_data: None,
-            returning_request_pool: ReturningRequestPool::new(
-                game_data,
-                date.clone(),
-            ),
+            borrowing_record_book_data: Some(borrowing_record_book_data),
+            returning_request_pool: returning_pool,
             suzuna_book_pool: SuzunaBookPool::new(game_data),
 	    date: date,
         }

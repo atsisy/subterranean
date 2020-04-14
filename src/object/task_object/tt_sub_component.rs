@@ -820,6 +820,29 @@ pub struct BorrowingRecordBookPageData {
     pub rental_limit: Option<RentalLimit>,
 }
 
+impl From<&ReturnBookInformation> for BorrowingRecordBookPageData {
+    fn from(info: &ReturnBookInformation) -> Self {
+	let mut borrowing_book_title = HashMap::new();
+
+	for (index, book_info) in info.returning.iter().enumerate() {
+	    borrowing_book_title.insert(numeric::Vector2u::new((4 - index) as u32, 0), book_info.clone());
+	}
+
+	for (index, book_info) in info.returning.iter().enumerate() {
+	    borrowing_book_title.insert(numeric::Vector2u::new((4 - index) as u32, 0), book_info.clone());
+	}
+	
+	BorrowingRecordBookPageData {
+	    borrowing_book_title: borrowing_book_title,
+	    borrowing_book_status: HashMap::new(),
+	    customer_name: Some(info.borrower.clone()),
+	    rental_limit: info.borrow_date.rental_limit_type(&info.return_date),
+	    return_date: Some(info.return_date),
+	    rental_date: Some(info.borrow_date),
+	}
+    }
+}
+
 pub struct BorrowingRecordBookData {
     pub pages_data: Vec<BorrowingRecordBookPageData>,
 }
