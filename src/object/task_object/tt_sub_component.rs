@@ -89,6 +89,10 @@ impl HoldDataVText {
         self.data.clone()
     }
 
+    pub fn ref_hold_data(&self) -> &HoldData {
+	&self.data
+    }
+
     pub fn is_none(&self) -> bool {
 	self.data == HoldData::None
     }
@@ -230,6 +234,34 @@ impl HoldData {
             HoldData::BookStatus(_) => "状態".to_string(),
             HoldData::None => "".to_string(),
         }
+    }
+
+    pub fn to_book_name(&self) -> Option<BookInformation> {
+	match self {
+	    HoldData::BookName(info) => Some(info.clone()),
+	    _ => None,
+	}
+    }
+
+    pub fn to_customer_name(&self) -> Option<String> {
+	match self {
+	    HoldData::CustomerName(name) => Some(name.clone()),
+	    _ => None,
+	}
+    }
+
+    pub fn to_date(&self) -> Option<GensoDate> {
+	match self {
+	    HoldData::Date(date) => Some(date.clone()),
+	    _ => None,
+	}
+    }
+
+    pub fn to_book_status(&self) -> Option<BookStatus> {
+	match self {
+	    HoldData::BookStatus(status) => Some(status.clone()),
+	    _ => None,
+	}
     }
 }
 
@@ -780,8 +812,11 @@ impl OnDesk for CopyingRequestPaper {
 
 #[derive(Clone)]
 pub struct BorrowingRecordBookPageData {
-    pub borrow_book: HashMap<numeric::Vector2u, HoldData>,
-    pub request_information: HashMap<numeric::Vector2u, HoldData>,
+    pub borrowing_book_title: HashMap<numeric::Vector2u, BookInformation>,
+    pub borrowing_book_status: HashMap<numeric::Vector2u, BookStatus>,
+    pub customer_name: Option<String>,
+    pub return_date: Option<GensoDate>,
+    pub rental_date: Option<GensoDate>,
 }
 
 pub struct BorrowingRecordBookData {
@@ -1028,13 +1063,9 @@ impl BorrowingRecordBookPage {
     ) -> Self {
         let mut page = Self::new_empty(ctx, rect, paper_tid, game_data, t);
 
-        for (position, hold_data) in page_data.borrow_book.iter() {
-            if hold_data.is_none() {
-                continue;
-            }
-
-            let info = page.borrow_book.get_mut(position).unwrap();
-            info.reset(hold_data.clone());
+        for (position, book_info) in page_data.borrowing_book_title.iter() {
+            let info = page.borrow_book.get_mut(&position).unwrap();
+            info.reset(HoldData::BookName(book_info.clone()));
             info.vtext.make_center(
                 ctx,
                 page.books_table
@@ -1042,20 +1073,49 @@ impl BorrowingRecordBookPage {
             );
         }
 
-        for (position, hold_data) in page_data.request_information.iter() {
-            if hold_data.is_none() {
-                continue;
-            }
-
-            let info = page.request_information.get_mut(position).unwrap();
-            info.reset(hold_data.clone());
+	for (position, book_status) in page_data.borrowing_book_status.iter() {
+            let info = page.borrow_book.get_mut(&position).unwrap();
+            info.reset(HoldData::BookStatus(book_status.clone()));
             info.vtext.make_center(
                 ctx,
-                page.customer_info_table
-                    .get_center_of(*position, page.customer_info_table.get_position()),
+                page.books_table
+                    .get_center_of(*position, page.books_table.get_position()),
             );
         }
 
+	if let Some(customer_name) = page_data.customer_name {
+	    let position = numeric::Vector2u::new(2, 1);
+	    let info = page.request_information.get_mut(&position).unwrap();
+            info.reset(HoldData::CustomerName(customer_name.clone()));
+            info.vtext.make_center(
+                ctx,
+                page.customer_info_table
+                    .get_center_of(position, page.customer_info_table.get_position()),
+            );
+	}
+	
+	if let Some(rental_date) = page_data.rental_date {
+	    let position = numeric::Vector2u::new(1, 1);
+	    let info = page.request_information.get_mut(&position).unwrap();
+            info.reset(HoldData::Date(rental_date.clone()));
+            info.vtext.make_center(
+                ctx,
+                page.customer_info_table
+                    .get_center_of(position, page.customer_info_table.get_position()),
+            );
+	}
+
+	if let Some(return_date) = page_data.return_date {
+	    let position = numeric::Vector2u::new(0, 1);
+	    let info = page.request_information.get_mut(&position).unwrap();
+            info.reset(HoldData::Date(return_date.clone()));
+            info.vtext.make_center(
+                ctx,
+                page.customer_info_table
+                    .get_center_of(position, page.customer_info_table.get_position()),
+            );
+	}
+	
         page
     }
 
@@ -1534,20 +1594,65 @@ impl BorrowingRecordBookPage {
     }
 
     pub fn export_page_data(&self) -> BorrowingRecordBookPageData {
-        let mut borrow_book = HashMap::new();
-        let mut request_information = HashMap::new();
+        let mut borrow_book_title = HashMap::new();
+	let mut borrow_book_status = HashMap::new();
 
-        for (p, hold_data_vtext) in &self.borrow_book {
-            borrow_book.insert(p.clone(), hold_data_vtext.copy_hold_data());
-        }
+	for index in 0..self.books_table.get_rows() {
+	    let position = numeric::Vector2u::new(index as u32, 0);
+	    let hold_data_vtext = self.borrow_book.get(&position);
 
-        for (p, hold_data_vtext) in &self.request_information {
-            request_information.insert(p.clone(), hold_data_vtext.copy_hold_data());
-        }
+	    if let Some(hold_data_vtext) = hold_data_vtext {
+		if !hold_data_vtext.is_none() {
+		    match hold_data_vtext.copy_hold_data() {
+			HoldData::BookName(info) => {
+			    borrow_book_title.insert(position, info);
+			},
+			_ => (),
+		    }
+		}
+	    }
+	}
 
+	for index in 0..self.books_table.get_rows() {
+	    let position = numeric::Vector2u::new(index as u32, 1);
+	    let hold_data_vtext = self.borrow_book.get(&position);
+
+	    if let Some(hold_data_vtext) = hold_data_vtext {
+		if !hold_data_vtext.is_none() {
+		    match hold_data_vtext.copy_hold_data() {
+			HoldData::BookStatus(status) => {
+			    borrow_book_status.insert(position, status);
+			},
+			_ => (),
+		    }
+		}
+	    }
+	}
+
+	let customer_name = if let Some(data) = self.request_information.get(&numeric::Vector2u::new(2, 1)) {
+	    data.ref_hold_data().to_customer_name()
+	} else {
+	    None
+	};
+
+	let rental_date = if let Some(data) = self.request_information.get(&numeric::Vector2u::new(1, 1)) {
+	    data.ref_hold_data().to_date()
+	} else {
+	    None
+	};
+	
+	let return_date = if let Some(data) = self.request_information.get(&numeric::Vector2u::new(0, 1)) {
+	    data.ref_hold_data().to_date()
+	} else {
+	    None
+	};
+	
         BorrowingRecordBookPageData {
-            borrow_book: borrow_book,
-            request_information: request_information,
+	    borrowing_book_title: borrow_book_title,
+	    borrowing_book_status: borrow_book_status,
+            customer_name: customer_name,
+	    return_date: return_date,
+	    rental_date: rental_date,
         }
     }
 }

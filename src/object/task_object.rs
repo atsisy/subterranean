@@ -60,6 +60,7 @@ impl TaskTable {
         t: Clock,
     ) -> Self {
         let sight = SuzuMiniSight::new(ctx, game_data, sight_rect, t);
+	
         let mut desk = DeskObjects::new(ctx, game_data, desk_rect);
 
         desk.add_object(DeskObject::new(
@@ -452,7 +453,7 @@ impl TaskTable {
         t: Clock,
     ) {
         // 客への返却処理有効化
-        self.sight.unlock_object_handover();
+        self.sight.lock_object_handover();
 
         for _ in &info.borrowing {
             let mut obj =
@@ -744,12 +745,21 @@ impl TaskTable {
         }
 
 	if let Some(index) = self.record_book_menu.payment_menu_last_clicked() {
-            let menu_position = self
+            let _menu_position = self
                 .record_book_menu
                 .get_payment_menu_position()
                 .unwrap();
 
-	    println!("payment grid x: {}", index);
+	    if index == 0 {
+		self.sight.unlock_object_handover();
+		self.slide_hide_record_book(ctx, game_data, t);
+		self.sight.silhouette.insert_new_balloon_phrase(
+		    "どうぞ".to_string(),
+		    TextBalloonPhraseType::SimplePhrase,
+		    20,
+		    t,
+		);
+	    }
 
             return true;
         }
