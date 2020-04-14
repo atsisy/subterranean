@@ -180,7 +180,7 @@ impl TableFrame {
         let tile_size = self.get_scaled_tile_size();
 
         for size in &self.frame_data.each_rows_size {
-            remain.x -= size + (tile_size.x as f32 * 1.5);
+            remain.x -= size + tile_size.x as f32;
             if remain.x < 0.0 {
                 break;
             }
@@ -188,7 +188,7 @@ impl TableFrame {
         }
 
         for size in &self.frame_data.each_cols_size {
-            remain.y -= size + (tile_size.y as f32 * 1.5);
+            remain.y -= size + tile_size.y as f32;
             if remain.y < 0.0 {
                 break;
             }
@@ -774,6 +774,10 @@ where
         &mut self.drawable
     }
 
+    pub fn relative_point(&self, point: numeric::Point2f) -> numeric::Point2f {
+	self.canvas.relative_point(point)
+    }
+    
     pub fn scroll(
         &mut self,
         ctx: &mut ggez::Context,

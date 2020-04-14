@@ -47,7 +47,7 @@ impl SelectBookWindowContents {
             game_data,
             numeric::Point2f::new(0.0, 0.0),
 	    TileBatchTextureID::OldStyleFrame,
-            FrameData::new(vec![140.0, 400.0], vec![42.0; 256]),
+            FrameData::new(vec![140.0, 400.0], vec![42.0; 128]),
             numeric::Vector2f::new(0.3, 0.3),
             0,
         );
@@ -91,7 +91,7 @@ impl SelectBookWindowContents {
                 self.book_font.clone(),
             );
 
-            let table_pos_x = (self.table_frame.get_rows() - 2 - index) as u32;
+            let table_pos_x = (self.table_frame.get_rows() - 1 - index) as u32;
 
             set_table_frame_cell_center!(
                 ctx,
@@ -113,21 +113,29 @@ impl SelectBookWindowContents {
     }
 
     fn click_handler(&mut self, ctx: &mut ggez::Context, point: numeric::Point2f) {
-        for (index, vtext) in self.book_title_text.iter_mut().enumerate() {
-            if vtext.contains(ctx, point) {
-                // 既に選択されている場合は、削除
-                if self.selecting_book_index.contains(&index) {
-                    vtext.set_color(ggraphics::Color::from_rgba_u32(0x000000ff));
-                    self.selecting_book_index
-                        .retain(|inner_index| *inner_index != index);
-                } else {
-                    // テキストを赤に変更し、選択中のインデックスとして登録
-                    vtext.set_color(ggraphics::Color::from_rgba_u32(0xee0000ff));
-                    self.selecting_book_index.push(index);
-                }
+	let maybe_grid_position = self.table_frame.get_grid_position(ctx, point);
+        let grid_position = match maybe_grid_position {
+            Some(it) => it,
+            _ => return,
+        };
+	
+	let index = self.table_frame.get_rows() - 1 - grid_position.x as usize;
+	let vtext = self.book_title_text.get_mut(index);
 
-                break;
-            }
+        let vtext = match vtext {
+            Some(it) => it,
+            _ => return,
+        };	
+	
+	// 既に選択されている場合は、削除
+	if self.selecting_book_index.contains(&index) {
+            vtext.set_color(ggraphics::Color::from_rgba_u32(0x000000ff));
+            self.selecting_book_index
+                .retain(|inner_index| *inner_index != index);
+        } else {
+            // テキストを赤に変更し、選択中のインデックスとして登録
+            vtext.set_color(ggraphics::Color::from_rgba_u32(0xee0000ff));
+            self.selecting_book_index.push(index);
         }
     }
 }
@@ -395,7 +403,8 @@ impl Clickable for SelectBookWindow {
         point: numeric::Point2f,
     ) {
         let rpoint = self.canvas.relative_point(point);
-        self.contents.ref_object_mut().click_handler(ctx, rpoint);
+	let contents_rpoint = self.contents.relative_point(rpoint);
+	self.contents.ref_object_mut().click_handler(ctx, contents_rpoint);
     }
 
     fn clickable_status(
