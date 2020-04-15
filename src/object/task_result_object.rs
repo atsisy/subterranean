@@ -44,7 +44,7 @@ impl DrawableTaskResult {
         let mut title_text = EffectableWrap::new(
             MovableWrap::new(
                 Box::new(VerticalText::new(
-                    format!("{}のお仕事結果", date.to_string()),
+                    format!("{}の\nお仕事結果", date.to_string()),
                     numeric::Point2f::new(800.0, 100.0),
                     numeric::Vector2f::new(1.0, 1.0),
                     0.0,

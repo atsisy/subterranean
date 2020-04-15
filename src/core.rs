@@ -15,6 +15,7 @@ use torifune::graphics::object::tile_batch::*;
 use torifune::graphics::object::{FontInformation, TextureObject};
 use torifune::hash;
 use torifune::numeric;
+use torifune::sound;
 
 use ggez::input as ginput;
 use ggez::input::keyboard::*;
@@ -250,6 +251,11 @@ pub const LARGE_BOOK_TEXTURE: [TextureID; 3] = [
     TextureID::LargeBook3,
 ];
 
+#[derive(Clone)]
+pub enum SoundID {
+    Unknown = 0,
+}
+
 #[derive(Debug, Deserialize, Clone, PartialEq)]
 pub struct BookInformation {
     pub name: String,
@@ -451,6 +457,7 @@ pub struct RawConfigFile {
     map_information: Vec<MapConstractData>,
     sprite_batch_information: Vec<SpriteBatchData>,
     scenario_table_path: String,
+    sound_file_path: Vec<String>,
 }
 
 impl RawConfigFile {
@@ -476,6 +483,8 @@ pub struct GameData {
     books_information: Vec<BookInformation>,
     map_data: Vec<MapConstractData>,
     scenario_table: ScenarioTable,
+    sounds: Vec<sound::SoundData>,
+    sound_manager: sound::SoundManager,
 }
 
 impl GameData {
@@ -488,6 +497,7 @@ impl GameData {
         let mut textures = Vec::new();
         let mut fonts = Vec::new();
         let mut sprite_batchs = Vec::new();
+	let mut sounds = Vec::new();
 
         for texture_path in &src_file.texture_paths {
             print!("Loading texture {}...", texture_path);
@@ -512,6 +522,11 @@ impl GameData {
             println!(" done!");
         }
 
+	for sound_path in &src_file.sound_file_path {
+	    let sound_data = sound::SoundData::new(ctx, sound_path).unwrap();
+	    sounds.push(sound_data);
+	}
+
 	let scenario_table = ScenarioTable::new(&src_file.scenario_table_path);
 	
         GameData {
@@ -522,6 +537,8 @@ impl GameData {
             books_information: src_file.books_information,
             map_data: src_file.map_information,
 	    scenario_table: scenario_table,
+	    sounds: sounds,
+	    sound_manager: sound::SoundManager::new(),
         }
     }
 
@@ -581,6 +598,24 @@ impl GameData {
 
     pub fn get_day_scenario_path(&self, date: &GensoDate) -> Option<String> {
 	self.scenario_table.get_day_scenario_path(date)
+    }
+
+    pub fn play_sound(
+	&mut self,
+	ctx: &mut ggez::Context,
+	sound_id: SoundID,
+	flags: Option<sound::SoundPlayFlags>
+    ) -> sound::SoundHandler {
+	let sound_data = self.sounds.get(sound_id as usize).unwrap();
+	self.sound_manager.play(ctx, sound_data.clone(), flags)
+    }
+
+    pub fn ref_sound(&self, handler: sound::SoundHandler) -> &sound::PlayableSound {
+	self.sound_manager.ref_sound(handler)
+    }
+
+    pub fn ref_sound_mut(&mut self, handler: sound::SoundHandler) -> &mut sound::PlayableSound {
+	self.sound_manager.ref_sound_mut(handler)
     }
 }
 
