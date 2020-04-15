@@ -35,14 +35,14 @@ impl TaskResult {
     }
 
     pub fn add_result(&mut self, task_result: &TaskResult) -> &mut Self {
-        self.done_works = task_result.done_works;
+        self.done_works += task_result.done_works;
         self.not_shelved_books
             .extend(task_result.not_shelved_books.clone());
         self.borrowing_books
             .extend(task_result.borrowing_books.clone());
         self.remain_copy_request
             .extend(task_result.remain_copy_request.clone());
-        self.total_money = task_result.total_money;
+        self.total_money += task_result.total_money;
 
         self
     }

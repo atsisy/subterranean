@@ -142,7 +142,7 @@ impl TaskScene {
             CustomerRequest::Borrowing(request_information) => {
                 // 貸出本を記録
                 self.task_result.done_works += 1;
-                self.task_result.total_money += (request_information.borrowing.len() * 300) as i32;
+                self.task_result.total_money += request_information.calc_fee();
                 self.task_result
                     .borrowing_books
                     .extend(request_information.borrowing);

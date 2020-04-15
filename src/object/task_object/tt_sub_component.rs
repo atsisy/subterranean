@@ -167,6 +167,10 @@ impl BorrowingInformation {
             rental_limit: rental_limit,
         }
     }
+
+    pub fn calc_fee(&self) -> i32 {
+	self.borrowing.len() as i32 * self.rental_limit.fee()
+    }
 }
 
 #[derive(Clone, Debug)]
@@ -988,14 +992,8 @@ impl PayFrame {
 		return;
 	    }
 	    
-	    let term_money = match rental_limit {
-		RentalLimit::LongTerm => 150,
-		RentalLimit::ShortTerm => 100,
-		_ => 0,
-	    };
-
 	    let mut vtext = VerticalText::new(
-		format!("{}円", number_to_jk((term_money * self.listed_books_number) as u64)),
+		format!("{}円", number_to_jk((rental_limit.fee() * self.listed_books_number as i32) as u64)),
 		numeric::Point2f::new(0.0, 0.0),
 		numeric::Vector2f::new(1.0, 1.0),
 		0.0,

@@ -283,6 +283,14 @@ impl RentalLimit {
             _ => panic!("Exception"),
         }
     }
+
+    pub fn fee(&self) -> i32 {
+	match self {
+	    RentalLimit::ShortTerm => 100,
+	    RentalLimit::LongTerm => 150,
+	    RentalLimit::Today => 0,
+	}
+    }
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]

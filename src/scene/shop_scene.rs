@@ -982,6 +982,7 @@ impl ShopScene {
             task_result,
             self.player.get_shelving_book(),
         );
+	
         self.task_result = task_result.clone();
     }
 
@@ -1036,7 +1037,7 @@ impl ShopScene {
     ) {
         if self.get_current_clock() % 40 == 0 {
             debug::debug_screen_push_text(&format!("{}", self.shop_clock));
-            self.shop_clock.add_minute(2);
+            self.shop_clock.add_minute(3);
 
             if self.shop_clock.equals(12, 0) {
                 self.notification_area.insert_new_contents_generic(
