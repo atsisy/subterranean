@@ -90,6 +90,8 @@ pub struct DropDownArea<D>
 where
     D: DrawableComponent,
 {
+    background: UniTexture,
+    apperance_frame: TileBatchFrame,
     canvas: EffectableWrap<MovableWrap<SubScreen>>,
     click_position: numeric::Point2f,
     drawable: D,
@@ -101,13 +103,32 @@ where
 {
     pub fn new(
         ctx: &mut ggez::Context,
+	game_data: &GameData,
 	click_position: numeric::Point2f,
         pos_rect: numeric::Rect,
         drawing_depth: i8,
         drawable: D,
         t: Clock,
     ) -> DropDownArea<D> {
+	let background = UniTexture::new(
+	    game_data.ref_texture(TextureID::TextBackground),
+	    numeric::Point2f::new(0.0, 0.0),
+	    numeric::Vector2f::new(1.0, 1.0),
+	    0.0,
+	    0
+	);
+
+	let appr_frame = TileBatchFrame::new(
+	    game_data,
+	    TileBatchTextureID::TaishoStyle1,
+	    numeric::Rect::new(0.0, 0.0, pos_rect.w, pos_rect.h),
+	    numeric::Vector2f::new(0.4, 0.4),
+	    0
+	);
+	
         DropDownArea::<D> {
+	    background: background,
+	    apperance_frame: appr_frame,
             canvas: EffectableWrap::new(
                 MovableWrap::new(
                     Box::new(SubScreen::new(
@@ -147,6 +168,9 @@ where
         if self.is_visible() {
             sub_screen::stack_screen(ctx, &self.canvas);
 
+	    self.background.draw(ctx)?;
+	    self.apperance_frame.draw(ctx)?;
+	    
             self.drawable.draw(ctx)?;
 
             sub_screen::pop_screen(ctx);
@@ -1634,6 +1658,7 @@ impl CustomerMenuGroup {
 
         let mut customer_question_menu_area = DropDownArea::new(
             ctx,
+	    game_data,
 	    position,
             numeric::Rect::new(
                 position.x,
@@ -1679,6 +1704,7 @@ impl CustomerMenuGroup {
         let mut remember_name_menu_area =
             RememberCustomerNameDropMenu::new(
 		ctx,
+		game_data,
 		position,
 		menu_rect,
 		0,
@@ -1704,6 +1730,7 @@ impl CustomerMenuGroup {
 
         let mut ok_menu_area = OkDropMenu::new(
             ctx,
+	    game_data,
 	    position,
             numeric::Rect::new(
                 position.x,
@@ -2172,6 +2199,7 @@ impl RecordBookMenuGroup {
 
         let mut button_group_area = DropDownArea::new(
             ctx,
+	    game_data,
 	    position,
             numeric::Rect::new(position.x, position.y, 290.0, 220.0),
             0,
@@ -2212,6 +2240,7 @@ impl RecordBookMenuGroup {
 
         let mut book_title_menu_area = DropDownArea::new(
 	    ctx,
+	    game_data,
 	    position,
 	    menu_rect,
 	    0,
@@ -2252,6 +2281,7 @@ impl RecordBookMenuGroup {
         let mut customer_name_menu_area =
             DropDownArea::new(
 		ctx,
+		game_data,
 		position,
 		menu_rect,
 		0,
@@ -2290,6 +2320,7 @@ impl RecordBookMenuGroup {
 
         let mut date_menu_area = DropDownArea::new(
 	    ctx,
+	    game_data,
 	    position,
 	    menu_rect,
 	    0,
@@ -2328,6 +2359,7 @@ impl RecordBookMenuGroup {
         let mut payment_menu_area =
             DropDownArea::new(
 		ctx,
+		game_data,
 		position,
 		menu_rect,
 		0,
@@ -2547,9 +2579,134 @@ impl Clickable for DeskBookMenu {
 
 pub type DeskBookDropMenu = DropDownArea<DeskBookMenu>;
 
+
+pub struct BookInfoDrawer {
+    book_info: BookInformation,
+    book_info_frame: TableFrame,
+    info_field_text: Vec<VerticalText>,
+    drwob_essential: DrawableObjectEssential,
+}
+
+impl BookInfoDrawer {
+    pub fn new(
+        ctx: &mut ggez::Context,
+        game_data: &GameData,
+        book_info: BookInformation,
+        drawing_depth: i8,
+    ) -> Self {
+        let mut info_field_vtext = Vec::new();
+
+        let font_info = FontInformation::new(
+            game_data.get_font(FontID::JpFude1),
+            numeric::Vector2f::new(32.0, 32.0),
+            ggraphics::Color::from_rgba_u32(0xff),
+        );
+
+        let book_info_frame = TableFrame::new(
+            game_data,
+            numeric::Point2f::new(10.0, 10.0),
+	    TileBatchTextureID::OldStyleFrame,
+            FrameData::new(vec![150.0, 150.0], vec![42.0; 3]),
+            numeric::Vector2f::new(0.3, 0.3),
+            0,
+        );
+
+	for (index, s) in vec!["状態", "寸法", "妖魔本"].iter().enumerate() {
+            let mut vtext = VerticalText::new(
+                s.to_string(),
+                numeric::Point2f::new(0.0, 0.0),
+                numeric::Vector2f::new(1.0, 1.0),
+                0.0,
+                drawing_depth,
+                font_info,
+            );
+
+            set_table_frame_cell_center!(
+                ctx,
+                book_info_frame,
+                vtext,
+                numeric::Vector2u::new(index as u32, 0)
+            );
+
+            info_field_vtext.push(vtext);
+        }
+
+	for (index, s) in vec!["良".to_string(), book_info.size.clone(), "100".to_string()].iter().enumerate() {
+            let mut vtext = VerticalText::new(
+                s.to_string(),
+                numeric::Point2f::new(0.0, 0.0),
+                numeric::Vector2f::new(1.0, 1.0),
+                0.0,
+                drawing_depth,
+                font_info,
+            );
+
+            set_table_frame_cell_center!(
+                ctx,
+                book_info_frame,
+                vtext,
+                numeric::Vector2u::new(index as u32, 1)
+            );
+
+            info_field_vtext.push(vtext);
+        }
+
+	BookInfoDrawer {
+            book_info: book_info,
+            book_info_frame: book_info_frame,
+            info_field_text: info_field_vtext,
+            drwob_essential: DrawableObjectEssential::new(true, drawing_depth),
+        }
+    }
+
+    pub fn get_target_book_info(&self) -> BookInformation {
+        self.book_info.clone()
+    }
+
+    pub fn get_book_info_frame_size(&self) -> numeric::Vector2f {
+        self.book_info_frame.size()
+    }
+}
+
+impl DrawableComponent for BookInfoDrawer {
+    fn draw(&mut self, ctx: &mut ggez::Context) -> ggez::GameResult<()> {
+        if self.is_visible() {
+            self.book_info_frame.draw(ctx)?;
+
+            for vtext in &mut self.info_field_text {
+                vtext.draw(ctx)?;
+            }
+        }
+        Ok(())
+    }
+
+    fn hide(&mut self) {
+        self.drwob_essential.visible = false;
+    }
+
+    fn appear(&mut self) {
+        self.drwob_essential.visible = true;
+    }
+
+    fn is_visible(&self) -> bool {
+        self.drwob_essential.visible
+    }
+
+    fn set_drawing_depth(&mut self, depth: i8) {
+        self.drwob_essential.drawing_depth = depth;
+    }
+
+    fn get_drawing_depth(&self) -> i8 {
+        self.drwob_essential.drawing_depth
+    }
+}
+
+pub type BookInfoArea = DropDownArea<BookInfoDrawer>;
+
 pub struct OnDeskMenuGroup {
     event_list: DelayEventList<Self>,
     desk_book_menu: Option<DeskBookDropMenu>,
+    book_info_area: Option<BookInfoArea>,
     drwob_essential: DrawableObjectEssential,
 }
 
@@ -2558,12 +2715,14 @@ impl OnDeskMenuGroup {
         OnDeskMenuGroup {
             event_list: DelayEventList::new(),
             desk_book_menu: None,
+	    book_info_area: None,
             drwob_essential: DrawableObjectEssential::new(true, drawing_depth),
         }
     }
 
     pub fn is_some_menu_opened(&self) -> bool {
-        self.desk_book_menu.is_some()
+        self.desk_book_menu.is_some() ||
+	    self.book_info_area.is_some()
     }
 
     pub fn close_desk_book_menu(&mut self, t: Clock) {
@@ -2571,6 +2730,16 @@ impl OnDeskMenuGroup {
             desk_book_menu.add_effect(vec![effect::fade_out(10, t)]);
             self.event_list.add_event(
                 Box::new(|slf: &mut OnDeskMenuGroup, _, _| slf.desk_book_menu = None),
+                t + 11,
+            );
+        }
+    }
+
+    pub fn close_book_info_area(&mut self, t: Clock) {
+        if let Some(info_area) = self.book_info_area.as_mut() {
+            info_area.add_effect(vec![effect::fade_out(10, t)]);
+            self.event_list.add_event(
+                Box::new(|slf: &mut OnDeskMenuGroup, _, _| slf.book_info_area = None),
                 t + 11,
             );
         }
@@ -2584,13 +2753,31 @@ impl OnDeskMenuGroup {
         self.desk_book_menu.is_some() && self.desk_book_menu.as_ref().unwrap().contains(ctx, point)
     }
 
+    pub fn contains_book_info_area(
+        &self,
+        ctx: &mut ggez::Context,
+        point: numeric::Point2f,
+    ) -> bool {
+        self.book_info_area.is_some() &&
+	    self.book_info_area.as_ref().unwrap().contains(ctx, point)
+    }
+
     pub fn is_contains_any_menus(&self, ctx: &mut ggez::Context, point: numeric::Point2f) -> bool {
-        self.contains_desk_book_menu(ctx, point)
+        self.contains_desk_book_menu(ctx, point) ||
+	    self.contains_book_info_area(ctx, point)
     }
 
     pub fn get_desk_book_menu_position(&self) -> Option<numeric::Point2f> {
         if let Some(desk_book_menu) = self.desk_book_menu.as_ref() {
             Some(desk_book_menu.get_position())
+        } else {
+            None
+        }
+    }
+
+    pub fn get_book_info_area_position(&self) -> Option<numeric::Point2f> {
+        if let Some(book_info_area) = self.book_info_area.as_ref() {
+            Some(book_info_area.get_position())
         } else {
             None
         }
@@ -2630,6 +2817,7 @@ impl OnDeskMenuGroup {
 
     pub fn close_all(&mut self, t: Clock) {
         self.close_desk_book_menu(t);
+	self.close_book_info_area(t);
     }
 
     pub fn show_desk_book_menu(
@@ -2665,6 +2853,7 @@ impl OnDeskMenuGroup {
 
         let mut dd_area = DropDownArea::new(
 	    ctx,
+	    game_data,
 	    position,
 	    menu_rect,
 	    0,
@@ -2677,12 +2866,62 @@ impl OnDeskMenuGroup {
         self.desk_book_menu = Some(dd_area);
     }
 
+    pub fn show_book_info_area(
+        &mut self,
+        ctx: &mut ggez::Context,
+        game_data: &GameData,
+        position: numeric::Point2f,
+        book_info: BookInformation,
+        t: Clock,
+    ) {
+        let drawer = BookInfoDrawer::new(
+	    ctx,
+	    game_data,
+	    book_info,
+	    0
+	);
+
+        let frame_size = drawer.get_book_info_frame_size();
+
+        let menu_size = numeric::Point2f::new(frame_size.x + 96.0, frame_size.y + 40.0);
+
+        let menu_rect = if (position.y + menu_size.y) as i16 <= core::WINDOW_SIZE_Y {
+            numeric::Rect::new(position.x, position.y, menu_size.x, menu_size.y)
+        } else {
+            numeric::Rect::new(
+                position.x,
+                position.y - menu_size.y,
+                menu_size.x,
+                menu_size.y,
+            )
+        };
+
+        let mut dd_area = DropDownArea::new(
+	    ctx,
+	    game_data,
+	    position,
+	    menu_rect,
+	    0,
+	    drawer,
+	    t
+	);
+
+        dd_area.add_effect(vec![effect::fade_in(10, t)]);
+
+        self.book_info_area = Some(dd_area);
+    }
+    
     pub fn update(&mut self, ctx: &mut ggez::Context, game_data: &GameData, t: Clock) {
         flush_delay_event!(self, self.event_list, ctx, game_data, t);
 
         if let Some(desk_book_menu) = self.desk_book_menu.as_mut() {
             desk_book_menu.move_with_func(t);
             desk_book_menu.effect(ctx, t);
+        }
+
+	if let Some(book_info_area) = self.book_info_area.as_mut() {
+            book_info_area.move_with_func(t);
+            book_info_area.effect(ctx, t);
         }
     }
 
@@ -2699,6 +2938,20 @@ impl OnDeskMenuGroup {
             None
         }
     }
+
+    pub fn get_book_info_area_target_book_info(&self) -> Option<BookInformation> {
+        if self.book_info_area.is_some() {
+            Some(
+                self.book_info_area
+                    .as_ref()
+                    .unwrap()
+                    .get_component()
+                    .get_target_book_info(),
+            )
+        } else {
+            None
+        }
+    }
 }
 
 impl DrawableComponent for OnDeskMenuGroup {
@@ -2706,6 +2959,10 @@ impl DrawableComponent for OnDeskMenuGroup {
         if self.is_visible() {
             if let Some(desk_book_menu) = self.desk_book_menu.as_mut() {
                 desk_book_menu.draw(ctx)?;
+            }
+
+	    if let Some(book_info_area) = self.book_info_area.as_mut() {
+                book_info_area.draw(ctx)?;
             }
         }
         Ok(())

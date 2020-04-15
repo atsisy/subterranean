@@ -884,21 +884,30 @@ impl TaskTable {
         }
 
         if let Some(index) = self.on_desk_menu.desk_book_menu_last_clicked() {
-            return match index {
-                0 => {
-                    panic!("ここに状態獲得の処理を記述する");
-                }
-                1 => {
-                    let book_info = self.on_desk_menu.get_desk_menu_target_book_info();
-                    if let Some(info) = book_info {
-                        self.kosuzu_memory.add_book_info(info);
+	    if let Some(book_info) = self.on_desk_menu.get_desk_menu_target_book_info() {
+		return match index {
+                    0 => {
+			// すぐに表示すると順番的にclose_allされてしまうので、遅らせる
+			self.event_list.add_event(Box::new(move |slf: &mut Self, ctx, game_data| {
+			    slf.on_desk_menu.show_book_info_area(
+				ctx,
+				game_data,
+				point,
+				book_info,
+				t + 1,
+			    );
+			}), t + 1);
+			true
+                    },
+                    1 => {
+			self.kosuzu_memory.add_book_info(book_info);
+			true
                     }
-                    true
-                }
-                _ => false,
-            };
-        }
-
+                    _ => false,
+		};
+            }
+	}
+	
         false
     }
 
@@ -1244,7 +1253,8 @@ impl Clickable for TaskTable {
             self.customer_silhouette_menu.close_all(t);
         }
 
-        if !self.on_desk_menu.is_contains_any_menus(ctx, point) {
+        if !self.on_desk_menu.is_contains_any_menus(ctx, rpoint) {
+	    println!("close all!");
             self.on_desk_menu.close_all(t);
         }
     }
