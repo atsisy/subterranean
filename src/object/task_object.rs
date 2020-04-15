@@ -164,7 +164,26 @@ impl TaskTable {
         game_data: &GameData,
         point: numeric::Point2f,
     ) {
-        let rpoint = self.canvas.relative_point(point);
+	let rpoint = self.canvas.relative_point(point);
+
+	// メニューがオブジェクトの上に表示されている場合、ドラッグする
+	// オブジェクトの走査は行わない
+	if self.record_book_is_staged {
+	    return ();
+	}
+
+	if self.record_book_menu.is_contains_any_menus(ctx, rpoint) {
+	    return ();
+	}
+
+	if self.customer_silhouette_menu.is_contains_any_menus(ctx, rpoint) {
+	    return ();
+	}
+
+	if self.on_desk_menu.is_contains_any_menus(ctx, rpoint) {
+	    return ();
+	}
+
         self.desk.select_dragging_object(ctx, game_data, rpoint);
     }
 
@@ -391,7 +410,7 @@ impl TaskTable {
         numeric::Point2f::new(rpoint.x, 0.0)
     }
 
-    fn check_sight_drop_to_desk(&mut self, ctx: &mut ggez::Context, t: Clock) {
+    fn check_sight_drop_to_desk(&mut self, ctx: &mut ggez::Context, game_data: &GameData, t: Clock) {
         let converted = self.sight.check_drop_desk();
         if converted.len() == 0 {
             return ();
@@ -406,6 +425,8 @@ impl TaskTable {
                 obj.get_object_mut()
                     .override_move_func(move_fn::gravity_move(1.0, 10.0, 400.0, 0.3), t);
                 obj.get_object_mut().set_drawing_depth(min);
+		obj.get_object_mut().ref_wrapped_object_mut().ref_wrapped_object_mut().finish_dragging(ctx, game_data);
+		
                 obj.get_object_mut().add_effect(vec![Box::new(
                     |obj: &mut dyn MovableObject, _: &ggez::Context, t: Clock| {
                         if obj.get_position().y > 150.0 {
@@ -429,7 +450,7 @@ impl TaskTable {
         self.sight.update(ctx, game_data, t);
         self.desk.update(ctx, game_data, t);
         self.shelving_box.update(ctx, t);
-        self.check_sight_drop_to_desk(ctx, t);
+        self.check_sight_drop_to_desk(ctx, game_data, t);
         self.borrowing_record_book.update(t);
         self.record_book_menu.update(ctx, game_data, t);
         self.customer_silhouette_menu.update(ctx, game_data, t);
@@ -1226,9 +1247,7 @@ impl Clickable for TaskTable {
         _: ggez::input::mouse::MouseButton,
         point: numeric::Point2f,
     ) {
-	if !self.record_book_is_staged {
-	    self.select_dragging_object(ctx, game_data, point);
-	}
+	self.select_dragging_object(ctx, game_data, point);
     }
 
     fn button_up(

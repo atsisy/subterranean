@@ -1042,7 +1042,7 @@ impl SuzuMiniSight {
                 ),
                 t,
             ),
-            object_handover_lock: false,
+            object_handover_lock: true,
         }
     }
 
