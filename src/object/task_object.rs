@@ -1269,6 +1269,14 @@ impl Clickable for TaskTable {
     ) {
         let rpoint = self.canvas.relative_point(point);
 
+        if self
+            .borrowing_record_book
+            .click_handler(ctx, game_data, t, rpoint)
+        {
+            // クリックハンドラが呼び出されたので終了
+            return;
+        }
+
         if !self.click_record_book_menu(ctx, game_data, button, rpoint, t)
             && !self.click_customer_silhouette_menu(ctx, game_data, button, rpoint, t)
             && !self.click_desk_book_menu(ctx, game_data, button, point, t)
@@ -1279,14 +1287,6 @@ impl Clickable for TaskTable {
             self.record_book_menu.close_all(t);
             self.customer_silhouette_menu.close_all(t);
             self.on_desk_menu.close_all(t);
-        }
-
-        if self
-            .borrowing_record_book
-            .click_handler(ctx, game_data, t, rpoint)
-        {
-            // クリックハンドラが呼び出されたので終了
-            return;
         }
 	
         if self.desk.click_handler(ctx, game_data, t, button, rpoint) {

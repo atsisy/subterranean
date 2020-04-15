@@ -200,14 +200,20 @@ impl SuzunaSubScene {
 
                 // 今回のTaskSceneで扱われるCustomerRequestを構築
                 let customer_request = match customer_request_hint.as_ref().unwrap() {
-                    CustomerRequest::Borrowing(raw_info) => CustomerRequest::Borrowing(
-                        self.suzuna_book_pool.generate_borrowing_request(
-                            &raw_info.borrower,
-                            raw_info.borrow_date,
-                            raw_info.rental_limit.clone(),
-                        ),
-                    ),
-                    CustomerRequest::Returning(_) => {
+                    CustomerRequest::Borrowing(raw_info) => {
+			let borrowing_info = self.suzuna_book_pool.generate_borrowing_request(
+				&raw_info.borrower,
+				raw_info.borrow_date,
+				raw_info.rental_limit.clone(),
+                        );
+
+			self.returning_request_pool.add_request(borrowing_info.clone());
+			
+			CustomerRequest::Borrowing(
+                            borrowing_info
+			)
+		    },
+		    CustomerRequest::Returning(_) => {
 			let request = self.returning_request_pool
 			    .select_returning_request_random()
 			    .unwrap();
