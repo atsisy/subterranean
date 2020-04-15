@@ -814,7 +814,7 @@ impl CustomerCharacter {
     }
 
     fn generate_hold_request(&mut self, game_data: &GameData, today: GensoDate) -> CustomerRequest {
-        let random_select = rand::random::<usize>() % 3;
+        let random_select = rand::random::<usize>() % 2;
         match random_select {
             0 => CustomerRequest::Borrowing(BorrowingInformation::new(
                 vec![game_data.book_random_select().clone()],
@@ -822,15 +822,10 @@ impl CustomerCharacter {
                 today,
                 RentalLimit::random(),
             )),
-            1 => CustomerRequest::Returning(ReturnBookInformation::new_random(
+            _ => CustomerRequest::Returning(ReturnBookInformation::new_random(
                 game_data,
                 today,
                 GensoDate::new(128, 12, 20),
-            )),
-            _ => CustomerRequest::Copying(CopyingRequestInformation::new_random(
-                game_data,
-                today,
-                GensoDate::new(12, 12, 12),
             )),
         }
     }
