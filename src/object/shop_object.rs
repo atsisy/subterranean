@@ -16,12 +16,11 @@ use torifune::numeric;
 use torifune::roundup2f;
 
 use crate::core::{
-    BookInformation, BookShelfInformation, FontID, GameData, TextureID, TileBatchTextureID,
+    BookInformation, BookShelfInformation, FontID, GameData, TextureID, TileBatchTextureID, TaskResult,
 };
 use crate::object::move_fn;
 use crate::object::util_object::*;
 use crate::object::Clickable;
-use crate::scene::suzuna_scene::TaskResult;
 use crate::scene::DelayEventList;
 use crate::set_table_frame_cell_center;
 

@@ -20,6 +20,7 @@ use torifune::sound;
 use ggez::input as ginput;
 use ggez::input::keyboard::*;
 use ginput::mouse::MouseButton;
+use crate::object::task_object::tt_sub_component::CopyingRequestInformation;
 
 use std::collections::HashMap;
 use std::collections::VecDeque;
@@ -759,6 +760,50 @@ impl MouseInformation {
     }
 }
 
+#[derive(Clone, Debug)]
+pub struct TaskResult {
+    pub done_works: u32,                                     // 総仕事数
+    pub not_shelved_books: Vec<BookInformation>,             // 返却済, 未配架
+    pub borrowing_books: Vec<BookInformation>,               // 貸出中
+    pub remain_copy_request: Vec<CopyingRequestInformation>, // 写本待
+    pub total_money: i32,                                    // 稼いだ金額
+}
+
+impl TaskResult {
+    pub fn new() -> Self {
+        TaskResult {
+            done_works: 0,
+            not_shelved_books: Vec::new(),
+            total_money: 0,
+            borrowing_books: Vec::new(),
+            remain_copy_request: Vec::new(),
+        }
+    }
+
+    pub fn add_result(&mut self, task_result: &TaskResult) -> &mut Self {
+        self.done_works += task_result.done_works;
+        self.not_shelved_books
+            .extend(task_result.not_shelved_books.clone());
+        self.borrowing_books
+            .extend(task_result.borrowing_books.clone());
+        self.remain_copy_request
+            .extend(task_result.remain_copy_request.clone());
+        self.total_money += task_result.total_money;
+
+        self
+    }
+
+    pub fn reset(&mut self) -> &mut Self {
+        self.done_works = 0;
+        self.not_shelved_books.clear();
+        self.borrowing_books.clear();
+        self.remain_copy_request.clear();
+        self.total_money = 0;
+
+        self
+    }
+}
+
 struct SceneStack<'a> {
     stack: VecDeque<Box<dyn scene::SceneManager + 'a>>,
 }
@@ -779,13 +824,50 @@ impl<'a> SceneStack<'a> {
     }
 }
 
+#[derive(Clone)]
+pub struct GameStatus {
+    pub date: GensoDate,
+    pub task_result: TaskResult,
+}
+
+pub enum TopScene {
+    ScenarioScene(scene::scenario_scene::ScenarioScene),
+    SuzunaScene(scene::suzuna_scene::SuzunaScene),
+    Null(scene::NullScene),
+}
+
+impl TopScene {
+    pub fn abs(&self) -> &dyn scene::SceneManager {
+	match self {
+	    TopScene::ScenarioScene(scene) => scene,
+	    TopScene::SuzunaScene(scene) => scene,
+	    TopScene::Null(scene) => scene,
+	}
+    }
+
+    pub fn abs_mut(&mut self) -> &mut dyn scene::SceneManager {
+	match self {
+	    TopScene::ScenarioScene(scene) => scene,
+	    TopScene::SuzunaScene(scene) => scene,
+	    TopScene::Null(scene) => scene,
+	}
+    }
+
+    pub fn to_suzuna_scene(&self) -> Option<&scene::suzuna_scene::SuzunaScene> {
+	match self {
+	    TopScene::SuzunaScene(scene) => Some(scene),
+	    _ => None,
+	}
+    }
+}
+
 struct SceneController<'a> {
-    current_scene: Box<dyn scene::SceneManager + 'a>,
+    current_scene: TopScene,
     scene_stack: SceneStack<'a>,
     key_map: tdev::ProgramableGenericKey,
     global_clock: u64,
     root_screen: SubScreen,
-    date: GensoDate,
+    game_status: GameStatus,
 }
 
 impl<'a> SceneController<'a> {
@@ -814,19 +896,44 @@ impl<'a> SceneController<'a> {
             ),
         );
 
-	let date = GensoDate::new(112, 7, 23);
+	let game_status = GameStatus {
+	    date: GensoDate::new(112, 7, 23),
+	    task_result: TaskResult::new(),
+	};
 
         SceneController {
             //current_scene: Box::new(scene::work_scene::WorkScene::new(ctx, game_data, 0)),
-            current_scene: Box::new(scene::scenario_scene::ScenarioScene::new(ctx, game_data, date.clone())),
+            current_scene: TopScene::ScenarioScene(
+		scene::scenario_scene::ScenarioScene::new(
+		    ctx,
+		    game_data,
+		    game_status.clone(),
+		)
+	    ),
             //current_scene: Box::new(scene::shop_scene::ShopScene::new(ctx, game_data, 0)),
             //current_scene: Box::new(scene::suzuna_scene::SuzunaScene::new(ctx, game_data, 0)),
             scene_stack: SceneStack::new(),
             key_map: tdev::ProgramableGenericKey::new(),
             global_clock: 0,
             root_screen: root_screen,
-	    date: date,
+	    game_status: game_status,
         }
+    }
+
+    fn swap_suzuna_to_scenario(
+	&mut self,
+	ctx: &mut ggez::Context,
+        game_data: &'a GameData,
+    ) {
+	let task_result = self.current_scene.to_suzuna_scene().unwrap().get_task_result();
+	self.game_status.task_result = task_result;
+	
+	self.current_scene =
+            TopScene::ScenarioScene(scene::scenario_scene::ScenarioScene::new(
+		ctx,
+		game_data,
+		self.game_status.clone(),
+	    ))
     }
 
     fn switch_scene_with_swap(
@@ -838,69 +945,27 @@ impl<'a> SceneController<'a> {
         match next_scene_id {
             scene::SceneID::SuzunaShop => {
                 self.current_scene =
-                    Box::new(scene::suzuna_scene::SuzunaScene::new(ctx, game_data, 0, self.date.clone()))
+                    TopScene::SuzunaScene(scene::suzuna_scene::SuzunaScene::new(ctx, game_data, 0, self.game_status.clone()))
             }
             scene::SceneID::Scenario => {
-                self.current_scene =
-                    Box::new(scene::scenario_scene::ScenarioScene::new(ctx, game_data, self.date.clone()))
+		match self.current_scene {
+		    TopScene::SuzunaScene(_) => self.swap_suzuna_to_scenario(ctx, game_data),
+		    _ => (),
+		}
             }
-            scene::SceneID::Null => self.current_scene = Box::new(scene::NullScene::new()),
+            scene::SceneID::Null => self.current_scene = TopScene::Null(scene::NullScene::new()),
             _ => (),
         }
     }
 
-    fn switch_scene_with_stacking(
-        &mut self,
-        ctx: &mut ggez::Context,
-        game_data: &'a GameData,
-        next_scene_id: scene::SceneID,
-    ) {
-        let next_scene: Option<Box<dyn scene::SceneManager + 'a>> =
-            if next_scene_id == scene::SceneID::MainDesk {
-                Some(Box::new(
-                    scene::suzuna_scene::suzuna_sub_scene::task_scene::TaskScene::new(
-                        ctx,
-                        game_data,
-                        GensoDate::new_empty(),
-                        None,
-                        None,
-                    ),
-                ))
-            } else if next_scene_id == scene::SceneID::SuzunaShop {
-                Some(Box::new(scene::shop_scene::ShopScene::new(
-                    ctx,
-                    game_data,
-                    0,
-                    GensoDate::new_empty(),
-                )))
-            } else if next_scene_id == scene::SceneID::Null {
-                Some(Box::new(scene::NullScene::new()))
-            } else {
-                None
-            };
-
-        if let Some(mut scene) = next_scene {
-            std::mem::swap(&mut self.current_scene, &mut scene);
-            self.scene_stack.push(scene);
-        }
-    }
-
-    fn switch_scene_with_popping(&mut self) {
-        if let Some(scene) = self.scene_stack.pop() {
-            self.current_scene = scene;
-        } else {
-            eprintln!("Scene Stack is Empty!!");
-        }
-    }
-
     fn run_pre_process(&mut self, ctx: &mut ggez::Context, game_data: &GameData) {
-        self.current_scene.pre_process(ctx, game_data);
+        self.current_scene.abs_mut().pre_process(ctx, game_data);
     }
 
     fn run_drawing_process(&mut self, ctx: &mut ggez::Context) {
         sub_screen::stack_screen(ctx, &self.root_screen);
 
-        self.current_scene.drawing_process(ctx);
+        self.current_scene.abs_mut().drawing_process(ctx);
 
         debug::debug_screen_draw(ctx);
 
@@ -909,17 +974,17 @@ impl<'a> SceneController<'a> {
     }
 
     fn run_post_process(&mut self, ctx: &mut ggez::Context, game_data: &'a GameData) {
-        match self.current_scene.post_process(ctx, game_data) {
+        match self.current_scene.abs_mut().post_process(ctx, game_data) {
             scene::SceneTransition::Keep => (),
             scene::SceneTransition::Reset => println!("FIXME!!"),
             scene::SceneTransition::SwapTransition => {
-                self.switch_scene_with_swap(ctx, game_data, self.current_scene.transition())
+                self.switch_scene_with_swap(ctx, game_data, self.current_scene.abs().transition())
             }
             scene::SceneTransition::StackingTransition => {
-                self.switch_scene_with_stacking(ctx, game_data, self.current_scene.transition());
+		panic!("Not Implemented");
             }
             scene::SceneTransition::PoppingTransition => {
-                self.switch_scene_with_popping();
+		panic!("Not Implemented");
             }
         }
 
@@ -941,6 +1006,7 @@ impl<'a> SceneController<'a> {
             std::process::exit(0);
         }
         self.current_scene
+            .abs_mut()
             .key_down_event(ctx, game_data, self.key_map.real_to_virtual(keycode));
     }
 
@@ -952,6 +1018,7 @@ impl<'a> SceneController<'a> {
         _keymods: KeyMods,
     ) {
         self.current_scene
+            .abs_mut()
             .key_up_event(ctx, game_data, self.key_map.real_to_virtual(keycode));
     }
 
@@ -963,6 +1030,7 @@ impl<'a> SceneController<'a> {
         offset: numeric::Vector2f,
     ) {
         self.current_scene
+	    .abs_mut()
             .mouse_motion_event(ctx, game_data, point, offset);
     }
 
@@ -974,6 +1042,7 @@ impl<'a> SceneController<'a> {
         point: numeric::Point2f,
     ) {
         self.current_scene
+	    .abs_mut()
             .mouse_button_down_event(ctx, game_data, button, point);
     }
 
@@ -985,6 +1054,7 @@ impl<'a> SceneController<'a> {
         point: numeric::Point2f,
     ) {
         self.current_scene
+	    .abs_mut()
             .mouse_button_up_event(ctx, game_data, button, point);
     }
 
@@ -996,13 +1066,15 @@ impl<'a> SceneController<'a> {
         y: f32,
     ) {
         let point = ggez::input::mouse::position(ctx);
-        self.current_scene.mouse_wheel_event(
-            ctx,
-            game_data,
-            numeric::Point2f::new(point.x, point.y),
-            x,
-            y,
-        );
+        self.current_scene
+	    .abs_mut()
+	    .mouse_wheel_event(
+		ctx,
+		game_data,
+		numeric::Point2f::new(point.x, point.y),
+		x,
+		y,
+            );
     }
 }
 

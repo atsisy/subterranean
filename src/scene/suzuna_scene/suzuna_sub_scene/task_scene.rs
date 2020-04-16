@@ -8,7 +8,7 @@ use torifune::numeric;
 use super::super::*;
 use crate::object::Clickable;
 
-use crate::core::{GameData, GensoDate, MouseActionRecord, MouseInformation, TileBatchTextureID};
+use crate::core::{GameData, GensoDate, MouseActionRecord, MouseInformation, TileBatchTextureID, TaskResult};
 use crate::object::effect_object;
 use crate::object::task_object::*;
 use crate::scene::{SceneID, SceneTransition};

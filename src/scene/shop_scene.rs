@@ -18,7 +18,7 @@ use torifune::numeric;
 
 use super::*;
 use crate::core::map_parser as mp;
-use crate::core::{FontID, GameData, GensoDate, TileBatchTextureID};
+use crate::core::{FontID, GameData, GensoDate, TileBatchTextureID, TaskResult, GameStatus};
 use crate::flush_delay_event;
 use crate::object::effect_object;
 use crate::object::map_object::*;
@@ -27,7 +27,6 @@ use crate::object::scenario::*;
 use crate::object::shop_object::*;
 use crate::object::task_object::tt_main_component::CustomerRequest;
 use crate::object::*;
-use crate::scene::suzuna_scene::TaskResult;
 use effect_object::{TilingEffectType, SceneTransitionEffectType};
 use notify::*;
 
@@ -308,10 +307,9 @@ pub struct ShopScene {
     character_group: CharacterGroup,
     shop_special_object: ShopSpecialObject,
     key_listener: tdev::KeyboardListener,
-    task_result: TaskResult,
     clock: Clock,
     shop_clock: ShopClock,
-    today_date: GensoDate,
+    game_status: GameStatus,
     map: MapData,
     event_list: DelayEventList<Self>,
     shop_menu: ShopMenuMaster,
@@ -330,7 +328,7 @@ impl ShopScene {
         ctx: &mut ggez::Context,
         game_data: &GameData,
         map_id: u32,
-        today_date: GensoDate,
+	game_status: GameStatus,
     ) -> ShopScene {
         let key_listener =
             tdev::KeyboardListener::new_masked(vec![tdev::KeyInputDevice::GenericKeyboard], vec![]);
@@ -370,10 +368,8 @@ impl ShopScene {
             character_group: character_group,
             shop_special_object: ShopSpecialObject::new(),
             key_listener: key_listener,
-            task_result: TaskResult::new(),
             clock: 0,
             shop_clock: ShopClock::new(8, 0),
-            today_date: today_date,
             map: map,
             event_list: DelayEventList::new(),
             shop_menu: ShopMenuMaster::new(ctx, game_data, numeric::Vector2f::new(450.0, 768.0), 0),
@@ -384,6 +380,7 @@ impl ShopScene {
                 numeric::Rect::new(0.0, 0.0, 1366.0, 768.0),
                 0,
             ),
+	    game_status: game_status,
             camera: camera,
             transition_scene: SceneID::SuzunaShop,
             transition_status: SceneTransition::Keep,
@@ -458,7 +455,7 @@ impl ShopScene {
     }
 
     pub fn get_today_date(&self) -> GensoDate {
-        self.today_date.clone()
+        self.game_status.date.clone()
     }
 
     fn right_key_handler(&mut self) {
@@ -779,7 +776,7 @@ impl ShopScene {
                 self.shop_special_object.show_shelving_select_ui(
                     ctx,
                     game_data,
-                    &self.task_result,
+                    &self.game_status.task_result,
                     self.player.get_shelving_book().clone(),
                     self.get_current_clock(),
                 );
@@ -983,11 +980,11 @@ impl ShopScene {
             self.player.get_shelving_book(),
         );
 	
-        self.task_result = task_result.clone();
+        self.game_status.task_result = task_result.clone();
     }
 
     pub fn current_task_result(&self) -> TaskResult {
-        self.task_result.clone()
+	self.game_status.task_result.clone()
     }
 
     fn try_hide_shelving_select_ui(&mut self, ctx: &mut ggez::Context, game_data: &GameData) {
@@ -995,12 +992,12 @@ impl ShopScene {
             .shop_special_object
             .hide_shelving_select_ui(self.get_current_clock());
         if let Some((boxed, shelving)) = select_result {
-            self.task_result.not_shelved_books = boxed;
+            self.game_status.task_result.not_shelved_books = boxed;
             self.player.update_shelving_book(shelving);
             self.shop_menu.update_contents(
                 ctx,
                 game_data,
-                &self.task_result,
+                &self.game_status.task_result,
                 self.player.get_shelving_book(),
             );
             self.dark_effect_panel
@@ -1017,7 +1014,7 @@ impl ShopScene {
             self.shop_menu.update_contents(
                 ctx,
                 game_data,
-                &self.task_result,
+                &self.game_status.task_result,
                 self.player.get_shelving_book(),
             );
             self.dark_effect_panel
@@ -1037,7 +1034,7 @@ impl ShopScene {
     ) {
         if self.get_current_clock() % 40 == 0 {
             debug::debug_screen_push_text(&format!("{}", self.shop_clock));
-            self.shop_clock.add_minute(3);
+            self.shop_clock.add_minute(5);
 
             if self.shop_clock.equals(12, 0) {
                 self.notification_area.insert_new_contents_generic(
@@ -1261,7 +1258,7 @@ impl SceneManager for ShopScene {
             }
 
             for customer in &mut rising_customers {
-                if let Some(request) = customer.check_rise_hand(game_data, self.today_date.clone())
+                if let Some(request) = customer.check_rise_hand(game_data, self.game_status.date.clone())
                 {
                     self.customer_request_queue.push_back(request);
                 }

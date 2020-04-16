@@ -10,9 +10,8 @@ use torifune::impl_drawable_object_for_wrapped;
 use torifune::impl_texture_object_for_wrapped;
 use torifune::numeric;
 
-use crate::core::{FontID, GameData, GensoDate};
+use crate::core::{FontID, GameData, GensoDate, TaskResult};
 use crate::object::effect;
-use crate::scene::suzuna_scene::TaskResult;
 
 use number_to_jk::number_to_jk;
 

@@ -135,10 +135,10 @@ pub struct SuzunaSubScene {
 }
 
 impl SuzunaSubScene {
-    pub fn new(ctx: &mut ggez::Context, game_data: &GameData, map_id: u32, date: GensoDate) -> Self {
+    pub fn new(ctx: &mut ggez::Context, game_data: &GameData, map_id: u32, game_status: GameStatus) -> Self {
 	let returning_pool = ReturningRequestPool::new(
             game_data,
-            date.clone(),
+            game_status.date.clone(),
         );
 
 	let borrowing_record_book_data = BorrowingRecordBookData {
@@ -154,7 +154,7 @@ impl SuzunaSubScene {
                 ctx,
                 game_data,
                 map_id,
-		date.clone(),
+		game_status.clone(),
             ))),
             desk_work_scene: None,
             day_result_scene: None,
@@ -163,7 +163,7 @@ impl SuzunaSubScene {
             borrowing_record_book_data: Some(borrowing_record_book_data),
             returning_request_pool: returning_pool,
             suzuna_book_pool: SuzunaBookPool::new(game_data),
-	    date: date,
+	    date: game_status.date,
         }
     }
 

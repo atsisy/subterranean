@@ -7,56 +7,12 @@ use torifune::debug;
 use torifune::device::VirtualKey;
 use torifune::numeric;
 
-use crate::core::{BookInformation, GameData, GensoDate};
+use crate::core::{GameData, GensoDate, TaskResult, GameStatus};
 use crate::scene::*;
 
 use crate::object::task_object::tt_sub_component::CopyingRequestInformation;
 
 use suzuna_sub_scene::*;
-
-#[derive(Clone, Debug)]
-pub struct TaskResult {
-    pub done_works: u32,                                     // 総仕事数
-    pub not_shelved_books: Vec<BookInformation>,             // 返却済, 未配架
-    pub borrowing_books: Vec<BookInformation>,               // 貸出中
-    pub remain_copy_request: Vec<CopyingRequestInformation>, // 写本待
-    pub total_money: i32,                                    // 稼いだ金額
-}
-
-impl TaskResult {
-    pub fn new() -> Self {
-        TaskResult {
-            done_works: 0,
-            not_shelved_books: Vec::new(),
-            total_money: 0,
-            borrowing_books: Vec::new(),
-            remain_copy_request: Vec::new(),
-        }
-    }
-
-    pub fn add_result(&mut self, task_result: &TaskResult) -> &mut Self {
-        self.done_works += task_result.done_works;
-        self.not_shelved_books
-            .extend(task_result.not_shelved_books.clone());
-        self.borrowing_books
-            .extend(task_result.borrowing_books.clone());
-        self.remain_copy_request
-            .extend(task_result.remain_copy_request.clone());
-        self.total_money += task_result.total_money;
-
-        self
-    }
-
-    pub fn reset(&mut self) -> &mut Self {
-        self.done_works = 0;
-        self.not_shelved_books.clear();
-        self.borrowing_books.clear();
-        self.remain_copy_request.clear();
-        self.total_money = 0;
-
-        self
-    }
-}
 
 pub struct SuzunaScene {
     clock: Clock,
@@ -65,11 +21,11 @@ pub struct SuzunaScene {
 }
 
 impl SuzunaScene {
-    pub fn new(ctx: &mut ggez::Context, game_data: &GameData, suzuna_map_id: u32, today: GensoDate) -> Self {
+    pub fn new(ctx: &mut ggez::Context, game_data: &GameData, suzuna_map_id: u32, game_status: GameStatus) -> Self {
         SuzunaScene {
             clock: 0,
-            sub_scene: SuzunaSubScene::new(ctx, game_data, suzuna_map_id, today),
-            task_result: TaskResult::new(),
+            sub_scene: SuzunaSubScene::new(ctx, game_data, suzuna_map_id, game_status.clone()),
+            task_result: game_status.task_result,
         }
     }
 
@@ -98,6 +54,10 @@ impl SuzunaScene {
             self.sub_scene
                 .switch_shop_to_copying(ctx, game_data, transition_status);
         }
+    }
+
+    pub fn get_task_result(&self) -> TaskResult {
+	self.task_result.clone()
     }
 }
 
