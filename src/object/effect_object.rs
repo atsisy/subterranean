@@ -30,26 +30,25 @@ pub struct ScreenTileEffect {
 }
 
 impl ScreenTileEffect {
-    pub fn new(
-        ctx: &mut ggez::Context,
-        game_data: &GameData,
+    pub fn new<'a>(
+        ctx: &mut SuzuContext<'a>,
         tile_batch_texture_id: TileBatchTextureID,
         rect: numeric::Rect,
         animation_time: Clock,
         st_effect_type: SceneTransitionEffectType,
-	tiling_effect_type: TilingEffectType,
+        tiling_effect_type: TilingEffectType,
         depth: i8,
         t: Clock,
     ) -> Self {
-        let tile_batch = game_data.ref_tile_batch(tile_batch_texture_id);
+        let tile_batch = ctx.resource.ref_tile_batch(tile_batch_texture_id);
         let size = tile_batch.get_tile_size();
 
         ScreenTileEffect {
             tile_batch: tile_batch,
             animation_rate: animation_time as f32 / (rect.w + rect.h + size.x as f32),
-            canvas: SubScreen::new(ctx, rect, depth, ggraphics::Color::from_rgba_u32(0)),
+            canvas: SubScreen::new(ctx.context, rect, depth, ggraphics::Color::from_rgba_u32(0)),
             st_effect_type: st_effect_type,
-	    tiling_effect_type: tiling_effect_type,
+            tiling_effect_type: tiling_effect_type,
             effect_start: t,
         }
     }
@@ -71,15 +70,16 @@ impl ScreenTileEffect {
                     }
                 };
 
-		let tile_pos = match self.tiling_effect_type {
-		    TilingEffectType::OneTile => numeric::Vector2u::new(0, 0),
-		    TilingEffectType::WholeTile => numeric::Vector2u::new(
-			(x / size.x as i16) as u32, (y / size.y as i16) as u32
-		    ),
-		};
-		
+                let tile_pos = match self.tiling_effect_type {
+                    TilingEffectType::OneTile => numeric::Vector2u::new(0, 0),
+                    TilingEffectType::WholeTile => numeric::Vector2u::new(
+                        (x / size.x as i16) as u32,
+                        (y / size.y as i16) as u32,
+                    ),
+                };
+
                 self.tile_batch.add_batch_tile_position(
-		    tile_pos,
+                    tile_pos,
                     numeric::Point2f::new(x as f32, y as f32),
                     numeric::Vector2f::new(1.0, 1.0),
                     ggraphics::Color::new(1.0, 1.0, 1.0, alpha),

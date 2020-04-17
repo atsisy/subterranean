@@ -53,9 +53,9 @@ pub struct TableFrame {
 
 impl TableFrame {
     pub fn new(
-        game_data: &GameData,
+        game_data: &GameResource,
         position: numeric::Point2f,
-	frame_batch_texture: TileBatchTextureID,
+        frame_batch_texture: TileBatchTextureID,
         frame_data: FrameData,
         frame_scale: numeric::Vector2f,
         draw_depth: i8,
@@ -473,16 +473,24 @@ pub struct SelectButton {
 }
 
 impl SelectButton {
-    pub fn new(
-        ctx: &mut ggez::Context,
+    pub fn new<'a>(
+        ctx: &mut SuzuContext<'a>,
         button_rect: numeric::Rect,
         mut texture: Box<dyn TextureObject>,
     ) -> Self {
         texture.set_position(numeric::Point2f::new(0.0, 0.0));
-        texture.fit_scale(ctx, numeric::Vector2f::new(button_rect.w, button_rect.h));
+        texture.fit_scale(
+            ctx.context,
+            numeric::Vector2f::new(button_rect.w, button_rect.h),
+        );
 
         SelectButton {
-            canvas: SubScreen::new(ctx, button_rect, 0, ggraphics::Color::from_rgba_u32(0)),
+            canvas: SubScreen::new(
+                ctx.context,
+                button_rect,
+                0,
+                ggraphics::Color::from_rgba_u32(0),
+            ),
             button_texture: texture,
             button_toggle: false,
         }
@@ -557,7 +565,7 @@ pub struct TileBatchFrame {
 
 impl TileBatchFrame {
     pub fn new(
-        game_data: &GameData,
+        game_data: &GameResource,
         tile_batch_texture: TileBatchTextureID,
         rect_pos: numeric::Rect,
         frame_scale: numeric::Vector2f,
@@ -722,10 +730,9 @@ impl DrawableComponent for TileBatchFrame {
 }
 
 pub trait Scrollable: DrawableComponent {
-    fn scroll(
+    fn scroll<'a>(
         &mut self,
-        ctx: &mut ggez::Context,
-        game_data: &GameData,
+        ctx: &mut SuzuContext<'a>,
         point: numeric::Point2f,
         offset: numeric::Vector2f,
     );
@@ -775,13 +782,12 @@ where
     }
 
     pub fn relative_point(&self, point: numeric::Point2f) -> numeric::Point2f {
-	self.canvas.relative_point(point)
+        self.canvas.relative_point(point)
     }
-    
-    pub fn scroll(
+
+    pub fn scroll<'a>(
         &mut self,
-        ctx: &mut ggez::Context,
-        game_data: &GameData,
+        ctx: &mut SuzuContext<'a>,
         point: numeric::Point2f,
         x: f32,
         y: f32,
@@ -789,13 +795,11 @@ where
         match self.scroll_direction {
             ScrollDirection::Vertical => self.drawable.scroll(
                 ctx,
-                game_data,
                 point,
                 numeric::Vector2f::new(self.scroll_rate.x * x, self.scroll_rate.y * y),
             ),
             ScrollDirection::Horizon => self.drawable.scroll(
                 ctx,
-                game_data,
                 point,
                 numeric::Vector2f::new(self.scroll_rate.x * y, self.scroll_rate.y * x),
             ),

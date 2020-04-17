@@ -32,7 +32,7 @@ pub struct ReturningRequestPool {
 }
 
 impl ReturningRequestPool {
-    pub fn new(game_data: &GameData, today: GensoDate) -> Self {
+    pub fn new(game_data: &GameResource, today: GensoDate) -> Self {
         let mut returning_request = Vec::new();
         let mut return_date = today.clone();
         return_date.add_day(14);
@@ -74,7 +74,7 @@ impl ReturningRequestPool {
     }
 
     pub fn iter(&self) -> std::slice::Iter<ReturnBookInformation> {
-	self.returning_request.iter()
+        self.returning_request.iter()
     }
 }
 
@@ -83,7 +83,7 @@ pub struct SuzunaBookPool {
 }
 
 impl SuzunaBookPool {
-    pub fn new(game_data: &GameData) -> Self {
+    pub fn new(game_data: &GameResource) -> Self {
         SuzunaBookPool {
             books: game_data.clone_available_books(),
         }
@@ -135,35 +135,29 @@ pub struct SuzunaSubScene {
 }
 
 impl SuzunaSubScene {
-    pub fn new(ctx: &mut ggez::Context, game_data: &GameData, map_id: u32, game_status: GameStatus) -> Self {
-	let returning_pool = ReturningRequestPool::new(
-            game_data,
-            game_status.date.clone(),
-        );
+    pub fn new<'a>(ctx: &mut SuzuContext<'a>, map_id: u32, game_status: SavableData) -> Self {
+        let returning_pool = ReturningRequestPool::new(ctx.resource, game_status.date.clone());
 
-	let borrowing_record_book_data = BorrowingRecordBookData {
-	    pages_data: returning_pool.iter()
-		.map(|ret_info| {
-		    println!("{:?}", ret_info); BorrowingRecordBookPageData::from(ret_info)
-		})
-		.collect(),
-	};
-	
+        let borrowing_record_book_data = BorrowingRecordBookData {
+            pages_data: returning_pool
+                .iter()
+                .map(|ret_info| {
+                    println!("{:?}", ret_info);
+                    BorrowingRecordBookPageData::from(ret_info)
+                })
+                .collect(),
+        };
+
         SuzunaSubScene {
-            shop_scene: Some(Box::new(ShopScene::new(
-                ctx,
-                game_data,
-                map_id,
-		game_status.clone(),
-            ))),
+            shop_scene: Some(Box::new(ShopScene::new(ctx, map_id, game_status.clone()))),
             desk_work_scene: None,
             day_result_scene: None,
             copying_scene: None,
             scene_status: SuzunaSceneStatus::Shop,
             borrowing_record_book_data: Some(borrowing_record_book_data),
             returning_request_pool: returning_pool,
-            suzuna_book_pool: SuzunaBookPool::new(game_data),
-	    date: game_status.date,
+            suzuna_book_pool: SuzunaBookPool::new(ctx.resource),
+            date: game_status.date,
         }
     }
 
@@ -183,10 +177,9 @@ impl SuzunaSubScene {
         self.scene_status
     }
 
-    pub fn switch_shop_to_deskwork(
+    pub fn switch_shop_to_deskwork<'a>(
         &mut self,
-        ctx: &mut ggez::Context,
-        game_data: &GameData,
+        ctx: &mut SuzuContext<'a>,
         transition: SceneTransition,
     ) {
         if transition == SceneTransition::StackingTransition {
@@ -201,27 +194,25 @@ impl SuzunaSubScene {
                 // 今回のTaskSceneで扱われるCustomerRequestを構築
                 let customer_request = match customer_request_hint.as_ref().unwrap() {
                     CustomerRequest::Borrowing(raw_info) => {
-			let borrowing_info = self.suzuna_book_pool.generate_borrowing_request(
-				&raw_info.borrower,
-				raw_info.borrow_date,
-				raw_info.rental_limit.clone(),
+                        let borrowing_info = self.suzuna_book_pool.generate_borrowing_request(
+                            &raw_info.borrower,
+                            raw_info.borrow_date,
+                            raw_info.rental_limit.clone(),
                         );
 
-			self.returning_request_pool.add_request(borrowing_info.clone());
-			
-			CustomerRequest::Borrowing(
-                            borrowing_info
-			)
-		    },
-		    CustomerRequest::Returning(_) => {
-			let request = self.returning_request_pool
-			    .select_returning_request_random()
-			    .unwrap();
-			println!("{:?}", request);
-			CustomerRequest::Returning(
-                            request
-			)
-		    },
+                        self.returning_request_pool
+                            .add_request(borrowing_info.clone());
+
+                        CustomerRequest::Borrowing(borrowing_info)
+                    }
+                    CustomerRequest::Returning(_) => {
+                        let request = self
+                            .returning_request_pool
+                            .select_returning_request_random()
+                            .unwrap();
+                        println!("{:?}", request);
+                        CustomerRequest::Returning(request)
+                    }
                     _ => return (),
                 };
 
@@ -232,7 +223,6 @@ impl SuzunaSubScene {
                 self.scene_status = SuzunaSceneStatus::DeskWork;
                 self.desk_work_scene = Some(Box::new(TaskScene::new(
                     ctx,
-                    game_data,
                     today_date,
                     Some(customer_request),
                     record_book_data,
@@ -241,24 +231,25 @@ impl SuzunaSubScene {
         }
     }
 
-    pub fn switch_shop_to_day_result(
+    pub fn switch_shop_to_day_result<'a>(
         &mut self,
-        ctx: &mut ggez::Context,
-        game_data: &GameData,
+        ctx: &mut SuzuContext<'a>,
         transition: SceneTransition,
     ) {
         if transition == SceneTransition::SwapTransition {
             let task_result = self.shop_scene.as_mut().unwrap().current_task_result();
             self.scene_status = SuzunaSceneStatus::DayResult;
-            self.day_result_scene =
-                Some(Box::new(TaskResultScene::new(ctx, game_data, task_result, self.date.clone())));
+            self.day_result_scene = Some(Box::new(TaskResultScene::new(
+                ctx,
+                task_result,
+                self.date.clone(),
+            )));
         }
     }
 
-    pub fn switch_deskwork_to_shop(
+    pub fn switch_deskwork_to_shop<'a>(
         &mut self,
-        ctx: &mut ggez::Context,
-        game_data: &GameData,
+        ctx: &mut SuzuContext<'a>,
         transition: SceneTransition,
     ) {
         if transition == SceneTransition::PoppingTransition {
@@ -271,89 +262,75 @@ impl SuzunaSubScene {
             );
             self.scene_status = SuzunaSceneStatus::Shop;
             self.desk_work_scene = None;
-            self.shop_scene
-                .as_mut()
-                .unwrap()
-                .switched_and_restart(ctx, game_data);
+            self.shop_scene.as_mut().unwrap().switched_and_restart(ctx);
         }
     }
 
-    pub fn switch_shop_to_copying(
+    pub fn switch_shop_to_copying<'a>(
         &mut self,
-        ctx: &mut ggez::Context,
-        game_data: &GameData,
+        ctx: &mut SuzuContext<'a>,
         transition: SceneTransition,
     ) {
         if transition == SceneTransition::StackingTransition {
             self.scene_status = SuzunaSceneStatus::Copying;
-            self.copying_scene = Some(Box::new(CopyingScene::new(ctx, game_data, Vec::new())));
+            self.copying_scene = Some(Box::new(CopyingScene::new(ctx, Vec::new())));
         }
     }
 }
 
 impl SceneManager for SuzunaSubScene {
-    fn key_down_event(&mut self, ctx: &mut ggez::Context, game_data: &GameData, vkey: VirtualKey) {
+    fn key_down_event<'a>(&mut self, ctx: &mut SuzuContext<'a>, vkey: VirtualKey) {
         match self.scene_status {
             SuzunaSceneStatus::Shop => {
-                self.shop_scene
-                    .as_mut()
-                    .unwrap()
-                    .key_down_event(ctx, game_data, vkey);
+                self.shop_scene.as_mut().unwrap().key_down_event(ctx, vkey);
             }
             SuzunaSceneStatus::DeskWork => {
                 self.desk_work_scene
                     .as_mut()
                     .unwrap()
-                    .key_down_event(ctx, game_data, vkey);
+                    .key_down_event(ctx, vkey);
             }
             SuzunaSceneStatus::DayResult => {
                 self.day_result_scene
                     .as_mut()
                     .unwrap()
-                    .key_down_event(ctx, game_data, vkey);
+                    .key_down_event(ctx, vkey);
             }
             SuzunaSceneStatus::Copying => {
                 self.copying_scene
                     .as_mut()
                     .unwrap()
-                    .key_down_event(ctx, game_data, vkey);
+                    .key_down_event(ctx, vkey);
             }
         }
     }
 
-    fn key_up_event(&mut self, ctx: &mut ggez::Context, game_data: &GameData, vkey: VirtualKey) {
+    fn key_up_event<'a>(&mut self, ctx: &mut SuzuContext<'a>, vkey: VirtualKey) {
         match self.scene_status {
             SuzunaSceneStatus::Shop => {
-                self.shop_scene
-                    .as_mut()
-                    .unwrap()
-                    .key_up_event(ctx, game_data, vkey);
+                self.shop_scene.as_mut().unwrap().key_up_event(ctx, vkey);
             }
             SuzunaSceneStatus::DeskWork => {
                 self.desk_work_scene
                     .as_mut()
                     .unwrap()
-                    .key_up_event(ctx, game_data, vkey);
+                    .key_up_event(ctx, vkey);
             }
             SuzunaSceneStatus::DayResult => {
                 self.day_result_scene
                     .as_mut()
                     .unwrap()
-                    .key_up_event(ctx, game_data, vkey);
+                    .key_up_event(ctx, vkey);
             }
             SuzunaSceneStatus::Copying => {
-                self.copying_scene
-                    .as_mut()
-                    .unwrap()
-                    .key_up_event(ctx, game_data, vkey);
+                self.copying_scene.as_mut().unwrap().key_up_event(ctx, vkey);
             }
         }
     }
 
-    fn mouse_motion_event(
+    fn mouse_motion_event<'a>(
         &mut self,
-        ctx: &mut ggez::Context,
-        game_data: &GameData,
+        ctx: &mut SuzuContext<'a>,
         point: numeric::Point2f,
         offset: numeric::Vector2f,
     ) {
@@ -362,33 +339,32 @@ impl SceneManager for SuzunaSubScene {
                 self.shop_scene
                     .as_mut()
                     .unwrap()
-                    .mouse_motion_event(ctx, game_data, point, offset);
+                    .mouse_motion_event(ctx, point, offset);
             }
             SuzunaSceneStatus::DeskWork => {
                 self.desk_work_scene
                     .as_mut()
                     .unwrap()
-                    .mouse_motion_event(ctx, game_data, point, offset);
+                    .mouse_motion_event(ctx, point, offset);
             }
             SuzunaSceneStatus::DayResult => {
                 self.day_result_scene
                     .as_mut()
                     .unwrap()
-                    .mouse_motion_event(ctx, game_data, point, offset);
+                    .mouse_motion_event(ctx, point, offset);
             }
             SuzunaSceneStatus::Copying => {
                 self.copying_scene
                     .as_mut()
                     .unwrap()
-                    .mouse_motion_event(ctx, game_data, point, offset);
+                    .mouse_motion_event(ctx, point, offset);
             }
         }
     }
 
-    fn mouse_button_down_event(
+    fn mouse_button_down_event<'a>(
         &mut self,
-        ctx: &mut ggez::Context,
-        game_data: &GameData,
+        ctx: &mut SuzuContext<'a>,
         button: MouseButton,
         point: numeric::Point2f,
     ) {
@@ -397,33 +373,32 @@ impl SceneManager for SuzunaSubScene {
                 self.shop_scene
                     .as_mut()
                     .unwrap()
-                    .mouse_button_down_event(ctx, game_data, button, point);
+                    .mouse_button_down_event(ctx, button, point);
             }
             SuzunaSceneStatus::DeskWork => {
                 self.desk_work_scene
                     .as_mut()
                     .unwrap()
-                    .mouse_button_down_event(ctx, game_data, button, point);
+                    .mouse_button_down_event(ctx, button, point);
             }
             SuzunaSceneStatus::DayResult => {
                 self.day_result_scene
                     .as_mut()
                     .unwrap()
-                    .mouse_button_down_event(ctx, game_data, button, point);
+                    .mouse_button_down_event(ctx, button, point);
             }
             SuzunaSceneStatus::Copying => {
                 self.copying_scene
                     .as_mut()
                     .unwrap()
-                    .mouse_button_down_event(ctx, game_data, button, point);
+                    .mouse_button_down_event(ctx, button, point);
             }
         }
     }
 
-    fn mouse_button_up_event(
+    fn mouse_button_up_event<'a>(
         &mut self,
-        ctx: &mut ggez::Context,
-        game_data: &GameData,
+        ctx: &mut SuzuContext<'a>,
         button: MouseButton,
         point: numeric::Point2f,
     ) {
@@ -432,33 +407,32 @@ impl SceneManager for SuzunaSubScene {
                 self.shop_scene
                     .as_mut()
                     .unwrap()
-                    .mouse_button_up_event(ctx, game_data, button, point);
+                    .mouse_button_up_event(ctx, button, point);
             }
             SuzunaSceneStatus::DeskWork => {
                 self.desk_work_scene
                     .as_mut()
                     .unwrap()
-                    .mouse_button_up_event(ctx, game_data, button, point);
+                    .mouse_button_up_event(ctx, button, point);
             }
             SuzunaSceneStatus::DayResult => {
                 self.day_result_scene
                     .as_mut()
                     .unwrap()
-                    .mouse_button_up_event(ctx, game_data, button, point);
+                    .mouse_button_up_event(ctx, button, point);
             }
             SuzunaSceneStatus::Copying => {
                 self.copying_scene
                     .as_mut()
                     .unwrap()
-                    .mouse_button_up_event(ctx, game_data, button, point);
+                    .mouse_button_up_event(ctx, button, point);
             }
         }
     }
 
-    fn mouse_wheel_event(
+    fn mouse_wheel_event<'a>(
         &mut self,
-        ctx: &mut ggez::Context,
-        game_data: &GameData,
+        ctx: &mut SuzuContext<'a>,
         point: numeric::Point2f,
         x: f32,
         y: f32,
@@ -468,54 +442,42 @@ impl SceneManager for SuzunaSubScene {
                 self.shop_scene
                     .as_mut()
                     .unwrap()
-                    .mouse_wheel_event(ctx, game_data, point, x, y);
+                    .mouse_wheel_event(ctx, point, x, y);
             }
             SuzunaSceneStatus::DeskWork => {
                 self.desk_work_scene
                     .as_mut()
                     .unwrap()
-                    .mouse_wheel_event(ctx, game_data, point, x, y);
+                    .mouse_wheel_event(ctx, point, x, y);
             }
             SuzunaSceneStatus::DayResult => {
                 self.day_result_scene
                     .as_mut()
                     .unwrap()
-                    .mouse_wheel_event(ctx, game_data, point, x, y);
+                    .mouse_wheel_event(ctx, point, x, y);
             }
             SuzunaSceneStatus::Copying => {
                 self.copying_scene
                     .as_mut()
                     .unwrap()
-                    .mouse_wheel_event(ctx, game_data, point, x, y);
+                    .mouse_wheel_event(ctx, point, x, y);
             }
         }
     }
 
-    fn pre_process(&mut self, ctx: &mut ggez::Context, game_data: &GameData) {
+    fn pre_process<'a>(&mut self, ctx: &mut SuzuContext<'a>) {
         match self.scene_status {
             SuzunaSceneStatus::Shop => {
-                self.shop_scene
-                    .as_mut()
-                    .unwrap()
-                    .pre_process(ctx, game_data);
+                self.shop_scene.as_mut().unwrap().pre_process(ctx);
             }
             SuzunaSceneStatus::DeskWork => {
-                self.desk_work_scene
-                    .as_mut()
-                    .unwrap()
-                    .pre_process(ctx, game_data);
+                self.desk_work_scene.as_mut().unwrap().pre_process(ctx);
             }
             SuzunaSceneStatus::DayResult => {
-                self.day_result_scene
-                    .as_mut()
-                    .unwrap()
-                    .pre_process(ctx, game_data);
+                self.day_result_scene.as_mut().unwrap().pre_process(ctx);
             }
             SuzunaSceneStatus::Copying => {
-                self.copying_scene
-                    .as_mut()
-                    .unwrap()
-                    .pre_process(ctx, game_data);
+                self.copying_scene.as_mut().unwrap().pre_process(ctx);
             }
         }
     }
@@ -537,28 +499,14 @@ impl SceneManager for SuzunaSubScene {
         }
     }
 
-    fn post_process(&mut self, ctx: &mut ggez::Context, game_data: &GameData) -> SceneTransition {
+    fn post_process<'a>(&mut self, ctx: &mut SuzuContext<'a>) -> SceneTransition {
         match self.scene_status {
-            SuzunaSceneStatus::Shop => self
-                .shop_scene
-                .as_mut()
-                .unwrap()
-                .post_process(ctx, game_data),
-            SuzunaSceneStatus::DeskWork => self
-                .desk_work_scene
-                .as_mut()
-                .unwrap()
-                .post_process(ctx, game_data),
-            SuzunaSceneStatus::DayResult => self
-                .day_result_scene
-                .as_mut()
-                .unwrap()
-                .post_process(ctx, game_data),
-            SuzunaSceneStatus::Copying => self
-                .copying_scene
-                .as_mut()
-                .unwrap()
-                .post_process(ctx, game_data),
+            SuzunaSceneStatus::Shop => self.shop_scene.as_mut().unwrap().post_process(ctx),
+            SuzunaSceneStatus::DeskWork => self.desk_work_scene.as_mut().unwrap().post_process(ctx),
+            SuzunaSceneStatus::DayResult => {
+                self.day_result_scene.as_mut().unwrap().post_process(ctx)
+            }
+            SuzunaSceneStatus::Copying => self.copying_scene.as_mut().unwrap().post_process(ctx),
         }
     }
 

@@ -14,8 +14,8 @@ use torifune::roundup2f;
 
 use super::Clickable;
 use crate::core;
-use crate::core::BookInformation;
-use crate::core::{FontID, GameData, GensoDate, TextureID, TileBatchTextureID};
+use crate::core::*;
+use crate::core::{FontID, GensoDate, TextureID, TileBatchTextureID};
 use crate::flush_delay_event;
 use crate::object::effect;
 use crate::object::util_object::*;
@@ -101,38 +101,37 @@ impl<D> DropDownArea<D>
 where
     D: DrawableComponent,
 {
-    pub fn new(
-        ctx: &mut ggez::Context,
-	game_data: &GameData,
-	click_position: numeric::Point2f,
+    pub fn new<'a>(
+        ctx: &mut SuzuContext<'a>,
+        click_position: numeric::Point2f,
         pos_rect: numeric::Rect,
         drawing_depth: i8,
         drawable: D,
         t: Clock,
     ) -> DropDownArea<D> {
-	let background = UniTexture::new(
-	    game_data.ref_texture(TextureID::TextBackground),
-	    numeric::Point2f::new(0.0, 0.0),
-	    numeric::Vector2f::new(1.0, 1.0),
-	    0.0,
-	    0
-	);
+        let background = UniTexture::new(
+            ctx.resource.ref_texture(TextureID::TextBackground),
+            numeric::Point2f::new(0.0, 0.0),
+            numeric::Vector2f::new(1.0, 1.0),
+            0.0,
+            0,
+        );
 
-	let appr_frame = TileBatchFrame::new(
-	    game_data,
-	    TileBatchTextureID::TaishoStyle1,
-	    numeric::Rect::new(0.0, 0.0, pos_rect.w, pos_rect.h),
-	    numeric::Vector2f::new(0.4, 0.4),
-	    0
-	);
-	
+        let appr_frame = TileBatchFrame::new(
+            ctx.resource,
+            TileBatchTextureID::TaishoStyle1,
+            numeric::Rect::new(0.0, 0.0, pos_rect.w, pos_rect.h),
+            numeric::Vector2f::new(0.4, 0.4),
+            0,
+        );
+
         DropDownArea::<D> {
-	    background: background,
-	    apperance_frame: appr_frame,
+            background: background,
+            apperance_frame: appr_frame,
             canvas: EffectableWrap::new(
                 MovableWrap::new(
                     Box::new(SubScreen::new(
-                        ctx,
+                        ctx.context,
                         pos_rect,
                         drawing_depth,
                         ggraphics::Color::from_rgba_u32(0xffffffff),
@@ -142,7 +141,7 @@ where
                 ),
                 Vec::new(),
             ),
-	    click_position: click_position,
+            click_position: click_position,
             drawable: drawable,
         }
     }
@@ -156,7 +155,7 @@ where
     }
 
     pub fn get_click_position(&self) -> numeric::Point2f {
-	self.click_position
+        self.click_position
     }
 }
 
@@ -168,9 +167,9 @@ where
         if self.is_visible() {
             sub_screen::stack_screen(ctx, &self.canvas);
 
-	    self.background.draw(ctx)?;
-	    self.apperance_frame.draw(ctx)?;
-	    
+            self.background.draw(ctx)?;
+            self.apperance_frame.draw(ctx)?;
+
             self.drawable.draw(ctx)?;
 
             sub_screen::pop_screen(ctx);
@@ -290,40 +289,37 @@ impl<D> Clickable for DropDownArea<D>
 where
     D: Clickable + DrawableComponent,
 {
-    fn button_down(
+    fn button_down<'a>(
         &mut self,
-        ctx: &mut ggez::Context,
-        game_data: &GameData,
+        ctx: &mut SuzuContext<'a>,
         t: Clock,
         button: ggez::input::mouse::MouseButton,
         point: numeric::Point2f,
     ) {
         let rpoint = self.canvas.relative_point(point);
-        self.drawable.button_down(ctx, game_data, t, button, rpoint);
+        self.drawable.button_down(ctx, t, button, rpoint);
     }
 
-    fn button_up(
+    fn button_up<'a>(
         &mut self,
-        ctx: &mut ggez::Context,
-        game_data: &GameData,
+        ctx: &mut SuzuContext<'a>,
         t: Clock,
         button: ggez::input::mouse::MouseButton,
         point: numeric::Point2f,
     ) {
         let rpoint = self.canvas.relative_point(point);
-        self.drawable.button_up(ctx, game_data, t, button, rpoint);
+        self.drawable.button_up(ctx, t, button, rpoint);
     }
 
-    fn on_click(
+    fn on_click<'a>(
         &mut self,
-        ctx: &mut ggez::Context,
-        game_data: &GameData,
+        ctx: &mut SuzuContext<'a>,
         t: Clock,
         button: ggez::input::mouse::MouseButton,
         point: numeric::Point2f,
     ) {
         let rpoint = self.canvas.relative_point(point);
-        self.drawable.on_click(ctx, game_data, t, button, rpoint);
+        self.drawable.on_click(ctx, t, button, rpoint);
     }
 
     fn clickable_status(
@@ -342,9 +338,8 @@ pub struct BookStatusButtonGroup {
 }
 
 impl BookStatusButtonGroup {
-    pub fn new(
-        ctx: &mut ggez::Context,
-        game_data: &GameData,
+    pub fn new<'a>(
+        ctx: &mut SuzuContext<'a>,
         mut button_rect: numeric::Rect,
         padding: f32,
         mut textures: Vec<TextureID>,
@@ -359,14 +354,17 @@ impl BookStatusButtonGroup {
             let texture = textures.swap_remove(0);
 
             let mut button_texture = UniTexture::new(
-                game_data.ref_texture(texture),
+                ctx.resource.ref_texture(texture),
                 numeric::Point2f::new(0.0, 0.0),
                 numeric::Vector2f::new(1.0, 1.0),
                 0.0,
                 0,
             );
 
-            button_texture.fit_scale(ctx, numeric::Vector2f::new(button_rect.w, button_rect.h));
+            button_texture.fit_scale(
+                ctx.context,
+                numeric::Vector2f::new(button_rect.w, button_rect.h),
+            );
 
             let button = SelectButton::new(ctx, button_rect, Box::new(button_texture));
 
@@ -427,15 +425,14 @@ impl DrawableComponent for BookStatusButtonGroup {
 }
 
 impl Clickable for BookStatusButtonGroup {
-    fn on_click(
+    fn on_click<'a>(
         &mut self,
-        ctx: &mut ggez::Context,
-        _game_data: &GameData,
+        ctx: &mut SuzuContext<'a>,
         _t: Clock,
         _button: ggez::event::MouseButton,
         point: numeric::Point2f,
     ) {
-        self.click_handler(ctx, point);
+        self.click_handler(ctx.context, point);
     }
 }
 
@@ -451,24 +448,23 @@ pub struct BookTitleMenu {
 }
 
 impl BookTitleMenu {
-    pub fn new(
-        ctx: &mut ggez::Context,
-        game_data: &GameData,
+    pub fn new<'a>(
+        ctx: &mut SuzuContext<'a>,
         book_info_data: Vec<BookInformation>,
         drawing_depth: i8,
     ) -> Self {
         let mut title_vtext = Vec::new();
 
         let font_info = FontInformation::new(
-            game_data.get_font(FontID::JpFude1),
+            ctx.resource.get_font(FontID::JpFude1),
             numeric::Vector2f::new(32.0, 32.0),
             ggraphics::Color::from_rgba_u32(0xff),
         );
 
         let title_table_frame = TableFrame::new(
-            game_data,
+            ctx.resource,
             numeric::Point2f::new(10.0, 10.0),
-	    TileBatchTextureID::OldStyleFrame,
+            TileBatchTextureID::OldStyleFrame,
             FrameData::new(vec![250.0], vec![64.0; book_info_data.len()]),
             numeric::Vector2f::new(0.3, 0.3),
             0,
@@ -486,7 +482,7 @@ impl BookTitleMenu {
             );
 
             set_table_frame_cell_center!(
-                ctx,
+                ctx.context,
                 title_table_frame,
                 vtext,
                 numeric::Vector2u::new(index as u32, 0)
@@ -574,15 +570,14 @@ impl DrawableComponent for BookTitleMenu {
 }
 
 impl Clickable for BookTitleMenu {
-    fn on_click(
+    fn on_click<'a>(
         &mut self,
-        ctx: &mut ggez::Context,
-        _game_data: &GameData,
+        ctx: &mut SuzuContext<'a>,
         _t: Clock,
         _button: ggez::event::MouseButton,
         point: numeric::Point2f,
     ) {
-        self.click_handler(ctx, point);
+        self.click_handler(ctx.context, point);
     }
 }
 
@@ -598,24 +593,23 @@ pub struct CustomerNameMenu {
 }
 
 impl CustomerNameMenu {
-    pub fn new(
-        ctx: &mut ggez::Context,
-        game_data: &GameData,
+    pub fn new<'a>(
+        ctx: &mut SuzuContext<'a>,
         customer_name_data: Vec<String>,
         drawing_depth: i8,
     ) -> Self {
         let mut title_vtext = Vec::new();
 
         let font_info = FontInformation::new(
-            game_data.get_font(FontID::JpFude1),
+            ctx.resource.get_font(FontID::JpFude1),
             numeric::Vector2f::new(32.0, 32.0),
             ggraphics::Color::from_rgba_u32(0xff),
         );
 
         let name_table_frame = TableFrame::new(
-            game_data,
+            ctx.resource,
             numeric::Point2f::new(10.0, 10.0),
-	    TileBatchTextureID::OldStyleFrame,
+            TileBatchTextureID::OldStyleFrame,
             FrameData::new(vec![250.0], vec![64.0; customer_name_data.len()]),
             numeric::Vector2f::new(0.3, 0.3),
             0,
@@ -633,7 +627,7 @@ impl CustomerNameMenu {
             );
 
             set_table_frame_cell_center!(
-                ctx,
+                ctx.context,
                 name_table_frame,
                 vtext,
                 numeric::Vector2u::new((customer_name_data.len() - index - 1) as u32, 0)
@@ -721,15 +715,14 @@ impl DrawableComponent for CustomerNameMenu {
 }
 
 impl Clickable for CustomerNameMenu {
-    fn on_click(
+    fn on_click<'a>(
         &mut self,
-        ctx: &mut ggez::Context,
-        _game_data: &GameData,
+        ctx: &mut SuzuContext<'a>,
         _t: Clock,
         _button: ggez::event::MouseButton,
         point: numeric::Point2f,
     ) {
-        self.click_handler(ctx, point);
+        self.click_handler(ctx.context, point);
     }
 }
 
@@ -746,26 +739,21 @@ pub struct DateMenu {
 }
 
 impl DateMenu {
-    pub fn new(
-        ctx: &mut ggez::Context,
-        game_data: &GameData,
-        today: GensoDate,
-        drawing_depth: i8,
-    ) -> Self {
+    pub fn new<'a>(ctx: &mut SuzuContext<'a>, today: GensoDate, drawing_depth: i8) -> Self {
         let mut date_data = Vec::new();
         let mut date_vtext = Vec::new();
         let mut desc_vtext = Vec::new();
 
         let font_info = FontInformation::new(
-            game_data.get_font(FontID::JpFude1),
+            ctx.resource.get_font(FontID::JpFude1),
             numeric::Vector2f::new(22.0, 22.0),
             ggraphics::Color::from_rgba_u32(0xff),
         );
 
         let date_table_frame = TableFrame::new(
-            game_data,
+            ctx.resource,
             numeric::Point2f::new(10.0, 10.0),
-	    TileBatchTextureID::OldStyleFrame,
+            TileBatchTextureID::OldStyleFrame,
             FrameData::new(vec![125.0, 255.0], vec![64.0; 3]),
             numeric::Vector2f::new(0.3, 0.3),
             0,
@@ -784,7 +772,7 @@ impl DateMenu {
             );
 
             set_table_frame_cell_center!(
-                ctx,
+                ctx.context,
                 date_table_frame,
                 vtext,
                 numeric::Vector2u::new(index, 1)
@@ -806,7 +794,7 @@ impl DateMenu {
             );
 
             set_table_frame_cell_center!(
-                ctx,
+                ctx.context,
                 date_table_frame,
                 vtext,
                 numeric::Vector2u::new(index as u32, 0)
@@ -899,15 +887,14 @@ impl DrawableComponent for DateMenu {
 }
 
 impl Clickable for DateMenu {
-    fn on_click(
+    fn on_click<'a>(
         &mut self,
-        ctx: &mut ggez::Context,
-        _game_data: &GameData,
+        ctx: &mut SuzuContext<'a>,
         _t: Clock,
         _button: ggez::event::MouseButton,
         point: numeric::Point2f,
     ) {
-        self.click_handler(ctx, point);
+        self.click_handler(ctx.context, point);
     }
 }
 
@@ -921,19 +908,19 @@ pub struct PaymentMenu {
 }
 
 impl PaymentMenu {
-    pub fn new(ctx: &mut ggez::Context, game_data: &GameData, drawing_depth: i8) -> Self {
+    pub fn new<'a>(ctx: &mut SuzuContext<'a>, drawing_depth: i8) -> Self {
         let mut select_vtext = Vec::new();
 
         let font_info = FontInformation::new(
-            game_data.get_font(FontID::JpFude1),
+            ctx.resource.get_font(FontID::JpFude1),
             numeric::Vector2f::new(26.0, 26.0),
             ggraphics::Color::from_rgba_u32(0xff),
         );
 
         let select_table_frame = TableFrame::new(
-            game_data,
+            ctx.resource,
             numeric::Point2f::new(10.0, 10.0),
-	    TileBatchTextureID::OldStyleFrame,
+            TileBatchTextureID::OldStyleFrame,
             FrameData::new(vec![240.0], vec![64.0]),
             numeric::Vector2f::new(0.3, 0.3),
             0,
@@ -950,7 +937,7 @@ impl PaymentMenu {
             );
 
             set_table_frame_cell_center!(
-                ctx,
+                ctx.context,
                 select_table_frame,
                 vtext,
                 numeric::Vector2u::new(index as u32, 0)
@@ -1017,15 +1004,14 @@ impl DrawableComponent for PaymentMenu {
 }
 
 impl Clickable for PaymentMenu {
-    fn on_click(
+    fn on_click<'a>(
         &mut self,
-        ctx: &mut ggez::Context,
-        _game_data: &GameData,
+        ctx: &mut SuzuContext<'a>,
         _t: Clock,
         _button: ggez::event::MouseButton,
         point: numeric::Point2f,
     ) {
-        self.click_handler(ctx, point);
+        self.click_handler(ctx.context, point);
     }
 }
 
@@ -1040,19 +1026,19 @@ pub struct CustomerQuestionMenu {
 }
 
 impl CustomerQuestionMenu {
-    pub fn new(ctx: &mut ggez::Context, game_data: &GameData, drawing_depth: i8) -> Self {
+    pub fn new<'a>(ctx: &mut SuzuContext<'a>, drawing_depth: i8) -> Self {
         let mut question_vtext = Vec::new();
 
         let font_info = FontInformation::new(
-            game_data.get_font(FontID::JpFude1),
+            ctx.resource.get_font(FontID::JpFude1),
             numeric::Vector2f::new(26.0, 26.0),
             ggraphics::Color::from_rgba_u32(0xff),
         );
 
         let question_table_frame = TableFrame::new(
-            game_data,
+            ctx.resource,
             numeric::Point2f::new(10.0, 10.0),
-	    TileBatchTextureID::OldStyleFrame,
+            TileBatchTextureID::OldStyleFrame,
             FrameData::new(vec![240.0], vec![64.0; 2]),
             numeric::Vector2f::new(0.3, 0.3),
             0,
@@ -1069,7 +1055,7 @@ impl CustomerQuestionMenu {
             );
 
             set_table_frame_cell_center!(
-                ctx,
+                ctx.context,
                 question_table_frame,
                 vtext,
                 numeric::Vector2u::new(index as u32, 0)
@@ -1148,15 +1134,14 @@ impl DrawableComponent for CustomerQuestionMenu {
 }
 
 impl Clickable for CustomerQuestionMenu {
-    fn on_click(
+    fn on_click<'a>(
         &mut self,
-        ctx: &mut ggez::Context,
-        _game_data: &GameData,
+        ctx: &mut SuzuContext<'a>,
         _t: Clock,
         _button: ggez::event::MouseButton,
         point: numeric::Point2f,
     ) {
-        self.click_handler(ctx, point);
+        self.click_handler(ctx.context, point);
     }
 }
 
@@ -1171,24 +1156,19 @@ pub struct RememberCustomerNameMenu {
 }
 
 impl RememberCustomerNameMenu {
-    pub fn new(
-        ctx: &mut ggez::Context,
-        game_data: &GameData,
-        drawing_depth: i8,
-        customer_name: String,
-    ) -> Self {
+    pub fn new<'a>(ctx: &mut SuzuContext<'a>, drawing_depth: i8, customer_name: String) -> Self {
         let mut select_vtext = Vec::new();
 
         let font_info = FontInformation::new(
-            game_data.get_font(FontID::JpFude1),
+            ctx.resource.get_font(FontID::JpFude1),
             numeric::Vector2f::new(26.0, 26.0),
             ggraphics::Color::from_rgba_u32(0xff),
         );
 
         let select_table_frame = TableFrame::new(
-            game_data,
+            ctx.resource,
             numeric::Point2f::new(10.0, 10.0),
-	    TileBatchTextureID::OldStyleFrame,
+            TileBatchTextureID::OldStyleFrame,
             FrameData::new(vec![240.0], vec![64.0]),
             numeric::Vector2f::new(0.3, 0.3),
             0,
@@ -1205,7 +1185,7 @@ impl RememberCustomerNameMenu {
             );
 
             set_table_frame_cell_center!(
-                ctx,
+                ctx.context,
                 select_table_frame,
                 vtext,
                 numeric::Vector2u::new(index as u32, 0)
@@ -1277,15 +1257,14 @@ impl DrawableComponent for RememberCustomerNameMenu {
 }
 
 impl Clickable for RememberCustomerNameMenu {
-    fn on_click(
+    fn on_click<'a>(
         &mut self,
-        ctx: &mut ggez::Context,
-        _game_data: &GameData,
+        ctx: &mut SuzuContext<'a>,
         _t: Clock,
         _button: ggez::event::MouseButton,
         point: numeric::Point2f,
     ) {
-        self.click_handler(ctx, point);
+        self.click_handler(ctx.context, point);
     }
 }
 
@@ -1299,19 +1278,19 @@ pub struct OkMenu {
 }
 
 impl OkMenu {
-    pub fn new(ctx: &mut ggez::Context, game_data: &GameData, drawing_depth: i8) -> Self {
+    pub fn new<'a>(ctx: &mut SuzuContext<'a>, drawing_depth: i8) -> Self {
         let mut select_vtext = Vec::new();
 
         let font_info = FontInformation::new(
-            game_data.get_font(FontID::JpFude1),
+            ctx.resource.get_font(FontID::JpFude1),
             numeric::Vector2f::new(26.0, 26.0),
             ggraphics::Color::from_rgba_u32(0xff),
         );
 
         let select_table_frame = TableFrame::new(
-            game_data,
+            ctx.resource,
             numeric::Point2f::new(10.0, 10.0),
-	    TileBatchTextureID::OldStyleFrame,
+            TileBatchTextureID::OldStyleFrame,
             FrameData::new(vec![240.0], vec![64.0]),
             numeric::Vector2f::new(0.3, 0.3),
             0,
@@ -1328,7 +1307,7 @@ impl OkMenu {
             );
 
             set_table_frame_cell_center!(
-                ctx,
+                ctx.context,
                 select_table_frame,
                 vtext,
                 numeric::Vector2u::new(index as u32, 0)
@@ -1395,15 +1374,14 @@ impl DrawableComponent for OkMenu {
 }
 
 impl Clickable for OkMenu {
-    fn on_click(
+    fn on_click<'a>(
         &mut self,
-        ctx: &mut ggez::Context,
-        _game_data: &GameData,
+        ctx: &mut SuzuContext<'a>,
         _t: Clock,
         _button: ggez::event::MouseButton,
         point: numeric::Point2f,
     ) {
-        self.click_handler(ctx, point);
+        self.click_handler(ctx.context, point);
     }
 }
 
@@ -1536,21 +1514,20 @@ impl CustomerMenuGroup {
     ///
     /// メニューのエントリをクリックしていたらtrueを返し、そうでなければfalseを返す
     ///
-    pub fn click_customer_question_menu(
+    pub fn click_customer_question_menu<'a>(
         &mut self,
-        ctx: &mut ggez::Context,
-        game_data: &GameData,
+        ctx: &mut SuzuContext<'a>,
         button: ggez::input::mouse::MouseButton,
         point: numeric::Point2f,
         t: Clock,
     ) -> bool {
         // ボタンエリア内をクリックしていない場合は、即終了
-        if !self.contains_customer_question_menu(ctx, point) {
+        if !self.contains_customer_question_menu(ctx.context, point) {
             return false;
         }
 
         if let Some(customer_question_menu) = self.customer_question_menu.as_mut() {
-            customer_question_menu.on_click(ctx, game_data, t, button, point);
+            customer_question_menu.on_click(ctx, t, button, point);
             true
         } else {
             false
@@ -1560,21 +1537,20 @@ impl CustomerMenuGroup {
     ///
     /// メニューのエントリをクリックしていたらtrueを返し、そうでなければfalseを返す
     ///
-    pub fn click_remember_name_menu(
+    pub fn click_remember_name_menu<'a>(
         &mut self,
-        ctx: &mut ggez::Context,
-        game_data: &GameData,
+        ctx: &mut SuzuContext<'a>,
         button: ggez::input::mouse::MouseButton,
         point: numeric::Point2f,
         t: Clock,
     ) -> bool {
         // ボタンエリア内をクリックしていない場合は、即終了
-        if !self.contains_remember_name_menu(ctx, point) {
+        if !self.contains_remember_name_menu(ctx.context, point) {
             return false;
         }
 
         if let Some(remember_name_menu) = self.remember_name_menu.as_mut() {
-            remember_name_menu.on_click(ctx, game_data, t, button, point);
+            remember_name_menu.on_click(ctx, t, button, point);
             true
         } else {
             false
@@ -1584,21 +1560,20 @@ impl CustomerMenuGroup {
     ///
     /// メニューのエントリをクリックしていたらtrueを返し、そうでなければfalseを返す
     ///
-    pub fn click_text_balloon_ok_menu(
+    pub fn click_text_balloon_ok_menu<'a>(
         &mut self,
-        ctx: &mut ggez::Context,
-        game_data: &GameData,
+        ctx: &mut SuzuContext<'a>,
         button: ggez::input::mouse::MouseButton,
         point: numeric::Point2f,
         t: Clock,
     ) -> bool {
         // ボタンエリア内をクリックしていない場合は、即終了
-        if !self.contains_text_balloon_ok_menu(ctx, point) {
+        if !self.contains_text_balloon_ok_menu(ctx.context, point) {
             return false;
         }
 
         if let Some(ok_menu) = self.text_balloon_ok_menu.as_mut() {
-            ok_menu.on_click(ctx, game_data, t, button, point);
+            ok_menu.on_click(ctx, t, button, point);
             true
         } else {
             false
@@ -1645,21 +1620,19 @@ impl CustomerMenuGroup {
         self.close_text_balloon_ok_menu(t);
     }
 
-    pub fn show_customer_question_menu(
+    pub fn show_customer_question_menu<'a>(
         &mut self,
-        ctx: &mut ggez::Context,
-        game_data: &GameData,
+        ctx: &mut SuzuContext<'a>,
         position: numeric::Point2f,
         t: Clock,
     ) {
-        let question_menu = CustomerQuestionMenu::new(ctx, game_data, 0);
+        let question_menu = CustomerQuestionMenu::new(ctx, 0);
 
         let frame_size = question_menu.get_date_frame_size();
 
         let mut customer_question_menu_area = DropDownArea::new(
             ctx,
-	    game_data,
-	    position,
+            position,
             numeric::Rect::new(
                 position.x,
                 position.y,
@@ -1676,15 +1649,14 @@ impl CustomerMenuGroup {
         self.customer_question_menu = Some(customer_question_menu_area);
     }
 
-    pub fn show_remember_name_menu(
+    pub fn show_remember_name_menu<'a>(
         &mut self,
-        ctx: &mut ggez::Context,
-        game_data: &GameData,
+        ctx: &mut SuzuContext<'a>,
         position: numeric::Point2f,
         customer_name: String,
         t: Clock,
     ) {
-        let remember_name_menu = RememberCustomerNameMenu::new(ctx, game_data, 0, customer_name);
+        let remember_name_menu = RememberCustomerNameMenu::new(ctx, 0, customer_name);
 
         let frame_size = remember_name_menu.get_date_frame_size();
 
@@ -1702,36 +1674,26 @@ impl CustomerMenuGroup {
         };
 
         let mut remember_name_menu_area =
-            RememberCustomerNameDropMenu::new(
-		ctx,
-		game_data,
-		position,
-		menu_rect,
-		0,
-		remember_name_menu,
-		t
-	    );
+            RememberCustomerNameDropMenu::new(ctx, position, menu_rect, 0, remember_name_menu, t);
 
         remember_name_menu_area.add_effect(vec![effect::fade_in(10, t)]);
 
         self.remember_name_menu = Some(remember_name_menu_area);
     }
 
-    pub fn show_text_balloon_ok_menu(
+    pub fn show_text_balloon_ok_menu<'a>(
         &mut self,
-        ctx: &mut ggez::Context,
-        game_data: &GameData,
+        ctx: &mut SuzuContext<'a>,
         position: numeric::Point2f,
         t: Clock,
     ) {
-        let ok_menu = OkMenu::new(ctx, game_data, 0);
+        let ok_menu = OkMenu::new(ctx, 0);
 
         let frame_size = ok_menu.get_date_frame_size();
 
         let mut ok_menu_area = OkDropMenu::new(
             ctx,
-	    game_data,
-	    position,
+            position,
             numeric::Rect::new(
                 position.x,
                 position.y,
@@ -1748,22 +1710,22 @@ impl CustomerMenuGroup {
         self.text_balloon_ok_menu = Some(ok_menu_area);
     }
 
-    pub fn update(&mut self, ctx: &mut ggez::Context, game_data: &GameData, t: Clock) {
-        flush_delay_event!(self, self.event_list, ctx, game_data, t);
+    pub fn update<'a>(&mut self, ctx: &mut SuzuContext<'a>, t: Clock) {
+        flush_delay_event!(self, self.event_list, ctx, t);
 
         if let Some(customer_question_menu) = self.customer_question_menu.as_mut() {
             customer_question_menu.move_with_func(t);
-            customer_question_menu.effect(ctx, t);
+            customer_question_menu.effect(ctx.context, t);
         }
 
         if let Some(remember_name_menu) = self.remember_name_menu.as_mut() {
             remember_name_menu.move_with_func(t);
-            remember_name_menu.effect(ctx, t);
+            remember_name_menu.effect(ctx.context, t);
         }
 
         if let Some(ok_menu) = self.text_balloon_ok_menu.as_mut() {
             ok_menu.move_with_func(t);
-            ok_menu.effect(ctx, t);
+            ok_menu.effect(ctx.context, t);
         }
     }
 }
@@ -1825,7 +1787,7 @@ impl RecordBookMenuGroup {
             book_title_menu: None,
             customer_name_menu: None,
             date_menu: None,
-	    payment_menu: None,
+            payment_menu: None,
             drwob_essential: DrawableObjectEssential::new(true, drawing_depth),
         }
     }
@@ -1835,7 +1797,7 @@ impl RecordBookMenuGroup {
             || self.book_title_menu.is_some()
             || self.customer_name_menu.is_some()
             || self.date_menu.is_some()
-	    || self.payment_menu.is_some()
+            || self.payment_menu.is_some()
     }
 
     pub fn close_book_status_menu(&mut self, t: Clock) {
@@ -1932,18 +1894,9 @@ impl RecordBookMenuGroup {
     pub fn contains_date_menu(&self, ctx: &mut ggez::Context, point: numeric::Point2f) -> bool {
         self.date_menu.is_some() && self.date_menu.as_ref().unwrap().contains(ctx, point)
     }
-    
-    pub fn contains_payment_menu(
-        &self,
-        ctx: &mut ggez::Context,
-        point: numeric::Point2f,
-    ) -> bool {
-        self.payment_menu.is_some()
-            && self
-                .payment_menu
-                .as_ref()
-                .unwrap()
-                .contains(ctx, point)
+
+    pub fn contains_payment_menu(&self, ctx: &mut ggez::Context, point: numeric::Point2f) -> bool {
+        self.payment_menu.is_some() && self.payment_menu.as_ref().unwrap().contains(ctx, point)
     }
 
     pub fn is_contains_any_menus(&self, ctx: &mut ggez::Context, point: numeric::Point2f) -> bool {
@@ -1951,7 +1904,7 @@ impl RecordBookMenuGroup {
             || self.contains_book_status_menu(ctx, point)
             || self.contains_customer_name_menu(ctx, point)
             || self.contains_date_menu(ctx, point)
-	    || self.contains_payment_menu(ctx, point)
+            || self.contains_payment_menu(ctx, point)
     }
 
     pub fn get_book_status_menu_position(&self) -> Option<numeric::Point2f> {
@@ -1997,21 +1950,20 @@ impl RecordBookMenuGroup {
     ///
     /// メニューのエントリをクリックしていたらtrueを返し、そうでなければfalseを返す
     ///
-    pub fn click_book_status_menu(
+    pub fn click_book_status_menu<'a>(
         &mut self,
-        ctx: &mut ggez::Context,
-        game_data: &GameData,
+        ctx: &mut SuzuContext<'a>,
         button: ggez::input::mouse::MouseButton,
         point: numeric::Point2f,
         t: Clock,
     ) -> bool {
         // ボタンエリア内をクリックしていない場合は、即終了
-        if !self.contains_book_status_menu(ctx, point) {
+        if !self.contains_book_status_menu(ctx.context, point) {
             return false;
         }
 
         if let Some(book_status_menu) = self.book_status_menu.as_mut() {
-            book_status_menu.on_click(ctx, game_data, t, button, point);
+            book_status_menu.on_click(ctx, t, button, point);
             true
         } else {
             false
@@ -2021,21 +1973,20 @@ impl RecordBookMenuGroup {
     ///
     /// メニューのエントリをクリックしていたらtrueを返し、そうでなければfalseを返す
     ///
-    pub fn click_book_title_menu(
+    pub fn click_book_title_menu<'a>(
         &mut self,
-        ctx: &mut ggez::Context,
-        game_data: &GameData,
+        ctx: &mut SuzuContext<'a>,
         button: ggez::input::mouse::MouseButton,
         point: numeric::Point2f,
         t: Clock,
     ) -> bool {
         // ボタンエリア内をクリックしていない場合は、即終了
-        if !self.contains_book_title_menu(ctx, point) {
+        if !self.contains_book_title_menu(ctx.context, point) {
             return false;
         }
 
         if let Some(book_title_menu) = self.book_title_menu.as_mut() {
-            book_title_menu.on_click(ctx, game_data, t, button, point);
+            book_title_menu.on_click(ctx, t, button, point);
             true
         } else {
             false
@@ -2045,21 +1996,20 @@ impl RecordBookMenuGroup {
     ///
     /// メニューのエントリをクリックしていたらtrueを返し、そうでなければfalseを返す
     ///
-    pub fn click_customer_name_menu(
+    pub fn click_customer_name_menu<'a>(
         &mut self,
-        ctx: &mut ggez::Context,
-        game_data: &GameData,
+        ctx: &mut SuzuContext<'a>,
         button: ggez::input::mouse::MouseButton,
         point: numeric::Point2f,
         t: Clock,
     ) -> bool {
         // ボタンエリア内をクリックしていない場合は、即終了
-        if !self.contains_customer_name_menu(ctx, point) {
+        if !self.contains_customer_name_menu(ctx.context, point) {
             return false;
         }
 
         if let Some(customer_name_menu) = self.customer_name_menu.as_mut() {
-            customer_name_menu.on_click(ctx, game_data, t, button, point);
+            customer_name_menu.on_click(ctx, t, button, point);
             true
         } else {
             false
@@ -2069,21 +2019,20 @@ impl RecordBookMenuGroup {
     ///
     /// メニューのエントリをクリックしていたらtrueを返し、そうでなければfalseを返す
     ///
-    pub fn click_date_menu(
+    pub fn click_date_menu<'a>(
         &mut self,
-        ctx: &mut ggez::Context,
-        game_data: &GameData,
+        ctx: &mut SuzuContext<'a>,
         button: ggez::input::mouse::MouseButton,
         point: numeric::Point2f,
         t: Clock,
     ) -> bool {
         // ボタンエリア内をクリックしていない場合は、即終了
-        if !self.contains_date_menu(ctx, point) {
+        if !self.contains_date_menu(ctx.context, point) {
             return false;
         }
 
         if let Some(date_menu) = self.date_menu.as_mut() {
-            date_menu.on_click(ctx, game_data, t, button, point);
+            date_menu.on_click(ctx, t, button, point);
             true
         } else {
             false
@@ -2093,21 +2042,20 @@ impl RecordBookMenuGroup {
     ///
     /// メニューのエントリをクリックしていたらtrueを返し、そうでなければfalseを返す
     ///
-    pub fn click_payment_menu(
+    pub fn click_payment_menu<'a>(
         &mut self,
-        ctx: &mut ggez::Context,
-        game_data: &GameData,
+        ctx: &mut SuzuContext<'a>,
         button: ggez::input::mouse::MouseButton,
         point: numeric::Point2f,
         t: Clock,
     ) -> bool {
         // ボタンエリア内をクリックしていない場合は、即終了
-        if !self.contains_payment_menu(ctx, point) {
+        if !self.contains_payment_menu(ctx.context, point) {
             return false;
         }
 
         if let Some(payment_menu) = self.payment_menu.as_mut() {
-            payment_menu.on_click(ctx, game_data, t, button, point);
+            payment_menu.on_click(ctx, t, button, point);
             true
         } else {
             false
@@ -2174,19 +2122,17 @@ impl RecordBookMenuGroup {
         self.close_book_title_menu(t);
         self.close_customer_name_menu(t);
         self.close_date_menu(t);
-	self.close_payment_menu(t);
+        self.close_payment_menu(t);
     }
 
-    pub fn show_book_status_menu(
+    pub fn show_book_status_menu<'a>(
         &mut self,
-        ctx: &mut ggez::Context,
-        game_data: &GameData,
+        ctx: &mut SuzuContext<'a>,
         position: numeric::Point2f,
         t: Clock,
     ) {
         let button_group = BookStatusButtonGroup::new(
             ctx,
-            game_data,
             numeric::Rect::new(0.0, 0.0, 70.0, 70.0),
             20.0,
             vec![
@@ -2199,8 +2145,7 @@ impl RecordBookMenuGroup {
 
         let mut button_group_area = DropDownArea::new(
             ctx,
-	    game_data,
-	    position,
+            position,
             numeric::Rect::new(position.x, position.y, 290.0, 220.0),
             0,
             button_group,
@@ -2212,16 +2157,14 @@ impl RecordBookMenuGroup {
         self.book_status_menu = Some(button_group_area);
     }
 
-    pub fn show_book_title_menu(
+    pub fn show_book_title_menu<'a>(
         &mut self,
-        ctx: &mut ggez::Context,
-        game_data: &GameData,
+        ctx: &mut SuzuContext<'a>,
         position: numeric::Point2f,
         kosuzu_memory: &KosuzuMemory,
         t: Clock,
     ) {
-        let book_title_menu =
-            BookTitleMenu::new(ctx, game_data, kosuzu_memory.books_info.clone(), 0);
+        let book_title_menu = BookTitleMenu::new(ctx, kosuzu_memory.books_info.clone(), 0);
 
         let frame_size = book_title_menu.get_title_frame_size();
 
@@ -2238,30 +2181,22 @@ impl RecordBookMenuGroup {
             )
         };
 
-        let mut book_title_menu_area = DropDownArea::new(
-	    ctx,
-	    game_data,
-	    position,
-	    menu_rect,
-	    0,
-	    book_title_menu,
-	    t
-	);
+        let mut book_title_menu_area =
+            DropDownArea::new(ctx, position, menu_rect, 0, book_title_menu, t);
         book_title_menu_area.add_effect(vec![effect::fade_in(10, t)]);
 
         self.book_title_menu = Some(book_title_menu_area);
     }
 
-    pub fn show_customer_name_menu(
+    pub fn show_customer_name_menu<'a>(
         &mut self,
-        ctx: &mut ggez::Context,
-        game_data: &GameData,
+        ctx: &mut SuzuContext<'a>,
         position: numeric::Point2f,
         kosuzu_memory: &KosuzuMemory,
         t: Clock,
     ) {
         let customer_name_menu =
-            CustomerNameMenu::new(ctx, game_data, kosuzu_memory.customers_name.clone(), 0);
+            CustomerNameMenu::new(ctx, kosuzu_memory.customers_name.clone(), 0);
 
         let frame_size = customer_name_menu.get_name_frame_size();
 
@@ -2279,29 +2214,20 @@ impl RecordBookMenuGroup {
         };
 
         let mut customer_name_menu_area =
-            DropDownArea::new(
-		ctx,
-		game_data,
-		position,
-		menu_rect,
-		0,
-		customer_name_menu,
-		t
-	    );
+            DropDownArea::new(ctx, position, menu_rect, 0, customer_name_menu, t);
         customer_name_menu_area.add_effect(vec![effect::fade_in(10, t)]);
 
         self.customer_name_menu = Some(customer_name_menu_area);
     }
 
-    pub fn show_date_menu(
+    pub fn show_date_menu<'a>(
         &mut self,
-        ctx: &mut ggez::Context,
-        game_data: &GameData,
+        ctx: &mut SuzuContext<'a>,
         position: numeric::Point2f,
         today: GensoDate,
         t: Clock,
     ) {
-        let date_menu = DateMenu::new(ctx, game_data, today, 0);
+        let date_menu = DateMenu::new(ctx, today, 0);
 
         let frame_size = date_menu.get_date_frame_size();
 
@@ -2318,15 +2244,7 @@ impl RecordBookMenuGroup {
             )
         };
 
-        let mut date_menu_area = DropDownArea::new(
-	    ctx,
-	    game_data,
-	    position,
-	    menu_rect,
-	    0,
-	    date_menu,
-	    t
-	);
+        let mut date_menu_area = DropDownArea::new(ctx, position, menu_rect, 0, date_menu, t);
         date_menu_area.add_effect(vec![effect::fade_in(10, t)]);
 
         self.date_menu = Some(date_menu_area);
@@ -2334,12 +2252,11 @@ impl RecordBookMenuGroup {
 
     pub fn show_payment_menu(
         &mut self,
-        ctx: &mut ggez::Context,
-        game_data: &GameData,
+        ctx: &mut SuzuContext,
         position: numeric::Point2f,
         t: Clock,
     ) {
-        let payment_menu = PaymentMenu::new(ctx, game_data, 0);
+        let payment_menu = PaymentMenu::new(ctx, 0);
 
         let frame_size = payment_menu.get_payment_frame_size();
 
@@ -2356,47 +2273,38 @@ impl RecordBookMenuGroup {
             )
         };
 
-        let mut payment_menu_area =
-            DropDownArea::new(
-		ctx,
-		game_data,
-		position,
-		menu_rect,
-		0,
-		payment_menu,
-		t
-	    );
+        let mut payment_menu_area = DropDownArea::new(ctx, position, menu_rect, 0, payment_menu, t);
         payment_menu_area.add_effect(vec![effect::fade_in(10, t)]);
 
         self.payment_menu = Some(payment_menu_area);
     }
-    
-    pub fn update(&mut self, ctx: &mut ggez::Context, game_data: &GameData, t: Clock) {
-        flush_delay_event!(self, self.event_list, ctx, game_data, t);
+
+    pub fn update<'a>(&mut self, ctx: &mut SuzuContext<'a>, t: Clock) {
+        flush_delay_event!(self, self.event_list, ctx, t);
 
         if let Some(book_status_menu) = self.book_status_menu.as_mut() {
             book_status_menu.move_with_func(t);
-            book_status_menu.effect(ctx, t);
+            book_status_menu.effect(ctx.context, t);
         }
 
         if let Some(book_title_menu) = self.book_title_menu.as_mut() {
             book_title_menu.move_with_func(t);
-            book_title_menu.effect(ctx, t);
+            book_title_menu.effect(ctx.context, t);
         }
 
         if let Some(customer_name_menu) = self.customer_name_menu.as_mut() {
             customer_name_menu.move_with_func(t);
-            customer_name_menu.effect(ctx, t);
+            customer_name_menu.effect(ctx.context, t);
         }
 
         if let Some(date_menu) = self.date_menu.as_mut() {
             date_menu.move_with_func(t);
-            date_menu.effect(ctx, t);
+            date_menu.effect(ctx.context, t);
         }
 
-	if let Some(payment_menu) = self.payment_menu.as_mut() {
+        if let Some(payment_menu) = self.payment_menu.as_mut() {
             payment_menu.move_with_func(t);
-            payment_menu.effect(ctx, t);
+            payment_menu.effect(ctx.context, t);
         }
     }
 }
@@ -2420,7 +2328,7 @@ impl DrawableComponent for RecordBookMenuGroup {
                 date_menu.draw(ctx)?;
             }
 
-	    if let Some(payment_menu) = self.payment_menu.as_mut() {
+            if let Some(payment_menu) = self.payment_menu.as_mut() {
                 payment_menu.draw(ctx)?;
             }
         }
@@ -2457,9 +2365,8 @@ pub struct DeskBookMenu {
 }
 
 impl DeskBookMenu {
-    pub fn new(
-        ctx: &mut ggez::Context,
-        game_data: &GameData,
+    pub fn new<'a>(
+        ctx: &mut SuzuContext<'a>,
         book_info: BookInformation,
         mut choice_text_str: Vec<String>,
         drawing_depth: i8,
@@ -2467,15 +2374,15 @@ impl DeskBookMenu {
         let mut choice_vtext = Vec::new();
 
         let font_info = FontInformation::new(
-            game_data.get_font(FontID::JpFude1),
+            ctx.resource.get_font(FontID::JpFude1),
             numeric::Vector2f::new(32.0, 32.0),
             ggraphics::Color::from_rgba_u32(0xff),
         );
 
         let select_table_frame = TableFrame::new(
-            game_data,
+            ctx.resource,
             numeric::Point2f::new(10.0, 10.0),
-	    TileBatchTextureID::OldStyleFrame,
+            TileBatchTextureID::OldStyleFrame,
             FrameData::new(vec![200.0], vec![64.0; 2]),
             numeric::Vector2f::new(0.3, 0.3),
             0,
@@ -2493,7 +2400,7 @@ impl DeskBookMenu {
             );
 
             set_table_frame_cell_center!(
-                ctx,
+                ctx.context,
                 select_table_frame,
                 vtext,
                 numeric::Vector2u::new(choice_text_str.len() as u32, 0)
@@ -2565,20 +2472,18 @@ impl DrawableComponent for DeskBookMenu {
 }
 
 impl Clickable for DeskBookMenu {
-    fn on_click(
+    fn on_click<'a>(
         &mut self,
-        ctx: &mut ggez::Context,
-        _game_data: &GameData,
+        ctx: &mut SuzuContext<'a>,
         _t: Clock,
         _button: ggez::event::MouseButton,
         point: numeric::Point2f,
     ) {
-        self.click_handler(ctx, point);
+        self.click_handler(ctx.context, point);
     }
 }
 
 pub type DeskBookDropMenu = DropDownArea<DeskBookMenu>;
-
 
 pub struct BookInfoDrawer {
     book_info: BookInformation,
@@ -2588,30 +2493,29 @@ pub struct BookInfoDrawer {
 }
 
 impl BookInfoDrawer {
-    pub fn new(
-        ctx: &mut ggez::Context,
-        game_data: &GameData,
+    pub fn new<'a>(
+        ctx: &mut SuzuContext<'a>,
         book_info: BookInformation,
         drawing_depth: i8,
     ) -> Self {
         let mut info_field_vtext = Vec::new();
 
         let font_info = FontInformation::new(
-            game_data.get_font(FontID::JpFude1),
+            ctx.resource.get_font(FontID::JpFude1),
             numeric::Vector2f::new(32.0, 32.0),
             ggraphics::Color::from_rgba_u32(0xff),
         );
 
         let book_info_frame = TableFrame::new(
-            game_data,
+            ctx.resource,
             numeric::Point2f::new(10.0, 10.0),
-	    TileBatchTextureID::OldStyleFrame,
+            TileBatchTextureID::OldStyleFrame,
             FrameData::new(vec![150.0, 150.0], vec![42.0; 3]),
             numeric::Vector2f::new(0.3, 0.3),
             0,
         );
 
-	for (index, s) in vec!["状態", "寸法", "妖魔本"].iter().enumerate() {
+        for (index, s) in vec!["状態", "寸法", "妖魔本"].iter().enumerate() {
             let mut vtext = VerticalText::new(
                 s.to_string(),
                 numeric::Point2f::new(0.0, 0.0),
@@ -2622,7 +2526,7 @@ impl BookInfoDrawer {
             );
 
             set_table_frame_cell_center!(
-                ctx,
+                ctx.context,
                 book_info_frame,
                 vtext,
                 numeric::Vector2u::new(index as u32, 0)
@@ -2631,7 +2535,10 @@ impl BookInfoDrawer {
             info_field_vtext.push(vtext);
         }
 
-	for (index, s) in vec!["良".to_string(), book_info.size.clone(), "100".to_string()].iter().enumerate() {
+        for (index, s) in vec!["良".to_string(), book_info.size.clone(), "100".to_string()]
+            .iter()
+            .enumerate()
+        {
             let mut vtext = VerticalText::new(
                 s.to_string(),
                 numeric::Point2f::new(0.0, 0.0),
@@ -2642,7 +2549,7 @@ impl BookInfoDrawer {
             );
 
             set_table_frame_cell_center!(
-                ctx,
+                ctx.context,
                 book_info_frame,
                 vtext,
                 numeric::Vector2u::new(index as u32, 1)
@@ -2651,7 +2558,7 @@ impl BookInfoDrawer {
             info_field_vtext.push(vtext);
         }
 
-	BookInfoDrawer {
+        BookInfoDrawer {
             book_info: book_info,
             book_info_frame: book_info_frame,
             info_field_text: info_field_vtext,
@@ -2715,14 +2622,13 @@ impl OnDeskMenuGroup {
         OnDeskMenuGroup {
             event_list: DelayEventList::new(),
             desk_book_menu: None,
-	    book_info_area: None,
+            book_info_area: None,
             drwob_essential: DrawableObjectEssential::new(true, drawing_depth),
         }
     }
 
     pub fn is_some_menu_opened(&self) -> bool {
-        self.desk_book_menu.is_some() ||
-	    self.book_info_area.is_some()
+        self.desk_book_menu.is_some() || self.book_info_area.is_some()
     }
 
     pub fn close_desk_book_menu(&mut self, t: Clock) {
@@ -2758,13 +2664,11 @@ impl OnDeskMenuGroup {
         ctx: &mut ggez::Context,
         point: numeric::Point2f,
     ) -> bool {
-        self.book_info_area.is_some() &&
-	    self.book_info_area.as_ref().unwrap().contains(ctx, point)
+        self.book_info_area.is_some() && self.book_info_area.as_ref().unwrap().contains(ctx, point)
     }
 
     pub fn is_contains_any_menus(&self, ctx: &mut ggez::Context, point: numeric::Point2f) -> bool {
-        self.contains_desk_book_menu(ctx, point) ||
-	    self.contains_book_info_area(ctx, point)
+        self.contains_desk_book_menu(ctx, point) || self.contains_book_info_area(ctx, point)
     }
 
     pub fn get_desk_book_menu_position(&self) -> Option<numeric::Point2f> {
@@ -2786,21 +2690,20 @@ impl OnDeskMenuGroup {
     ///
     /// メニューのエントリをクリックしていたらtrueを返し、そうでなければfalseを返す
     ///
-    pub fn click_desk_book_menu(
+    pub fn click_desk_book_menu<'a>(
         &mut self,
-        ctx: &mut ggez::Context,
-        game_data: &GameData,
+        ctx: &mut SuzuContext<'a>,
         button: ggez::input::mouse::MouseButton,
         point: numeric::Point2f,
         t: Clock,
     ) -> bool {
         // ボタンエリア内をクリックしていない場合は、即終了
-        if !self.contains_desk_book_menu(ctx, point) {
+        if !self.contains_desk_book_menu(ctx.context, point) {
             return false;
         }
 
         if let Some(desk_book_menu) = self.desk_book_menu.as_mut() {
-            desk_book_menu.on_click(ctx, game_data, t, button, point);
+            desk_book_menu.on_click(ctx, t, button, point);
             true
         } else {
             false
@@ -2817,20 +2720,18 @@ impl OnDeskMenuGroup {
 
     pub fn close_all(&mut self, t: Clock) {
         self.close_desk_book_menu(t);
-	self.close_book_info_area(t);
+        self.close_book_info_area(t);
     }
 
-    pub fn show_desk_book_menu(
+    pub fn show_desk_book_menu<'a>(
         &mut self,
-        ctx: &mut ggez::Context,
-        game_data: &GameData,
+        ctx: &mut SuzuContext<'a>,
         position: numeric::Point2f,
         book_info: BookInformation,
         t: Clock,
     ) {
         let menu = DeskBookMenu::new(
             ctx,
-            game_data,
             book_info,
             vec!["記憶".to_string(), "状態確認".to_string()],
             0,
@@ -2851,35 +2752,21 @@ impl OnDeskMenuGroup {
             )
         };
 
-        let mut dd_area = DropDownArea::new(
-	    ctx,
-	    game_data,
-	    position,
-	    menu_rect,
-	    0,
-	    menu,
-	    t
-	);
+        let mut dd_area = DropDownArea::new(ctx, position, menu_rect, 0, menu, t);
 
         dd_area.add_effect(vec![effect::fade_in(10, t)]);
 
         self.desk_book_menu = Some(dd_area);
     }
 
-    pub fn show_book_info_area(
+    pub fn show_book_info_area<'a>(
         &mut self,
-        ctx: &mut ggez::Context,
-        game_data: &GameData,
+        ctx: &mut SuzuContext<'a>,
         position: numeric::Point2f,
         book_info: BookInformation,
         t: Clock,
     ) {
-        let drawer = BookInfoDrawer::new(
-	    ctx,
-	    game_data,
-	    book_info,
-	    0
-	);
+        let drawer = BookInfoDrawer::new(ctx, book_info, 0);
 
         let frame_size = drawer.get_book_info_frame_size();
 
@@ -2896,32 +2783,24 @@ impl OnDeskMenuGroup {
             )
         };
 
-        let mut dd_area = DropDownArea::new(
-	    ctx,
-	    game_data,
-	    position,
-	    menu_rect,
-	    0,
-	    drawer,
-	    t
-	);
+        let mut dd_area = DropDownArea::new(ctx, position, menu_rect, 0, drawer, t);
 
         dd_area.add_effect(vec![effect::fade_in(10, t)]);
 
         self.book_info_area = Some(dd_area);
     }
-    
-    pub fn update(&mut self, ctx: &mut ggez::Context, game_data: &GameData, t: Clock) {
-        flush_delay_event!(self, self.event_list, ctx, game_data, t);
+
+    pub fn update<'a>(&mut self, ctx: &mut SuzuContext<'a>, t: Clock) {
+        flush_delay_event!(self, self.event_list, ctx, t);
 
         if let Some(desk_book_menu) = self.desk_book_menu.as_mut() {
             desk_book_menu.move_with_func(t);
-            desk_book_menu.effect(ctx, t);
+            desk_book_menu.effect(ctx.context, t);
         }
 
-	if let Some(book_info_area) = self.book_info_area.as_mut() {
+        if let Some(book_info_area) = self.book_info_area.as_mut() {
             book_info_area.move_with_func(t);
-            book_info_area.effect(ctx, t);
+            book_info_area.effect(ctx.context, t);
         }
     }
 
@@ -2961,7 +2840,7 @@ impl DrawableComponent for OnDeskMenuGroup {
                 desk_book_menu.draw(ctx)?;
             }
 
-	    if let Some(book_info_area) = self.book_info_area.as_mut() {
+            if let Some(book_info_area) = self.book_info_area.as_mut() {
                 book_info_area.draw(ctx)?;
             }
         }

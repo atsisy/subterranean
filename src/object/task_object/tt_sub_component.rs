@@ -16,13 +16,13 @@ use torifune::impl_texture_object_for_wrapped;
 use torifune::numeric;
 use torifune::roundup2f;
 
-use crate::core::{BookInformation, TileBatchTextureID, RentalLimit};
+use crate::core::{BookInformation, RentalLimit, TileBatchTextureID};
 use crate::object::move_fn;
 use crate::object::util_object::*;
 use crate::set_table_frame_cell_center;
 
 use super::Clickable;
-use crate::core::{FontID, GameData, GensoDate, TextureID};
+use crate::core::{FontID, GameResource, GensoDate, SuzuContext, TextureID};
 
 use number_to_jk::number_to_jk;
 
@@ -90,11 +90,11 @@ impl HoldDataVText {
     }
 
     pub fn ref_hold_data(&self) -> &HoldData {
-	&self.data
+        &self.data
     }
 
     pub fn is_none(&self) -> bool {
-	self.data == HoldData::None
+        self.data == HoldData::None
     }
 }
 
@@ -154,7 +154,7 @@ impl BorrowingInformation {
         let mut return_date = borrow_date.clone();
 
         match rental_limit {
-	    RentalLimit::Today => return_date.add_day(0),
+            RentalLimit::Today => return_date.add_day(0),
             RentalLimit::ShortTerm => return_date.add_day(7),
             RentalLimit::LongTerm => return_date.add_day(14),
         }
@@ -169,7 +169,7 @@ impl BorrowingInformation {
     }
 
     pub fn calc_fee(&self) -> i32 {
-	self.borrowing.len() as i32 * self.rental_limit.fee()
+        self.borrowing.len() as i32 * self.rental_limit.fee()
     }
 }
 
@@ -197,7 +197,7 @@ impl ReturnBookInformation {
     }
 
     pub fn new_random(
-        game_data: &GameData,
+        game_data: &GameResource,
         borrow_date: GensoDate,
         return_date: GensoDate,
     ) -> Self {
@@ -241,31 +241,31 @@ impl HoldData {
     }
 
     pub fn to_book_name(&self) -> Option<BookInformation> {
-	match self {
-	    HoldData::BookName(info) => Some(info.clone()),
-	    _ => None,
-	}
+        match self {
+            HoldData::BookName(info) => Some(info.clone()),
+            _ => None,
+        }
     }
 
     pub fn to_customer_name(&self) -> Option<String> {
-	match self {
-	    HoldData::CustomerName(name) => Some(name.clone()),
-	    _ => None,
-	}
+        match self {
+            HoldData::CustomerName(name) => Some(name.clone()),
+            _ => None,
+        }
     }
 
     pub fn to_date(&self) -> Option<GensoDate> {
-	match self {
-	    HoldData::Date(date) => Some(date.clone()),
-	    _ => None,
-	}
+        match self {
+            HoldData::Date(date) => Some(date.clone()),
+            _ => None,
+        }
     }
 
     pub fn to_book_status(&self) -> Option<BookStatus> {
-	match self {
-	    HoldData::BookStatus(status) => Some(status.clone()),
-	    _ => None,
-	}
+        match self {
+            HoldData::BookStatus(status) => Some(status.clone()),
+            _ => None,
+        }
     }
 }
 
@@ -298,9 +298,9 @@ pub trait OnDesk: TextureObject + Clickable {
 
     fn get_type(&self) -> OnDeskType;
 
-    fn start_dragging(&mut self, _: &mut ggez::Context, _: &GameData) {}
+    fn start_dragging<'a>(&mut self, _: &mut SuzuContext<'a>) {}
 
-    fn finish_dragging(&mut self, _: &mut ggez::Context, _: &GameData) {}
+    fn finish_dragging<'a>(&mut self, _: &mut SuzuContext<'a>) {}
 }
 
 pub struct OnDeskTexture {
@@ -402,11 +402,11 @@ impl OnDesk for OnDeskTexture {
         self.on_desk_type
     }
 
-    fn start_dragging(&mut self, _: &mut ggez::Context, _: &GameData) {
+    fn start_dragging<'a>(&mut self, _: &mut SuzuContext<'a>) {
         self.enable_shadow();
     }
 
-    fn finish_dragging(&mut self, _: &mut ggez::Context, _: &GameData) {
+    fn finish_dragging<'a>(&mut self, _: &mut SuzuContext<'a>) {
         self.disable_shadow();
     }
 }
@@ -420,13 +420,12 @@ pub struct OnDeskBook {
 }
 
 impl OnDeskBook {
-    pub fn new(
-        ctx: &mut ggez::Context,
-        game_data: &GameData,
+    pub fn new<'a>(
+        ctx: &mut SuzuContext<'a>,
         texture_id: TextureID,
         info: BookInformation,
     ) -> Self {
-        let texture = game_data.ref_texture(texture_id);
+        let texture = ctx.resource.ref_texture(texture_id);
         let book_texture = UniTexture::new(
             texture,
             numeric::Point2f::new(6.0, 6.0),
@@ -434,13 +433,13 @@ impl OnDeskBook {
             0.0,
             0,
         );
-        let book_size = book_texture.get_drawing_size(ctx);
+        let book_size = book_texture.get_drawing_size(ctx.context);
         let book_title = info.get_name().to_string();
 
         let shadow_bounds = numeric::Rect::new(0.0, 0.0, book_size.x + 12.0, book_size.y + 12.0);
 
         let mut shadow = ShadowShape::new(
-            ctx,
+            ctx.context,
             12.0,
             shadow_bounds,
             ggraphics::Color::from_rgba_u32(0xbb),
@@ -449,7 +448,7 @@ impl OnDeskBook {
         shadow.hide();
 
         let canvas = SubScreen::new(
-            ctx,
+            ctx.context,
             shadow_bounds,
             0,
             ggraphics::Color::from_rgba_u32(0x00000000),
@@ -466,7 +465,7 @@ impl OnDeskBook {
                 0.0,
                 0,
                 FontInformation::new(
-                    game_data.get_font(FontID::JpFude1),
+                    ctx.resource.get_font(FontID::JpFude1),
                     numeric::Vector2f::new(18.0, 18.0),
                     ggraphics::Color::from_rgba_u32(0x000000ff),
                 ),
@@ -557,11 +556,11 @@ impl OnDesk for OnDeskBook {
         OnDeskType::Book
     }
 
-    fn start_dragging(&mut self, _: &mut ggez::Context, _: &GameData) {
+    fn start_dragging<'a>(&mut self, _: &mut SuzuContext<'a>) {
         self.enable_shadow();
     }
 
-    fn finish_dragging(&mut self, _: &mut ggez::Context, _: &GameData) {
+    fn finish_dragging<'a>(&mut self, _: &mut SuzuContext<'a>) {
         self.disable_shadow();
     }
 }
@@ -590,7 +589,7 @@ impl CopyingRequestInformation {
     }
 
     pub fn new_random(
-        game_data: &GameData,
+        game_data: &GameResource,
         request_date: GensoDate,
         return_date: GensoDate,
     ) -> Self {
@@ -623,7 +622,7 @@ impl CopyingRequestPaper {
         rect: ggraphics::Rect,
         paper_tid: TextureID,
         info: CopyingRequestInformation,
-        game_data: &GameData,
+        game_data: &GameResource,
         t: Clock,
     ) -> Self {
         let default_scale = numeric::Vector2f::new(1.0, 1.0);
@@ -826,24 +825,30 @@ pub struct BorrowingRecordBookPageData {
 
 impl From<&ReturnBookInformation> for BorrowingRecordBookPageData {
     fn from(info: &ReturnBookInformation) -> Self {
-	let mut borrowing_book_title = HashMap::new();
+        let mut borrowing_book_title = HashMap::new();
 
-	for (index, book_info) in info.returning.iter().enumerate() {
-	    borrowing_book_title.insert(numeric::Vector2u::new((4 - index) as u32, 0), book_info.clone());
-	}
+        for (index, book_info) in info.returning.iter().enumerate() {
+            borrowing_book_title.insert(
+                numeric::Vector2u::new((4 - index) as u32, 0),
+                book_info.clone(),
+            );
+        }
 
-	for (index, book_info) in info.returning.iter().enumerate() {
-	    borrowing_book_title.insert(numeric::Vector2u::new((4 - index) as u32, 0), book_info.clone());
-	}
-	
-	BorrowingRecordBookPageData {
-	    borrowing_book_title: borrowing_book_title,
-	    borrowing_book_status: HashMap::new(),
-	    customer_name: Some(info.borrower.clone()),
-	    rental_limit: info.borrow_date.rental_limit_type(&info.return_date),
-	    return_date: Some(info.return_date),
-	    rental_date: Some(info.borrow_date),
-	}
+        for (index, book_info) in info.returning.iter().enumerate() {
+            borrowing_book_title.insert(
+                numeric::Vector2u::new((4 - index) as u32, 0),
+                book_info.clone(),
+            );
+        }
+
+        BorrowingRecordBookPageData {
+            borrowing_book_title: borrowing_book_title,
+            borrowing_book_status: HashMap::new(),
+            customer_name: Some(info.borrower.clone()),
+            rental_limit: info.borrow_date.rental_limit_type(&info.return_date),
+            return_date: Some(info.return_date),
+            rental_date: Some(info.borrow_date),
+        }
     }
 }
 
@@ -863,15 +868,15 @@ pub struct PayFrame {
 }
 
 impl PayFrame {
-    pub fn new(ctx: &mut ggez::Context, game_data: &GameData, position: numeric::Point2f, depth: i8) -> Self {
-	let pay_frame = TableFrame::new(
-	    game_data,
-	    position,
-	    TileBatchTextureID::RedOldStyleFrame,
-	    FrameData::new(vec![160.0, 300.0], vec![42.0; 3]),
-	    numeric::Vector2f::new(0.3, 0.3),
-	    0,
-	);
+    pub fn new<'a>(ctx: &mut SuzuContext<'a>, position: numeric::Point2f, depth: i8) -> Self {
+        let pay_frame = TableFrame::new(
+            ctx.resource,
+            position,
+            TileBatchTextureID::RedOldStyleFrame,
+            FrameData::new(vec![160.0, 300.0], vec![42.0; 3]),
+            numeric::Vector2f::new(0.3, 0.3),
+            0,
+        );
 
         let mut borrowing_number = VerticalText::new(
             "貸出冊数".to_string(),
@@ -880,185 +885,217 @@ impl PayFrame {
             0.0,
             0,
             FontInformation::new(
-                game_data.get_font(FontID::JpFude1),
+                ctx.resource.get_font(FontID::JpFude1),
                 numeric::Vector2f::new(24.0, 24.0),
                 ggraphics::Color::from_rgba_u32(0x000000ff),
             ),
         );
 
-        set_table_frame_cell_center!(ctx, pay_frame, borrowing_number, numeric::Vector2u::new(2, 0));
+        set_table_frame_cell_center!(
+            ctx.context,
+            pay_frame,
+            borrowing_number,
+            numeric::Vector2u::new(2, 0)
+        );
 
-	let mut rental_limit = VerticalText::new(
+        let mut rental_limit = VerticalText::new(
             "貸出期限".to_string(),
             numeric::Point2f::new(0.0, 0.0),
             numeric::Vector2f::new(1.0, 1.0),
             0.0,
             0,
             FontInformation::new(
-                game_data.get_font(FontID::JpFude1),
+                ctx.resource.get_font(FontID::JpFude1),
                 numeric::Vector2f::new(24.0, 24.0),
                 ggraphics::Color::from_rgba_u32(0x000000ff),
             ),
         );
 
-        set_table_frame_cell_center!(ctx, pay_frame, rental_limit, numeric::Vector2u::new(1, 0));
+        set_table_frame_cell_center!(
+            ctx.context,
+            pay_frame,
+            rental_limit,
+            numeric::Vector2u::new(1, 0)
+        );
 
-	let mut total = VerticalText::new(
+        let mut total = VerticalText::new(
             "合計".to_string(),
             numeric::Point2f::new(0.0, 0.0),
             numeric::Vector2f::new(1.0, 1.0),
             0.0,
             0,
             FontInformation::new(
-                game_data.get_font(FontID::JpFude1),
+                ctx.resource.get_font(FontID::JpFude1),
                 numeric::Vector2f::new(24.0, 24.0),
                 ggraphics::Color::from_rgba_u32(0x000000ff),
             ),
         );
 
-        set_table_frame_cell_center!(ctx, pay_frame, total, numeric::Vector2u::new(0, 0));
-	
+        set_table_frame_cell_center!(ctx.context, pay_frame, total, numeric::Vector2u::new(0, 0));
 
-	let mut pay_frame = PayFrame {
-	    pay_frame: pay_frame,
-	    cell_desc_text: vec![borrowing_number, rental_limit, total],
-	    rental_limit_text: None,
-	    borrowing_number_text: None,
-	    pay_money_text: None,
-	    rental_limit_data: None,
-	    listed_books_number: 0,
-	    drwob_essential: DrawableObjectEssential::new(true, depth),
-	};
+        let mut pay_frame = PayFrame {
+            pay_frame: pay_frame,
+            cell_desc_text: vec![borrowing_number, rental_limit, total],
+            rental_limit_text: None,
+            borrowing_number_text: None,
+            pay_money_text: None,
+            rental_limit_data: None,
+            listed_books_number: 0,
+            drwob_essential: DrawableObjectEssential::new(true, depth),
+        };
 
-	pay_frame.update_book_count(ctx, game_data, 0);
+        pay_frame.update_book_count(ctx, 0);
 
-	pay_frame
+        pay_frame
     }
 
-    pub fn update_rental_limit_text(&mut self, ctx: &mut ggez::Context, game_data: &GameData, rental_limit: RentalLimit) {
-	let text = match rental_limit {
-	    RentalLimit::ShortTerm => "短期",
-	    RentalLimit::LongTerm => "長期",
-	    RentalLimit::Today => "",
-	}.to_string();
+    pub fn update_rental_limit_text<'a>(
+        &mut self,
+        ctx: &mut SuzuContext<'a>,
+        rental_limit: RentalLimit,
+    ) {
+        let text = match rental_limit {
+            RentalLimit::ShortTerm => "短期",
+            RentalLimit::LongTerm => "長期",
+            RentalLimit::Today => "",
+        }
+        .to_string();
 
-	let mut vtext = VerticalText::new(
-	    text,
-	    numeric::Point2f::new(0.0, 0.0),
-	    numeric::Vector2f::new(1.0, 1.0),
-	    0.0,
-	    0,
-	    FontInformation::new(
-                game_data.get_font(FontID::JpFude1),
+        let mut vtext = VerticalText::new(
+            text,
+            numeric::Point2f::new(0.0, 0.0),
+            numeric::Vector2f::new(1.0, 1.0),
+            0.0,
+            0,
+            FontInformation::new(
+                ctx.resource.get_font(FontID::JpFude1),
                 numeric::Vector2f::new(24.0, 24.0),
                 ggraphics::Color::from_rgba_u32(0x000000ff),
-	    ),
-	);
-	
-	set_table_frame_cell_center!(ctx, self.pay_frame, vtext, numeric::Vector2u::new(1, 1));
+            ),
+        );
 
-	self.rental_limit_text = Some(vtext);
-	self.rental_limit_data = Some(rental_limit);
+        set_table_frame_cell_center!(
+            ctx.context,
+            self.pay_frame,
+            vtext,
+            numeric::Vector2u::new(1, 1)
+        );
 
-	self.calc_payment_money(ctx, game_data);
+        self.rental_limit_text = Some(vtext);
+        self.rental_limit_data = Some(rental_limit);
+
+        self.calc_payment_money(ctx);
     }
 
-    pub fn update_book_count(&mut self, ctx: &mut ggez::Context, game_data: &GameData, count: usize) {
-	let mut vtext = VerticalText::new(
-	    format!("{}冊", number_to_jk(count as u64)),
-	    numeric::Point2f::new(0.0, 0.0),
-	    numeric::Vector2f::new(1.0, 1.0),
-	    0.0,
-	    0,
-	    FontInformation::new(
-                game_data.get_font(FontID::JpFude1),
+    pub fn update_book_count<'a>(&mut self, ctx: &mut SuzuContext<'a>, count: usize) {
+        let mut vtext = VerticalText::new(
+            format!("{}冊", number_to_jk(count as u64)),
+            numeric::Point2f::new(0.0, 0.0),
+            numeric::Vector2f::new(1.0, 1.0),
+            0.0,
+            0,
+            FontInformation::new(
+                ctx.resource.get_font(FontID::JpFude1),
                 numeric::Vector2f::new(24.0, 24.0),
                 ggraphics::Color::from_rgba_u32(0x000000ff),
-	    ),
-	);
-	
-	set_table_frame_cell_center!(ctx, self.pay_frame, vtext, numeric::Vector2u::new(2, 1));
- 
-	self.borrowing_number_text = Some(vtext);
-	self.listed_books_number = count;
+            ),
+        );
 
-	self.calc_payment_money(ctx, game_data);
+        set_table_frame_cell_center!(
+            ctx.context,
+            self.pay_frame,
+            vtext,
+            numeric::Vector2u::new(2, 1)
+        );
+
+        self.borrowing_number_text = Some(vtext);
+        self.listed_books_number = count;
+
+        self.calc_payment_money(ctx);
     }
 
-    fn calc_payment_money(&mut self, ctx: &mut ggez::Context, game_data: &GameData) {
-	if let Some(rental_limit) = self.rental_limit_data.as_ref() {
-	    // 返却期限がTodayの場合は計算を行わず、終了
-	    if rental_limit == &RentalLimit::Today {
-		return;
-	    }
-	    
-	    let mut vtext = VerticalText::new(
-		format!("{}円", number_to_jk((rental_limit.fee() * self.listed_books_number as i32) as u64)),
-		numeric::Point2f::new(0.0, 0.0),
-		numeric::Vector2f::new(1.0, 1.0),
-		0.0,
-		0,
-		FontInformation::new(
-                    game_data.get_font(FontID::JpFude1),
+    fn calc_payment_money<'a>(&mut self, ctx: &mut SuzuContext<'a>) {
+        if let Some(rental_limit) = self.rental_limit_data.as_ref() {
+            // 返却期限がTodayの場合は計算を行わず、終了
+            if rental_limit == &RentalLimit::Today {
+                return;
+            }
+
+            let mut vtext = VerticalText::new(
+                format!(
+                    "{}円",
+                    number_to_jk((rental_limit.fee() * self.listed_books_number as i32) as u64)
+                ),
+                numeric::Point2f::new(0.0, 0.0),
+                numeric::Vector2f::new(1.0, 1.0),
+                0.0,
+                0,
+                FontInformation::new(
+                    ctx.resource.get_font(FontID::JpFude1),
                     numeric::Vector2f::new(24.0, 24.0),
                     ggraphics::Color::from_rgba_u32(0x000000ff),
-		),
-	    );
-	    set_table_frame_cell_center!(ctx, self.pay_frame, vtext, numeric::Vector2u::new(0, 1));
+                ),
+            );
+            set_table_frame_cell_center!(
+                ctx.context,
+                self.pay_frame,
+                vtext,
+                numeric::Vector2u::new(0, 1)
+            );
 
-	    self.pay_money_text = Some(vtext);
-	}
+            self.pay_money_text = Some(vtext);
+        }
     }
 
     pub fn get_pay_frame(&self) -> &TableFrame {
-	&self.pay_frame
+        &self.pay_frame
     }
 }
 
 impl DrawableComponent for PayFrame {
     fn draw(&mut self, ctx: &mut ggez::Context) -> ggez::GameResult<()> {
-	if self.is_visible() {
-	    self.pay_frame.draw(ctx)?;
+        if self.is_visible() {
+            self.pay_frame.draw(ctx)?;
 
-	    for vtext in &mut self.cell_desc_text {
-		vtext.draw(ctx)?;
-	    }
+            for vtext in &mut self.cell_desc_text {
+                vtext.draw(ctx)?;
+            }
 
-	    if let Some(vtext) = self.borrowing_number_text.as_mut() {
-		vtext.draw(ctx)?;
-	    }
+            if let Some(vtext) = self.borrowing_number_text.as_mut() {
+                vtext.draw(ctx)?;
+            }
 
-	    if let Some(vtext) = self.rental_limit_text.as_mut() {
-		vtext.draw(ctx)?;
-	    }
+            if let Some(vtext) = self.rental_limit_text.as_mut() {
+                vtext.draw(ctx)?;
+            }
 
-	    if let Some(vtext) = self.pay_money_text.as_mut() {
-		vtext.draw(ctx)?;
-	    }
-	}
+            if let Some(vtext) = self.pay_money_text.as_mut() {
+                vtext.draw(ctx)?;
+            }
+        }
 
-	Ok(())
+        Ok(())
     }
-    
+
     fn hide(&mut self) {
-	self.drwob_essential.visible = false;
+        self.drwob_essential.visible = false;
     }
-    
+
     fn appear(&mut self) {
-	self.drwob_essential.visible = true;
+        self.drwob_essential.visible = true;
     }
-    
+
     fn is_visible(&self) -> bool {
-	self.drwob_essential.visible
+        self.drwob_essential.visible
     }
-    
+
     fn set_drawing_depth(&mut self, depth: i8) {
-	self.drwob_essential.drawing_depth = depth;
+        self.drwob_essential.drawing_depth = depth;
     }
-    
+
     fn get_drawing_depth(&self) -> i8 {
-	self.drwob_essential.drawing_depth
-    }   
+        self.drwob_essential.drawing_depth
+    }
 }
 
 pub struct BorrowingRecordBookPage {
@@ -1077,89 +1114,88 @@ pub struct BorrowingRecordBookPage {
 }
 
 impl BorrowingRecordBookPage {
-    pub fn new(
-        ctx: &mut ggez::Context,
-        game_data: &GameData,
+    pub fn new<'a>(
+        ctx: &mut SuzuContext<'a>,
         rect: ggraphics::Rect,
         paper_tid: TextureID,
         page_data: BorrowingRecordBookPageData,
         t: Clock,
     ) -> Self {
-        let mut page = Self::new_empty(ctx, rect, paper_tid, game_data, t);
+        let mut page = Self::new_empty(ctx, rect, paper_tid, t);
 
         for (position, book_info) in page_data.borrowing_book_title.iter() {
             let info = page.borrow_book.get_mut(&position).unwrap();
             info.reset(HoldData::BookName(book_info.clone()));
             info.vtext.make_center(
-                ctx,
+                ctx.context,
                 page.books_table
                     .get_center_of(*position, page.books_table.get_position()),
             );
         }
 
-	for (position, book_status) in page_data.borrowing_book_status.iter() {
+        for (position, book_status) in page_data.borrowing_book_status.iter() {
             let info = page.borrow_book.get_mut(&position).unwrap();
             info.reset(HoldData::BookStatus(book_status.clone()));
             info.vtext.make_center(
-                ctx,
+                ctx.context,
                 page.books_table
                     .get_center_of(*position, page.books_table.get_position()),
             );
         }
 
-	if let Some(customer_name) = page_data.customer_name {
-	    let position = numeric::Vector2u::new(2, 1);
-	    let info = page.request_information.get_mut(&position).unwrap();
+        if let Some(customer_name) = page_data.customer_name {
+            let position = numeric::Vector2u::new(2, 1);
+            let info = page.request_information.get_mut(&position).unwrap();
             info.reset(HoldData::CustomerName(customer_name.clone()));
             info.vtext.make_center(
-                ctx,
+                ctx.context,
                 page.customer_info_table
                     .get_center_of(position, page.customer_info_table.get_position()),
             );
-	}
-	
-	if let Some(rental_date) = page_data.rental_date {
-	    let position = numeric::Vector2u::new(1, 1);
-	    let info = page.request_information.get_mut(&position).unwrap();
+        }
+
+        if let Some(rental_date) = page_data.rental_date {
+            let position = numeric::Vector2u::new(1, 1);
+            let info = page.request_information.get_mut(&position).unwrap();
             info.reset(HoldData::Date(rental_date.clone()));
             info.vtext.make_center(
-                ctx,
+                ctx.context,
                 page.customer_info_table
                     .get_center_of(position, page.customer_info_table.get_position()),
             );
-	}
+        }
 
-	if let Some(return_date) = page_data.return_date {
-	    let position = numeric::Vector2u::new(0, 1);
-	    let info = page.request_information.get_mut(&position).unwrap();
+        if let Some(return_date) = page_data.return_date {
+            let position = numeric::Vector2u::new(0, 1);
+            let info = page.request_information.get_mut(&position).unwrap();
             info.reset(HoldData::Date(return_date.clone()));
             info.vtext.make_center(
-                ctx,
+                ctx.context,
                 page.customer_info_table
                     .get_center_of(position, page.customer_info_table.get_position()),
             );
-	}
+        }
 
-	if let Some(rental_limit) = page_data.rental_limit {
-	    page.pay_frame.update_rental_limit_text(ctx, game_data, rental_limit);
-	}
+        if let Some(rental_limit) = page_data.rental_limit {
+            page.pay_frame.update_rental_limit_text(ctx, rental_limit);
+        }
 
-	page.pay_frame.update_book_count(ctx, game_data, page_data.borrowing_book_title.len());
-	
+        page.pay_frame
+            .update_book_count(ctx, page_data.borrowing_book_title.len());
+
         page
     }
 
-    pub fn new_empty(
-        ctx: &mut ggez::Context,
+    pub fn new_empty<'a>(
+        ctx: &mut SuzuContext<'a>,
         rect: ggraphics::Rect,
         paper_tid: TextureID,
-        game_data: &GameData,
         t: Clock,
     ) -> Self {
         let table_frame = TableFrame::new(
-            game_data,
+            ctx.resource,
             numeric::Point2f::new(rect.w - 200.0, 40.0),
-	    TileBatchTextureID::OldStyleFrame,
+            TileBatchTextureID::OldStyleFrame,
             FrameData::new(vec![150.0, 300.0], vec![40.0; 3]),
             numeric::Vector2f::new(0.3, 0.3),
             0,
@@ -1172,13 +1208,18 @@ impl BorrowingRecordBookPage {
             0.0,
             0,
             FontInformation::new(
-                game_data.get_font(FontID::JpFude1),
+                ctx.resource.get_font(FontID::JpFude1),
                 numeric::Vector2f::new(24.0, 24.0),
                 ggraphics::Color::from_rgba_u32(0x000000ff),
             ),
         );
 
-        set_table_frame_cell_center!(ctx, table_frame, borrower, numeric::Vector2u::new(2, 0));
+        set_table_frame_cell_center!(
+            ctx.context,
+            table_frame,
+            borrower,
+            numeric::Vector2u::new(2, 0)
+        );
 
         let mut borrow_date = VerticalText::new(
             "貸出日".to_string(),
@@ -1187,13 +1228,18 @@ impl BorrowingRecordBookPage {
             0.0,
             0,
             FontInformation::new(
-                game_data.get_font(FontID::JpFude1),
+                ctx.resource.get_font(FontID::JpFude1),
                 numeric::Vector2f::new(24.0, 24.0),
                 ggraphics::Color::from_rgba_u32(0x000000ff),
             ),
         );
 
-        set_table_frame_cell_center!(ctx, table_frame, borrow_date, numeric::Vector2u::new(1, 0));
+        set_table_frame_cell_center!(
+            ctx.context,
+            table_frame,
+            borrow_date,
+            numeric::Vector2u::new(1, 0)
+        );
 
         let mut return_date = VerticalText::new(
             "返却期限".to_string(),
@@ -1202,18 +1248,23 @@ impl BorrowingRecordBookPage {
             0.0,
             0,
             FontInformation::new(
-                game_data.get_font(FontID::JpFude1),
+                ctx.resource.get_font(FontID::JpFude1),
                 numeric::Vector2f::new(24.0, 24.0),
                 ggraphics::Color::from_rgba_u32(0x000000ff),
             ),
         );
 
-        set_table_frame_cell_center!(ctx, table_frame, return_date, numeric::Vector2u::new(0, 0));
+        set_table_frame_cell_center!(
+            ctx.context,
+            table_frame,
+            return_date,
+            numeric::Vector2u::new(0, 0)
+        );
 
         let books_table = TableFrame::new(
-            game_data,
+            ctx.resource,
             numeric::Point2f::new(rect.w - 550.0, 30.0),
-	    TileBatchTextureID::OldStyleFrame,
+            TileBatchTextureID::OldStyleFrame,
             FrameData::new(vec![380.0, 70.0], vec![40.0; 6]),
             numeric::Vector2f::new(0.3, 0.3),
             0,
@@ -1226,13 +1277,18 @@ impl BorrowingRecordBookPage {
             0.0,
             0,
             FontInformation::new(
-                game_data.get_font(FontID::JpFude1),
+                ctx.resource.get_font(FontID::JpFude1),
                 numeric::Vector2f::new(24.0, 24.0),
                 ggraphics::Color::from_rgba_u32(0x000000ff),
             ),
         );
 
-        set_table_frame_cell_center!(ctx, books_table, book_head, numeric::Vector2u::new(5, 0));
+        set_table_frame_cell_center!(
+            ctx.context,
+            books_table,
+            book_head,
+            numeric::Vector2u::new(5, 0)
+        );
 
         let mut book_status = VerticalText::new(
             "状態".to_string(),
@@ -1241,17 +1297,22 @@ impl BorrowingRecordBookPage {
             0.0,
             0,
             FontInformation::new(
-                game_data.get_font(FontID::JpFude1),
+                ctx.resource.get_font(FontID::JpFude1),
                 numeric::Vector2f::new(24.0, 24.0),
                 ggraphics::Color::from_rgba_u32(0x000000ff),
             ),
         );
 
-        set_table_frame_cell_center!(ctx, books_table, book_status, numeric::Vector2u::new(5, 1));
+        set_table_frame_cell_center!(
+            ctx.context,
+            books_table,
+            book_status,
+            numeric::Vector2u::new(5, 1)
+        );
 
         let paper_texture = SimpleObject::new(
             MovableUniTexture::new(
-                game_data.ref_texture(paper_tid),
+                ctx.resource.ref_texture(paper_tid),
                 numeric::Point2f::new(0.0, 0.0),
                 numeric::Vector2f::new(1.0, 1.0),
                 0.0,
@@ -1263,7 +1324,7 @@ impl BorrowingRecordBookPage {
         );
 
         let info_font = FontInformation::new(
-            game_data.get_font(FontID::JpFude1),
+            ctx.resource.get_font(FontID::JpFude1),
             numeric::Vector2f::new(24.0, 24.0),
             ggraphics::Color::from_rgba_u32(0xff),
         );
@@ -1433,7 +1494,7 @@ impl BorrowingRecordBookPage {
             book_status: book_status,
             paper_texture: paper_texture,
             borrow_date: borrow_date,
-	    pay_frame: PayFrame::new(ctx, game_data, numeric::Point2f::new(100.0, 40.0), 0),
+            pay_frame: PayFrame::new(ctx, numeric::Point2f::new(100.0, 40.0), 0),
             return_date: return_date,
             drwob_essential: DrawableObjectEssential::new(true, 0),
         }
@@ -1488,24 +1549,24 @@ impl BorrowingRecordBookPage {
     }
 
     fn count_written_book_title(&self) -> usize {
-	self.borrow_book.iter()
-	    .map(|(_, data)| if data.is_none() { 0 } else { 1 } )
-	    .fold(0, |sum, c| sum + c )
+        self.borrow_book
+            .iter()
+            .map(|(_, data)| if data.is_none() { 0 } else { 1 })
+            .fold(0, |sum, c| sum + c)
     }
 
     ///
     /// Dataを格納できればtrue, できなければfalse
     ///
-    pub fn try_insert_data_in_borrowing_books_frame(
+    pub fn try_insert_data_in_borrowing_books_frame<'a>(
         &mut self,
-        ctx: &mut ggez::Context,
-	game_data: &GameData,
+        ctx: &mut SuzuContext<'a>,
         menu_position: numeric::Point2f,
         book_info: BookInformation,
     ) {
         let grid_pos = self
             .books_table
-            .get_grid_position(ctx, menu_position)
+            .get_grid_position(ctx.context, menu_position)
             .unwrap();
 
         // 本の状態は、このメソッドからは設定できない
@@ -1516,28 +1577,28 @@ impl BorrowingRecordBookPage {
         let info = self.borrow_book.get_mut(&grid_pos).unwrap();
         info.reset(HoldData::BookName(book_info));
         info.vtext.make_center(
-            ctx,
+            ctx.context,
             self.books_table
                 .get_center_of(grid_pos, self.books_table.get_position()),
         );
 
-	self.pay_frame.update_book_count(ctx, game_data, self.count_written_book_title());
+        self.pay_frame
+            .update_book_count(ctx, self.count_written_book_title());
     }
 
     ///
     /// Dataを格納できればtrue, できなければfalse
     ///
-    pub fn try_insert_date_data_in_cutomer_info_frame(
+    pub fn try_insert_date_data_in_cutomer_info_frame<'a>(
         &mut self,
-        ctx: &mut ggez::Context,
-	game_data: &GameData,
+        ctx: &mut SuzuContext<'a>,
         menu_position: numeric::Point2f,
         date: GensoDate,
-	rental_limit: RentalLimit,
+        rental_limit: RentalLimit,
     ) {
         let grid_pos = self
             .customer_info_table
-            .get_grid_position(ctx, menu_position)
+            .get_grid_position(ctx.context, menu_position)
             .unwrap();
 
         // 挿入先が日時のエントリではない
@@ -1548,14 +1609,14 @@ impl BorrowingRecordBookPage {
         let info = self.request_information.get_mut(&grid_pos).unwrap();
         info.reset(HoldData::Date(date));
         info.vtext.make_center(
-            ctx,
+            ctx.context,
             self.customer_info_table
                 .get_center_of(grid_pos, self.customer_info_table.get_position()),
         );
 
-	if grid_pos.x == 0 {
-	    self.pay_frame.update_rental_limit_text(ctx, game_data, rental_limit);
-	}
+        if grid_pos.x == 0 {
+            self.pay_frame.update_rental_limit_text(ctx, rental_limit);
+        }
     }
 
     ///
@@ -1586,7 +1647,7 @@ impl BorrowingRecordBookPage {
         );
     }
 
-    pub fn replace_borrower_name(&mut self, game_data: &GameData, name: &str) -> &mut Self {
+    pub fn replace_borrower_name(&mut self, game_data: &GameResource, name: &str) -> &mut Self {
         let pos = self.borrower.get_position();
         self.borrower = VerticalText::new(
             format!("借りた人   {}", name),
@@ -1625,72 +1686,74 @@ impl BorrowingRecordBookPage {
 
     pub fn export_page_data(&self) -> BorrowingRecordBookPageData {
         let mut borrow_book_title = HashMap::new();
-	let mut borrow_book_status = HashMap::new();
+        let mut borrow_book_status = HashMap::new();
 
-	for index in 0..self.books_table.get_rows() {
-	    let position = numeric::Vector2u::new(index as u32, 0);
-	    let hold_data_vtext = self.borrow_book.get(&position);
+        for index in 0..self.books_table.get_rows() {
+            let position = numeric::Vector2u::new(index as u32, 0);
+            let hold_data_vtext = self.borrow_book.get(&position);
 
-	    if let Some(hold_data_vtext) = hold_data_vtext {
-		if !hold_data_vtext.is_none() {
-		    match hold_data_vtext.copy_hold_data() {
-			HoldData::BookName(info) => {
-			    borrow_book_title.insert(position, info);
-			},
-			_ => (),
-		    }
-		}
-	    }
-	}
+            if let Some(hold_data_vtext) = hold_data_vtext {
+                if !hold_data_vtext.is_none() {
+                    match hold_data_vtext.copy_hold_data() {
+                        HoldData::BookName(info) => {
+                            borrow_book_title.insert(position, info);
+                        }
+                        _ => (),
+                    }
+                }
+            }
+        }
 
-	for index in 0..self.books_table.get_rows() {
-	    let position = numeric::Vector2u::new(index as u32, 1);
-	    let hold_data_vtext = self.borrow_book.get(&position);
+        for index in 0..self.books_table.get_rows() {
+            let position = numeric::Vector2u::new(index as u32, 1);
+            let hold_data_vtext = self.borrow_book.get(&position);
 
-	    if let Some(hold_data_vtext) = hold_data_vtext {
-		if !hold_data_vtext.is_none() {
-		    match hold_data_vtext.copy_hold_data() {
-			HoldData::BookStatus(status) => {
-			    borrow_book_status.insert(position, status);
-			},
-			_ => (),
-		    }
-		}
-	    }
-	}
+            if let Some(hold_data_vtext) = hold_data_vtext {
+                if !hold_data_vtext.is_none() {
+                    match hold_data_vtext.copy_hold_data() {
+                        HoldData::BookStatus(status) => {
+                            borrow_book_status.insert(position, status);
+                        }
+                        _ => (),
+                    }
+                }
+            }
+        }
 
-	let customer_name = if let Some(data) = self.request_information.get(&numeric::Vector2u::new(2, 1)) {
-	    data.ref_hold_data().to_customer_name()
-	} else {
-	    None
-	};
+        let customer_name =
+            if let Some(data) = self.request_information.get(&numeric::Vector2u::new(2, 1)) {
+                data.ref_hold_data().to_customer_name()
+            } else {
+                None
+            };
 
-	let rental_date = if let Some(data) = self.request_information.get(&numeric::Vector2u::new(1, 1)) {
-	    data.ref_hold_data().to_date()
-	} else {
-	    None
-	};
-	
-	let return_date = if let Some(data) = self.request_information.get(&numeric::Vector2u::new(0, 1)) {
-	    data.ref_hold_data().to_date()
-	} else {
-	    None
-	};
+        let rental_date =
+            if let Some(data) = self.request_information.get(&numeric::Vector2u::new(1, 1)) {
+                data.ref_hold_data().to_date()
+            } else {
+                None
+            };
 
-	let rental_limit = if let Some(data) = self.pay_frame.rental_limit_data.as_ref() {
-	    Some(data.clone())
-	} else {
-	    None
-	};
+        let return_date =
+            if let Some(data) = self.request_information.get(&numeric::Vector2u::new(0, 1)) {
+                data.ref_hold_data().to_date()
+            } else {
+                None
+            };
 
-	
+        let rental_limit = if let Some(data) = self.pay_frame.rental_limit_data.as_ref() {
+            Some(data.clone())
+        } else {
+            None
+        };
+
         BorrowingRecordBookPageData {
-	    borrowing_book_title: borrow_book_title,
-	    borrowing_book_status: borrow_book_status,
+            borrowing_book_title: borrow_book_title,
+            borrowing_book_status: borrow_book_status,
             customer_name: customer_name,
-	    return_date: return_date,
-	    rental_date: rental_date,
-	    rental_limit: rental_limit,
+            return_date: return_date,
+            rental_date: rental_date,
+            rental_limit: rental_limit,
         }
     }
 }
@@ -1707,7 +1770,7 @@ impl DrawableComponent for BorrowingRecordBookPage {
             self.borrow_date.draw(ctx)?;
             self.return_date.draw(ctx)?;
 
-	    self.pay_frame.draw(ctx)?;
+            self.pay_frame.draw(ctx)?;
 
             for (_, d) in &mut self.borrow_book {
                 d.draw(ctx)?;
@@ -1752,9 +1815,8 @@ pub struct BorrowingRecordBook {
 }
 
 impl BorrowingRecordBook {
-    pub fn new(
-        ctx: &mut ggez::Context,
-        game_data: &GameData,
+    pub fn new<'a>(
+        ctx: &mut SuzuContext<'a>,
         rect: ggraphics::Rect,
         drawing_depth: i8,
         mut maybe_book_data: Option<BorrowingRecordBookData>,
@@ -1767,7 +1829,6 @@ impl BorrowingRecordBook {
                 let page_data = book_data.pages_data.remove(0);
                 pages.push(BorrowingRecordBookPage::new(
                     ctx,
-                    game_data,
                     rect,
                     TextureID::Paper1,
                     page_data,
@@ -1781,7 +1842,7 @@ impl BorrowingRecordBook {
         };
 
         let mut next_page_ope = shape::DrawableShape::new(
-            ctx,
+            ctx.context,
             shape::Rectangle::new(
                 numeric::Rect::new(0.0, 0.0, 30.0, rect.h),
                 ggraphics::DrawMode::fill(),
@@ -1794,7 +1855,7 @@ impl BorrowingRecordBook {
         next_page_ope.hide();
 
         let mut prev_page_ope = shape::DrawableShape::new(
-            ctx,
+            ctx.context,
             shape::Rectangle::new(
                 numeric::Rect::new(rect.w - 30.0, 0.0, 30.0, rect.h),
                 ggraphics::DrawMode::fill(),
@@ -1814,7 +1875,7 @@ impl BorrowingRecordBook {
             prev_page_ope_mesh: prev_page_ope,
             canvas: MovableWrap::new(
                 Box::new(SubScreen::new(
-                    ctx,
+                    ctx.context,
                     rect,
                     drawing_depth,
                     ggraphics::Color::from_rgba_u32(0xffffffff),
@@ -1825,17 +1886,11 @@ impl BorrowingRecordBook {
         }
     }
 
-    pub fn add_empty_page(
-        &mut self,
-        ctx: &mut ggez::Context,
-        game_data: &GameData,
-        t: Clock,
-    ) -> &Self {
+    pub fn add_empty_page<'a>(&mut self, ctx: &mut SuzuContext<'a>, t: Clock) -> &Self {
         self.pages.push(BorrowingRecordBookPage::new_empty(
             ctx,
             self.rect,
             TextureID::Paper1,
-            game_data,
             t,
         ));
         self
@@ -1857,10 +1912,10 @@ impl BorrowingRecordBook {
     /// 次のページが存在する場合は、ページを繰って、trueを返す
     /// 存在しない場合は、falseを返す
     ///
-    fn next_page(&mut self, ctx: &mut ggez::Context, game_data: &GameData, t: Clock) {
+    fn next_page<'a>(&mut self, ctx: &mut SuzuContext<'a>, t: Clock) {
         self.current_page += 1;
         if self.current_page >= self.pages.len() {
-            self.add_empty_page(ctx, game_data, t);
+            self.add_empty_page(ctx, t);
         }
     }
 
@@ -1869,31 +1924,29 @@ impl BorrowingRecordBook {
             self.current_page -= 1;
         }
     }
-    
-    pub fn insert_book_title_to_books_frame(
+
+    pub fn insert_book_title_to_books_frame<'a>(
         &mut self,
-        ctx: &mut ggez::Context,
-	game_data: &GameData,
+        ctx: &mut SuzuContext<'a>,
         menu_position: numeric::Point2f,
         book_info: BookInformation,
     ) {
         let rpoint = self.relative_point(menu_position);
         if let Some(page) = self.get_current_page_mut() {
-            page.try_insert_data_in_borrowing_books_frame(ctx, game_data, rpoint, book_info);
+            page.try_insert_data_in_borrowing_books_frame(ctx, rpoint, book_info);
         }
     }
 
-    pub fn insert_date_data_to_customer_info(
+    pub fn insert_date_data_to_customer_info<'a>(
         &mut self,
-        ctx: &mut ggez::Context,
-	game_data: &GameData,
+        ctx: &mut SuzuContext<'a>,
         menu_position: numeric::Point2f,
         date: GensoDate,
-	rental_limit: RentalLimit,
+        rental_limit: RentalLimit,
     ) {
         let rpoint = self.relative_point(menu_position);
         if let Some(page) = self.get_current_page_mut() {
-            page.try_insert_date_data_in_cutomer_info_frame(ctx, game_data, rpoint, date, rental_limit);
+            page.try_insert_date_data_in_cutomer_info_frame(ctx, rpoint, date, rental_limit);
         }
     }
 
@@ -1919,10 +1972,9 @@ impl BorrowingRecordBook {
         }
     }
 
-    pub fn click_handler(
+    pub fn click_handler<'a>(
         &mut self,
-        ctx: &mut ggez::Context,
-        game_data: &GameData,
+        ctx: &mut SuzuContext<'a>,
         t: Clock,
         point: numeric::Point2f,
     ) -> bool {
@@ -1932,7 +1984,7 @@ impl BorrowingRecordBook {
         let prev_area = numeric::Rect::new(self.rect.w - 20.0, 0.0, 30.0, self.rect.h);
 
         if next_area.contains(rpoint) {
-            self.next_page(ctx, game_data, t);
+            self.next_page(ctx, t);
             return true;
         } else if prev_area.contains(rpoint) {
             self.prev_page();
@@ -1983,7 +2035,9 @@ impl BorrowingRecordBook {
     ) -> Option<numeric::Vector2u> {
         if let Some(page) = self.get_current_page().as_ref() {
             let page_point = self.relative_point(point);
-            page.pay_frame.get_pay_frame().get_grid_position(ctx, page_point)
+            page.pay_frame
+                .get_pay_frame()
+                .get_grid_position(ctx, page_point)
         } else {
             None
         }

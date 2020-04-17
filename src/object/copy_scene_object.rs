@@ -15,7 +15,7 @@ use torifune::impl_drawable_object_for_wrapped;
 use torifune::impl_texture_object_for_wrapped;
 use torifune::numeric;
 
-use crate::core::{GameData, TextureID};
+use crate::core::{SuzuContext, TextureID};
 
 #[derive(Clone)]
 struct DragDistanceCalculator {
@@ -135,16 +135,21 @@ pub struct EffectableHangi {
 }
 
 impl EffectableHangi {
-    pub fn new(ctx: &mut ggez::Context, game_data: &GameData, rect: numeric::Rect) -> Self {
+    pub fn new<'a>(ctx: &mut SuzuContext<'a>, rect: numeric::Rect) -> Self {
         EffectableHangi {
             hangi_texture: UniTexture::new(
-                game_data.ref_texture(TextureID::Wood1),
+                ctx.resource.ref_texture(TextureID::Wood1),
                 numeric::Point2f::new(0.0, 0.0),
                 numeric::Vector2f::new(1.0, 1.0),
                 0.0,
                 1,
             ),
-            canvas: SubScreen::new(ctx, rect, 0, ggraphics::Color::from_rgba_u32(0xffffffff)),
+            canvas: SubScreen::new(
+                ctx.context,
+                rect,
+                0,
+                ggraphics::Color::from_rgba_u32(0xffffffff),
+            ),
             drag_distance: DragDistanceCalculator::new(),
             lag_effect: PointerLag::new(),
         }

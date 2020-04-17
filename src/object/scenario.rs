@@ -10,7 +10,7 @@ use torifune::impl_drawable_object_for_wrapped;
 use torifune::impl_texture_object_for_wrapped;
 
 use super::*;
-use crate::core::{FontID, GameData, TextureID, TileBatchTextureID};
+use crate::core::{FontID, GameResource, SuzuContext, TextureID, TileBatchTextureID};
 use crate::object::util_object::*;
 use crate::scene::SceneID;
 use std::str::FromStr;
@@ -40,7 +40,7 @@ impl ScenarioTextSegment {
 
     pub fn from_toml_using_default(
         obj: &toml::value::Table,
-        game_data: &GameData,
+        game_data: &GameResource,
         default: &ScenarioTextAttribute,
     ) -> Self {
         let text = obj.get("text");
@@ -150,7 +150,7 @@ pub struct ScenarioTachie {
 }
 
 impl ScenarioTachie {
-    pub fn new(game_data: &GameData, tid_array: Vec<TextureID>, t: Clock) -> Self {
+    pub fn new(game_data: &GameResource, tid_array: Vec<TextureID>, t: Clock) -> Self {
         // left
         let left_texture = if tid_array.len() > 0 {
             Some(SimpleObject::new(
@@ -242,7 +242,7 @@ pub struct ScenarioText {
 }
 
 impl ScenarioText {
-    pub fn new(toml_scripts: &toml::value::Value, game_data: &GameData) -> Self {
+    pub fn new(toml_scripts: &toml::value::Value, game_data: &GameResource) -> Self {
         let id = toml_scripts.get("id").unwrap().as_integer().unwrap() as i32;
         let next_id = toml_scripts.get("next-id").unwrap().as_integer().unwrap() as i32;
 
@@ -366,7 +366,7 @@ pub struct ChoicePatternData {
 }
 
 impl ChoicePatternData {
-    pub fn from_toml_object(toml_scripts: &toml::value::Value, _: &GameData) -> Self {
+    pub fn from_toml_object(toml_scripts: &toml::value::Value, _: &GameResource) -> Self {
         let id = toml_scripts.get("id").unwrap().as_integer().unwrap() as i32;
 
         let mut choice_pattern_array = Vec::new();
@@ -479,9 +479,8 @@ pub struct ChoiceBox {
 }
 
 impl ChoiceBox {
-    fn generate_choice_panel(
-        ctx: &mut ggez::Context,
-        game_data: &GameData,
+    fn generate_choice_panel<'a>(
+        ctx: &mut SuzuContext<'a>,
         size: usize,
         left_top: numeric::Vector2f,
         align: f32,
@@ -492,13 +491,18 @@ impl ChoiceBox {
 
         for _ in 0..size {
             choice_panels.push(ChoicePanel::new(UniTexture::new(
-                game_data.ref_texture(TextureID::from_u32(panel).unwrap()),
+                ctx.resource
+                    .ref_texture(TextureID::from_u32(panel).unwrap()),
                 pos,
                 numeric::Vector2f::new(1.0, 1.0),
                 0.0,
                 0,
             )));
-            pos.x += choice_panels.last().unwrap().get_drawing_size(ctx).x;
+            pos.x += choice_panels
+                .last()
+                .unwrap()
+                .get_drawing_size(ctx.context)
+                .x;
             pos.x += align;
             panel += 1;
         }
@@ -506,15 +510,13 @@ impl ChoiceBox {
         choice_panels
     }
 
-    pub fn new(
-        ctx: &mut ggez::Context,
+    pub fn new<'a>(
+        ctx: &mut SuzuContext<'a>,
         pos_rect: numeric::Rect,
-        game_data: &GameData,
         choice_text: Vec<String>,
     ) -> Self {
         let mut panels = Self::generate_choice_panel(
             ctx,
-            game_data,
             choice_text.len(),
             numeric::Vector2f::new(10.0, 10.0),
             10.0,
@@ -532,7 +534,7 @@ impl ChoiceBox {
             panels: panels,
             choice_text: choice_text,
             selecting: 0,
-            canvas: SubScreen::new(ctx, pos_rect, 0, ggraphics::Color::from_rgba_u32(0)),
+            canvas: SubScreen::new(ctx.context, pos_rect, 0, ggraphics::Color::from_rgba_u32(0)),
         }
     }
 
@@ -658,7 +660,7 @@ pub struct Scenario {
 }
 
 impl Scenario {
-    pub fn new(file_path: &str, game_data: &GameData) -> Self {
+    pub fn new(file_path: &str, game_data: &GameResource) -> Self {
         let mut scenario = Vec::new();
 
         let content = match std::fs::read_to_string(file_path) {
@@ -819,20 +821,19 @@ pub struct TextBox {
 }
 
 impl TextBox {
-    pub fn new(
-        ctx: &mut ggez::Context,
-        game_data: &GameData,
+    pub fn new<'a>(
+        ctx: &mut SuzuContext<'a>,
         rect: numeric::Rect,
         mut background: SimpleObject,
         tile_batch_texture_id: TileBatchTextureID,
         box_lines: usize,
         _t: Clock,
     ) -> Self {
-        background.fit_scale(ctx, numeric::Vector2f::new(rect.w, rect.h));
+        background.fit_scale(ctx.context, numeric::Vector2f::new(rect.w, rect.h));
         background.set_position(numeric::Point2f::new(0.0, 0.0));
 
         let appr_frame = TileBatchFrame::new(
-            game_data,
+            ctx.resource,
             tile_batch_texture_id,
             numeric::Rect::new(0.0, 0.0, rect.w, rect.h),
             numeric::Vector2f::new(0.8, 0.8),
@@ -847,7 +848,12 @@ impl TextBox {
             text_box_status: TextBoxStatus::UpdatingText,
             background: background,
             appearance_frame: appr_frame,
-            canvas: SubScreen::new(ctx, rect, 0, ggraphics::Color::from_rgba_u32(0xffffffff)),
+            canvas: SubScreen::new(
+                ctx.context,
+                rect,
+                0,
+                ggraphics::Color::from_rgba_u32(0xffffffff),
+            ),
         }
     }
 
@@ -1018,15 +1024,10 @@ pub struct ScenarioBox {
 }
 
 impl ScenarioBox {
-    pub fn new(
-        ctx: &mut ggez::Context,
-        game_data: &GameData,
-        rect: numeric::Rect,
-        t: Clock,
-    ) -> Self {
+    pub fn new<'a>(ctx: &mut SuzuContext, rect: numeric::Rect, t: Clock) -> Self {
         let background = tobj::SimpleObject::new(
             tobj::MovableUniTexture::new(
-                game_data.ref_texture(TextureID::TextBackground),
+                ctx.resource.ref_texture(TextureID::TextBackground),
                 numeric::Point2f::new(20.0, 20.0),
                 numeric::Vector2f::new(1.0, 1.0),
                 0.0,
@@ -1039,7 +1040,6 @@ impl ScenarioBox {
         ScenarioBox {
             text_box: TextBox::new(
                 ctx,
-                game_data,
                 numeric::Rect::new(0.0, 0.0, rect.w, rect.h),
                 background,
                 TileBatchTextureID::TaishoStyle1,
@@ -1047,13 +1047,12 @@ impl ScenarioBox {
                 t,
             ),
             choice_box: None,
-            canvas: SubScreen::new(ctx, rect, 0, ggraphics::Color::from_rgba_u32(0x00)),
+            canvas: SubScreen::new(ctx.context, rect, 0, ggraphics::Color::from_rgba_u32(0x00)),
         }
     }
 
-    pub fn new_choice(
-        ctx: &mut ggez::Context,
-        game_data: &GameData,
+    pub fn new_choice<'a>(
+        ctx: &mut SuzuContext<'a>,
         rect: numeric::Rect,
         choice_pattern: ChoicePatternData,
         font_info: FontInformation,
@@ -1061,7 +1060,7 @@ impl ScenarioBox {
     ) -> Self {
         let background = tobj::SimpleObject::new(
             tobj::MovableUniTexture::new(
-                game_data.ref_texture(TextureID::TextBackground),
+                ctx.resource.ref_texture(TextureID::TextBackground),
                 numeric::Point2f::new(20.0, 20.0),
                 numeric::Vector2f::new(0.8, 0.8),
                 0.0,
@@ -1074,7 +1073,6 @@ impl ScenarioBox {
         let mut scenario_box = ScenarioBox {
             text_box: TextBox::new(
                 ctx,
-                game_data,
                 numeric::Rect::new(0.0, 0.0, rect.w, rect.h),
                 background,
                 TileBatchTextureID::TaishoStyle1,
@@ -1084,10 +1082,9 @@ impl ScenarioBox {
             choice_box: Some(ChoiceBox::new(
                 ctx,
                 numeric::Rect::new(40.0, 100.0, 1200.0, 150.0),
-                game_data,
                 choice_pattern.text.clone(),
             )),
-            canvas: SubScreen::new(ctx, rect, 0, ggraphics::Color::from_rgba_u32(0x00)),
+            canvas: SubScreen::new(ctx.context, rect, 0, ggraphics::Color::from_rgba_u32(0x00)),
         };
         scenario_box.display_choice_box_text(font_info);
 
@@ -1192,36 +1189,34 @@ pub struct ScenarioEvent {
 }
 
 impl ScenarioEvent {
-    pub fn new(
-        ctx: &mut ggez::Context,
+    pub fn new<'a>(
+        ctx: &mut SuzuContext<'a>,
         rect: numeric::Rect,
         file_path: &str,
-        game_data: &GameData,
         t: Clock,
     ) -> Self {
-        let scenario = Scenario::new(file_path, game_data);
+        let scenario = Scenario::new(file_path, ctx.resource);
 
         let event_background = if let Some(mut texture) =
-            Self::update_event_background_sub(game_data, scenario.ref_current_element())
+            Self::update_event_background_sub(ctx.resource, scenario.ref_current_element())
         {
-            texture.fit_scale(ctx, numeric::Vector2f::new(rect.w, rect.h));
+            texture.fit_scale(ctx.context, numeric::Vector2f::new(rect.w, rect.h));
             Some(texture)
         } else {
             None
         };
 
         let event_tachie =
-            Self::update_event_tachie_sub(game_data, scenario.ref_current_element(), t);
+            Self::update_event_tachie_sub(ctx.resource, scenario.ref_current_element(), t);
 
         ScenarioEvent {
             scenario: scenario,
             scenario_box: ScenarioBox::new(
                 ctx,
-                game_data,
                 numeric::Rect::new(20.0, 310.0, rect.w - 40.0, 270.0),
                 t,
             ),
-            canvas: SubScreen::new(ctx, rect, 0, ggraphics::Color::from_rgba_u32(0x00)),
+            canvas: SubScreen::new(ctx.context, rect, 0, ggraphics::Color::from_rgba_u32(0x00)),
             status: ScenarioEventStatus::Scenario,
             scene_transition: None,
             background: event_background,
@@ -1230,7 +1225,7 @@ impl ScenarioEvent {
     }
 
     pub fn update_event_background_sub(
-        game_data: &GameData,
+        game_data: &GameResource,
         scenario_element: &ScenarioElement,
     ) -> Option<UniTexture> {
         // ScenarioEventの背景を設定
@@ -1249,7 +1244,7 @@ impl ScenarioEvent {
         }
     }
 
-    pub fn update_event_background(&mut self, ctx: &mut ggez::Context, game_data: &GameData) {
+    pub fn update_event_background(&mut self, ctx: &mut ggez::Context, game_data: &GameResource) {
         // 現在のScenarioElementに背景がある場合、背景を変更
         // そうでない場合は、何もしない
         if let Some(mut texture) =
@@ -1262,7 +1257,7 @@ impl ScenarioEvent {
     }
 
     pub fn update_event_tachie_sub(
-        game_data: &GameData,
+        game_data: &GameResource,
         scenario_element: &ScenarioElement,
         t: Clock,
     ) -> Option<ScenarioTachie> {
@@ -1275,7 +1270,7 @@ impl ScenarioEvent {
         }
     }
 
-    pub fn update_event_tachie(&mut self, game_data: &GameData, t: Clock) {
+    pub fn update_event_tachie(&mut self, game_data: &GameResource, t: Clock) {
         // 現在のScenarioElementに立ち絵がある場合、立ち絵データを取り込み
         // そうでない場合は、何もしない
         let scenario_tachie =
@@ -1288,7 +1283,7 @@ impl ScenarioEvent {
     ///
     /// 表示しているテキストや選択肢を更新するメソッド
     ///
-    pub fn update_text(&mut self, ctx: &mut ggez::Context, game_data: &GameData) {
+    pub fn update_text<'a>(&mut self, ctx: &mut SuzuContext<'a>) {
         match self.scenario.ref_current_element_mut() {
             ScenarioElement::Text(scenario_text) => {
                 if self.scenario_box.get_text_box_status() == TextBoxStatus::UpdatingText {
@@ -1308,14 +1303,13 @@ impl ScenarioEvent {
                     self.scenario_box.insert_choice_box(Some(ChoiceBox::new(
                         ctx,
                         numeric::Rect::new(40.0, 100.0, 1200.0, 150.0),
-                        game_data,
                         choice_pattern.text.clone(),
                     )));
 
                     // テキストボックスに選択肢の文字列を表示する
                     self.scenario_box
                         .display_choice_box_text(FontInformation::new(
-                            game_data.get_font(FontID::JpFude1),
+                            ctx.resource.get_font(FontID::JpFude1),
                             numeric::Vector2f::new(32.0, 32.0),
                             ggraphics::Color::from_rgba_u32(0x000000ff),
                         ));
@@ -1350,7 +1344,12 @@ impl ScenarioEvent {
     ///
     /// Action1キーが押されたときの、ScenarioEventの挙動
     ///
-    pub fn key_down_action1(&mut self, ctx: &mut ggez::Context, game_data: &GameData, _: Clock) {
+    pub fn key_down_action1(
+        &mut self,
+        ctx: &mut ggez::Context,
+        game_data: &GameResource,
+        _: Clock,
+    ) {
         match self.scenario.ref_current_element_mut() {
             // 現在のScenarioElementがテキスト
             ScenarioElement::Text(scenario_text) => {
@@ -1390,12 +1389,12 @@ impl ScenarioEvent {
     ///
     /// Rightキーが押されたときの、ScenarioEventの挙動
     ///
-    pub fn key_down_right(&mut self, _: &mut ggez::Context, game_data: &GameData) {
+    pub fn key_down_right<'a>(&mut self, ctx: &mut SuzuContext<'a>) {
         if let Some(choice) = self.scenario_box.choice_box.as_mut() {
             choice.move_right();
             self.scenario_box
                 .display_choice_box_text(FontInformation::new(
-                    game_data.get_font(FontID::JpFude1),
+                    ctx.resource.get_font(FontID::JpFude1),
                     numeric::Vector2f::new(32.0, 32.0),
                     ggraphics::Color::from_rgba_u32(0x000000ff),
                 ));
@@ -1405,12 +1404,12 @@ impl ScenarioEvent {
     ///
     /// Leftキーが押されたときの、ScenarioEventの挙動
     ///
-    pub fn key_down_left(&mut self, _: &mut ggez::Context, game_data: &GameData) {
+    pub fn key_down_left<'a>(&mut self, ctx: &mut SuzuContext<'a>) {
         if let Some(choice) = self.scenario_box.choice_box.as_mut() {
             choice.move_left();
             self.scenario_box
                 .display_choice_box_text(FontInformation::new(
-                    game_data.get_font(FontID::JpFude1),
+                    ctx.resource.get_font(FontID::JpFude1),
                     numeric::Vector2f::new(32.0, 32.0),
                     ggraphics::Color::from_rgba_u32(0x000000ff),
                 ));

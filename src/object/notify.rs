@@ -9,12 +9,11 @@ use torifune::graphics::object::sub_screen;
 use torifune::graphics::object::*;
 use torifune::numeric;
 
-use crate::core::{FontID, GameData, TextureID, TileBatchTextureID};
+use crate::core::{FontID, GameResource, SuzuContext, TextureID, TileBatchTextureID};
 use crate::flush_delay_event;
 use crate::object::effect;
 use crate::object::util_object::*;
 use crate::scene::*;
-
 
 #[derive(Clone, PartialEq)]
 pub enum NotificationType {
@@ -34,11 +33,15 @@ pub struct NotificationContentsData {
 }
 
 impl NotificationContentsData {
-    pub fn new(header_text: String, main_text: String, notification_type: NotificationType) -> Self {
+    pub fn new(
+        header_text: String,
+        main_text: String,
+        notification_type: NotificationType,
+    ) -> Self {
         NotificationContentsData {
             header_text: header_text,
             main_text: main_text,
-	    notification_type: notification_type,
+            notification_type: notification_type,
         }
     }
 }
@@ -52,14 +55,9 @@ pub struct GeneralNotificationContents {
 }
 
 impl GeneralNotificationContents {
-    pub fn new(
-        ctx: &mut ggez::Context,
-        game_data: &GameData,
-        data: NotificationContentsData,
-        depth: i8,
-    ) -> Self {
+    pub fn new(ctx: &mut SuzuContext, data: NotificationContentsData, depth: i8) -> Self {
         let font_info = FontInformation::new(
-            game_data.get_font(FontID::JpFude1),
+            ctx.resource.get_font(FontID::JpFude1),
             numeric::Vector2f::new(28.0, 28.0),
             ggraphics::Color::from_rgba_u32(0xff),
         );
@@ -83,13 +81,13 @@ impl GeneralNotificationContents {
         );
 
         let size = numeric::Vector2f::new(
-            header_text.get_drawing_size(ctx).x + 60.0,
-            main_text.get_drawing_size(ctx).y + 120.0,
+            header_text.get_drawing_size(ctx.context).x + 60.0,
+            main_text.get_drawing_size(ctx.context).y + 120.0,
         );
 
-        header_text.make_center(ctx, numeric::Point2f::new(size.x / 2.0, 40.0));
+        header_text.make_center(ctx.context, numeric::Point2f::new(size.x / 2.0, 40.0));
         main_text.make_center(
-            ctx,
+            ctx.context,
             numeric::Point2f::new(size.x / 2.0, (size.y / 2.0) + 10.0),
         );
 
@@ -97,7 +95,7 @@ impl GeneralNotificationContents {
             main_text: main_text,
             header_text: header_text,
             required_size: size,
-	    notification_type: data.notification_type,
+            notification_type: data.notification_type,
             drwob_essential: DrawableObjectEssential::new(true, depth),
         }
     }
@@ -138,9 +136,9 @@ impl NotificationContents for GeneralNotificationContents {
     fn required_size(&self) -> numeric::Vector2f {
         self.required_size
     }
-    
+
     fn get_notification_type(&self) -> NotificationType {
-	self.notification_type.clone()
+        self.notification_type.clone()
     }
 }
 
@@ -157,7 +155,7 @@ pub struct NotificationArea {
 }
 
 impl NotificationArea {
-    pub fn new(game_data: &GameData, right_top_position: numeric::Point2f, depth: i8) -> Self {
+    pub fn new(game_data: &GameResource, right_top_position: numeric::Point2f, depth: i8) -> Self {
         let texture = UniTexture::new(
             game_data.ref_texture(TextureID::Paper1),
             numeric::Point2f::new(0.0, 0.0),
@@ -172,17 +170,17 @@ impl NotificationArea {
             background: texture,
             event_list: DelayEventList::new(),
             right_top_position: right_top_position,
-	    queued_contents: VecDeque::new(),
+            queued_contents: VecDeque::new(),
             contents: None,
             area: None,
             drwob_essential: DrawableObjectEssential::new(true, depth),
         }
     }
 
-    fn new_appearance_frame(&mut self, ctx: &mut ggez::Context, game_data: &GameData) {
-        let size = self.area.as_ref().unwrap().get_drawing_size(ctx);
+    fn new_appearance_frame<'a>(&mut self, ctx: &mut SuzuContext<'a>) {
+        let size = self.area.as_ref().unwrap().get_drawing_size(ctx.context);
         self.appearance_frame = Some(TileBatchFrame::new(
-            game_data,
+            ctx.resource,
             TileBatchTextureID::TaishoStyle1,
             numeric::Rect::new(0.0, 0.0, size.x, size.y),
             numeric::Vector2f::new(0.5, 0.5),
@@ -190,49 +188,42 @@ impl NotificationArea {
         ));
     }
 
-    pub fn insert_new_contents(
+    pub fn insert_new_contents<'a>(
         &mut self,
-        ctx: &mut ggez::Context,
-        game_data: &GameData,
+        ctx: &mut SuzuContext<'a>,
         contents: Box<dyn NotificationContents>,
         t: Clock,
     ) {
-	if self.contents.is_none() {
-	    self.contents = Some(contents);
-	    self.update_area_canvas(ctx, t);
-            self.new_appearance_frame(ctx, game_data);
+        if self.contents.is_none() {
+            self.contents = Some(contents);
+            self.update_area_canvas(ctx.context, t);
+            self.new_appearance_frame(ctx);
             self.set_appear_animation(t);
-	} else {
-	    // 重複した内容は通知キューに入れない
-	    let newer_type = contents.get_notification_type();
-	    let current_type = self.contents.as_ref().unwrap().get_notification_type();
-	    
-	    if current_type != newer_type {
-		for contents in &self.queued_contents {
-		    if contents.get_notification_type() == contents.get_notification_type() {
-			return;
-		    }
-		}
-		
-		self.queued_contents.push_back(contents);
-	    }
-	}
+        } else {
+            // 重複した内容は通知キューに入れない
+            let newer_type = contents.get_notification_type();
+            let current_type = self.contents.as_ref().unwrap().get_notification_type();
+
+            if current_type != newer_type {
+                for contents in &self.queued_contents {
+                    if contents.get_notification_type() == contents.get_notification_type() {
+                        return;
+                    }
+                }
+
+                self.queued_contents.push_back(contents);
+            }
+        }
     }
 
-    pub fn insert_new_contents_generic(
+    pub fn insert_new_contents_generic<'a>(
         &mut self,
-        ctx: &mut ggez::Context,
-        game_data: &GameData,
+        ctx: &mut SuzuContext<'a>,
         generic_data: NotificationContentsData,
         t: Clock,
     ) {
-        let contents = Box::new(GeneralNotificationContents::new(
-            ctx,
-            game_data,
-            generic_data,
-            0,
-        ));
-        self.insert_new_contents(ctx, game_data, contents, t);
+        let contents = Box::new(GeneralNotificationContents::new(ctx, generic_data, 0));
+        self.insert_new_contents(ctx, contents, t);
     }
 
     fn set_hide_animation(&mut self, t: Clock) {
@@ -245,13 +236,13 @@ impl NotificationArea {
 
             let scheduled = t + self.default_animation_time;
             self.event_list.add_event(
-                Box::new(move |slf: &mut NotificationArea, ctx, game_data| {
+                Box::new(move |slf: &mut NotificationArea, ctx, t| {
                     slf.area = None;
                     slf.contents = None;
-		    let next = slf.queued_contents.pop_front();
-		    if let Some(next_contents) = next {
-			slf.insert_new_contents(ctx, game_data, next_contents, scheduled);
-		    }
+                    let next = slf.queued_contents.pop_front();
+                    if let Some(next_contents) = next {
+                        slf.insert_new_contents(ctx, next_contents, t);
+                    }
                 }),
                 scheduled,
             );
@@ -298,12 +289,12 @@ impl NotificationArea {
         ));
     }
 
-    pub fn update(&mut self, ctx: &mut ggez::Context, game_data: &GameData, t: Clock) {
-        flush_delay_event!(self, self.event_list, ctx, game_data, t);
+    pub fn update<'a>(&mut self, ctx: &mut SuzuContext<'a>, t: Clock) {
+        flush_delay_event!(self, self.event_list, ctx, t);
 
         if let Some(area) = self.area.as_mut() {
             area.move_with_func(t);
-            area.effect(ctx, t);
+            area.effect(ctx.context, t);
         }
     }
 }

@@ -10,7 +10,7 @@ use torifune::graphics::object::shape as tshape;
 use ggez::graphics as ggraphics;
 
 use super::*;
-use crate::core::{FontID, GameData, TextureID};
+use crate::core::{FontID, GameResource, TextureID};
 
 struct Counter<T> {
     count: T,
@@ -248,7 +248,7 @@ impl Choice {
         choice_text: Vec<&str>,
         textures: Vec<TextureID>,
         select_tid: TextureID,
-        game_data: &GameData,
+        game_data: &GameResource,
     ) -> Self {
         Choice {
             choice_text: choice_text
@@ -351,13 +351,13 @@ pub struct SimulationStatus {
 }
 
 impl SimulationStatus {
-    pub fn new(ctx: &mut ggez::Context, pos: numeric::Rect, game_data: &GameData) -> Self {
+    pub fn new<'a>(ctx: &mut SuzuContext<'a>, pos: numeric::Rect) -> Self {
         SimulationStatus {
             money_counter: DrawableCounter::<u32>::new(
                 25000 as u32,
                 numeric::Point2f::new(0.0, 0.0),
                 FontInformation::new(
-                    game_data.get_font(FontID::DEFAULT),
+                    ctx.resource.get_font(FontID::DEFAULT),
                     numeric::Vector2f::new(24.0, 24.0),
                     ggraphics::Color::from_rgba_u32(0xffffffff),
                 ),
@@ -378,11 +378,16 @@ impl SimulationStatus {
                 vec!["test1", "test2"],
                 vec![TextureID::LotusBlue, TextureID::LotusPink],
                 TextureID::LotusYellow,
-                game_data,
+                ctx.resource,
             ),
-            canvas: SubScreen::new(ctx, pos, 0, ggraphics::Color::from_rgba_u32(0xe6cde3ff)),
+            canvas: SubScreen::new(
+                ctx.context,
+                pos,
+                0,
+                ggraphics::Color::from_rgba_u32(0xe6cde3ff),
+            ),
             background: MovableUniTexture::new(
-                game_data.ref_texture(TextureID::WafuTexture2),
+                ctx.resource.ref_texture(TextureID::WafuTexture2),
                 numeric::Point2f::new(0.0, 0.0),
                 numeric::Vector2f::new(1.0, 1.0),
                 0.0,

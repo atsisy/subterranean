@@ -15,9 +15,7 @@ use torifune::impl_texture_object_for_wrapped;
 use torifune::numeric;
 use torifune::roundup2f;
 
-use crate::core::{
-    BookInformation, BookShelfInformation, FontID, GameData, TextureID, TileBatchTextureID, TaskResult,
-};
+use crate::core::*;
 use crate::object::move_fn;
 use crate::object::util_object::*;
 use crate::object::Clickable;
@@ -38,14 +36,14 @@ pub struct SelectBookWindowContents {
 
 impl SelectBookWindowContents {
     pub fn new(
-        game_data: &GameData,
+        game_data: &GameResource,
         font_info: FontInformation,
         window_rect: numeric::Rect,
     ) -> SelectBookWindowContents {
         let mut table_frame = TableFrame::new(
             game_data,
             numeric::Point2f::new(0.0, 0.0),
-	    TileBatchTextureID::OldStyleFrame,
+            TileBatchTextureID::OldStyleFrame,
             FrameData::new(vec![140.0, 400.0], vec![42.0; 128]),
             numeric::Vector2f::new(0.3, 0.3),
             0,
@@ -112,22 +110,22 @@ impl SelectBookWindowContents {
     }
 
     fn click_handler(&mut self, ctx: &mut ggez::Context, point: numeric::Point2f) {
-	let maybe_grid_position = self.table_frame.get_grid_position(ctx, point);
+        let maybe_grid_position = self.table_frame.get_grid_position(ctx, point);
         let grid_position = match maybe_grid_position {
             Some(it) => it,
             _ => return,
         };
-	
-	let index = self.table_frame.get_rows() - 1 - grid_position.x as usize;
-	let vtext = self.book_title_text.get_mut(index);
+
+        let index = self.table_frame.get_rows() - 1 - grid_position.x as usize;
+        let vtext = self.book_title_text.get_mut(index);
 
         let vtext = match vtext {
             Some(it) => it,
             _ => return,
-        };	
-	
-	// 既に選択されている場合は、削除
-	if self.selecting_book_index.contains(&index) {
+        };
+
+        // 既に選択されている場合は、削除
+        if self.selecting_book_index.contains(&index) {
             vtext.set_color(ggraphics::Color::from_rgba_u32(0x000000ff));
             self.selecting_book_index
                 .retain(|inner_index| *inner_index != index);
@@ -182,10 +180,9 @@ impl DrawableComponent for SelectBookWindowContents {
 }
 
 impl Scrollable for SelectBookWindowContents {
-    fn scroll(
+    fn scroll<'a>(
         &mut self,
-        _: &mut ggez::Context,
-        _: &GameData,
+        _: &mut SuzuContext<'a>,
         _: numeric::Point2f,
         offset: numeric::Vector2f,
     ) {
@@ -213,15 +210,14 @@ pub struct SelectBookWindow {
 }
 
 impl SelectBookWindow {
-    pub fn new(
-        ctx: &mut ggez::Context,
-        game_data: &GameData,
+    pub fn new<'a>(
+        ctx: &mut SuzuContext<'a>,
         window_rect: numeric::Rect,
         title: &str,
         book_info: Vec<BookInformation>,
     ) -> Self {
         let appr_frame = TileBatchFrame::new(
-            game_data,
+            ctx.resource,
             TileBatchTextureID::TaishoStyle1,
             numeric::Rect::new(6.0, 6.0, window_rect.w - 12.0, window_rect.h - 12.0),
             numeric::Vector2f::new(0.6, 0.6),
@@ -229,15 +225,15 @@ impl SelectBookWindow {
         );
 
         let font_info = FontInformation::new(
-            game_data.get_font(FontID::JpFude1),
+            ctx.resource.get_font(FontID::JpFude1),
             numeric::Vector2f::new(30.0, 30.0),
             ggraphics::Color::from_rgba_u32(0xff),
         );
 
         let mut desc_frame = TableFrame::new(
-            game_data,
+            ctx.resource,
             numeric::Point2f::new(0.0, 0.0),
-	    TileBatchTextureID::OldStyleFrame,
+            TileBatchTextureID::OldStyleFrame,
             FrameData::new(vec![140.0, 400.0], vec![42.0]),
             numeric::Vector2f::new(0.3, 0.3),
             0,
@@ -266,14 +262,24 @@ impl SelectBookWindow {
             font_info,
         );
 
-        set_table_frame_cell_center!(ctx, desc_frame, cell_desc1, numeric::Vector2u::new(0, 0));
-        set_table_frame_cell_center!(ctx, desc_frame, cell_desc2, numeric::Vector2u::new(0, 1));
+        set_table_frame_cell_center!(
+            ctx.context,
+            desc_frame,
+            cell_desc1,
+            numeric::Vector2u::new(0, 0)
+        );
+        set_table_frame_cell_center!(
+            ctx.context,
+            desc_frame,
+            cell_desc2,
+            numeric::Vector2u::new(0, 1)
+        );
 
-        let contents = SelectBookWindowContents::new(game_data, font_info, window_rect);
+        let contents = SelectBookWindowContents::new(ctx.resource, font_info, window_rect);
 
         let mut window = SelectBookWindow {
             canvas: SubScreen::new(
-                ctx,
+                ctx.context,
                 window_rect,
                 0,
                 ggraphics::Color::from_rgba_u32(0xeeeeeeff),
@@ -290,7 +296,7 @@ impl SelectBookWindow {
             desc_frame: desc_frame,
             cell_desc: vec![cell_desc1, cell_desc2],
             contents: ScrollableWindow::new(
-                ctx,
+                ctx.context,
                 numeric::Rect::new(36.0, 12.0, window_rect.w - 160.0, window_rect.h - 24.0),
                 contents,
                 0,
@@ -299,7 +305,7 @@ impl SelectBookWindow {
             ),
         };
 
-        window.update_contents(ctx, &book_info);
+        window.update_contents(ctx.context, &book_info);
 
         window
     }
@@ -325,17 +331,16 @@ impl SelectBookWindow {
         self.contents.ref_object_mut().selecting_book_index.clear();
     }
 
-    pub fn scroll_handler(
+    pub fn scroll_handler<'a>(
         &mut self,
-        ctx: &mut ggez::Context,
-        game_data: &GameData,
+        ctx: &mut SuzuContext<'a>,
         point: numeric::Point2f,
         x: f32,
         y: f32,
     ) {
         let rpoint = self.canvas.relative_point(point);
-        if self.contents.contains(ctx, rpoint) {
-            self.contents.scroll(ctx, game_data, rpoint, x, y);
+        if self.contents.contains(ctx.context, rpoint) {
+            self.contents.scroll(ctx, rpoint, x, y);
         }
     }
 }
@@ -393,17 +398,18 @@ impl TextureObject for SelectBookWindow {
 }
 
 impl Clickable for SelectBookWindow {
-    fn on_click(
+    fn on_click<'a>(
         &mut self,
-        ctx: &mut ggez::Context,
-        _: &GameData,
+        ctx: &mut SuzuContext<'a>,
         _: Clock,
         _button: ggez::input::mouse::MouseButton,
         point: numeric::Point2f,
     ) {
         let rpoint = self.canvas.relative_point(point);
-	let contents_rpoint = self.contents.relative_point(rpoint);
-	self.contents.ref_object_mut().click_handler(ctx, contents_rpoint);
+        let contents_rpoint = self.contents.relative_point(rpoint);
+        self.contents
+            .ref_object_mut()
+            .click_handler(ctx.context, contents_rpoint);
     }
 
     fn clickable_status(
@@ -426,9 +432,8 @@ pub struct SelectShelvingBookUI {
 }
 
 impl SelectShelvingBookUI {
-    pub fn new(
-        ctx: &mut ggez::Context,
-        game_data: &GameData,
+    pub fn new<'a>(
+        ctx: &mut SuzuContext<'a>,
         ui_rect: numeric::Rect,
         mut box_book_info: Vec<BookInformation>,
         mut shelving_book: Vec<BookInformation>,
@@ -437,17 +442,15 @@ impl SelectShelvingBookUI {
         shelving_book.sort_by(|a, b| a.billing_number.cmp(&b.billing_number));
 
         SelectShelvingBookUI {
-            canvas: SubScreen::new(ctx, ui_rect, 0, ggraphics::Color::from_rgba_u32(0)),
+            canvas: SubScreen::new(ctx.context, ui_rect, 0, ggraphics::Color::from_rgba_u32(0)),
             box_info_window: SelectBookWindow::new(
                 ctx,
-                game_data,
                 numeric::Rect::new(70.0, 50.0, 550.0, 650.0),
                 "返却済み",
                 box_book_info.clone(),
             ),
             shelving_window: SelectBookWindow::new(
                 ctx,
-                game_data,
                 numeric::Rect::new(770.0, 50.0, 550.0, 650.0),
                 "配架中",
                 shelving_book.clone(),
@@ -458,7 +461,7 @@ impl SelectShelvingBookUI {
                 ctx,
                 numeric::Rect::new(650.0, 200.0, 100.0, 50.0),
                 Box::new(UniTexture::new(
-                    game_data.ref_texture(TextureID::ArrowRight),
+                    ctx.resource.ref_texture(TextureID::ArrowRight),
                     numeric::Point2f::new(0.0, 0.0),
                     numeric::Vector2f::new(0.5, 0.5),
                     0.0,
@@ -469,7 +472,7 @@ impl SelectShelvingBookUI {
                 ctx,
                 numeric::Rect::new(650.0, 500.0, 100.0, 50.0),
                 Box::new(UniTexture::new(
-                    game_data.ref_texture(TextureID::ArrowLeft),
+                    ctx.resource.ref_texture(TextureID::ArrowLeft),
                     numeric::Point2f::new(0.0, 0.0),
                     numeric::Vector2f::new(0.5, 0.5),
                     0.0,
@@ -552,19 +555,16 @@ impl SelectShelvingBookUI {
         (self.boxed_books.clone(), self.shelving_books.clone())
     }
 
-    pub fn scroll_handler(
+    pub fn scroll_handler<'a>(
         &mut self,
-        ctx: &mut ggez::Context,
-        game_data: &GameData,
+        ctx: &mut SuzuContext<'a>,
         point: numeric::Point2f,
         x: f32,
         y: f32,
     ) {
         let rpoint = self.canvas.relative_point(point);
-        self.box_info_window
-            .scroll_handler(ctx, game_data, rpoint, x, y);
-        self.shelving_window
-            .scroll_handler(ctx, game_data, rpoint, x, y);
+        self.box_info_window.scroll_handler(ctx, rpoint, x, y);
+        self.shelving_window.scroll_handler(ctx, rpoint, x, y);
     }
 }
 
@@ -616,10 +616,9 @@ impl TextureObject for SelectShelvingBookUI {
 }
 
 impl Clickable for SelectShelvingBookUI {
-    fn on_click(
+    fn on_click<'a>(
         &mut self,
-        ctx: &mut ggez::Context,
-        game_data: &GameData,
+        ctx: &mut SuzuContext<'a>,
         clock: Clock,
         button: ggez::input::mouse::MouseButton,
         point: numeric::Point2f,
@@ -628,22 +627,26 @@ impl Clickable for SelectShelvingBookUI {
 
         let rpoint = self.canvas.relative_point(point);
 
-        if self.box_info_window.contains(ctx, rpoint) {
-            self.box_info_window
-                .on_click(ctx, game_data, clock, button, rpoint);
+        if self.box_info_window.contains(ctx.context, rpoint) {
+            self.box_info_window.on_click(ctx, clock, button, rpoint);
         }
 
-        if self.shelving_window.contains(ctx, rpoint) {
-            self.shelving_window
-                .on_click(ctx, game_data, clock, button, rpoint);
+        if self.shelving_window.contains(ctx.context, rpoint) {
+            self.shelving_window.on_click(ctx, clock, button, rpoint);
         }
 
-        if self.move_box_to_shelving_button.contains(ctx, point) {
-            self.move_box_to_shelving(ctx);
+        if self
+            .move_box_to_shelving_button
+            .contains(ctx.context, point)
+        {
+            self.move_box_to_shelving(ctx.context);
         }
 
-        if self.move_shelving_to_box_button.contains(ctx, rpoint) {
-            self.move_shelving_to_box(ctx);
+        if self
+            .move_shelving_to_box_button
+            .contains(ctx.context, rpoint)
+        {
+            self.move_shelving_to_box(ctx.context);
         }
     }
 
@@ -671,18 +674,17 @@ pub struct SelectStoringBookWindow {
 }
 
 impl SelectStoringBookWindow {
-    pub fn new(
-        ctx: &mut ggez::Context,
-        game_data: &GameData,
+    pub fn new<'a>(
+        ctx: &mut SuzuContext<'a>,
         window_rect: numeric::Rect,
         title: &str,
         book_shelf_info: &BookShelfInformation,
         book_info: Vec<BookInformation>,
     ) -> Self {
         let mut table_frame = TableFrame::new(
-            game_data,
+            ctx.resource,
             numeric::Point2f::new(0.0, 0.0),
-	    TileBatchTextureID::OldStyleFrame,
+            TileBatchTextureID::OldStyleFrame,
             FrameData::new(vec![107.0, 107.0, 370.0], vec![50.0; 6]),
             numeric::Vector2f::new(0.3, 0.3),
             0,
@@ -694,7 +696,7 @@ impl SelectStoringBookWindow {
         ));
 
         let appr_frame = TileBatchFrame::new(
-            game_data,
+            ctx.resource,
             TileBatchTextureID::TaishoStyle1,
             numeric::Rect::new(6.0, 6.0, window_rect.w - 12.0, window_rect.h - 12.0),
             numeric::Vector2f::new(0.6, 0.6),
@@ -702,13 +704,13 @@ impl SelectStoringBookWindow {
         );
 
         let normal_font_info = FontInformation::new(
-            game_data.get_font(FontID::JpFude1),
+            ctx.resource.get_font(FontID::JpFude1),
             numeric::Vector2f::new(28.0, 28.0),
             ggraphics::Color::from_rgba_u32(0xff),
         );
 
         let header_font_info = FontInformation::new(
-            game_data.get_font(FontID::JpFude1),
+            ctx.resource.get_font(FontID::JpFude1),
             numeric::Vector2f::new(35.0, 35.0),
             ggraphics::Color::from_rgba_u32(0xff),
         );
@@ -743,21 +745,21 @@ impl SelectStoringBookWindow {
         let table_pos_x = (table_frame.get_rows() - 1) as u32;
 
         set_table_frame_cell_center!(
-            ctx,
+            ctx.context,
             table_frame,
             storable_desc_text,
             numeric::Vector2u::new(table_pos_x, 0)
         );
 
         set_table_frame_cell_center!(
-            ctx,
+            ctx.context,
             table_frame,
             number_desc_text,
             numeric::Vector2u::new(table_pos_x, 1)
         );
 
         set_table_frame_cell_center!(
-            ctx,
+            ctx.context,
             table_frame,
             title_desc_text,
             numeric::Vector2u::new(table_pos_x, 2)
@@ -765,7 +767,7 @@ impl SelectStoringBookWindow {
 
         let mut window = SelectStoringBookWindow {
             canvas: SubScreen::new(
-                ctx,
+                ctx.context,
                 window_rect,
                 0,
                 ggraphics::Color::from_rgba_u32(0xeeeeeeff),
@@ -789,7 +791,7 @@ impl SelectStoringBookWindow {
             book_font: normal_font_info,
         };
 
-        window.update_contents(ctx, book_shelf_info, &book_info);
+        window.update_contents(ctx.context, book_shelf_info, &book_info);
 
         window
     }
@@ -957,10 +959,9 @@ impl TextureObject for SelectStoringBookWindow {
 }
 
 impl Clickable for SelectStoringBookWindow {
-    fn on_click(
+    fn on_click<'a>(
         &mut self,
-        ctx: &mut ggez::Context,
-        _: &GameData,
+        ctx: &mut SuzuContext<'a>,
         _: Clock,
         _button: ggez::input::mouse::MouseButton,
         point: numeric::Point2f,
@@ -971,7 +972,7 @@ impl Clickable for SelectStoringBookWindow {
         for (index, vtext) in self.book_title_text.iter_mut().enumerate() {
             if *self.book_storable.get(index).unwrap() {
                 // 本情報をクリックしたか？
-                if vtext.contains(ctx, rpoint) {
+                if vtext.contains(ctx.context, rpoint) {
                     // 既に選択されている場合は、削除
                     if self.selecting_book_index.contains(&index) {
                         vtext.set_color(ggraphics::Color::from_rgba_u32(0x000000ff));
@@ -1014,9 +1015,8 @@ pub struct SelectStoreBookUI {
 }
 
 impl SelectStoreBookUI {
-    pub fn new(
-        ctx: &mut ggez::Context,
-        game_data: &GameData,
+    pub fn new<'a>(
+        ctx: &mut SuzuContext,
         ui_rect: numeric::Rect,
         book_shelf_info: BookShelfInformation,
         mut shelving_book: Vec<BookInformation>,
@@ -1024,10 +1024,9 @@ impl SelectStoreBookUI {
         shelving_book.sort_by(|a, b| a.billing_number.cmp(&b.billing_number));
 
         SelectStoreBookUI {
-            canvas: SubScreen::new(ctx, ui_rect, 0, ggraphics::Color::from_rgba_u32(0)),
+            canvas: SubScreen::new(ctx.context, ui_rect, 0, ggraphics::Color::from_rgba_u32(0)),
             select_book_window: SelectStoringBookWindow::new(
                 ctx,
-                game_data,
                 numeric::Rect::new(70.0, 50.0, 850.0, 690.0),
                 "配架中",
                 &book_shelf_info,
@@ -1039,7 +1038,7 @@ impl SelectStoreBookUI {
                 ctx,
                 numeric::Rect::new(1000.0, 200.0, 100.0, 50.0),
                 Box::new(UniTexture::new(
-                    game_data.ref_texture(TextureID::StoreButton),
+                    ctx.resource.ref_texture(TextureID::StoreButton),
                     numeric::Point2f::new(0.0, 0.0),
                     numeric::Vector2f::new(0.5, 0.5),
                     0.0,
@@ -1050,7 +1049,7 @@ impl SelectStoreBookUI {
                 ctx,
                 numeric::Rect::new(1000.0, 500.0, 100.0, 50.0),
                 Box::new(UniTexture::new(
-                    game_data.ref_texture(TextureID::ResetButton),
+                    ctx.resource.ref_texture(TextureID::ResetButton),
                     numeric::Point2f::new(0.0, 0.0),
                     numeric::Vector2f::new(0.5, 0.5),
                     0.0,
@@ -1139,27 +1138,25 @@ impl TextureObject for SelectStoreBookUI {
 }
 
 impl Clickable for SelectStoreBookUI {
-    fn on_click(
+    fn on_click<'a>(
         &mut self,
-        ctx: &mut ggez::Context,
-        game_data: &GameData,
+        ctx: &mut SuzuContext<'a>,
         clock: Clock,
         button: ggez::input::mouse::MouseButton,
         point: numeric::Point2f,
     ) {
         let rpoint = self.canvas.relative_point(point);
 
-        if self.select_book_window.contains(ctx, rpoint) {
-            self.select_book_window
-                .on_click(ctx, game_data, clock, button, rpoint);
+        if self.select_book_window.contains(ctx.context, rpoint) {
+            self.select_book_window.on_click(ctx, clock, button, rpoint);
         }
 
-        if self.reset_select_button.contains(ctx, rpoint) {
+        if self.reset_select_button.contains(ctx.context, rpoint) {
             self.select_book_window.clear_selecting_index();
         }
 
-        if self.store_button.contains(ctx, rpoint) {
-            self.store_shelving_books(ctx);
+        if self.store_button.contains(ctx.context, rpoint) {
+            self.store_shelving_books(ctx.context);
         }
     }
 
@@ -1187,12 +1184,7 @@ pub struct ShelvingDetailContents {
 }
 
 impl ShelvingDetailContents {
-    pub fn new(
-        ctx: &mut ggez::Context,
-        game_data: &GameData,
-        menu_rect: numeric::Rect,
-        t: Clock,
-    ) -> Self {
+    pub fn new<'a>(ctx: &mut SuzuContext<'a>, menu_rect: numeric::Rect, t: Clock) -> Self {
         let title = VerticalText::new(
             "配架中".to_string(),
             numeric::Point2f::new(menu_rect.w - 110.0, 70.0),
@@ -1200,23 +1192,23 @@ impl ShelvingDetailContents {
             0.0,
             0,
             FontInformation::new(
-                game_data.get_font(FontID::JpFude1),
+                ctx.resource.get_font(FontID::JpFude1),
                 numeric::Vector2f::new(40.0, 40.0),
                 ggraphics::Color::from_rgba_u32(0xff),
             ),
         );
 
         let frame = TableFrame::new(
-            game_data,
+            ctx.resource,
             numeric::Point2f::new(25.0, 60.0),
-	    TileBatchTextureID::OldStyleFrame,
+            TileBatchTextureID::OldStyleFrame,
             FrameData::new(vec![160.0, 420.0], vec![44.0; 6]),
             numeric::Vector2f::new(0.3, 0.3),
             0,
         );
 
         let font_info = FontInformation::new(
-            game_data.get_font(FontID::JpFude1),
+            ctx.resource.get_font(FontID::JpFude1),
             numeric::Vector2f::new(30.0, 30.0),
             ggraphics::Color::from_rgba_u32(0xff),
         );
@@ -1239,11 +1231,11 @@ impl ShelvingDetailContents {
             font_info,
         );
 
-        set_table_frame_cell_center!(ctx, frame, cell_desc1, numeric::Vector2u::new(5, 0));
-        set_table_frame_cell_center!(ctx, frame, cell_desc2, numeric::Vector2u::new(5, 1));
+        set_table_frame_cell_center!(ctx.context, frame, cell_desc1, numeric::Vector2u::new(5, 0));
+        set_table_frame_cell_center!(ctx.context, frame, cell_desc2, numeric::Vector2u::new(5, 1));
 
         let background = UniTexture::new(
-            game_data.ref_texture(TextureID::MenuArt2),
+            ctx.resource.ref_texture(TextureID::MenuArt2),
             numeric::Point2f::new(menu_rect.w - 1366.0, 0.0),
             numeric::Vector2f::new(1.0, 1.0),
             0.0,
@@ -1253,7 +1245,7 @@ impl ShelvingDetailContents {
         ShelvingDetailContents {
             canvas: MovableWrap::new(
                 Box::new(SubScreen::new(
-                    ctx,
+                    ctx.context,
                     menu_rect,
                     0,
                     ggraphics::Color::from_rgba_u32(0xffffffff),
@@ -1271,16 +1263,15 @@ impl ShelvingDetailContents {
         }
     }
 
-    pub fn update_contents(
+    pub fn update_contents<'a>(
         &mut self,
-        ctx: &mut ggez::Context,
-        game_data: &GameData,
+        ctx: &mut SuzuContext<'a>,
         player_shelving: &Vec<BookInformation>,
     ) {
         self.book_title_text.clear();
 
         let book_font_information = FontInformation::new(
-            game_data.get_font(FontID::JpFude1),
+            ctx.resource.get_font(FontID::JpFude1),
             numeric::Vector2f::new(30.0, 30.0),
             ggraphics::Color::from_rgba_u32(0xff),
         );
@@ -1310,13 +1301,13 @@ impl ShelvingDetailContents {
                 let table_pos_x = (self.book_info_frame.get_rows() - 2 - index) as u32;
 
                 set_table_frame_cell_center!(
-                    ctx,
+                    ctx.context,
                     self.book_info_frame,
                     billing_number_text,
                     numeric::Vector2u::new(table_pos_x, 0)
                 );
                 set_table_frame_cell_center!(
-                    ctx,
+                    ctx.context,
                     self.book_info_frame,
                     book_title_text,
                     numeric::Vector2u::new(table_pos_x, 1)
@@ -1424,7 +1415,7 @@ pub struct ShopMenuContents {
 }
 
 impl ShopMenuContents {
-    pub fn new(game_data: &GameData) -> Self {
+    pub fn new(game_data: &GameResource) -> Self {
         let normal_scale_font = FontInformation::new(
             game_data.get_font(FontID::JpFude1),
             numeric::Vector2f::new(30.0, 30.0),
@@ -1514,7 +1505,7 @@ impl ShopMenuContents {
         }
     }
 
-    pub fn update_contents(&mut self, game_data: &GameData, task_result: &TaskResult) {
+    pub fn update_contents(&mut self, game_data: &GameResource, task_result: &TaskResult) {
         let _normal_scale_font = FontInformation::new(
             game_data.get_font(FontID::JpFude1),
             numeric::Vector2f::new(26.0, 26.0),
@@ -1639,16 +1630,11 @@ pub struct ShopMenu {
 }
 
 impl ShopMenu {
-    pub fn new(
-        ctx: &mut ggez::Context,
-        game_data: &GameData,
-        size: numeric::Vector2f,
-        t: Clock,
-    ) -> Self {
+    pub fn new<'a>(ctx: &mut SuzuContext<'a>, size: numeric::Vector2f, t: Clock) -> Self {
         ShopMenu {
             canvas: MovableWrap::new(
                 Box::new(SubScreen::new(
-                    ctx,
+                    ctx.context,
                     numeric::Rect::new(-size.x, 0.0, size.x, size.y),
                     0,
                     ggraphics::Color::from_rgba_u32(0xffffffff),
@@ -1657,13 +1643,13 @@ impl ShopMenu {
                 t,
             ),
             background: UniTexture::new(
-                game_data.ref_texture(TextureID::MenuArt1),
+                ctx.resource.ref_texture(TextureID::MenuArt1),
                 numeric::Point2f::new(size.x - 1366.0, 0.0),
                 numeric::Vector2f::new(1.0, 1.0),
                 0.0,
                 0,
             ),
-            menu_contents: ShopMenuContents::new(game_data),
+            menu_contents: ShopMenuContents::new(ctx.resource),
             menu_canvas_size: size,
             now_appear: false,
         }
@@ -1689,7 +1675,7 @@ impl ShopMenu {
         self.now_appear
     }
 
-    pub fn update_menu_contents(&mut self, game_data: &GameData, task_result: &TaskResult) {
+    pub fn update_menu_contents(&mut self, game_data: &GameResource, task_result: &TaskResult) {
         self.menu_contents.update_contents(game_data, task_result);
     }
 }
@@ -1748,15 +1734,14 @@ pub struct ShopDetailMenuContents {
 }
 
 impl ShopDetailMenuContents {
-    pub fn new(
-        ctx: &mut ggez::Context,
-        game_data: &GameData,
+    pub fn new<'a>(
+        ctx: &mut SuzuContext<'a>,
         appear_position: numeric::Point2f,
         shelving_rect: numeric::Rect,
         t: Clock,
     ) -> Self {
         ShopDetailMenuContents {
-            shelving_info: ShelvingDetailContents::new(ctx, game_data, shelving_rect, t),
+            shelving_info: ShelvingDetailContents::new(ctx, shelving_rect, t),
             drwob_essential: DrawableObjectEssential::new(true, 0),
             contents_switch: ShopDetailMenuSymbol::None,
             appear_position: appear_position,
@@ -1764,14 +1749,12 @@ impl ShopDetailMenuContents {
         }
     }
 
-    pub fn update_contents(
+    pub fn update_contents<'a>(
         &mut self,
-        ctx: &mut ggez::Context,
-        game_data: &GameData,
+        ctx: &mut SuzuContext<'a>,
         player_shelving: &Vec<BookInformation>,
     ) {
-        self.shelving_info
-            .update_contents(ctx, game_data, player_shelving);
+        self.shelving_info.update_contents(ctx, player_shelving);
     }
 
     pub fn detail_menu_is_open(&self) -> bool {
@@ -1857,23 +1840,21 @@ pub struct ShopMenuMaster {
 }
 
 impl ShopMenuMaster {
-    pub fn new(
-        ctx: &mut ggez::Context,
-        game_data: &GameData,
+    pub fn new<'a>(
+        ctx: &mut SuzuContext<'a>,
         first_menu_size: numeric::Vector2f,
         t: Clock,
     ) -> Self {
         ShopMenuMaster {
-            first_menu: ShopMenu::new(ctx, game_data, first_menu_size, t),
+            first_menu: ShopMenu::new(ctx, first_menu_size, t),
             detail_menu: ShopDetailMenuContents::new(
                 ctx,
-                game_data,
                 numeric::Point2f::new(first_menu_size.x, 0.0),
                 numeric::Rect::new(-450.0, 0.0, 450.0, 768.0),
                 t,
             ),
             canvas: SubScreen::new(
-                ctx,
+                ctx.context,
                 numeric::Rect::new(0.0, 0.0, 1366.0, 768.0),
                 0,
                 ggraphics::Color::from_rgba_u32(0),
@@ -1883,14 +1864,13 @@ impl ShopMenuMaster {
 
     pub fn update_contents(
         &mut self,
-        ctx: &mut ggez::Context,
-        game_data: &GameData,
+        ctx: &mut SuzuContext,
         task_result: &TaskResult,
         player_shelving: &Vec<BookInformation>,
     ) {
-        self.first_menu.update_menu_contents(game_data, task_result);
-        self.detail_menu
-            .update_contents(ctx, game_data, player_shelving);
+        self.first_menu
+            .update_menu_contents(ctx.resource, task_result);
+        self.detail_menu.update_contents(ctx, player_shelving);
     }
 
     pub fn toggle_first_menu(&mut self, t: Clock) {
@@ -1904,13 +1884,7 @@ impl ShopMenuMaster {
         self.first_menu.appearing_now()
     }
 
-    pub fn menu_key_action(
-        &mut self,
-        _: &mut ggez::Context,
-        _: &GameData,
-        vkey: VirtualKey,
-        t: Clock,
-    ) {
+    pub fn menu_key_action(&mut self, vkey: VirtualKey, t: Clock) {
         match vkey {
             VirtualKey::Action3 => {
                 if self.first_menu_is_open() {
@@ -1985,10 +1959,9 @@ impl ShopSpecialObject {
         }
     }
 
-    pub fn show_shelving_select_ui(
+    pub fn show_shelving_select_ui<'a>(
         &mut self,
-        ctx: &mut ggez::Context,
-        game_data: &GameData,
+        ctx: &mut SuzuContext<'a>,
         task_result: &TaskResult,
         player_shelving_books: Vec<BookInformation>,
         t: Clock,
@@ -1997,7 +1970,6 @@ impl ShopSpecialObject {
             self.shelving_select_ui = Some(MovableWrap::new(
                 Box::new(SelectShelvingBookUI::new(
                     ctx,
-                    game_data,
                     numeric::Rect::new(0.0, -768.0, 1366.0, 768.0),
                     task_result.not_shelved_books.clone(),
                     player_shelving_books,
@@ -2010,8 +1982,7 @@ impl ShopSpecialObject {
 
     pub fn show_storing_select_ui(
         &mut self,
-        ctx: &mut ggez::Context,
-        game_data: &GameData,
+        ctx: &mut SuzuContext,
         book_shelf_info: BookShelfInformation,
         player_shelving_books: Vec<BookInformation>,
         t: Clock,
@@ -2020,7 +1991,6 @@ impl ShopSpecialObject {
             self.storing_select_ui = Some(MovableWrap::new(
                 Box::new(SelectStoreBookUI::new(
                     ctx,
-                    game_data,
                     numeric::Rect::new(0.0, -768.0, 1366.0, 768.0),
                     book_shelf_info,
                     player_shelving_books,
@@ -2079,47 +2049,31 @@ impl ShopSpecialObject {
         self.shelving_select_ui.is_some() || self.storing_select_ui.is_some()
     }
 
-    pub fn mouse_down_action(
+    pub fn mouse_down_action<'a>(
         &mut self,
-        ctx: &mut ggez::Context,
-        game_data: &GameData,
+        ctx: &mut SuzuContext<'a>,
         button: MouseButton,
         point: numeric::Point2f,
         t: Clock,
     ) {
         if let Some(ui) = self.shelving_select_ui.as_mut() {
-            ui.on_click(ctx, game_data, t, button, point);
+            ui.on_click(ctx, t, button, point);
         }
 
         if let Some(ui) = self.storing_select_ui.as_mut() {
-            ui.on_click(ctx, game_data, t, button, point);
+            ui.on_click(ctx, t, button, point);
         }
     }
 
-    pub fn mouse_wheel_scroll_action(
+    pub fn mouse_wheel_scroll_action<'a>(
         &mut self,
-        ctx: &mut ggez::Context,
-        game_data: &GameData,
+        ctx: &mut SuzuContext<'a>,
         point: numeric::Point2f,
         x: f32,
         y: f32,
     ) {
         if let Some(ui) = self.shelving_select_ui.as_mut() {
-            ui.scroll_handler(ctx, game_data, point, x, y);
-        }
-    }
-
-    pub fn run_delay_event(&mut self, ctx: &mut ggez::Context, game_data: &GameData, t: Clock) {
-        // 最後の要素の所有権を移動
-        while let Some(event) = self.event_list.move_top() {
-            // 時間が来ていない場合は、取り出した要素をリストに戻して処理ループを抜ける
-            if event.run_time > t {
-                self.event_list.add(event);
-                break;
-            }
-
-            // 所有権を移動しているため、selfを渡してもエラーにならない
-            (event.func)(self, ctx, game_data);
+            ui.scroll_handler(ctx, point, x, y);
         }
     }
 }

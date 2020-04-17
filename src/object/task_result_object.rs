@@ -10,7 +10,7 @@ use torifune::impl_drawable_object_for_wrapped;
 use torifune::impl_texture_object_for_wrapped;
 use torifune::numeric;
 
-use crate::core::{FontID, GameData, GensoDate, TaskResult};
+use crate::core::{FontID, GensoDate, SuzuContext, TaskResult};
 use crate::object::effect;
 
 use number_to_jk::number_to_jk;
@@ -24,17 +24,16 @@ pub struct DrawableTaskResult {
 }
 
 impl DrawableTaskResult {
-    pub fn new(
-        ctx: &mut ggez::Context,
-        game_data: &GameData,
+    pub fn new<'a>(
+        ctx: &mut SuzuContext<'a>,
         rect_pos: numeric::Rect,
         task_result: TaskResult,
         background: SimpleObject,
-	date: GensoDate,
+        date: GensoDate,
         t: Clock,
     ) -> Self {
         let font_info = FontInformation::new(
-            game_data.get_font(FontID::JpFude1),
+            ctx.resource.get_font(FontID::JpFude1),
             numeric::Vector2f::new(30.0, 30.0),
             ggraphics::Color::from_rgba_u32(0x000000ff),
         );
@@ -96,7 +95,7 @@ impl DrawableTaskResult {
             done_work_text: done_work_text,
             money_text: money_text,
             background: background,
-            canvas: SubScreen::new(ctx, rect_pos, 0, ggraphics::Color::from_rgba_u32(0)),
+            canvas: SubScreen::new(ctx.context, rect_pos, 0, ggraphics::Color::from_rgba_u32(0)),
         }
     }
 }

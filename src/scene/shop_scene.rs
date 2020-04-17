@@ -18,7 +18,9 @@ use torifune::numeric;
 
 use super::*;
 use crate::core::map_parser as mp;
-use crate::core::{FontID, GameData, GensoDate, TileBatchTextureID, TaskResult, GameStatus};
+use crate::core::{
+    FontID, GameResource, GensoDate, SavableData, SuzuContext, TaskResult, TileBatchTextureID,
+};
 use crate::flush_delay_event;
 use crate::object::effect_object;
 use crate::object::map_object::*;
@@ -27,7 +29,7 @@ use crate::object::scenario::*;
 use crate::object::shop_object::*;
 use crate::object::task_object::tt_main_component::CustomerRequest;
 use crate::object::*;
-use effect_object::{TilingEffectType, SceneTransitionEffectType};
+use effect_object::{SceneTransitionEffectType, TilingEffectType};
 use notify::*;
 
 struct CharacterGroup {
@@ -161,17 +163,16 @@ struct MapData {
 }
 
 impl MapData {
-    pub fn new(
-        ctx: &mut ggez::Context,
-        game_data: &GameData,
+    pub fn new<'a>(
+        ctx: &mut SuzuContext<'a>,
         map_id: u32,
         camera: Rc<RefCell<numeric::Rect>>,
     ) -> Self {
-        let map_constract_data = game_data.get_map_data(map_id).unwrap();
+        let map_constract_data = ctx.resource.get_map_data(map_id).unwrap();
 
         MapData {
             tile_map: mp::StageObjectMap::new(
-                ctx,
+                ctx.context,
                 &map_constract_data.map_file_path,
                 camera.clone(),
                 numeric::Rect::new(0.0, 0.0, 1366.0, 768.0),
@@ -309,7 +310,7 @@ pub struct ShopScene {
     key_listener: tdev::KeyboardListener,
     clock: Clock,
     shop_clock: ShopClock,
-    game_status: GameStatus,
+    game_status: SavableData,
     map: MapData,
     event_list: DelayEventList<Self>,
     shop_menu: ShopMenuMaster,
@@ -324,12 +325,7 @@ pub struct ShopScene {
 }
 
 impl ShopScene {
-    pub fn new(
-        ctx: &mut ggez::Context,
-        game_data: &GameData,
-        map_id: u32,
-	game_status: GameStatus,
-    ) -> ShopScene {
+    pub fn new<'a>(ctx: &mut SuzuContext<'a>, map_id: u32, game_status: SavableData) -> ShopScene {
         let key_listener =
             tdev::KeyboardListener::new_masked(vec![tdev::KeyInputDevice::GenericKeyboard], vec![]);
 
@@ -339,17 +335,17 @@ impl ShopScene {
 
         let player = PlayableCharacter::new(character_factory::create_character(
             character_factory::CharacterFactoryOrder::PlayableDoremy1,
-            game_data,
+            ctx.resource,
             &camera.borrow(),
             map_position,
         ));
 
         let mut character_group = CharacterGroup::new();
         character_group.add(CustomerCharacter::new(
-            game_data,
+            ctx.resource,
             character_factory::create_character(
                 character_factory::CharacterFactoryOrder::CustomerSample,
-                game_data,
+                ctx.resource,
                 &camera.borrow(),
                 numeric::Point2f::new(1170.0, 870.0),
             ),
@@ -360,7 +356,7 @@ impl ShopScene {
             ]),
         ));
 
-        let mut map = MapData::new(ctx, game_data, map_id, camera.clone());
+        let mut map = MapData::new(ctx, map_id, camera.clone());
         map.tile_map.build_collision_map();
 
         ShopScene {
@@ -372,21 +368,21 @@ impl ShopScene {
             shop_clock: ShopClock::new(8, 0),
             map: map,
             event_list: DelayEventList::new(),
-            shop_menu: ShopMenuMaster::new(ctx, game_data, numeric::Vector2f::new(450.0, 768.0), 0),
+            shop_menu: ShopMenuMaster::new(ctx, numeric::Vector2f::new(450.0, 768.0), 0),
             customer_request_queue: VecDeque::new(),
             customer_queue: VecDeque::new(),
             dark_effect_panel: DarkEffectPanel::new(
-                ctx,
+                ctx.context,
                 numeric::Rect::new(0.0, 0.0, 1366.0, 768.0),
                 0,
             ),
-	    game_status: game_status,
+            game_status: game_status,
             camera: camera,
             transition_scene: SceneID::SuzunaShop,
             transition_status: SceneTransition::Keep,
             scene_transition_effect: None,
             notification_area: NotificationArea::new(
-                game_data,
+                ctx.resource,
                 numeric::Point2f::new((crate::core::WINDOW_SIZE_X - 20) as f32, 20.0),
                 0,
             ),
@@ -763,10 +759,9 @@ impl ShopScene {
         self.move_playable_character_y(ctx, t);
     }
 
-    pub fn run_builtin_event(
+    pub fn run_builtin_event<'a>(
         &mut self,
-        ctx: &mut ggez::Context,
-        game_data: &GameData,
+        ctx: &mut SuzuContext<'a>,
         builtin_event: BuiltinEvent,
     ) {
         match builtin_event.get_event_symbol() {
@@ -775,7 +770,6 @@ impl ShopScene {
                     .new_effect(8, self.get_current_clock(), 0, 200);
                 self.shop_special_object.show_shelving_select_ui(
                     ctx,
-                    game_data,
                     &self.game_status.task_result,
                     self.player.get_shelving_book().clone(),
                     self.get_current_clock(),
@@ -784,10 +778,9 @@ impl ShopScene {
         }
     }
 
-    fn scene_transition_close_effect(&mut self, ctx: &mut ggez::Context, game_data: &GameData, t: Clock) {
-	self.scene_transition_effect = Some(effect_object::ScreenTileEffect::new(
+    fn scene_transition_close_effect<'a>(&mut self, ctx: &mut SuzuContext<'a>, t: Clock) {
+        self.scene_transition_effect = Some(effect_object::ScreenTileEffect::new(
             ctx,
-            game_data,
             TileBatchTextureID::Shoji,
             numeric::Rect::new(
                 0.0,
@@ -797,22 +790,17 @@ impl ShopScene {
             ),
             60,
             SceneTransitionEffectType::Close,
-	    TilingEffectType::WholeTile,
+            TilingEffectType::WholeTile,
             -128,
             t,
         ));
     }
-    
-    fn check_event_panel_onmap(
-        &mut self,
-        ctx: &mut ggez::Context,
-        game_data: &GameData,
-        trigger: EventTrigger,
-    ) {
+
+    fn check_event_panel_onmap<'a>(&mut self, ctx: &mut SuzuContext<'a>, trigger: EventTrigger) {
         let t = self.get_current_clock();
         let target_event = self.map.check_event_panel(
             trigger,
-            self.player.get_center_map_position(ctx),
+            self.player.get_center_map_position(ctx.context),
             self.get_current_clock(),
         );
 
@@ -821,16 +809,12 @@ impl ShopScene {
                 MapEventElement::TextEvent(text) => {
                     println!("{}", text.get_text());
 
-                    let mut scenario_box = ScenarioBox::new(
-                        ctx,
-                        game_data,
-                        numeric::Rect::new(33.0, 470.0, 1300.0, 270.0),
-                        t,
-                    );
+                    let mut scenario_box =
+                        ScenarioBox::new(ctx, numeric::Rect::new(33.0, 470.0, 1300.0, 270.0), t);
                     scenario_box.text_box.set_fixed_text(
                         text.get_text(),
                         FontInformation::new(
-                            game_data.get_font(FontID::JpFude1),
+                            ctx.resource.get_font(FontID::JpFude1),
                             numeric::Vector2f::new(32.0, 32.0),
                             ggraphics::Color::from_rgba_u32(0x000000ff),
                         ),
@@ -853,7 +837,7 @@ impl ShopScene {
                                 let mut customer = slf.customer_queue.pop_front().unwrap();
 
                                 customer.set_destination_forced(
-                                    ctx,
+                                    ctx.context,
                                     &slf.map.tile_map,
                                     numeric::Vector2u::new(15, 10),
                                 );
@@ -862,7 +846,7 @@ impl ShopScene {
                             t + 31,
                         );
 
-			self.scene_transition_close_effect(ctx, game_data, t);
+                        self.scene_transition_close_effect(ctx, t);
                     }
                 }
                 MapEventElement::BookStoreEvent(book_store_event) => {
@@ -874,7 +858,6 @@ impl ShopScene {
                         .new_effect(8, self.get_current_clock(), 0, 200);
                     self.shop_special_object.show_storing_select_ui(
                         ctx,
-                        game_data,
                         book_store_event.get_book_shelf_info().clone(),
                         self.player.get_shelving_book().clone(),
                         t,
@@ -882,7 +865,7 @@ impl ShopScene {
                 }
                 MapEventElement::BuiltinEvent(builtin_event) => {
                     let builtin_event = builtin_event.clone();
-                    self.run_builtin_event(ctx, game_data, builtin_event);
+                    self.run_builtin_event(ctx, builtin_event);
                 }
             }
         }
@@ -938,7 +921,7 @@ impl ShopScene {
         self.update_playable_character_texture(rad);
     }
 
-    pub fn switched_and_restart(&mut self, ctx: &mut ggez::Context, game_data: &GameData) {
+    pub fn switched_and_restart<'a>(&mut self, ctx: &mut SuzuContext<'a>) {
         let t = self.get_current_clock();
         let animation_time = 30;
 
@@ -946,7 +929,6 @@ impl ShopScene {
 
         self.scene_transition_effect = Some(effect_object::ScreenTileEffect::new(
             ctx,
-            game_data,
             TileBatchTextureID::Shoji,
             numeric::Rect::new(
                 0.0,
@@ -956,7 +938,7 @@ impl ShopScene {
             ),
             animation_time,
             SceneTransitionEffectType::Open,
-	    TilingEffectType::WholeTile,
+            TilingEffectType::WholeTile,
             -128,
             t,
         ));
@@ -967,27 +949,18 @@ impl ShopScene {
         // );
     }
 
-    pub fn update_task_result(
-        &mut self,
-        ctx: &mut ggez::Context,
-        game_data: &GameData,
-        task_result: &TaskResult,
-    ) {
-        self.shop_menu.update_contents(
-            ctx,
-            game_data,
-            task_result,
-            self.player.get_shelving_book(),
-        );
-	
+    pub fn update_task_result<'a>(&mut self, ctx: &mut SuzuContext<'a>, task_result: &TaskResult) {
+        self.shop_menu
+            .update_contents(ctx, task_result, self.player.get_shelving_book());
+
         self.game_status.task_result = task_result.clone();
     }
 
     pub fn current_task_result(&self) -> TaskResult {
-	self.game_status.task_result.clone()
+        self.game_status.task_result.clone()
     }
 
-    fn try_hide_shelving_select_ui(&mut self, ctx: &mut ggez::Context, game_data: &GameData) {
+    fn try_hide_shelving_select_ui<'a>(&mut self, ctx: &mut SuzuContext<'a>) {
         let select_result = self
             .shop_special_object
             .hide_shelving_select_ui(self.get_current_clock());
@@ -996,7 +969,6 @@ impl ShopScene {
             self.player.update_shelving_book(shelving);
             self.shop_menu.update_contents(
                 ctx,
-                game_data,
                 &self.game_status.task_result,
                 self.player.get_shelving_book(),
             );
@@ -1005,7 +977,7 @@ impl ShopScene {
         }
     }
 
-    fn try_hide_storing_select_ui(&mut self, ctx: &mut ggez::Context, game_data: &GameData) {
+    fn try_hide_storing_select_ui<'a>(&mut self, ctx: &mut SuzuContext<'a>) {
         let store_result = self
             .shop_special_object
             .hide_storing_select_ui(self.get_current_clock());
@@ -1013,7 +985,6 @@ impl ShopScene {
             self.player.update_shelving_book(shelving);
             self.shop_menu.update_contents(
                 ctx,
-                game_data,
                 &self.game_status.task_result,
                 self.player.get_shelving_book(),
             );
@@ -1026,12 +997,7 @@ impl ShopScene {
         self.customer_request_queue.pop_front()
     }
 
-    pub fn update_shop_clock_regular(
-        &mut self,
-        ctx: &mut ggez::Context,
-        game_data: &GameData,
-        t: Clock,
-    ) {
+    pub fn update_shop_clock_regular<'a>(&mut self, ctx: &mut SuzuContext<'a>, t: Clock) {
         if self.get_current_clock() % 40 == 0 {
             debug::debug_screen_push_text(&format!("{}", self.shop_clock));
             self.shop_clock.add_minute(5);
@@ -1039,11 +1005,10 @@ impl ShopScene {
             if self.shop_clock.equals(12, 0) {
                 self.notification_area.insert_new_contents_generic(
                     ctx,
-                    game_data,
                     NotificationContentsData::new(
                         "セラ知オ".to_string(),
                         "十二時ヲ過ギマシタ".to_string(),
-			NotificationType::Time,
+                        NotificationType::Time,
                     ),
                     t,
                 );
@@ -1051,22 +1016,21 @@ impl ShopScene {
         }
     }
 
-    pub fn check_shop_clock_regular(&mut self, ctx: &mut ggez::Context, game_data: &GameData, t: Clock) {
+    pub fn check_shop_clock_regular<'a>(&mut self, ctx: &mut SuzuContext<'a>, t: Clock) {
         if self.shop_clock.equals(18, 0) {
-
-	    self.event_list.add_event(
+            self.event_list.add_event(
                 Box::new(move |slf: &mut Self, _, _| {
-		    slf.transition_status = SceneTransition::SwapTransition;
-		    slf.transition_scene = SceneID::DayResult;
-		}),
-		t + 120,
+                    slf.transition_status = SceneTransition::SwapTransition;
+                    slf.transition_scene = SceneID::DayResult;
+                }),
+                t + 120,
             );
-	    
-	    self.scene_transition_close_effect(ctx, game_data, t);
+
+            self.scene_transition_close_effect(ctx, t);
         }
     }
 
-    fn random_add_customer(&mut self, game_data: &GameData) {
+    fn random_add_customer(&mut self, game_data: &GameResource) {
         if
         /* self.shop_clock.minute % 1 == 0 && */
         rand::random::<usize>() % 150 == 0 {
@@ -1087,19 +1051,18 @@ impl ShopScene {
         }
     }
 
-    fn notify_customer_calling(&mut self, ctx: &mut ggez::Context, game_data: &GameData, t: Clock) {
+    fn notify_customer_calling<'a>(&mut self, ctx: &mut SuzuContext<'a>, t: Clock) {
         let notification = Box::new(notify::GeneralNotificationContents::new(
             ctx,
-            game_data,
             NotificationContentsData::new(
-		"セラ知オ".to_string(),
-		"御客ガ呼ンデイマス".to_string(),
-		NotificationType::CustomerCalling,
-	    ),
+                "セラ知オ".to_string(),
+                "御客ガ呼ンデイマス".to_string(),
+                NotificationType::CustomerCalling,
+            ),
             0,
         ));
         self.notification_area
-            .insert_new_contents(ctx, game_data, notification, t);
+            .insert_new_contents(ctx, notification, t);
     }
 
     fn transition_to_copy_scene(&mut self) {
@@ -1109,12 +1072,7 @@ impl ShopScene {
 }
 
 impl SceneManager for ShopScene {
-    fn key_down_event(
-        &mut self,
-        ctx: &mut ggez::Context,
-        game_data: &GameData,
-        vkey: tdev::VirtualKey,
-    ) {
+    fn key_down_event<'a>(&mut self, ctx: &mut SuzuContext<'a>, vkey: tdev::VirtualKey) {
         match vkey {
             tdev::VirtualKey::Action1 => {
                 if let Some(scenario_box) = self.map.scenario_box.as_mut() {
@@ -1123,7 +1081,7 @@ impl SceneManager for ShopScene {
                     }
                 } else {
                     debug::debug_screen_push_text("OK");
-                    self.check_event_panel_onmap(ctx, game_data, EventTrigger::Action);
+                    self.check_event_panel_onmap(ctx, EventTrigger::Action);
                 }
             }
             tdev::VirtualKey::Action2 => {
@@ -1137,8 +1095,8 @@ impl SceneManager for ShopScene {
                 }
             }
             tdev::VirtualKey::Action3 => {
-                self.try_hide_shelving_select_ui(ctx, game_data);
-                self.try_hide_storing_select_ui(ctx, game_data);
+                self.try_hide_shelving_select_ui(ctx);
+                self.try_hide_storing_select_ui(ctx);
             }
             tdev::VirtualKey::Action4 => {
                 self.transition_to_copy_scene();
@@ -1151,43 +1109,29 @@ impl SceneManager for ShopScene {
         }
 
         self.shop_menu
-            .menu_key_action(ctx, game_data, vkey, self.get_current_clock());
+            .menu_key_action(vkey, self.get_current_clock());
     }
 
-    fn key_up_event(
+    fn mouse_motion_event<'a>(
         &mut self,
-        _ctx: &mut ggez::Context,
-        _game_data: &GameData,
-        vkey: tdev::VirtualKey,
-    ) {
-        match vkey {
-            tdev::VirtualKey::Action1 => println!("Action1 up!"),
-            _ => (),
-        }
-    }
-
-    fn mouse_motion_event(
-        &mut self,
-        ctx: &mut ggez::Context,
-        _game_data: &GameData,
+        ctx: &mut SuzuContext<'a>,
         point: numeric::Point2f,
         _offset: numeric::Vector2f,
     ) {
-        if ggez::input::mouse::button_pressed(ctx, MouseButton::Left) {
-            self.start_mouse_move(ctx, point);
+        if ggez::input::mouse::button_pressed(ctx.context, MouseButton::Left) {
+            self.start_mouse_move(ctx.context, point);
         }
     }
 
-    fn mouse_button_down_event(
+    fn mouse_button_down_event<'a>(
         &mut self,
-        ctx: &mut ggez::Context,
-        game_data: &GameData,
+        ctx: &mut SuzuContext<'a>,
         button: MouseButton,
         point: numeric::Point2f,
     ) {
         match button {
             MouseButton::Left => {
-                self.start_mouse_move(ctx, point);
+                self.start_mouse_move(ctx.context, point);
             }
             MouseButton::Right => {
                 self.player.reset_speed();
@@ -1195,19 +1139,13 @@ impl SceneManager for ShopScene {
             _ => (),
         }
 
-        self.shop_special_object.mouse_down_action(
-            ctx,
-            game_data,
-            button,
-            point,
-            self.get_current_clock(),
-        );
+        self.shop_special_object
+            .mouse_down_action(ctx, button, point, self.get_current_clock());
     }
 
-    fn mouse_button_up_event(
+    fn mouse_button_up_event<'a>(
         &mut self,
-        _ctx: &mut ggez::Context,
-        _game_data: &GameData,
+        _ctx: &mut SuzuContext<'a>,
         button: MouseButton,
         _point: numeric::Point2f,
     ) {
@@ -1219,30 +1157,29 @@ impl SceneManager for ShopScene {
         }
     }
 
-    fn mouse_wheel_event(
+    fn mouse_wheel_event<'a>(
         &mut self,
-        ctx: &mut ggez::Context,
-        game_data: &GameData,
+        ctx: &mut SuzuContext<'a>,
         point: numeric::Point2f,
         x: f32,
         y: f32,
     ) {
         self.shop_special_object
-            .mouse_wheel_scroll_action(ctx, game_data, point, x, y);
+            .mouse_wheel_scroll_action(ctx, point, x, y);
     }
 
-    fn pre_process(&mut self, ctx: &mut ggez::Context, game_data: &GameData) {
+    fn pre_process<'a>(&mut self, ctx: &mut SuzuContext<'a>) {
         let t = self.get_current_clock();
 
-        flush_delay_event!(self, self.event_list, ctx, game_data, t);
+        flush_delay_event!(self, self.event_list, ctx, t);
 
         if !self.shop_menu.first_menu_is_open() && !self.shop_special_object.is_enable_now() {
-            self.random_add_customer(game_data);
-            self.move_playable_character(ctx, t);
-            self.check_event_panel_onmap(ctx, game_data, EventTrigger::Touch);
+            self.random_add_customer(ctx.resource);
+            self.move_playable_character(ctx.context, t);
+            self.check_event_panel_onmap(ctx, EventTrigger::Touch);
 
             self.character_group.move_and_collision_check(
-                ctx,
+                ctx.context,
                 &self.camera.borrow(),
                 &self.map.tile_map,
                 t,
@@ -1254,11 +1191,12 @@ impl SceneManager for ShopScene {
 
             // 新しく客が列に並んだら、通知をする
             if !rising_customers.is_empty() {
-                self.notify_customer_calling(ctx, game_data, t);
+                self.notify_customer_calling(ctx, t);
             }
 
             for customer in &mut rising_customers {
-                if let Some(request) = customer.check_rise_hand(game_data, self.game_status.date.clone())
+                if let Some(request) =
+                    customer.check_rise_hand(ctx.resource, self.game_status.date.clone())
                 {
                     self.customer_request_queue.push_back(request);
                 }
@@ -1269,7 +1207,6 @@ impl SceneManager for ShopScene {
             for customer in self.character_group.iter_mut() {
                 customer.try_update_move_effect(
                     ctx,
-                    game_data,
                     &self.map.tile_map,
                     numeric::Vector2u::new(4, 10),
                     numeric::Vector2u::new(15, 10),
@@ -1280,7 +1217,7 @@ impl SceneManager for ShopScene {
 
             for customer in &mut self.customer_queue {
                 Self::customer_move_and_collision_check(
-                    ctx,
+                    ctx.context,
                     customer,
                     &self.camera.borrow(),
                     &self.map.tile_map,
@@ -1288,7 +1225,6 @@ impl SceneManager for ShopScene {
                 );
                 customer.try_update_move_effect(
                     ctx,
-                    game_data,
                     &self.map.tile_map,
                     numeric::Vector2u::new(4, 10),
                     numeric::Vector2u::new(15, 10),
@@ -1302,28 +1238,28 @@ impl SceneManager for ShopScene {
             self.character_group.sort_by_y_position();
 
             // マップ描画の準備
-            self.map.tile_map.update(ctx, t);
+            self.map.tile_map.update(ctx.context, t);
         }
 
         // 時刻の更新
-        self.update_shop_clock_regular(ctx, game_data, t);
-        self.check_shop_clock_regular(ctx, game_data, t);
+        self.update_shop_clock_regular(ctx, t);
+        self.check_shop_clock_regular(ctx, t);
 
         // 暗転の描画
-        self.dark_effect_panel.run_effect(ctx, t);
+        self.dark_effect_panel.run_effect(ctx.context, t);
 
-        self.notification_area.update(ctx, game_data, t);
+        self.notification_area.update(ctx, t);
 
         if let Some(transition_effect) = self.scene_transition_effect.as_mut() {
-            transition_effect.effect(ctx, t);
+            transition_effect.effect(ctx.context, t);
         }
 
         // select_uiなどの更新
-        self.shop_special_object.run_delay_event(ctx, game_data, t);
-        self.shop_special_object.update(ctx, t);
+        flush_delay_event!(self, self.event_list, ctx, t);
+        self.shop_special_object.update(ctx.context, t);
 
         // メニューの更新
-        self.shop_menu.update(ctx, t);
+        self.shop_menu.update(ctx.context, t);
     }
 
     fn drawing_process(&mut self, ctx: &mut ggez::Context) {
@@ -1362,7 +1298,7 @@ impl SceneManager for ShopScene {
         self.notification_area.draw(ctx).unwrap();
     }
 
-    fn post_process(&mut self, _ctx: &mut ggez::Context, _: &GameData) -> SceneTransition {
+    fn post_process<'a>(&mut self, _ctx: &mut SuzuContext<'a>) -> SceneTransition {
         self.update_current_clock();
         self.transition_status
     }

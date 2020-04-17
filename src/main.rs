@@ -42,7 +42,7 @@ pub fn main() {
         .build()
         .unwrap();
 
-    let game_data: GameData = GameData::new(ctx, "game_data.toml".to_owned());
+    let game_data: GameResource = GameResource::new(ctx, "game_data.toml".to_owned());
 
     {
         let state = &mut State::new(ctx, &game_data).unwrap();

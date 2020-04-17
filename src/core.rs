@@ -17,10 +17,10 @@ use torifune::hash;
 use torifune::numeric;
 use torifune::sound;
 
+use crate::object::task_object::tt_sub_component::CopyingRequestInformation;
 use ggez::input as ginput;
 use ggez::input::keyboard::*;
 use ginput::mouse::MouseButton;
-use crate::object::task_object::tt_sub_component::CopyingRequestInformation;
 
 use std::collections::HashMap;
 use std::collections::VecDeque;
@@ -48,18 +48,18 @@ pub struct InitialDisplay {
 
 impl InitialDisplay {
     pub fn new(ctx: &mut ggez::Context) -> Self {
-	InitialDisplay {
-	    texture: vec![ggraphics::Image::new(ctx, "/textures/sumire_logo.png").unwrap()],
-	    index: 0,
-	}
+        InitialDisplay {
+            texture: vec![ggraphics::Image::new(ctx, "/textures/sumire_logo.png").unwrap()],
+            index: 0,
+        }
     }
 
-    pub fn draw(&self, ctx: &mut ggez::Context) {	
-	ggraphics::clear(ctx, [0.0, 0.0, 0.0, 0.0].into());
-	let texture = self.texture.get(self.index);
-	
-	ggraphics::draw(ctx, texture.unwrap(), ggraphics::DrawParam::default()).unwrap();
-	
+    pub fn draw(&self, ctx: &mut ggez::Context) {
+        ggraphics::clear(ctx, [0.0, 0.0, 0.0, 0.0].into());
+        let texture = self.texture.get(self.index);
+
+        ggraphics::draw(ctx, texture.unwrap(), ggraphics::DrawParam::default()).unwrap();
+
         ggraphics::present(ctx).unwrap();
     }
 }
@@ -292,11 +292,11 @@ impl RentalLimit {
     }
 
     pub fn fee(&self) -> i32 {
-	match self {
-	    RentalLimit::ShortTerm => 100,
-	    RentalLimit::LongTerm => 150,
-	    RentalLimit::Today => 0,
-	}
+        match self {
+            RentalLimit::ShortTerm => 100,
+            RentalLimit::LongTerm => 150,
+            RentalLimit::Today => 0,
+        }
     }
 }
 
@@ -347,29 +347,29 @@ impl GensoDate {
     }
 
     pub fn rental_limit_type(&self, limit: &GensoDate) -> Option<RentalLimit> {
-	let month_diff = limit.month - self.month;
-	let maybe_day_diff = if month_diff == 1 {
-	    Some(limit.day + (31 - self.day))
-	} else if month_diff == 0 {
-	    Some(limit.day - self.day)
-	} else {
-	    None
-	};
+        let month_diff = limit.month - self.month;
+        let maybe_day_diff = if month_diff == 1 {
+            Some(limit.day + (31 - self.day))
+        } else if month_diff == 0 {
+            Some(limit.day - self.day)
+        } else {
+            None
+        };
 
-	if let Some(day_diff) = maybe_day_diff {
-	    println!("day_diff: {:?}", day_diff);
-	    if day_diff == 0 {
-		Some(RentalLimit::Today)
-	    } else if day_diff == 7 {
-		Some(RentalLimit::ShortTerm)
-	    } else if day_diff == 14 {
-		Some(RentalLimit::LongTerm)
-	    } else {
-		None
-	    }
-	} else {
-	    None
-	}
+        if let Some(day_diff) = maybe_day_diff {
+            println!("day_diff: {:?}", day_diff);
+            if day_diff == 0 {
+                Some(RentalLimit::Today)
+            } else if day_diff == 7 {
+                Some(RentalLimit::ShortTerm)
+            } else if day_diff == 14 {
+                Some(RentalLimit::LongTerm)
+            } else {
+                None
+            }
+        } else {
+            None
+        }
     }
 }
 
@@ -379,39 +379,39 @@ pub struct ScenarioTable {
 
 impl ScenarioTable {
     pub fn new(table_toml_path: &str) -> Self {
-	let mut table = HashMap::new();
-	
-	let content = match std::fs::read_to_string(table_toml_path) {
+        let mut table = HashMap::new();
+
+        let content = match std::fs::read_to_string(table_toml_path) {
             Ok(c) => c,
             Err(_) => panic!("Failed to read: {}", table_toml_path),
         };
-	let root = content.parse::<toml::Value>().unwrap();
+        let root = content.parse::<toml::Value>().unwrap();
         let array = root["scenario-table"].as_array().unwrap();
-	
-	for elem in array {
+
+        for elem in array {
             let date_data = elem.get("date").unwrap().as_table().unwrap();
-	    let genso_date = GensoDate::new(
-		date_data.get("season").unwrap().as_integer().unwrap() as u32,
-		date_data.get("month").unwrap().as_integer().unwrap() as u8,
-		date_data.get("day").unwrap().as_integer().unwrap() as u8,
-	    );
+            let genso_date = GensoDate::new(
+                date_data.get("season").unwrap().as_integer().unwrap() as u32,
+                date_data.get("month").unwrap().as_integer().unwrap() as u8,
+                date_data.get("day").unwrap().as_integer().unwrap() as u8,
+            );
 
-	    let path = elem.get("path").unwrap().as_str().unwrap();
+            let path = elem.get("path").unwrap().as_str().unwrap();
 
-	    table.insert(genso_date, path.to_string());
+            table.insert(genso_date, path.to_string());
         }
 
-	ScenarioTable {
-	    scenario_table: table,
-	}
+        ScenarioTable {
+            scenario_table: table,
+        }
     }
 
     pub fn get_day_scenario_path(&self, date: &GensoDate) -> Option<String> {
-	if let Some(s) = self.scenario_table.get(&date) {
-	    Some(s.to_string())
-	} else {
-	    None
-	}
+        if let Some(s) = self.scenario_table.get(&date) {
+            Some(s.to_string())
+        } else {
+            None
+        }
     }
 }
 
@@ -476,7 +476,7 @@ impl RawConfigFile {
     }
 }
 
-pub struct GameData {
+pub struct GameResource {
     textures: Vec<Rc<ggraphics::Image>>,
     fonts: Vec<ggraphics::Font>,
     tile_batchs: Vec<TileBatch>,
@@ -488,17 +488,17 @@ pub struct GameData {
     sound_manager: sound::SoundManager,
 }
 
-impl GameData {
-    pub fn new(ctx: &mut ggez::Context, file_path: String) -> GameData {
-	let init_display = InitialDisplay::new(ctx);
-	init_display.draw(ctx);
-	
+impl GameResource {
+    pub fn new(ctx: &mut ggez::Context, file_path: String) -> GameResource {
+        let init_display = InitialDisplay::new(ctx);
+        init_display.draw(ctx);
+
         let src_file = RawConfigFile::new(file_path);
 
         let mut textures = Vec::new();
         let mut fonts = Vec::new();
         let mut sprite_batchs = Vec::new();
-	let mut sounds = Vec::new();
+        let mut sounds = Vec::new();
 
         for texture_path in &src_file.texture_paths {
             print!("Loading texture {}...", texture_path);
@@ -523,23 +523,23 @@ impl GameData {
             println!(" done!");
         }
 
-	for sound_path in &src_file.sound_file_path {
-	    let sound_data = sound::SoundData::new(ctx, sound_path).unwrap();
-	    sounds.push(sound_data);
-	}
+        for sound_path in &src_file.sound_file_path {
+            let sound_data = sound::SoundData::new(ctx, sound_path).unwrap();
+            sounds.push(sound_data);
+        }
 
-	let scenario_table = ScenarioTable::new(&src_file.scenario_table_path);
-	
-        GameData {
+        let scenario_table = ScenarioTable::new(&src_file.scenario_table_path);
+
+        GameResource {
             textures: textures,
             fonts: fonts,
             tile_batchs: sprite_batchs,
             customers_name: src_file.customers_name,
             books_information: src_file.books_information,
             map_data: src_file.map_information,
-	    scenario_table: scenario_table,
-	    sounds: sounds,
-	    sound_manager: sound::SoundManager::new(),
+            scenario_table: scenario_table,
+            sounds: sounds,
+            sound_manager: sound::SoundManager::new(),
         }
     }
 
@@ -598,25 +598,25 @@ impl GameData {
     }
 
     pub fn get_day_scenario_path(&self, date: &GensoDate) -> Option<String> {
-	self.scenario_table.get_day_scenario_path(date)
+        self.scenario_table.get_day_scenario_path(date)
     }
 
     pub fn play_sound(
-	&mut self,
-	ctx: &mut ggez::Context,
-	sound_id: SoundID,
-	flags: Option<sound::SoundPlayFlags>
+        &mut self,
+        ctx: &mut ggez::Context,
+        sound_id: SoundID,
+        flags: Option<sound::SoundPlayFlags>,
     ) -> sound::SoundHandler {
-	let sound_data = self.sounds.get(sound_id as usize).unwrap();
-	self.sound_manager.play(ctx, sound_data.clone(), flags)
+        let sound_data = self.sounds.get(sound_id as usize).unwrap();
+        self.sound_manager.play(ctx, sound_data.clone(), flags)
     }
 
     pub fn ref_sound(&self, handler: sound::SoundHandler) -> &sound::PlayableSound {
-	self.sound_manager.ref_sound(handler)
+        self.sound_manager.ref_sound(handler)
     }
 
     pub fn ref_sound_mut(&mut self, handler: sound::SoundHandler) -> &mut sound::PlayableSound {
-	self.sound_manager.ref_sound_mut(handler)
+        self.sound_manager.ref_sound_mut(handler)
     }
 }
 
@@ -804,30 +804,36 @@ impl TaskResult {
     }
 }
 
-struct SceneStack<'a> {
-    stack: VecDeque<Box<dyn scene::SceneManager + 'a>>,
+struct SceneStack {
+    stack: VecDeque<TopScene>,
 }
 
-impl<'a> SceneStack<'a> {
-    pub fn new() -> SceneStack<'a> {
+impl SceneStack {
+    pub fn new() -> SceneStack {
         SceneStack {
             stack: VecDeque::new(),
         }
     }
 
-    pub fn push(&mut self, scene: Box<dyn scene::SceneManager + 'a>) {
+    pub fn push(&mut self, scene: TopScene) {
         self.stack.push_back(scene);
     }
 
-    pub fn pop(&mut self) -> Option<Box<dyn scene::SceneManager + 'a>> {
+    pub fn pop(&mut self) -> Option<TopScene> {
         self.stack.pop_back()
     }
 }
 
 #[derive(Clone)]
-pub struct GameStatus {
+pub struct SavableData {
     pub date: GensoDate,
     pub task_result: TaskResult,
+}
+
+pub struct SuzuContext<'ctx> {
+    pub context: &'ctx mut ggez::Context,
+    pub resource: &'ctx GameResource,
+    pub savable_data: &'ctx mut SavableData,
 }
 
 pub enum TopScene {
@@ -838,40 +844,40 @@ pub enum TopScene {
 
 impl TopScene {
     pub fn abs(&self) -> &dyn scene::SceneManager {
-	match self {
-	    TopScene::ScenarioScene(scene) => scene,
-	    TopScene::SuzunaScene(scene) => scene,
-	    TopScene::Null(scene) => scene,
-	}
+        match self {
+            TopScene::ScenarioScene(scene) => scene,
+            TopScene::SuzunaScene(scene) => scene,
+            TopScene::Null(scene) => scene,
+        }
     }
 
     pub fn abs_mut(&mut self) -> &mut dyn scene::SceneManager {
-	match self {
-	    TopScene::ScenarioScene(scene) => scene,
-	    TopScene::SuzunaScene(scene) => scene,
-	    TopScene::Null(scene) => scene,
-	}
+        match self {
+            TopScene::ScenarioScene(scene) => scene,
+            TopScene::SuzunaScene(scene) => scene,
+            TopScene::Null(scene) => scene,
+        }
     }
 
     pub fn to_suzuna_scene(&self) -> Option<&scene::suzuna_scene::SuzunaScene> {
-	match self {
-	    TopScene::SuzunaScene(scene) => Some(scene),
-	    _ => None,
-	}
+        match self {
+            TopScene::SuzunaScene(scene) => Some(scene),
+            _ => None,
+        }
     }
 }
 
-struct SceneController<'a> {
+struct SceneController {
     current_scene: TopScene,
-    scene_stack: SceneStack<'a>,
+    scene_stack: SceneStack,
     key_map: tdev::ProgramableGenericKey,
     global_clock: u64,
     root_screen: SubScreen,
-    game_status: GameStatus,
+    game_status: SavableData,
 }
 
-impl<'a> SceneController<'a> {
-    pub fn new(ctx: &mut ggez::Context, game_data: &'a GameData) -> SceneController<'a> {
+impl SceneController {
+    pub fn new<'a>(ctx: &mut ggez::Context, game_data: &'a GameResource) -> SceneController {
         let window_size = ggraphics::drawable_size(ctx);
 
         let mut root_screen = SubScreen::new(
@@ -896,70 +902,101 @@ impl<'a> SceneController<'a> {
             ),
         );
 
-	let game_status = GameStatus {
-	    date: GensoDate::new(112, 7, 23),
-	    task_result: TaskResult::new(),
-	};
+        let mut game_status = SavableData {
+            date: GensoDate::new(112, 7, 23),
+            task_result: TaskResult::new(),
+        };
+
+        let current_scene = scene::scenario_scene::ScenarioScene::new(&mut SuzuContext {
+            context: ctx,
+            resource: game_data,
+            savable_data: &mut game_status,
+        });
 
         SceneController {
             //current_scene: Box::new(scene::work_scene::WorkScene::new(ctx, game_data, 0)),
-            current_scene: TopScene::ScenarioScene(
-		scene::scenario_scene::ScenarioScene::new(
-		    ctx,
-		    game_data,
-		    game_status.clone(),
-		)
-	    ),
+            current_scene: TopScene::ScenarioScene(current_scene),
             //current_scene: Box::new(scene::shop_scene::ShopScene::new(ctx, game_data, 0)),
             //current_scene: Box::new(scene::suzuna_scene::SuzunaScene::new(ctx, game_data, 0)),
             scene_stack: SceneStack::new(),
             key_map: tdev::ProgramableGenericKey::new(),
             global_clock: 0,
             root_screen: root_screen,
-	    game_status: game_status,
+            game_status: game_status,
         }
     }
 
-    fn swap_suzuna_to_scenario(
-	&mut self,
-	ctx: &mut ggez::Context,
-        game_data: &'a GameData,
-    ) {
-	let task_result = self.current_scene.to_suzuna_scene().unwrap().get_task_result();
-	self.game_status.task_result = task_result;
-	
-	self.current_scene =
-            TopScene::ScenarioScene(scene::scenario_scene::ScenarioScene::new(
-		ctx,
-		game_data,
-		self.game_status.clone(),
-	    ))
-    }
-
-    fn switch_scene_with_swap(
+    fn switch_scene_with_swap<'a>(
         &mut self,
         ctx: &mut ggez::Context,
-        game_data: &'a GameData,
+        game_data: &'a GameResource,
         next_scene_id: scene::SceneID,
     ) {
+        let mut ctx = SuzuContext {
+            context: ctx,
+            resource: game_data,
+            savable_data: &mut self.game_status,
+        };
+
         match next_scene_id {
             scene::SceneID::SuzunaShop => {
                 self.current_scene =
-                    TopScene::SuzunaScene(scene::suzuna_scene::SuzunaScene::new(ctx, game_data, 0, self.game_status.clone()))
+                    TopScene::SuzunaScene(scene::suzuna_scene::SuzunaScene::new(&mut ctx, 0))
             }
-            scene::SceneID::Scenario => {
-		match self.current_scene {
-		    TopScene::SuzunaScene(_) => self.swap_suzuna_to_scenario(ctx, game_data),
-		    _ => (),
-		}
-            }
+            scene::SceneID::Scenario => match self.current_scene {
+                TopScene::SuzunaScene(_) => {
+                    self.current_scene =
+                        TopScene::ScenarioScene(scene::scenario_scene::ScenarioScene::new(&mut ctx))
+                }
+                _ => (),
+            },
             scene::SceneID::Null => self.current_scene = TopScene::Null(scene::NullScene::new()),
             _ => (),
         }
     }
 
-    fn run_pre_process(&mut self, ctx: &mut ggez::Context, game_data: &GameData) {
-        self.current_scene.abs_mut().pre_process(ctx, game_data);
+    fn switch_scene_with_stacking<'a>(
+        &mut self,
+        ctx: &mut ggez::Context,
+        game_data: &'a GameResource,
+        next_scene_id: scene::SceneID,
+    ) {
+        let mut ctx = SuzuContext {
+            context: ctx,
+            resource: game_data,
+            savable_data: &mut self.game_status,
+        };
+
+        let next_scene = if next_scene_id == scene::SceneID::SuzunaShop {
+            Some(TopScene::SuzunaScene(
+                scene::suzuna_scene::SuzunaScene::new(&mut ctx, 0),
+            ))
+        } else if next_scene_id == scene::SceneID::Null {
+            Some(TopScene::Null(scene::NullScene::new()))
+        } else {
+            None
+        };
+
+        if let Some(mut scene) = next_scene {
+            std::mem::swap(&mut self.current_scene, &mut scene);
+            self.scene_stack.push(scene);
+        }
+    }
+
+    fn switch_scene_with_popping(&mut self) {
+        if let Some(scene) = self.scene_stack.pop() {
+            self.current_scene = scene;
+        } else {
+            eprintln!("Scene Stack is Empty!!");
+        }
+    }
+
+    fn run_pre_process(&mut self, ctx: &mut ggez::Context, game_data: &GameResource) {
+        self.current_scene.abs_mut().pre_process(&mut SuzuContext {
+            context: ctx,
+            resource: game_data,
+            savable_data: &mut self.game_status,
+        });
     }
 
     fn run_drawing_process(&mut self, ctx: &mut ggez::Context) {
@@ -973,18 +1010,28 @@ impl<'a> SceneController<'a> {
         self.root_screen.draw(ctx).unwrap();
     }
 
-    fn run_post_process(&mut self, ctx: &mut ggez::Context, game_data: &'a GameData) {
-        match self.current_scene.abs_mut().post_process(ctx, game_data) {
+    fn run_post_process<'a>(&mut self, ctx: &mut ggez::Context, game_data: &'a GameResource) {
+        let mut suzu_ctx = SuzuContext {
+            context: ctx,
+            resource: game_data,
+            savable_data: &mut self.game_status,
+        };
+
+        match self.current_scene.abs_mut().post_process(&mut suzu_ctx) {
             scene::SceneTransition::Keep => (),
             scene::SceneTransition::Reset => println!("FIXME!!"),
             scene::SceneTransition::SwapTransition => {
                 self.switch_scene_with_swap(ctx, game_data, self.current_scene.abs().transition())
             }
             scene::SceneTransition::StackingTransition => {
-		panic!("Not Implemented");
+                self.switch_scene_with_stacking(
+                    ctx,
+                    game_data,
+                    self.current_scene.abs().transition(),
+                );
             }
             scene::SceneTransition::PoppingTransition => {
-		panic!("Not Implemented");
+                self.switch_scene_with_popping();
             }
         }
 
@@ -997,7 +1044,7 @@ impl<'a> SceneController<'a> {
     fn key_down_event(
         &mut self,
         ctx: &mut Context,
-        game_data: &GameData,
+        game_data: &GameResource,
         keycode: KeyCode,
         _keymods: KeyMods,
         _repeat: bool,
@@ -1005,84 +1052,113 @@ impl<'a> SceneController<'a> {
         if keycode == KeyCode::Escape {
             std::process::exit(0);
         }
-        self.current_scene
-            .abs_mut()
-            .key_down_event(ctx, game_data, self.key_map.real_to_virtual(keycode));
+        self.current_scene.abs_mut().key_down_event(
+            &mut SuzuContext {
+                context: ctx,
+                resource: game_data,
+                savable_data: &mut self.game_status,
+            },
+            self.key_map.real_to_virtual(keycode),
+        );
     }
 
     fn key_up_event(
         &mut self,
         ctx: &mut Context,
-        game_data: &GameData,
+        game_data: &GameResource,
         keycode: KeyCode,
         _keymods: KeyMods,
     ) {
-        self.current_scene
-            .abs_mut()
-            .key_up_event(ctx, game_data, self.key_map.real_to_virtual(keycode));
+        self.current_scene.abs_mut().key_up_event(
+            &mut SuzuContext {
+                context: ctx,
+                resource: game_data,
+                savable_data: &mut self.game_status,
+            },
+            self.key_map.real_to_virtual(keycode),
+        );
     }
 
-    fn mouse_motion_event(
+    fn mouse_motion_event<'a>(
         &mut self,
-        ctx: &mut ggez::Context,
-        game_data: &GameData,
+        ctx: &mut Context,
+        game_data: &GameResource,
         point: numeric::Point2f,
         offset: numeric::Vector2f,
     ) {
-        self.current_scene
-	    .abs_mut()
-            .mouse_motion_event(ctx, game_data, point, offset);
+        self.current_scene.abs_mut().mouse_motion_event(
+            &mut SuzuContext {
+                context: ctx,
+                resource: game_data,
+                savable_data: &mut self.game_status,
+            },
+            point,
+            offset,
+        );
     }
 
     fn mouse_button_down_event(
         &mut self,
         ctx: &mut ggez::Context,
-        game_data: &GameData,
+        game_data: &GameResource,
         button: ginput::mouse::MouseButton,
         point: numeric::Point2f,
     ) {
-        self.current_scene
-	    .abs_mut()
-            .mouse_button_down_event(ctx, game_data, button, point);
+        self.current_scene.abs_mut().mouse_button_down_event(
+            &mut SuzuContext {
+                context: ctx,
+                resource: game_data,
+                savable_data: &mut self.game_status,
+            },
+            button,
+            point,
+        );
     }
 
     fn mouse_button_up_event(
         &mut self,
         ctx: &mut ggez::Context,
-        game_data: &GameData,
+        game_data: &GameResource,
         button: ginput::mouse::MouseButton,
         point: numeric::Point2f,
     ) {
-        self.current_scene
-	    .abs_mut()
-            .mouse_button_up_event(ctx, game_data, button, point);
+        self.current_scene.abs_mut().mouse_button_up_event(
+            &mut SuzuContext {
+                context: ctx,
+                resource: game_data,
+                savable_data: &mut self.game_status,
+            },
+            button,
+            point,
+        );
     }
 
-    fn mouse_wheel_scroll_event(
+    fn mouse_wheel_scroll_event<'a>(
         &mut self,
         ctx: &mut ggez::Context,
-        game_data: &GameData,
+        game_data: &GameResource,
         x: f32,
         y: f32,
     ) {
         let point = ggez::input::mouse::position(ctx);
-        self.current_scene
-	    .abs_mut()
-	    .mouse_wheel_event(
-		ctx,
-		game_data,
-		numeric::Point2f::new(point.x, point.y),
-		x,
-		y,
-            );
+        self.current_scene.abs_mut().mouse_wheel_event(
+            &mut SuzuContext {
+                context: ctx,
+                resource: game_data,
+                savable_data: &mut self.game_status,
+            },
+            numeric::Point2f::new(point.x, point.y),
+            x,
+            y,
+        );
     }
 }
 
 pub struct State<'data> {
     clock: Clock,
     fps: f64,
-    scene_controller: SceneController<'data>,
-    game_data: &'data GameData,
+    scene_controller: SceneController,
+    game_data: &'data GameResource,
 }
 
 impl<'data> ggez::event::EventHandler for State<'data> {
@@ -1171,7 +1247,7 @@ impl<'data> ggez::event::EventHandler for State<'data> {
 }
 
 impl<'data> State<'data> {
-    pub fn new(ctx: &mut Context, game_data: &'data GameData) -> GameResult<State<'data>> {
+    pub fn new(ctx: &mut Context, game_data: &'data GameResource) -> GameResult<State<'data>> {
         let s = State {
             clock: 0,
             fps: 0.0,

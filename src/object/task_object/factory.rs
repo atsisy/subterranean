@@ -7,7 +7,7 @@ use crate::object::task_object::*;
 
 pub fn create_dobj_random(
     ctx: &mut ggez::Context,
-    game_data: &GameData,
+    game_data: &GameResource,
     obj_type: DeskObjectType,
     t: Clock,
 ) -> DeskObject {
@@ -43,9 +43,8 @@ pub fn create_dobj_random(
     )
 }
 
-pub fn create_dobj_book(
-    ctx: &mut ggez::Context,
-    game_data: &GameData,
+pub fn create_dobj_book<'a>(
+    ctx: &mut SuzuContext<'a>,
     obj_type: DeskObjectType,
     book_info: BookInformation,
     t: Clock,
@@ -53,9 +52,9 @@ pub fn create_dobj_book(
     let texture = *util::random_select(LARGE_BOOK_TEXTURE.iter()).unwrap();
     DeskObject::new(
         Box::new(OnDeskTexture::new(
-            ctx,
+            ctx.context,
             UniTexture::new(
-                game_data.ref_texture(texture),
+                ctx.resource.ref_texture(texture),
                 numeric::Point2f::new(0.0, 0.0),
                 numeric::Vector2f::new(0.1, 0.1),
                 0.0,
@@ -63,12 +62,7 @@ pub fn create_dobj_book(
             ),
             OnDeskType::Book,
         )),
-        Box::new(OnDeskBook::new(
-            ctx,
-            game_data,
-            texture,
-            book_info,
-        )),
+        Box::new(OnDeskBook::new(ctx, texture, book_info)),
         0,
         obj_type,
         t,

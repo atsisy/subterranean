@@ -27,13 +27,12 @@ use torifune::impl_texture_object_for_wrapped;
 use torifune::numeric;
 
 use crate::core::map_parser as mp;
-use crate::core::{GameData, TextureID};
+use crate::core::{GameResource, SuzuContext, TextureID};
 
 pub trait Clickable {
-    fn button_down(
+    fn button_down<'a>(
         &mut self,
-        _ctx: &mut ggez::Context,
-        _: &GameData,
+        _ctx: &mut SuzuContext<'a>,
         _: Clock,
         _button: ggez::input::mouse::MouseButton,
         _point: numeric::Point2f,
@@ -42,18 +41,16 @@ pub trait Clickable {
 
     fn button_up(
         &mut self,
-        _ctx: &mut ggez::Context,
-        _: &GameData,
+        _ctx: &mut SuzuContext,
         _: Clock,
         _button: ggez::input::mouse::MouseButton,
         _point: numeric::Point2f,
     ) {
     }
 
-    fn on_click(
+    fn on_click<'a>(
         &mut self,
-        _ctx: &mut ggez::Context,
-        _: &GameData,
+        _ctx: &mut SuzuContext<'a>,
         _: Clock,
         _button: ggez::input::mouse::MouseButton,
         _point: numeric::Point2f,
@@ -91,7 +88,7 @@ pub struct BlackOutTexture {
 
 impl BlackOutTexture {
     pub fn new(
-        game_data: &mut GameData,
+        game_data: &mut GameResource,
         texture_id: TextureID,
         pos: numeric::Point2f,
         drawing_depth: i8,

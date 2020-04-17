@@ -13,13 +13,13 @@ use torifune::graphics::object::*;
 use torifune::numeric;
 
 use crate::core::map_parser as mp;
-use crate::core::{BookInformation, BookShelfInformation, GameData, GensoDate, RentalLimit};
+use crate::core::{
+    BookInformation, BookShelfInformation, GameResource, GensoDate, RentalLimit, SuzuContext,
+};
 use crate::flush_delay_event;
 use crate::object::collision::*;
 use crate::object::task_object::tt_main_component::CustomerRequest;
-use crate::object::task_object::tt_sub_component::{
-    BorrowingInformation, ReturnBookInformation,
-};
+use crate::object::task_object::tt_sub_component::{BorrowingInformation, ReturnBookInformation};
 use crate::object::util_object::*;
 use crate::scene::{DelayEventList, SceneID};
 
@@ -620,7 +620,11 @@ pub struct CustomerCharacter {
 }
 
 impl CustomerCharacter {
-    pub fn new(game_data: &GameData, character: MapObject, move_data: CustomerDestPoint) -> Self {
+    pub fn new(
+        game_data: &GameResource,
+        character: MapObject,
+        move_data: CustomerDestPoint,
+    ) -> Self {
         CustomerCharacter {
             event_list: DelayEventList::new(),
             character: character,
@@ -813,7 +817,11 @@ impl CustomerCharacter {
         distance!(current, self.current_goal) < 1.5
     }
 
-    fn generate_hold_request(&mut self, game_data: &GameData, today: GensoDate) -> CustomerRequest {
+    fn generate_hold_request(
+        &mut self,
+        game_data: &GameResource,
+        today: GensoDate,
+    ) -> CustomerRequest {
         let random_select = rand::random::<usize>() % 2;
         match random_select {
             0 => CustomerRequest::Borrowing(BorrowingInformation::new(
@@ -867,33 +875,32 @@ impl CustomerCharacter {
     ///
     /// 移動速度の更新が必要であれば行うメソッド
     ///
-    pub fn try_update_move_effect(
+    pub fn try_update_move_effect<'a>(
         &mut self,
-        ctx: &mut ggez::Context,
-        game_data: &GameData,
+        ctx: &mut SuzuContext<'a>,
         map_data: &mp::StageObjectMap,
         counter: numeric::Vector2u,
         exit: numeric::Vector2u,
         t: Clock,
     ) {
         // 遅延イベントを実行
-        flush_delay_event!(self, self.event_list, ctx, game_data, t);
+        flush_delay_event!(self, self.event_list, ctx, t);
 
         match self.customer_status {
             CustomerCharacterStatus::Ready => {
                 // 移動可能状態であれば、移動を開始する
-                self.update_move_effect(ctx, map_data, t);
+                self.update_move_effect(ctx.context, map_data, t);
             }
             CustomerCharacterStatus::Moving => {
                 // 移動中, 目的地に到着したか？
-                if self.is_goal_now(ctx) {
+                if self.is_goal_now(ctx.context) {
                     let goal = self.current_goal;
 
                     debug::debug_screen_push_text(&format!("goal: {:?}", goal));
 
                     // 目的地でマップ位置を上書き
                     self.get_mut_character_object()
-                        .set_map_position_with_collision_top_offset(ctx, goal);
+                        .set_map_position_with_collision_top_offset(ctx.context, goal);
 
                     // 移動可能状態に変更
                     self.customer_status = CustomerCharacterStatus::Ready;
@@ -919,7 +926,7 @@ impl CustomerCharacter {
 
     pub fn check_rise_hand(
         &mut self,
-        game_data: &GameData,
+        game_data: &GameResource,
         today: GensoDate,
     ) -> Option<CustomerRequest> {
         if self.customer_status == CustomerCharacterStatus::WaitOnClerk {

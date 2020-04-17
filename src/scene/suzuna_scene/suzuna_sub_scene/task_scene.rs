@@ -8,7 +8,7 @@ use torifune::numeric;
 use super::super::*;
 use crate::object::Clickable;
 
-use crate::core::{GameData, GensoDate, MouseActionRecord, MouseInformation, TileBatchTextureID, TaskResult};
+use crate::core::{GensoDate, MouseActionRecord, MouseInformation, TaskResult, TileBatchTextureID};
 use crate::object::effect_object;
 use crate::object::task_object::*;
 use crate::scene::{SceneID, SceneTransition};
@@ -40,9 +40,8 @@ pub struct TaskScene {
 }
 
 impl TaskScene {
-    pub fn new(
-        ctx: &mut ggez::Context,
-        game_data: &GameData,
+    pub fn new<'a>(
+        ctx: &mut SuzuContext<'a>,
         today_date: GensoDate,
         customer_request: Option<CustomerRequest>,
         record_book_data: Option<BorrowingRecordBookData>,
@@ -51,7 +50,6 @@ impl TaskScene {
 
         let scene_transition_effect = Some(effect_object::ScreenTileEffect::new(
             ctx,
-            game_data,
             TileBatchTextureID::Shoji,
             numeric::Rect::new(
                 0.0,
@@ -61,7 +59,7 @@ impl TaskScene {
             ),
             animation_time,
             effect_object::SceneTransitionEffectType::Open,
-	    effect_object::TilingEffectType::WholeTile,
+            effect_object::TilingEffectType::WholeTile,
             -128,
             0,
         ));
@@ -77,7 +75,6 @@ impl TaskScene {
         TaskScene {
             task_table: TaskTable::new(
                 ctx,
-                game_data,
                 numeric::Rect::new(0.0, 0.0, 1366.0, 768.0),
                 numeric::Rect::new(0.0, 0.0, 800.0, 300.0),
                 numeric::Rect::new(0.0, 310.0, 900.0, 500.0),
@@ -98,41 +95,29 @@ impl TaskScene {
         }
     }
 
-    fn dragging_handler(
+    fn dragging_handler<'a>(
         &mut self,
-        ctx: &mut ggez::Context,
+        ctx: &mut SuzuContext<'a>,
         point: numeric::Point2f,
         _offset: numeric::Vector2f,
-        _game_data: &GameData,
     ) {
         let last = self.mouse_info.get_last_dragged(MouseButton::Left);
         self.task_table.dragging_handler(point, last);
-        self.task_table.hand_over_check(ctx, point);
+        self.task_table.hand_over_check(ctx.context, point);
     }
 
-    fn unselect_dragging_object(
-        &mut self,
-        ctx: &mut ggez::Context,
-        game_data: &GameData,
-        t: Clock,
-    ) {
-        self.task_table.unselect_dragging_object(ctx, game_data, t);
+    fn unselect_dragging_object<'a>(&mut self, ctx: &mut SuzuContext<'a>, t: Clock) {
+        self.task_table.unselect_dragging_object(ctx, t);
     }
 
     fn insert_customer_event(&mut self, request: CustomerRequest, delay_clock: Clock) {
         self.event_list.add_event(
-            Box::new(
-                |s: &mut TaskScene, ctx: &mut ggez::Context, game_data: &GameData| {
-                    s.task_table.start_customer_event(
-                        ctx,
-                        game_data,
-                        request.clone(),
-                        s.get_current_clock(),
-                    );
-                    s.status = TaskSceneStatus::CustomerEvent;
-                    s.check_done_today_work(request);
-                },
-            ),
+            Box::new(|s: &mut TaskScene, ctx, _| {
+                s.task_table
+                    .start_customer_event(ctx, request.clone(), s.get_current_clock());
+                s.status = TaskSceneStatus::CustomerEvent;
+                s.check_done_today_work(request);
+            }),
             self.get_current_clock() + delay_clock,
         );
     }
@@ -176,12 +161,7 @@ impl TaskScene {
         self.status
     }
 
-    pub fn ready_to_finish_scene(
-        &mut self,
-        ctx: &mut ggez::Context,
-        game_data: &GameData,
-        t: Clock,
-    ) {
+    pub fn ready_to_finish_scene<'a>(&mut self, ctx: &mut SuzuContext<'a>, t: Clock) {
         self.status = TaskSceneStatus::FinishDay;
         self.event_list.add_event(
             Box::new(move |slf: &mut TaskScene, _, _| {
@@ -193,7 +173,6 @@ impl TaskScene {
 
         self.scene_transition_effect = Some(effect_object::ScreenTileEffect::new(
             ctx,
-            game_data,
             TileBatchTextureID::Shoji,
             numeric::Rect::new(
                 0.0,
@@ -203,7 +182,7 @@ impl TaskScene {
             ),
             30,
             effect_object::SceneTransitionEffectType::Close,
-	    effect_object::TilingEffectType::WholeTile,
+            effect_object::TilingEffectType::WholeTile,
             -128,
             t,
         ));
@@ -215,14 +194,9 @@ impl TaskScene {
 }
 
 impl SceneManager for TaskScene {
-    fn key_down_event(
-        &mut self,
-        ctx: &mut ggez::Context,
-        game_data: &GameData,
-        vkey: tdev::VirtualKey,
-    ) {
+    fn key_down_event<'a>(&mut self, ctx: &mut SuzuContext<'a>, vkey: tdev::VirtualKey) {
         self.task_table
-            .key_event_handler(ctx, game_data, vkey, self.get_current_clock());
+            .key_event_handler(ctx, vkey, self.get_current_clock());
         match vkey {
             tdev::VirtualKey::Action1 => {
                 println!("Action1 down!");
@@ -239,56 +213,36 @@ impl SceneManager for TaskScene {
         }
     }
 
-    fn key_up_event(
+    fn mouse_motion_event<'a>(
         &mut self,
-        _ctx: &mut ggez::Context,
-        _game_data: &GameData,
-        vkey: tdev::VirtualKey,
-    ) {
-        match vkey {
-            tdev::VirtualKey::Action1 => println!("Action1 up!"),
-            tdev::VirtualKey::Action2 => {}
-            _ => (),
-        }
-    }
-
-    fn mouse_motion_event(
-        &mut self,
-        ctx: &mut ggez::Context,
-        game_data: &GameData,
+        ctx: &mut SuzuContext<'a>,
         point: numeric::Point2f,
         offset: numeric::Vector2f,
     ) {
         if self.mouse_info.is_dragging(MouseButton::Left) {
             let d = numeric::Vector2f::new(offset.x / 2.0, offset.y / 2.0);
-            self.dragging_handler(ctx, point, d, game_data);
+            self.dragging_handler(ctx, point, d);
             self.mouse_info
                 .set_last_dragged(MouseButton::Left, point, self.get_current_clock());
         }
 
-        self.task_table
-            .mouse_motion_handler(ctx, game_data, point, offset);
+        self.task_table.mouse_motion_handler(ctx, point, offset);
 
-        let mouse_cursor_status = self.task_table.clickable_status(ctx, point);
-        ggez::input::mouse::set_cursor_type(ctx, mouse_cursor_status);
+        let mouse_cursor_status = self.task_table.clickable_status(ctx.context, point);
+        ggez::input::mouse::set_cursor_type(ctx.context, mouse_cursor_status);
     }
 
-    fn mouse_button_down_event(
+    fn mouse_button_down_event<'a>(
         &mut self,
-        ctx: &mut ggez::Context,
-        game_data: &GameData,
+        ctx: &mut SuzuContext<'a>,
         button: MouseButton,
         point: numeric::Point2f,
     ) {
         let info: &MouseActionRecord = &self.mouse_info.last_clicked.get(&button).unwrap();
         if info.point == point {
             if (self.get_current_clock() - info.t) < 30 {
-                self.task_table.double_click_handler(
-                    ctx,
-                    point,
-                    game_data,
-                    self.get_current_clock(),
-                );
+                self.task_table
+                    .double_click_handler(ctx, point, self.get_current_clock());
             }
         }
 
@@ -301,37 +255,35 @@ impl SceneManager for TaskScene {
         self.mouse_info.update_dragging(button, true);
 
         self.task_table
-            .button_down(ctx, game_data, self.get_current_clock(), button, point);
+            .button_down(ctx, self.get_current_clock(), button, point);
     }
 
-    fn mouse_button_up_event(
+    fn mouse_button_up_event<'a>(
         &mut self,
-        ctx: &mut ggez::Context,
-        game_data: &GameData,
+        ctx: &mut SuzuContext<'a>,
         button: MouseButton,
         point: numeric::Point2f,
     ) {
         self.mouse_info.update_dragging(button, false);
         //self.paper.button_up(ctx, button, point);
-        self.unselect_dragging_object(ctx, game_data, self.get_current_clock());
+        self.unselect_dragging_object(ctx, self.get_current_clock());
 
         self.task_table
-            .button_up(ctx, game_data, self.get_current_clock(), button, point);
+            .button_up(ctx, self.get_current_clock(), button, point);
 
         let info: &MouseActionRecord = &self.mouse_info.last_down.get(&button).unwrap();
         if info.point == point {
             self.task_table
-                .on_click(ctx, game_data, self.get_current_clock(), button, point);
+                .on_click(ctx, self.get_current_clock(), button, point);
         }
 
         self.mouse_info
             .set_last_up(button, point, self.get_current_clock());
     }
 
-    fn pre_process(&mut self, ctx: &mut ggez::Context, game_data: &GameData) {
+    fn pre_process<'a>(&mut self, ctx: &mut SuzuContext<'a>) {
         let t = self.get_current_clock();
-        self.task_table
-            .update(ctx, game_data, self.get_current_clock());
+        self.task_table.update(ctx, self.get_current_clock());
 
         if (self.status == TaskSceneStatus::CustomerEvent || self.status == TaskSceneStatus::Init)
             && self.task_table.get_remaining_customer_object_number() == 0
@@ -352,8 +304,8 @@ impl SceneManager for TaskScene {
 
             if self.customer_request.is_none() {
                 self.event_list.add_event(
-                    Box::new(move |scene: &mut TaskScene, ctx, game_data| {
-                        scene.ready_to_finish_scene(ctx, game_data, scene.get_current_clock());
+                    Box::new(move |scene: &mut TaskScene, ctx, _| {
+                        scene.ready_to_finish_scene(ctx, scene.get_current_clock());
                     }),
                     t + 150,
                 );
@@ -370,16 +322,10 @@ impl SceneManager for TaskScene {
         }
 
         if let Some(transition_effect) = self.scene_transition_effect.as_mut() {
-            transition_effect.effect(ctx, t);
+            transition_effect.effect(ctx.context, t);
         }
 
-        flush_delay_event!(
-            self,
-            self.event_list,
-            ctx,
-            game_data,
-            self.get_current_clock()
-        );
+        flush_delay_event!(self, self.event_list, ctx, self.get_current_clock());
     }
 
     fn drawing_process(&mut self, ctx: &mut ggez::Context) {
@@ -390,7 +336,7 @@ impl SceneManager for TaskScene {
         }
     }
 
-    fn post_process(&mut self, _ctx: &mut ggez::Context, _: &GameData) -> SceneTransition {
+    fn post_process<'a>(&mut self, _ctx: &mut SuzuContext<'a>) -> SceneTransition {
         self.update_current_clock();
         self.transition_status
     }

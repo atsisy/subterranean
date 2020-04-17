@@ -2,11 +2,11 @@ use torifune::numeric;
 
 use super::map_object::*;
 use super::*;
-use crate::core::{GameData, TextureID};
+use crate::core::{GameResource, TextureID};
 use crate::object::util_object::*;
 
 fn create_playable_doremy1(
-    game_data: &GameData,
+    game_data: &GameResource,
     camera: &numeric::Rect,
     map_position: numeric::Point2f,
 ) -> MapObject {
@@ -58,7 +58,7 @@ fn create_playable_doremy1(
 }
 
 fn create_customer_sample(
-    game_data: &GameData,
+    game_data: &GameResource,
     camera: &numeric::Rect,
     map_position: numeric::Point2f,
 ) -> MapObject {
@@ -117,7 +117,7 @@ pub enum CharacterFactoryOrder {
 
 pub fn create_character(
     order: CharacterFactoryOrder,
-    game_data: &GameData,
+    game_data: &GameResource,
     camera: &numeric::Rect,
     map_position: numeric::Point2f,
 ) -> MapObject {

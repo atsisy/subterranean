@@ -20,7 +20,7 @@ use crate::object::{effect, move_fn};
 use crate::scene::*;
 
 use super::Clickable;
-use crate::core::{FontID, GameData, TextureID, RentalLimit};
+use crate::core::{FontID, RentalLimit, SuzuContext, TextureID};
 
 use super::tt_menu_component::*;
 use super::tt_sub_component::*;
@@ -91,23 +91,24 @@ pub struct DeskObjects {
 }
 
 impl DeskObjects {
-    pub fn new(
-        ctx: &mut ggez::Context,
-        game_data: &GameData,
-        rect: ggraphics::Rect,
-    ) -> DeskObjects {
+    pub fn new<'a>(ctx: &mut SuzuContext<'a>, rect: ggraphics::Rect) -> DeskObjects {
         let mut dparam = ggraphics::DrawParam::default();
         dparam.dest = numeric::Point2f::new(rect.x, rect.y).into();
 
         let desk_objects = DeskObjectContainer::new();
 
         DeskObjects {
-            canvas: SubScreen::new(ctx, rect, 0, ggraphics::Color::new(0.0, 0.0, 0.0, 0.0)),
+            canvas: SubScreen::new(
+                ctx.context,
+                rect,
+                0,
+                ggraphics::Color::new(0.0, 0.0, 0.0, 0.0),
+            ),
             desk_objects: desk_objects,
             dragging: None,
             table_texture: SimpleObject::new(
                 MovableUniTexture::new(
-                    game_data.ref_texture(TextureID::Wood1),
+                    ctx.resource.ref_texture(TextureID::Wood1),
                     numeric::Point2f::new(0.0, 0.0),
                     numeric::Vector2f::new(1.0, 1.0),
                     0.0,
@@ -128,10 +129,9 @@ impl DeskObjects {
         }
     }
 
-    pub fn select_dragging_object(
+    pub fn select_dragging_object<'a>(
         &mut self,
-        ctx: &mut ggez::Context,
-        game_data: &GameData,
+        ctx: &mut SuzuContext<'a>,
         point: numeric::Point2f,
     ) {
         let mut dragging_object_index = 0;
@@ -149,7 +149,7 @@ impl DeskObjects {
             .rev()
             .enumerate()
         {
-            if obj.get_object().get_drawing_area(ctx).contains(rpoint) {
+            if obj.get_object().contains(ctx.context, rpoint) {
                 obj.get_object_mut().override_move_func(None, 0);
                 dragging_object_index = self.desk_objects.len() - index - 1;
                 drag_start = true;
@@ -164,7 +164,7 @@ impl DeskObjects {
                 .get_raw_container_mut()
                 .swap_remove(dragging_object_index);
 
-            dragging.get_object_mut().start_dragging(ctx, game_data);
+            dragging.get_object_mut().start_dragging(ctx);
 
             self.dragging = Some(dragging);
 
@@ -172,17 +172,13 @@ impl DeskObjects {
         }
     }
 
-    pub fn unselect_dragging_object(&mut self, ctx: &mut ggez::Context, game_data: &GameData) {
-        for obj in self.desk_objects.get_raw_container() {
-            print!("{},", obj.get_object().get_drawing_depth());
-        }
-
+    pub fn unselect_dragging_object<'a>(&mut self, ctx: &mut SuzuContext<'a>) {
         if self.dragging.is_some() {
             let mut dragged = self.release_dragging().unwrap();
 
             let min = self.desk_objects.get_minimum_depth();
             dragged.get_object_mut().set_drawing_depth(min);
-            dragged.get_object_mut().finish_dragging(ctx, game_data);
+            dragged.get_object_mut().finish_dragging(ctx);
             self.desk_objects.change_depth_equally(1);
 
             self.desk_objects.add(dragged);
@@ -190,20 +186,19 @@ impl DeskObjects {
         }
     }
 
-    pub fn update(&mut self, ctx: &mut ggez::Context, game_data: &GameData, t: Clock) {
-        flush_delay_event!(self, self.event_list, ctx, game_data, t);
+    pub fn update<'a>(&mut self, ctx: &mut SuzuContext<'a>, t: Clock) {
+        flush_delay_event!(self, self.event_list, ctx, t);
 
         for p in self.desk_objects.get_raw_container_mut() {
             p.get_object_mut().move_with_func(t);
-            p.get_object_mut().effect(ctx, t);
+            p.get_object_mut().effect(ctx.context, t);
         }
     }
 
-    pub fn double_click_handler(
+    pub fn double_click_handler<'a>(
         &mut self,
-        ctx: &mut ggez::Context,
+        ctx: &mut SuzuContext<'a>,
         point: numeric::Point2f,
-        _game_data: &GameData,
     ) -> Option<OnDeskType> {
         let rpoint = self.canvas.relative_point(point);
         let mut click_flag = false;
@@ -219,7 +214,7 @@ impl DeskObjects {
             .rev()
             .enumerate()
         {
-            if obj.get_object().get_drawing_area(ctx).contains(rpoint) {
+            if obj.get_object().contains(ctx.context, rpoint) {
                 click_flag = true;
 
                 object_type = Some(obj.get_object().get_type());
@@ -287,10 +282,9 @@ impl DeskObjects {
         count + if self.dragging.is_some() { 1 } else { 0 }
     }
 
-    pub fn click_handler(
+    pub fn click_handler<'a>(
         &mut self,
-        ctx: &mut ggez::Context,
-        game_data: &GameData,
+        ctx: &mut SuzuContext<'a>,
         t: Clock,
         button: ggez::input::mouse::MouseButton,
         point: numeric::Point2f,
@@ -298,9 +292,8 @@ impl DeskObjects {
         let rpoint = self.canvas.relative_point(point);
 
         for dobj in self.desk_objects.get_raw_container_mut().iter_mut().rev() {
-            if dobj.get_object_mut().contains(ctx, rpoint) {
-                dobj.get_object_mut()
-                    .button_up(ctx, game_data, t, button, rpoint);
+            if dobj.get_object_mut().contains(ctx.context, rpoint) {
+                dobj.get_object_mut().button_up(ctx, t, button, rpoint);
 
                 return true;
             }
@@ -792,20 +785,19 @@ pub struct SuzuMiniSightSilhouette {
 }
 
 impl SuzuMiniSightSilhouette {
-    pub fn new(
-        ctx: &mut ggez::Context,
-        game_data: &GameData,
+    pub fn new<'a>(
+        ctx: &mut SuzuContext<'a>,
         rect: numeric::Rect,
         background: MovableUniTexture,
         t: Clock,
     ) -> Self {
         let mut text_balloon = Box::new(TextBalloon::new(
-            ctx,
+            ctx.context,
             numeric::Rect::new(430.0, 10.0, 200.0, 300.0),
             "",
             TextBalloonPhraseType::SimplePhrase,
             FontInformation::new(
-                game_data.get_font(FontID::JpFude1),
+                ctx.resource.get_font(FontID::JpFude1),
                 numeric::Vector2f::new(22.0, 22.0),
                 ggraphics::Color::from_rgba_u32(0xff),
             ),
@@ -816,7 +808,7 @@ impl SuzuMiniSightSilhouette {
             event_list: DelayEventList::new(),
             background: background,
             silhouette: TaskSilhouette::new_empty(
-                ctx,
+                ctx.context,
                 numeric::Rect::new(100.0, 0.0, 350.0, 300.0),
             ),
             text_balloon: EffectableWrap::new(
@@ -824,7 +816,12 @@ impl SuzuMiniSightSilhouette {
                 vec![effect::fade_in(10, t)],
             ),
             customer_dialogue: CustomerDialogue::new(Vec::new(), Vec::new()),
-            canvas: SubScreen::new(ctx, rect, 0, ggraphics::Color::from_rgba_u32(0x00000000)),
+            canvas: SubScreen::new(
+                ctx.context,
+                rect,
+                0,
+                ggraphics::Color::from_rgba_u32(0x00000000),
+            ),
         }
     }
 
@@ -851,11 +848,15 @@ impl SuzuMiniSightSilhouette {
             let line = self.customer_dialogue.get_current_dialogue_line();
             delay_time += self.customer_dialogue.get_current_time_step();
             self.event_list.add(DelayEvent::new(
-                Box::new(move |silhouette, ctx, _| {
-                    silhouette.replace_text(ctx, &line, TextBalloonPhraseType::SimplePhrase);
+                Box::new(move |silhouette, ctx, called| {
+                    silhouette.replace_text(
+                        ctx.context,
+                        &line,
+                        TextBalloonPhraseType::SimplePhrase,
+                    );
                     silhouette
                         .text_balloon
-                        .add_effect(vec![effect::fade_in(20, t + delay_time)]);
+                        .add_effect(vec![effect::fade_in(20, called)]);
                 }),
                 t + delay_time,
             ));
@@ -870,16 +871,19 @@ impl SuzuMiniSightSilhouette {
         self.replace_character(chara, name);
     }
 
-    fn run_effect(&mut self, ctx: &mut ggez::Context, game_data: &GameData, t: Clock) {
-        flush_delay_event!(self, self.event_list, ctx, game_data, t);
+    fn run_effect<'a>(&mut self, ctx: &mut SuzuContext<'a>, t: Clock) {
+        flush_delay_event!(self, self.event_list, ctx, t);
 
         if self.silhouette.is_some() {
             self.silhouette.get_object_mut().unwrap().move_with_func(t);
-            self.silhouette.get_object_mut().unwrap().effect(ctx, t);
+            self.silhouette
+                .get_object_mut()
+                .unwrap()
+                .effect(ctx.context, t);
         }
 
-        self.text_balloon.update_mesh(ctx);
-        self.text_balloon.effect(ctx, t);
+        self.text_balloon.update_mesh(ctx.context);
+        self.text_balloon.effect(ctx.context, t);
     }
 
     pub fn replace_text(
@@ -901,7 +905,7 @@ impl SuzuMiniSightSilhouette {
     ) {
         self.event_list.add(DelayEvent::new(
             Box::new(move |silhouette, ctx, _| {
-                silhouette.replace_text(ctx, &text, phrase_type);
+                silhouette.replace_text(ctx.context, &text, phrase_type);
                 silhouette
                     .text_balloon
                     .add_effect(vec![effect::fade_in(20, now + delay_time)]);
@@ -1016,23 +1020,22 @@ pub struct SuzuMiniSight {
 }
 
 impl SuzuMiniSight {
-    pub fn new(
-        ctx: &mut ggez::Context,
-        game_data: &GameData,
-        rect: ggraphics::Rect,
-        t: Clock,
-    ) -> Self {
+    pub fn new<'a>(ctx: &mut SuzuContext<'a>, rect: ggraphics::Rect, t: Clock) -> Self {
         SuzuMiniSight {
-            canvas: SubScreen::new(ctx, rect, 0, ggraphics::Color::new(0.0, 0.0, 0.0, 0.0)),
+            canvas: SubScreen::new(
+                ctx.context,
+                rect,
+                0,
+                ggraphics::Color::new(0.0, 0.0, 0.0, 0.0),
+            ),
             dragging: None,
             dropping: Vec::new(),
             dropping_to_desk: Vec::new(),
             silhouette: SuzuMiniSightSilhouette::new(
                 ctx,
-                game_data,
                 rect,
                 MovableUniTexture::new(
-                    game_data.ref_texture(TextureID::Paper1),
+                    ctx.resource.ref_texture(TextureID::Paper1),
                     numeric::Point2f::new(-100.0, 0.0),
                     numeric::Vector2f::new(1.0, 1.0),
                     0.0,
@@ -1087,20 +1090,20 @@ impl SuzuMiniSight {
         self.silhouette.run_hide_effect(now);
     }
 
-    pub fn update(&mut self, ctx: &mut ggez::Context, game_data: &GameData, t: Clock) {
+    pub fn update<'a>(&mut self, ctx: &mut SuzuContext<'a>, t: Clock) {
         self.dropping.retain(|d| !d.get_object().is_stop());
 
         for d in &mut self.dropping {
             d.get_object_mut().move_with_func(t);
-            d.get_object_mut().effect(ctx, t);
+            d.get_object_mut().effect(ctx.context, t);
         }
 
         for d in &mut self.dropping_to_desk {
             d.get_object_mut().move_with_func(t);
-            d.get_object_mut().effect(ctx, t);
+            d.get_object_mut().effect(ctx.context, t);
         }
 
-        self.silhouette.run_effect(ctx, game_data, t);
+        self.silhouette.run_effect(ctx, t);
     }
 
     pub fn check_drop_desk(&mut self) -> Vec<DeskObject> {
@@ -1316,21 +1319,22 @@ pub struct ShelvingBookBox {
 }
 
 impl ShelvingBookBox {
-    pub fn new(
-        ctx: &mut ggez::Context,
-        game_data: &GameData,
-        rect: ggraphics::Rect,
-    ) -> ShelvingBookBox {
+    pub fn new<'a>(ctx: &mut SuzuContext<'a>, rect: ggraphics::Rect) -> ShelvingBookBox {
         let mut dparam = ggraphics::DrawParam::default();
         dparam.dest = numeric::Point2f::new(rect.x, rect.y).into();
 
         ShelvingBookBox {
-            canvas: SubScreen::new(ctx, rect, 0, ggraphics::Color::new(0.0, 0.0, 0.0, 0.0)),
+            canvas: SubScreen::new(
+                ctx.context,
+                rect,
+                0,
+                ggraphics::Color::new(0.0, 0.0, 0.0, 0.0),
+            ),
             shelved: Vec::new(),
             dragging: None,
             table_texture: SimpleObject::new(
                 MovableUniTexture::new(
-                    game_data.ref_texture(TextureID::Wood1),
+                    ctx.resource.ref_texture(TextureID::Wood1),
                     numeric::Point2f::new(0.0, 0.0),
                     numeric::Vector2f::new(1.0, 1.0),
                     0.0,
@@ -1432,10 +1436,9 @@ impl ShelvingBookBox {
         !self.canvas.contains(point)
     }
 
-    fn button_up_handler(
+    fn button_up_handler<'a>(
         &mut self,
-        ctx: &mut ggez::Context,
-        game_data: &GameData,
+        ctx: &mut SuzuContext<'a>,
         t: Clock,
         button: ggez::input::mouse::MouseButton,
         point: numeric::Point2f,
@@ -1444,9 +1447,8 @@ impl ShelvingBookBox {
         let rpoint = self.canvas.relative_point(point);
 
         for dobj in &mut self.shelved {
-            if dobj.get_object_mut().get_drawing_area(ctx).contains(rpoint) {
-                dobj.get_object_mut()
-                    .button_up(ctx, game_data, t, button, rpoint);
+            if dobj.get_object_mut().contains(ctx.context, rpoint) {
+                dobj.get_object_mut().button_up(ctx, t, button, rpoint);
             }
         }
     }

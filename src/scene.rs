@@ -9,7 +9,7 @@ use torifune::core::Clock;
 use torifune::device as tdev;
 use torifune::numeric;
 
-use crate::core::GameData;
+use crate::core::SuzuContext;
 
 #[derive(Debug, Eq, PartialEq, Clone, Copy)]
 pub enum SceneTransition {
@@ -45,63 +45,47 @@ impl FromStr for SceneID {
 }
 
 pub trait SceneManager {
-    fn key_down_event(
-        &mut self,
-        _ctx: &mut ggez::Context,
-        _game_data: &GameData,
-        _vkey: tdev::VirtualKey,
-    ) {
-    }
+    fn key_down_event<'a>(&mut self, _: &mut SuzuContext<'a>, _vkey: tdev::VirtualKey) {}
 
-    fn key_up_event(
-        &mut self,
-        _ctx: &mut ggez::Context,
-        _game_data: &GameData,
-        _vkey: tdev::VirtualKey,
-    ) {
-    }
+    fn key_up_event<'a>(&mut self, _ctx: &mut SuzuContext<'a>, _vkey: tdev::VirtualKey) {}
 
-    fn mouse_motion_event(
+    fn mouse_motion_event<'a>(
         &mut self,
-        _ctx: &mut ggez::Context,
-        _game_data: &GameData,
+        _ctx: &mut SuzuContext<'a>,
         _point: numeric::Point2f,
         _offset: numeric::Vector2f,
     ) {
     }
 
-    fn mouse_button_down_event(
+    fn mouse_button_down_event<'a>(
         &mut self,
-        _ctx: &mut ggez::Context,
-        _game_data: &GameData,
+        _ctx: &mut SuzuContext<'a>,
         _button: ginput::mouse::MouseButton,
         _point: numeric::Point2f,
     ) {
     }
 
-    fn mouse_button_up_event(
+    fn mouse_button_up_event<'a>(
         &mut self,
-        _ctx: &mut ggez::Context,
-        _game_data: &GameData,
+        _ctx: &mut SuzuContext<'a>,
         _button: ginput::mouse::MouseButton,
         _point: numeric::Point2f,
     ) {
     }
 
-    fn mouse_wheel_event(
+    fn mouse_wheel_event<'a>(
         &mut self,
-        _ctx: &mut ggez::Context,
-        _game_data: &GameData,
+        _ctx: &mut SuzuContext<'a>,
         _point: numeric::Point2f,
         _x: f32,
         _y: f32,
     ) {
     }
 
-    fn pre_process(&mut self, ctx: &mut ggez::Context, game_data: &GameData);
+    fn pre_process<'a>(&mut self, ctx: &mut SuzuContext<'a>);
 
     fn drawing_process(&mut self, ctx: &mut ggez::Context);
-    fn post_process(&mut self, ctx: &mut ggez::Context, game_data: &GameData) -> SceneTransition;
+    fn post_process<'a>(&mut self, ctx: &mut SuzuContext<'a>) -> SceneTransition;
     fn transition(&self) -> SceneID;
 
     fn get_current_clock(&self) -> Clock;
@@ -118,10 +102,10 @@ impl NullScene {
 }
 
 impl SceneManager for NullScene {
-    fn pre_process(&mut self, _ctx: &mut ggez::Context, _: &GameData) {}
+    fn pre_process<'a>(&mut self, _ctx: &mut SuzuContext<'a>) {}
 
     fn drawing_process(&mut self, _ctx: &mut ggez::Context) {}
-    fn post_process(&mut self, _ctx: &mut ggez::Context, _: &GameData) -> SceneTransition {
+    fn post_process<'a>(&mut self, _ctx: &mut SuzuContext<'a>) -> SceneTransition {
         SceneTransition::Keep
     }
 
@@ -147,11 +131,11 @@ impl SceneManager for NullScene {
 ///
 pub struct DelayEvent<T> {
     pub run_time: Clock,
-    pub func: Box<dyn FnOnce(&mut T, &mut ggez::Context, &GameData) -> ()>,
+    pub func: Box<dyn FnOnce(&mut T, &mut SuzuContext, Clock) -> ()>,
 }
 
 impl<T> DelayEvent<T> {
-    pub fn new(f: Box<dyn FnOnce(&mut T, &mut ggez::Context, &GameData) -> ()>, t: Clock) -> Self {
+    pub fn new(f: Box<dyn FnOnce(&mut T, &mut SuzuContext, Clock) -> ()>, t: Clock) -> Self {
         DelayEvent::<T> {
             run_time: t,
             func: f,
@@ -176,7 +160,7 @@ impl<T> DelayEventList<T> {
 
     pub fn add_event(
         &mut self,
-        f: Box<dyn FnOnce(&mut T, &mut ggez::Context, &GameData) -> ()>,
+        f: Box<dyn FnOnce(&mut T, &mut SuzuContext, Clock) -> ()>,
         t: Clock,
     ) -> &mut Self {
         self.add(DelayEvent::new(f, t))
@@ -203,7 +187,7 @@ impl<T> DelayEventList<T> {
 
 #[macro_export]
 macro_rules! flush_delay_event {
-    ($slf: expr, $event_list: expr, $ctx: expr, $game_data: expr, $t: expr) => {
+    ($slf: expr, $event_list: expr, $ctx: expr, $t: expr) => {
 	while let Some(event) = $event_list.move_top() {
             // 時間が来ていない場合は、取り出した要素をリストに戻して処理ループを抜ける
             if event.run_time > $t {
@@ -212,7 +196,7 @@ macro_rules! flush_delay_event {
             }
 
             // 所有権を移動しているため、selfを渡してもエラーにならない
-            (event.func)($slf, $ctx, $game_data);
+            (event.func)($slf, $ctx, $t);
         }
     };
 }

@@ -7,7 +7,7 @@ use torifune::debug;
 use torifune::device::VirtualKey;
 use torifune::numeric;
 
-use crate::core::{GameData, GensoDate, TaskResult, GameStatus};
+use crate::core::{GensoDate, SuzuContext, TaskResult};
 use crate::scene::*;
 
 use crate::object::task_object::tt_sub_component::CopyingRequestInformation;
@@ -17,118 +17,103 @@ use suzuna_sub_scene::*;
 pub struct SuzunaScene {
     clock: Clock,
     sub_scene: SuzunaSubScene,
-    task_result: TaskResult,
 }
 
 impl SuzunaScene {
-    pub fn new(ctx: &mut ggez::Context, game_data: &GameData, suzuna_map_id: u32, game_status: GameStatus) -> Self {
+    pub fn new<'a>(ctx: &mut SuzuContext<'a>, suzuna_map_id: u32) -> Self {
         SuzunaScene {
             clock: 0,
-            sub_scene: SuzunaSubScene::new(ctx, game_data, suzuna_map_id, game_status.clone()),
-            task_result: game_status.task_result,
+            sub_scene: SuzunaSubScene::new(ctx, suzuna_map_id, ctx.savable_data.clone()),
         }
     }
 
-    fn transition_shop_scene_to_others(
+    fn transition_shop_scene_to_others<'a>(
         &mut self,
-        ctx: &mut ggez::Context,
-        game_data: &GameData,
+        ctx: &mut SuzuContext<'a>,
         transition_status: SceneTransition,
     ) {
         if transition_status == SceneTransition::StackingTransition {
             if self.sub_scene.get_shop_scene_mut().unwrap().transition() == SceneID::MainDesk {
                 debug::debug_screen_push_text("switch shop -> work");
                 self.sub_scene
-                    .switch_shop_to_deskwork(ctx, game_data, transition_status);
+                    .switch_shop_to_deskwork(ctx, transition_status);
             }
         }
 
         if self.sub_scene.get_shop_scene_mut().unwrap().transition() == SceneID::DayResult {
             debug::debug_screen_push_text("switch shop -> result");
             self.sub_scene
-                .switch_shop_to_day_result(ctx, game_data, transition_status);
+                .switch_shop_to_day_result(ctx, transition_status);
         }
 
         if self.sub_scene.get_shop_scene_mut().unwrap().transition() == SceneID::Copying {
             debug::debug_screen_push_text("switch shop -> copying");
             self.sub_scene
-                .switch_shop_to_copying(ctx, game_data, transition_status);
+                .switch_shop_to_copying(ctx, transition_status);
         }
-    }
-
-    pub fn get_task_result(&self) -> TaskResult {
-	self.task_result.clone()
     }
 }
 
 impl SceneManager for SuzunaScene {
-    fn key_down_event(&mut self, ctx: &mut ggez::Context, game_data: &GameData, vkey: VirtualKey) {
-        self.sub_scene.key_down_event(ctx, game_data, vkey);
+    fn key_down_event<'a>(&mut self, ctx: &mut SuzuContext<'a>, vkey: VirtualKey) {
+        self.sub_scene.key_down_event(ctx, vkey);
     }
 
-    fn key_up_event(&mut self, ctx: &mut ggez::Context, game_data: &GameData, vkey: VirtualKey) {
-        self.sub_scene.key_up_event(ctx, game_data, vkey);
+    fn key_up_event<'a>(&mut self, ctx: &mut SuzuContext<'a>, vkey: VirtualKey) {
+        self.sub_scene.key_up_event(ctx, vkey);
     }
 
-    fn mouse_motion_event(
+    fn mouse_motion_event<'a>(
         &mut self,
-        ctx: &mut ggez::Context,
-        game_data: &GameData,
+        ctx: &mut SuzuContext<'a>,
         point: numeric::Point2f,
         offset: numeric::Vector2f,
     ) {
-        self.sub_scene
-            .mouse_motion_event(ctx, game_data, point, offset);
+        self.sub_scene.mouse_motion_event(ctx, point, offset);
     }
 
-    fn mouse_button_down_event(
+    fn mouse_button_down_event<'a>(
         &mut self,
-        ctx: &mut ggez::Context,
-        game_data: &GameData,
+        ctx: &mut SuzuContext<'a>,
         button: MouseButton,
         point: numeric::Point2f,
     ) {
-        self.sub_scene
-            .mouse_button_down_event(ctx, game_data, button, point);
+        self.sub_scene.mouse_button_down_event(ctx, button, point);
     }
 
-    fn mouse_button_up_event(
+    fn mouse_button_up_event<'a>(
         &mut self,
-        ctx: &mut ggez::Context,
-        game_data: &GameData,
+        ctx: &mut SuzuContext<'a>,
         button: MouseButton,
         point: numeric::Point2f,
     ) {
-        self.sub_scene
-            .mouse_button_up_event(ctx, game_data, button, point);
+        self.sub_scene.mouse_button_up_event(ctx, button, point);
     }
 
-    fn mouse_wheel_event(
+    fn mouse_wheel_event<'a>(
         &mut self,
-        ctx: &mut ggez::Context,
-        game_data: &GameData,
+        ctx: &mut SuzuContext<'a>,
         point: numeric::Point2f,
         x: f32,
         y: f32,
     ) {
-        self.sub_scene
-            .mouse_wheel_event(ctx, game_data, point, x, y);
+        self.sub_scene.mouse_wheel_event(ctx, point, x, y);
     }
 
-    fn pre_process(&mut self, ctx: &mut ggez::Context, game_data: &GameData) {
-        self.sub_scene.pre_process(ctx, game_data);
+    fn pre_process<'a>(&mut self, ctx: &mut SuzuContext<'a>) {
+        self.sub_scene.pre_process(ctx);
     }
 
     fn drawing_process(&mut self, ctx: &mut ggez::Context) {
         self.sub_scene.drawing_process(ctx);
     }
 
-    fn post_process(&mut self, ctx: &mut ggez::Context, game_data: &GameData) -> SceneTransition {
-        let transition_status = self.sub_scene.post_process(ctx, game_data);
+    fn post_process<'a>(&mut self, ctx: &mut SuzuContext<'a>) -> SceneTransition {
+        let transition_status = self.sub_scene.post_process(ctx);
 
         match self.sub_scene.get_scene_status() {
             SuzunaSceneStatus::Shop => {
-                self.transition_shop_scene_to_others(ctx, game_data, transition_status);
+                self.transition_shop_scene_to_others(ctx, transition_status);
             }
             SuzunaSceneStatus::DeskWork => {
                 if transition_status == SceneTransition::PoppingTransition {
@@ -139,21 +124,8 @@ impl SceneManager for SuzunaScene {
                         .transition()
                         == SceneID::SuzunaShop
                     {
-                        self.task_result.add_result(
-                            self.sub_scene
-                                .desk_work_scene
-                                .as_ref()
-                                .unwrap()
-                                .get_task_result(),
-                        );
                         self.sub_scene
-                            .switch_deskwork_to_shop(ctx, game_data, transition_status);
-                        self.sub_scene
-                            .shop_scene
-                            .as_mut()
-                            .unwrap()
-                            .update_task_result(ctx, game_data, &self.task_result);
-                        debug::debug_screen_push_text(&format!("{:?}", self.task_result));
+                            .switch_deskwork_to_shop(ctx, transition_status);
                     }
                 }
             }

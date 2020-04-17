@@ -28,7 +28,7 @@ use tt_menu_component::*;
 use tt_sub_component::*;
 
 use super::Clickable;
-use crate::core::{GameData, GensoDate, TextureID, RentalLimit};
+use crate::core::{GensoDate, RentalLimit, SuzuContext, TextureID};
 
 pub struct TaskTable {
     canvas: SubScreen,
@@ -48,9 +48,8 @@ pub struct TaskTable {
 }
 
 impl TaskTable {
-    pub fn new(
-        ctx: &mut ggez::Context,
-        game_data: &GameData,
+    pub fn new<'a>(
+        ctx: &mut SuzuContext<'a>,
         pos: numeric::Rect,
         sight_rect: numeric::Rect,
         desk_rect: numeric::Rect,
@@ -59,15 +58,15 @@ impl TaskTable {
         record_book_data: Option<BorrowingRecordBookData>,
         t: Clock,
     ) -> Self {
-        let sight = SuzuMiniSight::new(ctx, game_data, sight_rect, t);
-	
-        let mut desk = DeskObjects::new(ctx, game_data, desk_rect);
+        let sight = SuzuMiniSight::new(ctx, sight_rect, t);
+
+        let mut desk = DeskObjects::new(ctx, desk_rect);
 
         desk.add_object(DeskObject::new(
             Box::new(OnDeskTexture::new(
-                ctx,
+                ctx.context,
                 UniTexture::new(
-                    game_data.ref_texture(TextureID::LotusPink),
+                    ctx.resource.ref_texture(TextureID::LotusPink),
                     numeric::Point2f::new(0.0, 0.0),
                     numeric::Vector2f::new(0.1, 0.1),
                     0.0,
@@ -76,9 +75,9 @@ impl TaskTable {
                 OnDeskType::Texture,
             )),
             Box::new(OnDeskTexture::new(
-                ctx,
+                ctx.context,
                 UniTexture::new(
-                    game_data.ref_texture(TextureID::LotusPink),
+                    ctx.resource.ref_texture(TextureID::LotusPink),
                     numeric::Point2f::new(0.0, 0.0),
                     numeric::Vector2f::new(0.1, 0.1),
                     0.0,
@@ -93,9 +92,9 @@ impl TaskTable {
 
         let mut record_book = DeskObject::new(
             Box::new(OnDeskTexture::new(
-                ctx,
+                ctx.context,
                 UniTexture::new(
-                    game_data.ref_texture(TextureID::Chobo1),
+                    ctx.resource.ref_texture(TextureID::Chobo1),
                     numeric::Point2f::new(0.0, 0.0),
                     numeric::Vector2f::new(0.2, 0.2),
                     0.0,
@@ -104,9 +103,9 @@ impl TaskTable {
                 OnDeskType::BorrowingRecordBook,
             )),
             Box::new(OnDeskTexture::new(
-                ctx,
+                ctx.context,
                 UniTexture::new(
-                    game_data.ref_texture(TextureID::Chobo1),
+                    ctx.resource.ref_texture(TextureID::Chobo1),
                     numeric::Point2f::new(0.0, 0.0),
                     numeric::Vector2f::new(0.5, 0.5),
                     0.0,
@@ -121,23 +120,27 @@ impl TaskTable {
         record_book.enable_large();
         desk.add_object(record_book);
 
-        let shelving_box = ShelvingBookBox::new(ctx, game_data, shelving_box_rect);
+        let shelving_box = ShelvingBookBox::new(ctx, shelving_box_rect);
 
         let mut record_book = BorrowingRecordBook::new(
             ctx,
-            game_data,
             ggraphics::Rect::new(150.0, -550.0, 1000.0, 550.0),
             0,
             record_book_data,
             t,
         );
         if record_book.pages_length() == 0 {
-            record_book.add_empty_page(ctx, game_data, 0);
+            record_book.add_empty_page(ctx, 0);
         }
         record_book.hide();
 
         TaskTable {
-            canvas: SubScreen::new(ctx, pos, 0, ggraphics::Color::from_rgba_u32(0x00000000)),
+            canvas: SubScreen::new(
+                ctx.context,
+                pos,
+                0,
+                ggraphics::Color::from_rgba_u32(0x00000000),
+            ),
             sight: sight,
             desk: desk,
             staging_object: None,
@@ -145,7 +148,7 @@ impl TaskTable {
             shelving_box: shelving_box,
             event_list: DelayEventList::new(),
             borrowing_record_book: record_book,
-	    record_book_is_staged: false,
+            record_book_is_staged: false,
             customer_silhouette_menu: CustomerMenuGroup::new(0),
             record_book_menu: RecordBookMenuGroup::new(0),
             on_desk_menu: OnDeskMenuGroup::new(0),
@@ -158,46 +161,46 @@ impl TaskTable {
         &self.kosuzu_memory
     }
 
-    fn select_dragging_object(
-        &mut self,
-        ctx: &mut ggez::Context,
-        game_data: &GameData,
-        point: numeric::Point2f,
-    ) {
-	let rpoint = self.canvas.relative_point(point);
+    fn select_dragging_object<'a>(&mut self, ctx: &mut SuzuContext<'a>, point: numeric::Point2f) {
+        let rpoint = self.canvas.relative_point(point);
 
-	// メニューがオブジェクトの上に表示されている場合、ドラッグする
-	// オブジェクトの走査は行わない
-	if self.record_book_is_staged {
-	    return ();
-	}
+        // メニューがオブジェクトの上に表示されている場合、ドラッグする
+        // オブジェクトの走査は行わない
+        if self.record_book_is_staged {
+            return ();
+        }
 
-	if self.record_book_menu.is_contains_any_menus(ctx, rpoint) {
-	    return ();
-	}
+        if self
+            .record_book_menu
+            .is_contains_any_menus(ctx.context, rpoint)
+        {
+            return ();
+        }
 
-	if self.customer_silhouette_menu.is_contains_any_menus(ctx, rpoint) {
-	    return ();
-	}
+        if self
+            .customer_silhouette_menu
+            .is_contains_any_menus(ctx.context, rpoint)
+        {
+            return ();
+        }
 
-	if self.on_desk_menu.is_contains_any_menus(ctx, rpoint) {
-	    return ();
-	}
+        if self.on_desk_menu.is_contains_any_menus(ctx.context, rpoint) {
+            return ();
+        }
 
-        self.desk.select_dragging_object(ctx, game_data, rpoint);
+        self.desk.select_dragging_object(ctx, rpoint);
     }
 
-    pub fn mouse_motion_handler(
+    pub fn mouse_motion_handler<'a>(
         &mut self,
-        _: &mut ggez::Context,
-        _: &GameData,
+        _: &mut SuzuContext<'a>,
         point: numeric::Point2f,
         _: numeric::Vector2f,
     ) {
         self.borrowing_record_book.mouse_motion_handler(point);
     }
 
-    fn slide_appear_record_book(&mut self, _ctx: &mut ggez::Context, _: &GameData, t: Clock) {
+    fn slide_appear_record_book(&mut self, t: Clock) {
         self.event_list.add_event(
             Box::new(|tt: &mut TaskTable, _, _| tt.borrowing_record_book.appear()),
             t + 30,
@@ -209,7 +212,7 @@ impl TaskTable {
         );
     }
 
-    fn slide_hide_record_book(&mut self, _ctx: &mut ggez::Context, _: &GameData, t: Clock) {
+    fn slide_hide_record_book(&mut self, t: Clock) {
         self.event_list.add_event(
             Box::new(|tt: &mut TaskTable, _, _| tt.borrowing_record_book.hide()),
             t + 30,
@@ -219,28 +222,27 @@ impl TaskTable {
             move_fn::devide_distance(numeric::Point2f::new(150.0, -550.0), 0.1),
             t,
         );
-	self.record_book_is_staged = false;
+        self.record_book_is_staged = false;
 
         self.record_book_menu.close_all(t);
     }
 
-    pub fn double_click_handler(
+    pub fn double_click_handler<'a>(
         &mut self,
-        ctx: &mut ggez::Context,
+        ctx: &mut SuzuContext<'a>,
         point: numeric::Point2f,
-        game_data: &GameData,
         t: Clock,
     ) {
         let rpoint = self.canvas.relative_point(point);
 
-        let clicked_object_type = self.desk.double_click_handler(ctx, rpoint, game_data);
+        let clicked_object_type = self.desk.double_click_handler(ctx, rpoint);
 
         if clicked_object_type.is_some() {
             match clicked_object_type.unwrap() {
                 OnDeskType::BorrowingRecordBook => {
                     debug::debug_screen_push_text("slide appear record book");
-                    self.slide_appear_record_book(ctx, game_data, t);
-		    self.record_book_is_staged = true;
+                    self.slide_appear_record_book(t);
+                    self.record_book_is_staged = true;
                 }
                 _ => (),
             }
@@ -256,14 +258,9 @@ impl TaskTable {
         self.shelving_box.dragging_handler(rpoint, rlast);
     }
 
-    pub fn unselect_dragging_object(
-        &mut self,
-        ctx: &mut ggez::Context,
-        game_data: &GameData,
-        t: Clock,
-    ) {
-        self.sight.unselect_dragging_object(ctx, t);
-        self.desk.unselect_dragging_object(ctx, game_data);
+    pub fn unselect_dragging_object<'a>(&mut self, ctx: &mut SuzuContext<'a>, t: Clock) {
+        self.sight.unselect_dragging_object(ctx.context, t);
+        self.desk.unselect_dragging_object(ctx);
         self.shelving_box.unselect_dragging_object(t);
     }
 
@@ -410,7 +407,7 @@ impl TaskTable {
         numeric::Point2f::new(rpoint.x, 0.0)
     }
 
-    fn check_sight_drop_to_desk(&mut self, ctx: &mut ggez::Context, game_data: &GameData, t: Clock) {
+    fn check_sight_drop_to_desk<'a>(&mut self, ctx: &mut SuzuContext<'a>, t: Clock) {
         let converted = self.sight.check_drop_desk();
         if converted.len() == 0 {
             return ();
@@ -420,13 +417,16 @@ impl TaskTable {
         let converted = converted
             .into_iter()
             .map(|mut obj| {
-                self.apply_s2d_point_convertion(ctx, &mut obj);
+                self.apply_s2d_point_convertion(ctx.context, &mut obj);
                 obj.get_object_mut().clear_effect();
                 obj.get_object_mut()
                     .override_move_func(move_fn::gravity_move(1.0, 10.0, 400.0, 0.3), t);
                 obj.get_object_mut().set_drawing_depth(min);
-		obj.get_object_mut().ref_wrapped_object_mut().ref_wrapped_object_mut().finish_dragging(ctx, game_data);
-		
+                obj.get_object_mut()
+                    .ref_wrapped_object_mut()
+                    .ref_wrapped_object_mut()
+                    .finish_dragging(ctx);
+
                 obj.get_object_mut().add_effect(vec![Box::new(
                     |obj: &mut dyn MovableObject, _: &ggez::Context, t: Clock| {
                         if obj.get_position().y > 150.0 {
@@ -444,17 +444,17 @@ impl TaskTable {
         self.desk.add_customer_object_vec(converted);
     }
 
-    pub fn update(&mut self, ctx: &mut ggez::Context, game_data: &GameData, t: Clock) {
-        flush_delay_event!(self, self.event_list, ctx, game_data, t);
+    pub fn update<'a>(&mut self, ctx: &mut SuzuContext<'a>, t: Clock) {
+        flush_delay_event!(self, self.event_list, ctx, t);
 
-        self.sight.update(ctx, game_data, t);
-        self.desk.update(ctx, game_data, t);
-        self.shelving_box.update(ctx, t);
-        self.check_sight_drop_to_desk(ctx, game_data, t);
+        self.sight.update(ctx, t);
+        self.desk.update(ctx, t);
+        self.shelving_box.update(ctx.context, t);
+        self.check_sight_drop_to_desk(ctx, t);
         self.borrowing_record_book.update(t);
-        self.record_book_menu.update(ctx, game_data, t);
-        self.customer_silhouette_menu.update(ctx, game_data, t);
-        self.on_desk_menu.update(ctx, game_data, t);
+        self.record_book_menu.update(ctx, t);
+        self.customer_silhouette_menu.update(ctx, t);
+        self.on_desk_menu.update(ctx, t);
     }
 
     pub fn finish_customer_event(&mut self, now: Clock) {
@@ -466,10 +466,9 @@ impl TaskTable {
             .count_object_by_type(DeskObjectType::CustomerObject)
     }
 
-    fn start_borrowing_customer_event(
+    fn start_borrowing_customer_event<'a>(
         &mut self,
-        ctx: &mut ggez::Context,
-        game_data: &GameData,
+        ctx: &mut SuzuContext<'a>,
         info: BorrowingInformation,
         t: Clock,
     ) {
@@ -477,15 +476,19 @@ impl TaskTable {
         self.sight.lock_object_handover();
 
         for book_info in &info.borrowing {
-            let mut obj =
-                factory::create_dobj_book(ctx, game_data, DeskObjectType::CustomerObject, book_info.clone(), t);
+            let mut obj = factory::create_dobj_book(
+                ctx,
+                DeskObjectType::CustomerObject,
+                book_info.clone(),
+                t,
+            );
             obj.enable_large();
             self.desk.add_customer_object(obj);
         }
 
         let mut new_silhouette = SimpleObject::new(
             MovableUniTexture::new(
-                game_data.ref_texture(TextureID::JunkoTachieDefault),
+                ctx.resource.ref_texture(TextureID::JunkoTachieDefault),
                 numeric::Point2f::new(100.0, 20.0),
                 numeric::Vector2f::new(0.1, 0.1),
                 0.0,
@@ -500,7 +503,7 @@ impl TaskTable {
         );
         new_silhouette.set_alpha(0.0);
         self.sight.silhouette_new_customer_update(
-            ctx,
+            ctx.context,
             new_silhouette,
             info.borrower.to_string(),
             CustomerDialogue::new(
@@ -511,10 +514,9 @@ impl TaskTable {
         );
     }
 
-    fn start_returning_customer_event(
+    fn start_returning_customer_event<'a>(
         &mut self,
-        ctx: &mut ggez::Context,
-        game_data: &GameData,
+        ctx: &mut SuzuContext<'a>,
         info: ReturnBookInformation,
         t: Clock,
     ) {
@@ -522,15 +524,19 @@ impl TaskTable {
         self.sight.lock_object_handover();
 
         for book_info in &info.returning {
-            let mut obj =
-                factory::create_dobj_book(ctx, game_data, DeskObjectType::CustomerObject, book_info.clone(), t);
+            let mut obj = factory::create_dobj_book(
+                ctx,
+                DeskObjectType::CustomerObject,
+                book_info.clone(),
+                t,
+            );
             obj.enable_large();
             self.desk.add_customer_object(obj);
         }
 
         let mut new_silhouette = SimpleObject::new(
             MovableUniTexture::new(
-                game_data.ref_texture(TextureID::JunkoTachieDefault),
+                ctx.resource.ref_texture(TextureID::JunkoTachieDefault),
                 numeric::Point2f::new(100.0, 20.0),
                 numeric::Vector2f::new(0.1, 0.1),
                 0.0,
@@ -545,7 +551,7 @@ impl TaskTable {
         );
         new_silhouette.set_alpha(0.0);
         self.sight.silhouette_new_customer_update(
-            ctx,
+            ctx.context,
             new_silhouette,
             info.borrower.to_string(),
             CustomerDialogue::new(
@@ -556,10 +562,9 @@ impl TaskTable {
         );
     }
 
-    fn start_copying_request_event(
+    fn start_copying_request_event<'a>(
         &mut self,
-        ctx: &mut ggez::Context,
-        game_data: &GameData,
+        ctx: &mut SuzuContext<'a>,
         info: CopyingRequestInformation,
         t: Clock,
     ) {
@@ -567,15 +572,15 @@ impl TaskTable {
         self.sight.unlock_object_handover();
 
         let paper_info = CopyingRequestInformation::new_random(
-            game_data,
+            ctx.resource,
             GensoDate::new(128, 12, 8),
             GensoDate::new(128, 12, 8),
         );
         let paper_obj = DeskObject::new(
             Box::new(OnDeskTexture::new(
-                ctx,
+                ctx.context,
                 UniTexture::new(
-                    game_data.ref_texture(TextureID::Paper1),
+                    ctx.resource.ref_texture(TextureID::Paper1),
                     numeric::Point2f::new(0.0, 0.0),
                     numeric::Vector2f::new(0.1, 0.1),
                     0.0,
@@ -584,11 +589,11 @@ impl TaskTable {
                 OnDeskType::Texture,
             )),
             Box::new(CopyingRequestPaper::new(
-                ctx,
+                ctx.context,
                 ggraphics::Rect::new(0.0, 0.0, 420.0, 350.0),
                 TextureID::Paper1,
                 paper_info,
-                game_data,
+                ctx.resource,
                 t,
             )),
             1,
@@ -598,7 +603,7 @@ impl TaskTable {
 
         let mut new_silhouette = SimpleObject::new(
             MovableUniTexture::new(
-                game_data.ref_texture(TextureID::JunkoTachieDefault),
+                ctx.resource.ref_texture(TextureID::JunkoTachieDefault),
                 numeric::Point2f::new(100.0, 20.0),
                 numeric::Vector2f::new(0.1, 0.1),
                 0.0,
@@ -612,7 +617,7 @@ impl TaskTable {
 
         new_silhouette.set_alpha(0.0);
         self.sight.silhouette_new_customer_update(
-            ctx,
+            ctx.context,
             new_silhouette,
             info.customer.to_string(),
             CustomerDialogue::new(
@@ -626,25 +631,13 @@ impl TaskTable {
         );
     }
 
-    pub fn start_customer_event(
-        &mut self,
-        ctx: &mut ggez::Context,
-        game_data: &GameData,
-        info: CustomerRequest,
-        t: Clock,
-    ) {
+    pub fn start_customer_event(&mut self, ctx: &mut SuzuContext, info: CustomerRequest, t: Clock) {
         self.current_customer_request = Some(info.clone());
 
         match info {
-            CustomerRequest::Borrowing(info) => {
-                self.start_borrowing_customer_event(ctx, game_data, info, t)
-            }
-            CustomerRequest::Returning(info) => {
-                self.start_returning_customer_event(ctx, game_data, info, t)
-            }
-            CustomerRequest::Copying(info) => {
-                self.start_copying_request_event(ctx, game_data, info, t)
-            }
+            CustomerRequest::Borrowing(info) => self.start_borrowing_customer_event(ctx, info, t),
+            CustomerRequest::Returning(info) => self.start_returning_customer_event(ctx, info, t),
+            CustomerRequest::Copying(info) => self.start_copying_request_event(ctx, info, t),
         }
     }
 
@@ -657,10 +650,9 @@ impl TaskTable {
     }
 
     /// キーハンドラ
-    pub fn key_event_handler(
+    pub fn key_event_handler<'a>(
         &mut self,
-        ctx: &mut ggez::Context,
-        game_data: &GameData,
+        _ctx: &mut SuzuContext<'a>,
         vkey: VirtualKey,
         t: Clock,
     ) {
@@ -674,7 +666,7 @@ impl TaskTable {
                     );
                 }
 
-                self.slide_hide_record_book(ctx, game_data, t);
+                self.slide_hide_record_book(t);
             }
             _ => (),
         }
@@ -687,29 +679,26 @@ impl TaskTable {
     ///
     /// メニューのエントリをクリックしていたらtrueを返し、そうでなければfalseを返す
     ///
-    fn click_record_book_menu(
+    fn click_record_book_menu<'a>(
         &mut self,
-        ctx: &mut ggez::Context,
-        game_data: &GameData,
+        ctx: &mut SuzuContext<'a>,
         button: ggez::input::mouse::MouseButton,
         point: numeric::Point2f,
         t: Clock,
     ) -> bool {
         if !self
             .record_book_menu
-            .click_book_status_menu(ctx, game_data, button, point, t)
+            .click_book_status_menu(ctx, button, point, t)
             && !self
                 .record_book_menu
-                .click_book_title_menu(ctx, game_data, button, point, t)
+                .click_book_title_menu(ctx, button, point, t)
+            && !self.record_book_menu.click_date_menu(ctx, button, point, t)
             && !self
                 .record_book_menu
-                .click_date_menu(ctx, game_data, button, point, t)
+                .click_customer_name_menu(ctx, button, point, t)
             && !self
-            .record_book_menu
-            .click_customer_name_menu(ctx, game_data, button, point, t)
-	    && !self
-            .record_book_menu
-            .click_payment_menu(ctx, game_data, button, point, t)
+                .record_book_menu
+                .click_payment_menu(ctx, button, point, t)
         {
             // メニューをクリックしていない場合はfalseをクリックして終了
             return false;
@@ -720,8 +709,11 @@ impl TaskTable {
                 .record_book_menu
                 .get_book_status_menu_position()
                 .unwrap();
-            self.borrowing_record_book
-                .insert_book_status_via_choice(ctx, index, menu_position);
+            self.borrowing_record_book.insert_book_status_via_choice(
+                ctx.context,
+                index,
+                menu_position,
+            );
 
             return true;
         }
@@ -733,7 +725,6 @@ impl TaskTable {
                 .unwrap();
             self.borrowing_record_book.insert_book_title_to_books_frame(
                 ctx,
-		game_data,
                 menu_position,
                 book_info,
             );
@@ -745,12 +736,12 @@ impl TaskTable {
 
         if let Some((_, date)) = self.record_book_menu.date_menu_last_clicked() {
             let menu_position = self.record_book_menu.get_date_menu_position().unwrap();
-	    let maybe_rental_limit = self.today.rental_limit_type(&date);
-	    if let Some(rental_limit) = maybe_rental_limit {
-		self.borrowing_record_book
-                    .insert_date_data_to_customer_info(ctx, game_data, menu_position, date, rental_limit);
-	    }
-	    
+            let maybe_rental_limit = self.today.rental_limit_type(&date);
+            if let Some(rental_limit) = maybe_rental_limit {
+                self.borrowing_record_book
+                    .insert_date_data_to_customer_info(ctx, menu_position, date, rental_limit);
+            }
+
             return true;
         }
 
@@ -760,27 +751,24 @@ impl TaskTable {
                 .get_customer_name_menu_position()
                 .unwrap();
             self.borrowing_record_book
-                .insert_customer_name_data_to_customer_info(ctx, menu_position, name);
+                .insert_customer_name_data_to_customer_info(ctx.context, menu_position, name);
 
             return true;
         }
 
-	if let Some(index) = self.record_book_menu.payment_menu_last_clicked() {
-            let _menu_position = self
-                .record_book_menu
-                .get_payment_menu_position()
-                .unwrap();
+        if let Some(index) = self.record_book_menu.payment_menu_last_clicked() {
+            let _menu_position = self.record_book_menu.get_payment_menu_position().unwrap();
 
-	    if index == 0 {
-		self.sight.unlock_object_handover();
-		self.slide_hide_record_book(ctx, game_data, t);
-		self.sight.silhouette.insert_new_balloon_phrase(
-		    "どうぞ".to_string(),
-		    TextBalloonPhraseType::SimplePhrase,
-		    20,
-		    t,
-		);
-	    }
+            if index == 0 {
+                self.sight.unlock_object_handover();
+                self.slide_hide_record_book(t);
+                self.sight.silhouette.insert_new_balloon_phrase(
+                    "どうぞ".to_string(),
+                    TextBalloonPhraseType::SimplePhrase,
+                    20,
+                    t,
+                );
+            }
 
             return true;
         }
@@ -813,7 +801,7 @@ impl TaskTable {
                     let phrase_text = match info.rental_limit {
                         RentalLimit::ShortTerm => "短期貸出でお願いします",
                         RentalLimit::LongTerm => "長期貸出でお願いします",
-			_ => "",
+                        _ => "",
                     }
                     .to_string();
 
@@ -832,10 +820,9 @@ impl TaskTable {
     ///
     /// メニューのエントリをクリックしていたらtrueを返し、そうでなければfalseを返す
     ///
-    fn click_customer_silhouette_menu(
+    fn click_customer_silhouette_menu<'a>(
         &mut self,
-        ctx: &mut ggez::Context,
-        game_data: &GameData,
+        ctx: &mut SuzuContext<'a>,
         button: ggez::input::mouse::MouseButton,
         point: numeric::Point2f,
         t: Clock,
@@ -843,10 +830,10 @@ impl TaskTable {
         println!("check customer_silhouette");
         if !self
             .customer_silhouette_menu
-            .click_customer_question_menu(ctx, game_data, button, point, t)
+            .click_customer_question_menu(ctx, button, point, t)
             && !self
                 .customer_silhouette_menu
-                .click_remember_name_menu(ctx, game_data, button, point, t)
+                .click_remember_name_menu(ctx, button, point, t)
         {
             // メニューをクリックしていない場合はfalseをクリックして終了
             println!("not clicked");
@@ -887,17 +874,16 @@ impl TaskTable {
     ///
     /// メニューのエントリをクリックしていたらtrueを返し、そうでなければfalseを返す
     ///
-    fn click_desk_book_menu(
+    fn click_desk_book_menu<'a>(
         &mut self,
-        ctx: &mut ggez::Context,
-        game_data: &GameData,
+        ctx: &mut SuzuContext<'a>,
         button: ggez::input::mouse::MouseButton,
         point: numeric::Point2f,
         t: Clock,
     ) -> bool {
         if !self
             .on_desk_menu
-            .click_desk_book_menu(ctx, game_data, button, point, t)
+            .click_desk_book_menu(ctx, button, point, t)
         {
             // メニューをクリックしていない場合はfalseをクリックして終了
             println!("not clicked");
@@ -905,30 +891,28 @@ impl TaskTable {
         }
 
         if let Some(index) = self.on_desk_menu.desk_book_menu_last_clicked() {
-	    if let Some(book_info) = self.on_desk_menu.get_desk_menu_target_book_info() {
-		return match index {
+            if let Some(book_info) = self.on_desk_menu.get_desk_menu_target_book_info() {
+                return match index {
                     0 => {
-			// すぐに表示すると順番的にclose_allされてしまうので、遅らせる
-			self.event_list.add_event(Box::new(move |slf: &mut Self, ctx, game_data| {
-			    slf.on_desk_menu.show_book_info_area(
-				ctx,
-				game_data,
-				point,
-				book_info,
-				t + 1,
-			    );
-			}), t + 1);
-			true
-                    },
+                        // すぐに表示すると順番的にclose_allされてしまうので、遅らせる
+                        self.event_list.add_event(
+                            Box::new(move |slf: &mut Self, ctx, _| {
+                                slf.on_desk_menu
+                                    .show_book_info_area(ctx, point, book_info, t + 1);
+                            }),
+                            t + 1,
+                        );
+                        true
+                    }
                     1 => {
-			self.kosuzu_memory.add_book_info(book_info);
-			true
+                        self.kosuzu_memory.add_book_info(book_info);
+                        true
                     }
                     _ => false,
-		};
+                };
             }
-	}
-	
+        }
+
         false
     }
 
@@ -937,29 +921,27 @@ impl TaskTable {
     ///
     /// book_info_frameをクリックした場合、true, そうでなければ、false
     ///
-    fn try_show_menus_regarding_book_info(
+    fn try_show_menus_regarding_book_info<'a>(
         &mut self,
-        ctx: &mut ggez::Context,
-        game_data: &GameData,
+        ctx: &mut SuzuContext<'a>,
         click_point: numeric::Point2f,
         t: Clock,
     ) -> bool {
         let grid_pos = self
             .borrowing_record_book
-            .get_book_info_frame_grid_position(ctx, click_point);
+            .get_book_info_frame_grid_position(ctx.context, click_point);
 
         if grid_pos.is_some() {
             match grid_pos.unwrap().y {
                 0 => self.record_book_menu.show_book_title_menu(
                     ctx,
-                    game_data,
                     click_point,
                     &self.kosuzu_memory,
                     t,
                 ),
                 1 => self
                     .record_book_menu
-                    .show_book_status_menu(ctx, game_data, click_point, t),
+                    .show_book_status_menu(ctx, click_point, t),
                 _ => (),
             }
 
@@ -974,22 +956,20 @@ impl TaskTable {
     ///
     /// customer_info_frameをクリックした場合、true, そうでなければ、false
     ///
-    fn try_show_menus_regarding_customer_info(
+    fn try_show_menus_regarding_customer_info<'a>(
         &mut self,
-        ctx: &mut ggez::Context,
-        game_data: &GameData,
+        ctx: &mut SuzuContext<'a>,
         click_point: numeric::Point2f,
         t: Clock,
     ) -> bool {
         let maybe_grid_pos = self
             .borrowing_record_book
-            .get_customer_info_frame_grid_position(ctx, click_point);
+            .get_customer_info_frame_grid_position(ctx.context, click_point);
 
         if let Some(grid_pos) = maybe_grid_pos {
             if grid_pos == numeric::Vector2u::new(2, 1) {
                 self.record_book_menu.show_customer_name_menu(
                     ctx,
-                    game_data,
                     click_point,
                     &self.kosuzu_memory,
                     t,
@@ -997,13 +977,8 @@ impl TaskTable {
             } else if grid_pos == numeric::Vector2u::new(1, 1)
                 || grid_pos == numeric::Vector2u::new(0, 1)
             {
-                self.record_book_menu.show_date_menu(
-                    ctx,
-                    game_data,
-                    click_point,
-                    self.today.clone(),
-                    t,
-                );
+                self.record_book_menu
+                    .show_date_menu(ctx, click_point, self.today.clone(), t);
             }
 
             true
@@ -1011,31 +986,25 @@ impl TaskTable {
             false
         }
     }
-    
+
     ///
     /// customer_info_frameに関するメニューを表示する
     ///
     /// customer_info_frameをクリックした場合、true, そうでなければ、false
     ///
-    fn try_show_menus_regarding_record_book_payment(
+    fn try_show_menus_regarding_record_book_payment<'a>(
         &mut self,
-        ctx: &mut ggez::Context,
-        game_data: &GameData,
+        ctx: &mut SuzuContext<'a>,
         click_point: numeric::Point2f,
         t: Clock,
     ) -> bool {
         let maybe_grid_pos = self
             .borrowing_record_book
-            .get_payment_frame_grid_position(ctx, click_point);
+            .get_payment_frame_grid_position(ctx.context, click_point);
 
         if let Some(grid_pos) = maybe_grid_pos {
             if grid_pos == numeric::Vector2u::new(0, 1) {
-		self.record_book_menu.show_payment_menu(
-		    ctx,
-		    game_data,
-		    click_point,
-		    t
-		);
+                self.record_book_menu.show_payment_menu(ctx, click_point, t);
             }
 
             true
@@ -1043,11 +1012,10 @@ impl TaskTable {
             false
         }
     }
-    
-    fn try_show_text_balloon_menus(
+
+    fn try_show_text_balloon_menus<'a>(
         &mut self,
-        ctx: &mut ggez::Context,
-        game_data: &GameData,
+        ctx: &mut SuzuContext<'a>,
         click_point: numeric::Point2f,
         t: Clock,
     ) {
@@ -1056,13 +1024,10 @@ impl TaskTable {
         match phrase_type {
             TextBalloonPhraseType::CustomerName(name) => self
                 .customer_silhouette_menu
-                .show_remember_name_menu(ctx, game_data, click_point, name.clone(), t),
-            _ => self.customer_silhouette_menu.show_text_balloon_ok_menu(
-                ctx,
-                game_data,
-                click_point,
-                t,
-            ),
+                .show_remember_name_menu(ctx, click_point, name.clone(), t),
+            _ => self
+                .customer_silhouette_menu
+                .show_text_balloon_ok_menu(ctx, click_point, t),
         }
     }
 
@@ -1073,29 +1038,24 @@ impl TaskTable {
     ///
     fn try_show_menus_regarding_customer_silhoutte(
         &mut self,
-        ctx: &mut ggez::Context,
-        game_data: &GameData,
+        ctx: &mut SuzuContext,
         click_point: numeric::Point2f,
         t: Clock,
     ) -> bool {
         if self
             .sight
             .silhouette
-            .contains_character_silhouette(ctx, click_point)
+            .contains_character_silhouette(ctx.context, click_point)
         {
-            self.customer_silhouette_menu.show_customer_question_menu(
-                ctx,
-                game_data,
-                click_point,
-                t,
-            );
+            self.customer_silhouette_menu
+                .show_customer_question_menu(ctx, click_point, t);
             true
         } else if self
             .sight
             .silhouette
-            .contains_text_balloon(ctx, click_point)
+            .contains_text_balloon(ctx.context, click_point)
         {
-            self.try_show_text_balloon_menus(ctx, game_data, click_point, t);
+            self.try_show_text_balloon_menus(ctx, click_point, t);
             true
         } else {
             false
@@ -1107,27 +1067,25 @@ impl TaskTable {
     ///
     /// customer_menuをクリックした場合、true, そうでなければ、false
     ///
-    fn try_show_menus_regarding_ondesk_book_info(
+    fn try_show_menus_regarding_ondesk_book_info<'a>(
         &mut self,
-        ctx: &mut ggez::Context,
-        game_data: &GameData,
+        ctx: &mut SuzuContext<'a>,
         click_point: numeric::Point2f,
         t: Clock,
     ) -> bool {
         let rpoint = self.desk.canvas.relative_point(click_point);
 
         for dobj in self.desk.get_desk_objects_list_mut().iter_mut().rev() {
-            if dobj.get_object_mut().contains(ctx, rpoint) {
+            if dobj.get_object_mut().contains(ctx.context, rpoint) {
                 let dobj_ref = &dobj.get_object();
                 let obj_type = dobj_ref.get_type();
-                let hold_data = dobj_ref.get_hold_data(ctx, rpoint);
+                let hold_data = dobj_ref.get_hold_data(ctx.context, rpoint);
 
                 match obj_type {
                     OnDeskType::Book => match hold_data {
                         HoldData::BookName(info) => {
                             self.on_desk_menu.show_desk_book_menu(
                                 ctx,
-                                game_data,
                                 click_point,
                                 info.clone(),
                                 t,
@@ -1145,10 +1103,9 @@ impl TaskTable {
         false
     }
 
-    fn try_show_menus(
+    fn try_show_menus<'a>(
         &mut self,
-        ctx: &mut ggez::Context,
-        game_data: &GameData,
+        ctx: &mut SuzuContext<'a>,
         click_point: numeric::Point2f,
         t: Clock,
     ) {
@@ -1169,14 +1126,13 @@ impl TaskTable {
             return ();
         }
 
-        if !self.try_show_menus_regarding_book_info(ctx, game_data, click_point, t) {
-            if !self.try_show_menus_regarding_customer_info(ctx, game_data, click_point, t) {
-		if !self.try_show_menus_regarding_record_book_payment(ctx, game_data, click_point, t) {
-                    if !self.try_show_menus_regarding_customer_silhoutte(ctx, game_data, click_point, t)
-                    {
-			self.try_show_menus_regarding_ondesk_book_info(ctx, game_data, click_point, t);
+        if !self.try_show_menus_regarding_book_info(ctx, click_point, t) {
+            if !self.try_show_menus_regarding_customer_info(ctx, click_point, t) {
+                if !self.try_show_menus_regarding_record_book_payment(ctx, click_point, t) {
+                    if !self.try_show_menus_regarding_customer_silhoutte(ctx, click_point, t) {
+                        self.try_show_menus_regarding_ondesk_book_info(ctx, click_point, t);
                     }
-		}
+                }
             }
         }
     }
@@ -1239,21 +1195,19 @@ impl TextureObject for TaskTable {
 }
 
 impl Clickable for TaskTable {
-    fn button_down(
+    fn button_down<'a>(
         &mut self,
-        ctx: &mut ggez::Context,
-        game_data: &GameData,
+        ctx: &mut SuzuContext<'a>,
         _: Clock,
         _: ggez::input::mouse::MouseButton,
         point: numeric::Point2f,
     ) {
-	self.select_dragging_object(ctx, game_data, point);
+        self.select_dragging_object(ctx, point);
     }
 
-    fn button_up(
+    fn button_up<'a>(
         &mut self,
-        ctx: &mut ggez::Context,
-        _: &GameData,
+        ctx: &mut SuzuContext<'a>,
         t: Clock,
         _: ggez::input::mouse::MouseButton,
         point: numeric::Point2f,
@@ -1261,54 +1215,56 @@ impl Clickable for TaskTable {
         let rpoint = self.canvas.relative_point(point);
 
         // ボタンが離されたとき、メニュー外にあった場合、すべてのメニューを消す
-        if !self.record_book_menu.is_contains_any_menus(ctx, rpoint) {
+        if !self
+            .record_book_menu
+            .is_contains_any_menus(ctx.context, rpoint)
+        {
             self.record_book_menu.close_all(t);
         }
 
         if !self
             .customer_silhouette_menu
-            .is_contains_any_menus(ctx, rpoint)
+            .is_contains_any_menus(ctx.context, rpoint)
         {
             self.customer_silhouette_menu.close_all(t);
         }
 
-        if !self.on_desk_menu.is_contains_any_menus(ctx, rpoint) {
-	    println!("close all!");
+        if !self.on_desk_menu.is_contains_any_menus(ctx.context, rpoint) {
+            println!("close all!");
             self.on_desk_menu.close_all(t);
         }
     }
 
-    fn on_click(
+    fn on_click<'a>(
         &mut self,
-        ctx: &mut ggez::Context,
-        game_data: &GameData,
+        ctx: &mut SuzuContext<'a>,
         t: Clock,
         button: ggez::input::mouse::MouseButton,
         point: numeric::Point2f,
     ) {
         let rpoint = self.canvas.relative_point(point);
 
-        if self
-            .borrowing_record_book
-            .click_handler(ctx, game_data, t, rpoint)
-        {
-            // クリックハンドラが呼び出されたので終了
-            return;
-        }
+        let menu_click = !self.click_record_book_menu(ctx, button, rpoint, t)
+            && !self.click_customer_silhouette_menu(ctx, button, rpoint, t)
+            && !self.click_desk_book_menu(ctx, button, point, t);
 
-        if !self.click_record_book_menu(ctx, game_data, button, rpoint, t)
-            && !self.click_customer_silhouette_menu(ctx, game_data, button, rpoint, t)
-            && !self.click_desk_book_menu(ctx, game_data, button, point, t)
-        {
+        if menu_click {
             // メニューをクリックしていない場合に、新しいメニュー表示処理を走らせる
-            self.try_show_menus(ctx, game_data, rpoint, t);
+            self.try_show_menus(ctx, rpoint, t);
         } else {
             self.record_book_menu.close_all(t);
             self.customer_silhouette_menu.close_all(t);
             self.on_desk_menu.close_all(t);
+
+            return ();
         }
-	
-        if self.desk.click_handler(ctx, game_data, t, button, rpoint) {
+
+        if self.borrowing_record_book.click_handler(ctx, t, rpoint) {
+            // クリックハンドラが呼び出されたので終了
+            return;
+        }
+
+        if self.desk.click_handler(ctx, t, button, rpoint) {
             // クリックハンドラが呼び出されたので終了
             return;
         }
