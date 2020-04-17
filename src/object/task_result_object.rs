@@ -10,7 +10,7 @@ use torifune::impl_drawable_object_for_wrapped;
 use torifune::impl_texture_object_for_wrapped;
 use torifune::numeric;
 
-use crate::core::{FontID, GensoDate, SuzuContext, TaskResult};
+use crate::core::{FontID, GensoDate, SuzuContext};
 use crate::object::effect;
 
 use number_to_jk::number_to_jk;
@@ -27,11 +27,12 @@ impl DrawableTaskResult {
     pub fn new<'a>(
         ctx: &mut SuzuContext<'a>,
         rect_pos: numeric::Rect,
-        task_result: TaskResult,
         background: SimpleObject,
         date: GensoDate,
         t: Clock,
     ) -> Self {
+	let task_result = &ctx.savable_data.task_result;
+	
         let font_info = FontInformation::new(
             ctx.resource.get_font(FontID::JpFude1),
             numeric::Vector2f::new(30.0, 30.0),

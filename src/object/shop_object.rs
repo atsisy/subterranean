@@ -22,6 +22,8 @@ use crate::object::Clickable;
 use crate::scene::DelayEventList;
 use crate::set_table_frame_cell_center;
 
+use crate::flush_delay_event;
+
 use number_to_jk::number_to_jk;
 
 pub struct SelectBookWindowContents {
@@ -435,9 +437,10 @@ impl SelectShelvingBookUI {
     pub fn new<'a>(
         ctx: &mut SuzuContext<'a>,
         ui_rect: numeric::Rect,
-        mut box_book_info: Vec<BookInformation>,
         mut shelving_book: Vec<BookInformation>,
     ) -> Self {
+	let mut box_book_info = ctx.savable_data.task_result.not_shelved_books.clone();
+	
         box_book_info.sort_by(|a, b| a.billing_number.cmp(&b.billing_number));
         shelving_book.sort_by(|a, b| a.billing_number.cmp(&b.billing_number));
 
@@ -1505,15 +1508,17 @@ impl ShopMenuContents {
         }
     }
 
-    pub fn update_contents(&mut self, game_data: &GameResource, task_result: &TaskResult) {
+    pub fn update_contents<'a>(&mut self, ctx: &mut SuzuContext<'a>) {
         let _normal_scale_font = FontInformation::new(
-            game_data.get_font(FontID::JpFude1),
+            ctx.resource.get_font(FontID::JpFude1),
             numeric::Vector2f::new(26.0, 26.0),
             ggraphics::Color::from_rgba_u32(0x000000ff),
         );
 
+	let task_result = &ctx.savable_data.task_result;
+
         let large_scale_font = FontInformation::new(
-            game_data.get_font(FontID::JpFude1),
+            ctx.resource.get_font(FontID::JpFude1),
             numeric::Vector2f::new(30.0, 30.0),
             ggraphics::Color::from_rgba_u32(0x000000ff),
         );
@@ -1675,8 +1680,8 @@ impl ShopMenu {
         self.now_appear
     }
 
-    pub fn update_menu_contents(&mut self, game_data: &GameResource, task_result: &TaskResult) {
-        self.menu_contents.update_contents(game_data, task_result);
+    pub fn update_menu_contents<'a>(&mut self, ctx: &mut SuzuContext<'a>) {
+        self.menu_contents.update_contents(ctx);
     }
 }
 
@@ -1865,11 +1870,10 @@ impl ShopMenuMaster {
     pub fn update_contents(
         &mut self,
         ctx: &mut SuzuContext,
-        task_result: &TaskResult,
         player_shelving: &Vec<BookInformation>,
     ) {
         self.first_menu
-            .update_menu_contents(ctx.resource, task_result);
+            .update_menu_contents(ctx);
         self.detail_menu.update_contents(ctx, player_shelving);
     }
 
@@ -1962,7 +1966,6 @@ impl ShopSpecialObject {
     pub fn show_shelving_select_ui<'a>(
         &mut self,
         ctx: &mut SuzuContext<'a>,
-        task_result: &TaskResult,
         player_shelving_books: Vec<BookInformation>,
         t: Clock,
     ) {
@@ -1971,7 +1974,6 @@ impl ShopSpecialObject {
                 Box::new(SelectShelvingBookUI::new(
                     ctx,
                     numeric::Rect::new(0.0, -768.0, 1366.0, 768.0),
-                    task_result.not_shelved_books.clone(),
                     player_shelving_books,
                 )),
                 move_fn::devide_distance(numeric::Point2f::new(0.0, 0.0), 0.4),
@@ -2076,14 +2078,14 @@ impl ShopSpecialObject {
             ui.scroll_handler(ctx, point, x, y);
         }
     }
-}
 
-impl Updatable for ShopSpecialObject {
-    fn update(&mut self, _: &mut ggez::Context, t: Clock) {
-        if let Some(ui) = self.shelving_select_ui.as_mut() {
+    pub fn update<'a>(&mut self, ctx: &mut SuzuContext<'a>, t: Clock) {
+	flush_delay_event!(self, self.event_list, ctx, t);
+	
+	if let Some(ui) = self.shelving_select_ui.as_mut() {
             ui.move_with_func(t);
         }
-
+	
         if let Some(storing_ui) = self.storing_select_ui.as_mut() {
             storing_ui.move_with_func(t);
         }

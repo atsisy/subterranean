@@ -7,7 +7,7 @@ use torifune::debug;
 use torifune::device::VirtualKey;
 use torifune::numeric;
 
-use crate::core::{GensoDate, SuzuContext, TaskResult};
+use crate::core::{GensoDate, SuzuContext};
 use crate::scene::*;
 
 use crate::object::task_object::tt_sub_component::CopyingRequestInformation;

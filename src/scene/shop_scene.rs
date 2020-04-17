@@ -19,7 +19,7 @@ use torifune::numeric;
 use super::*;
 use crate::core::map_parser as mp;
 use crate::core::{
-    FontID, GameResource, GensoDate, SavableData, SuzuContext, TaskResult, TileBatchTextureID,
+    FontID, GameResource, SuzuContext, TileBatchTextureID,
 };
 use crate::flush_delay_event;
 use crate::object::effect_object;
@@ -310,7 +310,6 @@ pub struct ShopScene {
     key_listener: tdev::KeyboardListener,
     clock: Clock,
     shop_clock: ShopClock,
-    game_status: SavableData,
     map: MapData,
     event_list: DelayEventList<Self>,
     shop_menu: ShopMenuMaster,
@@ -325,7 +324,7 @@ pub struct ShopScene {
 }
 
 impl ShopScene {
-    pub fn new<'a>(ctx: &mut SuzuContext<'a>, map_id: u32, game_status: SavableData) -> ShopScene {
+    pub fn new<'a>(ctx: &mut SuzuContext<'a>, map_id: u32) -> ShopScene {
         let key_listener =
             tdev::KeyboardListener::new_masked(vec![tdev::KeyInputDevice::GenericKeyboard], vec![]);
 
@@ -376,7 +375,6 @@ impl ShopScene {
                 numeric::Rect::new(0.0, 0.0, 1366.0, 768.0),
                 0,
             ),
-            game_status: game_status,
             camera: camera,
             transition_scene: SceneID::SuzunaShop,
             transition_status: SceneTransition::Keep,
@@ -449,11 +447,7 @@ impl ShopScene {
         self.camera.borrow_mut().x = offset.x;
         self.camera.borrow_mut().y = offset.y;
     }
-
-    pub fn get_today_date(&self) -> GensoDate {
-        self.game_status.date.clone()
-    }
-
+    
     fn right_key_handler(&mut self) {
         self.player
             .get_mut_character_object()
@@ -770,7 +764,6 @@ impl ShopScene {
                     .new_effect(8, self.get_current_clock(), 0, 200);
                 self.shop_special_object.show_shelving_select_ui(
                     ctx,
-                    &self.game_status.task_result,
                     self.player.get_shelving_book().clone(),
                     self.get_current_clock(),
                 );
@@ -949,15 +942,9 @@ impl ShopScene {
         // );
     }
 
-    pub fn update_task_result<'a>(&mut self, ctx: &mut SuzuContext<'a>, task_result: &TaskResult) {
+    pub fn update_task_result<'a>(&mut self, ctx: &mut SuzuContext<'a>) {
         self.shop_menu
-            .update_contents(ctx, task_result, self.player.get_shelving_book());
-
-        self.game_status.task_result = task_result.clone();
-    }
-
-    pub fn current_task_result(&self) -> TaskResult {
-        self.game_status.task_result.clone()
+            .update_contents(ctx, self.player.get_shelving_book());
     }
 
     fn try_hide_shelving_select_ui<'a>(&mut self, ctx: &mut SuzuContext<'a>) {
@@ -965,11 +952,10 @@ impl ShopScene {
             .shop_special_object
             .hide_shelving_select_ui(self.get_current_clock());
         if let Some((boxed, shelving)) = select_result {
-            self.game_status.task_result.not_shelved_books = boxed;
+            ctx.savable_data.task_result.not_shelved_books = boxed;
             self.player.update_shelving_book(shelving);
             self.shop_menu.update_contents(
                 ctx,
-                &self.game_status.task_result,
                 self.player.get_shelving_book(),
             );
             self.dark_effect_panel
@@ -985,7 +971,6 @@ impl ShopScene {
             self.player.update_shelving_book(shelving);
             self.shop_menu.update_contents(
                 ctx,
-                &self.game_status.task_result,
                 self.player.get_shelving_book(),
             );
             self.dark_effect_panel
@@ -1196,7 +1181,7 @@ impl SceneManager for ShopScene {
 
             for customer in &mut rising_customers {
                 if let Some(request) =
-                    customer.check_rise_hand(ctx.resource, self.game_status.date.clone())
+                    customer.check_rise_hand(ctx)
                 {
                     self.customer_request_queue.push_back(request);
                 }
@@ -1256,7 +1241,7 @@ impl SceneManager for ShopScene {
 
         // select_uiなどの更新
         flush_delay_event!(self, self.event_list, ctx, t);
-        self.shop_special_object.update(ctx.context, t);
+        self.shop_special_object.update(ctx, t);
 
         // メニューの更新
         self.shop_menu.update(ctx.context, t);

@@ -27,7 +27,7 @@ pub struct TaskResultScene {
 }
 
 impl TaskResultScene {
-    pub fn new<'a>(ctx: &mut SuzuContext<'a>, task_result: TaskResult, date: GensoDate) -> Self {
+    pub fn new<'a>(ctx: &mut SuzuContext<'a>, date: GensoDate) -> Self {
         let mut background_object = MovableUniTexture::new(
             ctx.resource.ref_texture(TextureID::Paper1),
             numeric::Point2f::new(0.0, 0.0),
@@ -89,7 +89,6 @@ impl TaskResultScene {
             drawable_task_result: DrawableTaskResult::new(
                 ctx,
                 numeric::Rect::new(0.0, 0.0, 1366.0, 768.0),
-                task_result.clone(),
                 SimpleObject::new(background_object, Vec::new()),
                 date,
                 0,

@@ -149,7 +149,7 @@ impl SuzunaSubScene {
         };
 
         SuzunaSubScene {
-            shop_scene: Some(Box::new(ShopScene::new(ctx, map_id, game_status.clone()))),
+            shop_scene: Some(Box::new(ShopScene::new(ctx, map_id))),
             desk_work_scene: None,
             day_result_scene: None,
             copying_scene: None,
@@ -218,12 +218,10 @@ impl SuzunaSubScene {
 
                 let record_book_data =
                     std::mem::replace(&mut self.borrowing_record_book_data, None);
-                let today_date = shop_scene.get_today_date();
 
                 self.scene_status = SuzunaSceneStatus::DeskWork;
                 self.desk_work_scene = Some(Box::new(TaskScene::new(
                     ctx,
-                    today_date,
                     Some(customer_request),
                     record_book_data,
                 )));
@@ -237,11 +235,9 @@ impl SuzunaSubScene {
         transition: SceneTransition,
     ) {
         if transition == SceneTransition::SwapTransition {
-            let task_result = self.shop_scene.as_mut().unwrap().current_task_result();
             self.scene_status = SuzunaSceneStatus::DayResult;
             self.day_result_scene = Some(Box::new(TaskResultScene::new(
                 ctx,
-                task_result,
                 self.date.clone(),
             )));
         }

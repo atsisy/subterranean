@@ -8,7 +8,7 @@ use torifune::numeric;
 use super::super::*;
 use crate::object::Clickable;
 
-use crate::core::{GensoDate, MouseActionRecord, MouseInformation, TaskResult, TileBatchTextureID};
+use crate::core::{MouseActionRecord, MouseInformation, TileBatchTextureID};
 use crate::object::effect_object;
 use crate::object::task_object::*;
 use crate::scene::{SceneID, SceneTransition};
@@ -32,7 +32,6 @@ pub struct TaskScene {
     mouse_info: MouseInformation,
     event_list: DelayEventList<Self>,
     status: TaskSceneStatus,
-    task_result: TaskResult,
     customer_request: Option<CustomerRequest>,
     transition_status: SceneTransition,
     transition_scene: SceneID,
@@ -42,7 +41,6 @@ pub struct TaskScene {
 impl TaskScene {
     pub fn new<'a>(
         ctx: &mut SuzuContext<'a>,
-        today_date: GensoDate,
         customer_request: Option<CustomerRequest>,
         record_book_data: Option<BorrowingRecordBookData>,
     ) -> TaskScene {
@@ -79,7 +77,6 @@ impl TaskScene {
                 numeric::Rect::new(0.0, 0.0, 800.0, 300.0),
                 numeric::Rect::new(0.0, 310.0, 900.0, 500.0),
                 numeric::Rect::new(900.0, 310.0, 500.0, 500.0),
-                today_date,
                 record_book_data,
                 0,
             ),
@@ -87,7 +84,6 @@ impl TaskScene {
             mouse_info: MouseInformation::new(),
             event_list: event_list,
             status: TaskSceneStatus::Init,
-            task_result: TaskResult::new(),
             customer_request: customer_request,
             transition_status: SceneTransition::Keep,
             transition_scene: SceneID::MainDesk,
@@ -116,45 +112,38 @@ impl TaskScene {
                 s.task_table
                     .start_customer_event(ctx, request.clone(), s.get_current_clock());
                 s.status = TaskSceneStatus::CustomerEvent;
-                s.check_done_today_work(request);
+                s.check_done_today_work(ctx, request);
             }),
             self.get_current_clock() + delay_clock,
         );
     }
 
-    fn check_done_today_work(&mut self, request: CustomerRequest) {
+    fn check_done_today_work<'a>(&mut self, ctx: &mut SuzuContext<'a>, request: CustomerRequest) {
+	let task_result = &mut ctx.savable_data.task_result;
         match request {
             CustomerRequest::Borrowing(request_information) => {
                 // 貸出本を記録
-                self.task_result.done_works += 1;
-                self.task_result.total_money += request_information.calc_fee();
-                self.task_result
+		task_result.done_works += 1;
+		task_result.total_money += request_information.calc_fee();
+                task_result
                     .borrowing_books
                     .extend(request_information.borrowing);
             }
             CustomerRequest::Returning(request_information) => {
                 // 貸出本を記録
-                self.task_result.done_works += 1;
-                self.task_result
+                task_result.done_works += 1;
+                task_result
                     .not_shelved_books
                     .extend(request_information.returning);
             }
             CustomerRequest::Copying(copying_request_information) => {
                 // 写本依頼を記録
-                self.task_result.done_works += 1;
-                self.task_result
+                task_result.done_works += 1;
+                task_result
                     .remain_copy_request
                     .push(copying_request_information);
             }
         }
-    }
-
-    pub fn get_task_result(&self) -> &TaskResult {
-        &self.task_result
-    }
-
-    pub fn reset_task_result(&mut self) {
-        self.task_result.reset();
     }
 
     pub fn get_task_status(&self) -> TaskSceneStatus {

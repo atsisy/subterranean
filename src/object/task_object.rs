@@ -54,7 +54,6 @@ impl TaskTable {
         sight_rect: numeric::Rect,
         desk_rect: numeric::Rect,
         shelving_box_rect: numeric::Rect,
-        today_date: GensoDate,
         record_book_data: Option<BorrowingRecordBookData>,
         t: Clock,
     ) -> Self {
@@ -153,7 +152,7 @@ impl TaskTable {
             record_book_menu: RecordBookMenuGroup::new(0),
             on_desk_menu: OnDeskMenuGroup::new(0),
             current_customer_request: None,
-            today: today_date,
+            today: ctx.savable_data.date,
         }
     }
 

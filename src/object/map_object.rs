@@ -817,21 +817,22 @@ impl CustomerCharacter {
         distance!(current, self.current_goal) < 1.5
     }
 
-    fn generate_hold_request(
+    fn generate_hold_request<'a>(
         &mut self,
-        game_data: &GameResource,
-        today: GensoDate,
+	ctx: &mut SuzuContext<'a>,
     ) -> CustomerRequest {
         let random_select = rand::random::<usize>() % 2;
+	let today = ctx.savable_data.date.clone();
+	
         match random_select {
             0 => CustomerRequest::Borrowing(BorrowingInformation::new(
-                vec![game_data.book_random_select().clone()],
+                vec![ctx.resource.book_random_select().clone()],
                 &self.customer_info.name,
                 today,
                 RentalLimit::random(),
             )),
             _ => CustomerRequest::Returning(ReturnBookInformation::new_random(
-                game_data,
+                ctx.resource,
                 today,
                 GensoDate::new(128, 12, 20),
             )),
@@ -924,13 +925,12 @@ impl CustomerCharacter {
         self.customer_status == CustomerCharacterStatus::WaitOnClerk
     }
 
-    pub fn check_rise_hand(
+    pub fn check_rise_hand<'a>(
         &mut self,
-        game_data: &GameResource,
-        today: GensoDate,
+	ctx: &mut SuzuContext<'a>,
     ) -> Option<CustomerRequest> {
         if self.customer_status == CustomerCharacterStatus::WaitOnClerk {
-            Some(self.generate_hold_request(game_data, today))
+            Some(self.generate_hold_request(ctx))
         } else {
             None
         }
