@@ -1271,16 +1271,16 @@ impl SceneManager for ShopScene {
             scenario_box.draw(ctx).unwrap();
         }
 
-        if let Some(transition_effect) = self.scene_transition_effect.as_mut() {
-            transition_effect.draw(ctx).unwrap();
-        }
-
         self.dark_effect_panel.draw(ctx).unwrap();
 
         self.shop_special_object.draw(ctx).unwrap();
         self.shop_menu.draw(ctx).unwrap();
 
         self.notification_area.draw(ctx).unwrap();
+
+        if let Some(transition_effect) = self.scene_transition_effect.as_mut() {
+            transition_effect.draw(ctx).unwrap();
+        }
     }
 
     fn post_process<'a>(&mut self, _ctx: &mut SuzuContext<'a>) -> SceneTransition {

@@ -23,6 +23,7 @@ use crate::set_table_frame_cell_center;
 
 use super::Clickable;
 use crate::core::{FontID, GameResource, GensoDate, SuzuContext, TextureID};
+use serde::{Serialize, Deserialize};
 
 use number_to_jk::number_to_jk;
 
@@ -565,7 +566,7 @@ impl OnDesk for OnDeskBook {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CopyingRequestInformation {
     pub book_info: BookInformation,
     pub customer: String,

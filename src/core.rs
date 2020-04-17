@@ -30,13 +30,15 @@ use std::str::FromStr;
 use crate::scene;
 
 use std::fs;
-use std::io::{BufReader, Read};
+use std::io::{BufReader, Read, Write};
+use std::fs::File;
 
-use serde::Deserialize;
+use serde::{Serialize, Deserialize};
 
 use number_to_jk::number_to_jk;
 
 extern crate num;
+
 
 pub const WINDOW_SIZE_X: i16 = 1366;
 pub const WINDOW_SIZE_Y: i16 = 768;
@@ -257,7 +259,7 @@ pub enum SoundID {
     Unknown = 0,
 }
 
-#[derive(Debug, Deserialize, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct BookInformation {
     pub name: String,
     pub pages: usize,
@@ -300,7 +302,7 @@ impl RentalLimit {
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct GensoDate {
     pub season: u32,
     pub month: u8,
@@ -760,7 +762,7 @@ impl MouseInformation {
     }
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct TaskResult {
     pub done_works: u32,                                     // 総仕事数
     pub not_shelved_books: Vec<BookInformation>,             // 返却済, 未配架
@@ -824,10 +826,28 @@ impl SceneStack {
     }
 }
 
-#[derive(Clone)]
+#[derive(Clone, Serialize, Deserialize)]
 pub struct SavableData {
     pub date: GensoDate,
     pub task_result: TaskResult,
+}
+
+impl SavableData {
+    pub fn save(&self, slot: u8) -> Result<(), Box<dyn std::error::Error>> {
+	let mut file = File::create(&format!("./resources/save{}.toml", slot))?;
+
+	write!(file, "{}", toml::to_string(self).unwrap())?;
+	file.flush()?;
+	
+	Ok(())
+    }
+
+    pub fn new_load(slot: u8) -> Result<SavableData, Box<dyn std::error::Error>> {
+	let content = fs::read_to_string(&format!("./resources/save{}.toml", slot))?;
+	let savable_data: SavableData = toml::from_str(&content).unwrap();
+	
+	Ok(savable_data)
+    }
 }
 
 pub struct SuzuContext<'ctx> {
