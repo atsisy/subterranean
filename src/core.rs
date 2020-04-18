@@ -123,6 +123,7 @@ pub enum TextureID {
     ResetButton,
     MenuArt1,
     MenuArt2,
+    JpHouseTexture,
     Unknown,
 }
 
@@ -178,6 +179,7 @@ impl FromStr for TextureID {
             "ResetButton" => Ok(Self::ResetButton),
             "MenuArt1" => Ok(Self::MenuArt1),
             "MenuArt2" => Ok(Self::MenuArt2),
+	    "JpHouseTexture" => Ok(Self::JpHouseTexture),
             _ => Err(()),
         }
     }
@@ -228,6 +230,7 @@ impl TextureID {
             39 => Some(Self::ResetButton),
             40 => Some(Self::MenuArt1),
             41 => Some(Self::MenuArt2),
+	    42 => Some(Self::JpHouseTexture),
             _ => None,
         }
     }
@@ -859,6 +862,7 @@ pub struct SuzuContext<'ctx> {
 pub enum TopScene {
     ScenarioScene(scene::scenario_scene::ScenarioScene),
     SuzunaScene(scene::suzuna_scene::SuzunaScene),
+    SaveScene(scene::save_scene::SaveScene),
     Null(scene::NullScene),
 }
 
@@ -867,6 +871,7 @@ impl TopScene {
         match self {
             TopScene::ScenarioScene(scene) => scene,
             TopScene::SuzunaScene(scene) => scene,
+	    TopScene::SaveScene(scene) => scene,
             TopScene::Null(scene) => scene,
         }
     }
@@ -875,6 +880,7 @@ impl TopScene {
         match self {
             TopScene::ScenarioScene(scene) => scene,
             TopScene::SuzunaScene(scene) => scene,
+	    TopScene::SaveScene(scene) => scene,
             TopScene::Null(scene) => scene,
         }
     }
@@ -987,15 +993,19 @@ impl SceneController {
             savable_data: &mut self.game_status,
         };
 
-        let next_scene = if next_scene_id == scene::SceneID::SuzunaShop {
-            Some(TopScene::SuzunaScene(
-                scene::suzuna_scene::SuzunaScene::new(&mut ctx, 0),
-            ))
-        } else if next_scene_id == scene::SceneID::Null {
-            Some(TopScene::Null(scene::NullScene::new()))
-        } else {
-            None
-        };
+        let next_scene = match next_scene_id {
+	    scene::SceneID::SuzunaShop =>
+		Some(TopScene::SuzunaScene(
+                    scene::suzuna_scene::SuzunaScene::new(&mut ctx, 0),
+		)),
+	    scene::SceneID::Save =>
+		Some(TopScene::SaveScene(
+                    scene::save_scene::SaveScene::new(&mut ctx),
+		)),
+	    scene::SceneID::Null =>
+		Some(TopScene::Null(scene::NullScene::new())),
+	    _ => None,
+	};
 
         if let Some(mut scene) = next_scene {
             std::mem::swap(&mut self.current_scene, &mut scene);

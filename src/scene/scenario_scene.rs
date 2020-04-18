@@ -13,6 +13,7 @@ use super::*;
 pub struct ScenarioScene {
     scenario_event: ScenarioEvent,
     simulation_status: sui::SimulationStatus,
+    scene_transition_type: SceneTransition,
     scene_transition: SceneID,
     clock: Clock,
 }
@@ -38,6 +39,7 @@ impl ScenarioScene {
             ),
             scenario_event: scenario,
             scene_transition: SceneID::Scenario,
+	    scene_transition_type: SceneTransition::Keep,
             clock: 0,
         }
     }
@@ -83,11 +85,14 @@ impl SceneManager for ScenarioScene {
             // 遷移先のSceneIDを取り出し、遷移先として登録する
             if let Some(scene_id) = self.scenario_event.get_scene_transition() {
                 self.scene_transition = scene_id;
-                return SceneTransition::SwapTransition;
+            }
+
+	    if let Some(scene_transition) = self.scenario_event.get_scene_transition_type() {
+                self.scene_transition_type = scene_transition;
             }
         }
 
-        SceneTransition::Keep
+	self.scene_transition_type
     }
 
     fn transition(&self) -> SceneID {

@@ -12,7 +12,7 @@ use torifune::impl_texture_object_for_wrapped;
 use super::*;
 use crate::core::{FontID, GameResource, SuzuContext, TextureID, TileBatchTextureID};
 use crate::object::util_object::*;
-use crate::scene::SceneID;
+use crate::scene::{SceneID, SceneTransition};
 use std::str::FromStr;
 
 pub type ScenarioElementID = i32;
@@ -620,7 +620,7 @@ impl DrawableComponent for ChoiceBox {
 /// シーンの切り替えが実現できる
 ///
 #[derive(Clone, Copy)]
-pub struct ScenarioTransitionData(SceneID, ScenarioElementID);
+pub struct ScenarioTransitionData(SceneID, SceneTransition, ScenarioElementID);
 
 pub enum ScenarioElement {
     Text(ScenarioText),
@@ -633,7 +633,7 @@ impl ScenarioElement {
         match self {
             Self::Text(text) => text.get_scenario_id(),
             Self::ChoiceSwitch(choice) => choice.get_scenario_id(),
-            Self::SceneTransition(transition_data) => transition_data.1,
+            Self::SceneTransition(transition_data) => transition_data.2,
         }
     }
 
@@ -693,6 +693,7 @@ impl Scenario {
         let scene_transition = root["scene-transition"].as_table().unwrap();
         scenario.push(ScenarioElement::SceneTransition(ScenarioTransitionData(
             SceneID::Scenario,
+	    SceneTransition::SwapTransition,
             scene_transition
                 .get("scenario")
                 .unwrap()
@@ -701,11 +702,13 @@ impl Scenario {
         )));
         scenario.push(ScenarioElement::SceneTransition(ScenarioTransitionData(
             SceneID::SuzunaShop,
+	    SceneTransition::SwapTransition,
             scene_transition.get("dream").unwrap().as_integer().unwrap() as i32,
         )));
-        scenario.push(ScenarioElement::SceneTransition(ScenarioTransitionData(
-            SceneID::MainDesk,
-            scene_transition.get("desk").unwrap().as_integer().unwrap() as i32,
+	scenario.push(ScenarioElement::SceneTransition(ScenarioTransitionData(
+            SceneID::Save,
+	    SceneTransition::StackingTransition,
+            scene_transition.get("save").unwrap().as_integer().unwrap() as i32,
         )));
 
         Scenario {
@@ -1183,7 +1186,8 @@ pub struct ScenarioEvent {
     scenario_box: ScenarioBox,
     canvas: SubScreen,
     status: ScenarioEventStatus,
-    scene_transition: Option<SceneID>,
+    transition_scene: Option<SceneID>,
+    transition_type: Option<SceneTransition>,
     background: Option<UniTexture>,
     tachie: Option<ScenarioTachie>,
 }
@@ -1218,7 +1222,8 @@ impl ScenarioEvent {
             ),
             canvas: SubScreen::new(ctx.context, rect, 0, ggraphics::Color::from_rgba_u32(0x00)),
             status: ScenarioEventStatus::Scenario,
-            scene_transition: None,
+            transition_scene: None,
+	    transition_type: None,
             background: event_background,
             tachie: event_tachie,
         }
@@ -1320,7 +1325,8 @@ impl ScenarioEvent {
             ScenarioElement::SceneTransition(transition_data) => {
                 // SceneTransition状態に移行し、移行先を決定する
                 self.status = ScenarioEventStatus::SceneTransition;
-                self.scene_transition = Some(transition_data.0);
+                self.transition_scene = Some(transition_data.0);
+		self.transition_type = Some(transition_data.1);
             }
         }
     }
@@ -1334,7 +1340,11 @@ impl ScenarioEvent {
     }
 
     pub fn get_scene_transition(&self) -> Option<SceneID> {
-        self.scene_transition
+        self.transition_scene
+    }
+
+    pub fn get_scene_transition_type(&self) -> Option<SceneTransition> {
+        self.transition_type
     }
 
     pub fn get_status(&self) -> ScenarioEventStatus {

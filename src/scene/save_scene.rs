@@ -1,12 +1,14 @@
 use torifune::core::Clock;
 use torifune::device as tdev;
 use torifune::graphics::drawable::*;
+use torifune::graphics::object::*;
 
-use crate::core::{SavableData, SuzuContext};
+use crate::core::{SavableData, SuzuContext, TextureID};
 use crate::scene::*;
 use crate::object::save_scene_object::*;
 
 pub struct SaveScene {
+    background: UniTexture,
     save_entry_table: SaveEntryTable,
     scene_transition: SceneID,
     clock: Clock,
@@ -14,7 +16,6 @@ pub struct SaveScene {
 
 impl SaveScene {
     pub fn new<'a>(ctx: &mut SuzuContext<'a>) -> Self {
-
 	let save_data_list = (1..=4)
 	    .map(|slot_index|
 		 match SavableData::new_load(slot_index) {
@@ -29,8 +30,17 @@ impl SaveScene {
 	    save_data_list,
 	    0
 	);
+
+	let background = UniTexture::new(
+	    ctx.resource.ref_texture(TextureID::JpHouseTexture),
+	    numeric::Point2f::new(0.0, 0.0),
+	    numeric::Vector2f::new(0.7, 0.7),
+	    0.0,
+	    0
+	);
 	
         SaveScene {
+	    background: background,
 	    save_entry_table: save_entry_table,
             scene_transition: SceneID::Save,
             clock: 0,
@@ -46,6 +56,7 @@ impl SceneManager for SaveScene {
     }
 
     fn drawing_process(&mut self, ctx: &mut ggez::Context) {
+	self.background.draw(ctx).unwrap();
 	self.save_entry_table.draw(ctx).unwrap();
     }
 

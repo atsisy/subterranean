@@ -100,6 +100,7 @@ impl DrawableComponent for DrawableSaveEntry {
 
 pub struct SaveEntryTable {
     canvas: SubScreen,
+    background: UniTexture,
     appearance_frame: TileBatchFrame,
     entries: Vec<Option<DrawableSaveEntry>>,
     title_text: UniText,
@@ -116,7 +117,7 @@ impl SaveEntryTable {
 	let appr_frame = TileBatchFrame::new(
 	    ctx.resource,
 	    TileBatchTextureID::TaishoStyle1,
-	    window_rect,
+	    numeric::Rect::new(0.0, 0.0, window_rect.w, window_rect.h),
 	    numeric::Vector2f::new(0.8, 0.8),
 	    0
 	);
@@ -144,15 +145,24 @@ impl SaveEntryTable {
 	    0,
 	    FontInformation::new(
 		ctx.resource.get_font(FontID::JpFude1),
-		numeric::Vector2f::new(30.0, 30.0),
+		numeric::Vector2f::new(35.0, 35.0),
 		ggraphics::Color::from_rgba_u32(0xff)
 	    ),
 	);
 
-	title_text.make_center(ctx.context, numeric::Point2f::new(window_rect.w / 2.0, 50.0));
+	title_text.make_center(ctx.context, numeric::Point2f::new(window_rect.w / 2.0, 70.0));
+
+	let background = UniTexture::new(
+	    ctx.resource.ref_texture(TextureID::Paper1),
+	    numeric::Point2f::new(0.0, 0.0),
+	    numeric::Vector2f::new(1.4, 1.4),
+	    0.0,
+	    0
+	);
 	
 	SaveEntryTable {
 	    canvas: SubScreen::new(ctx.context, window_rect, draw_depth, ggraphics::Color::from_rgba_u32(0)),
+	    background: background,
 	    appearance_frame: appr_frame,
 	    entries: entries,
 	    title_text: title_text,
@@ -166,6 +176,7 @@ impl DrawableComponent for SaveEntryTable {
         if self.is_visible() {
             sub_screen::stack_screen(ctx, &self.canvas);
 
+	    self.background.draw(ctx)?;
             self.appearance_frame.draw(ctx)?;
 
 	    for maybe_entry in self.entries.iter_mut() {
