@@ -40,11 +40,11 @@ id = 11
 [scenario-group.tachie-data]
 
    [[scenario-group.choice-pattern]]
-   pattern = "選択肢1"
+   pattern = "店番を始める"
    jump-id = 2
    [[scenario-group.choice-pattern]]
-   pattern = "選択肢2"
+   pattern = "状態確認"
    jump-id = 2
    [[scenario-group.choice-pattern]]
-   pattern = "選択肢3"
+   pattern = "保存"
    jump-id = 2

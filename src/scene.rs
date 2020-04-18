@@ -1,6 +1,7 @@
 pub mod scenario_scene;
 pub mod shop_scene;
 pub mod suzuna_scene;
+pub mod save_scene;
 
 use std::str::FromStr;
 
@@ -27,6 +28,7 @@ pub enum SceneID {
     Scenario,
     SuzunaShop,
     DayResult,
+    Save,
     Copying,
 }
 
