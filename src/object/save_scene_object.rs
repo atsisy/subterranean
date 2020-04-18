@@ -17,16 +17,42 @@ use crate::object::util_object::*;
 use number_to_jk::number_to_jk;
 
 pub struct DrawableSaveEntry {
-    date_text: VerticalText,
-    money_text: VerticalText,
+    slot_id: u8,
+    background: UniTexture,
+    date_text: Option<VerticalText>,
+    money_text: Option<VerticalText>,
+    none_text: Option<VerticalText>,
     canvas: SubScreen,
 }
 
 impl DrawableSaveEntry {
     pub fn new<'a>(
 	ctx: &mut SuzuContext<'a>,
+	savable_data: Option<SavableData>,
+        pos_rect: numeric::Rect,
+	slot_id: u8,
+    ) -> Self {
+	let background = UniTexture::new(
+	    ctx.resource.ref_texture(TextureID::Wood1),
+	    numeric::Point2f::new(0.0, 0.0),
+	    numeric::Vector2f::new(1.0, 1.0),
+	    0.0,
+	    0
+	);
+	
+	if let Some(savable_data) = savable_data {
+	    Self::new_some(ctx, background, savable_data, pos_rect, slot_id)
+	} else {
+	    Self::new_none(ctx, background, pos_rect, slot_id)
+	}
+    }
+
+    fn new_some<'a>(
+    	ctx: &mut SuzuContext<'a>,
+	background: UniTexture,
 	savable_data: SavableData,
         pos_rect: numeric::Rect,
+	slot_id: u8,
     ) -> Self {
 	let date_text = VerticalText::new(
 	    format!("{}月{}日", number_to_jk(savable_data.date.month as u64), number_to_jk(savable_data.date.day as u64)),
@@ -53,13 +79,82 @@ impl DrawableSaveEntry {
 		ggraphics::Color::from_rgba_u32(0xff)
 	    ),
 	);
-
 	
         DrawableSaveEntry {
-	    date_text: date_text,
-	    money_text:  money_text,
+	    background: background,
+	    date_text: Some(date_text),
+	    money_text:  Some(money_text),
+	    none_text: None,
 	    canvas: SubScreen::new(ctx.context, pos_rect, 0, ggraphics::Color::from_rgba_u32(0)),
+	    slot_id: slot_id,
         }
+    }
+
+    fn new_none<'a>(
+        ctx: &mut SuzuContext<'a>,
+	background: UniTexture,
+        pos_rect: numeric::Rect,
+	slot_id: u8,
+    ) -> Self {
+	let mut none_text = VerticalText::new(
+	    "記録ガ在リマセン".to_string(),
+	    numeric::Point2f::new(0.0, 0.0),
+	    numeric::Vector2f::new(1.0, 1.0),
+	    0.0,
+	    0,
+	    FontInformation::new(
+		ctx.resource.get_font(FontID::JpFude1),
+		numeric::Vector2f::new(40.0, 40.0),
+		ggraphics::Color::from_rgba_u32(0xff)
+	    ),
+	);
+
+	none_text.make_center(ctx.context, numeric::Point2f::new(pos_rect.w / 2.0, pos_rect.h / 2.0));
+	
+        DrawableSaveEntry {
+	    background: background,
+	    date_text: None,
+	    money_text:  None,
+	    none_text: Some(none_text),
+	    canvas: SubScreen::new(ctx.context, pos_rect, 0, ggraphics::Color::from_rgba_u32(0)),
+	    slot_id: slot_id,
+        }
+    }
+
+    pub fn save_action<'a>(&mut self, ctx: &mut SuzuContext<'a>) {
+	ctx.savable_data.save(self.slot_id);
+
+	let savable_data = &ctx.savable_data;
+
+	let date_text = VerticalText::new(
+	    format!("{}月{}日", number_to_jk(savable_data.date.month as u64), number_to_jk(savable_data.date.day as u64)),
+	    numeric::Point2f::new(300.0, 50.0),
+	    numeric::Vector2f::new(1.0, 1.0),
+	    0.0,
+	    0,
+	    FontInformation::new(
+		ctx.resource.get_font(FontID::JpFude1),
+		numeric::Vector2f::new(35.0, 35.0),
+		ggraphics::Color::from_rgba_u32(0xff)
+	    ),
+	);
+
+	let money_text = VerticalText::new(
+	    format!("所持金{}円", number_to_jk(savable_data.task_result.total_money as u64)),
+	    numeric::Point2f::new(250.0, 150.0),
+	    numeric::Vector2f::new(1.0, 1.0),
+	    0.0,
+	    0,
+	    FontInformation::new(
+		ctx.resource.get_font(FontID::JpFude1),
+		numeric::Vector2f::new(35.0, 35.0),
+		ggraphics::Color::from_rgba_u32(0xff)
+	    ),
+	);
+
+	self.date_text = Some(date_text);
+	self.money_text = Some(money_text);
+	self.none_text = None;
     }
 }
 
@@ -68,8 +163,19 @@ impl DrawableComponent for DrawableSaveEntry {
         if self.is_visible() {
 	    sub_screen::stack_screen(ctx, &self.canvas);
 
-	    self.date_text.draw(ctx)?;
-	    self.money_text.draw(ctx)?;
+	    self.background.draw(ctx)?;
+	    
+	    if let Some(vtext) = self.date_text.as_mut() {
+		vtext.draw(ctx)?;
+	    }
+
+	    if let Some(vtext) = self.money_text.as_mut() {
+		vtext.draw(ctx)?;
+	    }
+
+	    if let Some(vtext) = self.none_text.as_mut() {
+		vtext.draw(ctx)?;
+	    }
 
             sub_screen::pop_screen(ctx);
             self.canvas.draw(ctx).unwrap();
@@ -98,11 +204,19 @@ impl DrawableComponent for DrawableSaveEntry {
     }
 }
 
+impl DrawableObject for DrawableSaveEntry {
+    impl_drawable_object_for_wrapped! {canvas}
+}
+
+impl TextureObject for DrawableSaveEntry {
+    impl_texture_object_for_wrapped! {canvas}
+}
+
 pub struct SaveEntryTable {
     canvas: SubScreen,
     background: UniTexture,
     appearance_frame: TileBatchFrame,
-    entries: Vec<Option<DrawableSaveEntry>>,
+    entries: Vec<DrawableSaveEntry>,
     title_text: UniText,
 }
 
@@ -123,15 +237,11 @@ impl SaveEntryTable {
 	);
 
 	let mut entries = Vec::new();
-	let mut pos_rect = numeric::Rect::new(50.0, 100.0, 280.0, 550.0);
+	let mut pos_rect = numeric::Rect::new(50.0, 125.0, 280.0, 500.0);
 
-	for maybe_save_data in save_data_list {
+	for (index, maybe_save_data) in save_data_list.iter().enumerate() {
 	    entries.push(
-		if let Some(save_data) = maybe_save_data {
-		    Some(DrawableSaveEntry::new(ctx, save_data, pos_rect))
-		} else {
-		    None
-		}
+		DrawableSaveEntry::new(ctx, maybe_save_data.clone(), pos_rect, index as u8)
 	    );
 
 	    pos_rect.x += 300.0;
@@ -169,6 +279,19 @@ impl SaveEntryTable {
 	}
     }
 
+    pub fn click_handler<'a>(
+	&mut self,
+	ctx: &mut SuzuContext<'a>,
+	point: numeric::Point2f,
+    ) {
+	let rpoint = self.canvas.relative_point(point);
+
+	for entry in self.entries.iter_mut() {
+	    if entry.contains(ctx.context, rpoint) {
+		entry.save_action(ctx);
+	    }
+	}
+    }
 }
 
 impl DrawableComponent for SaveEntryTable {
@@ -179,10 +302,8 @@ impl DrawableComponent for SaveEntryTable {
 	    self.background.draw(ctx)?;
             self.appearance_frame.draw(ctx)?;
 
-	    for maybe_entry in self.entries.iter_mut() {
-		if let Some(entry) = maybe_entry {
-		    entry.draw(ctx)?;
-		}
+	    for entry in self.entries.iter_mut() {
+		entry.draw(ctx)?;
 	    }
 
 	    self.title_text.draw(ctx)?;
@@ -212,12 +333,4 @@ impl DrawableComponent for SaveEntryTable {
     fn get_drawing_depth(&self) -> i8 {
         self.canvas.get_drawing_depth()
     }
-}
-
-impl DrawableObject for DrawableSaveEntry {
-    impl_drawable_object_for_wrapped! {canvas}
-}
-
-impl TextureObject for DrawableSaveEntry {
-    impl_texture_object_for_wrapped! {canvas}
 }

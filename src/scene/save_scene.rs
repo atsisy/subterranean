@@ -49,9 +49,15 @@ impl SaveScene {
 }
 
 impl SceneManager for SaveScene {
-    fn key_down_event<'a>(&mut self, _ctx: &mut SuzuContext, _vkey: tdev::VirtualKey) {
+    fn mouse_button_down_event<'a>(
+        &mut self,
+        ctx: &mut SuzuContext<'a>,
+        _button: ginput::mouse::MouseButton,
+        point: numeric::Point2f,
+    ) {
+	self.save_entry_table.click_handler(ctx, point);
     }
-
+    
     fn pre_process<'a>(&mut self, _ctx: &mut SuzuContext<'a>) {
     }
 
