@@ -872,6 +872,7 @@ pub enum TopScene {
     ScenarioScene(scene::scenario_scene::ScenarioScene),
     SuzunaScene(scene::suzuna_scene::SuzunaScene),
     SaveScene(scene::save_scene::SaveScene),
+    TitleScene(scene::title_scene::TitleScene),
     Null(scene::NullScene),
 }
 
@@ -881,6 +882,7 @@ impl TopScene {
             TopScene::ScenarioScene(scene) => scene,
             TopScene::SuzunaScene(scene) => scene,
 	    TopScene::SaveScene(scene) => scene,
+	    TopScene::TitleScene(scene) => scene,
             TopScene::Null(scene) => scene,
         }
     }
@@ -890,6 +892,7 @@ impl TopScene {
             TopScene::ScenarioScene(scene) => scene,
             TopScene::SuzunaScene(scene) => scene,
 	    TopScene::SaveScene(scene) => scene,
+	    TopScene::TitleScene(scene) => scene,
             TopScene::Null(scene) => scene,
         }
     }
@@ -942,17 +945,20 @@ impl SceneController {
             task_result: TaskResult::new(),
         };
 
-        let current_scene = scene::scenario_scene::ScenarioScene::new(&mut SuzuContext {
+        // let current_scene = scene::scenario_scene::ScenarioScene::new(&mut SuzuContext {
+        //     context: ctx,
+        //     resource: game_data,
+        //     savable_data: &mut game_status,
+        // });
+	let current_scene = scene::title_scene::TitleScene::new(&mut SuzuContext {
             context: ctx,
             resource: game_data,
             savable_data: &mut game_status,
         });
 
         SceneController {
-            //current_scene: Box::new(scene::work_scene::WorkScene::new(ctx, game_data, 0)),
-            current_scene: TopScene::ScenarioScene(current_scene),
-            //current_scene: Box::new(scene::shop_scene::ShopScene::new(ctx, game_data, 0)),
-            //current_scene: Box::new(scene::suzuna_scene::SuzunaScene::new(ctx, game_data, 0)),
+            //current_scene: TopScene::ScenarioScene(current_scene),
+	    current_scene: TopScene::TitleScene(current_scene),
             scene_stack: SceneStack::new(),
             key_map: tdev::ProgramableGenericKey::new(),
             global_clock: 0,
