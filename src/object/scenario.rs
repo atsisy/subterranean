@@ -1,3 +1,4 @@
+use std::collections::LinkedList;
 use std::collections::VecDeque;
 
 use torifune::graphics::drawable::*;
@@ -656,6 +657,7 @@ impl ScenarioElement {
 
 pub struct Scenario {
     scenario: Vec<ScenarioElement>,
+    element_id_stack: LinkedList<ScenarioElementID>,
     current_page: usize,
 }
 
@@ -669,6 +671,9 @@ impl Scenario {
         };
 
         let root = content.parse::<toml::Value>().unwrap();
+
+	let first_scenario_id = root["first-scenario-id"].as_integer().unwrap();
+	
         let array = root["scenario-group"].as_array().unwrap();
 
         for elem in array {
@@ -710,11 +715,15 @@ impl Scenario {
 	    SceneTransition::StackingTransition,
             scene_transition.get("save").unwrap().as_integer().unwrap() as i32,
         )));
-
-        Scenario {
+	
+        let mut scenario = Scenario {
             scenario: scenario,
+	    element_id_stack: LinkedList::new(),
             current_page: 0,
-        }
+        };
+
+	scenario.update_current_page_index(first_scenario_id as ScenarioElementID);
+	scenario
     }
 
     ///
@@ -731,6 +740,35 @@ impl Scenario {
     }
 
     ///
+    /// 次のScenarioElementIDを記録して、かつ、そのインデックスを求め、現在のシナリオとしてセットするメソッド
+    /// 
+    pub fn update_current_page_index(&mut self, scenario_element_id: ScenarioElementID) {
+	// 次のScenarioElementIDから、ScenarioElementのインデックスを得る
+	self.element_id_stack.push_back(scenario_element_id);
+	let index = self.find_index_of_specified_scenario_id(scenario_element_id);
+	self.current_page = index;
+    }
+
+    pub fn turn_back_scenario_offset(&mut self, offset: usize) {
+	for _ in 0..offset {
+	    self.element_id_stack.pop_back();
+	    
+	}
+
+	let turn_backed_id = self.element_id_stack.back().unwrap();
+
+	self.current_page = self.find_index_of_specified_scenario_id(*turn_backed_id);
+
+        // シナリオを初期化する
+        match self.ref_current_element_mut() {
+            ScenarioElement::Text(obj) => {
+                obj.reset();
+            }
+            _ => (),
+        }
+    }
+    
+    ///
     /// Scenarioの状態遷移を行うメソッド
     /// このメソッドは通常のテキストから他の状態に遷移する際に呼び出す
     ///
@@ -743,8 +781,7 @@ impl Scenario {
             }
         };
 
-        // 次のScenarioElementIDから、ScenarioElementのインデックスを得る
-        self.current_page = self.find_index_of_specified_scenario_id(next_id);
+	self.update_current_page_index(next_id);
 
         // 次がシナリオなら初期化する
         match self.ref_current_element_mut() {
@@ -771,8 +808,7 @@ impl Scenario {
             }
         };
 
-        // 次のScenarioElementIDから、ScenarioElementのインデックスを得る
-        self.current_page = self.find_index_of_specified_scenario_id(next_id);
+	self.update_current_page_index(next_id);
 
         // シナリオを初期化する
         match self.ref_current_element_mut() {
@@ -1283,6 +1319,10 @@ impl ScenarioEvent {
         if scenario_tachie.is_some() {
             self.tachie = scenario_tachie;
         }
+    }
+
+    pub fn scenario_control_mut(&mut self) -> &mut Scenario {
+	&mut self.scenario
     }
 
     ///

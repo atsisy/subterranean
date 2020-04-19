@@ -66,6 +66,16 @@ impl SceneManager for ScenarioScene {
         }
     }
 
+    fn scene_popping_return_handler<'a>(
+	&mut self,
+	_: &mut SuzuContext<'a>,
+    ) {
+	println!("recover!!!!");
+	self.scene_transition = SceneID::Scenario;
+	self.scene_transition_type = SceneTransition::Keep;
+	self.scenario_event.scenario_control_mut().turn_back_scenario_offset(1);
+    }
+
     fn pre_process<'a>(&mut self, ctx: &mut SuzuContext<'a>) {
         self.scenario_event.update_text(ctx);
         self.simulation_status.update();

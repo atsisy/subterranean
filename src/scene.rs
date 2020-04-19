@@ -84,6 +84,12 @@ pub trait SceneManager {
     ) {
     }
 
+    fn scene_popping_return_handler<'a>(
+	&mut self,
+	_: &mut SuzuContext<'a>,
+    ) {
+    }
+
     fn pre_process<'a>(&mut self, ctx: &mut SuzuContext<'a>);
 
     fn drawing_process(&mut self, ctx: &mut ggez::Context);

@@ -1,3 +1,5 @@
+first-scenario-id = 10
+
 [scene-transition]
 scenario = 1
 dream = 2

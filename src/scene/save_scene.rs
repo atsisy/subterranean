@@ -6,11 +6,13 @@ use crate::core::{SavableData, SuzuContext, TextureID, TileBatchTextureID};
 use crate::scene::*;
 use crate::object::save_scene_object::*;
 use crate::object::effect_object;
+use crate::object::util_object::*;
 
 use crate::flush_delay_event;
 
 pub struct SaveScene {
     background: UniTexture,
+    exit_button: SelectButton,
     event_list: DelayEventList<Self>,
     scene_transition_effect: Option<effect_object::ScreenTileEffect>,
     save_entry_table: SaveEntryTable,
@@ -60,6 +62,18 @@ impl SaveScene {
             0,
         ));
 
+	let exit_button = SelectButton::new(
+	    ctx,
+	    numeric::Rect::new(1000.0, (crate::core::WINDOW_SIZE_Y as f32) - 80.0, 100.0, 50.0),
+	    Box::new(UniTexture::new(
+		ctx.resource.ref_texture(TextureID::ChoicePanel1),
+		numeric::Point2f::new(0.0, 0.0),
+		numeric::Vector2f::new(1.0, 1.0),
+		0.0,
+		0
+	    )),
+	);
+	
         let mut event_list = DelayEventList::new();
         event_list.add_event(
             Box::new(move |slf: &mut Self, _, _| {
@@ -71,6 +85,7 @@ impl SaveScene {
         SaveScene {
 	    background: background,
 	    event_list: event_list,
+	    exit_button: exit_button,
 	    scene_transition_effect: scene_transition_effect,
 	    save_entry_table: save_entry_table,
             scene_transition: SceneID::Save,
@@ -79,7 +94,33 @@ impl SaveScene {
         }
     }
 
-    pub fn load_and_scene_swap<'a>(&mut self, ctx: &mut SuzuContext<'a>, slot: u8, t: Clock) {
+    fn exit_scene_poping<'a>(&mut self, ctx: &mut SuzuContext<'a>, t: Clock) {
+	self.scene_transition_effect = Some(effect_object::ScreenTileEffect::new(
+            ctx,
+            TileBatchTextureID::Shoji,
+            numeric::Rect::new(
+                0.0,
+                0.0,
+                crate::core::WINDOW_SIZE_X as f32,
+                crate::core::WINDOW_SIZE_Y as f32,
+            ),
+            30,
+            effect_object::SceneTransitionEffectType::Close,
+            effect_object::TilingEffectType::WholeTile,
+            -128,
+            t,
+        ));
+
+	self.event_list.add_event(
+            Box::new(move |slf: &mut Self, _, _| {
+		slf.scene_transition = SceneID::Scenario;
+		slf.scene_transition_type = SceneTransition::PoppingTransition;
+            }),
+	    31,
+        );
+    }
+
+    fn load_and_scene_swap<'a>(&mut self, ctx: &mut SuzuContext<'a>, slot: u8, t: Clock) {
 	ctx.savable_data.replace(SavableData::new_load(slot).unwrap());
 
         self.scene_transition_effect = Some(effect_object::ScreenTileEffect::new(
@@ -115,11 +156,17 @@ impl SceneManager for SaveScene {
         _button: ginput::mouse::MouseButton,
         point: numeric::Point2f,
     ) {
+	let t = self.get_current_clock();
+	
 	match self.save_entry_table.click_handler(ctx, point) {
 	    SaveDataOperation::Loading(slot) => {
-		self.load_and_scene_swap(ctx, slot, self.get_current_clock());
+		self.load_and_scene_swap(ctx, slot, t);
 	    },
 	    _ => (),
+	}
+
+	if self.exit_button.contains(ctx.context, point) {
+	    self.exit_scene_poping(ctx, t);
 	}
     }
 
@@ -137,6 +184,8 @@ impl SceneManager for SaveScene {
 	self.background.draw(ctx).unwrap();
 	self.save_entry_table.draw(ctx).unwrap();
 
+	self.exit_button.draw(ctx).unwrap();
+	
 	if let Some(transition_effect) = self.scene_transition_effect.as_mut() {
             transition_effect.draw(ctx).unwrap();
         }

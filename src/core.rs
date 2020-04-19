@@ -1026,14 +1026,6 @@ impl SceneController {
         }
     }
 
-    fn switch_scene_with_popping(&mut self) {
-        if let Some(scene) = self.scene_stack.pop() {
-            self.current_scene = scene;
-        } else {
-            eprintln!("Scene Stack is Empty!!");
-        }
-    }
-
     fn run_pre_process(&mut self, ctx: &mut ggez::Context, game_data: &GameResource) {
         self.current_scene.abs_mut().pre_process(&mut SuzuContext {
             context: ctx,
@@ -1074,7 +1066,12 @@ impl SceneController {
                 );
             }
             scene::SceneTransition::PoppingTransition => {
-                self.switch_scene_with_popping();
+		if let Some(scene) = self.scene_stack.pop() {
+		    self.current_scene = scene;
+		    self.current_scene.abs_mut().scene_popping_return_handler(&mut suzu_ctx);
+		} else {
+		    eprintln!("Scene Stack is Empty!!");
+		}
             }
         }
 
