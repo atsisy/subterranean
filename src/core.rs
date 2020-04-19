@@ -845,6 +845,10 @@ impl SavableData {
 	Ok(())
     }
 
+    pub fn delete(slot: u8) {
+	std::fs::remove_file(&format!("./resources/save{}.toml", slot)).unwrap();
+    }
+
     pub fn new_load(slot: u8) -> Result<SavableData, Box<dyn std::error::Error>> {
 	let content = fs::read_to_string(&format!("./resources/save{}.toml", slot))?;
 	let savable_data: SavableData = toml::from_str(&content).unwrap();

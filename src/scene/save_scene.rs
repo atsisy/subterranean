@@ -1,5 +1,4 @@
 use torifune::core::Clock;
-use torifune::device as tdev;
 use torifune::graphics::drawable::*;
 use torifune::graphics::object::*;
 

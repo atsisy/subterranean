@@ -22,6 +22,8 @@ pub struct DrawableSaveEntry {
     date_text: Option<VerticalText>,
     money_text: Option<VerticalText>,
     none_text: Option<VerticalText>,
+    save_button: SelectButton,
+    delete_button: SelectButton,
     canvas: SubScreen,
 }
 
@@ -39,11 +41,35 @@ impl DrawableSaveEntry {
 	    0.0,
 	    0
 	);
+
+	let save_button = SelectButton::new(
+	    ctx,
+	    numeric::Rect::new(100.0, pos_rect.h - 100.0, 70.0, 70.0),
+	    Box::new(UniTexture::new(
+		ctx.resource.ref_texture(TextureID::ChoicePanel1),
+		numeric::Point2f::new(0.0, 0.0),
+		numeric::Vector2f::new(1.0, 1.0),
+		0.0,
+		0
+	    )),
+	);
+
+	let delete_button = SelectButton::new(
+	    ctx,
+	    numeric::Rect::new(200.0, pos_rect.h - 100.0, 70.0, 70.0),
+	    Box::new(UniTexture::new(
+		ctx.resource.ref_texture(TextureID::ChoicePanel2),
+		numeric::Point2f::new(0.0, 0.0),
+		numeric::Vector2f::new(1.0, 1.0),
+		0.0,
+		0
+	    )),
+	);
 	
 	if let Some(savable_data) = savable_data {
-	    Self::new_some(ctx, background, savable_data, pos_rect, slot_id)
+	    Self::new_some(ctx, background, savable_data, pos_rect, save_button, delete_button, slot_id)
 	} else {
-	    Self::new_none(ctx, background, pos_rect, slot_id)
+	    Self::new_none(ctx, background, pos_rect, save_button, delete_button, slot_id)
 	}
     }
 
@@ -52,53 +78,52 @@ impl DrawableSaveEntry {
 	background: UniTexture,
 	savable_data: SavableData,
         pos_rect: numeric::Rect,
+	save_button: SelectButton,
+	delete_button: SelectButton,
 	slot_id: u8,
     ) -> Self {
-	let date_text = VerticalText::new(
-	    format!("{}月{}日", number_to_jk(savable_data.date.month as u64), number_to_jk(savable_data.date.day as u64)),
-	    numeric::Point2f::new(300.0, 50.0),
-	    numeric::Vector2f::new(1.0, 1.0),
-	    0.0,
-	    0,
-	    FontInformation::new(
-		ctx.resource.get_font(FontID::JpFude1),
-		numeric::Vector2f::new(35.0, 35.0),
-		ggraphics::Color::from_rgba_u32(0xff)
-	    ),
-	);
-
-	let money_text = VerticalText::new(
-	    format!("所持金{}円", number_to_jk(savable_data.task_result.total_money as u64)),
-	    numeric::Point2f::new(250.0, 150.0),
-	    numeric::Vector2f::new(1.0, 1.0),
-	    0.0,
-	    0,
-	    FontInformation::new(
-		ctx.resource.get_font(FontID::JpFude1),
-		numeric::Vector2f::new(35.0, 35.0),
-		ggraphics::Color::from_rgba_u32(0xff)
-	    ),
-	);
-	
-        DrawableSaveEntry {
+        let mut entry = DrawableSaveEntry {
 	    background: background,
-	    date_text: Some(date_text),
-	    money_text:  Some(money_text),
+	    date_text: None,
+	    money_text:  None,
 	    none_text: None,
+	    save_button: save_button,
+	    delete_button: delete_button,
 	    canvas: SubScreen::new(ctx.context, pos_rect, 0, ggraphics::Color::from_rgba_u32(0)),
 	    slot_id: slot_id,
-        }
+        };
+
+	entry.update_entry_contents(ctx, savable_data);
+	entry
     }
 
     fn new_none<'a>(
         ctx: &mut SuzuContext<'a>,
 	background: UniTexture,
         pos_rect: numeric::Rect,
+	save_button: SelectButton,
+	delete_button: SelectButton,
 	slot_id: u8,
     ) -> Self {
-	let mut none_text = VerticalText::new(
-	    "記録ガ在リマセン".to_string(),
-	    numeric::Point2f::new(0.0, 0.0),
+	let mut entry = DrawableSaveEntry {
+	    background: background,
+	    date_text: None,
+	    money_text:  None,
+	    none_text: None,
+	    save_button: save_button,
+	    delete_button: delete_button,
+	    canvas: SubScreen::new(ctx.context, pos_rect, 0, ggraphics::Color::from_rgba_u32(0)),
+	    slot_id: slot_id,
+        };
+
+	entry.update_none_contents(ctx);
+	entry
+    }
+
+    fn update_entry_contents<'a>(&mut self, ctx: &mut SuzuContext<'a>, savable_data: SavableData) {
+	let date_text = VerticalText::new(
+	    format!("{}月{}日", number_to_jk(savable_data.date.month as u64), number_to_jk(savable_data.date.day as u64)),
+	    numeric::Point2f::new(220.0, 60.0),
 	    numeric::Vector2f::new(1.0, 1.0),
 	    0.0,
 	    0,
@@ -109,39 +134,9 @@ impl DrawableSaveEntry {
 	    ),
 	);
 
-	none_text.make_center(ctx.context, numeric::Point2f::new(pos_rect.w / 2.0, pos_rect.h / 2.0));
-	
-        DrawableSaveEntry {
-	    background: background,
-	    date_text: None,
-	    money_text:  None,
-	    none_text: Some(none_text),
-	    canvas: SubScreen::new(ctx.context, pos_rect, 0, ggraphics::Color::from_rgba_u32(0)),
-	    slot_id: slot_id,
-        }
-    }
-
-    pub fn save_action<'a>(&mut self, ctx: &mut SuzuContext<'a>) {
-	ctx.savable_data.save(self.slot_id);
-
-	let savable_data = &ctx.savable_data;
-
-	let date_text = VerticalText::new(
-	    format!("{}月{}日", number_to_jk(savable_data.date.month as u64), number_to_jk(savable_data.date.day as u64)),
-	    numeric::Point2f::new(300.0, 50.0),
-	    numeric::Vector2f::new(1.0, 1.0),
-	    0.0,
-	    0,
-	    FontInformation::new(
-		ctx.resource.get_font(FontID::JpFude1),
-		numeric::Vector2f::new(35.0, 35.0),
-		ggraphics::Color::from_rgba_u32(0xff)
-	    ),
-	);
-
 	let money_text = VerticalText::new(
 	    format!("所持金{}円", number_to_jk(savable_data.task_result.total_money as u64)),
-	    numeric::Point2f::new(250.0, 150.0),
+	    numeric::Point2f::new(150.0, 160.0),
 	    numeric::Vector2f::new(1.0, 1.0),
 	    0.0,
 	    0,
@@ -155,6 +150,50 @@ impl DrawableSaveEntry {
 	self.date_text = Some(date_text);
 	self.money_text = Some(money_text);
 	self.none_text = None;
+    }
+
+    fn update_none_contents<'a>(&mut self, ctx: &mut SuzuContext<'a>) {
+	let mut none_text = VerticalText::new(
+	    "記録ガ在リマセン".to_string(),
+	    numeric::Point2f::new(0.0, 0.0),
+	    numeric::Vector2f::new(1.0, 1.0),
+	    0.0,
+	    0,
+	    FontInformation::new(
+		ctx.resource.get_font(FontID::JpFude1),
+		numeric::Vector2f::new(40.0, 40.0),
+		ggraphics::Color::from_rgba_u32(0xff)
+	    ),
+	);
+
+	let size = self.canvas.get_drawing_size(ctx.context);
+	none_text.make_center(ctx.context, numeric::Point2f::new(size.x / 2.0, size.y / 2.0));
+	
+
+	self.date_text = None;
+	self.money_text = None;
+	self.none_text = Some(none_text);
+    }
+    
+    fn save_action<'a>(&mut self, ctx: &mut SuzuContext<'a>) {
+	ctx.savable_data.save(self.slot_id).unwrap();
+	let savable_data = ctx.savable_data.clone();
+	self.update_entry_contents(ctx, savable_data);
+    }
+
+    fn delete_action<'a>(&mut self, ctx: &mut SuzuContext<'a>) {
+	SavableData::delete(self.slot_id);
+	self.update_none_contents(ctx);
+    }
+
+    pub fn click_handler<'a>(&mut self, ctx: &mut SuzuContext<'a>, point: numeric::Point2f) {
+	let rpoint = self.canvas.relative_point(point);
+
+	if self.save_button.contains(ctx.context, rpoint) {
+	    self.save_action(ctx);
+	} else if self.delete_button.contains(ctx.context, rpoint) {
+	    self.delete_action(ctx);
+	}
     }
 }
 
@@ -176,6 +215,9 @@ impl DrawableComponent for DrawableSaveEntry {
 	    if let Some(vtext) = self.none_text.as_mut() {
 		vtext.draw(ctx)?;
 	    }
+
+	    self.save_button.draw(ctx)?;
+	    self.delete_button.draw(ctx)?;
 
             sub_screen::pop_screen(ctx);
             self.canvas.draw(ctx).unwrap();
@@ -288,7 +330,7 @@ impl SaveEntryTable {
 
 	for entry in self.entries.iter_mut() {
 	    if entry.contains(ctx.context, rpoint) {
-		entry.save_action(ctx);
+		entry.click_handler(ctx, rpoint);
 	    }
 	}
     }
