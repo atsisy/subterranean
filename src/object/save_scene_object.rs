@@ -16,6 +16,13 @@ use crate::object::util_object::*;
 
 use number_to_jk::number_to_jk;
 
+pub enum SaveDataOperation {
+    Saving,
+    Deleting,
+    Loading(u8),
+    NoOperation,
+}
+
 pub struct DrawableSaveEntry {
     slot_id: u8,
     background: UniTexture,
@@ -24,6 +31,7 @@ pub struct DrawableSaveEntry {
     none_text: Option<VerticalText>,
     save_button: SelectButton,
     delete_button: SelectButton,
+    load_button: SelectButton,
     canvas: SubScreen,
 }
 
@@ -44,7 +52,7 @@ impl DrawableSaveEntry {
 
 	let save_button = SelectButton::new(
 	    ctx,
-	    numeric::Rect::new(100.0, pos_rect.h - 100.0, 70.0, 70.0),
+	    numeric::Rect::new(30.0, pos_rect.h - 80.0, 60.0, 60.0),
 	    Box::new(UniTexture::new(
 		ctx.resource.ref_texture(TextureID::ChoicePanel1),
 		numeric::Point2f::new(0.0, 0.0),
@@ -56,7 +64,7 @@ impl DrawableSaveEntry {
 
 	let delete_button = SelectButton::new(
 	    ctx,
-	    numeric::Rect::new(200.0, pos_rect.h - 100.0, 70.0, 70.0),
+	    numeric::Rect::new(130.0, pos_rect.h - 80.0, 60.0, 60.0),
 	    Box::new(UniTexture::new(
 		ctx.resource.ref_texture(TextureID::ChoicePanel2),
 		numeric::Point2f::new(0.0, 0.0),
@@ -65,11 +73,23 @@ impl DrawableSaveEntry {
 		0
 	    )),
 	);
+
+	let load_button = SelectButton::new(
+	    ctx,
+	    numeric::Rect::new(230.0, pos_rect.h - 80.0, 60.0, 60.0),
+	    Box::new(UniTexture::new(
+		ctx.resource.ref_texture(TextureID::ChoicePanel3),
+		numeric::Point2f::new(0.0, 0.0),
+		numeric::Vector2f::new(1.0, 1.0),
+		0.0,
+		0
+	    )),
+	);
 	
 	if let Some(savable_data) = savable_data {
-	    Self::new_some(ctx, background, savable_data, pos_rect, save_button, delete_button, slot_id)
+	    Self::new_some(ctx, background, savable_data, pos_rect, save_button, load_button, delete_button, slot_id)
 	} else {
-	    Self::new_none(ctx, background, pos_rect, save_button, delete_button, slot_id)
+	    Self::new_none(ctx, background, pos_rect, save_button, load_button, delete_button, slot_id)
 	}
     }
 
@@ -79,6 +99,7 @@ impl DrawableSaveEntry {
 	savable_data: SavableData,
         pos_rect: numeric::Rect,
 	save_button: SelectButton,
+	load_button: SelectButton,
 	delete_button: SelectButton,
 	slot_id: u8,
     ) -> Self {
@@ -88,6 +109,7 @@ impl DrawableSaveEntry {
 	    money_text:  None,
 	    none_text: None,
 	    save_button: save_button,
+	    load_button: load_button,
 	    delete_button: delete_button,
 	    canvas: SubScreen::new(ctx.context, pos_rect, 0, ggraphics::Color::from_rgba_u32(0)),
 	    slot_id: slot_id,
@@ -102,6 +124,7 @@ impl DrawableSaveEntry {
 	background: UniTexture,
         pos_rect: numeric::Rect,
 	save_button: SelectButton,
+	load_button: SelectButton,
 	delete_button: SelectButton,
 	slot_id: u8,
     ) -> Self {
@@ -111,6 +134,7 @@ impl DrawableSaveEntry {
 	    money_text:  None,
 	    none_text: None,
 	    save_button: save_button,
+	    load_button: load_button,
 	    delete_button: delete_button,
 	    canvas: SubScreen::new(ctx.context, pos_rect, 0, ggraphics::Color::from_rgba_u32(0)),
 	    slot_id: slot_id,
@@ -168,7 +192,6 @@ impl DrawableSaveEntry {
 
 	let size = self.canvas.get_drawing_size(ctx.context);
 	none_text.make_center(ctx.context, numeric::Point2f::new(size.x / 2.0, size.y / 2.0));
-	
 
 	self.date_text = None;
 	self.money_text = None;
@@ -186,13 +209,23 @@ impl DrawableSaveEntry {
 	self.update_none_contents(ctx);
     }
 
-    pub fn click_handler<'a>(&mut self, ctx: &mut SuzuContext<'a>, point: numeric::Point2f) {
+    pub fn click_handler<'a>(
+	&mut self,
+	ctx: &mut SuzuContext<'a>,
+	point: numeric::Point2f
+    ) -> SaveDataOperation {
 	let rpoint = self.canvas.relative_point(point);
 
 	if self.save_button.contains(ctx.context, rpoint) {
 	    self.save_action(ctx);
+	    SaveDataOperation::Saving
 	} else if self.delete_button.contains(ctx.context, rpoint) {
 	    self.delete_action(ctx);
+	    SaveDataOperation::Deleting
+	} else if self.load_button.contains(ctx.context, rpoint) {
+	    SaveDataOperation::Loading(self.slot_id)
+	} else {
+	    SaveDataOperation::NoOperation
 	}
     }
 }
@@ -217,6 +250,7 @@ impl DrawableComponent for DrawableSaveEntry {
 	    }
 
 	    self.save_button.draw(ctx)?;
+	    self.load_button.draw(ctx)?;
 	    self.delete_button.draw(ctx)?;
 
             sub_screen::pop_screen(ctx);
@@ -325,14 +359,16 @@ impl SaveEntryTable {
 	&mut self,
 	ctx: &mut SuzuContext<'a>,
 	point: numeric::Point2f,
-    ) {
+    ) -> SaveDataOperation {
 	let rpoint = self.canvas.relative_point(point);
 
 	for entry in self.entries.iter_mut() {
 	    if entry.contains(ctx.context, rpoint) {
-		entry.click_handler(ctx, rpoint);
+		return entry.click_handler(ctx, rpoint);
 	    }
 	}
+
+	SaveDataOperation::NoOperation
     }
 }
 

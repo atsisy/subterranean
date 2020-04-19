@@ -855,6 +855,11 @@ impl SavableData {
 	
 	Ok(savable_data)
     }
+
+    pub fn replace(&mut self, data: SavableData) {
+	self.date = data.date;
+	self.task_result = data.task_result;
+    }
 }
 
 pub struct SuzuContext<'ctx> {
@@ -977,7 +982,11 @@ impl SceneController {
                 TopScene::SuzunaScene(_) => {
                     self.current_scene =
                         TopScene::ScenarioScene(scene::scenario_scene::ScenarioScene::new(&mut ctx))
-                }
+                },
+		TopScene::SaveScene(_) => {
+		    self.current_scene =
+                        TopScene::ScenarioScene(scene::scenario_scene::ScenarioScene::new(&mut ctx))
+		}
                 _ => (),
             },
             scene::SceneID::Null => self.current_scene = TopScene::Null(scene::NullScene::new()),
