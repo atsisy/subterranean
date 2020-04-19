@@ -317,7 +317,7 @@ impl SaveEntryTable {
 
 	for (index, maybe_save_data) in save_data_list.iter().enumerate() {
 	    entries.push(
-		DrawableSaveEntry::new(ctx, maybe_save_data.clone(), pos_rect, index as u8)
+		DrawableSaveEntry::new(ctx, maybe_save_data.clone(), pos_rect, (index + 1) as u8)
 	    );
 
 	    pos_rect.x += 300.0;
