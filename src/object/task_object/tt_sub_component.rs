@@ -295,7 +295,11 @@ pub enum OnDeskType {
 pub trait OnDesk: TextureObject + Clickable {
     fn ondesk_whose(&self) -> i32;
 
-    fn get_hold_data(&self, ctx: &mut ggez::Context, point: numeric::Point2f) -> HoldData;
+    fn click_hold_data(&self, ctx: &mut ggez::Context, point: numeric::Point2f) -> HoldData;
+
+    fn get_hold_data(&self) -> HoldData {
+	HoldData::None
+    }
 
     fn get_type(&self) -> OnDeskType;
 
@@ -395,7 +399,7 @@ impl OnDesk for OnDeskTexture {
         0
     }
 
-    fn get_hold_data(&self, _: &mut ggez::Context, _: numeric::Point2f) -> HoldData {
+    fn click_hold_data(&self, _: &mut ggez::Context, _: numeric::Point2f) -> HoldData {
         HoldData::None
     }
 
@@ -549,10 +553,15 @@ impl OnDesk for OnDeskBook {
     fn ondesk_whose(&self) -> i32 {
         0
     }
-    fn get_hold_data(&self, _: &mut ggez::Context, _: numeric::Point2f) -> HoldData {
+
+    fn click_hold_data(&self, _: &mut ggez::Context, _: numeric::Point2f) -> HoldData {
         return HoldData::BookName(self.info.clone());
     }
 
+    fn get_hold_data(&self) -> HoldData {
+	HoldData::BookName(self.info.clone())
+    }
+    
     fn get_type(&self) -> OnDeskType {
         OnDeskType::Book
     }
@@ -795,7 +804,7 @@ impl OnDesk for CopyingRequestPaper {
         0
     }
 
-    fn get_hold_data(&self, ctx: &mut ggez::Context, point: numeric::Point2f) -> HoldData {
+    fn click_hold_data(&self, ctx: &mut ggez::Context, point: numeric::Point2f) -> HoldData {
         let rpoint = self.canvas.relative_point(point);
 
         if self.request_book.get_drawing_area(ctx).contains(rpoint) {
@@ -2175,7 +2184,7 @@ impl OnDesk for BorrowingRecordBook {
         0
     }
 
-    fn get_hold_data(&self, _: &mut ggez::Context, _: numeric::Point2f) -> HoldData {
+    fn click_hold_data(&self, _: &mut ggez::Context, _: numeric::Point2f) -> HoldData {
         HoldData::None
     }
 

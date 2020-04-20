@@ -833,6 +833,7 @@ impl SceneStack {
 pub struct SavableData {
     pub date: GensoDate,
     pub task_result: TaskResult,
+    pub jinyou_balance: f32,
 }
 
 impl SavableData {
@@ -943,6 +944,7 @@ impl SceneController {
         let mut game_status = SavableData {
             date: GensoDate::new(112, 7, 23),
             task_result: TaskResult::new(),
+	    jinyou_balance: 0.0,
         };
 
         // let current_scene = scene::scenario_scene::ScenarioScene::new(&mut SuzuContext {
@@ -990,6 +992,10 @@ impl SceneController {
                         TopScene::ScenarioScene(scene::scenario_scene::ScenarioScene::new(&mut ctx))
                 },
 		TopScene::SaveScene(_) => {
+		    self.current_scene =
+                        TopScene::ScenarioScene(scene::scenario_scene::ScenarioScene::new(&mut ctx))
+		},
+		TopScene::TitleScene(_) => {
 		    self.current_scene =
                         TopScene::ScenarioScene(scene::scenario_scene::ScenarioScene::new(&mut ctx))
 		}

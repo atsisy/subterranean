@@ -500,7 +500,7 @@ impl OnDesk for TaskSilhouette {
         0
     }
 
-    fn get_hold_data(&self, _: &mut ggez::Context, _: numeric::Point2f) -> HoldData {
+    fn click_hold_data(&self, _: &mut ggez::Context, _: numeric::Point2f) -> HoldData {
         if let Some(name) = &self.name {
             HoldData::CustomerName(name.to_string())
         } else {
@@ -997,9 +997,9 @@ impl OnDesk for SuzuMiniSightSilhouette {
         0
     }
 
-    fn get_hold_data(&self, ctx: &mut ggez::Context, point: numeric::Point2f) -> HoldData {
+    fn click_hold_data(&self, ctx: &mut ggez::Context, point: numeric::Point2f) -> HoldData {
         if self.silhouette.get_drawing_area(ctx).contains(point) {
-            self.silhouette.get_hold_data(ctx, point)
+            self.silhouette.click_hold_data(ctx, point)
         } else {
             HoldData::None
         }
@@ -1186,7 +1186,7 @@ impl SuzuMiniSight {
     ) -> HoldData {
         let rpoint = self.canvas.relative_point(point);
 
-        self.silhouette.get_hold_data(ctx, rpoint)
+        self.silhouette.click_hold_data(ctx, rpoint)
     }
 
     pub fn release_dragging(&mut self) -> Option<DeskObject> {
@@ -1361,7 +1361,7 @@ impl ShelvingBookBox {
         for obj in self.shelved.iter_mut().rev() {
             let contains = obj.get_object().get_drawing_area(ctx).contains(rpoint);
             if contains {
-                clicked_data = obj.get_object_mut().get_hold_data(ctx, rpoint);
+                clicked_data = obj.get_object_mut().click_hold_data(ctx, rpoint);
                 break;
             }
         }

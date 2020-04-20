@@ -81,10 +81,11 @@ impl TitleScene {
 
 	self.event_list.add_event(
             Box::new(move |slf: &mut Self, _, _| {
+		println!("aaaaaaaaaaaaa");
 		slf.scene_transition = scene_id;
 		slf.scene_transition_type = SceneTransition::SwapTransition;
             }),
-	    31,
+	    t + 31,
         );
     }
 }
