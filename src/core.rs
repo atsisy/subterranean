@@ -989,15 +989,25 @@ impl SceneController {
             scene::SceneID::Scenario => match self.current_scene {
                 TopScene::SuzunaScene(_) => {
                     self.current_scene =
-                        TopScene::ScenarioScene(scene::scenario_scene::ScenarioScene::new(&mut ctx))
+                        TopScene::ScenarioScene(
+			    scene::scenario_scene::ScenarioScene::new(
+				&mut ctx,
+				scene::scenario_scene::ScenarioSelect::DayBegin,
+			    ))
                 },
 		TopScene::SaveScene(_) => {
 		    self.current_scene =
-                        TopScene::ScenarioScene(scene::scenario_scene::ScenarioScene::new(&mut ctx))
+                        TopScene::ScenarioScene(scene::scenario_scene::ScenarioScene::new(
+			    &mut ctx,
+			    scene::scenario_scene::ScenarioSelect::DayBegin,
+			))
 		},
 		TopScene::TitleScene(_) => {
 		    self.current_scene =
-                        TopScene::ScenarioScene(scene::scenario_scene::ScenarioScene::new(&mut ctx))
+                        TopScene::ScenarioScene(scene::scenario_scene::ScenarioScene::new(
+			    &mut ctx,
+			    scene::scenario_scene::ScenarioSelect::DayBegin,
+			))
 		}
                 _ => (),
             },

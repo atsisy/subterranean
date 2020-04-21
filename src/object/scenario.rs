@@ -853,6 +853,7 @@ pub struct TextBox {
     buffered_text: VecDeque<SimpleText>,
     head_line_number: u32,
     text: VecDeque<SimpleText>,
+    line_arrow: UniTexture,
     text_box_status: TextBoxStatus,
     appearance_frame: TileBatchFrame,
     background: SimpleObject,
@@ -879,6 +880,16 @@ impl TextBox {
             0,
         );
 
+	let mut line_arrow = UniTexture::new(
+	    ctx.resource.ref_texture(TextureID::ChoicePanel1),
+	    numeric::Point2f::new(0.0, 0.0),
+	    numeric::Vector2f::new(1.0, 1.0),
+	    0.0,
+	    0
+	);
+	line_arrow.fit_scale(ctx.context, numeric::Vector2f::new(28.0, 28.0));
+	line_arrow.hide();
+
         TextBox {
             box_lines: box_lines,
             buffered_text: VecDeque::new(),
@@ -887,6 +898,7 @@ impl TextBox {
             text_box_status: TextBoxStatus::UpdatingText,
             background: background,
             appearance_frame: appr_frame,
+	    line_arrow: line_arrow,
             canvas: SubScreen::new(
                 ctx.context,
                 rect,
@@ -921,13 +933,13 @@ impl TextBox {
         text_lines
     }
 
-    pub fn update_scenario_text(&mut self, scenario: &ScenarioText) -> usize {
+    pub fn update_scenario_text<'a>(&mut self, ctx: &mut SuzuContext<'a>, scenario: &ScenarioText) -> usize {
         // 表示するテキストバッファをクリア。これで、新しくテキストを詰めていく
         self.text.clear();
         self.buffered_text.clear();
 
         // 表示する文字数を取得。この値を減算していき文字数チェックを行う
-        let mut remain = scenario.current_iterator();
+        let mut remain = scenario.current_iterator() as i32;
 
         let mut this_head_line = 0;
 
@@ -936,14 +948,14 @@ impl TextBox {
 
         for seg in scenario.seq_text_iter() {
             // このテキストセグメントの文字数を取得
-            let seg_len = seg.str_len();
+            let seg_len = seg.str_len() as i32;
 
             // セグメントの切り出す文字数を計算
             let slice_len = if seg_len < remain { seg_len } else { remain };
 
             // 行ごとにSimleTextに変換していく
             let mut index = 0;
-            for mut line in Self::text_from_segment(seg, slice_len) {
+            for mut line in Self::text_from_segment(seg, slice_len as usize) {
                 line.move_diff(numeric::Vector2f::new(
                     0.0,
                     seg.get_attribute().font_info.scale.y * index as f32,
@@ -968,19 +980,26 @@ impl TextBox {
 
             // 残りの文字数が0になったら、break
             remain -= slice_len;
-            if remain as usize <= 0 {
+            if remain <= 0 {
                 break;
             }
 
             seg_count += 1;
         }
-
+	
         // ボックスに入ったSimpleTextの位置を設定
         let mut pos = numeric::Point2f::new(50.0, 50.0);
         for line in &mut self.text {
             line.set_position(pos);
             pos.y += line.get_font_scale().y;
         }
+
+	if self.text_box_status == TextBoxStatus::WaitNextLineKey || scenario.iterator_finish() {
+	    self.line_arrow.appear();
+	    let last_text_drawing_area = self.text.back().unwrap().get_drawing_area(ctx.context);
+	    let pos = numeric::Point2f::new(last_text_drawing_area.x + last_text_drawing_area.w, last_text_drawing_area.y);
+	    self.line_arrow.set_position(pos);
+	}
 
         // 処理したセグメントの数を返す
         seg_count
@@ -1028,6 +1047,8 @@ impl DrawableComponent for TextBox {
             for d in &mut self.text {
                 d.draw(ctx)?;
             }
+
+	    self.line_arrow.draw(ctx)?;
 
             sub_screen::pop_screen(ctx);
             self.canvas.draw(ctx).unwrap();
@@ -1134,8 +1155,8 @@ impl ScenarioBox {
         self.text_box.text_box_status
     }
 
-    pub fn update_scenario_text(&mut self, scenario: &ScenarioText) -> usize {
-        self.text_box.update_scenario_text(scenario)
+    pub fn update_scenario_text<'a>(&mut self, ctx: &mut SuzuContext<'a>, scenario: &ScenarioText) -> usize {
+        self.text_box.update_scenario_text(ctx, scenario)
     }
 
     pub fn is_enable_choice_box(&self) -> bool {
@@ -1336,7 +1357,7 @@ impl ScenarioEvent {
                     scenario_text.update_iterator();
 
                     // 何行目までのテキストが表示されたか？
-                    let current_segment = self.scenario_box.update_scenario_text(&scenario_text);
+                    let current_segment = self.scenario_box.update_scenario_text(ctx, &scenario_text);
 
                     // どこまで表示したかを更新
                     scenario_text.set_current_segment(current_segment);
@@ -1403,6 +1424,8 @@ impl ScenarioEvent {
         match self.scenario.ref_current_element_mut() {
             // 現在のScenarioElementがテキスト
             ScenarioElement::Text(scenario_text) => {
+		self.scenario_box.text_box.line_arrow.hide();
+		
                 // 最後まで到達していた場合、新しいScenarioElementに遷移し、テキストボックスをリセット
                 if scenario_text.iterator_finish() {
                     self.scenario.go_next_scenario_from_text_scenario();

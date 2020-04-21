@@ -10,6 +10,13 @@ use torifune::graphics::drawable::*;
 
 use super::*;
 
+#[derive(Clone)]
+pub enum ScenarioSelect {
+    DayBegin = 0,
+    DayEnd,
+    OpeningEpisode,
+}
+
 pub struct ScenarioScene {
     scenario_event: ScenarioEvent,
     simulation_status: sui::SimulationStatus,
@@ -19,11 +26,15 @@ pub struct ScenarioScene {
 }
 
 impl ScenarioScene {
-    pub fn new<'a>(ctx: &mut SuzuContext<'a>) -> Self {
-        let file_path = ctx
-            .resource
-            .get_day_scenario_path(&ctx.savable_data.date)
-            .expect("BUG");
+    pub fn new<'a>(ctx: &mut SuzuContext<'a>, scenario_select: ScenarioSelect) -> Self {
+        let file_path = match scenario_select {
+	    ScenarioSelect::DayBegin => ctx
+		.resource
+		.get_day_scenario_path(&ctx.savable_data.date)
+		.expect("BUG"),
+	    ScenarioSelect::OpeningEpisode => panic!(""),
+	    _ => panic!(""),
+	};
 
         let scenario = ScenarioEvent::new(
             ctx,
