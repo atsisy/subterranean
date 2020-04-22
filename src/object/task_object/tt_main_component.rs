@@ -1518,3 +1518,107 @@ impl DrawableComponent for ShelvingBookBox {
         self.canvas.get_drawing_depth()
     }
 }
+
+pub struct KosuzuPhrase {
+    text_balloon: Option<EffectableWrap<MovableWrap<TextBalloon>>>,
+    event_list: DelayEventList<Self>,
+    canvas: SubScreen,
+}
+
+impl KosuzuPhrase {
+    pub fn new<'a>(ctx: &mut SuzuContext<'a>, depth: i8) -> Self {
+	KosuzuPhrase {
+	    text_balloon: None,
+	    event_list: DelayEventList::new(),
+	    canvas: SubScreen::new(
+		ctx.context,
+		numeric::Rect::new(800.0, 300.0, 300.0, 500.0),
+		depth,
+		ggraphics::Color::from_rgba_u32(0)
+	    ),
+	}
+    }
+
+    pub fn insert_new_phrase<'a>(&mut self, ctx: &mut SuzuContext<'a>, text: &str, t: Clock) {
+	self.text_balloon = Some(
+	    EffectableWrap::new(
+		MovableWrap::new(
+		    Box::new(TextBalloon::new(
+			ctx.context,
+			numeric::Rect::new(0.0, 0.0, 300.0, 500.0),
+			text,
+			TextBalloonPhraseType::SimplePhrase,
+			FontInformation::new(
+			    ctx.resource.get_font(FontID::JpFude1),
+			    numeric::Vector2f::new(21.0, 21.0),
+			    ggraphics::BLACK
+			)
+		    )),
+		    None,
+		    t,
+		),
+		vec![effect::fade_in(10, t)],
+	    )
+	);
+
+	self.event_list.add_event(
+            Box::new(|slf: &mut Self, _, t| slf.close_text_balloon(t)),
+            t + 240,
+        );
+    }
+
+    fn close_text_balloon(&mut self, t: Clock) {
+	if let Some(balloon) = self.text_balloon.as_mut() {
+            balloon.add_effect(vec![effect::fade_out(10, t)]);
+            self.event_list.add_event(
+                Box::new(|slf: &mut Self, _, _| slf.text_balloon = None),
+                t + 11,
+            );
+	}
+    }
+
+    pub fn update<'a>(&mut self, ctx: &mut SuzuContext<'a>, t: Clock) {
+        flush_delay_event!(self, self.event_list, ctx, t);
+	
+	if let Some(balloon) = self.text_balloon.as_mut() {
+	    balloon.effect(ctx.context, t);
+	    balloon.move_with_func(t);
+	}
+    }
+}
+
+impl DrawableComponent for KosuzuPhrase {
+    fn draw(&mut self, ctx: &mut ggez::Context) -> ggez::GameResult<()> {
+	if self.is_visible() {
+            sub_screen::stack_screen(ctx, &self.canvas);
+
+	    if let Some(balloon) = self.text_balloon.as_mut() {
+		balloon.draw(ctx)?;
+	    }
+	    
+            sub_screen::pop_screen(ctx);
+            self.canvas.draw(ctx).unwrap();
+        }
+        Ok(())
+    }
+
+    fn hide(&mut self) {
+        self.canvas.hide();
+    }
+
+    fn appear(&mut self) {
+        self.canvas.appear();
+    }
+
+    fn is_visible(&self) -> bool {
+        self.canvas.is_visible()
+    }
+
+    fn set_drawing_depth(&mut self, depth: i8) {
+        self.canvas.set_drawing_depth(depth);
+    }
+
+    fn get_drawing_depth(&self) -> i8 {
+        self.canvas.get_drawing_depth()
+    }    
+}

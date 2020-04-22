@@ -28,7 +28,9 @@ use tt_menu_component::*;
 use tt_sub_component::*;
 
 use super::Clickable;
-use crate::core::{GensoDate, RentalLimit, SuzuContext, TextureID, FontID};
+use crate::core::{GensoDate, RentalLimit, SuzuContext, TextureID};
+
+use number_to_jk::number_to_jk;
 
 pub struct TaskTable {
     canvas: SubScreen,
@@ -44,7 +46,7 @@ pub struct TaskTable {
     on_desk_menu: OnDeskMenuGroup,
     record_book_menu: RecordBookMenuGroup,
     current_customer_request: Option<CustomerRequest>,
-    kosuzu_phrase: Option<TextBalloon>,
+    kosuzu_phrase: KosuzuPhrase,
     today: GensoDate,
 }
 
@@ -153,7 +155,7 @@ impl TaskTable {
             record_book_menu: RecordBookMenuGroup::new(0),
             on_desk_menu: OnDeskMenuGroup::new(0),
             current_customer_request: None,
-	    kosuzu_phrase: None,
+	    kosuzu_phrase: KosuzuPhrase::new(ctx, 0),
             today: ctx.savable_data.date,
         }
     }
@@ -456,6 +458,7 @@ impl TaskTable {
         self.record_book_menu.update(ctx, t);
         self.customer_silhouette_menu.update(ctx, t);
         self.on_desk_menu.update(ctx, t);
+	self.kosuzu_phrase.update(ctx, t);
     }
 
     pub fn finish_customer_event(&mut self, now: Clock) {
@@ -758,12 +761,12 @@ impl TaskTable {
         }
 
         if let Some(index) = self.record_book_menu.payment_menu_last_clicked() {
-            let _menu_position = self.record_book_menu.get_payment_menu_position().unwrap();
+	    let price =  self.record_book_menu.get_payment_menu_price().unwrap();
 
             if index == 0 {
                 self.sight.unlock_object_handover();
                 self.slide_hide_record_book(t);
-		self.show_kosuzu_payment_message(ctx, t);
+		self.show_kosuzu_payment_message(ctx, price, t);
                 self.sight.silhouette.insert_new_balloon_phrase(
                     "どうぞ".to_string(),
                     TextBalloonPhraseType::SimplePhrase,
@@ -819,17 +822,12 @@ impl TaskTable {
         }
     }
 
-    fn show_kosuzu_payment_message<'a>(&mut self, ctx: &mut SuzuContext<'a>, _t: Clock) {
-	self.kosuzu_phrase = Some(TextBalloon::new(
-	    ctx.context,
-	    numeric::Rect::new(850.0, 200.0, 300.0, 500.0),
-	    "合計「」円になります。",
-	    TextBalloonPhraseType::SimplePhrase,
-	    FontInformation::new(
-		ctx.resource.get_font(FontID::JpFude1),
-		numeric::Vector2f::new(21.0, 21.0),
-		ggraphics::BLACK),
-	));
+    fn show_kosuzu_payment_message<'a>(&mut self, ctx: &mut SuzuContext<'a>, price: u32, t: Clock) {
+	self.kosuzu_phrase.insert_new_phrase(
+	    ctx,
+	    &format!("合計{}円になります", number_to_jk(price as u64)),
+	    t
+	);
     }
     
     ///
@@ -1019,7 +1017,8 @@ impl TaskTable {
 
         if let Some(grid_pos) = maybe_grid_pos {
             if grid_pos == numeric::Vector2u::new(0, 1) {
-                self.record_book_menu.show_payment_menu(ctx, click_point, t);
+		let price = self.borrowing_record_book.get_calculated_price().unwrap();
+                self.record_book_menu.show_payment_menu(ctx, click_point, price, t);
             }
 
             true
@@ -1167,10 +1166,7 @@ impl DrawableComponent for TaskTable {
             }
 
             self.borrowing_record_book.draw(ctx)?;
-
-	    if let Some(kosuzu_phrase) = self.kosuzu_phrase.as_mut() {
-                kosuzu_phrase.draw(ctx)?;
-            }
+	    self.kosuzu_phrase.draw(ctx)?;
 	    
             self.customer_silhouette_menu.draw(ctx)?;
             self.record_book_menu.draw(ctx)?;

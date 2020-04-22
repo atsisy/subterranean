@@ -875,6 +875,7 @@ pub struct PayFrame {
     rental_limit_data: Option<RentalLimit>,
     listed_books_number: usize,
     drwob_essential: DrawableObjectEssential,
+    calculated_price: Option<u32>,
 }
 
 impl PayFrame {
@@ -952,6 +953,7 @@ impl PayFrame {
             rental_limit_data: None,
             listed_books_number: 0,
             drwob_essential: DrawableObjectEssential::new(true, depth),
+	    calculated_price: None,
         };
 
         pay_frame.update_book_count(ctx, 0);
@@ -1031,10 +1033,12 @@ impl PayFrame {
                 return;
             }
 
+	    self.calculated_price = Some((rental_limit.fee() * self.listed_books_number as i32) as u32);
+	    
             let mut vtext = VerticalText::new(
                 format!(
                     "{}円",
-                    number_to_jk((rental_limit.fee() * self.listed_books_number as i32) as u64)
+                    number_to_jk(self.calculated_price.unwrap() as u64)
                 ),
                 numeric::Point2f::new(0.0, 0.0),
                 numeric::Vector2f::new(1.0, 1.0),
@@ -1059,6 +1063,10 @@ impl PayFrame {
 
     pub fn get_pay_frame(&self) -> &TableFrame {
         &self.pay_frame
+    }
+
+    pub fn get_calculated_price(&self) -> Option<u32> {
+	self.calculated_price.clone()
     }
 }
 
@@ -1510,6 +1518,10 @@ impl BorrowingRecordBookPage {
         }
     }
 
+    pub fn get_calculated_price(&self) -> Option<u32> {
+	self.pay_frame.get_calculated_price()
+    }
+
     pub fn try_insert_data_in_info_frame(
         &mut self,
         ctx: &mut ggez::Context,
@@ -1958,6 +1970,14 @@ impl BorrowingRecordBook {
         if let Some(page) = self.get_current_page_mut() {
             page.try_insert_date_data_in_cutomer_info_frame(ctx, rpoint, date, rental_limit);
         }
+    }
+
+    pub fn get_calculated_price(&self) -> Option<u32> {
+	if let Some(page) = self.get_current_page() {
+	    page.get_calculated_price()
+	} else {
+	    None
+	}
     }
 
     pub fn insert_customer_name_data_to_customer_info(

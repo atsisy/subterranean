@@ -904,11 +904,12 @@ pub struct PaymentMenu {
     select_table_frame: TableFrame,
     select_vtext: Vec<VerticalText>,
     drwob_essential: DrawableObjectEssential,
+    price: u32,
     last_clicked: Option<usize>,
 }
 
 impl PaymentMenu {
-    pub fn new<'a>(ctx: &mut SuzuContext<'a>, drawing_depth: i8) -> Self {
+    pub fn new<'a>(ctx: &mut SuzuContext<'a>, price: u32, drawing_depth: i8) -> Self {
         let mut select_vtext = Vec::new();
 
         let font_info = FontInformation::new(
@@ -950,6 +951,7 @@ impl PaymentMenu {
             select_table_frame: select_table_frame,
             select_vtext: select_vtext,
             drwob_essential: DrawableObjectEssential::new(true, drawing_depth),
+	    price: price,
             last_clicked: None,
         }
     }
@@ -967,6 +969,10 @@ impl PaymentMenu {
 
     pub fn get_payment_frame_size(&self) -> numeric::Vector2f {
         self.select_table_frame.size()
+    }
+
+    pub fn get_price(&self) -> u32 {
+	self.price
     }
 }
 
@@ -2254,9 +2260,10 @@ impl RecordBookMenuGroup {
         &mut self,
         ctx: &mut SuzuContext,
         position: numeric::Point2f,
+	price: u32,
         t: Clock,
     ) {
-        let payment_menu = PaymentMenu::new(ctx, 0);
+        let payment_menu = PaymentMenu::new(ctx, price, 0);
 
         let frame_size = payment_menu.get_payment_frame_size();
 
@@ -2279,6 +2286,14 @@ impl RecordBookMenuGroup {
         self.payment_menu = Some(payment_menu_area);
     }
 
+    pub fn get_payment_menu_price(&self) -> Option<u32> {
+	if let Some(menu) = self.payment_menu.as_ref() {
+	    Some(menu.get_component().get_price())
+	} else {
+	    None
+	}
+    }
+    
     pub fn update<'a>(&mut self, ctx: &mut SuzuContext<'a>, t: Clock) {
         flush_delay_event!(self, self.event_list, ctx, t);
 
