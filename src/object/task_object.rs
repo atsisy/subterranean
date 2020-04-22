@@ -820,7 +820,11 @@ impl TaskTable {
             if let Some(book_info) = self.on_desk_menu.get_desk_menu_target_book_info() {
                 return match index {
                     0 => {
-                        // すぐに表示すると順番的にclose_allされてしまうので、遅らせる
+			self.kosuzu_memory.add_book_info(book_info);
+                        true
+                    },
+                    1 => {
+			// すぐに表示すると順番的にclose_allされてしまうので、遅らせる
                         self.event_list.add_event(
                             Box::new(move |slf: &mut Self, ctx, t| {
                                 slf.on_desk_menu
@@ -829,11 +833,20 @@ impl TaskTable {
                             t + 1,
                         );
                         true
-                    }
-                    1 => {
-                        self.kosuzu_memory.add_book_info(book_info);
+                    },
+		    2 => {
+                        self.event_list.add_event(
+                            Box::new(move |slf: &mut Self, ctx, t| {
+				slf.kosuzu_phrase.insert_new_phrase(
+				    ctx,
+				    "すみません　この本は貸し出せません",
+				    t
+				);
+                            }),
+                            t + 1,
+                        );
                         true
-                    }
+                    },
                     _ => false,
                 };
             }

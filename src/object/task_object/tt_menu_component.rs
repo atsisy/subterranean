@@ -23,7 +23,7 @@ use crate::scene::*;
 use crate::set_table_frame_cell_center;
 
 pub struct KosuzuMemory {
-    books_info: Vec<BookInformation>,
+    remembered_book_info: Vec<BookInformation>,
     customers_name: Vec<String>,
     dates: Vec<GensoDate>,
 }
@@ -31,14 +31,14 @@ pub struct KosuzuMemory {
 impl KosuzuMemory {
     pub fn new() -> Self {
         KosuzuMemory {
-            books_info: Vec::new(),
+            remembered_book_info: Vec::new(),
             customers_name: Vec::new(),
             dates: Vec::new(),
         }
     }
 
     pub fn add_book_info(&mut self, book_info: BookInformation) {
-        self.books_info.push(book_info);
+        self.remembered_book_info.push(book_info);
     }
 
     pub fn add_customer_name(&mut self, name: String) {
@@ -50,10 +50,10 @@ impl KosuzuMemory {
     }
 
     pub fn get_book_info_remove(&mut self, index: usize) -> Option<BookInformation> {
-        if self.books_info.len() <= index {
+        if self.remembered_book_info.len() <= index {
             None
         } else {
-            Some(self.books_info.swap_remove(index))
+            Some(self.remembered_book_info.swap_remove(index))
         }
     }
 
@@ -74,7 +74,7 @@ impl KosuzuMemory {
     }
 
     pub fn remove_book_info_at(&mut self, index: usize) {
-        self.books_info.remove(index);
+        self.remembered_book_info.remove(index);
     }
 
     pub fn remove_customer_name_at(&mut self, index: usize) {
@@ -2170,7 +2170,7 @@ impl RecordBookMenuGroup {
         kosuzu_memory: &KosuzuMemory,
         t: Clock,
     ) {
-        let book_title_menu = BookTitleMenu::new(ctx, kosuzu_memory.books_info.clone(), 0);
+        let book_title_menu = BookTitleMenu::new(ctx, kosuzu_memory.remembered_book_info.clone(), 0);
 
         let frame_size = book_title_menu.get_title_frame_size();
 
@@ -2383,7 +2383,6 @@ impl DeskBookMenu {
     pub fn new<'a>(
         ctx: &mut SuzuContext<'a>,
         book_info: BookInformation,
-        mut choice_text_str: Vec<String>,
         drawing_depth: i8,
     ) -> Self {
         let mut choice_vtext = Vec::new();
@@ -2398,14 +2397,15 @@ impl DeskBookMenu {
             ctx.resource,
             numeric::Point2f::new(10.0, 10.0),
             TileBatchTextureID::OldStyleFrame,
-            FrameData::new(vec![200.0], vec![64.0; 2]),
+            FrameData::new(vec![200.0], vec![64.0; 3]),
             numeric::Vector2f::new(0.3, 0.3),
             0,
         );
 
-        while choice_text_str.len() > 0 {
-            let choice_str_element = choice_text_str.swap_remove(0);
-            let mut vtext = VerticalText::new(
+	for (index, s) in vec!["題名を記憶", "状態確認", "貸出を断る"].iter().enumerate() {
+	    let choice_str_element = s.to_string();
+	    
+	    let mut vtext = VerticalText::new(
                 choice_str_element,
                 numeric::Point2f::new(0.0, 0.0),
                 numeric::Vector2f::new(1.0, 1.0),
@@ -2413,16 +2413,16 @@ impl DeskBookMenu {
                 drawing_depth,
                 font_info,
             );
-
+	    
             set_table_frame_cell_center!(
                 ctx.context,
                 select_table_frame,
                 vtext,
-                numeric::Vector2u::new(choice_text_str.len() as u32, 0)
+                numeric::Vector2u::new(index as u32, 0)
             );
 
             choice_vtext.push(vtext);
-        }
+	}
 
         DeskBookMenu {
             book_info: book_info,
@@ -2748,7 +2748,6 @@ impl OnDeskMenuGroup {
         let menu = DeskBookMenu::new(
             ctx,
             book_info,
-            vec!["記憶".to_string(), "状態確認".to_string()],
             0,
         );
 
