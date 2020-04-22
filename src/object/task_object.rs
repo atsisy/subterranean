@@ -88,6 +88,7 @@ impl TaskTable {
                 OnDeskType::BorrowingRecordBook,
             ),
             0,
+	    true,
             DeskObjectType::BorrowRecordBook,
             t,
         );
@@ -446,9 +447,6 @@ impl TaskTable {
         info: BorrowingInformation,
         t: Clock,
     ) {
-        // 客への返却処理有効化
-        self.sight.lock_object_handover();
-
         for book_info in &info.borrowing {
             let mut obj = factory::create_dobj_book(
                 ctx,
@@ -494,9 +492,6 @@ impl TaskTable {
         info: ReturnBookInformation,
         t: Clock,
     ) {
-        // 客への返却処理無効化
-        self.sight.lock_object_handover();
-
         for book_info in &info.returning {
             let mut obj = factory::create_dobj_book(
                 ctx,
@@ -665,9 +660,26 @@ impl TaskTable {
 	    let price =  self.record_book_menu.get_payment_menu_price().unwrap();
 
             if index == 0 {
-                self.sight.unlock_object_handover();
                 self.slide_hide_record_book(t);
 		self.show_kosuzu_payment_message(ctx, price, t);
+
+		// 本の情報が帳簿に記載されていた場合
+		// 対応する本のハンドオーバーロックを解除する
+		let written_books = self.borrowing_record_book.get_current_page_written_books().unwrap();
+		for item in self.desk.desk_objects.get_raw_container_mut().iter_mut() {
+		    match item {
+			TaskItem::Book(book) => {
+			    let info = book.get_large_object_mut()
+    				.get_book_info();
+
+			    if written_books.contains(&info) {
+				book.unlock_handover();
+			    }
+			},
+			_ => (),
+		    }
+		}
+		
                 self.sight.silhouette.insert_new_balloon_phrase(
                     "どうぞ".to_string(),
                     TextBalloonPhraseType::SimplePhrase,

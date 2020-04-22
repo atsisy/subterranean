@@ -1016,7 +1016,6 @@ pub struct SuzuMiniSight {
     pub dropping: Vec<TaskItem>,
     pub dropping_to_desk: Vec<TaskItem>,
     pub silhouette: SuzuMiniSightSilhouette,
-    object_handover_lock: bool,
 }
 
 impl SuzuMiniSight {
@@ -1045,7 +1044,6 @@ impl SuzuMiniSight {
                 ),
                 t,
             ),
-            object_handover_lock: true,
         }
     }
 
@@ -1069,21 +1067,13 @@ impl SuzuMiniSight {
     }
 
     fn check_object_drop(&self, ctx: &mut ggez::Context, desk_obj: &TaskItem) -> bool {
-        if self.object_handover_lock {
+        if desk_obj.is_handover_locked() {
             // 客への手渡しがロックされているので、手渡しが発生しないようにfalseを返す
             return false;
         } else {
             let area = desk_obj.get_object().get_drawing_area(ctx);
             return area.y + area.h < self.canvas.get_drawing_area(ctx).h;
         }
-    }
-
-    pub fn lock_object_handover(&mut self) {
-        self.object_handover_lock = true;
-    }
-
-    pub fn unlock_object_handover(&mut self) {
-        self.object_handover_lock = false;
     }
 
     pub fn finish_customer_event(&mut self, now: Clock) {

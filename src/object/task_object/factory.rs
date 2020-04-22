@@ -31,6 +31,7 @@ pub fn create_dobj_book<'a>(
 		book_info
 	    ),
             0,
+	    true,
             obj_type,
             t,
 	)

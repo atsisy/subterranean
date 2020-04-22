@@ -1522,6 +1522,19 @@ impl BorrowingRecordBookPage {
 	self.pay_frame.get_calculated_price()
     }
 
+    pub fn get_written_books(&self) -> Vec<BookInformation> {
+	let mut book_info = Vec::new();
+
+	for (_, hold_data) in self.borrow_book.iter() {
+	    match hold_data.ref_hold_data() {
+		HoldData::BookName(info) => book_info.push(info.clone()),
+		_ => (),
+	    }
+	}
+
+	book_info
+    }
+    
     pub fn try_insert_data_in_info_frame(
         &mut self,
         ctx: &mut ggez::Context,
@@ -1959,6 +1972,14 @@ impl BorrowingRecordBook {
         }
     }
 
+    pub fn get_current_page_written_books<'a>(&self) -> Option<Vec<BookInformation>> {
+        if let Some(page) = self.get_current_page() {
+	    Some(page.get_written_books())
+        } else {
+	    None
+	}
+    }
+    
     pub fn insert_date_data_to_customer_info<'a>(
         &mut self,
         ctx: &mut SuzuContext<'a>,
@@ -2218,6 +2239,7 @@ where S: OnDesk, L: OnDesk {
     small: Box<EffectableWrap<MovableWrap<S>>>,
     large: Box<EffectableWrap<MovableWrap<L>>>,
     switch: u8,
+    handover_locked: bool,
     object_type: DeskObjectType,
 }
 
@@ -2227,6 +2249,7 @@ where S: OnDesk, L: OnDesk {
         small: S,
         large: L,
         switch: u8,
+	handover_locked: bool,
         obj_type: DeskObjectType,
         t: Clock,
     ) -> TaskItemStruct<S, L> {
@@ -2249,6 +2272,7 @@ where S: OnDesk, L: OnDesk {
                     Vec::new(),
             )),
             switch: switch,
+	    handover_locked: handover_locked,
             object_type: obj_type,
         }
     }
@@ -2303,6 +2327,34 @@ where S: OnDesk, L: OnDesk {
 	    1 => self.large.as_mut(),
 	    _ => panic!("Failed to object selecting. select = {}", self.switch),
         }
+    }
+
+    pub fn is_handover_locked(&self) -> bool {
+	self.handover_locked
+    }
+
+    pub fn lock_handover(&mut self) {
+	self.handover_locked = true;
+    }
+
+    pub fn unlock_handover(&mut self) {
+	self.handover_locked = false;
+    }
+
+    pub fn get_small_object(&mut self) -> &S {
+	self.small.ref_wrapped_object().ref_wrapped_object()
+    }
+
+    pub fn get_small_object_mut(&mut self) -> &mut S {
+	self.small.ref_wrapped_object_mut().ref_wrapped_object_mut()
+    }
+
+    pub fn get_large_object(&mut self) -> &L {
+	self.large.ref_wrapped_object().ref_wrapped_object()
+    }
+
+    pub fn get_large_object_mut(&mut self) -> &mut L {
+	self.large.ref_wrapped_object_mut().ref_wrapped_object_mut()
     }
 }
 
@@ -2375,6 +2427,27 @@ impl TaskItem {
 	match self {
 	    TaskItem::Book(item) => item.get_effectable_object(),
 	    TaskItem::Texture(item) => item.get_effectable_object(),
+	}
+    }
+
+    pub fn is_handover_locked(&self) -> bool {
+	match self {
+	    TaskItem::Book(item) => item.is_handover_locked(),
+	    TaskItem::Texture(item) => item.is_handover_locked(),
+	}
+    }
+
+    pub fn lock_handover(&mut self) {
+	match self {
+	    TaskItem::Book(item) => item.lock_handover(),
+	    TaskItem::Texture(item) => item.lock_handover(),
+	}
+    }
+
+    pub fn unlock_handover(&mut self) {
+	match self {
+	    TaskItem::Book(item) => item.unlock_handover(),
+	    TaskItem::Texture(item) => item.unlock_handover(),
 	}
     }
 }
