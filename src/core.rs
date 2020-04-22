@@ -830,10 +830,25 @@ impl SceneStack {
 }
 
 #[derive(Clone, Serialize, Deserialize)]
+pub struct SuzunaAnStatus {
+    pub jinyou_balance: f32,
+    pub reputation: f32,
+}
+
+impl SuzunaAnStatus {
+    pub fn new() -> Self {
+	SuzunaAnStatus {
+	    jinyou_balance: 0.0,
+	    reputation: 50.0,
+	}
+    }
+}
+
+#[derive(Clone, Serialize, Deserialize)]
 pub struct SavableData {
     pub date: GensoDate,
     pub task_result: TaskResult,
-    pub jinyou_balance: f32,
+    pub suzunaan_status: SuzunaAnStatus,
 }
 
 impl SavableData {
@@ -944,7 +959,7 @@ impl SceneController {
         let mut game_status = SavableData {
             date: GensoDate::new(112, 7, 23),
             task_result: TaskResult::new(),
-	    jinyou_balance: 0.0,
+	    suzunaan_status: SuzunaAnStatus::new(),
         };
 
         // let current_scene = scene::scenario_scene::ScenarioScene::new(&mut SuzuContext {

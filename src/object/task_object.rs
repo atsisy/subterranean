@@ -64,36 +64,8 @@ impl TaskTable {
 
         let mut desk = DeskObjects::new(ctx, desk_rect);
 
-        desk.add_object(DeskObject::new(
-            Box::new(OnDeskTexture::new(
-                ctx.context,
-                UniTexture::new(
-                    ctx.resource.ref_texture(TextureID::LotusPink),
-                    numeric::Point2f::new(0.0, 0.0),
-                    numeric::Vector2f::new(0.1, 0.1),
-                    0.0,
-                    -1,
-                ),
-                OnDeskType::Texture,
-            )),
-            Box::new(OnDeskTexture::new(
-                ctx.context,
-                UniTexture::new(
-                    ctx.resource.ref_texture(TextureID::LotusPink),
-                    numeric::Point2f::new(0.0, 0.0),
-                    numeric::Vector2f::new(0.1, 0.1),
-                    0.0,
-                    -1,
-                ),
-                OnDeskType::Texture,
-            )),
-            1,
-            DeskObjectType::SuzunaObject,
-            t,
-        ));
-
-        let mut record_book = DeskObject::new(
-            Box::new(OnDeskTexture::new(
+        let mut record_book = TaskTexture::new(
+            OnDeskTexture::new(
                 ctx.context,
                 UniTexture::new(
                     ctx.resource.ref_texture(TextureID::Chobo1),
@@ -103,8 +75,8 @@ impl TaskTable {
                     -1,
                 ),
                 OnDeskType::BorrowingRecordBook,
-            )),
-            Box::new(OnDeskTexture::new(
+            ),
+            OnDeskTexture::new(
                 ctx.context,
                 UniTexture::new(
                     ctx.resource.ref_texture(TextureID::Chobo1),
@@ -114,13 +86,13 @@ impl TaskTable {
                     -1,
                 ),
                 OnDeskType::BorrowingRecordBook,
-            )),
+            ),
             0,
             DeskObjectType::BorrowRecordBook,
             t,
         );
         record_book.enable_large();
-        desk.add_object(record_book);
+        desk.add_object(TaskItem::Texture(record_book));
 
         let shelving_box = ShelvingBookBox::new(ctx, shelving_box_rect);
 
@@ -276,7 +248,7 @@ impl TaskTable {
         self.hand_over_check_box2desk(ctx, rpoint);
     }
 
-    fn apply_d2s_point_convertion(&mut self, ctx: &mut ggez::Context, obj: &mut DeskObject) {
+    fn apply_d2s_point_convertion(&mut self, ctx: &mut ggez::Context, obj: &mut TaskItem) {
         // オブジェクトの座標を取得
         let mut obj_p = obj.get_object().get_position();
 
@@ -293,7 +265,7 @@ impl TaskTable {
         obj.get_object_mut().make_center(ctx, p);
     }
 
-    fn apply_s2d_point_convertion(&mut self, ctx: &mut ggez::Context, obj: &mut DeskObject) {
+    fn apply_s2d_point_convertion(&mut self, ctx: &mut ggez::Context, obj: &mut TaskItem) {
         let mut obj_p = obj.get_object().get_position();
         obj_p.x = obj.get_object().get_center(ctx).x;
         let p = self.sight_edge_to_desk_edge(obj_p);
@@ -301,7 +273,7 @@ impl TaskTable {
         obj.get_object_mut().make_center(ctx, p);
     }
 
-    fn apply_desk2box_point_convertion(&mut self, ctx: &mut ggez::Context, obj: &mut DeskObject) {
+    fn apply_desk2box_point_convertion(&mut self, ctx: &mut ggez::Context, obj: &mut TaskItem) {
         // オブジェクトの座標を取得
         let mut obj_p = obj.get_object().get_center(ctx);
 
@@ -316,7 +288,7 @@ impl TaskTable {
         obj.get_object_mut().make_center(ctx, obj_p);
     }
 
-    fn apply_box2desk_point_convertion(&mut self, ctx: &mut ggez::Context, obj: &mut DeskObject) {
+    fn apply_box2desk_point_convertion(&mut self, ctx: &mut ggez::Context, obj: &mut TaskItem) {
         // オブジェクトの座標を取得
         let mut obj_p = obj.get_object().get_center(ctx);
 
@@ -421,16 +393,14 @@ impl TaskTable {
             .into_iter()
             .map(|mut obj| {
                 self.apply_s2d_point_convertion(ctx.context, &mut obj);
-                obj.get_object_mut().clear_effect();
-                obj.get_object_mut()
+                obj.as_effectable_object().clear_effect();
+                obj.as_movable_object_mut()
                     .override_move_func(move_fn::gravity_move(1.0, 10.0, 400.0, 0.3), t);
                 obj.get_object_mut().set_drawing_depth(min);
                 obj.get_object_mut()
-                    .ref_wrapped_object_mut()
-                    .ref_wrapped_object_mut()
                     .finish_dragging(ctx);
 
-                obj.get_object_mut().add_effect(vec![Box::new(
+                obj.as_effectable_object().add_effect(vec![Box::new(
                     |obj: &mut dyn MovableObject, _: &ggez::Context, t: Clock| {
                         if obj.get_position().y > 150.0 {
                             obj.override_move_func(None, t);
@@ -565,83 +535,14 @@ impl TaskTable {
             t,
         );
     }
-
-    fn start_copying_request_event<'a>(
-        &mut self,
-        ctx: &mut SuzuContext<'a>,
-        info: CopyingRequestInformation,
-        t: Clock,
-    ) {
-        // 客への返却処理有効化
-        self.sight.unlock_object_handover();
-
-        let paper_info = CopyingRequestInformation::new_random(
-            ctx.resource,
-            GensoDate::new(128, 12, 8),
-            GensoDate::new(128, 12, 8),
-        );
-        let paper_obj = DeskObject::new(
-            Box::new(OnDeskTexture::new(
-                ctx.context,
-                UniTexture::new(
-                    ctx.resource.ref_texture(TextureID::Paper1),
-                    numeric::Point2f::new(0.0, 0.0),
-                    numeric::Vector2f::new(0.1, 0.1),
-                    0.0,
-                    0,
-                ),
-                OnDeskType::Texture,
-            )),
-            Box::new(CopyingRequestPaper::new(
-                ctx.context,
-                ggraphics::Rect::new(0.0, 0.0, 420.0, 350.0),
-                TextureID::Paper1,
-                paper_info,
-                ctx.resource,
-                t,
-            )),
-            1,
-            DeskObjectType::CustomerObject,
-            t,
-        );
-
-        let mut new_silhouette = SimpleObject::new(
-            MovableUniTexture::new(
-                ctx.resource.ref_texture(TextureID::JunkoTachieDefault),
-                numeric::Point2f::new(100.0, 20.0),
-                numeric::Vector2f::new(0.1, 0.1),
-                0.0,
-                0,
-                None,
-                t,
-            ),
-            vec![effect::fade_in(50, t)],
-        );
-        self.desk.add_customer_object(paper_obj);
-
-        new_silhouette.set_alpha(0.0);
-        self.sight.silhouette_new_customer_update(
-            ctx.context,
-            new_silhouette,
-            info.customer.to_string(),
-            CustomerDialogue::new(
-                vec![
-                    "こんにちは".to_string(),
-                    "この本の写本\nお願いできますか".to_string(),
-                ],
-                vec![100, 100],
-            ),
-            t,
-        );
-    }
-
+    
     pub fn start_customer_event(&mut self, ctx: &mut SuzuContext, info: CustomerRequest, t: Clock) {
         self.current_customer_request = Some(info.clone());
 
         match info {
             CustomerRequest::Borrowing(info) => self.start_borrowing_customer_event(ctx, info, t),
             CustomerRequest::Returning(info) => self.start_returning_customer_event(ctx, info, t),
-            CustomerRequest::Copying(info) => self.start_copying_request_event(ctx, info, t),
+            CustomerRequest::Copying(_) => (),
         }
     }
 

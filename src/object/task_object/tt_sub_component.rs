@@ -2213,36 +2213,40 @@ impl OnDesk for BorrowingRecordBook {
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq)]
-pub enum DeskObjectType {
-    CustomerObject = 0,
-    BorrowRecordBook,
-    SuzunaObject,
-}
-
-pub struct DeskObject {
-    small: Box<EffectableWrap<MovableWrap<dyn OnDesk>>>,
-    large: Box<EffectableWrap<MovableWrap<dyn OnDesk>>>,
+pub struct TaskItemStruct<S, L>
+where S: OnDesk, L: OnDesk {
+    small: Box<EffectableWrap<MovableWrap<S>>>,
+    large: Box<EffectableWrap<MovableWrap<L>>>,
     switch: u8,
     object_type: DeskObjectType,
 }
 
-impl DeskObject {
+impl<S, L> TaskItemStruct<S, L>
+where S: OnDesk, L: OnDesk {
     pub fn new(
-        small: Box<dyn OnDesk>,
-        large: Box<dyn OnDesk>,
+        small: S,
+        large: L,
         switch: u8,
         obj_type: DeskObjectType,
         t: Clock,
-    ) -> Self {
-        DeskObject {
+    ) -> TaskItemStruct<S, L> {
+        TaskItemStruct {
             small: Box::new(EffectableWrap::new(
-                MovableWrap::new(small, None, t),
+                MovableWrap::new(
+		    Box::new(small),
+		    None,
+		    t
+		),
                 Vec::new(),
             )),
-            large: Box::new(EffectableWrap::new(
-                MovableWrap::new(large, None, t),
-                Vec::new(),
+            large: Box::new(
+		EffectableWrap::new(
+                    MovableWrap::new(
+			Box::new(large),
+			None,
+			t
+		    ),
+                    Vec::new(),
             )),
             switch: switch,
             object_type: obj_type,
@@ -2257,29 +2261,170 @@ impl DeskObject {
         self.switch = 1;
     }
 
-    pub fn get_object(&self) -> &Box<EffectableWrap<MovableWrap<dyn OnDesk>>> {
-        match self.switch {
-            0 => &self.small,
-            1 => &self.large,
-            _ => panic!("Failed to object selecting. select = {}", self.switch),
+    pub fn get_object_type(&self) -> DeskObjectType {
+        self.object_type
+    }
+
+    pub fn get_object(&self) -> &dyn OnDesk {
+	match self.switch {
+	    0 => self.small.ref_wrapped_object().ref_wrapped_object().as_ref(),
+	    1 => self.large.ref_wrapped_object().ref_wrapped_object().as_ref(),
+	    _ => panic!("Failed to object selecting. select = {}", self.switch),
         }
     }
 
-    pub fn get_object_mut(&mut self) -> &mut Box<EffectableWrap<MovableWrap<dyn OnDesk>>> {
-        match self.switch {
-            0 => &mut self.small,
-            1 => &mut self.large,
-            _ => panic!("Failed to object selecting. select = {}", self.switch),
+    pub fn get_object_mut(&mut self) -> &mut dyn OnDesk {
+	match self.switch {
+	    0 => self.small.ref_wrapped_object_mut().ref_wrapped_object_mut().as_mut(),
+	    1 => self.large.ref_wrapped_object_mut().ref_wrapped_object_mut().as_mut(),
+	    _ => panic!("Failed to object selecting. select = {}", self.switch),
         }
+    }
+
+    pub fn get_movable_object(&self) -> &dyn MovableObject {
+	match self.switch {
+	    0 => self.small.ref_wrapped_object(),
+	    1 => self.large.ref_wrapped_object(),
+	    _ => panic!("Failed to object selecting. select = {}", self.switch),
+        }
+    }
+    
+    pub fn get_movable_object_mut(&mut self) -> &mut dyn MovableObject {
+	match self.switch {
+	    0 => self.small.ref_wrapped_object_mut(),
+	    1 => self.large.ref_wrapped_object_mut(),
+	    _ => panic!("Failed to object selecting. select = {}", self.switch),
+        }
+    }
+
+    pub fn get_effectable_object(&mut self) -> &mut dyn HasGenericEffect {
+	match self.switch {
+	    0 => self.small.as_mut(),
+	    1 => self.large.as_mut(),
+	    _ => panic!("Failed to object selecting. select = {}", self.switch),
+        }
+    }
+}
+
+pub type TaskBook = TaskItemStruct<OnDeskTexture, OnDeskBook>;
+pub type TaskTexture = TaskItemStruct<OnDeskTexture, OnDeskTexture>;
+
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub enum DeskObjectType {
+    CustomerObject = 0,
+    BorrowRecordBook,
+    SuzunaObject,
+}
+
+pub enum TaskItem {
+    Book(TaskBook),
+    Texture(TaskTexture),
+}
+
+impl TaskItem {
+    pub fn enable_small(&mut self) {
+	match self {
+	    TaskItem::Book(item) => item.enable_small(),
+	    TaskItem::Texture(item) => item.enable_small(),
+	}
+    }
+
+    pub fn enable_large(&mut self) {
+	match self {
+	    TaskItem::Book(item) => item.enable_large(),
+	    TaskItem::Texture(item) => item.enable_large(),
+	}
     }
 
     pub fn get_object_type(&self) -> DeskObjectType {
-        self.object_type
+	match self {
+	    TaskItem::Book(item) => item.get_object_type(),
+	    TaskItem::Texture(item) => item.get_object_type(),
+	}
+    }
+
+    pub fn get_object(&self) -> &dyn OnDesk {
+	match self {
+	    TaskItem::Book(item) => item.get_object(),
+	    TaskItem::Texture(item) => item.get_object(),
+	}
+    }
+
+    pub fn get_object_mut(&mut self) -> &mut dyn OnDesk {
+	match self {
+	    TaskItem::Book(item) => item.get_object_mut(),
+	    TaskItem::Texture(item) => item.get_object_mut(),
+	}
+    }
+
+    pub fn as_movable_object(&self) -> &dyn MovableObject {
+	match self {
+	    TaskItem::Book(item) => item.get_movable_object(),
+	    TaskItem::Texture(item) => item.get_movable_object(),
+	}
+    }
+    
+    pub fn as_movable_object_mut(&mut self) -> &mut dyn MovableObject {
+	match self {
+	    TaskItem::Book(item) => item.get_movable_object_mut(),
+	    TaskItem::Texture(item) => item.get_movable_object_mut(),
+	}
+    }
+
+    pub fn as_effectable_object(&mut self) -> &mut dyn HasGenericEffect {
+	match self {
+	    TaskItem::Book(item) => item.get_effectable_object(),
+	    TaskItem::Texture(item) => item.get_effectable_object(),
+	}
+    }
+}
+
+impl DrawableComponent for TaskItem {
+    fn draw(&mut self, ctx: &mut ggez::Context) -> ggez::GameResult<()> {
+	match self {
+	    TaskItem::Book(item) => item.get_object_mut().draw(ctx),
+	    TaskItem::Texture(item) => item.get_object_mut().draw(ctx),
+	}
+    }
+    
+    fn hide(&mut self) {	
+	match self {
+	    TaskItem::Book(item) => item.get_object_mut().hide(),
+	    TaskItem::Texture(item) => item.get_object_mut().hide(),
+	}
+    }
+    
+    fn appear(&mut self) {
+	match self {
+	    TaskItem::Book(item) => item.get_object_mut().appear(),
+	    TaskItem::Texture(item) => item.get_object_mut().appear(),
+	}
+    }
+    
+    fn is_visible(&self) -> bool {
+	match self {
+	    TaskItem::Book(item) => item.get_object().is_visible(),
+	    TaskItem::Texture(item) => item.get_object().is_visible(),
+	}
+    }
+    
+    fn set_drawing_depth(&mut self, depth: i8) {
+	match self {
+	    TaskItem::Book(item) => item.get_object_mut().set_drawing_depth(depth),
+	    TaskItem::Texture(item) => item.get_object_mut().set_drawing_depth(depth),
+	}
+    }
+    
+    fn get_drawing_depth(&self) -> i8 {
+	match self {
+	    TaskItem::Book(item) => item.get_object().get_drawing_depth(),
+	    TaskItem::Texture(item) => item.get_object().get_drawing_depth(),
+	}
     }
 }
 
 pub struct DeskObjectContainer {
-    container: Vec<DeskObject>,
+    container: Vec<TaskItem>,
 }
 
 impl DeskObjectContainer {
@@ -2289,12 +2434,12 @@ impl DeskObjectContainer {
         }
     }
 
-    pub fn add(&mut self, obj: DeskObject) {
+    pub fn add_item(&mut self, obj: TaskItem) {
         self.container.push(obj);
     }
 
     pub fn sort_with_depth(&mut self) {
-        self.container.sort_by(|a: &DeskObject, b: &DeskObject| {
+        self.container.sort_by(|a: &TaskItem, b: &TaskItem| {
             let (ad, bd) = (
                 a.get_object().get_drawing_depth(),
                 b.get_object().get_drawing_depth(),
@@ -2309,11 +2454,11 @@ impl DeskObjectContainer {
         });
     }
 
-    pub fn get_raw_container(&self) -> &Vec<DeskObject> {
+    pub fn get_raw_container(&self) -> &Vec<TaskItem> {
         &self.container
     }
 
-    pub fn get_raw_container_mut(&mut self) -> &mut Vec<DeskObject> {
+    pub fn get_raw_container_mut(&mut self) -> &mut Vec<TaskItem> {
         &mut self.container
     }
 
@@ -2332,18 +2477,18 @@ impl DeskObjectContainer {
 
     pub fn change_depth_equally(&mut self, offset: i8) {
         for obj in &mut self.container {
-            let current_depth = obj.get_object().get_drawing_depth();
+            let current_depth = obj.get_drawing_depth();
             let next_depth: i16 = (current_depth as i16) + (offset as i16);
 
             if next_depth <= 127 && next_depth >= -128 {
                 // 範囲内
-                obj.get_object_mut().set_drawing_depth(next_depth as i8);
+                obj.set_drawing_depth(next_depth as i8);
             } else if next_depth > 0 {
                 // 範囲外（上限）
-                obj.get_object_mut().set_drawing_depth(127);
+                obj.set_drawing_depth(127);
             } else {
                 // 範囲外（下限）
-                obj.get_object_mut().set_drawing_depth(-128);
+                obj.set_drawing_depth(-128);
             }
         }
     }

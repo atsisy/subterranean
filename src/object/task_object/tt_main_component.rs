@@ -85,7 +85,7 @@ impl DrawableComponent for TaskTableStagingObject {
 pub struct DeskObjects {
     pub canvas: SubScreen,
     pub desk_objects: DeskObjectContainer,
-    pub dragging: Option<DeskObject>,
+    pub dragging: Option<TaskItem>,
     pub table_texture: SimpleObject,
     event_list: DelayEventList<Self>,
 }
@@ -150,7 +150,7 @@ impl DeskObjects {
             .enumerate()
         {
             if obj.get_object().contains(ctx.context, rpoint) {
-                obj.get_object_mut().override_move_func(None, 0);
+                obj.as_movable_object_mut().override_move_func(None, 0);
                 dragging_object_index = self.desk_objects.len() - index - 1;
                 drag_start = true;
                 break;
@@ -181,7 +181,7 @@ impl DeskObjects {
             dragged.get_object_mut().finish_dragging(ctx);
             self.desk_objects.change_depth_equally(1);
 
-            self.desk_objects.add(dragged);
+            self.desk_objects.add_item(dragged);
             self.desk_objects.sort_with_depth();
         }
     }
@@ -190,8 +190,8 @@ impl DeskObjects {
         flush_delay_event!(self, self.event_list, ctx, t);
 
         for p in self.desk_objects.get_raw_container_mut() {
-            p.get_object_mut().move_with_func(t);
-            p.get_object_mut().effect(ctx.context, t);
+            p.as_movable_object_mut().move_with_func(t);
+            p.as_effectable_object().effect(ctx.context, t);
         }
     }
 
@@ -229,16 +229,16 @@ impl DeskObjects {
         object_type
     }
 
-    pub fn add_object(&mut self, obj: DeskObject) {
-        self.desk_objects.add(obj);
+    pub fn add_object(&mut self, obj: TaskItem) {
+        self.desk_objects.add_item(obj);
         self.desk_objects.sort_with_depth();
     }
 
-    pub fn add_customer_object(&mut self, obj: DeskObject) {
+    pub fn add_customer_object(&mut self, obj: TaskItem) {
         self.add_object(obj);
     }
 
-    pub fn add_customer_object_vec(&mut self, mut obj_vec: Vec<DeskObject>) {
+    pub fn add_customer_object_vec(&mut self, mut obj_vec: Vec<TaskItem>) {
         while obj_vec.len() != 0 {
             self.add_object(obj_vec.pop().unwrap());
         }
@@ -248,18 +248,18 @@ impl DeskObjects {
         self.dragging.is_some()
     }
 
-    pub fn insert_dragging(&mut self, obj: DeskObject) {
+    pub fn insert_dragging(&mut self, obj: TaskItem) {
         let d = std::mem::replace(&mut self.dragging, Some(obj));
         if d.is_some() {
-            self.desk_objects.add(d.unwrap());
+            self.desk_objects.add_item(d.unwrap());
         }
     }
 
-    pub fn release_dragging(&mut self) -> Option<DeskObject> {
+    pub fn release_dragging(&mut self) -> Option<TaskItem> {
         std::mem::replace(&mut self.dragging, None)
     }
 
-    pub fn ref_dragging(&self) -> &Option<DeskObject> {
+    pub fn ref_dragging(&self) -> &Option<TaskItem> {
         &self.dragging
     }
 
@@ -323,11 +323,11 @@ impl DeskObjects {
         MouseCursor::Default
     }
 
-    pub fn get_desk_objects_list(&self) -> &Vec<DeskObject> {
+    pub fn get_desk_objects_list(&self) -> &Vec<TaskItem> {
         self.desk_objects.get_raw_container()
     }
 
-    pub fn get_desk_objects_list_mut(&mut self) -> &mut Vec<DeskObject> {
+    pub fn get_desk_objects_list_mut(&mut self) -> &mut Vec<TaskItem> {
         self.desk_objects.get_raw_container_mut()
     }
 }
@@ -1012,9 +1012,9 @@ impl OnDesk for SuzuMiniSightSilhouette {
 
 pub struct SuzuMiniSight {
     pub canvas: SubScreen,
-    pub dragging: Option<DeskObject>,
-    pub dropping: Vec<DeskObject>,
-    pub dropping_to_desk: Vec<DeskObject>,
+    pub dragging: Option<TaskItem>,
+    pub dropping: Vec<TaskItem>,
+    pub dropping_to_desk: Vec<TaskItem>,
     pub silhouette: SuzuMiniSightSilhouette,
     object_handover_lock: bool,
 }
@@ -1068,7 +1068,7 @@ impl SuzuMiniSight {
         }
     }
 
-    fn check_object_drop(&self, ctx: &mut ggez::Context, desk_obj: &DeskObject) -> bool {
+    fn check_object_drop(&self, ctx: &mut ggez::Context, desk_obj: &TaskItem) -> bool {
         if self.object_handover_lock {
             // 客への手渡しがロックされているので、手渡しが発生しないようにfalseを返す
             return false;
@@ -1091,22 +1091,22 @@ impl SuzuMiniSight {
     }
 
     pub fn update<'a>(&mut self, ctx: &mut SuzuContext<'a>, t: Clock) {
-        self.dropping.retain(|d| !d.get_object().is_stop());
+        self.dropping.retain(|d| !d.as_movable_object().is_stop());
 
         for d in &mut self.dropping {
-            d.get_object_mut().move_with_func(t);
-            d.get_object_mut().effect(ctx.context, t);
+            d.as_movable_object_mut().move_with_func(t);
+            d.as_effectable_object().effect(ctx.context, t);
         }
 
         for d in &mut self.dropping_to_desk {
-            d.get_object_mut().move_with_func(t);
-            d.get_object_mut().effect(ctx.context, t);
+            d.as_movable_object_mut().move_with_func(t);
+            d.as_effectable_object().effect(ctx.context, t);
         }
 
         self.silhouette.run_effect(ctx, t);
     }
 
-    pub fn check_drop_desk(&mut self) -> Vec<DeskObject> {
+    pub fn check_drop_desk(&mut self) -> Vec<TaskItem> {
         let mut drop_to_desk = Vec::new();
 
         let mut index = 0;
@@ -1115,7 +1115,7 @@ impl SuzuMiniSight {
                 .dropping_to_desk
                 .get(index)
                 .unwrap()
-                .get_object()
+                .as_movable_object()
                 .is_stop();
             if stop {
                 drop_to_desk.push(self.dropping_to_desk.swap_remove(index));
@@ -1126,7 +1126,7 @@ impl SuzuMiniSight {
         drop_to_desk
     }
 
-    pub fn add_object(&mut self, obj: DeskObject) {
+    pub fn add_object(&mut self, obj: TaskItem) {
         self.dropping.push(obj);
     }
 
@@ -1134,7 +1134,7 @@ impl SuzuMiniSight {
         self.dragging.is_some()
     }
 
-    pub fn insert_dragging(&mut self, obj: DeskObject) {
+    pub fn insert_dragging(&mut self, obj: TaskItem) {
         let d = std::mem::replace(&mut self.dragging, Some(obj));
         if d.is_some() {
             self.dropping.push(d.unwrap());
@@ -1147,9 +1147,9 @@ impl SuzuMiniSight {
 
             if self.check_object_drop(ctx, &dragged) {
                 dragged
-                    .get_object_mut()
+                    .as_movable_object_mut()
                     .override_move_func(move_fn::gravity_move(1.0, 10.0, 310.0, 0.3), t);
-                dragged.get_object_mut().add_effect(vec![Box::new(
+                dragged.as_effectable_object().add_effect(vec![Box::new(
                     |obj: &mut dyn MovableObject, _: &ggez::Context, t: Clock| {
                         if obj.get_position().y > 350.0 {
                             obj.override_move_func(None, t);
@@ -1162,9 +1162,9 @@ impl SuzuMiniSight {
                 self.dropping.push(dragged);
             } else {
                 dragged
-                    .get_object_mut()
+                    .as_movable_object_mut()
                     .override_move_func(move_fn::gravity_move(1.0, 10.0, 310.0, 0.3), t);
-                dragged.get_object_mut().add_effect(vec![Box::new(
+                dragged.as_effectable_object().add_effect(vec![Box::new(
                     |obj: &mut dyn MovableObject, _: &ggez::Context, t: Clock| {
                         if obj.get_position().y > 300.0 {
                             obj.override_move_func(None, t);
@@ -1189,11 +1189,11 @@ impl SuzuMiniSight {
         self.silhouette.click_hold_data(ctx, rpoint)
     }
 
-    pub fn release_dragging(&mut self) -> Option<DeskObject> {
+    pub fn release_dragging(&mut self) -> Option<TaskItem> {
         std::mem::replace(&mut self.dragging, None)
     }
 
-    pub fn ref_dragging(&self) -> &Option<DeskObject> {
+    pub fn ref_dragging(&self) -> &Option<TaskItem> {
         &self.dragging
     }
 
@@ -1313,8 +1313,8 @@ impl CustomerRequest {
 
 pub struct ShelvingBookBox {
     pub canvas: SubScreen,
-    pub shelved: Vec<DeskObject>,
-    pub dragging: Option<DeskObject>,
+    pub shelved: Vec<TaskItem>,
+    pub dragging: Option<TaskItem>,
     pub table_texture: SimpleObject,
 }
 
@@ -1379,9 +1379,9 @@ impl ShelvingBookBox {
     pub fn unselect_dragging_object(&mut self, t: Clock) {
         if let Some(dragged) = &mut self.dragging {
             dragged
-                .get_object_mut()
+                .as_movable_object_mut()
                 .override_move_func(move_fn::gravity_move(1.0, 10.0, 310.0, 0.3), t);
-            dragged.get_object_mut().add_effect(vec![Box::new(
+            dragged.as_effectable_object().add_effect(vec![Box::new(
                 |obj: &mut dyn MovableObject, _: &ggez::Context, t: Clock| {
                     if obj.get_position().y > 350.0 {
                         obj.override_move_func(None, t);
@@ -1398,16 +1398,16 @@ impl ShelvingBookBox {
 
     pub fn update(&mut self, ctx: &mut ggez::Context, t: Clock) {
         for p in &mut self.shelved {
-            p.get_object_mut().move_with_func(t);
-            p.get_object_mut().effect(ctx, t);
+            p.as_movable_object_mut().move_with_func(t);
+            p.as_effectable_object().effect(ctx, t);
         }
     }
 
-    pub fn add_object(&mut self, obj: DeskObject) {
+    pub fn add_object(&mut self, obj: TaskItem) {
         self.shelved.push(obj);
     }
 
-    pub fn add_customer_object_vec(&mut self, mut obj_vec: Vec<DeskObject>) {
+    pub fn add_customer_object_vec(&mut self, mut obj_vec: Vec<TaskItem>) {
         while obj_vec.len() != 0 {
             self.add_object(obj_vec.pop().unwrap());
         }
@@ -1417,18 +1417,18 @@ impl ShelvingBookBox {
         self.dragging.is_some()
     }
 
-    pub fn insert_dragging(&mut self, obj: DeskObject) {
+    pub fn insert_dragging(&mut self, obj: TaskItem) {
         let d = std::mem::replace(&mut self.dragging, Some(obj));
         if d.is_some() {
             self.add_object(d.unwrap());
         }
     }
 
-    pub fn release_dragging(&mut self) -> Option<DeskObject> {
+    pub fn release_dragging(&mut self) -> Option<TaskItem> {
         std::mem::replace(&mut self.dragging, None)
     }
 
-    pub fn ref_dragging(&self) -> &Option<DeskObject> {
+    pub fn ref_dragging(&self) -> &Option<TaskItem> {
         &self.dragging
     }
 
@@ -1591,7 +1591,7 @@ impl DrawableComponent for KosuzuPhrase {
     fn draw(&mut self, ctx: &mut ggez::Context) -> ggez::GameResult<()> {
 	if self.is_visible() {
             sub_screen::stack_screen(ctx, &self.canvas);
-
+	    
 	    if let Some(balloon) = self.text_balloon.as_mut() {
 		balloon.draw(ctx)?;
 	    }
