@@ -1204,26 +1204,29 @@ impl Clickable for TaskTable {
     ) {
         let rpoint = self.canvas.relative_point(point);
 
-        let menu_click = !self.click_record_book_menu(ctx, button, rpoint, t)
-            && !self.click_customer_silhouette_menu(ctx, button, rpoint, t)
-            && !self.click_desk_book_menu(ctx, button, point, t);
-
-        if menu_click {
-            // メニューをクリックしていない場合に、新しいメニュー表示処理を走らせる
-            self.try_show_menus(ctx, rpoint, t);
-        } else {
-            self.record_book_menu.close_all(t);
-            self.customer_silhouette_menu.close_all(t);
-            self.on_desk_menu.close_all(t);
-
-            return ();
-        }
-
+        if self.click_record_book_menu(ctx, button, rpoint, t) {
+	    self.record_book_menu.close_all(t);
+	    return;
+	}
+	
         if self.borrowing_record_book.click_handler(ctx, t, rpoint) {
             // クリックハンドラが呼び出されたので終了
             return;
         }
 
+	if self.click_customer_silhouette_menu(ctx, button, rpoint, t) {
+	    self.customer_silhouette_menu.close_all(t);
+	    return;
+	}
+	
+        if self.click_desk_book_menu(ctx, button, point, t) {
+	    self.on_desk_menu.close_all(t);
+	    return;
+	}
+	
+        // メニューをクリックしていない場合に、新しいメニュー表示処理を走らせる
+        self.try_show_menus(ctx, rpoint, t);
+	
         if self.desk.click_handler(ctx, t, button, rpoint) {
             // クリックハンドラが呼び出されたので終了
             return;
