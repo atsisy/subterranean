@@ -735,6 +735,31 @@ impl TaskTable {
         }
     }
 
+    fn refusing_book_borrowing_conversation(&mut self, t: Clock) {
+	self.event_list.add_event(
+            Box::new(move |slf: &mut Self, ctx, t| {
+		slf.kosuzu_phrase.insert_new_phrase(
+		    ctx,
+		    "すみません　この本は貸し出せません",
+		    t
+		);
+            }),
+            t + 1,
+        );
+
+	self.event_list.add_event(
+            Box::new(move |slf: &mut Self, ctx, _| {
+		slf.sight.silhouette.replace_text(
+		    ctx.context,
+		    "あ そうなんですか",
+		    TextBalloonPhraseType::SimplePhrase
+		);
+            }),
+            t + 30,
+        );
+
+    }
+
     fn show_kosuzu_payment_message<'a>(&mut self, ctx: &mut SuzuContext<'a>, price: u32, t: Clock) {
 	self.kosuzu_phrase.insert_new_phrase(
 	    ctx,
@@ -835,16 +860,10 @@ impl TaskTable {
                         true
                     },
 		    2 => {
-                        self.event_list.add_event(
-                            Box::new(move |slf: &mut Self, ctx, t| {
-				slf.kosuzu_phrase.insert_new_phrase(
-				    ctx,
-				    "すみません　この本は貸し出せません",
-				    t
-				);
-                            }),
-                            t + 1,
-                        );
+			let target_book_info = self.on_desk_menu.get_desk_menu_target_book_info().unwrap();
+			self.kosuzu_memory.add_book_to_black_list(target_book_info);
+
+			self.refusing_book_borrowing_conversation(t);
                         true
                     },
                     _ => false,

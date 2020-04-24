@@ -205,7 +205,7 @@ impl ReturnBookInformation {
         let borrowing_num = rand::random::<u32>() % 5;
         let mut borrow_books = Vec::new();
 
-        for _ in 0..borrowing_num {
+        for _ in 1..=borrowing_num {
             borrow_books.push(game_data.book_random_select().clone());
         }
 

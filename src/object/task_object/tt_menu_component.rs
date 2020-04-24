@@ -24,6 +24,7 @@ use crate::set_table_frame_cell_center;
 
 pub struct KosuzuMemory {
     remembered_book_info: Vec<BookInformation>,
+    book_black_list: Vec<BookInformation>,
     customers_name: Vec<String>,
     dates: Vec<GensoDate>,
 }
@@ -32,6 +33,7 @@ impl KosuzuMemory {
     pub fn new() -> Self {
         KosuzuMemory {
             remembered_book_info: Vec::new(),
+	    book_black_list: Vec::new(),
             customers_name: Vec::new(),
             dates: Vec::new(),
         }
@@ -47,6 +49,10 @@ impl KosuzuMemory {
 
     pub fn add_date(&mut self, date: GensoDate) {
         self.dates.push(date);
+    }
+
+    pub fn add_book_to_black_list(&mut self, book_info: BookInformation) {
+	self.book_black_list.push(book_info);
     }
 
     pub fn get_book_info_remove(&mut self, index: usize) -> Option<BookInformation> {

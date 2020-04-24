@@ -34,10 +34,16 @@ pub struct ReturningRequestPool {
 impl ReturningRequestPool {
     pub fn new(game_data: &GameResource, today: GensoDate) -> Self {
         let mut returning_request = Vec::new();
-        let mut return_date = today.clone();
-        return_date.add_day(14);
-
-        for _ in 0..3 {
+	
+        for _ in 1..=5 {
+	    let mut return_date = today.clone();
+	    
+	    match rand::random::<u32>() % 2 {
+		0 => return_date.add_day(14),
+		1 => return_date.add_day(7),
+		_ => (),
+	    }
+	    
             returning_request.push(ReturnBookInformation::new_random(
                 game_data,
                 today,
@@ -104,7 +110,7 @@ impl SuzunaBookPool {
         rental_limit: RentalLimit,
     ) -> BorrowingInformation {
         let mut borrowing_books = Vec::new();
-        for _ in 0..(rand::random::<u32>() % 5) {
+        for _ in 1..(rand::random::<u32>() % 6) {
             if self.books.is_empty() {
                 break;
             }
@@ -114,6 +120,8 @@ impl SuzunaBookPool {
                 .swap_remove(rand::random::<usize>() % self.books.len());
             borrowing_books.push(book_info);
         }
+
+	println!("generated books: {}", borrowing_books.len());
 
         BorrowingInformation::new(borrowing_books, customer_name, borrow_date, rental_limit)
     }
