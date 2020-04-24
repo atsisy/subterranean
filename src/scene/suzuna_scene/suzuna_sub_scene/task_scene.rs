@@ -19,7 +19,6 @@ use crate::object::task_object::tt_sub_component::*;
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum TaskSceneStatus {
-    Init,
     CustomerFree,
     CustomerWait,
     CustomerEvent,
@@ -83,7 +82,7 @@ impl TaskScene {
             clock: 0,
             mouse_info: MouseInformation::new(),
             event_list: event_list,
-            status: TaskSceneStatus::Init,
+            status: TaskSceneStatus::CustomerFree,
             customer_request: customer_request,
             transition_status: SceneTransition::Keep,
             transition_scene: SceneID::MainDesk,
@@ -274,8 +273,8 @@ impl SceneManager for TaskScene {
         let t = self.get_current_clock();
         self.task_table.update(ctx, self.get_current_clock());
 
-        if (self.status == TaskSceneStatus::CustomerEvent || self.status == TaskSceneStatus::Init)
-            && self.task_table.get_remaining_customer_object_number() == 0
+        if self.status == TaskSceneStatus::CustomerEvent
+            && self.task_table.task_is_done()
         {
             debug::debug_screen_push_text(&format!("register delay process!!"));
             self.event_list.add_event(

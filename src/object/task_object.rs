@@ -48,6 +48,7 @@ pub struct TaskTable {
     current_customer_request: Option<CustomerRequest>,
     kosuzu_phrase: KosuzuPhrase,
     today: GensoDate,
+    task_is_done: bool,
 }
 
 impl TaskTable {
@@ -130,6 +131,7 @@ impl TaskTable {
             current_customer_request: None,
 	    kosuzu_phrase: KosuzuPhrase::new(ctx, 0),
             today: ctx.savable_data.date,
+	    task_is_done: false,
         }
     }
 
@@ -430,15 +432,16 @@ impl TaskTable {
         self.customer_silhouette_menu.update(ctx, t);
         self.on_desk_menu.update(ctx, t);
 	self.kosuzu_phrase.update(ctx, t);
+
+	self.check_task_is_done();
     }
 
     pub fn finish_customer_event(&mut self, now: Clock) {
         self.sight.finish_customer_event(now);
     }
 
-    pub fn get_remaining_customer_object_number(&self) -> usize {
-        self.desk
-            .count_object_by_type(DeskObjectType::CustomerObject)
+    pub fn task_is_done(&self) -> bool {
+	self.task_is_done
     }
 
     fn start_borrowing_customer_event<'a>(
@@ -541,6 +544,77 @@ impl TaskTable {
         }
     }
 
+    fn check_borrowing_task_is_done(&self) -> bool {
+	let mut book_count = 0;
+	for obj in self.desk.desk_objects.get_raw_container().iter() {
+	    match obj {
+		TaskItem::Book(item) => {
+		    if !self.kosuzu_memory.is_in_blacklist(item.get_large_object().get_book_info()) {
+			book_count += 1;
+		    }
+		}
+		_ => (),
+	    }
+	}
+
+	book_count += self.sight.count_not_forbidden_book_items(&self.kosuzu_memory);
+
+	if let Some(dragging) = self.desk.dragging.as_ref() {
+	     match dragging {
+		TaskItem::Book(item) => {
+		    if !self.kosuzu_memory.is_in_blacklist(item.get_large_object().get_book_info()) {
+			book_count += 1;
+		    }
+		}
+		_ => (),
+	    }
+	}
+
+	book_count == 0
+    }
+
+    fn check_returning_task_is_done(&self) -> bool {
+	let mut book_count = 0;
+	for obj in self.desk.desk_objects.get_raw_container().iter() {
+	    match obj {
+		TaskItem::Book(_) => {
+		    book_count += 1;
+		}
+		_ => (),
+	    }
+	}
+
+	book_count += self.sight.count_not_forbidden_book_items(&self.kosuzu_memory);
+
+	if let Some(dragging) = self.desk.dragging.as_ref() {
+	     match dragging {
+		TaskItem::Book(item) => {
+		    if !self.kosuzu_memory.is_in_blacklist(item.get_large_object().get_book_info()) {
+			book_count += 1;
+		    }
+		}
+		_ => (),
+	    }
+	}
+
+	book_count == 0
+    }
+    
+    fn check_task_is_done(&mut self) {
+	if self.current_customer_request.is_none() {
+	    self.task_is_done = false;
+	    return;
+	}
+
+	self.task_is_done = match self.current_customer_request.as_ref().unwrap() {
+	    CustomerRequest::Borrowing(_) => 
+		self.check_borrowing_task_is_done(),
+	    CustomerRequest::Returning(_) =>
+		self.check_returning_task_is_done(),
+	    _ => true,
+	};
+    }
+
     pub fn get_shelving_box(&self) -> &ShelvingBookBox {
         &self.shelving_box
     }
@@ -598,7 +672,7 @@ impl TaskTable {
                 .click_customer_name_menu(ctx, button, point, t)
             && !self
                 .record_book_menu
-                .click_payment_menu(ctx, button, point, t)
+            .click_payment_menu(ctx, button, point, t)
         {
             // メニューをクリックしていない場合はfalseをクリックして終了
             return false;
@@ -691,7 +765,7 @@ impl TaskTable {
             return true;
         }
 
-        false
+	false
     }
 
     ///
@@ -757,6 +831,17 @@ impl TaskTable {
             }),
             t + 30,
         );
+
+	if let Some(customer_request) = self.current_customer_request.as_ref() {
+	    match customer_request {
+		CustomerRequest::Borrowing(info) => {
+		    if self.kosuzu_memory.full_of_blacklist(&info.borrowing) {
+			
+		    }
+		},
+		_ => (),
+	    }
+	}
 
     }
 
@@ -845,7 +930,12 @@ impl TaskTable {
             if let Some(book_info) = self.on_desk_menu.get_desk_menu_target_book_info() {
                 return match index {
                     0 => {
-			self.kosuzu_memory.add_book_info(book_info);
+			if self.kosuzu_memory.is_in_blacklist(&book_info) {
+			    self.kosuzu_phrase.insert_new_phrase(ctx, "これは貸出しないはずの本だ", t);
+			} else {
+			    println!("Ok, This book info is not in blacklist");
+			    self.kosuzu_memory.add_book_info(book_info);
+			}
                         true
                     },
                     1 => {
@@ -1068,6 +1158,10 @@ impl TaskTable {
         click_point: numeric::Point2f,
         t: Clock,
     ) {
+	if self.record_book_is_staged {
+	    return;
+	}
+	
         // 既に表示されている場合は、メニューを消して終了
         if self.record_book_menu.is_some_menu_opened() {
             self.record_book_menu.close_all(t);
@@ -1223,7 +1317,7 @@ impl Clickable for TaskTable {
 	    self.on_desk_menu.close_all(t);
 	    return;
 	}
-	
+
         // メニューをクリックしていない場合に、新しいメニュー表示処理を走らせる
         self.try_show_menus(ctx, rpoint, t);
 	

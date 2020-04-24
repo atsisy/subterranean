@@ -2042,7 +2042,7 @@ impl BorrowingRecordBook {
             return true;
         }
 
-        false
+	self.contains(ctx.context, point)
     }
 
     pub fn pages_length(&self) -> usize {
@@ -2341,7 +2341,7 @@ where S: OnDesk, L: OnDesk {
 	self.handover_locked = false;
     }
 
-    pub fn get_small_object(&mut self) -> &S {
+    pub fn get_small_object(&self) -> &S {
 	self.small.ref_wrapped_object().ref_wrapped_object()
     }
 
@@ -2349,7 +2349,7 @@ where S: OnDesk, L: OnDesk {
 	self.small.ref_wrapped_object_mut().ref_wrapped_object_mut()
     }
 
-    pub fn get_large_object(&mut self) -> &L {
+    pub fn get_large_object(&self) -> &L {
 	self.large.ref_wrapped_object().ref_wrapped_object()
     }
 
