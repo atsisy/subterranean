@@ -37,7 +37,6 @@ left = "JunkoTachieDefault"
 
 [[scenario-group]]
 type = "choice"
-background = "WafuTexture1"
 id = 11
 [scenario-group.tachie-data]
 

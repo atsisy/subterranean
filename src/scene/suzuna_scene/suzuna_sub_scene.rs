@@ -121,7 +121,7 @@ impl SuzunaBookPool {
             borrowing_books.push(book_info);
         }
 
-	println!("generated books: {}", borrowing_books.len());
+	println!("generated books count: {}", borrowing_books.len());
 
         BorrowingInformation::new(borrowing_books, customer_name, borrow_date, rental_limit)
     }

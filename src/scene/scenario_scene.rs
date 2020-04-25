@@ -5,7 +5,7 @@ use torifune::numeric;
 use crate::core::SuzuContext;
 
 use crate::object::scenario::*;
-use crate::object::simulation_ui as sui;
+use crate::object::simulation_ui::*;
 use torifune::graphics::drawable::*;
 
 use super::*;
@@ -19,7 +19,7 @@ pub enum ScenarioSelect {
 
 pub struct ScenarioScene {
     scenario_event: ScenarioEvent,
-    simulation_status: sui::SimulationStatus,
+    scenario_menu: ScenarioMenu,
     scene_transition_type: SceneTransition,
     scene_transition: SceneID,
     clock: Clock,
@@ -35,20 +35,17 @@ impl ScenarioScene {
 	    ScenarioSelect::OpeningEpisode => panic!(""),
 	    _ => panic!(""),
 	};
-
+	
         let scenario = ScenarioEvent::new(
             ctx,
-            numeric::Rect::new(0.0, 180.0, 1366.0, 600.0),
+            numeric::Rect::new(300.0, 0.0, 1066.0, 768.0),
             &file_path,
             0,
         );
 
         ScenarioScene {
-            simulation_status: sui::SimulationStatus::new(
-                ctx,
-                numeric::Rect::new(0.0, 0.0, 1366.0, 180.0),
-            ),
             scenario_event: scenario,
+	    scenario_menu: ScenarioMenu::new(ctx, numeric::Vector2f::new(300.0, 768.0)),
             scene_transition: SceneID::Scenario,
 	    scene_transition_type: SceneTransition::Keep,
             clock: 0,
@@ -89,13 +86,11 @@ impl SceneManager for ScenarioScene {
 
     fn pre_process<'a>(&mut self, ctx: &mut SuzuContext<'a>) {
         self.scenario_event.update_text(ctx);
-        self.simulation_status.update();
     }
 
     fn drawing_process(&mut self, ctx: &mut ggez::Context) {
         self.scenario_event.draw(ctx).unwrap();
-
-        self.simulation_status.draw(ctx).unwrap();
+	self.scenario_menu.draw(ctx).unwrap();
     }
 
     fn post_process<'a>(&mut self, _ctx: &mut SuzuContext<'a>) -> SceneTransition {

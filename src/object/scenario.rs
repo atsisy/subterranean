@@ -157,7 +157,7 @@ impl ScenarioTachie {
             Some(SimpleObject::new(
                 MovableUniTexture::new(
                     game_data.ref_texture(tid_array[0]),
-                    numeric::Point2f::new(50.0, 0.0),
+                    numeric::Point2f::new(50.0, 100.0),
                     numeric::Vector2f::new(0.12, 0.12),
                     0.0,
                     0,
@@ -174,7 +174,7 @@ impl ScenarioTachie {
             Some(SimpleObject::new(
                 MovableUniTexture::new(
                     game_data.ref_texture(tid_array[1]),
-                    numeric::Point2f::new(900.0, 0.0),
+                    numeric::Point2f::new(800.0, 100.0),
                     numeric::Vector2f::new(0.12, 0.12),
                     0.0,
                     0,
@@ -1269,12 +1269,12 @@ impl ScenarioEvent {
 
         let event_tachie =
             Self::update_event_tachie_sub(ctx.resource, scenario.ref_current_element(), t);
-
+	
         ScenarioEvent {
             scenario: scenario,
             scenario_box: ScenarioBox::new(
                 ctx,
-                numeric::Rect::new(20.0, 310.0, rect.w - 40.0, 270.0),
+                numeric::Rect::new(20.0, rect.h - 280.0, rect.w - 40.0, 270.0),
                 t,
             ),
             canvas: SubScreen::new(ctx.context, rect, 0, ggraphics::Color::from_rgba_u32(0x00)),

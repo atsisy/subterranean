@@ -1,6 +1,5 @@
 pub mod map_parser;
 pub mod util;
-
 use ggez::graphics as ggraphics;
 use ggez::*;
 
@@ -131,6 +130,8 @@ pub enum TextureID {
 pub enum FontID {
     DEFAULT = 0,
     JpFude1,
+    CorpMincho,
+    Cinema,
 }
 
 impl FromStr for TextureID {
@@ -336,6 +337,24 @@ impl GensoDate {
             number_to_jk(self.month as u64),
             number_to_jk(self.day as u64)
         )
+    }
+
+    pub fn to_month_string_eng_short(&self) -> String {
+	match self.month {
+	    1 => "Jan.",
+	    2 => "Feb.",
+	    3 => "Mar.",
+	    4 => "Apr.",
+	    5 => "May",
+	    6 => "Jun.",
+	    7 => "Jul.",
+	    8 => "Aug.",
+	    9 => "Sep.",
+	    10 => "Oct.",
+	    11 => "Nov.",
+	    12 => "Dec.",
+	    _ => panic!("Invalid month"),
+	}.to_string()
     }
 
     pub fn add_day(&mut self, day: u8) {
