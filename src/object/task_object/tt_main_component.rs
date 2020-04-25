@@ -20,7 +20,7 @@ use crate::object::{effect, move_fn};
 use crate::scene::*;
 
 use super::Clickable;
-use crate::core::{FontID, RentalLimit, SuzuContext, TextureID};
+use crate::core::*;
 
 use super::tt_menu_component::*;
 use super::tt_sub_component::*;

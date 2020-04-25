@@ -13,13 +13,10 @@ use torifune::graphics::object::*;
 use torifune::numeric;
 
 use crate::core::map_parser as mp;
-use crate::core::{
-    BookInformation, BookShelfInformation, GameResource, GensoDate, RentalLimit, SuzuContext,
-};
+use crate::core::*;
 use crate::flush_delay_event;
 use crate::object::collision::*;
 use crate::object::task_object::tt_main_component::CustomerRequest;
-use crate::object::task_object::tt_sub_component::{BorrowingInformation, ReturnBookInformation};
 use crate::object::util_object::*;
 use crate::scene::{DelayEventList, SceneID};
 

@@ -28,7 +28,7 @@ use tt_menu_component::*;
 use tt_sub_component::*;
 
 use super::Clickable;
-use crate::core::{GensoDate, RentalLimit, SuzuContext, TextureID};
+use crate::core::{GensoDate, RentalLimit, SuzuContext, TextureID, BorrowingInformation, ReturnBookInformation};
 
 use number_to_jk::number_to_jk;
 

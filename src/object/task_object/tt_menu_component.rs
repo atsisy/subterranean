@@ -484,7 +484,7 @@ impl BookTitleMenu {
             ggraphics::Color::from_rgba_u32(0xff),
         );
 	
-        let mut title_table_frame = TableFrame::new(
+        let title_table_frame = TableFrame::new(
             ctx.resource,
             numeric::Point2f::new(48.0, 32.0),
             TileBatchTextureID::OldStyleFrame,

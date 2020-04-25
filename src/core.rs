@@ -33,6 +33,7 @@ use std::io::{BufReader, Read, Write};
 use std::fs::File;
 
 use serde::{Serialize, Deserialize};
+extern crate serde_json;
 
 use number_to_jk::number_to_jk;
 
@@ -870,18 +871,219 @@ impl SuzunaAnStatus {
     }
 }
 
+
+#[derive(Clone)]
+pub struct BorrowingInformation {
+    pub borrowing: Vec<BookInformation>,
+    pub borrower: String,
+    pub borrow_date: GensoDate,
+    pub return_date: GensoDate,
+    pub rental_limit: RentalLimit,
+}
+
+impl BorrowingInformation {
+    pub fn new(
+        borrowing: Vec<BookInformation>,
+        borrower: &str,
+        borrow_date: GensoDate,
+        rental_limit: RentalLimit,
+    ) -> Self {
+        let mut return_date = borrow_date.clone();
+
+        match rental_limit {
+            RentalLimit::Today => return_date.add_day(0),
+            RentalLimit::ShortTerm => return_date.add_day(7),
+            RentalLimit::LongTerm => return_date.add_day(14),
+        }
+
+        BorrowingInformation {
+            borrowing: borrowing,
+            borrower: borrower.to_string(),
+            borrow_date: borrow_date,
+            return_date: return_date,
+            rental_limit: rental_limit,
+        }
+    }
+
+    pub fn calc_fee(&self) -> i32 {
+        self.borrowing.len() as i32 * self.rental_limit.fee()
+    }
+}
+
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+pub struct ReturnBookInformation {
+    pub returning: Vec<BookInformation>,
+    pub borrower: String,
+    pub borrow_date: GensoDate,
+    pub return_date: GensoDate,
+}
+
+impl ReturnBookInformation {
+    pub fn new(
+        returning: Vec<BookInformation>,
+        borrower: &str,
+        borrow_date: GensoDate,
+        return_date: GensoDate,
+    ) -> Self {
+        ReturnBookInformation {
+            returning: returning,
+            borrower: borrower.to_string(),
+            borrow_date,
+            return_date,
+        }
+    }
+
+    pub fn new_random(
+        game_data: &GameResource,
+        borrow_date: GensoDate,
+        return_date: GensoDate,
+    ) -> Self {
+        let borrowing_num = (rand::random::<u32>() % 5) + 1;
+        let mut borrow_books = Vec::new();
+
+        for _ in 0..borrowing_num {
+            borrow_books.push(game_data.book_random_select().clone());
+        }
+
+        Self::new(
+            borrow_books,
+            game_data.customer_random_select(),
+            borrow_date,
+            return_date,
+        )
+    }
+}
+
+
+#[derive(Clone, Serialize, Deserialize)]
+pub struct SuzunaBookPool {
+    books: Vec<BookInformation>,
+}
+
+impl SuzunaBookPool {
+    pub fn new(game_data: &GameResource) -> Self {
+        SuzunaBookPool {
+            books: game_data.clone_available_books(),
+        }
+    }
+
+    pub fn push_book(&mut self, book_info: BookInformation) {
+        self.books.push(book_info);
+    }
+
+    pub fn push_book_vec(&mut self, book_info_vec: Vec<BookInformation>) {
+        self.books.extend(book_info_vec);
+    }
+
+    pub fn generate_borrowing_request(
+        &mut self,
+        customer_name: &str,
+        borrow_date: GensoDate,
+        rental_limit: RentalLimit,
+    ) -> BorrowingInformation {
+        let mut borrowing_books = Vec::new();
+        for _ in 0..((rand::random::<u32>() % 5) + 1) {
+            if self.books.is_empty() {
+                break;
+            }
+
+            let book_info = self
+                .books
+                .swap_remove(rand::random::<usize>() % self.books.len());
+            borrowing_books.push(book_info);
+        }
+
+	println!("generated books count: {}, books_len = {}", borrowing_books.len(), self.books.len());
+
+        BorrowingInformation::new(borrowing_books, customer_name, borrow_date, rental_limit)
+    }
+}
+
+
+#[derive(Clone, Serialize, Deserialize)]
+pub struct ReturningRequestPool {
+    returning_request: Vec<ReturnBookInformation>,
+}
+
+impl ReturningRequestPool {
+    pub fn new(game_data: &GameResource, today: GensoDate) -> Self {
+        let mut returning_request = Vec::new();
+	
+        for _ in 1..=5 {
+	    let mut return_date = today.clone();
+	    
+	    match rand::random::<u32>() % 2 {
+		0 => return_date.add_day(14),
+		1 => return_date.add_day(7),
+		_ => (),
+	    }
+	    
+            returning_request.push(ReturnBookInformation::new_random(
+                game_data,
+                today,
+                return_date,
+            ));
+        }
+
+        ReturningRequestPool {
+            returning_request: returning_request,
+        }
+    }
+
+    pub fn add_request(&mut self, borrow_info: BorrowingInformation) {
+        let returning_book_info = ReturnBookInformation::new(
+            borrow_info.borrowing.clone(),
+            &borrow_info.borrower,
+            borrow_info.borrow_date,
+            borrow_info.return_date,
+        );
+        self.returning_request.push(returning_book_info);
+    }
+
+    pub fn select_returning_request_random(&mut self) -> Option<ReturnBookInformation> {
+        let request_len = self.returning_request.len();
+
+        if request_len == 0 {
+            return None;
+        }
+
+        Some(
+            self.returning_request
+                .swap_remove(rand::random::<usize>() % request_len),
+        )
+    }
+
+    pub fn iter(&self) -> std::slice::Iter<ReturnBookInformation> {
+        self.returning_request.iter()
+    }
+}
+
 #[derive(Clone, Serialize, Deserialize)]
 pub struct SavableData {
+    pub suzuna_book_pool: SuzunaBookPool,
+    pub returning_request_pool: ReturningRequestPool,
     pub date: GensoDate,
     pub task_result: TaskResult,
     pub suzunaan_status: SuzunaAnStatus,
 }
 
 impl SavableData {
+    pub fn new(game_data: &GameResource) -> Self {
+	let date = GensoDate::new(112, 7, 23);
+	
+	SavableData {
+            date: date.clone(),
+            task_result: TaskResult::new(),
+	    suzunaan_status: SuzunaAnStatus::new(),
+	    suzuna_book_pool: SuzunaBookPool::new(game_data),
+	    returning_request_pool: ReturningRequestPool::new(game_data, date),
+        }
+    }
+    
     pub fn save(&self, slot: u8) -> Result<(), Box<dyn std::error::Error>> {
 	let mut file = File::create(&format!("./resources/save{}.toml", slot))?;
 
-	write!(file, "{}", toml::to_string(self).unwrap())?;
+	write!(file, "{}", serde_json::to_string(self).unwrap())?;
 	file.flush()?;
 	
 	Ok(())
@@ -990,12 +1192,8 @@ impl SceneController {
                 ggraphics::Color::from_rgba_u32(0xffffffa0),
             ),
         );
-
-        let mut game_status = SavableData {
-            date: GensoDate::new(112, 7, 23),
-            task_result: TaskResult::new(),
-	    suzunaan_status: SuzunaAnStatus::new(),
-        };
+	
+        let mut game_status = SavableData::new(game_data);
 
         // let current_scene = scene::scenario_scene::ScenarioScene::new(&mut SuzuContext {
         //     context: ctx,

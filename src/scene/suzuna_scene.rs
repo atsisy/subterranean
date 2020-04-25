@@ -23,7 +23,7 @@ impl SuzunaScene {
     pub fn new<'a>(ctx: &mut SuzuContext<'a>, suzuna_map_id: u32) -> Self {
         SuzunaScene {
             clock: 0,
-            sub_scene: SuzunaSubScene::new(ctx, suzuna_map_id, ctx.savable_data.clone()),
+            sub_scene: SuzunaSubScene::new(ctx, suzuna_map_id),
         }
     }
 

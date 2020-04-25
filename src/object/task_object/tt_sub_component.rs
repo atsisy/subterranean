@@ -22,7 +22,7 @@ use crate::object::util_object::*;
 use crate::set_table_frame_cell_center;
 
 use super::Clickable;
-use crate::core::{FontID, GameResource, GensoDate, SuzuContext, TextureID};
+use crate::core::*;
 use serde::{Serialize, Deserialize};
 
 use number_to_jk::number_to_jk;
@@ -134,88 +134,6 @@ impl DrawableObject for HoldDataVText {
 
 impl TextureObject for HoldDataVText {
     impl_texture_object_for_wrapped! {vtext}
-}
-
-#[derive(Clone)]
-pub struct BorrowingInformation {
-    pub borrowing: Vec<BookInformation>,
-    pub borrower: String,
-    pub borrow_date: GensoDate,
-    pub return_date: GensoDate,
-    pub rental_limit: RentalLimit,
-}
-
-impl BorrowingInformation {
-    pub fn new(
-        borrowing: Vec<BookInformation>,
-        borrower: &str,
-        borrow_date: GensoDate,
-        rental_limit: RentalLimit,
-    ) -> Self {
-        let mut return_date = borrow_date.clone();
-
-        match rental_limit {
-            RentalLimit::Today => return_date.add_day(0),
-            RentalLimit::ShortTerm => return_date.add_day(7),
-            RentalLimit::LongTerm => return_date.add_day(14),
-        }
-
-        BorrowingInformation {
-            borrowing: borrowing,
-            borrower: borrower.to_string(),
-            borrow_date: borrow_date,
-            return_date: return_date,
-            rental_limit: rental_limit,
-        }
-    }
-
-    pub fn calc_fee(&self) -> i32 {
-        self.borrowing.len() as i32 * self.rental_limit.fee()
-    }
-}
-
-#[derive(Clone, Debug)]
-pub struct ReturnBookInformation {
-    pub returning: Vec<BookInformation>,
-    pub borrower: String,
-    pub borrow_date: GensoDate,
-    pub return_date: GensoDate,
-}
-
-impl ReturnBookInformation {
-    pub fn new(
-        returning: Vec<BookInformation>,
-        borrower: &str,
-        borrow_date: GensoDate,
-        return_date: GensoDate,
-    ) -> Self {
-        ReturnBookInformation {
-            returning: returning,
-            borrower: borrower.to_string(),
-            borrow_date,
-            return_date,
-        }
-    }
-
-    pub fn new_random(
-        game_data: &GameResource,
-        borrow_date: GensoDate,
-        return_date: GensoDate,
-    ) -> Self {
-        let borrowing_num = (rand::random::<u32>() % 5) + 1;
-        let mut borrow_books = Vec::new();
-
-        for _ in 0..borrowing_num {
-            borrow_books.push(game_data.book_random_select().clone());
-        }
-
-        Self::new(
-            borrow_books,
-            game_data.customer_random_select(),
-            borrow_date,
-            return_date,
-        )
-    }
 }
 
 ///
