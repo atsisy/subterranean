@@ -202,10 +202,10 @@ impl ReturnBookInformation {
         borrow_date: GensoDate,
         return_date: GensoDate,
     ) -> Self {
-        let borrowing_num = rand::random::<u32>() % 5;
+        let borrowing_num = (rand::random::<u32>() % 5) + 1;
         let mut borrow_books = Vec::new();
 
-        for _ in 1..=borrowing_num {
+        for _ in 0..borrowing_num {
             borrow_books.push(game_data.book_random_select().clone());
         }
 
@@ -2042,7 +2042,7 @@ impl BorrowingRecordBook {
             return true;
         }
 
-	self.contains(ctx.context, point)
+	false
     }
 
     pub fn pages_length(&self) -> usize {

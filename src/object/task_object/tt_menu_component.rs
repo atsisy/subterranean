@@ -483,10 +483,10 @@ impl BookTitleMenu {
             numeric::Vector2f::new(32.0, 32.0),
             ggraphics::Color::from_rgba_u32(0xff),
         );
-
-        let title_table_frame = TableFrame::new(
+	
+        let mut title_table_frame = TableFrame::new(
             ctx.resource,
-            numeric::Point2f::new(10.0, 10.0),
+            numeric::Point2f::new(48.0, 32.0),
             TileBatchTextureID::OldStyleFrame,
             FrameData::new(vec![250.0], vec![64.0; book_info_data.len()]),
             numeric::Vector2f::new(0.3, 0.3),
@@ -516,7 +516,7 @@ impl BookTitleMenu {
 
         let header_text = VerticalText::new(
             "題目一覧".to_string(),
-            numeric::Point2f::new(title_table_frame.real_width() + 20.0, 30.0),
+            numeric::Point2f::new(title_table_frame.real_width() + 70.0, 30.0),
             numeric::Vector2f::new(1.0, 1.0),
             0.0,
             0,
@@ -631,7 +631,7 @@ impl CustomerNameMenu {
 
         let name_table_frame = TableFrame::new(
             ctx.resource,
-            numeric::Point2f::new(10.0, 10.0),
+            numeric::Point2f::new(48.0, 20.0),
             TileBatchTextureID::OldStyleFrame,
             FrameData::new(vec![250.0], vec![64.0; customer_name_data.len()]),
             numeric::Vector2f::new(0.3, 0.3),
@@ -775,7 +775,7 @@ impl DateMenu {
 
         let date_table_frame = TableFrame::new(
             ctx.resource,
-            numeric::Point2f::new(10.0, 10.0),
+            numeric::Point2f::new(48.0, 10.0),
             TileBatchTextureID::OldStyleFrame,
             FrameData::new(vec![125.0, 255.0], vec![64.0; 3]),
             numeric::Vector2f::new(0.3, 0.3),

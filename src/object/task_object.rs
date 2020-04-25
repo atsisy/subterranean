@@ -1157,11 +1157,7 @@ impl TaskTable {
         ctx: &mut SuzuContext<'a>,
         click_point: numeric::Point2f,
         t: Clock,
-    ) {
-	if self.record_book_is_staged {
-	    return;
-	}
-	
+    ) {	
         // 既に表示されている場合は、メニューを消して終了
         if self.record_book_menu.is_some_menu_opened() {
             self.record_book_menu.close_all(t);
@@ -1179,14 +1175,28 @@ impl TaskTable {
             return ();
         }
 
-        if !self.try_show_menus_regarding_book_info(ctx, click_point, t) {
-            if !self.try_show_menus_regarding_customer_info(ctx, click_point, t) {
-                if !self.try_show_menus_regarding_record_book_payment(ctx, click_point, t) {
-                    if !self.try_show_menus_regarding_customer_silhoutte(ctx, click_point, t) {
-                        self.try_show_menus_regarding_ondesk_book_info(ctx, click_point, t);
-                    }
-                }
-            }
+	if self.try_show_menus_regarding_record_book_payment(ctx, click_point, t) {
+	    return;
+	}
+
+	if self.try_show_menus_regarding_book_info(ctx, click_point, t) {
+	    return;
+	}
+
+	if self.try_show_menus_regarding_customer_info(ctx, click_point, t) {
+	    return;
+	}
+
+	if self.borrowing_record_book.contains(ctx.context, click_point) {
+	    return;
+	}
+
+	if self.record_book_is_staged {
+	    return;
+	}
+	
+        if !self.try_show_menus_regarding_customer_silhoutte(ctx, click_point, t) {
+            self.try_show_menus_regarding_ondesk_book_info(ctx, click_point, t);
         }
     }
 }

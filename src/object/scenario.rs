@@ -876,7 +876,7 @@ impl TextBox {
             ctx.resource,
             tile_batch_texture_id,
             numeric::Rect::new(0.0, 0.0, rect.w, rect.h),
-            numeric::Vector2f::new(0.8, 0.8),
+            numeric::Vector2f::new(0.778, 0.778),
             0,
         );
 

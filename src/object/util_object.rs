@@ -417,6 +417,12 @@ impl TableFrame {
             self.stroke_hline_batch(position);
         }
     }
+
+    pub fn make_center(&mut self, point: numeric::Point2f) {
+	let half_size = numeric::Vector2f::new(self.real_width() / 2.0, self.real_height() / 2.0);
+	let next_position = numeric::Point2f::new(point.x - half_size.x, point.y - half_size.y);
+	self.set_position(next_position);
+    }
 }
 
 impl DrawableComponent for TableFrame {

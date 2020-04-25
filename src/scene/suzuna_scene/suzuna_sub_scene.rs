@@ -110,7 +110,7 @@ impl SuzunaBookPool {
         rental_limit: RentalLimit,
     ) -> BorrowingInformation {
         let mut borrowing_books = Vec::new();
-        for _ in 1..(rand::random::<u32>() % 6) {
+        for _ in 0..((rand::random::<u32>() % 5) + 1) {
             if self.books.is_empty() {
                 break;
             }
@@ -121,7 +121,7 @@ impl SuzunaBookPool {
             borrowing_books.push(book_info);
         }
 
-	println!("generated books count: {}", borrowing_books.len());
+	println!("generated books count: {}, books_len = {}", borrowing_books.len(), self.books.len());
 
         BorrowingInformation::new(borrowing_books, customer_name, borrow_date, rental_limit)
     }
@@ -218,10 +218,10 @@ impl SuzunaSubScene {
                             .returning_request_pool
                             .select_returning_request_random()
                             .unwrap();
-                        println!("{:?}", request);
+                        println!("returning count: {}", request.returning.len());
                         CustomerRequest::Returning(request)
                     }
-                    _ => return (),
+                    _ => return,
                 };
 
                 let record_book_data =
