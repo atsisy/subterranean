@@ -469,7 +469,7 @@ impl ScenarioMenuContents {
 
         let large_scale_font = FontInformation::new(
             ctx.resource.get_font(FontID::Cinema),
-            numeric::Vector2f::new(34.0, 34.0),
+            numeric::Vector2f::new(40.0, 40.0),
             ggraphics::Color::from_rgba_u32(0x000000ff),
         );
 
@@ -559,7 +559,7 @@ impl ScenarioMenuContents {
 	    desc_text: desc_text,
             day_text: UniText::new(
                 format!("{}, {}", ctx.savable_data.date.day, ctx.savable_data.date.to_month_string_eng_short()),
-                numeric::Point2f::new(30.0, 70.0),
+                numeric::Point2f::new(40.0, 70.0),
                 numeric::Vector2f::new(1.0, 1.0),
                 0.0,
                 0,

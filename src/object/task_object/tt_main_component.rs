@@ -1354,12 +1354,30 @@ pub struct ShelvingBookBox {
     pub shelved: Vec<TaskItem>,
     pub dragging: Option<TaskItem>,
     pub table_texture: SimpleObject,
+    box_back: UniTexture,
+    box_front: UniTexture,
 }
 
 impl ShelvingBookBox {
     pub fn new<'a>(ctx: &mut SuzuContext<'a>, rect: ggraphics::Rect) -> ShelvingBookBox {
         let mut dparam = ggraphics::DrawParam::default();
         dparam.dest = numeric::Point2f::new(rect.x, rect.y).into();
+
+	let box_back = UniTexture::new(
+	    ctx.resource.ref_texture(TextureID::BookBoxBack),
+	    numeric::Point2f::new(0.0, 0.0),
+	    numeric::Vector2f::new(0.9, 0.9),
+	    0.0,
+	    0
+	);
+
+	let box_front = UniTexture::new(
+	    ctx.resource.ref_texture(TextureID::BookBoxFront),
+	    numeric::Point2f::new(0.0, 0.0),
+	    numeric::Vector2f::new(0.9, 0.9),
+	    0.0,
+	    0
+	);
 
         ShelvingBookBox {
             canvas: SubScreen::new(
@@ -1382,6 +1400,8 @@ impl ShelvingBookBox {
                 ),
                 Vec::new(),
             ),
+	    box_front: box_front,
+	    box_back: box_back
         }
     }
 
@@ -1520,6 +1540,8 @@ impl DrawableComponent for ShelvingBookBox {
 
             self.table_texture.draw(ctx)?;
 
+	    self.box_back.draw(ctx)?;
+
             for obj in &mut self.shelved {
                 obj.get_object_mut().draw(ctx)?;
             }
@@ -1527,6 +1549,8 @@ impl DrawableComponent for ShelvingBookBox {
             if let Some(ref mut d) = self.dragging {
                 d.get_object_mut().draw(ctx)?;
             }
+
+	    self.box_front.draw(ctx)?;
 
             sub_screen::pop_screen(ctx);
             self.canvas.draw(ctx).unwrap();

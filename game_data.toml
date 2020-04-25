@@ -41,7 +41,9 @@ texture_paths = [
 	      "/textures/reset_button.png",
 	      "/textures/menu_art1.png",
 	      "/textures/menu_art2.png",
-	      "/textures/jp_house_background1.png"]
+	      "/textures/jp_house_background1.png",
+	      "/textures/book_box_front.png",
+	      "/textures/book_box_back.png"]
 font_paths = ["/fonts/azuki.ttf", "/fonts/RiiT_F.ttf", "/fonts/OradanoGSRR.ttf", "/fonts/cinecaption226.ttf"]
 tileset_paths = ["./resources/maps/suzunaan/suzuna1.tmx"]
 scenario_table_path = "./resources/scenario_table.toml"

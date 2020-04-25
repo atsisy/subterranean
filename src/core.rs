@@ -123,6 +123,8 @@ pub enum TextureID {
     MenuArt1,
     MenuArt2,
     JpHouseTexture,
+    BookBoxFront,
+    BookBoxBack,
     Unknown,
 }
 
@@ -181,6 +183,8 @@ impl FromStr for TextureID {
             "MenuArt1" => Ok(Self::MenuArt1),
             "MenuArt2" => Ok(Self::MenuArt2),
 	    "JpHouseTexture" => Ok(Self::JpHouseTexture),
+	    "BookBoxFront" => Ok(Self::BookBoxFront),
+	    "BookBoxBack" => Ok(Self::BookBoxBack),
             _ => Err(()),
         }
     }
@@ -232,6 +236,8 @@ impl TextureID {
             40 => Some(Self::MenuArt1),
             41 => Some(Self::MenuArt2),
 	    42 => Some(Self::JpHouseTexture),
+	    43 => Some(Self::BookBoxFront),
+	    44 => Some(Self::BookBoxBack),
             _ => None,
         }
     }
