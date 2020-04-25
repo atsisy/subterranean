@@ -479,7 +479,7 @@ impl BookTitleMenu {
         let mut title_vtext = Vec::new();
 
         let font_info = FontInformation::new(
-            ctx.resource.get_font(FontID::JpFude1),
+            ctx.resource.get_font(FontID::Cinema),
             numeric::Vector2f::new(32.0, 32.0),
             ggraphics::Color::from_rgba_u32(0xff),
         );
@@ -624,7 +624,7 @@ impl CustomerNameMenu {
         let mut title_vtext = Vec::new();
 
         let font_info = FontInformation::new(
-            ctx.resource.get_font(FontID::JpFude1),
+            ctx.resource.get_font(FontID::Cinema),
             numeric::Vector2f::new(32.0, 32.0),
             ggraphics::Color::from_rgba_u32(0xff),
         );
@@ -768,7 +768,7 @@ impl DateMenu {
         let mut desc_vtext = Vec::new();
 
         let font_info = FontInformation::new(
-            ctx.resource.get_font(FontID::JpFude1),
+            ctx.resource.get_font(FontID::Cinema),
             numeric::Vector2f::new(22.0, 22.0),
             ggraphics::Color::from_rgba_u32(0xff),
         );
@@ -936,7 +936,7 @@ impl PaymentMenu {
         let mut select_vtext = Vec::new();
 
         let font_info = FontInformation::new(
-            ctx.resource.get_font(FontID::JpFude1),
+            ctx.resource.get_font(FontID::Cinema),
             numeric::Vector2f::new(26.0, 26.0),
             ggraphics::Color::from_rgba_u32(0xff),
         );
@@ -1059,7 +1059,7 @@ impl CustomerQuestionMenu {
         let mut question_vtext = Vec::new();
 
         let font_info = FontInformation::new(
-            ctx.resource.get_font(FontID::JpFude1),
+            ctx.resource.get_font(FontID::Cinema),
             numeric::Vector2f::new(26.0, 26.0),
             ggraphics::Color::from_rgba_u32(0xff),
         );
@@ -1189,7 +1189,7 @@ impl RememberCustomerNameMenu {
         let mut select_vtext = Vec::new();
 
         let font_info = FontInformation::new(
-            ctx.resource.get_font(FontID::JpFude1),
+            ctx.resource.get_font(FontID::Cinema),
             numeric::Vector2f::new(26.0, 26.0),
             ggraphics::Color::from_rgba_u32(0xff),
         );
@@ -1311,7 +1311,7 @@ impl OkMenu {
         let mut select_vtext = Vec::new();
 
         let font_info = FontInformation::new(
-            ctx.resource.get_font(FontID::JpFude1),
+            ctx.resource.get_font(FontID::Cinema),
             numeric::Vector2f::new(26.0, 26.0),
             ggraphics::Color::from_rgba_u32(0xff),
         );
@@ -2411,7 +2411,7 @@ impl DeskBookMenu {
         let mut choice_vtext = Vec::new();
 
         let font_info = FontInformation::new(
-            ctx.resource.get_font(FontID::JpFude1),
+            ctx.resource.get_font(FontID::Cinema),
             numeric::Vector2f::new(32.0, 32.0),
             ggraphics::Color::from_rgba_u32(0xff),
         );
@@ -2539,7 +2539,7 @@ impl BookInfoDrawer {
         let mut info_field_vtext = Vec::new();
 
         let font_info = FontInformation::new(
-            ctx.resource.get_font(FontID::JpFude1),
+            ctx.resource.get_font(FontID::Cinema),
             numeric::Vector2f::new(32.0, 32.0),
             ggraphics::Color::from_rgba_u32(0xff),
         );

@@ -256,6 +256,7 @@ pub enum TileBatchTextureID {
     TaishoStyle1,
     Suzu1,
     Shoji,
+    BlackFrame,
 }
 
 pub const LARGE_BOOK_TEXTURE: [TextureID; 3] = [
@@ -890,11 +891,20 @@ impl SavableData {
 	std::fs::remove_file(&format!("./resources/save{}.toml", slot)).unwrap();
     }
 
-    pub fn new_load(slot: u8) -> Result<SavableData, Box<dyn std::error::Error>> {
-	let content = fs::read_to_string(&format!("./resources/save{}.toml", slot))?;
-	let savable_data: SavableData = toml::from_str(&content).unwrap();
+    pub fn new_load(slot: u8) -> Result<SavableData, ()> {
+	let content = fs::read_to_string(&format!("./resources/save{}.toml", slot));
+
+	if content.is_err() {
+	    return Err(());
+	}
 	
-	Ok(savable_data)
+	let savable_data = toml::from_str(&content.unwrap());
+
+	if savable_data.is_err() {
+	    Err(())
+	} else {
+	    Ok(savable_data.unwrap())   
+	}
     }
 
     pub fn replace(&mut self, data: SavableData) {

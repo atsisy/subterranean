@@ -649,7 +649,7 @@ impl DrawableComponent for ScenarioMenu {
         sub_screen::stack_screen(ctx, &self.canvas);
 
         self.background.draw(ctx)?;
-        self.contents.draw(ctx).unwrap();
+        self.contents.draw(ctx)?;
 
         sub_screen::pop_screen(ctx);
         self.canvas.draw(ctx)

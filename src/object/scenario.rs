@@ -1247,6 +1247,7 @@ pub struct ScenarioEvent {
     transition_type: Option<SceneTransition>,
     background: Option<UniTexture>,
     tachie: Option<ScenarioTachie>,
+    appearance_frame: TileBatchFrame,
 }
 
 impl ScenarioEvent {
@@ -1269,6 +1270,14 @@ impl ScenarioEvent {
 
         let event_tachie =
             Self::update_event_tachie_sub(ctx.resource, scenario.ref_current_element(), t);
+
+	let appr_frame = TileBatchFrame::new(
+	    ctx.resource,
+	    TileBatchTextureID::BlackFrame,
+	    numeric::Rect::new(0.0, 0.0, rect.w, rect.h),
+	    numeric::Vector2f::new(1.0, 1.0),
+	    0
+	);
 	
         ScenarioEvent {
             scenario: scenario,
@@ -1282,6 +1291,7 @@ impl ScenarioEvent {
             transition_scene: None,
 	    transition_type: None,
             background: event_background,
+	    appearance_frame: appr_frame,
             tachie: event_tachie,
         }
     }
@@ -1504,6 +1514,8 @@ impl DrawableComponent for ScenarioEvent {
             }
 
             self.scenario_box.draw(ctx)?;
+
+	    self.appearance_frame.draw(ctx)?;
 
             sub_screen::pop_screen(ctx);
             self.canvas.draw(ctx).unwrap();
