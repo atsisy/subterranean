@@ -33,17 +33,19 @@ pub struct DrawableSaveEntry {
     delete_button: SelectButton,
     load_button: SelectButton,
     canvas: SubScreen,
+    appearance_frame: TileBatchFrame,
 }
 
 impl DrawableSaveEntry {
     pub fn new<'a>(
 	ctx: &mut SuzuContext<'a>,
+	texture_id: TextureID,
 	savable_data: Option<SavableData>,
         pos_rect: numeric::Rect,
 	slot_id: u8,
     ) -> Self {
-	let background = UniTexture::new(
-	    ctx.resource.ref_texture(TextureID::Wood1),
+	let mut background = UniTexture::new(
+	    ctx.resource.ref_texture(texture_id),
 	    numeric::Point2f::new(0.0, 0.0),
 	    numeric::Vector2f::new(1.0, 1.0),
 	    0.0,
@@ -64,7 +66,7 @@ impl DrawableSaveEntry {
 
 	let delete_button = SelectButton::new(
 	    ctx,
-	    numeric::Rect::new(130.0, pos_rect.h - 80.0, 60.0, 60.0),
+	    numeric::Rect::new(110.0, pos_rect.h - 80.0, 60.0, 60.0),
 	    Box::new(UniTexture::new(
 		ctx.resource.ref_texture(TextureID::ChoicePanel2),
 		numeric::Point2f::new(0.0, 0.0),
@@ -76,7 +78,7 @@ impl DrawableSaveEntry {
 
 	let load_button = SelectButton::new(
 	    ctx,
-	    numeric::Rect::new(230.0, pos_rect.h - 80.0, 60.0, 60.0),
+	    numeric::Rect::new(190.0, pos_rect.h - 80.0, 60.0, 60.0),
 	    Box::new(UniTexture::new(
 		ctx.resource.ref_texture(TextureID::ChoicePanel3),
 		numeric::Point2f::new(0.0, 0.0),
@@ -85,17 +87,34 @@ impl DrawableSaveEntry {
 		0
 	    )),
 	);
+
+	let drawing_size = background.get_drawing_size(ctx.context);
+	background.set_crop(
+	    numeric::Rect::new(
+		0.0,
+		0.0,
+		(pos_rect.w - 16.0) / drawing_size.x,
+		(pos_rect.h - 16.0) / drawing_size.y,
+	    ));
+	let appr_frame = TileBatchFrame::new(
+	    ctx.resource,
+	    TileBatchTextureID::BlackFrame2,
+	    numeric::Rect::new(0.0, 0.0, pos_rect.w, pos_rect.h),
+	    numeric::Vector2f::new(0.25, 0.25),
+	    0
+	);
 	
 	if let Some(savable_data) = savable_data {
-	    Self::new_some(ctx, background, savable_data, pos_rect, save_button, load_button, delete_button, slot_id)
+	    Self::new_some(ctx, background, appr_frame, savable_data, pos_rect, save_button, load_button, delete_button, slot_id)
 	} else {
-	    Self::new_none(ctx, background, pos_rect, save_button, load_button, delete_button, slot_id)
+	    Self::new_none(ctx, background, appr_frame, pos_rect, save_button, load_button, delete_button, slot_id)
 	}
     }
 
     fn new_some<'a>(
     	ctx: &mut SuzuContext<'a>,
 	background: UniTexture,
+	appr_frame: TileBatchFrame,
 	savable_data: SavableData,
         pos_rect: numeric::Rect,
 	save_button: SelectButton,
@@ -103,6 +122,7 @@ impl DrawableSaveEntry {
 	delete_button: SelectButton,
 	slot_id: u8,
     ) -> Self {
+	
         let mut entry = DrawableSaveEntry {
 	    background: background,
 	    date_text: None,
@@ -111,6 +131,7 @@ impl DrawableSaveEntry {
 	    save_button: save_button,
 	    load_button: load_button,
 	    delete_button: delete_button,
+	    appearance_frame: appr_frame,
 	    canvas: SubScreen::new(ctx.context, pos_rect, 0, ggraphics::Color::from_rgba_u32(0)),
 	    slot_id: slot_id,
         };
@@ -122,6 +143,7 @@ impl DrawableSaveEntry {
     fn new_none<'a>(
         ctx: &mut SuzuContext<'a>,
 	background: UniTexture,
+	appr_frame: TileBatchFrame,
         pos_rect: numeric::Rect,
 	save_button: SelectButton,
 	load_button: SelectButton,
@@ -136,6 +158,7 @@ impl DrawableSaveEntry {
 	    save_button: save_button,
 	    load_button: load_button,
 	    delete_button: delete_button,
+	    appearance_frame: appr_frame,
 	    canvas: SubScreen::new(ctx.context, pos_rect, 0, ggraphics::Color::from_rgba_u32(0)),
 	    slot_id: slot_id,
         };
@@ -235,6 +258,7 @@ impl DrawableComponent for DrawableSaveEntry {
         if self.is_visible() {
 	    sub_screen::stack_screen(ctx, &self.canvas);
 
+	    self.appearance_frame.draw(ctx)?;
 	    self.background.draw(ctx)?;
 	    
 	    if let Some(vtext) = self.date_text.as_mut() {
@@ -315,9 +339,10 @@ impl SaveEntryTable {
 	let mut entries = Vec::new();
 	let mut pos_rect = numeric::Rect::new(50.0, 125.0, 280.0, 500.0);
 
+	let texture_vec = vec![TextureID::Paper4, TextureID::Paper5, TextureID::Paper6, TextureID::Paper7];
 	for (index, maybe_save_data) in save_data_list.iter().enumerate() {
 	    entries.push(
-		DrawableSaveEntry::new(ctx, maybe_save_data.clone(), pos_rect, (index + 1) as u8)
+		DrawableSaveEntry::new(ctx, texture_vec[index], maybe_save_data.clone(), pos_rect, (index + 1) as u8)
 	    );
 
 	    pos_rect.x += 300.0;
@@ -330,8 +355,8 @@ impl SaveEntryTable {
 	    0.0,
 	    0,
 	    FontInformation::new(
-		ctx.resource.get_font(FontID::JpFude1),
-		numeric::Vector2f::new(35.0, 35.0),
+		ctx.resource.get_font(FontID::Cinema),
+		numeric::Vector2f::new(40.0, 40.0),
 		ggraphics::Color::from_rgba_u32(0xff)
 	    ),
 	);

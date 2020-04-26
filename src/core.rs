@@ -126,6 +126,11 @@ pub enum TextureID {
     JpHouseTexture,
     BookBoxFront,
     BookBoxBack,
+    Paper3,
+    Paper4,
+    Paper5,
+    Paper6,
+    Paper7,
     Unknown,
 }
 
@@ -258,6 +263,7 @@ pub enum TileBatchTextureID {
     Suzu1,
     Shoji,
     BlackFrame,
+    BlackFrame2,
 }
 
 pub const LARGE_BOOK_TEXTURE: [TextureID; 3] = [
@@ -871,7 +877,6 @@ impl SuzunaAnStatus {
     }
 }
 
-
 #[derive(Clone)]
 pub struct BorrowingInformation {
     pub borrowing: Vec<BookInformation>,
@@ -1081,7 +1086,7 @@ impl SavableData {
     }
     
     pub fn save(&self, slot: u8) -> Result<(), Box<dyn std::error::Error>> {
-	let mut file = File::create(&format!("./resources/save{}.toml", slot))?;
+	let mut file = File::create(&format!("./resources/save{}.json", slot))?;
 
 	write!(file, "{}", serde_json::to_string(self).unwrap())?;
 	file.flush()?;
@@ -1090,17 +1095,17 @@ impl SavableData {
     }
 
     pub fn delete(slot: u8) {
-	std::fs::remove_file(&format!("./resources/save{}.toml", slot)).unwrap();
+	std::fs::remove_file(&format!("./resources/save{}.json", slot)).unwrap();
     }
 
     pub fn new_load(slot: u8) -> Result<SavableData, ()> {
-	let content = fs::read_to_string(&format!("./resources/save{}.toml", slot));
+	let content = fs::read_to_string(&format!("./resources/save{}.json", slot));
 
 	if content.is_err() {
 	    return Err(());
 	}
 	
-	let savable_data = toml::from_str(&content.unwrap());
+	let savable_data = serde_json::from_str(&content.unwrap());
 
 	if savable_data.is_err() {
 	    Err(())

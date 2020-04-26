@@ -1058,26 +1058,12 @@ impl SuzuMiniSight {
         self.silhouette
             .new_customer_update(ctx, chara, name, dialogue, t);
     }
-
+    
     pub fn count_not_forbidden_book_items(&self, kosuzu_memory: &KosuzuMemory) -> usize {
 	let mut count = 0;
 
 	if let Some(dragging) = self.dragging.as_ref() {
 	    match dragging {
-		TaskItem::Book(item) => {
-		    if !kosuzu_memory
-			.is_in_blacklist(
-			    item.get_large_object().get_book_info()
-			) {
-			    count += 1;
-			}
-		},
-		_ => (),
-	    }
-	}
-
-	for obj in self.dropping.iter() {
-	    match obj {
 		TaskItem::Book(item) => {
 		    if !kosuzu_memory
 			.is_in_blacklist(
