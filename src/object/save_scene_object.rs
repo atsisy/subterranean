@@ -332,12 +332,12 @@ impl SaveEntryTable {
 	    ctx.resource,
 	    TileBatchTextureID::TaishoStyle1,
 	    numeric::Rect::new(0.0, 0.0, window_rect.w, window_rect.h),
-	    numeric::Vector2f::new(0.8, 0.8),
+	    numeric::Vector2f::new(0.75, 0.75),
 	    0
 	);
 
 	let mut entries = Vec::new();
-	let mut pos_rect = numeric::Rect::new(50.0, 125.0, 280.0, 500.0);
+	let mut pos_rect = numeric::Rect::new(50.0, 125.0, 288.0, 496.0);
 
 	let texture_vec = vec![TextureID::Paper4, TextureID::Paper5, TextureID::Paper6, TextureID::Paper7];
 	for (index, maybe_save_data) in save_data_list.iter().enumerate() {

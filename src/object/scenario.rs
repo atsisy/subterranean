@@ -876,7 +876,7 @@ impl TextBox {
             ctx.resource,
             tile_batch_texture_id,
             numeric::Rect::new(0.0, 0.0, rect.w, rect.h),
-            numeric::Vector2f::new(0.778, 0.778),
+            numeric::Vector2f::new(0.75, 0.75),
             0,
         );
 
@@ -1283,7 +1283,7 @@ impl ScenarioEvent {
             scenario: scenario,
             scenario_box: ScenarioBox::new(
                 ctx,
-                numeric::Rect::new(20.0, rect.h - 280.0, rect.w - 40.0, 270.0),
+                numeric::Rect::new(20.0, rect.h - 300.0, 1008.0, 288.0),
                 t,
             ),
             canvas: SubScreen::new(ctx.context, rect, 0, ggraphics::Color::from_rgba_u32(0x00)),

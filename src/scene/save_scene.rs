@@ -33,7 +33,7 @@ impl SaveScene {
 	    
 	let save_entry_table = SaveEntryTable::new(
 	    ctx,
-	    numeric::Rect::new(50.0, 50.0, 1266.0, 668.0),
+	    numeric::Rect::new(50.0, 50.0, 1248.0, 672.0),
 	    save_data_list,
 	    0
 	);

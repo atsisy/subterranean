@@ -609,7 +609,7 @@ impl TileBatchFrame {
         let mut top_dest_pos = numeric::Point2f::new(tile_size.x, 0.0);
         let mut bottom_dest_pos =
             numeric::Point2f::new(tile_size.x, (height - tile_size.x).round());
-        for _ in 1..self.tile_per_hline(width) {
+        for _ in 1..(self.tile_per_hline(width) - 1) {
             self.tile_batch.add_batch_tile_position(
                 numeric::Vector2u::new(1, 0),
                 top_dest_pos,
@@ -626,13 +626,29 @@ impl TileBatchFrame {
             top_dest_pos.x += tile_size.x;
             bottom_dest_pos.x += tile_size.x;
         }
-
+	let last_scale = numeric::Vector2f::new(
+	    self.tile_remaining_hline(width) / (self.tile_batch.get_tile_size().x as f32),
+	    self.frame_scale.y
+	);
+	self.tile_batch.add_batch_tile_position(
+            numeric::Vector2u::new(1, 0),
+	    top_dest_pos,
+            last_scale,
+            ggraphics::Color::from_rgb_u32(0xffffffff),
+        );
+	self.tile_batch.add_batch_tile_position(
+            numeric::Vector2u::new(1, 2),
+            bottom_dest_pos,
+            last_scale,
+            ggraphics::Color::from_rgb_u32(0xffffffff),
+        );
+	
         //
         // 垂直方向の枠だけ描画
         //
         let mut left_dest_pos = numeric::Point2f::new(0.0, tile_size.y);
         let mut right_dest_pos = numeric::Point2f::new(width - tile_size.x, tile_size.y);
-        for _ in 1..self.tile_per_vline(height) {
+        for _ in 1..(self.tile_per_vline(height) - 1) {
             self.tile_batch.add_batch_tile_position(
                 numeric::Vector2u::new(0, 1),
                 left_dest_pos,
@@ -649,6 +665,22 @@ impl TileBatchFrame {
             left_dest_pos.y += tile_size.y;
             right_dest_pos.y += tile_size.y;
         }
+	let last_scale = numeric::Vector2f::new(
+	    self.frame_scale.x,
+	    self.tile_remaining_vline(height) / (self.tile_batch.get_tile_size().y as f32),
+	);
+	self.tile_batch.add_batch_tile_position(
+            numeric::Vector2u::new(0, 1),
+	    left_dest_pos,
+            last_scale,
+            ggraphics::Color::from_rgb_u32(0xffffffff),
+        );
+	self.tile_batch.add_batch_tile_position(
+            numeric::Vector2u::new(2, 1),
+            right_dest_pos,
+            last_scale,
+            ggraphics::Color::from_rgb_u32(0xffffffff),
+        );
 
         //
         // 枠の角を描画
@@ -687,9 +719,21 @@ impl TileBatchFrame {
         (length / tile_size.y) as usize
     }
 
+    fn tile_remaining_vline(&self, length: f32) -> f32 {
+	let tile_size = self.get_scaled_tile_size();
+        let num = self.tile_per_vline(length) as f32;
+	length - (num * tile_size.y)
+    }
+
     fn tile_per_hline(&self, length: f32) -> usize {
         let tile_size = self.get_scaled_tile_size();
         (length / tile_size.x) as usize
+    }
+
+    fn tile_remaining_hline(&self, length: f32) -> f32 {
+	let tile_size = self.get_scaled_tile_size();
+        let num = self.tile_per_hline(length) as f32;
+	length - (num * tile_size.x)
     }
 
     fn get_scaled_tile_size(&self) -> numeric::Vector2f {
