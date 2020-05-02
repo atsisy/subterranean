@@ -137,11 +137,15 @@ impl SuzunaSubScene {
         transition: SceneTransition,
     ) {
         if transition == SceneTransition::SwapTransition {
-            self.scene_status = SuzunaSceneStatus::DayResult;
-            self.day_result_scene = Some(Box::new(TaskResultScene::new(
-                ctx,
-                self.date.clone(),
-            )));
+	    if let Some(shop_scene) = self.shop_scene.as_ref() {
+		let init_data = shop_scene.clone_begning_save_data();
+		self.scene_status = SuzunaSceneStatus::DayResult;
+		self.day_result_scene = Some(Box::new(TaskResultScene::new(
+                    ctx,
+		    init_data,
+                    self.date.clone(),
+		)));
+	    }
         }
     }
 

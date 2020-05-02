@@ -19,7 +19,7 @@ use torifune::numeric;
 use super::*;
 use crate::core::map_parser as mp;
 use crate::core::{
-    FontID, GameResource, SuzuContext, TileBatchTextureID,
+    FontID, GameResource, SuzuContext, TileBatchTextureID, SavableData
 };
 use crate::flush_delay_event;
 use crate::object::effect_object;
@@ -321,6 +321,7 @@ pub struct ShopScene {
     transition_scene: SceneID,
     scene_transition_effect: Option<effect_object::ScreenTileEffect>,
     notification_area: NotificationArea,
+    begining_save_data: SavableData,
 }
 
 impl ShopScene {
@@ -384,6 +385,7 @@ impl ShopScene {
                 numeric::Point2f::new((crate::core::WINDOW_SIZE_X - 20) as f32, 20.0),
                 0,
             ),
+	    begining_save_data: ctx.savable_data.clone(),
         }
     }
 
@@ -985,7 +987,7 @@ impl ShopScene {
     pub fn update_shop_clock_regular<'a>(&mut self, ctx: &mut SuzuContext<'a>, t: Clock) {
         if self.get_current_clock() % 40 == 0 {
             debug::debug_screen_push_text(&format!("{}", self.shop_clock));
-            self.shop_clock.add_minute(5);
+            self.shop_clock.add_minute(60);
 
             if self.shop_clock.equals(12, 0) {
                 self.notification_area.insert_new_contents_generic(
@@ -999,6 +1001,10 @@ impl ShopScene {
                 );
             }
         }
+    }
+
+    pub fn clone_begning_save_data(&self) -> SavableData {
+	self.begining_save_data.clone()
     }
 
     pub fn check_shop_clock_regular<'a>(&mut self, ctx: &mut SuzuContext<'a>, t: Clock) {
