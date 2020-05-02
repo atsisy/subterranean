@@ -206,9 +206,13 @@ impl DarkEffectPanel {
 
 impl DrawableComponent for DarkEffectPanel {
     fn draw(&mut self, ctx: &mut ggez::Context) -> ggez::GameResult<()> {
-        sub_screen::stack_screen(ctx, self.canvas.ref_wrapped_object().ref_wrapped_object());
-        sub_screen::pop_screen(ctx);
-        self.canvas.draw(ctx)
+	if self.is_visible() {
+            sub_screen::stack_screen(ctx, &self.canvas);
+            sub_screen::pop_screen(ctx);
+            self.canvas.draw(ctx).unwrap();
+	}
+
+	Ok(())
     }
 
     #[inline(always)]

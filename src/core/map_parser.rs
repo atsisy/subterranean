@@ -343,6 +343,8 @@ pub struct StageObjectMap {
     collision_map: Option<CollisionMap>,
     camera: Rc<RefCell<numeric::Rect>>,
     scale: numeric::Vector2f,
+    redraw_request: bool,
+    update_batch_request: bool,
     canvas: SubScreen,
 }
 
@@ -383,6 +385,8 @@ impl StageObjectMap {
             camera: camera,
             scale: scale,
             canvas: canvas,
+	    redraw_request: true,
+	    update_batch_request: true,
         }
     }
 
@@ -410,6 +414,14 @@ impl StageObjectMap {
         )
     }
 
+    pub fn request_redraw(&mut self) {
+	self.redraw_request = true;
+    }
+
+    pub fn request_updating_tile_batch(&mut self) {
+	self.update_batch_request = true;
+    }
+    
     /// ある座標が、カメラに写ったときの座標を返すメソッド
     fn camera_relative_position(&self, p: numeric::Point2f) -> numeric::Point2f {
         numeric::Point2f::new(p.x - self.camera.borrow().x, p.y - self.camera.borrow().y)
@@ -515,6 +527,12 @@ impl StageObjectMap {
 
     /// sprite batch処理を実際に行うメソッド
     fn update_sprite_batch(&mut self) {
+	if !self.update_batch_request {
+	    return;
+	}
+
+	self.update_batch_request = false;
+	
         // batch処理を全てクリア
         self.clear_all_batchs();
 
@@ -649,28 +667,31 @@ impl StageObjectMap {
 impl DrawableComponent for StageObjectMap {
     fn draw(&mut self, ctx: &mut ggez::Context) -> ggez::GameResult<()> {
         if self.is_visible() {
-            sub_screen::stack_screen(ctx, &self.canvas);
-
-            // 全てのsprite batchを描画
-            for (_, batch) in &self.tilesets_batchs {
-                ggraphics::draw(
-                    ctx,
-                    batch,
-                    ggraphics::DrawParam {
-                        dest: numeric::Point2f::new(
-                            -self.camera.borrow().x.round(),
-                            -self.camera.borrow().y.round(),
-                        )
-                        .into(),
-                        ..Default::default()
-                    },
-                )?;
-            }
-
-            sub_screen::pop_screen(ctx);
+	    if self.redraw_request {
+		sub_screen::stack_screen(ctx, &self.canvas);
+		
+		// 全てのsprite batchを描画
+		for (_, batch) in &self.tilesets_batchs {
+                    ggraphics::draw(
+			ctx,
+			batch,
+			ggraphics::DrawParam {
+                            dest: numeric::Point2f::new(
+				-self.camera.borrow().x.round(),
+				-self.camera.borrow().y.round(),
+                            )
+				.into(),
+                            ..Default::default()
+			},
+                    )?;
+		}
+		
+		sub_screen::pop_screen(ctx);
+		self.redraw_request = false;
+	    }
             self.canvas.draw(ctx).unwrap();
         }
-
+	
         Ok(())
     }
 

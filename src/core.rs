@@ -27,6 +27,7 @@ use std::rc::Rc;
 use std::str::FromStr;
 
 use crate::scene;
+use crate::perf_measure;
 
 use std::fs;
 use std::io::{BufReader, Read, Write};
@@ -1302,22 +1303,30 @@ impl SceneController {
     }
 
     fn run_pre_process(&mut self, ctx: &mut ggez::Context, game_data: &GameResource) {
-        self.current_scene.abs_mut().pre_process(&mut SuzuContext {
-            context: ctx,
-            resource: game_data,
-            savable_data: &mut self.game_status,
-        });
+	//println!("{}", perf_measure!(
+	    {
+		self.current_scene.abs_mut().pre_process(&mut SuzuContext {
+		    context: ctx,
+		    resource: game_data,
+		    savable_data: &mut self.game_status,
+		});
+	    }
+	//));
     }
 
     fn run_drawing_process(&mut self, ctx: &mut ggez::Context) {
-        sub_screen::stack_screen(ctx, &self.root_screen);
-
-        self.current_scene.abs_mut().drawing_process(ctx);
-
-        debug::debug_screen_draw(ctx);
-
-        sub_screen::pop_screen(ctx);
-        self.root_screen.draw(ctx).unwrap();
+	//println!("{}", perf_measure!(
+	    {
+		sub_screen::stack_screen(ctx, &self.root_screen);
+		
+		self.current_scene.abs_mut().drawing_process(ctx);
+		
+		debug::debug_screen_draw(ctx);
+		
+		sub_screen::pop_screen(ctx);
+		self.root_screen.draw(ctx).unwrap();
+	    }
+	//) as f32 / 1000000.0);
     }
 
     fn run_post_process<'a>(&mut self, ctx: &mut ggez::Context, game_data: &'a GameResource) {

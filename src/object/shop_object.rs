@@ -1636,14 +1636,17 @@ pub struct ShopMenu {
 
 impl ShopMenu {
     pub fn new<'a>(ctx: &mut SuzuContext<'a>, size: numeric::Vector2f, t: Clock) -> Self {
+	let mut canvas = SubScreen::new(
+            ctx.context,
+            numeric::Rect::new(-size.x, 0.0, size.x, size.y),
+            0,
+            ggraphics::Color::from_rgba_u32(0xffffffff),
+        );
+	canvas.hide();
+	
         ShopMenu {
             canvas: MovableWrap::new(
-                Box::new(SubScreen::new(
-                    ctx.context,
-                    numeric::Rect::new(-size.x, 0.0, size.x, size.y),
-                    0,
-                    ggraphics::Color::from_rgba_u32(0xffffffff),
-                )),
+                Box::new(canvas),
                 None,
                 t,
             ),
@@ -1667,12 +1670,14 @@ impl ShopMenu {
                 t,
             );
             self.now_appear = false;
+	    self.hide();
         } else {
             self.canvas.override_move_func(
                 move_fn::devide_distance(numeric::Point2f::new(0.0, 0.0), 0.5),
                 t,
             );
             self.now_appear = true;
+	    self.appear();
         }
     }
 
@@ -1693,13 +1698,17 @@ impl Updatable for ShopMenu {
 
 impl DrawableComponent for ShopMenu {
     fn draw(&mut self, ctx: &mut ggez::Context) -> ggez::GameResult<()> {
-        sub_screen::stack_screen(ctx, &self.canvas);
+	if self.is_visible() {
+            sub_screen::stack_screen(ctx, &self.canvas);
+	    
+            self.background.draw(ctx)?;
+            self.menu_contents.draw(ctx).unwrap();
+	    
+            sub_screen::pop_screen(ctx);
+            self.canvas.draw(ctx)?;
+	}
 
-        self.background.draw(ctx)?;
-        self.menu_contents.draw(ctx).unwrap();
-
-        sub_screen::pop_screen(ctx);
-        self.canvas.draw(ctx)
+	Ok(())
     }
 
     fn hide(&mut self) {
@@ -1747,7 +1756,7 @@ impl ShopDetailMenuContents {
     ) -> Self {
         ShopDetailMenuContents {
             shelving_info: ShelvingDetailContents::new(ctx, shelving_rect, t),
-            drwob_essential: DrawableObjectEssential::new(true, 0),
+            drwob_essential: DrawableObjectEssential::new(false, 0),
             contents_switch: ShopDetailMenuSymbol::None,
             appear_position: appear_position,
             now_appear: false,
@@ -1769,11 +1778,13 @@ impl ShopDetailMenuContents {
     pub fn hide_toggle(&mut self, t: Clock) {
         self.now_appear = false;
         self.shelving_info.slide_hide(t);
+	self.hide();
     }
 
     pub fn appear_toggle(&mut self, t: Clock) {
         self.now_appear = true;
         self.shelving_info.slide_appear(self.appear_position, t);
+	self.appear();
     }
 
     pub fn slide_toggle(&mut self, t: Clock) {

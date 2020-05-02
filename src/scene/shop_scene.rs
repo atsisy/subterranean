@@ -435,6 +435,11 @@ impl ShopScene {
     pub fn move_camera(&mut self, offset: numeric::Vector2f) {
         self.camera.borrow_mut().x += offset.x;
         self.camera.borrow_mut().y += offset.y;
+
+	if offset.x != 0.0 || offset.y != 0.0 {
+	    self.map.tile_map.request_redraw();
+	    self.map.tile_map.request_updating_tile_batch();
+	}
     }
 
     pub fn set_camera_x(&mut self, offset: f32) {
@@ -845,10 +850,6 @@ impl ShopScene {
                     }
                 }
                 MapEventElement::BookStoreEvent(book_store_event) => {
-                    debug::debug_screen_push_text(&format!(
-                        "book store event: {:?}",
-                        book_store_event.get_book_shelf_info()
-                    ));
                     self.dark_effect_panel
                         .new_effect(8, self.get_current_clock(), 0, 200);
                     self.shop_special_object.show_storing_select_ui(
@@ -986,7 +987,6 @@ impl ShopScene {
 
     pub fn update_shop_clock_regular<'a>(&mut self, ctx: &mut SuzuContext<'a>, t: Clock) {
         if self.get_current_clock() % 40 == 0 {
-            debug::debug_screen_push_text(&format!("{}", self.shop_clock));
             self.shop_clock.add_minute(5);
 
             if self.shop_clock.equals(12, 0) {
@@ -1071,7 +1071,6 @@ impl SceneManager for ShopScene {
                         self.map.scenario_box = None;
                     }
                 } else {
-                    debug::debug_screen_push_text("OK");
                     self.check_event_panel_onmap(ctx, EventTrigger::Action);
                 }
             }
@@ -1263,11 +1262,25 @@ impl SceneManager for ShopScene {
         self.character_group.draw(ctx).unwrap();
 
         for customer in self.character_group.iter_mut() {
-            map_obj_drawer.add(customer);
+	    if customer.
+		get_character_object()
+		.obj()
+		.get_drawing_area(ctx)
+		.overlaps(&numeric::Rect::new(0.0, 0.0, 1366.0, 768.0))
+	    {
+		map_obj_drawer.add(customer);
+	    }
         }
 
-        for queued_customer in &mut self.customer_queue {
-            map_obj_drawer.add(queued_customer);
+        for customer in &mut self.customer_queue {
+	    if customer.
+		get_character_object()
+		.obj()
+		.get_drawing_area(ctx)
+		.overlaps(&numeric::Rect::new(0.0, 0.0, 1366.0, 768.0))
+	    {
+		map_obj_drawer.add(customer);
+	    }
         }
 
         map_obj_drawer.sort(ctx);
