@@ -4,6 +4,7 @@ use ggez::graphics as ggraphics;
 use ggez::input as ginput;
 use ginput::mouse::MouseCursor;
 
+use torifune::roundup2f;
 use torifune::core::Clock;
 use torifune::graphics::drawable::*;
 use torifune::graphics::object::shape;
@@ -16,8 +17,10 @@ use torifune::impl_texture_object_for_wrapped;
 use torifune::{debug, numeric};
 
 use crate::flush_delay_event;
+use crate::set_table_frame_cell_center;
 use crate::object::{effect, move_fn};
 use crate::scene::*;
+use crate::object::util_object::*;
 
 use super::Clickable;
 use crate::core::*;
@@ -809,7 +812,7 @@ impl SuzuMiniSightSilhouette {
             background: background,
             silhouette: TaskSilhouette::new_empty(
                 ctx.context,
-                numeric::Rect::new(100.0, 0.0, 350.0, 300.0),
+                numeric::Rect::new(0.0, 0.0, rect.w, 300.0),
             ),
             text_balloon: EffectableWrap::new(
                 MovableWrap::new(text_balloon, None, 0),
@@ -818,7 +821,7 @@ impl SuzuMiniSightSilhouette {
             customer_dialogue: CustomerDialogue::new(Vec::new(), Vec::new()),
             canvas: SubScreen::new(
                 ctx.context,
-                rect,
+                numeric::Rect::new(0.0, 0.0, rect.w, rect.h),
                 0,
                 ggraphics::Color::from_rgba_u32(0x00000000),
             ),
@@ -1025,7 +1028,7 @@ impl SuzuMiniSight {
                 ctx.context,
                 rect,
                 0,
-                ggraphics::Color::new(0.0, 0.0, 0.0, 0.0),
+                ggraphics::Color::from_rgba_u32(0),
             ),
             dragging: None,
             dropping: Vec::new(),
@@ -1035,8 +1038,8 @@ impl SuzuMiniSight {
                 rect,
                 MovableUniTexture::new(
                     ctx.resource.ref_texture(TextureID::Paper1),
-                    numeric::Point2f::new(-100.0, 0.0),
-                    numeric::Vector2f::new(1.0, 1.0),
+                    numeric::Point2f::new(0.0, 0.0),
+                    numeric::Vector2f::new(1.2, 1.2),
                     0.0,
                     0,
                     move_fn::stop(),
@@ -1351,16 +1354,16 @@ impl ShelvingBookBox {
 
 	let box_back = UniTexture::new(
 	    ctx.resource.ref_texture(TextureID::BookBoxBack),
-	    numeric::Point2f::new(0.0, 0.0),
-	    numeric::Vector2f::new(0.9, 0.9),
+	    numeric::Point2f::new(0.0, rect.h - 300.0),
+	    numeric::Vector2f::new(0.586, 0.586),
 	    0.0,
 	    0
 	);
 
 	let box_front = UniTexture::new(
 	    ctx.resource.ref_texture(TextureID::BookBoxFront),
-	    numeric::Point2f::new(0.0, 0.0),
-	    numeric::Vector2f::new(0.9, 0.9),
+	    numeric::Point2f::new(0.0, rect.h - 300.0),
+	    numeric::Vector2f::new(0.586, 0.586),
 	    0.0,
 	    0
 	);
@@ -1669,4 +1672,165 @@ impl DrawableComponent for KosuzuPhrase {
     fn get_drawing_depth(&self) -> i8 {
         self.canvas.get_drawing_depth()
     }    
+}
+
+///
+/// メニューに表示するやつ
+///
+struct TaskInfoContents {
+    book_table_frame: TableFrame,
+    desc_text: Vec<VerticalText>,
+    drwob_essential: DrawableObjectEssential,
+}
+
+impl TaskInfoContents {
+    pub fn new<'a>(ctx: &mut SuzuContext<'a>) -> Self {
+        let normal_scale_font = FontInformation::new(
+            ctx.resource.get_font(FontID::Cinema),
+            numeric::Vector2f::new(30.0, 30.0),
+            ggraphics::Color::from_rgba_u32(0x000000ff),
+        );
+
+        let large_scale_font = FontInformation::new(
+            ctx.resource.get_font(FontID::Cinema),
+            numeric::Vector2f::new(40.0, 40.0),
+            ggraphics::Color::from_rgba_u32(0x000000ff),
+        );
+
+	let table_frame = TableFrame::new(
+	    ctx.resource,
+	    numeric::Point2f::new(50.0, 150.0),
+	    TileBatchTextureID::OldStyleFrame,
+	    FrameData::new(vec![250.0, 250.0], vec![50.0; 4]),
+	    numeric::Vector2f::new(0.25, 0.25),
+	    0
+	);
+
+	let mut desc_text = Vec::new();
+
+	for (index, s) in vec!["妖怪疑念度", "要件", "氏名", "本日"].iter().enumerate() {
+	    let mut vtext = VerticalText::new(
+		s.to_string(),
+		numeric::Point2f::new(0.0, 0.0),
+		numeric::Vector2f::new(1.0, 1.0),
+		0.0,
+		0,
+		normal_scale_font
+	    );
+
+            set_table_frame_cell_center!(
+                ctx.context,
+                table_frame,
+                vtext,
+                numeric::Vector2u::new(index as u32, 0)
+            );
+	    
+	    desc_text.push(vtext);
+	}
+	
+        TaskInfoContents {
+	    book_table_frame: table_frame,
+	    desc_text: desc_text,
+            drwob_essential: DrawableObjectEssential::new(true, 0),
+        }
+    }
+}
+
+impl DrawableComponent for TaskInfoContents {
+    fn draw(&mut self, ctx: &mut ggez::Context) -> ggez::GameResult<()> {
+        if self.is_visible() {
+	    self.book_table_frame.draw(ctx).unwrap();
+
+	    for vtext in self.desc_text.iter_mut() {
+		vtext.draw(ctx).unwrap();
+	    }
+        }
+
+        Ok(())
+    }
+    
+    #[inline(always)]
+    fn hide(&mut self) {
+        self.drwob_essential.visible = false;
+    }
+
+    #[inline(always)]
+    fn appear(&mut self) {
+        self.drwob_essential.visible = true;
+    }
+
+    #[inline(always)]
+    fn is_visible(&self) -> bool {
+        self.drwob_essential.visible
+    }
+
+    #[inline(always)]
+    fn set_drawing_depth(&mut self, depth: i8) {
+        self.drwob_essential.drawing_depth = depth;
+    }
+
+    #[inline(always)]
+    fn get_drawing_depth(&self) -> i8 {
+        self.drwob_essential.drawing_depth
+    }
+}
+
+pub struct TaskInfoPanel {
+    canvas: SubScreen,
+    contents: TaskInfoContents,
+    background: UniTexture,
+}
+
+impl TaskInfoPanel {
+    pub fn new<'a>(ctx: &mut SuzuContext<'a>, size: numeric::Rect) -> Self {
+        TaskInfoPanel {
+            canvas: SubScreen::new(
+                ctx.context,
+		size,
+                0,
+                ggraphics::Color::from_rgba_u32(0xffffffff),
+            ),
+            background: UniTexture::new(
+                ctx.resource.ref_texture(TextureID::MenuArt1),
+		numeric::Point2f::new(0.0, 0.0),
+		numeric::Vector2f::new(1.0, 1.0),
+		0.0,
+		0,
+            ),
+            contents: TaskInfoContents::new(ctx),
+	}
+    }
+}
+
+impl DrawableComponent for TaskInfoPanel {
+    fn draw(&mut self, ctx: &mut ggez::Context) -> ggez::GameResult<()> {
+        sub_screen::stack_screen(ctx, &self.canvas);
+
+        self.background.draw(ctx)?;
+        self.contents.draw(ctx)?;
+
+        sub_screen::pop_screen(ctx);
+        self.canvas.draw(ctx)
+    }
+
+    fn hide(&mut self) {
+        self.canvas.hide();
+    }
+
+    fn appear(&mut self) {
+        self.canvas.appear();
+    }
+
+    fn is_visible(&self) -> bool {
+        self.canvas.is_visible()
+    }
+
+    fn set_drawing_depth(&mut self, depth: i8) {
+        self.canvas.set_drawing_depth(depth);
+    }
+
+    fn get_drawing_depth(&self) -> i8 {
+        self.canvas.get_drawing_depth()
+    }
+
 }

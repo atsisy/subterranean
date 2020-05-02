@@ -352,7 +352,7 @@ impl OnDeskBook {
         let book_texture = UniTexture::new(
             texture,
             numeric::Point2f::new(6.0, 6.0),
-            numeric::Vector2f::new(0.2, 0.2),
+            numeric::Vector2f::new(0.16, 0.16),
             0.0,
             0,
         );

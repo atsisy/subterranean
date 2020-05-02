@@ -987,7 +987,7 @@ impl ShopScene {
     pub fn update_shop_clock_regular<'a>(&mut self, ctx: &mut SuzuContext<'a>, t: Clock) {
         if self.get_current_clock() % 40 == 0 {
             debug::debug_screen_push_text(&format!("{}", self.shop_clock));
-            self.shop_clock.add_minute(60);
+            self.shop_clock.add_minute(5);
 
             if self.shop_clock.equals(12, 0) {
                 self.notification_area.insert_new_contents_generic(

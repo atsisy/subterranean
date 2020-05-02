@@ -23,17 +23,19 @@ use torifune::numeric;
 use crate::flush_delay_event;
 use crate::object::{effect, move_fn};
 use crate::scene::*;
+use crate::object::util_object::*;
 use tt_main_component::*;
 use tt_menu_component::*;
 use tt_sub_component::*;
 
 use super::Clickable;
-use crate::core::{GensoDate, RentalLimit, SuzuContext, TextureID, BorrowingInformation, ReturnBookInformation};
+use crate::core::{GensoDate, RentalLimit, SuzuContext, TextureID, BorrowingInformation, ReturnBookInformation, TileBatchTextureID};
 
 use number_to_jk::number_to_jk;
 
 pub struct TaskTable {
     canvas: SubScreen,
+    info_panel: TaskInfoPanel,
     sight: SuzuMiniSight,
     desk: DeskObjects,
     staging_object: Option<TaskTableStagingObject>,
@@ -49,12 +51,14 @@ pub struct TaskTable {
     kosuzu_phrase: KosuzuPhrase,
     today: GensoDate,
     task_is_done: bool,
+    appearance_frame: TileBatchFrame,
 }
 
 impl TaskTable {
     pub fn new<'a>(
         ctx: &mut SuzuContext<'a>,
         pos: numeric::Rect,
+	info_panel_rect: numeric::Rect,
         sight_rect: numeric::Rect,
         desk_rect: numeric::Rect,
         shelving_box_rect: numeric::Rect,
@@ -96,6 +100,14 @@ impl TaskTable {
         record_book.enable_large();
         desk.add_object(TaskItem::Texture(record_book));
 
+	let appr_frame = TileBatchFrame::new(
+	    ctx.resource,
+	    TileBatchTextureID::BlackFrame,
+	    numeric::Rect::new(300.0, 0.0, 1066.0, 768.0),
+	    numeric::Vector2f::new(1.0, 1.0),
+	    0
+	);
+
         let shelving_box = ShelvingBookBox::new(ctx, shelving_box_rect);
 
         let mut record_book = BorrowingRecordBook::new(
@@ -117,6 +129,7 @@ impl TaskTable {
                 0,
                 ggraphics::Color::from_rgba_u32(0x00000000),
             ),
+	    info_panel: TaskInfoPanel::new(ctx, info_panel_rect),
             sight: sight,
             desk: desk,
             staging_object: None,
@@ -132,6 +145,7 @@ impl TaskTable {
 	    kosuzu_phrase: KosuzuPhrase::new(ctx, 0),
             today: ctx.savable_data.date,
 	    task_is_done: false,
+	    appearance_frame: appr_frame,
         }
     }
 
@@ -1206,6 +1220,7 @@ impl DrawableComponent for TaskTable {
         if self.is_visible() {
             sub_screen::stack_screen(ctx, &self.canvas);
 
+	    self.info_panel.draw(ctx).unwrap();
             self.sight.draw(ctx).unwrap();
             self.desk.draw(ctx).unwrap();
             self.shelving_box.draw(ctx).unwrap();
@@ -1220,6 +1235,8 @@ impl DrawableComponent for TaskTable {
             self.customer_silhouette_menu.draw(ctx)?;
             self.record_book_menu.draw(ctx)?;
             self.on_desk_menu.draw(ctx)?;
+
+	    self.appearance_frame.draw(ctx)?;
 
             sub_screen::pop_screen(ctx);
             self.canvas.draw(ctx).unwrap();

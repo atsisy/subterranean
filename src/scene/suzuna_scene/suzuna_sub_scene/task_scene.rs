@@ -73,9 +73,10 @@ impl TaskScene {
             task_table: TaskTable::new(
                 ctx,
                 numeric::Rect::new(0.0, 0.0, 1366.0, 768.0),
-                numeric::Rect::new(0.0, 0.0, 800.0, 300.0),
-                numeric::Rect::new(0.0, 310.0, 900.0, 500.0),
-                numeric::Rect::new(900.0, 310.0, 500.0, 500.0),
+		numeric::Rect::new(0.0, 0.0, 300.0, 768.0),
+                numeric::Rect::new(300.0, 0.0, 1066.0, 300.0),
+                numeric::Rect::new(300.0, 300.0, 766.0, 468.0),
+                numeric::Rect::new(1066.0, 300.0, 300.0, 468.0),
                 record_book_data,
                 0,
             ),
