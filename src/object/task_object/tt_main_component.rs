@@ -91,6 +91,7 @@ pub struct DeskObjects {
     pub dragging: Option<TaskItem>,
     pub table_texture: SimpleObject,
     event_list: DelayEventList<Self>,
+    appearance_frame: TileBatchFrame,
 }
 
 impl DeskObjects {
@@ -98,6 +99,14 @@ impl DeskObjects {
         let mut dparam = ggraphics::DrawParam::default();
         dparam.dest = numeric::Point2f::new(rect.x, rect.y).into();
 
+	let appr_frame = TileBatchFrame::new(
+	    ctx.resource,
+	    TileBatchTextureID::BlackFrame,
+	    numeric::Rect::new(0.0, 0.0, rect.w, rect.h),
+	    numeric::Vector2f::new(1.0, 1.0),
+	    0
+	);
+	
         let desk_objects = DeskObjectContainer::new();
 
         DeskObjects {
@@ -122,6 +131,7 @@ impl DeskObjects {
                 Vec::new(),
             ),
             event_list: DelayEventList::new(),
+	    appearance_frame: appr_frame,
         }
     }
 
@@ -349,6 +359,8 @@ impl DrawableComponent for DeskObjects {
             if let Some(d) = self.dragging.as_mut() {
                 d.get_object_mut().draw(ctx)?;
             }
+
+	    self.appearance_frame.draw(ctx)?;
 
             sub_screen::pop_screen(ctx);
             self.canvas.draw(ctx).unwrap();
@@ -1019,10 +1031,19 @@ pub struct SuzuMiniSight {
     pub dropping: Vec<TaskItem>,
     pub dropping_to_desk: Vec<TaskItem>,
     pub silhouette: SuzuMiniSightSilhouette,
+    appearance_frame: TileBatchFrame,
 }
 
 impl SuzuMiniSight {
     pub fn new<'a>(ctx: &mut SuzuContext<'a>, rect: ggraphics::Rect, t: Clock) -> Self {
+	let appr_frame = TileBatchFrame::new(
+	    ctx.resource,
+	    TileBatchTextureID::BlackFrame,
+	    numeric::Rect::new(0.0, 0.0, rect.w, rect.h),
+	    numeric::Vector2f::new(1.0, 1.0),
+	    0
+	);
+	
         SuzuMiniSight {
             canvas: SubScreen::new(
                 ctx.context,
@@ -1047,6 +1068,7 @@ impl SuzuMiniSight {
                 ),
                 t,
             ),
+	    appearance_frame: appr_frame,
         }
     }
 
@@ -1261,6 +1283,8 @@ impl DrawableComponent for SuzuMiniSight {
                 d.get_object_mut().draw(ctx)?;
             }
 
+	    self.appearance_frame.draw(ctx)?;
+
             sub_screen::pop_screen(ctx);
             self.canvas.draw(ctx).unwrap();
         }
@@ -1345,6 +1369,7 @@ pub struct ShelvingBookBox {
     pub table_texture: SimpleObject,
     box_back: UniTexture,
     box_front: UniTexture,
+    appearance_frame: TileBatchFrame,
 }
 
 impl ShelvingBookBox {
@@ -1365,6 +1390,14 @@ impl ShelvingBookBox {
 	    numeric::Point2f::new(0.0, rect.h - 300.0),
 	    numeric::Vector2f::new(0.586, 0.586),
 	    0.0,
+	    0
+	);
+
+	let appr_frame = TileBatchFrame::new(
+	    ctx.resource,
+	    TileBatchTextureID::BlackFrame,
+	    numeric::Rect::new(0.0, 0.0, rect.w, rect.h),
+	    numeric::Vector2f::new(1.0, 1.0),
 	    0
 	);
 
@@ -1390,7 +1423,8 @@ impl ShelvingBookBox {
                 Vec::new(),
             ),
 	    box_front: box_front,
-	    box_back: box_back
+	    box_back: box_back,
+	    appearance_frame: appr_frame,
         }
     }
 
@@ -1541,6 +1575,8 @@ impl DrawableComponent for ShelvingBookBox {
 
 	    self.box_front.draw(ctx)?;
 
+	    self.appearance_frame.draw(ctx)?;
+
             sub_screen::pop_screen(ctx);
             self.canvas.draw(ctx).unwrap();
         }
@@ -1679,6 +1715,8 @@ impl DrawableComponent for KosuzuPhrase {
 ///
 struct TaskInfoContents {
     book_table_frame: TableFrame,
+    general_info_frame: TableFrame,
+    header_text: UniText,
     desc_text: Vec<VerticalText>,
     drwob_essential: DrawableObjectEssential,
 }
@@ -1687,7 +1725,7 @@ impl TaskInfoContents {
     pub fn new<'a>(ctx: &mut SuzuContext<'a>) -> Self {
         let normal_scale_font = FontInformation::new(
             ctx.resource.get_font(FontID::Cinema),
-            numeric::Vector2f::new(30.0, 30.0),
+            numeric::Vector2f::new(25.0, 25.0),
             ggraphics::Color::from_rgba_u32(0x000000ff),
         );
 
@@ -1697,15 +1735,34 @@ impl TaskInfoContents {
             ggraphics::Color::from_rgba_u32(0x000000ff),
         );
 
-	let table_frame = TableFrame::new(
+	let book_frame = TableFrame::new(
 	    ctx.resource,
-	    numeric::Point2f::new(50.0, 150.0),
+	    numeric::Point2f::new(50.0, 65.0),
 	    TileBatchTextureID::OldStyleFrame,
-	    FrameData::new(vec![250.0, 250.0], vec![50.0; 4]),
+	    FrameData::new(vec![130.0, 130.0], vec![45.0; 4]),
 	    numeric::Vector2f::new(0.25, 0.25),
 	    0
 	);
 
+	let general_frame = TableFrame::new(
+	    ctx.resource,
+	    numeric::Point2f::new(50.0, 400.0),
+	    TileBatchTextureID::OldStyleFrame,
+	    FrameData::new(vec![300.0], vec![45.0; 4]),
+	    numeric::Vector2f::new(0.25, 0.25),
+	    0
+	);
+
+	let mut header_text = UniText::new(
+	    "報情客接".to_string(),
+	    numeric::Point2f::new(0.0, 0.0),
+	    numeric::Vector2f::new(1.0, 1.0),
+	    0.0,
+	    0,
+	    large_scale_font
+	);
+	header_text.make_center(ctx.context, numeric::Point2f::new(150.0, 30.0));
+	
 	let mut desc_text = Vec::new();
 
 	for (index, s) in vec!["妖怪疑念度", "要件", "氏名", "本日"].iter().enumerate() {
@@ -1720,7 +1777,7 @@ impl TaskInfoContents {
 
             set_table_frame_cell_center!(
                 ctx.context,
-                table_frame,
+                book_frame,
                 vtext,
                 numeric::Vector2u::new(index as u32, 0)
             );
@@ -1729,7 +1786,9 @@ impl TaskInfoContents {
 	}
 	
         TaskInfoContents {
-	    book_table_frame: table_frame,
+	    general_info_frame: general_frame,
+	    book_table_frame: book_frame,
+	    header_text: header_text,
 	    desc_text: desc_text,
             drwob_essential: DrawableObjectEssential::new(true, 0),
         }
@@ -1739,8 +1798,11 @@ impl TaskInfoContents {
 impl DrawableComponent for TaskInfoContents {
     fn draw(&mut self, ctx: &mut ggez::Context) -> ggez::GameResult<()> {
         if self.is_visible() {
-	    self.book_table_frame.draw(ctx).unwrap();
+	    self.book_table_frame.draw(ctx)?;
+	    self.general_info_frame.draw(ctx)?;
 
+	    self.header_text.draw(ctx)?;
+	    
 	    for vtext in self.desc_text.iter_mut() {
 		vtext.draw(ctx).unwrap();
 	    }

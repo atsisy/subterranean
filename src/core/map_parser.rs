@@ -662,6 +662,15 @@ impl StageObjectMap {
             None
         }
     }
+
+    pub fn get_map_size(&self) -> numeric::Vector2f {
+	let tile_size = self.get_tile_drawing_size();
+	
+	numeric::Vector2f::new(
+	    self.tile_map.width as f32 * tile_size.x,
+	    self.tile_map.height as f32 * tile_size.y,
+	)
+    }
 }
 
 impl DrawableComponent for StageObjectMap {

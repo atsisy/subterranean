@@ -176,7 +176,7 @@ impl MapData {
                 &map_constract_data.map_file_path,
                 camera.clone(),
                 numeric::Rect::new(0.0, 0.0, 1366.0, 768.0),
-                numeric::Vector2f::new(6.0, 6.0),
+                numeric::Vector2f::new(3.0, 3.0),
             ),
             event_map: MapEventList::from_file(&map_constract_data.event_map_file_path),
             scenario_box: None,
@@ -444,15 +444,30 @@ impl ShopScene {
 
     pub fn set_camera_x(&mut self, offset: f32) {
         self.camera.borrow_mut().x = offset;
+
+	if offset != 0.0 {
+	    self.map.tile_map.request_redraw();
+	    self.map.tile_map.request_updating_tile_batch();
+	}
     }
 
     pub fn set_camera_y(&mut self, offset: f32) {
         self.camera.borrow_mut().y = offset;
+
+	if offset != 0.0 {
+	    self.map.tile_map.request_redraw();
+	    self.map.tile_map.request_updating_tile_batch();
+	}
     }
 
     pub fn set_camera(&mut self, offset: numeric::Vector2f) {
         self.camera.borrow_mut().x = offset.x;
         self.camera.borrow_mut().y = offset.y;
+
+	if offset.x != 0.0 || offset.y != 0.0 {
+	    self.map.tile_map.request_redraw();
+	    self.map.tile_map.request_updating_tile_batch();
+	}
     }
     
     fn right_key_handler(&mut self) {
@@ -512,23 +527,32 @@ impl ShopScene {
             .update_display_position(camera);
     }
 
-    fn fix_camera_position(&self) -> numeric::Point2f {
-        numeric::Point2f::new(
-            if self.player.get_map_position().x >= 800.0 {
-                self.player.get_character_object().obj().get_position().x
-            } else if self.player.get_map_position().x >= 650.0 {
-                650.0
-            } else {
-                self.player.get_map_position().x
-            },
-            if self.player.get_map_position().y >= 1130.0 {
-                self.player.get_character_object().obj().get_position().y
-            } else if self.player.get_map_position().y >= 400.0 {
-                400.0
-            } else {
-                self.player.get_map_position().y
-            },
-        )
+    fn camera_focus_character_x(&mut self) {
+        let chara_pos = self.player.get_map_position();
+
+	let x = if chara_pos.x <= 683.0 {
+	    0.0
+	} else if chara_pos.x >= 1237.0 {
+	    554.0
+	} else {
+	    chara_pos.x - 683.0
+	};
+	
+	self.set_camera_x(x);
+    }
+
+    fn camera_focus_character_y(&mut self) {
+        let chara_pos = self.player.get_map_position();
+
+	let y = if chara_pos.y <= 384.0 {
+	    0.0
+	} else if chara_pos.y >= 1536.0 {
+	    1152.0
+	} else {
+	    chara_pos.y - 384.0
+	};
+	
+	self.set_camera_y(y);
     }
 
     ///
@@ -588,8 +612,7 @@ impl ShopScene {
             .get_mut_character_object()
             .update_display_position(&self.camera.borrow());
 
-        // カメラをプレイヤーにフォーカス
-        self.focus_camera_playable_character_x();
+	self.camera_focus_character_x();
     }
 
     ///
@@ -612,21 +635,7 @@ impl ShopScene {
             .update_display_position(&self.camera.borrow());
 
         // カメラをプレイヤーにフォーカス
-        self.focus_camera_playable_character_y();
-    }
-
-    fn focus_camera_playable_character_x(&mut self) {
-        // カメラとプレイヤーキャラクターの差分を計算し、プレイヤーが中心に来るようにカメラを移動
-        let player_diff = self.player.get_mut_character_object().obj().get_position()
-            - self.fix_camera_position();
-        self.move_camera(numeric::Vector2f::new(player_diff.x, 0.0));
-    }
-
-    fn focus_camera_playable_character_y(&mut self) {
-        // カメラとプレイヤーキャラクターの差分を計算し、プレイヤーが中心に来るようにカメラを移動
-        let player_diff = self.player.get_mut_character_object().obj().get_position()
-            - self.fix_camera_position();
-        self.move_camera(numeric::Vector2f::new(0.0, player_diff.y));
+	self.camera_focus_character_y();
     }
 
     ///
@@ -671,7 +680,7 @@ impl ShopScene {
         }
 
         // カメラをプレイヤーに合わせる
-        self.focus_camera_playable_character_x();
+	self.camera_focus_character_x();
     }
 
     ///
@@ -716,12 +725,12 @@ impl ShopScene {
         }
 
         // カメラをプレイヤーに合わせる
-        self.focus_camera_playable_character_y();
+	self.camera_focus_character_y();
     }
 
     fn move_playable_character_x(&mut self, ctx: &mut ggez::Context, t: Clock) {
         // プレイヤーのX方向の移動
-        self.player.move_map_current_speed_x(1500.0);
+        self.player.move_map_current_speed_x(self.map.tile_map.get_map_size().x);
 
         // マップ座標を更新, これで、衝突判定を行えるようになる
         self.player
@@ -737,7 +746,7 @@ impl ShopScene {
 
     fn move_playable_character_y(&mut self, ctx: &mut ggez::Context, t: Clock) {
         // プレイヤーのY方向の移動
-        self.player.move_map_current_speed_y(1500.0);
+        self.player.move_map_current_speed_y(self.map.tile_map.get_map_size().y);
         // マップ座標を更新, これで、衝突判定を行えるようになる
         self.player
             .get_mut_character_object()

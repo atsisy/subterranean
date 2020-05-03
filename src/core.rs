@@ -1198,6 +1198,7 @@ impl SceneController {
                 ggraphics::Color::from_rgba_u32(0xffffffa0),
             ),
         );
+	debug::debug_screen_hide();
 	
         let mut game_status = SavableData::new(game_data);
 
@@ -1376,6 +1377,15 @@ impl SceneController {
         if keycode == KeyCode::Escape {
             std::process::exit(0);
         }
+
+	if keycode == KeyCode::F1 {
+	    debug::debug_screen_appear();
+	}
+
+	if keycode == KeyCode::F2 {
+	    debug::debug_screen_hide();
+	}
+	
         self.current_scene.abs_mut().key_down_event(
             &mut SuzuContext {
                 context: ctx,
