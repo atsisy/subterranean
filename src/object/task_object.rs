@@ -63,6 +63,7 @@ impl TaskTable {
         desk_rect: numeric::Rect,
         shelving_box_rect: numeric::Rect,
         record_book_data: Option<BorrowingRecordBookData>,
+	customer_request: Option<CustomerRequest>,
         t: Clock,
     ) -> Self {
         let sight = SuzuMiniSight::new(ctx, sight_rect, t);
@@ -129,7 +130,7 @@ impl TaskTable {
                 0,
                 ggraphics::Color::from_rgba_u32(0x00000000),
             ),
-	    info_panel: TaskInfoPanel::new(ctx, info_panel_rect),
+	    info_panel: TaskInfoPanel::new(ctx, info_panel_rect, customer_request),
             sight: sight,
             desk: desk,
             staging_object: None,

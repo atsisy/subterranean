@@ -347,12 +347,12 @@ impl ShopScene {
                 character_factory::CharacterFactoryOrder::CustomerSample,
                 ctx.resource,
                 &camera.borrow(),
-                numeric::Point2f::new(1170.0, 870.0),
+                numeric::Point2f::new(1824.0, 1344.0),
             ),
             CustomerDestPoint::new(vec![
-                numeric::Vector2u::new(10, 3),
-                numeric::Vector2u::new(6, 3),
-                numeric::Vector2u::new(4, 10),
+                numeric::Vector2u::new(10, 4),
+                numeric::Vector2u::new(6, 4),
+                numeric::Vector2u::new(5, 14),
             ]),
         ));
 
@@ -532,8 +532,8 @@ impl ShopScene {
 
 	let x = if chara_pos.x <= 683.0 {
 	    0.0
-	} else if chara_pos.x >= 1237.0 {
-	    554.0
+	} else if chara_pos.x >= 853.0 {
+	    170.0
 	} else {
 	    chara_pos.x - 683.0
 	};
@@ -546,8 +546,8 @@ impl ShopScene {
 
 	let y = if chara_pos.y <= 384.0 {
 	    0.0
-	} else if chara_pos.y >= 1536.0 {
-	    1152.0
+	} else if chara_pos.y >= 1344.0 {
+	    960.0
 	} else {
 	    chara_pos.y - 384.0
 	};
@@ -730,7 +730,7 @@ impl ShopScene {
 
     fn move_playable_character_x(&mut self, ctx: &mut ggez::Context, t: Clock) {
         // プレイヤーのX方向の移動
-        self.player.move_map_current_speed_x(self.map.tile_map.get_map_size().x);
+        self.player.move_map_current_speed_x(ctx, numeric::Vector2f::new(0.0, self.map.tile_map.get_map_size().x));
 
         // マップ座標を更新, これで、衝突判定を行えるようになる
         self.player
@@ -746,7 +746,7 @@ impl ShopScene {
 
     fn move_playable_character_y(&mut self, ctx: &mut ggez::Context, t: Clock) {
         // プレイヤーのY方向の移動
-        self.player.move_map_current_speed_y(self.map.tile_map.get_map_size().y);
+        self.player.move_map_current_speed_y(ctx, numeric::Vector2f::new(0.0, self.map.tile_map.get_map_size().y));
         // マップ座標を更新, これで、衝突判定を行えるようになる
         self.player
             .get_mut_character_object()
@@ -848,7 +848,7 @@ impl ShopScene {
                                 customer.set_destination_forced(
                                     ctx.context,
                                     &slf.map.tile_map,
-                                    numeric::Vector2u::new(15, 10),
+                                    numeric::Vector2u::new(15, 14),
                                 );
                                 slf.character_group.add(customer);
                             }),
@@ -1040,12 +1040,12 @@ impl ShopScene {
                     character_factory::CharacterFactoryOrder::CustomerSample,
                     game_data,
                     &self.camera.borrow(),
-                    numeric::Point2f::new(1200.0, 870.0),
+                    numeric::Point2f::new(1824.0, 1344.0),
                 ),
                 CustomerDestPoint::new(vec![
-                    numeric::Vector2u::new(10, 3),
-                    numeric::Vector2u::new(6, 3),
-                    numeric::Vector2u::new(4, 10),
+                    numeric::Vector2u::new(10, 4),
+                    numeric::Vector2u::new(6, 4),
+                    numeric::Vector2u::new(5, 14),
                 ]),
             ));
         }
@@ -1202,13 +1202,12 @@ impl SceneManager for ShopScene {
             }
 
             self.customer_queue.extend(rising_customers);
-
             for customer in self.character_group.iter_mut() {
                 customer.try_update_move_effect(
                     ctx,
                     &self.map.tile_map,
-                    numeric::Vector2u::new(4, 10),
-                    numeric::Vector2u::new(15, 10),
+                    numeric::Vector2u::new(5, 14),
+                    numeric::Vector2u::new(15, 14),
                     t,
                 );
                 customer.get_mut_character_object().update_texture(t);
@@ -1225,8 +1224,8 @@ impl SceneManager for ShopScene {
                 customer.try_update_move_effect(
                     ctx,
                     &self.map.tile_map,
-                    numeric::Vector2u::new(4, 10),
-                    numeric::Vector2u::new(15, 10),
+                    numeric::Vector2u::new(5, 14),
+                    numeric::Vector2u::new(15, 14),
                     t,
                 );
                 customer.get_mut_character_object().update_texture(t);

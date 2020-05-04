@@ -1362,6 +1362,16 @@ impl CustomerRequest {
     }
 }
 
+impl ToString for CustomerRequest {
+    fn to_string(&self) -> String {
+	match self {
+	    CustomerRequest::Borrowing(_) => "貸出",
+	    CustomerRequest::Returning(_) => "返却",
+	    CustomerRequest::Copying(_) => "写本",
+	}.to_string()
+    }
+}
+
 pub struct ShelvingBookBox {
     pub canvas: SubScreen,
     pub shelved: Vec<TaskItem>,
@@ -1722,7 +1732,10 @@ struct TaskInfoContents {
 }
 
 impl TaskInfoContents {
-    pub fn new<'a>(ctx: &mut SuzuContext<'a>) -> Self {
+    pub fn new<'a>(
+	ctx: &mut SuzuContext<'a>,
+	customer_request: Option<CustomerRequest>,
+    ) -> Self {
         let normal_scale_font = FontInformation::new(
             ctx.resource.get_font(FontID::Cinema),
             numeric::Vector2f::new(25.0, 25.0),
@@ -1784,6 +1797,24 @@ impl TaskInfoContents {
 	    
 	    desc_text.push(vtext);
 	}
+
+	let mut request_type_vtext = VerticalText::new(
+	    if let Some(request) = customer_request.as_ref() { request.to_string() } else { "".to_string() },
+	    numeric::Point2f::new(0.0, 0.0),
+	    numeric::Vector2f::new(1.0, 1.0),
+	    0.0,
+	    0,
+	    normal_scale_font
+	);
+	
+        set_table_frame_cell_center!(
+            ctx.context,
+            book_frame,
+	    request_type_vtext,
+            numeric::Vector2u::new(1, 1)
+        );
+	
+	desc_text.push(request_type_vtext);
 	
         TaskInfoContents {
 	    general_info_frame: general_frame,
@@ -1844,7 +1875,11 @@ pub struct TaskInfoPanel {
 }
 
 impl TaskInfoPanel {
-    pub fn new<'a>(ctx: &mut SuzuContext<'a>, size: numeric::Rect) -> Self {
+    pub fn new<'a>(
+	ctx: &mut SuzuContext<'a>,
+	size: numeric::Rect,
+	customer_request: Option<CustomerRequest>,
+    ) -> Self {
         TaskInfoPanel {
             canvas: SubScreen::new(
                 ctx.context,
@@ -1859,7 +1894,7 @@ impl TaskInfoPanel {
 		0.0,
 		0,
             ),
-            contents: TaskInfoContents::new(ctx),
+            contents: TaskInfoContents::new(ctx, customer_request),
 	}
     }
 }

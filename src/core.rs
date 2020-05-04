@@ -284,6 +284,7 @@ pub struct BookInformation {
     pub pages: usize,
     pub size: String,
     pub billing_number: u16,
+    pub base_price: u32,
 }
 
 impl BookInformation {
