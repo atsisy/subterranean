@@ -824,7 +824,7 @@ impl SuzuMiniSightSilhouette {
             background: background,
             silhouette: TaskSilhouette::new_empty(
                 ctx.context,
-                numeric::Rect::new(0.0, 0.0, rect.w, 300.0),
+                numeric::Rect::new(0.0, 0.0, 350.0, 300.0),
             ),
             text_balloon: EffectableWrap::new(
                 MovableWrap::new(text_balloon, None, 0),

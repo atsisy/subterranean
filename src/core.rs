@@ -313,13 +313,15 @@ impl RentalLimit {
         }
     }
 
-    pub fn fee(&self) -> i32 {
+    pub fn fee_rate(&self) -> f32 {
         match self {
-            RentalLimit::ShortTerm => 100,
-            RentalLimit::LongTerm => 150,
-            RentalLimit::Today => 0,
+            RentalLimit::ShortTerm => 1.0,
+            RentalLimit::LongTerm => 1.5,
+            RentalLimit::Today => 0.0,
         }
     }
+
+    
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
@@ -913,7 +915,9 @@ impl BorrowingInformation {
     }
 
     pub fn calc_fee(&self) -> i32 {
-        self.borrowing.len() as i32 * self.rental_limit.fee()
+	(self.borrowing.iter()
+	    .map(|info| info.base_price)
+	    .fold(0, |sum, price| sum + price) as f32 * self.rental_limit.fee_rate()) as i32
     }
 }
 

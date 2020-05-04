@@ -874,7 +874,7 @@ impl PayFrame {
 	    calculated_price: None,
         };
 
-        pay_frame.update_book_count(ctx, 0);
+        pay_frame.update_book_count(ctx, 0, 0);
 
         pay_frame
     }
@@ -883,6 +883,7 @@ impl PayFrame {
         &mut self,
         ctx: &mut SuzuContext<'a>,
         rental_limit: RentalLimit,
+	base_price: u32
     ) {
         let text = match rental_limit {
             RentalLimit::ShortTerm => "短期",
@@ -914,10 +915,10 @@ impl PayFrame {
         self.rental_limit_text = Some(vtext);
         self.rental_limit_data = Some(rental_limit);
 
-        self.calc_payment_money(ctx);
+        self.calc_payment_money(ctx, base_price);
     }
 
-    pub fn update_book_count<'a>(&mut self, ctx: &mut SuzuContext<'a>, count: usize) {
+    pub fn update_book_count<'a>(&mut self, ctx: &mut SuzuContext<'a>, count: usize, base_price: u32) {
         let mut vtext = VerticalText::new(
             format!("{}冊", number_to_jk(count as u64)),
             numeric::Point2f::new(0.0, 0.0),
@@ -941,17 +942,17 @@ impl PayFrame {
         self.borrowing_number_text = Some(vtext);
         self.listed_books_number = count;
 
-        self.calc_payment_money(ctx);
+        self.calc_payment_money(ctx, base_price);
     }
 
-    fn calc_payment_money<'a>(&mut self, ctx: &mut SuzuContext<'a>) {
+    fn calc_payment_money<'a>(&mut self, ctx: &mut SuzuContext<'a>, base_price: u32) {
         if let Some(rental_limit) = self.rental_limit_data.as_ref() {
             // 返却期限がTodayの場合は計算を行わず、終了
             if rental_limit == &RentalLimit::Today {
                 return;
             }
 
-	    self.calculated_price = Some((rental_limit.fee() * self.listed_books_number as i32) as u32);
+	    self.calculated_price = Some((rental_limit.fee_rate() * base_price as f32) as u32);
 	    
             let mut vtext = VerticalText::new(
                 format!(
@@ -1112,12 +1113,14 @@ impl BorrowingRecordBookPage {
             );
         }
 
+	let base_price = page.base_price_of_written_book();
+	
         if let Some(rental_limit) = page_data.rental_limit {
-            page.pay_frame.update_rental_limit_text(ctx, rental_limit);
+            page.pay_frame.update_rental_limit_text(ctx, rental_limit, base_price);
         }
 
         page.pay_frame
-            .update_book_count(ctx, page_data.borrowing_book_title.len());
+            .update_book_count(ctx, page_data.borrowing_book_title.len(), base_price);
 
         page
     }
@@ -1508,6 +1511,18 @@ impl BorrowingRecordBookPage {
             .fold(0, |sum, c| sum + c)
     }
 
+    fn base_price_of_written_book(&self) -> u32 {
+	self.borrow_book
+            .iter()
+            .map(|(_, data)|
+		 match data.ref_hold_data() {
+		     HoldData::BookName(info) => info.base_price,
+		     _ => 0
+		 }
+	    )
+            .fold(0, |sum, c| sum + c)
+    }
+
     ///
     /// Dataを格納できればtrue, できなければfalse
     ///
@@ -1536,7 +1551,7 @@ impl BorrowingRecordBookPage {
         );
 
         self.pay_frame
-            .update_book_count(ctx, self.count_written_book_title());
+            .update_book_count(ctx, self.count_written_book_title(), self.base_price_of_written_book());
     }
 
     ///
@@ -1568,7 +1583,7 @@ impl BorrowingRecordBookPage {
         );
 
         if grid_pos.x == 0 {
-            self.pay_frame.update_rental_limit_text(ctx, rental_limit);
+            self.pay_frame.update_rental_limit_text(ctx, rental_limit, self.base_price_of_written_book());
         }
     }
 

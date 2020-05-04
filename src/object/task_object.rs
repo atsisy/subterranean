@@ -113,7 +113,7 @@ impl TaskTable {
 
         let mut record_book = BorrowingRecordBook::new(
             ctx,
-            ggraphics::Rect::new(150.0, -550.0, 1000.0, 550.0),
+            ggraphics::Rect::new(320.0, -550.0, 1000.0, 550.0),
             0,
             record_book_data,
             t,
@@ -200,7 +200,7 @@ impl TaskTable {
         );
 
         self.borrowing_record_book.override_move_func(
-            move_fn::devide_distance(numeric::Point2f::new(150.0, 50.0), 0.1),
+            move_fn::devide_distance(numeric::Point2f::new(320.0, 100.0), 0.1),
             t,
         );
     }
@@ -212,7 +212,7 @@ impl TaskTable {
         );
 
         self.borrowing_record_book.override_move_func(
-            move_fn::devide_distance(numeric::Point2f::new(150.0, -550.0), 0.1),
+            move_fn::devide_distance(numeric::Point2f::new(320.0, -550.0), 0.1),
             t,
         );
         self.record_book_is_staged = false;
@@ -1106,20 +1106,21 @@ impl TaskTable {
         click_point: numeric::Point2f,
         t: Clock,
     ) -> bool {
-        if self
+	let rpoint = self.sight.canvas.relative_point(click_point);
+	if self
             .sight
             .silhouette
-            .contains_character_silhouette(ctx.context, click_point)
+            .contains_text_balloon(ctx.context, rpoint)
         {
-            self.customer_silhouette_menu
-                .show_customer_question_menu(ctx, click_point, t);
+            self.try_show_text_balloon_menus(ctx, click_point, t);
             true
         } else if self
             .sight
             .silhouette
-            .contains_text_balloon(ctx.context, click_point)
+            .contains_character_silhouette(ctx.context, rpoint)
         {
-            self.try_show_text_balloon_menus(ctx, click_point, t);
+            self.customer_silhouette_menu
+                .show_customer_question_menu(ctx, click_point, t);
             true
         } else {
             false
