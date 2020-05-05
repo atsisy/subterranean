@@ -248,7 +248,7 @@ impl TaskTable {
         let rlast = self.canvas.relative_point(last);
 
         self.sight.dragging_handler(rpoint, rlast);
-        self.desk.dragging_handler(ctx, rpoint, rlast);
+        self.desk.dragging_handler(ctx, rpoint);
         self.shelving_box.dragging_handler(rpoint, rlast);
     }
 

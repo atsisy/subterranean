@@ -13,7 +13,6 @@ use torifune::core::Updatable;
 use torifune::graphics::drawable::*;
 
 use ggez::input::mouse::MouseButton;
-use torifune::debug;
 use torifune::numeric;
 
 use super::*;

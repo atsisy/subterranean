@@ -13,6 +13,7 @@ pub mod task_object;
 pub mod task_result_object;
 pub mod util_object;
 pub mod save_scene_object;
+pub mod title_object;
 
 use std::rc::Rc;
 

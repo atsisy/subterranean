@@ -135,10 +135,8 @@ impl DeskObjects {
         }
     }
 
-    fn drag_current_object<'a>(&mut self, ctx: &mut SuzuContext<'a>, point: numeric::Point2f, last: numeric::Point2f) {
+    fn drag_current_object<'a>(&mut self, ctx: &mut SuzuContext<'a>, point: numeric::Point2f) {
 	if let Some(obj) = &mut self.dragging {
-	    let diff = numeric::Vector2f::new(point.x - last.x, point.y - last.y);
-	    
 	    let area = match obj {
 		TaskItem::Book(item) => item.get_large_object().get_drawing_area(ctx.context),
 		TaskItem::Texture(item) => item.get_large_object().get_drawing_area(ctx.context),
@@ -167,8 +165,8 @@ impl DeskObjects {
         }
     }
 
-    pub fn dragging_handler<'a>(&mut self, ctx: &mut SuzuContext<'a>, point: numeric::Point2f, last: numeric::Point2f) {
-	self.drag_current_object(ctx, point, last);
+    pub fn dragging_handler<'a>(&mut self, ctx: &mut SuzuContext<'a>, point: numeric::Point2f) {
+	self.drag_current_object(ctx, point);
     }
 
     pub fn select_dragging_object<'a>(

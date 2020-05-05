@@ -784,6 +784,14 @@ pub struct BorrowingRecordBookData {
     pub pages_data: Vec<BorrowingRecordBookPageData>,
 }
 
+pub struct SignFrame {
+    sign_frame: TableFrame,
+    borrowing_is_done: bool,
+    returning_is_done: bool,
+    borrowing_sign: Option<UniTexture>,
+    returning_sign: Option<UniTexture>,
+}
+
 pub struct PayFrame {
     pay_frame: TableFrame,
     cell_desc_text: Vec<VerticalText>,
@@ -1433,7 +1441,7 @@ impl BorrowingRecordBookPage {
             book_status: book_status,
             paper_texture: paper_texture,
             borrow_date: borrow_date,
-            pay_frame: PayFrame::new(ctx, numeric::Point2f::new(100.0, 40.0), 0),
+            pay_frame: PayFrame::new(ctx, numeric::Point2f::new(170.0, 40.0), 0),
             return_date: return_date,
             drwob_essential: DrawableObjectEssential::new(true, 0),
         }

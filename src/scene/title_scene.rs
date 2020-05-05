@@ -1,11 +1,14 @@
+use ggez::graphics as ggraphics;
+
 use torifune::core::Clock;
 use torifune::graphics::drawable::*;
 use torifune::graphics::object::*;
 use torifune::device::*;
 
-use crate::core::{SuzuContext, TextureID, TileBatchTextureID};
+use crate::core::{SuzuContext, TextureID, TileBatchTextureID, FontID};
 use crate::scene::*;
 use crate::object::effect_object;
+use crate::object::title_object::*;
 
 use crate::flush_delay_event;
 
@@ -15,6 +18,7 @@ pub struct TitleScene {
     scene_transition_effect: Option<effect_object::ScreenTileEffect>,
     scene_transition: SceneID,
     scene_transition_type: SceneTransition,
+    text_list: VTextList,
     clock: Clock,
 }
 
@@ -58,7 +62,28 @@ impl TitleScene {
 	    scene_transition_effect: scene_transition_effect,
             scene_transition: SceneID::Save,
 	    scene_transition_type: SceneTransition::Keep,
-            clock: 0,
+	    text_list: VTextList::new(
+		numeric::Point2f::new(150.0, 550.0),
+		FontInformation::new(
+		    ctx.resource.get_font(FontID::Cinema),
+		    numeric::Vector2f::new(42.0, 42.0),
+		    ggraphics::Color::from_rgba_u32(0xccccccff)
+		),
+		FontInformation::new(
+		    ctx.resource.get_font(FontID::Cinema),
+		    numeric::Vector2f::new(52.0, 52.0),
+		    ggraphics::Color::from_rgba_u32(0xccccccff)
+		),
+		vec![
+		    "開演".to_string(),
+		    "設定".to_string(),
+		    "蓄音機".to_string(),
+		    "終演".to_string()
+		],
+		10.0,
+		0
+	    ),
+	    clock: 0,
         }
     }
 
@@ -81,7 +106,6 @@ impl TitleScene {
 
 	self.event_list.add_event(
             Box::new(move |slf: &mut Self, _, _| {
-		println!("aaaaaaaaaaaaa");
 		slf.scene_transition = scene_id;
 		slf.scene_transition_type = SceneTransition::SwapTransition;
             }),
@@ -91,7 +115,6 @@ impl TitleScene {
 }
 
 impl SceneManager for TitleScene {
-
     fn key_up_event<'a>(&mut self, ctx: &mut SuzuContext<'a>, vkey: tdev::VirtualKey) {
 	let t = self.get_current_clock();
 	
@@ -116,6 +139,8 @@ impl SceneManager for TitleScene {
     fn drawing_process(&mut self, ctx: &mut ggez::Context) {
 	self.background.draw(ctx).unwrap();
 
+	self.text_list.draw(ctx).unwrap();
+	
 	if let Some(transition_effect) = self.scene_transition_effect.as_mut() {
             transition_effect.draw(ctx).unwrap();
         }
