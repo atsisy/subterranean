@@ -2173,7 +2173,9 @@ where S: OnDesk, L: OnDesk {
     large: Box<EffectableWrap<MovableWrap<L>>>,
     switch: u8,
     handover_locked: bool,
+    shelving_box_locked: bool,
     object_type: DeskObjectType,
+    drag_point: numeric::Vector2f,
 }
 
 impl<S, L> TaskItemStruct<S, L>
@@ -2183,6 +2185,7 @@ where S: OnDesk, L: OnDesk {
         large: L,
         switch: u8,
 	handover_locked: bool,
+	shelving_box_locked: bool,
         obj_type: DeskObjectType,
         t: Clock,
     ) -> TaskItemStruct<S, L> {
@@ -2206,7 +2209,9 @@ where S: OnDesk, L: OnDesk {
             )),
             switch: switch,
 	    handover_locked: handover_locked,
+	    shelving_box_locked: shelving_box_locked,
             object_type: obj_type,
+	    drag_point: numeric::Vector2f::new(0.0, 0.0),
         }
     }
 
@@ -2274,6 +2279,18 @@ where S: OnDesk, L: OnDesk {
 	self.handover_locked = false;
     }
 
+    pub fn is_shelving_box_handover_locked(&self) -> bool {
+	self.shelving_box_locked
+    }
+
+    pub fn lock_shelving_box_handover(&mut self) {
+	self.shelving_box_locked = true;
+    }
+
+    pub fn unlock_shelving_box_handover(&mut self) {
+	self.shelving_box_locked = false;
+    }
+
     pub fn get_small_object(&self) -> &S {
 	self.small.ref_wrapped_object().ref_wrapped_object()
     }
@@ -2288,6 +2305,14 @@ where S: OnDesk, L: OnDesk {
 
     pub fn get_large_object_mut(&mut self) -> &mut L {
 	self.large.ref_wrapped_object_mut().ref_wrapped_object_mut()
+    }
+
+    pub fn get_drag_point(&self) -> numeric::Vector2f {
+	self.drag_point
+    }
+
+    pub fn set_drag_point(&mut self, drag_point: numeric::Vector2f) {
+	self.drag_point = drag_point;
     }
 }
 
@@ -2381,6 +2406,41 @@ impl TaskItem {
 	match self {
 	    TaskItem::Book(item) => item.unlock_handover(),
 	    TaskItem::Texture(item) => item.unlock_handover(),
+	}
+    }
+
+    pub fn is_shelving_box_handover_locked(&self) -> bool {
+	match self {
+	    TaskItem::Book(item) => item.is_shelving_box_handover_locked(),
+	    TaskItem::Texture(item) => item.is_shelving_box_handover_locked(),
+	}
+    }
+
+    pub fn lock_shelving_box_handover(&mut self) {
+	match self {
+	    TaskItem::Book(item) => item.lock_shelving_box_handover(),
+	    TaskItem::Texture(item) => item.lock_shelving_box_handover(),
+	}
+    }
+
+    pub fn unlock_shelving_box_handover(&mut self) {
+	match self {
+	    TaskItem::Book(item) => item.unlock_shelving_box_handover(),
+	    TaskItem::Texture(item) => item.unlock_shelving_box_handover(),
+	}
+    }
+
+    pub fn get_drag_point(&self) -> numeric::Vector2f {
+	match self {
+	    TaskItem::Book(item) => item.get_drag_point(),
+	    TaskItem::Texture(item) => item.get_drag_point(),
+	}
+    }
+
+    pub fn set_drag_point(&mut self, drag_point: numeric::Vector2f) {
+	match self {
+	    TaskItem::Book(item) => item.set_drag_point(drag_point),
+	    TaskItem::Texture(item) => item.set_drag_point(drag_point),
 	}
     }
 }

@@ -135,11 +135,40 @@ impl DeskObjects {
         }
     }
 
-    pub fn dragging_handler(&mut self, point: numeric::Point2f, last: numeric::Point2f) {
-        if let Some(obj) = &mut self.dragging {
-            obj.get_object_mut()
-                .move_diff(numeric::Vector2f::new(point.x - last.x, point.y - last.y));
+    fn drag_current_object<'a>(&mut self, ctx: &mut SuzuContext<'a>, point: numeric::Point2f, last: numeric::Point2f) {
+	if let Some(obj) = &mut self.dragging {
+	    let diff = numeric::Vector2f::new(point.x - last.x, point.y - last.y);
+	    
+	    let area = match obj {
+		TaskItem::Book(item) => item.get_large_object().get_drawing_area(ctx.context),
+		TaskItem::Texture(item) => item.get_large_object().get_drawing_area(ctx.context),
+	    };
+
+	    let canvas_size = self.canvas.get_drawing_size(ctx.context);
+	    let rpoint = self.canvas.relative_point(point);
+
+	    if (canvas_size.x - rpoint.x) <= 0.0 {
+		return;
+	    }
+
+	    let drag_point = obj.get_drag_point();
+	    let next_position = numeric::Point2f::new(
+		rpoint.x - (area.w * drag_point.x),
+		rpoint.y - (area.h * drag_point.y)
+	    );
+	    
+	    obj.get_object_mut().set_position(next_position);
+
+	    if obj.is_shelving_box_handover_locked() {
+		if next_position.x + area.w > canvas_size.x {
+		    obj.get_object_mut().set_position(numeric::Point2f::new(canvas_size.x - area.w, area.y));
+		}
+	    }
         }
+    }
+
+    pub fn dragging_handler<'a>(&mut self, ctx: &mut SuzuContext<'a>, point: numeric::Point2f, last: numeric::Point2f) {
+	self.drag_current_object(ctx, point, last);
     }
 
     pub fn select_dragging_object<'a>(
@@ -178,6 +207,16 @@ impl DeskObjects {
                 .swap_remove(dragging_object_index);
 
             dragging.get_object_mut().start_dragging(ctx);
+
+	    let object_area = match &dragging {
+		TaskItem::Book(item) => item.get_large_object().get_drawing_area(ctx.context),
+		TaskItem::Texture(item) => item.get_large_object().get_drawing_area(ctx.context),
+	    };
+	    
+	    dragging.set_drag_point(numeric::Vector2f::new(
+		(rpoint.x - object_area.x) / object_area.w,
+		(rpoint.y - object_area.y) / object_area.h,
+	    ));
 
             self.dragging = Some(dragging);
 
@@ -272,8 +311,8 @@ impl DeskObjects {
         std::mem::replace(&mut self.dragging, None)
     }
 
-    pub fn ref_dragging(&self) -> &Option<TaskItem> {
-        &self.dragging
+    pub fn ref_dragging(&self) -> Option<&TaskItem> {
+        self.dragging.as_ref()
     }
 
     pub fn out_of_desk(&self, point: numeric::Point2f) -> bool {
@@ -1183,6 +1222,10 @@ impl SuzuMiniSight {
         self.dragging.is_some()
     }
 
+    pub fn ref_dragging(&self) -> Option<&TaskItem> {
+	self.dragging.as_ref()
+    }
+
     pub fn insert_dragging(&mut self, obj: TaskItem) {
         let d = std::mem::replace(&mut self.dragging, Some(obj));
         if d.is_some() {
@@ -1240,10 +1283,6 @@ impl SuzuMiniSight {
 
     pub fn release_dragging(&mut self) -> Option<TaskItem> {
         std::mem::replace(&mut self.dragging, None)
-    }
-
-    pub fn ref_dragging(&self) -> &Option<TaskItem> {
-        &self.dragging
     }
 
     pub fn out_of_desk(&self, point: numeric::Point2f) -> bool {

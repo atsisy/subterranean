@@ -99,7 +99,7 @@ impl TaskScene {
         _offset: numeric::Vector2f,
     ) {
         let last = self.mouse_info.get_last_dragged(MouseButton::Left);
-        self.task_table.dragging_handler(point, last);
+        self.task_table.dragging_handler(ctx, point, last);
         self.task_table.hand_over_check(ctx.context, point);
     }
 

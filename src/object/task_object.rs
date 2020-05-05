@@ -95,6 +95,7 @@ impl TaskTable {
             ),
             0,
 	    true,
+	    true,
             DeskObjectType::BorrowRecordBook,
             t,
         );
@@ -242,12 +243,12 @@ impl TaskTable {
         }
     }
 
-    pub fn dragging_handler(&mut self, point: numeric::Point2f, last: numeric::Point2f) {
+    pub fn dragging_handler<'a>(&mut self, ctx: &mut SuzuContext<'a>, point: numeric::Point2f, last: numeric::Point2f) {
         let rpoint = self.canvas.relative_point(point);
         let rlast = self.canvas.relative_point(last);
 
         self.sight.dragging_handler(rpoint, rlast);
-        self.desk.dragging_handler(rpoint, rlast);
+        self.desk.dragging_handler(ctx, rpoint, rlast);
         self.shelving_box.dragging_handler(rpoint, rlast);
     }
 
@@ -354,6 +355,9 @@ impl TaskTable {
         let border = self.desk_border_x(ctx);
 
         if self.desk.has_dragging() && border < rpoint.x {
+	    if self.desk.ref_dragging().unwrap().is_shelving_box_handover_locked() {
+		return;
+	    }
             debug::debug_screen_push_text("desk 2 box");
             if let Some(mut dragging) = self.desk.release_dragging() {
                 self.apply_desk2box_point_convertion(ctx, &mut dragging);
