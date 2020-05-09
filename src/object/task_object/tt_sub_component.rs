@@ -784,13 +784,144 @@ pub struct BorrowingRecordBookData {
     pub pages_data: Vec<BorrowingRecordBookPageData>,
 }
 
+#[derive(Clone)]
+pub enum SignFrameEntry {
+    BorrowingSign,
+    ReturningSign,
+}
+
 pub struct SignFrame {
     sign_frame: TableFrame,
     borrowing_is_done: bool,
     returning_is_done: bool,
     borrowing_sign: Option<UniTexture>,
     returning_sign: Option<UniTexture>,
+    drwob_essential: DrawableObjectEssential,
 }
+
+impl SignFrame {
+    pub fn new<'a>(ctx: &mut SuzuContext<'a>, position: numeric::Point2f, depth: i8) -> Self {
+	let sign_frame = TableFrame::new(
+            ctx.resource,
+            position,
+            TileBatchTextureID::RedOldStyleFrame,
+            FrameData::new(vec![80.0; 2], vec![80.0]),
+            numeric::Vector2f::new(0.3, 0.3),
+            0,
+        );
+	
+	SignFrame {
+	    sign_frame: sign_frame,
+	    borrowing_is_done: false,
+	    returning_is_done: false,
+	    borrowing_sign: None,
+	    returning_sign: None,
+	    drwob_essential: DrawableObjectEssential::new(true, depth),
+	}
+    }
+
+    pub fn contains_sign_frame(&self, ctx: &mut ggez::Context, point: numeric::Point2f) -> Option<SignFrameEntry> {
+	let maybe_grid_position = self.sign_frame.get_grid_position(ctx, point);
+        if let Some(grid_position) = maybe_grid_position {
+	    match grid_position.y {
+		0 => Some(SignFrameEntry::BorrowingSign),
+		1 => Some(SignFrameEntry::ReturningSign),
+		_ => None
+	    }
+        } else {
+	    None
+	}
+    }
+
+    pub fn sign_borrowing_frame(&mut self, ctx: &mut SuzuContext) {
+	let mut sign_texture = UniTexture::new(
+	    ctx.resource.ref_texture(TextureID::ChoicePanel1),
+	    numeric::Point2f::new(0.0, 0.0),
+	    numeric::Vector2f::new(0.25, 0.25),
+	    0.0,
+	    0
+	);
+
+	set_table_frame_cell_center!(
+            ctx.context,
+            self.sign_frame,
+            sign_texture,
+            numeric::Vector2u::new(0, 0)
+        );
+	
+	self.borrowing_sign = Some(
+	    sign_texture
+	);
+    }
+
+    pub fn sign_returning_frame(&mut self, ctx: &mut SuzuContext) {
+	let mut sign_texture = UniTexture::new(
+	    ctx.resource.ref_texture(TextureID::ChoicePanel2),
+	    numeric::Point2f::new(0.0, 0.0),
+	    numeric::Vector2f::new(0.25, 0.25),
+	    0.0,
+	    0
+	);
+
+	set_table_frame_cell_center!(
+            ctx.context,
+            self.sign_frame,
+            sign_texture,
+            numeric::Vector2u::new(0, 1)
+        );
+	
+	self.returning_sign = Some(
+	    sign_texture
+	);
+    }
+
+    pub fn borrowing_signing_is_done(&self) -> bool {
+	self.borrowing_sign.is_some()
+    }
+
+    pub fn retuning_signing_is_done(&self) -> bool {
+	self.returning_sign.is_some()
+    }
+}
+
+impl DrawableComponent for SignFrame {
+    fn draw(&mut self, ctx: &mut ggez::Context) -> ggez::GameResult<()> {
+        if self.is_visible() {
+            self.sign_frame.draw(ctx)?;
+
+            if let Some(texture) = self.borrowing_sign.as_mut() {
+                texture.draw(ctx)?;
+            }
+
+            if let Some(texture) = self.returning_sign.as_mut() {
+                texture.draw(ctx)?;
+            }
+        }
+
+        Ok(())
+    }
+
+    fn hide(&mut self) {
+        self.drwob_essential.visible = false;
+    }
+
+    fn appear(&mut self) {
+        self.drwob_essential.visible = true;
+    }
+
+    fn is_visible(&self) -> bool {
+        self.drwob_essential.visible
+    }
+
+    fn set_drawing_depth(&mut self, depth: i8) {
+        self.drwob_essential.drawing_depth = depth;
+    }
+
+    fn get_drawing_depth(&self) -> i8 {
+        self.drwob_essential.drawing_depth
+    }
+}
+
 
 pub struct PayFrame {
     pay_frame: TableFrame,
@@ -1054,6 +1185,7 @@ pub struct BorrowingRecordBookPage {
     borrow_date: VerticalText,
     return_date: VerticalText,
     pay_frame: PayFrame,
+    sign_frame: SignFrame,
     paper_texture: SimpleObject,
     drwob_essential: DrawableObjectEssential,
 }
@@ -1442,6 +1574,7 @@ impl BorrowingRecordBookPage {
             paper_texture: paper_texture,
             borrow_date: borrow_date,
             pay_frame: PayFrame::new(ctx, numeric::Point2f::new(170.0, 40.0), 0),
+	    sign_frame: SignFrame::new(ctx, numeric::Point2f::new(30.0, rect.h - 190.0), 0),
             return_date: return_date,
             drwob_essential: DrawableObjectEssential::new(true, 0),
         }
@@ -1529,6 +1662,32 @@ impl BorrowingRecordBookPage {
 		 }
 	    )
             .fold(0, |sum, c| sum + c)
+    }
+
+    fn borrowing_signing_is_available(&self) -> bool {
+	// 何らかの値段が設定されていればOK
+	self.pay_frame.calculated_price.is_some() && !self.sign_frame.borrowing_signing_is_done()
+    }
+
+    fn returning_signing_is_available(&self) -> bool {
+	let rows_size = self.books_table.get_rows();
+	for index in 0..rows_size {
+	    // ある列の先頭の要素が存在し、かつ本の情報である場合、下の欄に状態が記載されてるか確認する
+	    let data = self.borrow_book.get(&numeric::Vector2u::new(index as u32, 0));
+	    if let Some(data) = data.as_ref() {
+		match data.ref_hold_data() {
+		    HoldData::BookName(_) => {
+			match self.borrow_book.get(&numeric::Vector2u::new(index as u32, 1)).unwrap().data {
+			    HoldData::BookStatus(_) => (),
+			    _ => return false,  // 本の状態の情報が無い場合、書き漏れがあるとして、falseを返す
+			}
+		    },
+		    _ => (),
+		}
+	    }
+	}
+
+	true
     }
 
     ///
@@ -1646,7 +1805,6 @@ impl BorrowingRecordBookPage {
         status_index: i32,
         menu_position: numeric::Point2f,
     ) {
-        println!("book status insert!! data -> {}", status_index);
         let grid_position = self
             .books_table
             .get_grid_position(ctx, menu_position)
@@ -1732,6 +1890,29 @@ impl BorrowingRecordBookPage {
             rental_limit: rental_limit,
         }
     }
+
+    pub fn sign_with_mouse_click<'a>(&mut self, ctx: &mut SuzuContext<'a>, point: numeric::Point2f) -> Option<SignFrameEntry> {
+	let maybe_sign_entry = self.sign_frame.contains_sign_frame(ctx.context, point);
+	
+	if let Some(sign_entry) = maybe_sign_entry.as_ref() {
+	    match sign_entry {
+		SignFrameEntry::BorrowingSign => {
+		    if self.borrowing_signing_is_available() {
+			self.sign_frame.sign_borrowing_frame(ctx);
+			return maybe_sign_entry;
+		    }
+		},
+		SignFrameEntry::ReturningSign => {
+		    if self.returning_signing_is_available() {
+			self.sign_frame.sign_returning_frame(ctx);
+			return maybe_sign_entry;
+		    }
+		},
+	    }
+	}
+
+	None
+    }
 }
 
 impl DrawableComponent for BorrowingRecordBookPage {
@@ -1747,6 +1928,7 @@ impl DrawableComponent for BorrowingRecordBookPage {
             self.return_date.draw(ctx)?;
 
             self.pay_frame.draw(ctx)?;
+	    self.sign_frame.draw(ctx)?;
 
             for (_, d) in &mut self.borrow_book {
                 d.draw(ctx)?;
@@ -1984,6 +2166,16 @@ impl BorrowingRecordBook {
         }
 
 	false
+    }
+
+    pub fn sign_with_mouse_click<'a>(&mut self, ctx: &mut SuzuContext<'a>, point: numeric::Point2f) -> Option<SignFrameEntry> {
+	let rpoint = self.relative_point(point);
+	
+	if let Some(page) = self.get_current_page_mut() {
+	    page.sign_with_mouse_click(ctx, rpoint)
+        } else {
+	    None
+	}
     }
 
     pub fn pages_length(&self) -> usize {

@@ -31,7 +31,7 @@ impl VTextList {
 	    );
 
 	    vtext_list.push(vtext);
-	    position.x += (normal_font_info.scale.x + padding);
+	    position.x += normal_font_info.scale.x + padding;
 	}
 	
 	VTextList {

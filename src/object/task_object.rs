@@ -195,10 +195,7 @@ impl TaskTable {
     }
 
     fn slide_appear_record_book(&mut self, t: Clock) {
-        self.event_list.add_event(
-            Box::new(|tt: &mut TaskTable, _, _| tt.borrowing_record_book.appear()),
-            t + 30,
-        );
+	self.borrowing_record_book.appear();
 
         self.borrowing_record_book.override_move_func(
             move_fn::devide_distance(numeric::Point2f::new(320.0, 100.0), 0.1),
@@ -669,6 +666,79 @@ impl TaskTable {
         self.borrowing_record_book.export_book_data()
     }
 
+    pub fn signing_borrowing_handler<'a>(
+	&mut self,
+        ctx: &mut SuzuContext<'a>,
+        t: Clock,
+    ) {
+	let price = self.borrowing_record_book.get_calculated_price().unwrap();
+	self.event_list.add_event(
+            Box::new(move |slf: &mut Self, ctx, t| {
+		slf.slide_hide_record_book(t);
+            }),
+            t + 30,
+        );
+	self.show_kosuzu_payment_message(ctx, price, t);
+	
+	// 本の情報が帳簿に記載されていた場合
+	// 対応する本のハンドオーバーロックを解除する
+	let written_books = self.borrowing_record_book.get_current_page_written_books().unwrap();
+	for item in self.desk.desk_objects.get_raw_container_mut().iter_mut() {
+	    match item {
+		TaskItem::Book(book) => {
+		    let info = book.get_large_object_mut()
+    			.get_book_info();
+		    
+		    if written_books.contains(&info) {
+			book.unlock_handover();
+		    }
+		},
+		_ => (),
+	    }
+	}
+	
+        self.sight.silhouette.insert_new_balloon_phrase(
+            "どうぞ".to_string(),
+            TextBalloonPhraseType::SimplePhrase,
+            20,
+            t,
+        );
+    }
+
+    
+    pub fn signing_returning_handler<'a>(
+	&mut self,
+        ctx: &mut SuzuContext<'a>,
+        t: Clock,
+    ) {
+	let price = self.borrowing_record_book.get_calculated_price().unwrap();
+	self.event_list.add_event(
+            Box::new(move |slf: &mut Self, ctx, t| {
+		slf.slide_hide_record_book(t);
+            }),
+            t + 30,
+        );
+
+	self.show_kosuzu_returning_is_done_message(ctx, t);
+	
+	// 本の情報が帳簿に記載されていた場合
+	// 対応する本のハンドオーバーロックを解除する
+	let written_books = self.borrowing_record_book.get_current_page_written_books().unwrap();
+	for item in self.desk.desk_objects.get_raw_container_mut().iter_mut() {
+	    match item {
+		TaskItem::Book(book) => {
+		    let info = book.get_large_object_mut()
+    			.get_book_info();
+		    
+		    if written_books.contains(&info) {
+			book.unlock_shelving_box_handover();
+		    }
+		},
+		_ => (),
+	    }
+	}
+    }
+    
     ///
     /// メニューのエントリをクリックしていたらtrueを返し、そうでなければfalseを返す
     ///
@@ -745,41 +815,6 @@ impl TaskTable {
                 .unwrap();
             self.borrowing_record_book
                 .insert_customer_name_data_to_customer_info(ctx.context, menu_position, name);
-
-            return true;
-        }
-
-        if let Some(index) = self.record_book_menu.payment_menu_last_clicked() {
-	    let price =  self.record_book_menu.get_payment_menu_price().unwrap();
-
-            if index == 0 {
-                self.slide_hide_record_book(t);
-		self.show_kosuzu_payment_message(ctx, price, t);
-
-		// 本の情報が帳簿に記載されていた場合
-		// 対応する本のハンドオーバーロックを解除する
-		let written_books = self.borrowing_record_book.get_current_page_written_books().unwrap();
-		for item in self.desk.desk_objects.get_raw_container_mut().iter_mut() {
-		    match item {
-			TaskItem::Book(book) => {
-			    let info = book.get_large_object_mut()
-    				.get_book_info();
-
-			    if written_books.contains(&info) {
-				book.unlock_handover();
-			    }
-			},
-			_ => (),
-		    }
-		}
-		
-                self.sight.silhouette.insert_new_balloon_phrase(
-                    "どうぞ".to_string(),
-                    TextBalloonPhraseType::SimplePhrase,
-                    20,
-                    t,
-                );
-            }
 
             return true;
         }
@@ -868,6 +903,14 @@ impl TaskTable {
 	self.kosuzu_phrase.insert_new_phrase(
 	    ctx,
 	    &format!("合計{}円になります", number_to_jk(price as u64)),
+	    t
+	);
+    }
+
+    fn show_kosuzu_returning_is_done_message<'a>(&mut self, ctx: &mut SuzuContext<'a>, t: Clock) {
+	self.kosuzu_phrase.insert_new_phrase(
+	    ctx,
+	    "確認しました またお越しください",
 	    t
 	);
     }
@@ -1340,6 +1383,14 @@ impl Clickable for TaskTable {
             // クリックハンドラが呼び出されたので終了
             return;
         }
+
+	if let Some(sign_entry) = self.borrowing_record_book.sign_with_mouse_click(ctx, rpoint) {
+	    match sign_entry {
+		SignFrameEntry::BorrowingSign => self.signing_borrowing_handler(ctx, t),
+		SignFrameEntry::ReturningSign => self.signing_returning_handler(ctx, t),
+	    }
+	    return;
+	}
 
 	if self.click_customer_silhouette_menu(ctx, button, rpoint, t) {
 	    self.customer_silhouette_menu.close_all(t);
