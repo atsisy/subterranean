@@ -355,7 +355,7 @@ impl TaskTable {
 	    if self.desk.ref_dragging().unwrap().is_shelving_box_handover_locked() {
 		return;
 	    }
-            debug::debug_screen_push_text("desk 2 box");
+	    
             if let Some(mut dragging) = self.desk.release_dragging() {
                 self.apply_desk2box_point_convertion(ctx, &mut dragging);
                 self.shelving_box.insert_dragging(dragging);
@@ -711,7 +711,6 @@ impl TaskTable {
         ctx: &mut SuzuContext<'a>,
         t: Clock,
     ) {
-	let price = self.borrowing_record_book.get_calculated_price().unwrap();
 	self.event_list.add_event(
             Box::new(move |slf: &mut Self, ctx, t| {
 		slf.slide_hide_record_book(t);

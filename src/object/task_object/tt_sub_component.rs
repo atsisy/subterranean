@@ -749,6 +749,8 @@ pub struct BorrowingRecordBookPageData {
     pub return_date: Option<GensoDate>,
     pub rental_date: Option<GensoDate>,
     pub rental_limit: Option<RentalLimit>,
+    pub borrowing_is_signed: bool,
+    pub returning_is_signed: bool,
 }
 
 impl From<&ReturnBookInformation> for BorrowingRecordBookPageData {
@@ -776,6 +778,8 @@ impl From<&ReturnBookInformation> for BorrowingRecordBookPageData {
             rental_limit: info.borrow_date.rental_limit_type(&info.return_date),
             return_date: Some(info.return_date),
             rental_date: Some(info.borrow_date),
+	    borrowing_is_signed: true,
+	    returning_is_signed: false,
         }
     }
 }
@@ -848,6 +852,8 @@ impl SignFrame {
             sign_texture,
             numeric::Vector2u::new(0, 0)
         );
+
+	self.borrowing_is_done = true;
 	
 	self.borrowing_sign = Some(
 	    sign_texture
@@ -869,6 +875,8 @@ impl SignFrame {
             sign_texture,
             numeric::Vector2u::new(0, 1)
         );
+
+	self.returning_is_done = true;
 	
 	self.returning_sign = Some(
 	    sign_texture
@@ -1261,6 +1269,14 @@ impl BorrowingRecordBookPage {
 
         page.pay_frame
             .update_book_count(ctx, page_data.borrowing_book_title.len(), base_price);
+
+	if page_data.borrowing_is_signed {
+	    page.sign_frame.sign_borrowing_frame(ctx);
+	}
+
+	if page_data.returning_is_signed {
+	    page.sign_frame.sign_returning_frame(ctx);
+	}
 
         page
     }
@@ -1888,6 +1904,8 @@ impl BorrowingRecordBookPage {
             return_date: return_date,
             rental_date: rental_date,
             rental_limit: rental_limit,
+	    borrowing_is_signed: self.sign_frame.borrowing_is_done,
+	    returning_is_signed: self.sign_frame.returning_is_done,
         }
     }
 
