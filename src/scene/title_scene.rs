@@ -18,7 +18,8 @@ pub struct TitleScene {
     scene_transition_effect: Option<effect_object::ScreenTileEffect>,
     scene_transition: SceneID,
     scene_transition_type: SceneTransition,
-    text_list: VTextList,
+    current_title_contents: Option<TitleContents>,
+    title_contents_set: TitleContentsSet,
     clock: Clock,
 }
 
@@ -55,14 +56,11 @@ impl TitleScene {
             }),
 	    31,
         );
-	
-        TitleScene {
-	    background: background,
-	    event_list: event_list,
-	    scene_transition_effect: scene_transition_effect,
-            scene_transition: SceneID::Save,
-	    scene_transition_type: SceneTransition::Keep,
-	    text_list: VTextList::new(
+
+	let mut title_contents_set = TitleContentsSet::new();
+	title_contents_set.add(
+	    0,
+	    TitleContents::InitialMenu(VTextList::new(
 		numeric::Point2f::new(150.0, 550.0),
 		FontInformation::new(
 		    ctx.resource.get_font(FontID::Cinema),
@@ -76,13 +74,24 @@ impl TitleScene {
 		),
 		vec![
 		    "開演".to_string(),
-		    "設定".to_string(),
+		    "再入場".to_string(),
 		    "蓄音機".to_string(),
+		    "設定".to_string(),
 		    "終演".to_string()
 		],
 		10.0,
 		0
-	    ),
+	    ))
+	);
+	
+        TitleScene {
+	    background: background,
+	    event_list: event_list,
+	    scene_transition_effect: scene_transition_effect,
+            scene_transition: SceneID::Save,
+	    scene_transition_type: SceneTransition::Keep,
+	    current_title_contents: title_contents_set.remove_pickup(0),
+	    title_contents_set: title_contents_set,
 	    clock: 0,
         }
     }
@@ -112,6 +121,16 @@ impl TitleScene {
 	    t + 31,
         );
     }
+
+    pub fn contents_mouse_motion_handler<'a>(&mut self, ctx: &mut SuzuContext<'a>, point: numeric::Point2f) {
+	if self.current_title_contents.is_none() {
+	    return;
+	}
+	
+	match &mut self.current_title_contents.as_mut().unwrap() {
+	    TitleContents::InitialMenu(contents) => contents.update_highlight(ctx, point),
+	}
+    }
 }
 
 impl SceneManager for TitleScene {
@@ -139,7 +158,9 @@ impl SceneManager for TitleScene {
     fn drawing_process(&mut self, ctx: &mut ggez::Context) {
 	self.background.draw(ctx).unwrap();
 
-	self.text_list.draw(ctx).unwrap();
+	if let Some(contetns) = self.current_title_contents.as_mut() {
+	    contetns.draw(ctx).unwrap();
+	}
 	
 	if let Some(transition_effect) = self.scene_transition_effect.as_mut() {
             transition_effect.draw(ctx).unwrap();
@@ -150,6 +171,15 @@ impl SceneManager for TitleScene {
         self.update_current_clock();
 
 	self.scene_transition_type
+    }
+
+    fn mouse_motion_event<'a>(
+	&mut self,
+	ctx: &mut SuzuContext<'a>,
+	point: numeric::Point2f,
+	_offset: numeric::Vector2f
+    ) {
+	self.contents_mouse_motion_handler(ctx, point);
     }
 
     fn transition(&self) -> SceneID {
