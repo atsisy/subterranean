@@ -143,6 +143,19 @@ pub enum FontID {
     Cinema,
 }
 
+impl FromStr for FontID {
+    type Err = ();
+    fn from_str(s: &str) -> Result<Self, ()> {
+	match s {
+	    "Default" => Ok(FontID::DEFAULT),
+	    "JpFude1" => Ok(FontID::JpFude1),
+	    "CorpMincho" => Ok(FontID::CorpMincho),
+	    "Cinema" => Ok(FontID::Cinema),
+	    _ => Err(()),
+	}
+    }
+}
+
 impl FromStr for TextureID {
     type Err = ();
     fn from_str(s: &str) -> Result<Self, ()> {
@@ -1596,4 +1609,24 @@ impl<'data> State<'data> {
 
         Ok(s)
     }
+}
+
+pub fn font_information_from_toml_value<'a>(game_data: &'a GameResource, toml_value: &toml::Value) -> FontInformation {
+    let font_str = toml_value["FontID"].as_str().unwrap();
+
+    let scale_table = toml_value["scale"].as_table().unwrap();
+
+    let scale = numeric::Vector2f::new(
+	scale_table["x"].as_float().unwrap() as f32,
+	scale_table["y"].as_float().unwrap() as f32
+    );
+
+    let color_hex_code = toml_value["color"].as_integer().unwrap() as u32;
+    
+    FontInformation::new(
+	game_data.get_font(FontID::from_str(font_str).unwrap()),
+	scale,
+	ggraphics::Color::from_rgba_u32(color_hex_code),
+    )
+    
 }

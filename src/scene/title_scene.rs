@@ -1,11 +1,9 @@
-use ggez::graphics as ggraphics;
-
 use torifune::core::Clock;
 use torifune::graphics::drawable::*;
 use torifune::graphics::object::*;
 use torifune::device::*;
 
-use crate::core::{SuzuContext, TextureID, TileBatchTextureID, FontID};
+use crate::core::{SuzuContext, TextureID, TileBatchTextureID};
 use crate::scene::*;
 use crate::object::effect_object;
 use crate::object::title_object::*;
@@ -57,32 +55,7 @@ impl TitleScene {
 	    31,
         );
 
-	let mut title_contents_set = TitleContentsSet::new();
-	title_contents_set.add(
-	    0,
-	    TitleContents::InitialMenu(VTextList::new(
-		numeric::Point2f::new(150.0, 550.0),
-		FontInformation::new(
-		    ctx.resource.get_font(FontID::Cinema),
-		    numeric::Vector2f::new(42.0, 42.0),
-		    ggraphics::Color::from_rgba_u32(0xccccccff)
-		),
-		FontInformation::new(
-		    ctx.resource.get_font(FontID::Cinema),
-		    numeric::Vector2f::new(52.0, 52.0),
-		    ggraphics::Color::from_rgba_u32(0xccccccff)
-		),
-		vec![
-		    "開演".to_string(),
-		    "再入場".to_string(),
-		    "蓄音機".to_string(),
-		    "設定".to_string(),
-		    "終演".to_string()
-		],
-		10.0,
-		0
-	    ))
-	);
+	let mut title_contents_set = TitleContentsSet::from_file(ctx, "./resources/title_contents/title_contents_list.toml");
 	
         TitleScene {
 	    background: background,
@@ -90,7 +63,7 @@ impl TitleScene {
 	    scene_transition_effect: scene_transition_effect,
             scene_transition: SceneID::Save,
 	    scene_transition_type: SceneTransition::Keep,
-	    current_title_contents: title_contents_set.remove_pickup(0),
+	    current_title_contents: title_contents_set.remove_pickup("init-menu"),
 	    title_contents_set: title_contents_set,
 	    clock: 0,
         }
@@ -130,6 +103,18 @@ impl TitleScene {
 	match &mut self.current_title_contents.as_mut().unwrap() {
 	    TitleContents::InitialMenu(contents) => contents.update_highlight(ctx, point),
 	}
+    }
+    
+    pub fn contents_mouse_click_handler<'a>(&mut self, ctx: &mut SuzuContext<'a>, point: numeric::Point2f) {
+	if self.current_title_contents.is_none() {
+	    return;
+	}
+	
+	match &mut self.current_title_contents.as_mut().unwrap() {
+	    TitleContents::InitialMenu(contents) => {
+		contents.click_handler(ctx, point);
+	    }
+	}	
     }
 }
 
@@ -171,6 +156,15 @@ impl SceneManager for TitleScene {
         self.update_current_clock();
 
 	self.scene_transition_type
+    }
+
+    fn mouse_button_up_event<'a>(
+	&mut self,
+	ctx: &mut SuzuContext<'a>,
+	_button: ginput::mouse::MouseButton,
+	point: numeric::Point2f
+    ) {
+	self.contents_mouse_click_handler(ctx, point);
     }
 
     fn mouse_motion_event<'a>(

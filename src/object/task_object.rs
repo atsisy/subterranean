@@ -673,7 +673,7 @@ impl TaskTable {
     ) {
 	let price = self.borrowing_record_book.get_calculated_price().unwrap();
 	self.event_list.add_event(
-            Box::new(move |slf: &mut Self, ctx, t| {
+            Box::new(move |slf: &mut Self, _, t| {
 		slf.slide_hide_record_book(t);
             }),
             t + 30,
@@ -712,7 +712,7 @@ impl TaskTable {
         t: Clock,
     ) {
 	self.event_list.add_event(
-            Box::new(move |slf: &mut Self, ctx, t| {
+            Box::new(move |slf: &mut Self, _, t| {
 		slf.slide_hide_record_book(t);
             }),
             t + 30,
