@@ -11,6 +11,7 @@ use torifune::numeric;
 use crate::core::{SuzuContext, font_information_from_toml_value};
 use crate::scene::SceneID;
 
+#[derive(Clone)]
 pub enum TitleContentsEvent {
     NextContents(String),
     SceneTransition(SceneID),
@@ -99,6 +100,7 @@ impl TextMenuData {
 pub struct VTextList {
     contents_name: String,
     vtext_list: Vec<VerticalText>,
+    menu_entries_data: Vec<TextMenuEntryData>,
     normal_font: FontInformation,
     large_font: FontInformation,
     drwob_essential: DrawableObjectEssential,
@@ -133,6 +135,7 @@ impl VTextList {
 	
 	VTextList {
 	    contents_name: text_menu_data.contents_name,
+	    menu_entries_data: text_menu_data.entries_data,
 	    vtext_list: vtext_list,
 	    normal_font: normal_font_info,
 	    large_font: large_font_info,
@@ -150,14 +153,15 @@ impl VTextList {
 	}
     }
 
-    pub fn click_handler<'a>(&mut self, ctx: &mut SuzuContext<'a>, point: numeric::Point2f) {
-	for vtext in self.vtext_list.iter_mut() {
+    pub fn click_handler<'a>(&mut self, ctx: &mut SuzuContext<'a>, point: numeric::Point2f) -> Option<TitleContentsEvent> {
+	for (index, vtext) in self.vtext_list.iter_mut().rev().enumerate() {
 	    if vtext.contains(ctx.context, point) {
-		vtext.set_color(ggraphics::Color::from_rgba_u32(0xddddddff));
-	    } else {
-		vtext.set_color(ggraphics::Color::from_rgba_u32(0xbbbbbbff));
+		let event = self.menu_entries_data.get(index).unwrap();
+		return Some(event.content_event.clone());
 	    }
 	}
+
+	None
     }
 }
 
@@ -231,6 +235,14 @@ impl TitleContents {
 		))
 	    },
 	    _ => None,
+	}
+    }
+
+    pub fn get_content_name(&self) -> String {
+	match self {
+	    TitleContents::InitialMenu(menu) => {
+		menu.contents_name.to_string()
+	    }
 	}
     }
 }

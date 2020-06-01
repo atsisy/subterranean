@@ -1,0 +1,4 @@
+[[contents-list]]
+name = "init-menu"
+type = "VTextList"
+src = "./resources/title_contents/init_menu.toml"

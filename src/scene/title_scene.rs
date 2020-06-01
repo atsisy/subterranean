@@ -105,14 +105,30 @@ impl TitleScene {
 	}
     }
     
-    pub fn contents_mouse_click_handler<'a>(&mut self, ctx: &mut SuzuContext<'a>, point: numeric::Point2f) {
+    pub fn contents_mouse_click_handler<'a>(&mut self, ctx: &mut SuzuContext<'a>, point: numeric::Point2f, t: Clock) {
 	if self.current_title_contents.is_none() {
 	    return;
 	}
 	
 	match &mut self.current_title_contents.as_mut().unwrap() {
 	    TitleContents::InitialMenu(contents) => {
-		contents.click_handler(ctx, point);
+		let maybe_event = contents.click_handler(ctx, point);
+		if let Some(event) = maybe_event {
+		    match event {
+			TitleContentsEvent::NextContents(content_name) => {
+			    let next_content = self.title_contents_set.remove_pickup(&content_name);
+			    if next_content.is_none() {
+				print!("{}?", content_name);
+				panic!("target title contents not found.");
+			    }
+			    let old = std::mem::replace(&mut self.current_title_contents, next_content);
+			    self.title_contents_set.add(old.as_ref().unwrap().get_content_name(), old.unwrap());
+			},
+			TitleContentsEvent::SceneTransition(scene_id) => {
+			    self.transition_selected_scene(ctx, scene_id, t);
+			}
+		    }
+		}
 	    }
 	}	
     }
@@ -164,7 +180,8 @@ impl SceneManager for TitleScene {
 	_button: ginput::mouse::MouseButton,
 	point: numeric::Point2f
     ) {
-	self.contents_mouse_click_handler(ctx, point);
+	let t = self.get_current_clock();
+	self.contents_mouse_click_handler(ctx, point, t);
     }
 
     fn mouse_motion_event<'a>(
