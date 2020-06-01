@@ -7,7 +7,7 @@ use torifune::graphics::object::*;
 
 use super::super::*;
 
-use crate::core::{MouseInformation, TextureID, TileBatchTextureID, SavableData};
+use crate::core::{MouseInformation, SavableData, TextureID, TileBatchTextureID};
 use crate::flush_delay_event;
 use crate::object::effect_object;
 use crate::object::task_result_object::*;
@@ -27,7 +27,11 @@ pub struct TaskResultScene {
 }
 
 impl TaskResultScene {
-    pub fn new<'a>(ctx: &mut SuzuContext<'a>, initial_save_data: SavableData, date: GensoDate) -> Self {
+    pub fn new<'a>(
+        ctx: &mut SuzuContext<'a>,
+        initial_save_data: SavableData,
+        date: GensoDate,
+    ) -> Self {
         let mut background_object = MovableUniTexture::new(
             ctx.resource.ref_texture(TextureID::Paper1),
             numeric::Point2f::new(0.0, 0.0),
@@ -90,7 +94,7 @@ impl TaskResultScene {
                 ctx,
                 numeric::Rect::new(0.0, 0.0, 1366.0, 768.0),
                 SimpleObject::new(background_object, Vec::new()),
-		initial_save_data,
+                initial_save_data,
                 date,
                 0,
             ),
@@ -104,7 +108,7 @@ impl TaskResultScene {
     fn ready_to_finish_scene<'a>(&mut self, ctx: &mut SuzuContext<'a>, t: Clock) {
         self.transition_scene = SceneID::Scenario;
         self.scene_transition_status = SceneTransition::SwapTransition;
-	ctx.savable_data.date.add_day(1);
+        ctx.savable_data.date.add_day(1);
 
         self.scene_transition_effect = Some(effect_object::ScreenTileEffect::new(
             ctx,

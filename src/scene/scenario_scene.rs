@@ -28,14 +28,14 @@ pub struct ScenarioScene {
 impl ScenarioScene {
     pub fn new<'a>(ctx: &mut SuzuContext<'a>, scenario_select: ScenarioSelect) -> Self {
         let file_path = match scenario_select {
-	    ScenarioSelect::DayBegin => ctx
-		.resource
-		.get_day_scenario_path(&ctx.savable_data.date)
-		.expect("BUG"),
-	    ScenarioSelect::OpeningEpisode => panic!(""),
-	    _ => panic!(""),
-	};
-	
+            ScenarioSelect::DayBegin => ctx
+                .resource
+                .get_day_scenario_path(&ctx.savable_data.date)
+                .expect("BUG"),
+            ScenarioSelect::OpeningEpisode => panic!(""),
+            _ => panic!(""),
+        };
+
         let scenario = ScenarioEvent::new(
             ctx,
             numeric::Rect::new(300.0, 0.0, 1066.0, 768.0),
@@ -45,9 +45,9 @@ impl ScenarioScene {
 
         ScenarioScene {
             scenario_event: scenario,
-	    scenario_menu: ScenarioMenu::new(ctx, numeric::Vector2f::new(300.0, 768.0)),
+            scenario_menu: ScenarioMenu::new(ctx, numeric::Vector2f::new(300.0, 768.0)),
             scene_transition: SceneID::Scenario,
-	    scene_transition_type: SceneTransition::Keep,
+            scene_transition_type: SceneTransition::Keep,
             clock: 0,
         }
     }
@@ -74,14 +74,13 @@ impl SceneManager for ScenarioScene {
         }
     }
 
-    fn scene_popping_return_handler<'a>(
-	&mut self,
-	_: &mut SuzuContext<'a>,
-    ) {
-	println!("recover!!!!");
-	self.scene_transition = SceneID::Scenario;
-	self.scene_transition_type = SceneTransition::Keep;
-	self.scenario_event.scenario_control_mut().turn_back_scenario_offset(1);
+    fn scene_popping_return_handler<'a>(&mut self, _: &mut SuzuContext<'a>) {
+        println!("recover!!!!");
+        self.scene_transition = SceneID::Scenario;
+        self.scene_transition_type = SceneTransition::Keep;
+        self.scenario_event
+            .scenario_control_mut()
+            .turn_back_scenario_offset(1);
     }
 
     fn pre_process<'a>(&mut self, ctx: &mut SuzuContext<'a>) {
@@ -90,7 +89,7 @@ impl SceneManager for ScenarioScene {
 
     fn drawing_process(&mut self, ctx: &mut ggez::Context) {
         self.scenario_event.draw(ctx).unwrap();
-	self.scenario_menu.draw(ctx).unwrap();
+        self.scenario_menu.draw(ctx).unwrap();
     }
 
     fn post_process<'a>(&mut self, _ctx: &mut SuzuContext<'a>) -> SceneTransition {
@@ -103,12 +102,12 @@ impl SceneManager for ScenarioScene {
                 self.scene_transition = scene_id;
             }
 
-	    if let Some(scene_transition) = self.scenario_event.get_scene_transition_type() {
+            if let Some(scene_transition) = self.scenario_event.get_scene_transition_type() {
                 self.scene_transition_type = scene_transition;
             }
         }
 
-	self.scene_transition_type
+        self.scene_transition_type
     }
 
     fn transition(&self) -> SceneID {

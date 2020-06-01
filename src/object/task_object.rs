@@ -21,15 +21,18 @@ use torifune::impl_texture_object_for_wrapped;
 use torifune::numeric;
 
 use crate::flush_delay_event;
+use crate::object::util_object::*;
 use crate::object::{effect, move_fn};
 use crate::scene::*;
-use crate::object::util_object::*;
 use tt_main_component::*;
 use tt_menu_component::*;
 use tt_sub_component::*;
 
 use super::Clickable;
-use crate::core::{GensoDate, RentalLimit, SuzuContext, TextureID, BorrowingInformation, ReturnBookInformation, TileBatchTextureID};
+use crate::core::{
+    BorrowingInformation, GensoDate, RentalLimit, ReturnBookInformation, SuzuContext, TextureID,
+    TileBatchTextureID,
+};
 
 use number_to_jk::number_to_jk;
 
@@ -58,12 +61,12 @@ impl TaskTable {
     pub fn new<'a>(
         ctx: &mut SuzuContext<'a>,
         pos: numeric::Rect,
-	info_panel_rect: numeric::Rect,
+        info_panel_rect: numeric::Rect,
         sight_rect: numeric::Rect,
         desk_rect: numeric::Rect,
         shelving_box_rect: numeric::Rect,
         record_book_data: Option<BorrowingRecordBookData>,
-	customer_request: Option<CustomerRequest>,
+        customer_request: Option<CustomerRequest>,
         t: Clock,
     ) -> Self {
         let sight = SuzuMiniSight::new(ctx, sight_rect, t);
@@ -94,21 +97,21 @@ impl TaskTable {
                 OnDeskType::BorrowingRecordBook,
             ),
             0,
-	    true,
-	    true,
+            true,
+            true,
             DeskObjectType::BorrowRecordBook,
             t,
         );
         record_book.enable_large();
         desk.add_object(TaskItem::Texture(record_book));
 
-	let appr_frame = TileBatchFrame::new(
-	    ctx.resource,
-	    TileBatchTextureID::BlackFrame,
-	    numeric::Rect::new(300.0, 0.0, 1066.0, 768.0),
-	    numeric::Vector2f::new(1.0, 1.0),
-	    0
-	);
+        let appr_frame = TileBatchFrame::new(
+            ctx.resource,
+            TileBatchTextureID::BlackFrame,
+            numeric::Rect::new(300.0, 0.0, 1066.0, 768.0),
+            numeric::Vector2f::new(1.0, 1.0),
+            0,
+        );
 
         let shelving_box = ShelvingBookBox::new(ctx, shelving_box_rect);
 
@@ -131,7 +134,7 @@ impl TaskTable {
                 0,
                 ggraphics::Color::from_rgba_u32(0x00000000),
             ),
-	    info_panel: TaskInfoPanel::new(ctx, info_panel_rect, customer_request),
+            info_panel: TaskInfoPanel::new(ctx, info_panel_rect, customer_request),
             sight: sight,
             desk: desk,
             staging_object: None,
@@ -144,10 +147,10 @@ impl TaskTable {
             record_book_menu: RecordBookMenuGroup::new(0),
             on_desk_menu: OnDeskMenuGroup::new(0),
             current_customer_request: None,
-	    kosuzu_phrase: KosuzuPhrase::new(ctx, 0),
+            kosuzu_phrase: KosuzuPhrase::new(ctx, 0),
             today: ctx.savable_data.date,
-	    task_is_done: false,
-	    appearance_frame: appr_frame,
+            task_is_done: false,
+            appearance_frame: appr_frame,
         }
     }
 
@@ -195,7 +198,7 @@ impl TaskTable {
     }
 
     fn slide_appear_record_book(&mut self, t: Clock) {
-	self.borrowing_record_book.appear();
+        self.borrowing_record_book.appear();
 
         self.borrowing_record_book.override_move_func(
             move_fn::devide_distance(numeric::Point2f::new(320.0, 100.0), 0.1),
@@ -240,7 +243,12 @@ impl TaskTable {
         }
     }
 
-    pub fn dragging_handler<'a>(&mut self, ctx: &mut SuzuContext<'a>, point: numeric::Point2f, last: numeric::Point2f) {
+    pub fn dragging_handler<'a>(
+        &mut self,
+        ctx: &mut SuzuContext<'a>,
+        point: numeric::Point2f,
+        last: numeric::Point2f,
+    ) {
         let rpoint = self.canvas.relative_point(point);
         let rlast = self.canvas.relative_point(last);
 
@@ -352,10 +360,15 @@ impl TaskTable {
         let border = self.desk_border_x(ctx);
 
         if self.desk.has_dragging() && border < rpoint.x {
-	    if self.desk.ref_dragging().unwrap().is_shelving_box_handover_locked() {
-		return;
-	    }
-	    
+            if self
+                .desk
+                .ref_dragging()
+                .unwrap()
+                .is_shelving_box_handover_locked()
+            {
+                return;
+            }
+
             if let Some(mut dragging) = self.desk.release_dragging() {
                 self.apply_desk2box_point_convertion(ctx, &mut dragging);
                 self.shelving_box.insert_dragging(dragging);
@@ -416,8 +429,7 @@ impl TaskTable {
                 obj.as_movable_object_mut()
                     .override_move_func(move_fn::gravity_move(1.0, 10.0, 400.0, 0.3), t);
                 obj.get_object_mut().set_drawing_depth(min);
-                obj.get_object_mut()
-                    .finish_dragging(ctx);
+                obj.get_object_mut().finish_dragging(ctx);
 
                 obj.as_effectable_object().add_effect(vec![Box::new(
                     |obj: &mut dyn MovableObject, _: &ggez::Context, t: Clock| {
@@ -447,9 +459,9 @@ impl TaskTable {
         self.record_book_menu.update(ctx, t);
         self.customer_silhouette_menu.update(ctx, t);
         self.on_desk_menu.update(ctx, t);
-	self.kosuzu_phrase.update(ctx, t);
+        self.kosuzu_phrase.update(ctx, t);
 
-	self.check_task_is_done();
+        self.check_task_is_done();
     }
 
     pub fn finish_customer_event(&mut self, now: Clock) {
@@ -457,7 +469,7 @@ impl TaskTable {
     }
 
     pub fn task_is_done(&self) -> bool {
-	self.task_is_done
+        self.task_is_done
     }
 
     fn start_borrowing_customer_event<'a>(
@@ -549,7 +561,7 @@ impl TaskTable {
             t,
         );
     }
-    
+
     pub fn start_customer_event(&mut self, ctx: &mut SuzuContext, info: CustomerRequest, t: Clock) {
         self.current_customer_request = Some(info.clone());
 
@@ -561,74 +573,85 @@ impl TaskTable {
     }
 
     fn check_borrowing_task_is_done(&self) -> bool {
-	let mut book_count = 0;
-	for obj in self.desk.desk_objects.get_raw_container().iter() {
-	    match obj {
-		TaskItem::Book(item) => {
-		    if !self.kosuzu_memory.is_in_blacklist(item.get_large_object().get_book_info()) {
-			book_count += 1;
-		    }
-		}
-		_ => (),
-	    }
-	}
+        let mut book_count = 0;
+        for obj in self.desk.desk_objects.get_raw_container().iter() {
+            match obj {
+                TaskItem::Book(item) => {
+                    if !self
+                        .kosuzu_memory
+                        .is_in_blacklist(item.get_large_object().get_book_info())
+                    {
+                        book_count += 1;
+                    }
+                }
+                _ => (),
+            }
+        }
 
-	book_count += self.sight.count_not_forbidden_book_items(&self.kosuzu_memory);
+        book_count += self
+            .sight
+            .count_not_forbidden_book_items(&self.kosuzu_memory);
 
-	if let Some(dragging) = self.desk.dragging.as_ref() {
-	     match dragging {
-		TaskItem::Book(item) => {
-		    if !self.kosuzu_memory.is_in_blacklist(item.get_large_object().get_book_info()) {
-			book_count += 1;
-		    }
-		}
-		_ => (),
-	    }
-	}
+        if let Some(dragging) = self.desk.dragging.as_ref() {
+            match dragging {
+                TaskItem::Book(item) => {
+                    if !self
+                        .kosuzu_memory
+                        .is_in_blacklist(item.get_large_object().get_book_info())
+                    {
+                        book_count += 1;
+                    }
+                }
+                _ => (),
+            }
+        }
 
-	book_count == 0
+        book_count == 0
     }
 
     fn check_returning_task_is_done(&self) -> bool {
-	let mut book_count = 0;
-	for obj in self.desk.desk_objects.get_raw_container().iter() {
-	    match obj {
-		TaskItem::Book(_) => {
-		    book_count += 1;
-		}
-		_ => (),
-	    }
-	}
+        let mut book_count = 0;
+        for obj in self.desk.desk_objects.get_raw_container().iter() {
+            match obj {
+                TaskItem::Book(_) => {
+                    book_count += 1;
+                }
+                _ => (),
+            }
+        }
 
-	book_count += self.sight.count_not_forbidden_book_items(&self.kosuzu_memory);
+        book_count += self
+            .sight
+            .count_not_forbidden_book_items(&self.kosuzu_memory);
 
-	if let Some(dragging) = self.desk.dragging.as_ref() {
-	     match dragging {
-		TaskItem::Book(item) => {
-		    if !self.kosuzu_memory.is_in_blacklist(item.get_large_object().get_book_info()) {
-			book_count += 1;
-		    }
-		}
-		_ => (),
-	    }
-	}
+        if let Some(dragging) = self.desk.dragging.as_ref() {
+            match dragging {
+                TaskItem::Book(item) => {
+                    if !self
+                        .kosuzu_memory
+                        .is_in_blacklist(item.get_large_object().get_book_info())
+                    {
+                        book_count += 1;
+                    }
+                }
+                _ => (),
+            }
+        }
 
-	book_count == 0
+        book_count == 0
     }
-    
-    fn check_task_is_done(&mut self) {
-	if self.current_customer_request.is_none() {
-	    self.task_is_done = false;
-	    return;
-	}
 
-	self.task_is_done = match self.current_customer_request.as_ref().unwrap() {
-	    CustomerRequest::Borrowing(_) => 
-		self.check_borrowing_task_is_done(),
-	    CustomerRequest::Returning(_) =>
-		self.check_returning_task_is_done(),
-	    _ => true,
-	};
+    fn check_task_is_done(&mut self) {
+        if self.current_customer_request.is_none() {
+            self.task_is_done = false;
+            return;
+        }
+
+        self.task_is_done = match self.current_customer_request.as_ref().unwrap() {
+            CustomerRequest::Borrowing(_) => self.check_borrowing_task_is_done(),
+            CustomerRequest::Returning(_) => self.check_returning_task_is_done(),
+            _ => true,
+        };
     }
 
     pub fn get_shelving_box(&self) -> &ShelvingBookBox {
@@ -666,37 +689,35 @@ impl TaskTable {
         self.borrowing_record_book.export_book_data()
     }
 
-    pub fn signing_borrowing_handler<'a>(
-	&mut self,
-        ctx: &mut SuzuContext<'a>,
-        t: Clock,
-    ) {
-	let price = self.borrowing_record_book.get_calculated_price().unwrap();
-	self.event_list.add_event(
+    pub fn signing_borrowing_handler<'a>(&mut self, ctx: &mut SuzuContext<'a>, t: Clock) {
+        let price = self.borrowing_record_book.get_calculated_price().unwrap();
+        self.event_list.add_event(
             Box::new(move |slf: &mut Self, _, t| {
-		slf.slide_hide_record_book(t);
+                slf.slide_hide_record_book(t);
             }),
             t + 30,
         );
-	self.show_kosuzu_payment_message(ctx, price, t);
-	
-	// 本の情報が帳簿に記載されていた場合
-	// 対応する本のハンドオーバーロックを解除する
-	let written_books = self.borrowing_record_book.get_current_page_written_books().unwrap();
-	for item in self.desk.desk_objects.get_raw_container_mut().iter_mut() {
-	    match item {
-		TaskItem::Book(book) => {
-		    let info = book.get_large_object_mut()
-    			.get_book_info();
-		    
-		    if written_books.contains(&info) {
-			book.unlock_handover();
-		    }
-		},
-		_ => (),
-	    }
-	}
-	
+        self.show_kosuzu_payment_message(ctx, price, t);
+
+        // 本の情報が帳簿に記載されていた場合
+        // 対応する本のハンドオーバーロックを解除する
+        let written_books = self
+            .borrowing_record_book
+            .get_current_page_written_books()
+            .unwrap();
+        for item in self.desk.desk_objects.get_raw_container_mut().iter_mut() {
+            match item {
+                TaskItem::Book(book) => {
+                    let info = book.get_large_object_mut().get_book_info();
+
+                    if written_books.contains(&info) {
+                        book.unlock_handover();
+                    }
+                }
+                _ => (),
+            }
+        }
+
         self.sight.silhouette.insert_new_balloon_phrase(
             "どうぞ".to_string(),
             TextBalloonPhraseType::SimplePhrase,
@@ -705,39 +726,36 @@ impl TaskTable {
         );
     }
 
-    
-    pub fn signing_returning_handler<'a>(
-	&mut self,
-        ctx: &mut SuzuContext<'a>,
-        t: Clock,
-    ) {
-	self.event_list.add_event(
+    pub fn signing_returning_handler<'a>(&mut self, ctx: &mut SuzuContext<'a>, t: Clock) {
+        self.event_list.add_event(
             Box::new(move |slf: &mut Self, _, t| {
-		slf.slide_hide_record_book(t);
+                slf.slide_hide_record_book(t);
             }),
             t + 30,
         );
 
-	self.show_kosuzu_returning_is_done_message(ctx, t);
-	
-	// 本の情報が帳簿に記載されていた場合
-	// 対応する本のハンドオーバーロックを解除する
-	let written_books = self.borrowing_record_book.get_current_page_written_books().unwrap();
-	for item in self.desk.desk_objects.get_raw_container_mut().iter_mut() {
-	    match item {
-		TaskItem::Book(book) => {
-		    let info = book.get_large_object_mut()
-    			.get_book_info();
-		    
-		    if written_books.contains(&info) {
-			book.unlock_shelving_box_handover();
-		    }
-		},
-		_ => (),
-	    }
-	}
+        self.show_kosuzu_returning_is_done_message(ctx, t);
+
+        // 本の情報が帳簿に記載されていた場合
+        // 対応する本のハンドオーバーロックを解除する
+        let written_books = self
+            .borrowing_record_book
+            .get_current_page_written_books()
+            .unwrap();
+        for item in self.desk.desk_objects.get_raw_container_mut().iter_mut() {
+            match item {
+                TaskItem::Book(book) => {
+                    let info = book.get_large_object_mut().get_book_info();
+
+                    if written_books.contains(&info) {
+                        book.unlock_shelving_box_handover();
+                    }
+                }
+                _ => (),
+            }
+        }
     }
-    
+
     ///
     /// メニューのエントリをクリックしていたらtrueを返し、そうでなければfalseを返す
     ///
@@ -760,7 +778,7 @@ impl TaskTable {
                 .click_customer_name_menu(ctx, button, point, t)
             && !self
                 .record_book_menu
-            .click_payment_menu(ctx, button, point, t)
+                .click_payment_menu(ctx, button, point, t)
         {
             // メニューをクリックしていない場合はfalseをクリックして終了
             return false;
@@ -818,7 +836,7 @@ impl TaskTable {
             return true;
         }
 
-	false
+        false
     }
 
     ///
@@ -863,57 +881,48 @@ impl TaskTable {
     }
 
     fn refusing_book_borrowing_conversation(&mut self, t: Clock) {
-	self.event_list.add_event(
+        self.event_list.add_event(
             Box::new(move |slf: &mut Self, ctx, t| {
-		slf.kosuzu_phrase.insert_new_phrase(
-		    ctx,
-		    "すみません　この本は貸し出せません",
-		    t
-		);
+                slf.kosuzu_phrase
+                    .insert_new_phrase(ctx, "すみません　この本は貸し出せません", t);
             }),
             t + 1,
         );
 
-	self.event_list.add_event(
+        self.event_list.add_event(
             Box::new(move |slf: &mut Self, ctx, _| {
-		slf.sight.silhouette.replace_text(
-		    ctx.context,
-		    "あ そうなんですか",
-		    TextBalloonPhraseType::SimplePhrase
-		);
+                slf.sight.silhouette.replace_text(
+                    ctx.context,
+                    "あ そうなんですか",
+                    TextBalloonPhraseType::SimplePhrase,
+                );
             }),
             t + 30,
         );
 
-	if let Some(customer_request) = self.current_customer_request.as_ref() {
-	    match customer_request {
-		CustomerRequest::Borrowing(info) => {
-		    if self.kosuzu_memory.full_of_blacklist(&info.borrowing) {
-			
-		    }
-		},
-		_ => (),
-	    }
-	}
-
+        if let Some(customer_request) = self.current_customer_request.as_ref() {
+            match customer_request {
+                CustomerRequest::Borrowing(info) => {
+                    if self.kosuzu_memory.full_of_blacklist(&info.borrowing) {}
+                }
+                _ => (),
+            }
+        }
     }
 
     fn show_kosuzu_payment_message<'a>(&mut self, ctx: &mut SuzuContext<'a>, price: u32, t: Clock) {
-	self.kosuzu_phrase.insert_new_phrase(
-	    ctx,
-	    &format!("合計{}円になります", number_to_jk(price as u64)),
-	    t
-	);
+        self.kosuzu_phrase.insert_new_phrase(
+            ctx,
+            &format!("合計{}円になります", number_to_jk(price as u64)),
+            t,
+        );
     }
 
     fn show_kosuzu_returning_is_done_message<'a>(&mut self, ctx: &mut SuzuContext<'a>, t: Clock) {
-	self.kosuzu_phrase.insert_new_phrase(
-	    ctx,
-	    "確認しました またお越しください",
-	    t
-	);
+        self.kosuzu_phrase
+            .insert_new_phrase(ctx, "確認しました またお越しください", t);
     }
-    
+
     ///
     /// メニューのエントリをクリックしていたらtrueを返し、そうでなければfalseを返す
     ///
@@ -991,16 +1000,20 @@ impl TaskTable {
             if let Some(book_info) = self.on_desk_menu.get_desk_menu_target_book_info() {
                 return match index {
                     0 => {
-			if self.kosuzu_memory.is_in_blacklist(&book_info) {
-			    self.kosuzu_phrase.insert_new_phrase(ctx, "これは貸出しないはずの本だ", t);
-			} else {
-			    println!("Ok, This book info is not in blacklist");
-			    self.kosuzu_memory.add_book_info(book_info);
-			}
+                        if self.kosuzu_memory.is_in_blacklist(&book_info) {
+                            self.kosuzu_phrase.insert_new_phrase(
+                                ctx,
+                                "これは貸出しないはずの本だ",
+                                t,
+                            );
+                        } else {
+                            println!("Ok, This book info is not in blacklist");
+                            self.kosuzu_memory.add_book_info(book_info);
+                        }
                         true
-                    },
+                    }
                     1 => {
-			// すぐに表示すると順番的にclose_allされてしまうので、遅らせる
+                        // すぐに表示すると順番的にclose_allされてしまうので、遅らせる
                         self.event_list.add_event(
                             Box::new(move |slf: &mut Self, ctx, t| {
                                 slf.on_desk_menu
@@ -1009,14 +1022,15 @@ impl TaskTable {
                             t + 1,
                         );
                         true
-                    },
-		    2 => {
-			let target_book_info = self.on_desk_menu.get_desk_menu_target_book_info().unwrap();
-			self.kosuzu_memory.add_book_to_black_list(target_book_info);
+                    }
+                    2 => {
+                        let target_book_info =
+                            self.on_desk_menu.get_desk_menu_target_book_info().unwrap();
+                        self.kosuzu_memory.add_book_to_black_list(target_book_info);
 
-			self.refusing_book_borrowing_conversation(t);
+                        self.refusing_book_borrowing_conversation(t);
                         true
-                    },
+                    }
                     _ => false,
                 };
             }
@@ -1113,8 +1127,9 @@ impl TaskTable {
 
         if let Some(grid_pos) = maybe_grid_pos {
             if grid_pos == numeric::Vector2u::new(0, 1) {
-		let price = self.borrowing_record_book.get_calculated_price().unwrap();
-                self.record_book_menu.show_payment_menu(ctx, click_point, price, t);
+                let price = self.borrowing_record_book.get_calculated_price().unwrap();
+                self.record_book_menu
+                    .show_payment_menu(ctx, click_point, price, t);
             }
 
             true
@@ -1152,8 +1167,8 @@ impl TaskTable {
         click_point: numeric::Point2f,
         t: Clock,
     ) -> bool {
-	let rpoint = self.sight.canvas.relative_point(click_point);
-	if self
+        let rpoint = self.sight.canvas.relative_point(click_point);
+        if self
             .sight
             .silhouette
             .contains_text_balloon(ctx.context, rpoint)
@@ -1219,7 +1234,7 @@ impl TaskTable {
         ctx: &mut SuzuContext<'a>,
         click_point: numeric::Point2f,
         t: Clock,
-    ) {	
+    ) {
         // 既に表示されている場合は、メニューを消して終了
         if self.record_book_menu.is_some_menu_opened() {
             self.record_book_menu.close_all(t);
@@ -1237,26 +1252,29 @@ impl TaskTable {
             return ();
         }
 
-	if self.try_show_menus_regarding_record_book_payment(ctx, click_point, t) {
-	    return;
-	}
+        if self.try_show_menus_regarding_record_book_payment(ctx, click_point, t) {
+            return;
+        }
 
-	if self.try_show_menus_regarding_book_info(ctx, click_point, t) {
-	    return;
-	}
+        if self.try_show_menus_regarding_book_info(ctx, click_point, t) {
+            return;
+        }
 
-	if self.try_show_menus_regarding_customer_info(ctx, click_point, t) {
-	    return;
-	}
+        if self.try_show_menus_regarding_customer_info(ctx, click_point, t) {
+            return;
+        }
 
-	if self.borrowing_record_book.contains(ctx.context, click_point) {
-	    return;
-	}
+        if self
+            .borrowing_record_book
+            .contains(ctx.context, click_point)
+        {
+            return;
+        }
 
-	if self.record_book_is_staged {
-	    return;
-	}
-	
+        if self.record_book_is_staged {
+            return;
+        }
+
         if !self.try_show_menus_regarding_customer_silhoutte(ctx, click_point, t) {
             self.try_show_menus_regarding_ondesk_book_info(ctx, click_point, t);
         }
@@ -1268,7 +1286,7 @@ impl DrawableComponent for TaskTable {
         if self.is_visible() {
             sub_screen::stack_screen(ctx, &self.canvas);
 
-	    self.info_panel.draw(ctx).unwrap();
+            self.info_panel.draw(ctx).unwrap();
             self.sight.draw(ctx).unwrap();
             self.desk.draw(ctx).unwrap();
             self.shelving_box.draw(ctx).unwrap();
@@ -1278,13 +1296,13 @@ impl DrawableComponent for TaskTable {
             }
 
             self.borrowing_record_book.draw(ctx)?;
-	    self.kosuzu_phrase.draw(ctx)?;
-	    
+            self.kosuzu_phrase.draw(ctx)?;
+
             self.customer_silhouette_menu.draw(ctx)?;
             self.record_book_menu.draw(ctx)?;
             self.on_desk_menu.draw(ctx)?;
 
-	    self.appearance_frame.draw(ctx)?;
+            self.appearance_frame.draw(ctx)?;
 
             sub_screen::pop_screen(ctx);
             self.canvas.draw(ctx).unwrap();
@@ -1374,36 +1392,39 @@ impl Clickable for TaskTable {
         let rpoint = self.canvas.relative_point(point);
 
         if self.click_record_book_menu(ctx, button, rpoint, t) {
-	    self.record_book_menu.close_all(t);
-	    return;
-	}
-	
+            self.record_book_menu.close_all(t);
+            return;
+        }
+
         if self.borrowing_record_book.click_handler(ctx, t, rpoint) {
             // クリックハンドラが呼び出されたので終了
             return;
         }
 
-	if let Some(sign_entry) = self.borrowing_record_book.sign_with_mouse_click(ctx, rpoint) {
-	    match sign_entry {
-		SignFrameEntry::BorrowingSign => self.signing_borrowing_handler(ctx, t),
-		SignFrameEntry::ReturningSign => self.signing_returning_handler(ctx, t),
-	    }
-	    return;
-	}
+        if let Some(sign_entry) = self
+            .borrowing_record_book
+            .sign_with_mouse_click(ctx, rpoint)
+        {
+            match sign_entry {
+                SignFrameEntry::BorrowingSign => self.signing_borrowing_handler(ctx, t),
+                SignFrameEntry::ReturningSign => self.signing_returning_handler(ctx, t),
+            }
+            return;
+        }
 
-	if self.click_customer_silhouette_menu(ctx, button, rpoint, t) {
-	    self.customer_silhouette_menu.close_all(t);
-	    return;
-	}
-	
+        if self.click_customer_silhouette_menu(ctx, button, rpoint, t) {
+            self.customer_silhouette_menu.close_all(t);
+            return;
+        }
+
         if self.click_desk_book_menu(ctx, button, point, t) {
-	    self.on_desk_menu.close_all(t);
-	    return;
-	}
+            self.on_desk_menu.close_all(t);
+            return;
+        }
 
         // メニューをクリックしていない場合に、新しいメニュー表示処理を走らせる
         self.try_show_menus(ctx, rpoint, t);
-	
+
         if self.desk.click_handler(ctx, t, button, rpoint) {
             // クリックハンドラが呼び出されたので終了
             return;

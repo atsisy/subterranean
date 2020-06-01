@@ -43,7 +43,9 @@ pub struct SuzunaSubScene {
 impl SuzunaSubScene {
     pub fn new<'a>(ctx: &mut SuzuContext<'a>, map_id: u32) -> Self {
         let borrowing_record_book_data = BorrowingRecordBookData {
-            pages_data: ctx.savable_data.returning_request_pool
+            pages_data: ctx
+                .savable_data
+                .returning_request_pool
                 .iter()
                 .map(|ret_info| {
                     println!("{:?}", ret_info);
@@ -96,19 +98,24 @@ impl SuzunaSubScene {
                 // 今回のTaskSceneで扱われるCustomerRequestを構築
                 let customer_request = match customer_request_hint.as_ref().unwrap() {
                     CustomerRequest::Borrowing(raw_info) => {
-                        let borrowing_info = ctx.savable_data.suzuna_book_pool.generate_borrowing_request(
-                            &raw_info.borrower,
-                            raw_info.borrow_date,
-                            raw_info.rental_limit.clone(),
-                        );
+                        let borrowing_info = ctx
+                            .savable_data
+                            .suzuna_book_pool
+                            .generate_borrowing_request(
+                                &raw_info.borrower,
+                                raw_info.borrow_date,
+                                raw_info.rental_limit.clone(),
+                            );
 
-			ctx.savable_data.returning_request_pool
+                        ctx.savable_data
+                            .returning_request_pool
                             .add_request(borrowing_info.clone());
 
                         CustomerRequest::Borrowing(borrowing_info)
                     }
                     CustomerRequest::Returning(_) => {
-                        let request = ctx.savable_data
+                        let request = ctx
+                            .savable_data
                             .returning_request_pool
                             .select_returning_request_random()
                             .unwrap();
@@ -137,15 +144,15 @@ impl SuzunaSubScene {
         transition: SceneTransition,
     ) {
         if transition == SceneTransition::SwapTransition {
-	    if let Some(shop_scene) = self.shop_scene.as_ref() {
-		let init_data = shop_scene.clone_begning_save_data();
-		self.scene_status = SuzunaSceneStatus::DayResult;
-		self.day_result_scene = Some(Box::new(TaskResultScene::new(
+            if let Some(shop_scene) = self.shop_scene.as_ref() {
+                let init_data = shop_scene.clone_begning_save_data();
+                self.scene_status = SuzunaSceneStatus::DayResult;
+                self.day_result_scene = Some(Box::new(TaskResultScene::new(
                     ctx,
-		    init_data,
+                    init_data,
                     self.date.clone(),
-		)));
-	    }
+                )));
+            }
         }
     }
 

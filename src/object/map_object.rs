@@ -444,32 +444,36 @@ impl PlayableCharacter {
 
     pub fn move_map_current_speed_x(&mut self, ctx: &mut ggez::Context, border: numeric::Vector2f) {
         let x_speed = self.get_character_object().speed_info().get_speed().x;
-	let current_position = self.get_map_position();
-	let next_position = self.get_map_position().x + x_speed;
-	let drawing_size = self.character.obj().get_drawing_size(ctx);
-	let right_border = border.y - drawing_size.x;
+        let current_position = self.get_map_position();
+        let next_position = self.get_map_position().x + x_speed;
+        let drawing_size = self.character.obj().get_drawing_size(ctx);
+        let right_border = border.y - drawing_size.x;
 
         if next_position < border.x {
-	    self.character.set_map_position(numeric::Point2f::new(border.x, current_position.y));
+            self.character
+                .set_map_position(numeric::Point2f::new(border.x, current_position.y));
         } else if next_position > right_border {
-	    self.character.set_map_position(numeric::Point2f::new(right_border, current_position.y));
-	} else {
+            self.character
+                .set_map_position(numeric::Point2f::new(right_border, current_position.y));
+        } else {
             self.move_map(numeric::Vector2f::new(x_speed, 0.0))
         }
     }
 
     pub fn move_map_current_speed_y(&mut self, ctx: &mut ggez::Context, border: numeric::Vector2f) {
         let y_speed = self.get_character_object().speed_info().get_speed().y;
-	let current_position = self.get_map_position();
-	let next_position = self.get_map_position().y + y_speed;
-	let drawing_size = self.character.obj().get_drawing_size(ctx);
-	let bottom_border = border.y - drawing_size.y;
-	
+        let current_position = self.get_map_position();
+        let next_position = self.get_map_position().y + y_speed;
+        let drawing_size = self.character.obj().get_drawing_size(ctx);
+        let bottom_border = border.y - drawing_size.y;
+
         if next_position < border.x {
-	    self.character.set_map_position(numeric::Point2f::new(current_position.x, border.x));
+            self.character
+                .set_map_position(numeric::Point2f::new(current_position.x, border.x));
         } else if next_position > bottom_border {
-	    self.character.set_map_position(numeric::Point2f::new(current_position.x, bottom_border));
-	} else {
+            self.character
+                .set_map_position(numeric::Point2f::new(current_position.x, bottom_border));
+        } else {
             self.move_map(numeric::Vector2f::new(0.0, y_speed))
         }
     }
@@ -826,13 +830,10 @@ impl CustomerCharacter {
         distance!(current, self.current_goal) < 1.5
     }
 
-    fn generate_hold_request<'a>(
-        &mut self,
-	ctx: &mut SuzuContext<'a>,
-    ) -> CustomerRequest {
+    fn generate_hold_request<'a>(&mut self, ctx: &mut SuzuContext<'a>) -> CustomerRequest {
         let random_select = rand::random::<usize>() % 2;
-	let today = ctx.savable_data.date.clone();
-	
+        let today = ctx.savable_data.date.clone();
+
         match random_select {
             0 => CustomerRequest::Borrowing(BorrowingInformation::new(
                 vec![ctx.resource.book_random_select().clone()],
@@ -934,10 +935,7 @@ impl CustomerCharacter {
         self.customer_status == CustomerCharacterStatus::WaitOnClerk
     }
 
-    pub fn check_rise_hand<'a>(
-        &mut self,
-	ctx: &mut SuzuContext<'a>,
-    ) -> Option<CustomerRequest> {
+    pub fn check_rise_hand<'a>(&mut self, ctx: &mut SuzuContext<'a>) -> Option<CustomerRequest> {
         if self.customer_status == CustomerCharacterStatus::WaitOnClerk {
             Some(self.generate_hold_request(ctx))
         } else {

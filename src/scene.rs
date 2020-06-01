@@ -1,7 +1,7 @@
+pub mod save_scene;
 pub mod scenario_scene;
 pub mod shop_scene;
 pub mod suzuna_scene;
-pub mod save_scene;
 pub mod title_scene;
 
 use std::str::FromStr;
@@ -43,7 +43,7 @@ impl FromStr for SceneID {
             "Scenario" => Ok(Self::Scenario),
             "SuzunaShop" => Ok(Self::SuzunaShop),
             "WorkResult" => Ok(Self::DayResult),
-	    "Title" => Ok(Self::Title),
+            "Title" => Ok(Self::Title),
             _ => panic!("Error: EventTrigger::from_str"),
         }
     }
@@ -87,11 +87,7 @@ pub trait SceneManager {
     ) {
     }
 
-    fn scene_popping_return_handler<'a>(
-	&mut self,
-	_: &mut SuzuContext<'a>,
-    ) {
-    }
+    fn scene_popping_return_handler<'a>(&mut self, _: &mut SuzuContext<'a>) {}
 
     fn pre_process<'a>(&mut self, ctx: &mut SuzuContext<'a>);
 

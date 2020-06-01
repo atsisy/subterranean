@@ -4,7 +4,6 @@ use ggez::graphics as ggraphics;
 use ggez::input as ginput;
 use ginput::mouse::MouseCursor;
 
-use torifune::roundup2f;
 use torifune::core::Clock;
 use torifune::graphics::drawable::*;
 use torifune::graphics::object::shape;
@@ -14,13 +13,14 @@ use torifune::graphics::object::sub_screen::SubScreen;
 use torifune::graphics::object::*;
 use torifune::impl_drawable_object_for_wrapped;
 use torifune::impl_texture_object_for_wrapped;
+use torifune::roundup2f;
 use torifune::{debug, numeric};
 
 use crate::flush_delay_event;
-use crate::set_table_frame_cell_center;
+use crate::object::util_object::*;
 use crate::object::{effect, move_fn};
 use crate::scene::*;
-use crate::object::util_object::*;
+use crate::set_table_frame_cell_center;
 
 use super::Clickable;
 use crate::core::*;
@@ -99,14 +99,14 @@ impl DeskObjects {
         let mut dparam = ggraphics::DrawParam::default();
         dparam.dest = numeric::Point2f::new(rect.x, rect.y).into();
 
-	let appr_frame = TileBatchFrame::new(
-	    ctx.resource,
-	    TileBatchTextureID::BlackFrame,
-	    numeric::Rect::new(0.0, 0.0, rect.w, rect.h),
-	    numeric::Vector2f::new(1.0, 1.0),
-	    0
-	);
-	
+        let appr_frame = TileBatchFrame::new(
+            ctx.resource,
+            TileBatchTextureID::BlackFrame,
+            numeric::Rect::new(0.0, 0.0, rect.w, rect.h),
+            numeric::Vector2f::new(1.0, 1.0),
+            0,
+        );
+
         let desk_objects = DeskObjectContainer::new();
 
         DeskObjects {
@@ -131,42 +131,43 @@ impl DeskObjects {
                 Vec::new(),
             ),
             event_list: DelayEventList::new(),
-	    appearance_frame: appr_frame,
+            appearance_frame: appr_frame,
         }
     }
 
     fn drag_current_object<'a>(&mut self, ctx: &mut SuzuContext<'a>, point: numeric::Point2f) {
-	if let Some(obj) = &mut self.dragging {
-	    let area = match obj {
-		TaskItem::Book(item) => item.get_large_object().get_drawing_area(ctx.context),
-		TaskItem::Texture(item) => item.get_large_object().get_drawing_area(ctx.context),
-	    };
+        if let Some(obj) = &mut self.dragging {
+            let area = match obj {
+                TaskItem::Book(item) => item.get_large_object().get_drawing_area(ctx.context),
+                TaskItem::Texture(item) => item.get_large_object().get_drawing_area(ctx.context),
+            };
 
-	    let canvas_size = self.canvas.get_drawing_size(ctx.context);
-	    let rpoint = self.canvas.relative_point(point);
+            let canvas_size = self.canvas.get_drawing_size(ctx.context);
+            let rpoint = self.canvas.relative_point(point);
 
-	    if (canvas_size.x - rpoint.x) <= 0.0 {
-		return;
-	    }
+            if (canvas_size.x - rpoint.x) <= 0.0 {
+                return;
+            }
 
-	    let drag_point = obj.get_drag_point();
-	    let next_position = numeric::Point2f::new(
-		rpoint.x - (area.w * drag_point.x),
-		rpoint.y - (area.h * drag_point.y)
-	    );
-	    
-	    obj.get_object_mut().set_position(next_position);
+            let drag_point = obj.get_drag_point();
+            let next_position = numeric::Point2f::new(
+                rpoint.x - (area.w * drag_point.x),
+                rpoint.y - (area.h * drag_point.y),
+            );
 
-	    if obj.is_shelving_box_handover_locked() {
-		if next_position.x + area.w > canvas_size.x {
-		    obj.get_object_mut().set_position(numeric::Point2f::new(canvas_size.x - area.w, area.y));
-		}
-	    }
+            obj.get_object_mut().set_position(next_position);
+
+            if obj.is_shelving_box_handover_locked() {
+                if next_position.x + area.w > canvas_size.x {
+                    obj.get_object_mut()
+                        .set_position(numeric::Point2f::new(canvas_size.x - area.w, area.y));
+                }
+            }
         }
     }
 
     pub fn dragging_handler<'a>(&mut self, ctx: &mut SuzuContext<'a>, point: numeric::Point2f) {
-	self.drag_current_object(ctx, point);
+        self.drag_current_object(ctx, point);
     }
 
     pub fn select_dragging_object<'a>(
@@ -206,15 +207,15 @@ impl DeskObjects {
 
             dragging.get_object_mut().start_dragging(ctx);
 
-	    let object_area = match &dragging {
-		TaskItem::Book(item) => item.get_large_object().get_drawing_area(ctx.context),
-		TaskItem::Texture(item) => item.get_large_object().get_drawing_area(ctx.context),
-	    };
-	    
-	    dragging.set_drag_point(numeric::Vector2f::new(
-		(rpoint.x - object_area.x) / object_area.w,
-		(rpoint.y - object_area.y) / object_area.h,
-	    ));
+            let object_area = match &dragging {
+                TaskItem::Book(item) => item.get_large_object().get_drawing_area(ctx.context),
+                TaskItem::Texture(item) => item.get_large_object().get_drawing_area(ctx.context),
+            };
+
+            dragging.set_drag_point(numeric::Vector2f::new(
+                (rpoint.x - object_area.x) / object_area.w,
+                (rpoint.y - object_area.y) / object_area.h,
+            ));
 
             self.dragging = Some(dragging);
 
@@ -397,7 +398,7 @@ impl DrawableComponent for DeskObjects {
                 d.get_object_mut().draw(ctx)?;
             }
 
-	    self.appearance_frame.draw(ctx)?;
+            self.appearance_frame.draw(ctx)?;
 
             sub_screen::pop_screen(ctx);
             self.canvas.draw(ctx).unwrap();
@@ -1073,21 +1074,16 @@ pub struct SuzuMiniSight {
 
 impl SuzuMiniSight {
     pub fn new<'a>(ctx: &mut SuzuContext<'a>, rect: ggraphics::Rect, t: Clock) -> Self {
-	let appr_frame = TileBatchFrame::new(
-	    ctx.resource,
-	    TileBatchTextureID::BlackFrame,
-	    numeric::Rect::new(0.0, 0.0, rect.w, rect.h),
-	    numeric::Vector2f::new(1.0, 1.0),
-	    0
-	);
-	
+        let appr_frame = TileBatchFrame::new(
+            ctx.resource,
+            TileBatchTextureID::BlackFrame,
+            numeric::Rect::new(0.0, 0.0, rect.w, rect.h),
+            numeric::Vector2f::new(1.0, 1.0),
+            0,
+        );
+
         SuzuMiniSight {
-            canvas: SubScreen::new(
-                ctx.context,
-                rect,
-                0,
-                ggraphics::Color::from_rgba_u32(0),
-            ),
+            canvas: SubScreen::new(ctx.context, rect, 0, ggraphics::Color::from_rgba_u32(0)),
             dragging: None,
             dropping: Vec::new(),
             dropping_to_desk: Vec::new(),
@@ -1105,7 +1101,7 @@ impl SuzuMiniSight {
                 ),
                 t,
             ),
-	    appearance_frame: appr_frame,
+            appearance_frame: appr_frame,
         }
     }
 
@@ -1120,39 +1116,33 @@ impl SuzuMiniSight {
         self.silhouette
             .new_customer_update(ctx, chara, name, dialogue, t);
     }
-    
+
     pub fn count_not_forbidden_book_items(&self, kosuzu_memory: &KosuzuMemory) -> usize {
-	let mut count = 0;
+        let mut count = 0;
 
-	if let Some(dragging) = self.dragging.as_ref() {
-	    match dragging {
-		TaskItem::Book(item) => {
-		    if !kosuzu_memory
-			.is_in_blacklist(
-			    item.get_large_object().get_book_info()
-			) {
-			    count += 1;
-			}
-		},
-		_ => (),
-	    }
-	}
+        if let Some(dragging) = self.dragging.as_ref() {
+            match dragging {
+                TaskItem::Book(item) => {
+                    if !kosuzu_memory.is_in_blacklist(item.get_large_object().get_book_info()) {
+                        count += 1;
+                    }
+                }
+                _ => (),
+            }
+        }
 
-	for obj in self.dropping_to_desk.iter() {
-	    match obj {
-		TaskItem::Book(item) => {
-		    if !kosuzu_memory
-			.is_in_blacklist(
-			    item.get_large_object().get_book_info()
-			) {
-			    count += 1;
-			}
-		},
-		_ => (),
-	    }
-	}
+        for obj in self.dropping_to_desk.iter() {
+            match obj {
+                TaskItem::Book(item) => {
+                    if !kosuzu_memory.is_in_blacklist(item.get_large_object().get_book_info()) {
+                        count += 1;
+                    }
+                }
+                _ => (),
+            }
+        }
 
-	count
+        count
     }
 
     pub fn dragging_handler(&mut self, point: numeric::Point2f, last: numeric::Point2f) {
@@ -1221,7 +1211,7 @@ impl SuzuMiniSight {
     }
 
     pub fn ref_dragging(&self) -> Option<&TaskItem> {
-	self.dragging.as_ref()
+        self.dragging.as_ref()
     }
 
     pub fn insert_dragging(&mut self, obj: TaskItem) {
@@ -1320,7 +1310,7 @@ impl DrawableComponent for SuzuMiniSight {
                 d.get_object_mut().draw(ctx)?;
             }
 
-	    self.appearance_frame.draw(ctx)?;
+            self.appearance_frame.draw(ctx)?;
 
             sub_screen::pop_screen(ctx);
             self.canvas.draw(ctx).unwrap();
@@ -1401,11 +1391,12 @@ impl CustomerRequest {
 
 impl ToString for CustomerRequest {
     fn to_string(&self) -> String {
-	match self {
-	    CustomerRequest::Borrowing(_) => "貸出",
-	    CustomerRequest::Returning(_) => "返却",
-	    CustomerRequest::Copying(_) => "写本",
-	}.to_string()
+        match self {
+            CustomerRequest::Borrowing(_) => "貸出",
+            CustomerRequest::Returning(_) => "返却",
+            CustomerRequest::Copying(_) => "写本",
+        }
+        .to_string()
     }
 }
 
@@ -1424,29 +1415,29 @@ impl ShelvingBookBox {
         let mut dparam = ggraphics::DrawParam::default();
         dparam.dest = numeric::Point2f::new(rect.x, rect.y).into();
 
-	let box_back = UniTexture::new(
-	    ctx.resource.ref_texture(TextureID::BookBoxBack),
-	    numeric::Point2f::new(0.0, rect.h - 300.0),
-	    numeric::Vector2f::new(0.586, 0.586),
-	    0.0,
-	    0
-	);
+        let box_back = UniTexture::new(
+            ctx.resource.ref_texture(TextureID::BookBoxBack),
+            numeric::Point2f::new(0.0, rect.h - 300.0),
+            numeric::Vector2f::new(0.586, 0.586),
+            0.0,
+            0,
+        );
 
-	let box_front = UniTexture::new(
-	    ctx.resource.ref_texture(TextureID::BookBoxFront),
-	    numeric::Point2f::new(0.0, rect.h - 300.0),
-	    numeric::Vector2f::new(0.586, 0.586),
-	    0.0,
-	    0
-	);
+        let box_front = UniTexture::new(
+            ctx.resource.ref_texture(TextureID::BookBoxFront),
+            numeric::Point2f::new(0.0, rect.h - 300.0),
+            numeric::Vector2f::new(0.586, 0.586),
+            0.0,
+            0,
+        );
 
-	let appr_frame = TileBatchFrame::new(
-	    ctx.resource,
-	    TileBatchTextureID::BlackFrame,
-	    numeric::Rect::new(0.0, 0.0, rect.w, rect.h),
-	    numeric::Vector2f::new(1.0, 1.0),
-	    0
-	);
+        let appr_frame = TileBatchFrame::new(
+            ctx.resource,
+            TileBatchTextureID::BlackFrame,
+            numeric::Rect::new(0.0, 0.0, rect.w, rect.h),
+            numeric::Vector2f::new(1.0, 1.0),
+            0,
+        );
 
         ShelvingBookBox {
             canvas: SubScreen::new(
@@ -1469,9 +1460,9 @@ impl ShelvingBookBox {
                 ),
                 Vec::new(),
             ),
-	    box_front: box_front,
-	    box_back: box_back,
-	    appearance_frame: appr_frame,
+            box_front: box_front,
+            box_back: box_back,
+            appearance_frame: appr_frame,
         }
     }
 
@@ -1610,7 +1601,7 @@ impl DrawableComponent for ShelvingBookBox {
 
             self.table_texture.draw(ctx)?;
 
-	    self.box_back.draw(ctx)?;
+            self.box_back.draw(ctx)?;
 
             for obj in &mut self.shelved {
                 obj.get_object_mut().draw(ctx)?;
@@ -1620,9 +1611,9 @@ impl DrawableComponent for ShelvingBookBox {
                 d.get_object_mut().draw(ctx)?;
             }
 
-	    self.box_front.draw(ctx)?;
+            self.box_front.draw(ctx)?;
 
-	    self.appearance_frame.draw(ctx)?;
+            self.appearance_frame.draw(ctx)?;
 
             sub_screen::pop_screen(ctx);
             self.canvas.draw(ctx).unwrap();
@@ -1661,75 +1652,73 @@ pub struct KosuzuPhrase {
 
 impl KosuzuPhrase {
     pub fn new<'a>(ctx: &mut SuzuContext<'a>, depth: i8) -> Self {
-	KosuzuPhrase {
-	    text_balloon: None,
-	    event_list: DelayEventList::new(),
-	    canvas: SubScreen::new(
-		ctx.context,
-		numeric::Rect::new(800.0, 300.0, 300.0, 500.0),
-		depth,
-		ggraphics::Color::from_rgba_u32(0)
-	    ),
-	}
+        KosuzuPhrase {
+            text_balloon: None,
+            event_list: DelayEventList::new(),
+            canvas: SubScreen::new(
+                ctx.context,
+                numeric::Rect::new(800.0, 300.0, 300.0, 500.0),
+                depth,
+                ggraphics::Color::from_rgba_u32(0),
+            ),
+        }
     }
 
     pub fn insert_new_phrase<'a>(&mut self, ctx: &mut SuzuContext<'a>, text: &str, t: Clock) {
-	self.text_balloon = Some(
-	    EffectableWrap::new(
-		MovableWrap::new(
-		    Box::new(TextBalloon::new(
-			ctx.context,
-			numeric::Rect::new(0.0, 0.0, 300.0, 500.0),
-			text,
-			TextBalloonPhraseType::SimplePhrase,
-			FontInformation::new(
-			    ctx.resource.get_font(FontID::JpFude1),
-			    numeric::Vector2f::new(21.0, 21.0),
-			    ggraphics::BLACK
-			)
-		    )),
-		    None,
-		    t,
-		),
-		vec![effect::fade_in(10, t)],
-	    )
-	);
+        self.text_balloon = Some(EffectableWrap::new(
+            MovableWrap::new(
+                Box::new(TextBalloon::new(
+                    ctx.context,
+                    numeric::Rect::new(0.0, 0.0, 300.0, 500.0),
+                    text,
+                    TextBalloonPhraseType::SimplePhrase,
+                    FontInformation::new(
+                        ctx.resource.get_font(FontID::JpFude1),
+                        numeric::Vector2f::new(21.0, 21.0),
+                        ggraphics::BLACK,
+                    ),
+                )),
+                None,
+                t,
+            ),
+            vec![effect::fade_in(10, t)],
+        ));
 
-	self.event_list.add_event(
+        self.event_list.add_event(
             Box::new(|slf: &mut Self, _, t| slf.close_text_balloon(t)),
             t + 240,
         );
     }
 
     fn close_text_balloon(&mut self, t: Clock) {
-	if let Some(balloon) = self.text_balloon.as_mut() {
+        if let Some(balloon) = self.text_balloon.as_mut() {
             balloon.add_effect(vec![effect::fade_out(10, t)]);
             self.event_list.add_event(
                 Box::new(|slf: &mut Self, _, _| slf.text_balloon = None),
                 t + 11,
             );
-	}
+        }
     }
 
     pub fn update<'a>(&mut self, ctx: &mut SuzuContext<'a>, t: Clock) {
         flush_delay_event!(self, self.event_list, ctx, t);
-	
-	if let Some(balloon) = self.text_balloon.as_mut() {
-	    balloon.effect(ctx.context, t);
-	    balloon.move_with_func(t);
-	}
+
+        if let Some(balloon) = self.text_balloon.as_mut() {
+            balloon.effect(ctx.context, t);
+            balloon.move_with_func(t);
+        }
     }
 }
 
 impl DrawableComponent for KosuzuPhrase {
     fn draw(&mut self, ctx: &mut ggez::Context) -> ggez::GameResult<()> {
-	if self.is_visible() {
+        if self.is_visible() {
             sub_screen::stack_screen(ctx, &self.canvas);
-	    
-	    if let Some(balloon) = self.text_balloon.as_mut() {
-		balloon.draw(ctx)?;
-	    }
-	    
+
+            if let Some(balloon) = self.text_balloon.as_mut() {
+                balloon.draw(ctx)?;
+            }
+
             sub_screen::pop_screen(ctx);
             self.canvas.draw(ctx).unwrap();
         }
@@ -1754,7 +1743,7 @@ impl DrawableComponent for KosuzuPhrase {
 
     fn get_drawing_depth(&self) -> i8 {
         self.canvas.get_drawing_depth()
-    }    
+    }
 }
 
 ///
@@ -1769,10 +1758,7 @@ struct TaskInfoContents {
 }
 
 impl TaskInfoContents {
-    pub fn new<'a>(
-	ctx: &mut SuzuContext<'a>,
-	customer_request: Option<CustomerRequest>,
-    ) -> Self {
+    pub fn new<'a>(ctx: &mut SuzuContext<'a>, customer_request: Option<CustomerRequest>) -> Self {
         let normal_scale_font = FontInformation::new(
             ctx.resource.get_font(FontID::Cinema),
             numeric::Vector2f::new(25.0, 25.0),
@@ -1785,45 +1771,48 @@ impl TaskInfoContents {
             ggraphics::Color::from_rgba_u32(0x000000ff),
         );
 
-	let book_frame = TableFrame::new(
-	    ctx.resource,
-	    numeric::Point2f::new(50.0, 65.0),
-	    TileBatchTextureID::OldStyleFrame,
-	    FrameData::new(vec![130.0, 130.0], vec![45.0; 4]),
-	    numeric::Vector2f::new(0.25, 0.25),
-	    0
-	);
+        let book_frame = TableFrame::new(
+            ctx.resource,
+            numeric::Point2f::new(50.0, 65.0),
+            TileBatchTextureID::OldStyleFrame,
+            FrameData::new(vec![130.0, 130.0], vec![45.0; 4]),
+            numeric::Vector2f::new(0.25, 0.25),
+            0,
+        );
 
-	let general_frame = TableFrame::new(
-	    ctx.resource,
-	    numeric::Point2f::new(50.0, 400.0),
-	    TileBatchTextureID::OldStyleFrame,
-	    FrameData::new(vec![300.0], vec![45.0; 4]),
-	    numeric::Vector2f::new(0.25, 0.25),
-	    0
-	);
+        let general_frame = TableFrame::new(
+            ctx.resource,
+            numeric::Point2f::new(50.0, 400.0),
+            TileBatchTextureID::OldStyleFrame,
+            FrameData::new(vec![300.0], vec![45.0; 4]),
+            numeric::Vector2f::new(0.25, 0.25),
+            0,
+        );
 
-	let mut header_text = UniText::new(
-	    "報情客接".to_string(),
-	    numeric::Point2f::new(0.0, 0.0),
-	    numeric::Vector2f::new(1.0, 1.0),
-	    0.0,
-	    0,
-	    large_scale_font
-	);
-	header_text.make_center(ctx.context, numeric::Point2f::new(150.0, 30.0));
-	
-	let mut desc_text = Vec::new();
+        let mut header_text = UniText::new(
+            "報情客接".to_string(),
+            numeric::Point2f::new(0.0, 0.0),
+            numeric::Vector2f::new(1.0, 1.0),
+            0.0,
+            0,
+            large_scale_font,
+        );
+        header_text.make_center(ctx.context, numeric::Point2f::new(150.0, 30.0));
 
-	for (index, s) in vec!["妖怪疑念度", "要件", "氏名", "本日"].iter().enumerate() {
-	    let mut vtext = VerticalText::new(
-		s.to_string(),
-		numeric::Point2f::new(0.0, 0.0),
-		numeric::Vector2f::new(1.0, 1.0),
-		0.0,
-		0,
-		normal_scale_font
-	    );
+        let mut desc_text = Vec::new();
+
+        for (index, s) in vec!["妖怪疑念度", "要件", "氏名", "本日"]
+            .iter()
+            .enumerate()
+        {
+            let mut vtext = VerticalText::new(
+                s.to_string(),
+                numeric::Point2f::new(0.0, 0.0),
+                numeric::Vector2f::new(1.0, 1.0),
+                0.0,
+                0,
+                normal_scale_font,
+            );
 
             set_table_frame_cell_center!(
                 ctx.context,
@@ -1831,33 +1820,37 @@ impl TaskInfoContents {
                 vtext,
                 numeric::Vector2u::new(index as u32, 0)
             );
-	    
-	    desc_text.push(vtext);
-	}
 
-	let mut request_type_vtext = VerticalText::new(
-	    if let Some(request) = customer_request.as_ref() { request.to_string() } else { "".to_string() },
-	    numeric::Point2f::new(0.0, 0.0),
-	    numeric::Vector2f::new(1.0, 1.0),
-	    0.0,
-	    0,
-	    normal_scale_font
-	);
-	
+            desc_text.push(vtext);
+        }
+
+        let mut request_type_vtext = VerticalText::new(
+            if let Some(request) = customer_request.as_ref() {
+                request.to_string()
+            } else {
+                "".to_string()
+            },
+            numeric::Point2f::new(0.0, 0.0),
+            numeric::Vector2f::new(1.0, 1.0),
+            0.0,
+            0,
+            normal_scale_font,
+        );
+
         set_table_frame_cell_center!(
             ctx.context,
             book_frame,
-	    request_type_vtext,
+            request_type_vtext,
             numeric::Vector2u::new(1, 1)
         );
-	
-	desc_text.push(request_type_vtext);
-	
+
+        desc_text.push(request_type_vtext);
+
         TaskInfoContents {
-	    general_info_frame: general_frame,
-	    book_table_frame: book_frame,
-	    header_text: header_text,
-	    desc_text: desc_text,
+            general_info_frame: general_frame,
+            book_table_frame: book_frame,
+            header_text: header_text,
+            desc_text: desc_text,
             drwob_essential: DrawableObjectEssential::new(true, 0),
         }
     }
@@ -1866,19 +1859,19 @@ impl TaskInfoContents {
 impl DrawableComponent for TaskInfoContents {
     fn draw(&mut self, ctx: &mut ggez::Context) -> ggez::GameResult<()> {
         if self.is_visible() {
-	    self.book_table_frame.draw(ctx)?;
-	    self.general_info_frame.draw(ctx)?;
+            self.book_table_frame.draw(ctx)?;
+            self.general_info_frame.draw(ctx)?;
 
-	    self.header_text.draw(ctx)?;
-	    
-	    for vtext in self.desc_text.iter_mut() {
-		vtext.draw(ctx).unwrap();
-	    }
+            self.header_text.draw(ctx)?;
+
+            for vtext in self.desc_text.iter_mut() {
+                vtext.draw(ctx).unwrap();
+            }
         }
 
         Ok(())
     }
-    
+
     #[inline(always)]
     fn hide(&mut self) {
         self.drwob_essential.visible = false;
@@ -1913,26 +1906,26 @@ pub struct TaskInfoPanel {
 
 impl TaskInfoPanel {
     pub fn new<'a>(
-	ctx: &mut SuzuContext<'a>,
-	size: numeric::Rect,
-	customer_request: Option<CustomerRequest>,
+        ctx: &mut SuzuContext<'a>,
+        size: numeric::Rect,
+        customer_request: Option<CustomerRequest>,
     ) -> Self {
         TaskInfoPanel {
             canvas: SubScreen::new(
                 ctx.context,
-		size,
+                size,
                 0,
                 ggraphics::Color::from_rgba_u32(0xffffffff),
             ),
             background: UniTexture::new(
                 ctx.resource.ref_texture(TextureID::MenuArt1),
-		numeric::Point2f::new(0.0, 0.0),
-		numeric::Vector2f::new(1.0, 1.0),
-		0.0,
-		0,
+                numeric::Point2f::new(0.0, 0.0),
+                numeric::Vector2f::new(1.0, 1.0),
+                0.0,
+                0,
             ),
             contents: TaskInfoContents::new(ctx, customer_request),
-	}
+        }
     }
 }
 
@@ -1966,5 +1959,4 @@ impl DrawableComponent for TaskInfoPanel {
     fn get_drawing_depth(&self) -> i8 {
         self.canvas.get_drawing_depth()
     }
-
 }

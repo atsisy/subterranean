@@ -23,7 +23,7 @@ use crate::set_table_frame_cell_center;
 
 use super::Clickable;
 use crate::core::*;
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 
 use number_to_jk::number_to_jk;
 
@@ -216,7 +216,7 @@ pub trait OnDesk: TextureObject + Clickable {
     fn click_hold_data(&self, ctx: &mut ggez::Context, point: numeric::Point2f) -> HoldData;
 
     fn get_hold_data(&self) -> HoldData {
-	HoldData::None
+        HoldData::None
     }
 
     fn get_type(&self) -> OnDeskType;
@@ -477,9 +477,9 @@ impl OnDesk for OnDeskBook {
     }
 
     fn get_hold_data(&self) -> HoldData {
-	HoldData::BookName(self.info.clone())
+        HoldData::BookName(self.info.clone())
     }
-    
+
     fn get_type(&self) -> OnDeskType {
         OnDeskType::Book
     }
@@ -778,8 +778,8 @@ impl From<&ReturnBookInformation> for BorrowingRecordBookPageData {
             rental_limit: info.borrow_date.rental_limit_type(&info.return_date),
             return_date: Some(info.return_date),
             rental_date: Some(info.borrow_date),
-	    borrowing_is_signed: true,
-	    returning_is_signed: false,
+            borrowing_is_signed: true,
+            returning_is_signed: false,
         }
     }
 }
@@ -805,7 +805,7 @@ pub struct SignFrame {
 
 impl SignFrame {
     pub fn new<'a>(ctx: &mut SuzuContext<'a>, position: numeric::Point2f, depth: i8) -> Self {
-	let sign_frame = TableFrame::new(
+        let sign_frame = TableFrame::new(
             ctx.resource,
             position,
             TileBatchTextureID::RedOldStyleFrame,
@@ -813,82 +813,82 @@ impl SignFrame {
             numeric::Vector2f::new(0.3, 0.3),
             0,
         );
-	
-	SignFrame {
-	    sign_frame: sign_frame,
-	    borrowing_is_done: false,
-	    returning_is_done: false,
-	    borrowing_sign: None,
-	    returning_sign: None,
-	    drwob_essential: DrawableObjectEssential::new(true, depth),
-	}
+
+        SignFrame {
+            sign_frame: sign_frame,
+            borrowing_is_done: false,
+            returning_is_done: false,
+            borrowing_sign: None,
+            returning_sign: None,
+            drwob_essential: DrawableObjectEssential::new(true, depth),
+        }
     }
 
-    pub fn contains_sign_frame(&self, ctx: &mut ggez::Context, point: numeric::Point2f) -> Option<SignFrameEntry> {
-	let maybe_grid_position = self.sign_frame.get_grid_position(ctx, point);
+    pub fn contains_sign_frame(
+        &self,
+        ctx: &mut ggez::Context,
+        point: numeric::Point2f,
+    ) -> Option<SignFrameEntry> {
+        let maybe_grid_position = self.sign_frame.get_grid_position(ctx, point);
         if let Some(grid_position) = maybe_grid_position {
-	    match grid_position.y {
-		0 => Some(SignFrameEntry::BorrowingSign),
-		1 => Some(SignFrameEntry::ReturningSign),
-		_ => None
-	    }
+            match grid_position.y {
+                0 => Some(SignFrameEntry::BorrowingSign),
+                1 => Some(SignFrameEntry::ReturningSign),
+                _ => None,
+            }
         } else {
-	    None
-	}
+            None
+        }
     }
 
     pub fn sign_borrowing_frame(&mut self, ctx: &mut SuzuContext) {
-	let mut sign_texture = UniTexture::new(
-	    ctx.resource.ref_texture(TextureID::ChoicePanel1),
-	    numeric::Point2f::new(0.0, 0.0),
-	    numeric::Vector2f::new(0.25, 0.25),
-	    0.0,
-	    0
-	);
+        let mut sign_texture = UniTexture::new(
+            ctx.resource.ref_texture(TextureID::ChoicePanel1),
+            numeric::Point2f::new(0.0, 0.0),
+            numeric::Vector2f::new(0.25, 0.25),
+            0.0,
+            0,
+        );
 
-	set_table_frame_cell_center!(
+        set_table_frame_cell_center!(
             ctx.context,
             self.sign_frame,
             sign_texture,
             numeric::Vector2u::new(0, 0)
         );
 
-	self.borrowing_is_done = true;
-	
-	self.borrowing_sign = Some(
-	    sign_texture
-	);
+        self.borrowing_is_done = true;
+
+        self.borrowing_sign = Some(sign_texture);
     }
 
     pub fn sign_returning_frame(&mut self, ctx: &mut SuzuContext) {
-	let mut sign_texture = UniTexture::new(
-	    ctx.resource.ref_texture(TextureID::ChoicePanel2),
-	    numeric::Point2f::new(0.0, 0.0),
-	    numeric::Vector2f::new(0.25, 0.25),
-	    0.0,
-	    0
-	);
+        let mut sign_texture = UniTexture::new(
+            ctx.resource.ref_texture(TextureID::ChoicePanel2),
+            numeric::Point2f::new(0.0, 0.0),
+            numeric::Vector2f::new(0.25, 0.25),
+            0.0,
+            0,
+        );
 
-	set_table_frame_cell_center!(
+        set_table_frame_cell_center!(
             ctx.context,
             self.sign_frame,
             sign_texture,
             numeric::Vector2u::new(0, 1)
         );
 
-	self.returning_is_done = true;
-	
-	self.returning_sign = Some(
-	    sign_texture
-	);
+        self.returning_is_done = true;
+
+        self.returning_sign = Some(sign_texture);
     }
 
     pub fn borrowing_signing_is_done(&self) -> bool {
-	self.borrowing_sign.is_some()
+        self.borrowing_sign.is_some()
     }
 
     pub fn retuning_signing_is_done(&self) -> bool {
-	self.returning_sign.is_some()
+        self.returning_sign.is_some()
     }
 }
 
@@ -929,7 +929,6 @@ impl DrawableComponent for SignFrame {
         self.drwob_essential.drawing_depth
     }
 }
-
 
 pub struct PayFrame {
     pay_frame: TableFrame,
@@ -1018,7 +1017,7 @@ impl PayFrame {
             rental_limit_data: None,
             listed_books_number: 0,
             drwob_essential: DrawableObjectEssential::new(true, depth),
-	    calculated_price: None,
+            calculated_price: None,
         };
 
         pay_frame.update_book_count(ctx, 0, 0);
@@ -1030,7 +1029,7 @@ impl PayFrame {
         &mut self,
         ctx: &mut SuzuContext<'a>,
         rental_limit: RentalLimit,
-	base_price: u32
+        base_price: u32,
     ) {
         let text = match rental_limit {
             RentalLimit::ShortTerm => "短期",
@@ -1065,7 +1064,12 @@ impl PayFrame {
         self.calc_payment_money(ctx, base_price);
     }
 
-    pub fn update_book_count<'a>(&mut self, ctx: &mut SuzuContext<'a>, count: usize, base_price: u32) {
+    pub fn update_book_count<'a>(
+        &mut self,
+        ctx: &mut SuzuContext<'a>,
+        count: usize,
+        base_price: u32,
+    ) {
         let mut vtext = VerticalText::new(
             format!("{}冊", number_to_jk(count as u64)),
             numeric::Point2f::new(0.0, 0.0),
@@ -1099,13 +1103,10 @@ impl PayFrame {
                 return;
             }
 
-	    self.calculated_price = Some((rental_limit.fee_rate() * base_price as f32) as u32);
-	    
+            self.calculated_price = Some((rental_limit.fee_rate() * base_price as f32) as u32);
+
             let mut vtext = VerticalText::new(
-                format!(
-                    "{}円",
-                    number_to_jk(self.calculated_price.unwrap() as u64)
-                ),
+                format!("{}円", number_to_jk(self.calculated_price.unwrap() as u64)),
                 numeric::Point2f::new(0.0, 0.0),
                 numeric::Vector2f::new(1.0, 1.0),
                 0.0,
@@ -1132,7 +1133,7 @@ impl PayFrame {
     }
 
     pub fn get_calculated_price(&self) -> Option<u32> {
-	self.calculated_price.clone()
+        self.calculated_price.clone()
     }
 }
 
@@ -1261,22 +1262,23 @@ impl BorrowingRecordBookPage {
             );
         }
 
-	let base_price = page.base_price_of_written_book();
-	
+        let base_price = page.base_price_of_written_book();
+
         if let Some(rental_limit) = page_data.rental_limit {
-            page.pay_frame.update_rental_limit_text(ctx, rental_limit, base_price);
+            page.pay_frame
+                .update_rental_limit_text(ctx, rental_limit, base_price);
         }
 
         page.pay_frame
             .update_book_count(ctx, page_data.borrowing_book_title.len(), base_price);
 
-	if page_data.borrowing_is_signed {
-	    page.sign_frame.sign_borrowing_frame(ctx);
-	}
+        if page_data.borrowing_is_signed {
+            page.sign_frame.sign_borrowing_frame(ctx);
+        }
 
-	if page_data.returning_is_signed {
-	    page.sign_frame.sign_returning_frame(ctx);
-	}
+        if page_data.returning_is_signed {
+            page.sign_frame.sign_returning_frame(ctx);
+        }
 
         page
     }
@@ -1590,29 +1592,29 @@ impl BorrowingRecordBookPage {
             paper_texture: paper_texture,
             borrow_date: borrow_date,
             pay_frame: PayFrame::new(ctx, numeric::Point2f::new(170.0, 40.0), 0),
-	    sign_frame: SignFrame::new(ctx, numeric::Point2f::new(30.0, rect.h - 190.0), 0),
+            sign_frame: SignFrame::new(ctx, numeric::Point2f::new(30.0, rect.h - 190.0), 0),
             return_date: return_date,
             drwob_essential: DrawableObjectEssential::new(true, 0),
         }
     }
 
     pub fn get_calculated_price(&self) -> Option<u32> {
-	self.pay_frame.get_calculated_price()
+        self.pay_frame.get_calculated_price()
     }
 
     pub fn get_written_books(&self) -> Vec<BookInformation> {
-	let mut book_info = Vec::new();
+        let mut book_info = Vec::new();
 
-	for (_, hold_data) in self.borrow_book.iter() {
-	    match hold_data.ref_hold_data() {
-		HoldData::BookName(info) => book_info.push(info.clone()),
-		_ => (),
-	    }
-	}
+        for (_, hold_data) in self.borrow_book.iter() {
+            match hold_data.ref_hold_data() {
+                HoldData::BookName(info) => book_info.push(info.clone()),
+                _ => (),
+            }
+        }
 
-	book_info
+        book_info
     }
-    
+
     pub fn try_insert_data_in_info_frame(
         &mut self,
         ctx: &mut ggez::Context,
@@ -1669,41 +1671,46 @@ impl BorrowingRecordBookPage {
     }
 
     fn base_price_of_written_book(&self) -> u32 {
-	self.borrow_book
+        self.borrow_book
             .iter()
-            .map(|(_, data)|
-		 match data.ref_hold_data() {
-		     HoldData::BookName(info) => info.base_price,
-		     _ => 0
-		 }
-	    )
+            .map(|(_, data)| match data.ref_hold_data() {
+                HoldData::BookName(info) => info.base_price,
+                _ => 0,
+            })
             .fold(0, |sum, c| sum + c)
     }
 
     fn borrowing_signing_is_available(&self) -> bool {
-	// 何らかの値段が設定されていればOK
-	self.pay_frame.calculated_price.is_some() && !self.sign_frame.borrowing_signing_is_done()
+        // 何らかの値段が設定されていればOK
+        self.pay_frame.calculated_price.is_some() && !self.sign_frame.borrowing_signing_is_done()
     }
 
     fn returning_signing_is_available(&self) -> bool {
-	let rows_size = self.books_table.get_rows();
-	for index in 0..rows_size {
-	    // ある列の先頭の要素が存在し、かつ本の情報である場合、下の欄に状態が記載されてるか確認する
-	    let data = self.borrow_book.get(&numeric::Vector2u::new(index as u32, 0));
-	    if let Some(data) = data.as_ref() {
-		match data.ref_hold_data() {
-		    HoldData::BookName(_) => {
-			match self.borrow_book.get(&numeric::Vector2u::new(index as u32, 1)).unwrap().data {
-			    HoldData::BookStatus(_) => (),
-			    _ => return false,  // 本の状態の情報が無い場合、書き漏れがあるとして、falseを返す
-			}
-		    },
-		    _ => (),
-		}
-	    }
-	}
+        let rows_size = self.books_table.get_rows();
+        for index in 0..rows_size {
+            // ある列の先頭の要素が存在し、かつ本の情報である場合、下の欄に状態が記載されてるか確認する
+            let data = self
+                .borrow_book
+                .get(&numeric::Vector2u::new(index as u32, 0));
+            if let Some(data) = data.as_ref() {
+                match data.ref_hold_data() {
+                    HoldData::BookName(_) => {
+                        match self
+                            .borrow_book
+                            .get(&numeric::Vector2u::new(index as u32, 1))
+                            .unwrap()
+                            .data
+                        {
+                            HoldData::BookStatus(_) => (),
+                            _ => return false, // 本の状態の情報が無い場合、書き漏れがあるとして、falseを返す
+                        }
+                    }
+                    _ => (),
+                }
+            }
+        }
 
-	true
+        true
     }
 
     ///
@@ -1733,8 +1740,11 @@ impl BorrowingRecordBookPage {
                 .get_center_of(grid_pos, self.books_table.get_position()),
         );
 
-        self.pay_frame
-            .update_book_count(ctx, self.count_written_book_title(), self.base_price_of_written_book());
+        self.pay_frame.update_book_count(
+            ctx,
+            self.count_written_book_title(),
+            self.base_price_of_written_book(),
+        );
     }
 
     ///
@@ -1766,7 +1776,11 @@ impl BorrowingRecordBookPage {
         );
 
         if grid_pos.x == 0 {
-            self.pay_frame.update_rental_limit_text(ctx, rental_limit, self.base_price_of_written_book());
+            self.pay_frame.update_rental_limit_text(
+                ctx,
+                rental_limit,
+                self.base_price_of_written_book(),
+            );
         }
     }
 
@@ -1904,32 +1918,36 @@ impl BorrowingRecordBookPage {
             return_date: return_date,
             rental_date: rental_date,
             rental_limit: rental_limit,
-	    borrowing_is_signed: self.sign_frame.borrowing_is_done,
-	    returning_is_signed: self.sign_frame.returning_is_done,
+            borrowing_is_signed: self.sign_frame.borrowing_is_done,
+            returning_is_signed: self.sign_frame.returning_is_done,
         }
     }
 
-    pub fn sign_with_mouse_click<'a>(&mut self, ctx: &mut SuzuContext<'a>, point: numeric::Point2f) -> Option<SignFrameEntry> {
-	let maybe_sign_entry = self.sign_frame.contains_sign_frame(ctx.context, point);
-	
-	if let Some(sign_entry) = maybe_sign_entry.as_ref() {
-	    match sign_entry {
-		SignFrameEntry::BorrowingSign => {
-		    if self.borrowing_signing_is_available() {
-			self.sign_frame.sign_borrowing_frame(ctx);
-			return maybe_sign_entry;
-		    }
-		},
-		SignFrameEntry::ReturningSign => {
-		    if self.returning_signing_is_available() {
-			self.sign_frame.sign_returning_frame(ctx);
-			return maybe_sign_entry;
-		    }
-		},
-	    }
-	}
+    pub fn sign_with_mouse_click<'a>(
+        &mut self,
+        ctx: &mut SuzuContext<'a>,
+        point: numeric::Point2f,
+    ) -> Option<SignFrameEntry> {
+        let maybe_sign_entry = self.sign_frame.contains_sign_frame(ctx.context, point);
 
-	None
+        if let Some(sign_entry) = maybe_sign_entry.as_ref() {
+            match sign_entry {
+                SignFrameEntry::BorrowingSign => {
+                    if self.borrowing_signing_is_available() {
+                        self.sign_frame.sign_borrowing_frame(ctx);
+                        return maybe_sign_entry;
+                    }
+                }
+                SignFrameEntry::ReturningSign => {
+                    if self.returning_signing_is_available() {
+                        self.sign_frame.sign_returning_frame(ctx);
+                        return maybe_sign_entry;
+                    }
+                }
+            }
+        }
+
+        None
     }
 }
 
@@ -1946,7 +1964,7 @@ impl DrawableComponent for BorrowingRecordBookPage {
             self.return_date.draw(ctx)?;
 
             self.pay_frame.draw(ctx)?;
-	    self.sign_frame.draw(ctx)?;
+            self.sign_frame.draw(ctx)?;
 
             for (_, d) in &mut self.borrow_book {
                 d.draw(ctx)?;
@@ -2115,12 +2133,12 @@ impl BorrowingRecordBook {
 
     pub fn get_current_page_written_books<'a>(&self) -> Option<Vec<BookInformation>> {
         if let Some(page) = self.get_current_page() {
-	    Some(page.get_written_books())
+            Some(page.get_written_books())
         } else {
-	    None
-	}
+            None
+        }
     }
-    
+
     pub fn insert_date_data_to_customer_info<'a>(
         &mut self,
         ctx: &mut SuzuContext<'a>,
@@ -2135,11 +2153,11 @@ impl BorrowingRecordBook {
     }
 
     pub fn get_calculated_price(&self) -> Option<u32> {
-	if let Some(page) = self.get_current_page() {
-	    page.get_calculated_price()
-	} else {
-	    None
-	}
+        if let Some(page) = self.get_current_page() {
+            page.get_calculated_price()
+        } else {
+            None
+        }
     }
 
     pub fn insert_customer_name_data_to_customer_info(
@@ -2183,17 +2201,21 @@ impl BorrowingRecordBook {
             return true;
         }
 
-	false
+        false
     }
 
-    pub fn sign_with_mouse_click<'a>(&mut self, ctx: &mut SuzuContext<'a>, point: numeric::Point2f) -> Option<SignFrameEntry> {
-	let rpoint = self.relative_point(point);
-	
-	if let Some(page) = self.get_current_page_mut() {
-	    page.sign_with_mouse_click(ctx, rpoint)
+    pub fn sign_with_mouse_click<'a>(
+        &mut self,
+        ctx: &mut SuzuContext<'a>,
+        point: numeric::Point2f,
+    ) -> Option<SignFrameEntry> {
+        let rpoint = self.relative_point(point);
+
+        if let Some(page) = self.get_current_page_mut() {
+            page.sign_with_mouse_click(ctx, rpoint)
         } else {
-	    None
-	}
+            None
+        }
     }
 
     pub fn pages_length(&self) -> usize {
@@ -2386,7 +2408,10 @@ impl OnDesk for BorrowingRecordBook {
 }
 
 pub struct TaskItemStruct<S, L>
-where S: OnDesk, L: OnDesk {
+where
+    S: OnDesk,
+    L: OnDesk,
+{
     small: Box<EffectableWrap<MovableWrap<S>>>,
     large: Box<EffectableWrap<MovableWrap<L>>>,
     switch: u8,
@@ -2397,39 +2422,33 @@ where S: OnDesk, L: OnDesk {
 }
 
 impl<S, L> TaskItemStruct<S, L>
-where S: OnDesk, L: OnDesk {
+where
+    S: OnDesk,
+    L: OnDesk,
+{
     pub fn new(
         small: S,
         large: L,
         switch: u8,
-	handover_locked: bool,
-	shelving_box_locked: bool,
+        handover_locked: bool,
+        shelving_box_locked: bool,
         obj_type: DeskObjectType,
         t: Clock,
     ) -> TaskItemStruct<S, L> {
         TaskItemStruct {
             small: Box::new(EffectableWrap::new(
-                MovableWrap::new(
-		    Box::new(small),
-		    None,
-		    t
-		),
+                MovableWrap::new(Box::new(small), None, t),
                 Vec::new(),
             )),
-            large: Box::new(
-		EffectableWrap::new(
-                    MovableWrap::new(
-			Box::new(large),
-			None,
-			t
-		    ),
-                    Vec::new(),
+            large: Box::new(EffectableWrap::new(
+                MovableWrap::new(Box::new(large), None, t),
+                Vec::new(),
             )),
             switch: switch,
-	    handover_locked: handover_locked,
-	    shelving_box_locked: shelving_box_locked,
+            handover_locked: handover_locked,
+            shelving_box_locked: shelving_box_locked,
             object_type: obj_type,
-	    drag_point: numeric::Vector2f::new(0.0, 0.0),
+            drag_point: numeric::Vector2f::new(0.0, 0.0),
         }
     }
 
@@ -2446,91 +2465,107 @@ where S: OnDesk, L: OnDesk {
     }
 
     pub fn get_object(&self) -> &dyn OnDesk {
-	match self.switch {
-	    0 => self.small.ref_wrapped_object().ref_wrapped_object().as_ref(),
-	    1 => self.large.ref_wrapped_object().ref_wrapped_object().as_ref(),
-	    _ => panic!("Failed to object selecting. select = {}", self.switch),
+        match self.switch {
+            0 => self
+                .small
+                .ref_wrapped_object()
+                .ref_wrapped_object()
+                .as_ref(),
+            1 => self
+                .large
+                .ref_wrapped_object()
+                .ref_wrapped_object()
+                .as_ref(),
+            _ => panic!("Failed to object selecting. select = {}", self.switch),
         }
     }
 
     pub fn get_object_mut(&mut self) -> &mut dyn OnDesk {
-	match self.switch {
-	    0 => self.small.ref_wrapped_object_mut().ref_wrapped_object_mut().as_mut(),
-	    1 => self.large.ref_wrapped_object_mut().ref_wrapped_object_mut().as_mut(),
-	    _ => panic!("Failed to object selecting. select = {}", self.switch),
+        match self.switch {
+            0 => self
+                .small
+                .ref_wrapped_object_mut()
+                .ref_wrapped_object_mut()
+                .as_mut(),
+            1 => self
+                .large
+                .ref_wrapped_object_mut()
+                .ref_wrapped_object_mut()
+                .as_mut(),
+            _ => panic!("Failed to object selecting. select = {}", self.switch),
         }
     }
 
     pub fn get_movable_object(&self) -> &dyn MovableObject {
-	match self.switch {
-	    0 => self.small.ref_wrapped_object(),
-	    1 => self.large.ref_wrapped_object(),
-	    _ => panic!("Failed to object selecting. select = {}", self.switch),
+        match self.switch {
+            0 => self.small.ref_wrapped_object(),
+            1 => self.large.ref_wrapped_object(),
+            _ => panic!("Failed to object selecting. select = {}", self.switch),
         }
     }
-    
+
     pub fn get_movable_object_mut(&mut self) -> &mut dyn MovableObject {
-	match self.switch {
-	    0 => self.small.ref_wrapped_object_mut(),
-	    1 => self.large.ref_wrapped_object_mut(),
-	    _ => panic!("Failed to object selecting. select = {}", self.switch),
+        match self.switch {
+            0 => self.small.ref_wrapped_object_mut(),
+            1 => self.large.ref_wrapped_object_mut(),
+            _ => panic!("Failed to object selecting. select = {}", self.switch),
         }
     }
 
     pub fn get_effectable_object(&mut self) -> &mut dyn HasGenericEffect {
-	match self.switch {
-	    0 => self.small.as_mut(),
-	    1 => self.large.as_mut(),
-	    _ => panic!("Failed to object selecting. select = {}", self.switch),
+        match self.switch {
+            0 => self.small.as_mut(),
+            1 => self.large.as_mut(),
+            _ => panic!("Failed to object selecting. select = {}", self.switch),
         }
     }
 
     pub fn is_handover_locked(&self) -> bool {
-	self.handover_locked
+        self.handover_locked
     }
 
     pub fn lock_handover(&mut self) {
-	self.handover_locked = true;
+        self.handover_locked = true;
     }
 
     pub fn unlock_handover(&mut self) {
-	self.handover_locked = false;
+        self.handover_locked = false;
     }
 
     pub fn is_shelving_box_handover_locked(&self) -> bool {
-	self.shelving_box_locked
+        self.shelving_box_locked
     }
 
     pub fn lock_shelving_box_handover(&mut self) {
-	self.shelving_box_locked = true;
+        self.shelving_box_locked = true;
     }
 
     pub fn unlock_shelving_box_handover(&mut self) {
-	self.shelving_box_locked = false;
+        self.shelving_box_locked = false;
     }
 
     pub fn get_small_object(&self) -> &S {
-	self.small.ref_wrapped_object().ref_wrapped_object()
+        self.small.ref_wrapped_object().ref_wrapped_object()
     }
 
     pub fn get_small_object_mut(&mut self) -> &mut S {
-	self.small.ref_wrapped_object_mut().ref_wrapped_object_mut()
+        self.small.ref_wrapped_object_mut().ref_wrapped_object_mut()
     }
 
     pub fn get_large_object(&self) -> &L {
-	self.large.ref_wrapped_object().ref_wrapped_object()
+        self.large.ref_wrapped_object().ref_wrapped_object()
     }
 
     pub fn get_large_object_mut(&mut self) -> &mut L {
-	self.large.ref_wrapped_object_mut().ref_wrapped_object_mut()
+        self.large.ref_wrapped_object_mut().ref_wrapped_object_mut()
     }
 
     pub fn get_drag_point(&self) -> numeric::Vector2f {
-	self.drag_point
+        self.drag_point
     }
 
     pub fn set_drag_point(&mut self, drag_point: numeric::Vector2f) {
-	self.drag_point = drag_point;
+        self.drag_point = drag_point;
     }
 }
 
@@ -2551,159 +2586,159 @@ pub enum TaskItem {
 
 impl TaskItem {
     pub fn enable_small(&mut self) {
-	match self {
-	    TaskItem::Book(item) => item.enable_small(),
-	    TaskItem::Texture(item) => item.enable_small(),
-	}
+        match self {
+            TaskItem::Book(item) => item.enable_small(),
+            TaskItem::Texture(item) => item.enable_small(),
+        }
     }
 
     pub fn enable_large(&mut self) {
-	match self {
-	    TaskItem::Book(item) => item.enable_large(),
-	    TaskItem::Texture(item) => item.enable_large(),
-	}
+        match self {
+            TaskItem::Book(item) => item.enable_large(),
+            TaskItem::Texture(item) => item.enable_large(),
+        }
     }
 
     pub fn get_object_type(&self) -> DeskObjectType {
-	match self {
-	    TaskItem::Book(item) => item.get_object_type(),
-	    TaskItem::Texture(item) => item.get_object_type(),
-	}
+        match self {
+            TaskItem::Book(item) => item.get_object_type(),
+            TaskItem::Texture(item) => item.get_object_type(),
+        }
     }
 
     pub fn get_object(&self) -> &dyn OnDesk {
-	match self {
-	    TaskItem::Book(item) => item.get_object(),
-	    TaskItem::Texture(item) => item.get_object(),
-	}
+        match self {
+            TaskItem::Book(item) => item.get_object(),
+            TaskItem::Texture(item) => item.get_object(),
+        }
     }
 
     pub fn get_object_mut(&mut self) -> &mut dyn OnDesk {
-	match self {
-	    TaskItem::Book(item) => item.get_object_mut(),
-	    TaskItem::Texture(item) => item.get_object_mut(),
-	}
+        match self {
+            TaskItem::Book(item) => item.get_object_mut(),
+            TaskItem::Texture(item) => item.get_object_mut(),
+        }
     }
 
     pub fn as_movable_object(&self) -> &dyn MovableObject {
-	match self {
-	    TaskItem::Book(item) => item.get_movable_object(),
-	    TaskItem::Texture(item) => item.get_movable_object(),
-	}
+        match self {
+            TaskItem::Book(item) => item.get_movable_object(),
+            TaskItem::Texture(item) => item.get_movable_object(),
+        }
     }
-    
+
     pub fn as_movable_object_mut(&mut self) -> &mut dyn MovableObject {
-	match self {
-	    TaskItem::Book(item) => item.get_movable_object_mut(),
-	    TaskItem::Texture(item) => item.get_movable_object_mut(),
-	}
+        match self {
+            TaskItem::Book(item) => item.get_movable_object_mut(),
+            TaskItem::Texture(item) => item.get_movable_object_mut(),
+        }
     }
 
     pub fn as_effectable_object(&mut self) -> &mut dyn HasGenericEffect {
-	match self {
-	    TaskItem::Book(item) => item.get_effectable_object(),
-	    TaskItem::Texture(item) => item.get_effectable_object(),
-	}
+        match self {
+            TaskItem::Book(item) => item.get_effectable_object(),
+            TaskItem::Texture(item) => item.get_effectable_object(),
+        }
     }
 
     pub fn is_handover_locked(&self) -> bool {
-	match self {
-	    TaskItem::Book(item) => item.is_handover_locked(),
-	    TaskItem::Texture(item) => item.is_handover_locked(),
-	}
+        match self {
+            TaskItem::Book(item) => item.is_handover_locked(),
+            TaskItem::Texture(item) => item.is_handover_locked(),
+        }
     }
 
     pub fn lock_handover(&mut self) {
-	match self {
-	    TaskItem::Book(item) => item.lock_handover(),
-	    TaskItem::Texture(item) => item.lock_handover(),
-	}
+        match self {
+            TaskItem::Book(item) => item.lock_handover(),
+            TaskItem::Texture(item) => item.lock_handover(),
+        }
     }
 
     pub fn unlock_handover(&mut self) {
-	match self {
-	    TaskItem::Book(item) => item.unlock_handover(),
-	    TaskItem::Texture(item) => item.unlock_handover(),
-	}
+        match self {
+            TaskItem::Book(item) => item.unlock_handover(),
+            TaskItem::Texture(item) => item.unlock_handover(),
+        }
     }
 
     pub fn is_shelving_box_handover_locked(&self) -> bool {
-	match self {
-	    TaskItem::Book(item) => item.is_shelving_box_handover_locked(),
-	    TaskItem::Texture(item) => item.is_shelving_box_handover_locked(),
-	}
+        match self {
+            TaskItem::Book(item) => item.is_shelving_box_handover_locked(),
+            TaskItem::Texture(item) => item.is_shelving_box_handover_locked(),
+        }
     }
 
     pub fn lock_shelving_box_handover(&mut self) {
-	match self {
-	    TaskItem::Book(item) => item.lock_shelving_box_handover(),
-	    TaskItem::Texture(item) => item.lock_shelving_box_handover(),
-	}
+        match self {
+            TaskItem::Book(item) => item.lock_shelving_box_handover(),
+            TaskItem::Texture(item) => item.lock_shelving_box_handover(),
+        }
     }
 
     pub fn unlock_shelving_box_handover(&mut self) {
-	match self {
-	    TaskItem::Book(item) => item.unlock_shelving_box_handover(),
-	    TaskItem::Texture(item) => item.unlock_shelving_box_handover(),
-	}
+        match self {
+            TaskItem::Book(item) => item.unlock_shelving_box_handover(),
+            TaskItem::Texture(item) => item.unlock_shelving_box_handover(),
+        }
     }
 
     pub fn get_drag_point(&self) -> numeric::Vector2f {
-	match self {
-	    TaskItem::Book(item) => item.get_drag_point(),
-	    TaskItem::Texture(item) => item.get_drag_point(),
-	}
+        match self {
+            TaskItem::Book(item) => item.get_drag_point(),
+            TaskItem::Texture(item) => item.get_drag_point(),
+        }
     }
 
     pub fn set_drag_point(&mut self, drag_point: numeric::Vector2f) {
-	match self {
-	    TaskItem::Book(item) => item.set_drag_point(drag_point),
-	    TaskItem::Texture(item) => item.set_drag_point(drag_point),
-	}
+        match self {
+            TaskItem::Book(item) => item.set_drag_point(drag_point),
+            TaskItem::Texture(item) => item.set_drag_point(drag_point),
+        }
     }
 }
 
 impl DrawableComponent for TaskItem {
     fn draw(&mut self, ctx: &mut ggez::Context) -> ggez::GameResult<()> {
-	match self {
-	    TaskItem::Book(item) => item.get_object_mut().draw(ctx),
-	    TaskItem::Texture(item) => item.get_object_mut().draw(ctx),
-	}
+        match self {
+            TaskItem::Book(item) => item.get_object_mut().draw(ctx),
+            TaskItem::Texture(item) => item.get_object_mut().draw(ctx),
+        }
     }
-    
-    fn hide(&mut self) {	
-	match self {
-	    TaskItem::Book(item) => item.get_object_mut().hide(),
-	    TaskItem::Texture(item) => item.get_object_mut().hide(),
-	}
+
+    fn hide(&mut self) {
+        match self {
+            TaskItem::Book(item) => item.get_object_mut().hide(),
+            TaskItem::Texture(item) => item.get_object_mut().hide(),
+        }
     }
-    
+
     fn appear(&mut self) {
-	match self {
-	    TaskItem::Book(item) => item.get_object_mut().appear(),
-	    TaskItem::Texture(item) => item.get_object_mut().appear(),
-	}
+        match self {
+            TaskItem::Book(item) => item.get_object_mut().appear(),
+            TaskItem::Texture(item) => item.get_object_mut().appear(),
+        }
     }
-    
+
     fn is_visible(&self) -> bool {
-	match self {
-	    TaskItem::Book(item) => item.get_object().is_visible(),
-	    TaskItem::Texture(item) => item.get_object().is_visible(),
-	}
+        match self {
+            TaskItem::Book(item) => item.get_object().is_visible(),
+            TaskItem::Texture(item) => item.get_object().is_visible(),
+        }
     }
-    
+
     fn set_drawing_depth(&mut self, depth: i8) {
-	match self {
-	    TaskItem::Book(item) => item.get_object_mut().set_drawing_depth(depth),
-	    TaskItem::Texture(item) => item.get_object_mut().set_drawing_depth(depth),
-	}
+        match self {
+            TaskItem::Book(item) => item.get_object_mut().set_drawing_depth(depth),
+            TaskItem::Texture(item) => item.get_object_mut().set_drawing_depth(depth),
+        }
     }
-    
+
     fn get_drawing_depth(&self) -> i8 {
-	match self {
-	    TaskItem::Book(item) => item.get_object().get_drawing_depth(),
-	    TaskItem::Texture(item) => item.get_object().get_drawing_depth(),
-	}
+        match self {
+            TaskItem::Book(item) => item.get_object().get_drawing_depth(),
+            TaskItem::Texture(item) => item.get_object().get_drawing_depth(),
+        }
     }
 }
 

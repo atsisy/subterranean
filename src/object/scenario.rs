@@ -672,8 +672,8 @@ impl Scenario {
 
         let root = content.parse::<toml::Value>().unwrap();
 
-	let first_scenario_id = root["first-scenario-id"].as_integer().unwrap();
-	
+        let first_scenario_id = root["first-scenario-id"].as_integer().unwrap();
+
         let array = root["scenario-group"].as_array().unwrap();
 
         for elem in array {
@@ -698,7 +698,7 @@ impl Scenario {
         let scene_transition = root["scene-transition"].as_table().unwrap();
         scenario.push(ScenarioElement::SceneTransition(ScenarioTransitionData(
             SceneID::Scenario,
-	    SceneTransition::SwapTransition,
+            SceneTransition::SwapTransition,
             scene_transition
                 .get("scenario")
                 .unwrap()
@@ -707,23 +707,23 @@ impl Scenario {
         )));
         scenario.push(ScenarioElement::SceneTransition(ScenarioTransitionData(
             SceneID::SuzunaShop,
-	    SceneTransition::SwapTransition,
+            SceneTransition::SwapTransition,
             scene_transition.get("dream").unwrap().as_integer().unwrap() as i32,
         )));
-	scenario.push(ScenarioElement::SceneTransition(ScenarioTransitionData(
+        scenario.push(ScenarioElement::SceneTransition(ScenarioTransitionData(
             SceneID::Save,
-	    SceneTransition::StackingTransition,
+            SceneTransition::StackingTransition,
             scene_transition.get("save").unwrap().as_integer().unwrap() as i32,
         )));
-	
+
         let mut scenario = Scenario {
             scenario: scenario,
-	    element_id_stack: LinkedList::new(),
+            element_id_stack: LinkedList::new(),
             current_page: 0,
         };
 
-	scenario.update_current_page_index(first_scenario_id as ScenarioElementID);
-	scenario
+        scenario.update_current_page_index(first_scenario_id as ScenarioElementID);
+        scenario
     }
 
     ///
@@ -741,23 +741,22 @@ impl Scenario {
 
     ///
     /// 次のScenarioElementIDを記録して、かつ、そのインデックスを求め、現在のシナリオとしてセットするメソッド
-    /// 
+    ///
     pub fn update_current_page_index(&mut self, scenario_element_id: ScenarioElementID) {
-	// 次のScenarioElementIDから、ScenarioElementのインデックスを得る
-	self.element_id_stack.push_back(scenario_element_id);
-	let index = self.find_index_of_specified_scenario_id(scenario_element_id);
-	self.current_page = index;
+        // 次のScenarioElementIDから、ScenarioElementのインデックスを得る
+        self.element_id_stack.push_back(scenario_element_id);
+        let index = self.find_index_of_specified_scenario_id(scenario_element_id);
+        self.current_page = index;
     }
 
     pub fn turn_back_scenario_offset(&mut self, offset: usize) {
-	for _ in 0..offset {
-	    self.element_id_stack.pop_back();
-	    
-	}
+        for _ in 0..offset {
+            self.element_id_stack.pop_back();
+        }
 
-	let turn_backed_id = self.element_id_stack.back().unwrap();
+        let turn_backed_id = self.element_id_stack.back().unwrap();
 
-	self.current_page = self.find_index_of_specified_scenario_id(*turn_backed_id);
+        self.current_page = self.find_index_of_specified_scenario_id(*turn_backed_id);
 
         // シナリオを初期化する
         match self.ref_current_element_mut() {
@@ -767,7 +766,7 @@ impl Scenario {
             _ => (),
         }
     }
-    
+
     ///
     /// Scenarioの状態遷移を行うメソッド
     /// このメソッドは通常のテキストから他の状態に遷移する際に呼び出す
@@ -781,7 +780,7 @@ impl Scenario {
             }
         };
 
-	self.update_current_page_index(next_id);
+        self.update_current_page_index(next_id);
 
         // 次がシナリオなら初期化する
         match self.ref_current_element_mut() {
@@ -808,7 +807,7 @@ impl Scenario {
             }
         };
 
-	self.update_current_page_index(next_id);
+        self.update_current_page_index(next_id);
 
         // シナリオを初期化する
         match self.ref_current_element_mut() {
@@ -880,15 +879,15 @@ impl TextBox {
             0,
         );
 
-	let mut line_arrow = UniTexture::new(
-	    ctx.resource.ref_texture(TextureID::ChoicePanel1),
-	    numeric::Point2f::new(0.0, 0.0),
-	    numeric::Vector2f::new(1.0, 1.0),
-	    0.0,
-	    0
-	);
-	line_arrow.fit_scale(ctx.context, numeric::Vector2f::new(28.0, 28.0));
-	line_arrow.hide();
+        let mut line_arrow = UniTexture::new(
+            ctx.resource.ref_texture(TextureID::ChoicePanel1),
+            numeric::Point2f::new(0.0, 0.0),
+            numeric::Vector2f::new(1.0, 1.0),
+            0.0,
+            0,
+        );
+        line_arrow.fit_scale(ctx.context, numeric::Vector2f::new(28.0, 28.0));
+        line_arrow.hide();
 
         TextBox {
             box_lines: box_lines,
@@ -898,7 +897,7 @@ impl TextBox {
             text_box_status: TextBoxStatus::UpdatingText,
             background: background,
             appearance_frame: appr_frame,
-	    line_arrow: line_arrow,
+            line_arrow: line_arrow,
             canvas: SubScreen::new(
                 ctx.context,
                 rect,
@@ -933,7 +932,11 @@ impl TextBox {
         text_lines
     }
 
-    pub fn update_scenario_text<'a>(&mut self, ctx: &mut SuzuContext<'a>, scenario: &ScenarioText) -> usize {
+    pub fn update_scenario_text<'a>(
+        &mut self,
+        ctx: &mut SuzuContext<'a>,
+        scenario: &ScenarioText,
+    ) -> usize {
         // 表示するテキストバッファをクリア。これで、新しくテキストを詰めていく
         self.text.clear();
         self.buffered_text.clear();
@@ -986,7 +989,7 @@ impl TextBox {
 
             seg_count += 1;
         }
-	
+
         // ボックスに入ったSimpleTextの位置を設定
         let mut pos = numeric::Point2f::new(50.0, 50.0);
         for line in &mut self.text {
@@ -994,12 +997,15 @@ impl TextBox {
             pos.y += line.get_font_scale().y;
         }
 
-	if self.text_box_status == TextBoxStatus::WaitNextLineKey || scenario.iterator_finish() {
-	    self.line_arrow.appear();
-	    let last_text_drawing_area = self.text.back().unwrap().get_drawing_area(ctx.context);
-	    let pos = numeric::Point2f::new(last_text_drawing_area.x + last_text_drawing_area.w, last_text_drawing_area.y);
-	    self.line_arrow.set_position(pos);
-	}
+        if self.text_box_status == TextBoxStatus::WaitNextLineKey || scenario.iterator_finish() {
+            self.line_arrow.appear();
+            let last_text_drawing_area = self.text.back().unwrap().get_drawing_area(ctx.context);
+            let pos = numeric::Point2f::new(
+                last_text_drawing_area.x + last_text_drawing_area.w,
+                last_text_drawing_area.y,
+            );
+            self.line_arrow.set_position(pos);
+        }
 
         // 処理したセグメントの数を返す
         seg_count
@@ -1048,7 +1054,7 @@ impl DrawableComponent for TextBox {
                 d.draw(ctx)?;
             }
 
-	    self.line_arrow.draw(ctx)?;
+            self.line_arrow.draw(ctx)?;
 
             sub_screen::pop_screen(ctx);
             self.canvas.draw(ctx).unwrap();
@@ -1155,7 +1161,11 @@ impl ScenarioBox {
         self.text_box.text_box_status
     }
 
-    pub fn update_scenario_text<'a>(&mut self, ctx: &mut SuzuContext<'a>, scenario: &ScenarioText) -> usize {
+    pub fn update_scenario_text<'a>(
+        &mut self,
+        ctx: &mut SuzuContext<'a>,
+        scenario: &ScenarioText,
+    ) -> usize {
         self.text_box.update_scenario_text(ctx, scenario)
     }
 
@@ -1271,14 +1281,14 @@ impl ScenarioEvent {
         let event_tachie =
             Self::update_event_tachie_sub(ctx.resource, scenario.ref_current_element(), t);
 
-	let appr_frame = TileBatchFrame::new(
-	    ctx.resource,
-	    TileBatchTextureID::BlackFrame,
-	    numeric::Rect::new(0.0, 0.0, rect.w, rect.h),
-	    numeric::Vector2f::new(1.0, 1.0),
-	    0
-	);
-	
+        let appr_frame = TileBatchFrame::new(
+            ctx.resource,
+            TileBatchTextureID::BlackFrame,
+            numeric::Rect::new(0.0, 0.0, rect.w, rect.h),
+            numeric::Vector2f::new(1.0, 1.0),
+            0,
+        );
+
         ScenarioEvent {
             scenario: scenario,
             scenario_box: ScenarioBox::new(
@@ -1289,9 +1299,9 @@ impl ScenarioEvent {
             canvas: SubScreen::new(ctx.context, rect, 0, ggraphics::Color::from_rgba_u32(0x00)),
             status: ScenarioEventStatus::Scenario,
             transition_scene: None,
-	    transition_type: None,
+            transition_type: None,
             background: event_background,
-	    appearance_frame: appr_frame,
+            appearance_frame: appr_frame,
             tachie: event_tachie,
         }
     }
@@ -1353,7 +1363,7 @@ impl ScenarioEvent {
     }
 
     pub fn scenario_control_mut(&mut self) -> &mut Scenario {
-	&mut self.scenario
+        &mut self.scenario
     }
 
     ///
@@ -1367,7 +1377,8 @@ impl ScenarioEvent {
                     scenario_text.update_iterator();
 
                     // 何行目までのテキストが表示されたか？
-                    let current_segment = self.scenario_box.update_scenario_text(ctx, &scenario_text);
+                    let current_segment =
+                        self.scenario_box.update_scenario_text(ctx, &scenario_text);
 
                     // どこまで表示したかを更新
                     scenario_text.set_current_segment(current_segment);
@@ -1397,7 +1408,7 @@ impl ScenarioEvent {
                 // SceneTransition状態に移行し、移行先を決定する
                 self.status = ScenarioEventStatus::SceneTransition;
                 self.transition_scene = Some(transition_data.0);
-		self.transition_type = Some(transition_data.1);
+                self.transition_type = Some(transition_data.1);
             }
         }
     }
@@ -1434,8 +1445,8 @@ impl ScenarioEvent {
         match self.scenario.ref_current_element_mut() {
             // 現在のScenarioElementがテキスト
             ScenarioElement::Text(scenario_text) => {
-		self.scenario_box.text_box.line_arrow.hide();
-		
+                self.scenario_box.text_box.line_arrow.hide();
+
                 // 最後まで到達していた場合、新しいScenarioElementに遷移し、テキストボックスをリセット
                 if scenario_text.iterator_finish() {
                     self.scenario.go_next_scenario_from_text_scenario();
@@ -1515,7 +1526,7 @@ impl DrawableComponent for ScenarioEvent {
 
             self.scenario_box.draw(ctx)?;
 
-	    self.appearance_frame.draw(ctx)?;
+            self.appearance_frame.draw(ctx)?;
 
             sub_screen::pop_screen(ctx);
             self.canvas.draw(ctx).unwrap();

@@ -439,8 +439,8 @@ impl SelectShelvingBookUI {
         ui_rect: numeric::Rect,
         mut shelving_book: Vec<BookInformation>,
     ) -> Self {
-	let mut box_book_info = ctx.savable_data.task_result.not_shelved_books.clone();
-	
+        let mut box_book_info = ctx.savable_data.task_result.not_shelved_books.clone();
+
         box_book_info.sort_by(|a, b| a.billing_number.cmp(&b.billing_number));
         shelving_book.sort_by(|a, b| a.billing_number.cmp(&b.billing_number));
 
@@ -1515,7 +1515,7 @@ impl ShopMenuContents {
             ggraphics::Color::from_rgba_u32(0x000000ff),
         );
 
-	let task_result = &ctx.savable_data.task_result;
+        let task_result = &ctx.savable_data.task_result;
 
         let large_scale_font = FontInformation::new(
             ctx.resource.get_font(FontID::JpFude1),
@@ -1636,20 +1636,16 @@ pub struct ShopMenu {
 
 impl ShopMenu {
     pub fn new<'a>(ctx: &mut SuzuContext<'a>, size: numeric::Vector2f, t: Clock) -> Self {
-	let mut canvas = SubScreen::new(
+        let mut canvas = SubScreen::new(
             ctx.context,
             numeric::Rect::new(-size.x, 0.0, size.x, size.y),
             0,
             ggraphics::Color::from_rgba_u32(0xffffffff),
         );
-	canvas.hide();
-	
+        canvas.hide();
+
         ShopMenu {
-            canvas: MovableWrap::new(
-                Box::new(canvas),
-                None,
-                t,
-            ),
+            canvas: MovableWrap::new(Box::new(canvas), None, t),
             background: UniTexture::new(
                 ctx.resource.ref_texture(TextureID::MenuArt1),
                 numeric::Point2f::new(size.x - 1366.0, 0.0),
@@ -1670,14 +1666,14 @@ impl ShopMenu {
                 t,
             );
             self.now_appear = false;
-	    self.hide();
+            self.hide();
         } else {
             self.canvas.override_move_func(
                 move_fn::devide_distance(numeric::Point2f::new(0.0, 0.0), 0.5),
                 t,
             );
             self.now_appear = true;
-	    self.appear();
+            self.appear();
         }
     }
 
@@ -1698,17 +1694,17 @@ impl Updatable for ShopMenu {
 
 impl DrawableComponent for ShopMenu {
     fn draw(&mut self, ctx: &mut ggez::Context) -> ggez::GameResult<()> {
-	if self.is_visible() {
+        if self.is_visible() {
             sub_screen::stack_screen(ctx, &self.canvas);
-	    
+
             self.background.draw(ctx)?;
             self.menu_contents.draw(ctx).unwrap();
-	    
+
             sub_screen::pop_screen(ctx);
             self.canvas.draw(ctx)?;
-	}
+        }
 
-	Ok(())
+        Ok(())
     }
 
     fn hide(&mut self) {
@@ -1778,13 +1774,13 @@ impl ShopDetailMenuContents {
     pub fn hide_toggle(&mut self, t: Clock) {
         self.now_appear = false;
         self.shelving_info.slide_hide(t);
-	self.hide();
+        self.hide();
     }
 
     pub fn appear_toggle(&mut self, t: Clock) {
         self.now_appear = true;
         self.shelving_info.slide_appear(self.appear_position, t);
-	self.appear();
+        self.appear();
     }
 
     pub fn slide_toggle(&mut self, t: Clock) {
@@ -1883,8 +1879,7 @@ impl ShopMenuMaster {
         ctx: &mut SuzuContext,
         player_shelving: &Vec<BookInformation>,
     ) {
-        self.first_menu
-            .update_menu_contents(ctx);
+        self.first_menu.update_menu_contents(ctx);
         self.detail_menu.update_contents(ctx, player_shelving);
     }
 
@@ -2091,12 +2086,12 @@ impl ShopSpecialObject {
     }
 
     pub fn update<'a>(&mut self, ctx: &mut SuzuContext<'a>, t: Clock) {
-	flush_delay_event!(self, self.event_list, ctx, t);
-	
-	if let Some(ui) = self.shelving_select_ui.as_mut() {
+        flush_delay_event!(self, self.event_list, ctx, t);
+
+        if let Some(ui) = self.shelving_select_ui.as_mut() {
             ui.move_with_func(t);
         }
-	
+
         if let Some(storing_ui) = self.storing_select_ui.as_mut() {
             storing_ui.move_with_func(t);
         }

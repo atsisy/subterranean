@@ -6,14 +6,14 @@ pub mod effect_object;
 pub mod map_object;
 pub mod move_fn;
 pub mod notify;
+pub mod save_scene_object;
 pub mod scenario;
 pub mod shop_object;
 pub mod simulation_ui;
 pub mod task_object;
 pub mod task_result_object;
-pub mod util_object;
-pub mod save_scene_object;
 pub mod title_object;
+pub mod util_object;
 
 use std::rc::Rc;
 
@@ -207,13 +207,13 @@ impl DarkEffectPanel {
 
 impl DrawableComponent for DarkEffectPanel {
     fn draw(&mut self, ctx: &mut ggez::Context) -> ggez::GameResult<()> {
-	if self.is_visible() {
+        if self.is_visible() {
             sub_screen::stack_screen(ctx, &self.canvas);
             sub_screen::pop_screen(ctx);
             self.canvas.draw(ctx).unwrap();
-	}
+        }
 
-	Ok(())
+        Ok(())
     }
 
     #[inline(always)]

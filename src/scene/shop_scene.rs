@@ -17,9 +17,7 @@ use torifune::numeric;
 
 use super::*;
 use crate::core::map_parser as mp;
-use crate::core::{
-    FontID, GameResource, SuzuContext, TileBatchTextureID, SavableData
-};
+use crate::core::{FontID, GameResource, SavableData, SuzuContext, TileBatchTextureID};
 use crate::flush_delay_event;
 use crate::object::effect_object;
 use crate::object::map_object::*;
@@ -384,7 +382,7 @@ impl ShopScene {
                 numeric::Point2f::new((crate::core::WINDOW_SIZE_X - 20) as f32, 20.0),
                 0,
             ),
-	    begining_save_data: ctx.savable_data.clone(),
+            begining_save_data: ctx.savable_data.clone(),
         }
     }
 
@@ -435,40 +433,40 @@ impl ShopScene {
         self.camera.borrow_mut().x += offset.x;
         self.camera.borrow_mut().y += offset.y;
 
-	if offset.x != 0.0 || offset.y != 0.0 {
-	    self.map.tile_map.request_redraw();
-	    self.map.tile_map.request_updating_tile_batch();
-	}
+        if offset.x != 0.0 || offset.y != 0.0 {
+            self.map.tile_map.request_redraw();
+            self.map.tile_map.request_updating_tile_batch();
+        }
     }
 
     pub fn set_camera_x(&mut self, offset: f32) {
         self.camera.borrow_mut().x = offset;
 
-	if offset != 0.0 {
-	    self.map.tile_map.request_redraw();
-	    self.map.tile_map.request_updating_tile_batch();
-	}
+        if offset != 0.0 {
+            self.map.tile_map.request_redraw();
+            self.map.tile_map.request_updating_tile_batch();
+        }
     }
 
     pub fn set_camera_y(&mut self, offset: f32) {
         self.camera.borrow_mut().y = offset;
 
-	if offset != 0.0 {
-	    self.map.tile_map.request_redraw();
-	    self.map.tile_map.request_updating_tile_batch();
-	}
+        if offset != 0.0 {
+            self.map.tile_map.request_redraw();
+            self.map.tile_map.request_updating_tile_batch();
+        }
     }
 
     pub fn set_camera(&mut self, offset: numeric::Vector2f) {
         self.camera.borrow_mut().x = offset.x;
         self.camera.borrow_mut().y = offset.y;
 
-	if offset.x != 0.0 || offset.y != 0.0 {
-	    self.map.tile_map.request_redraw();
-	    self.map.tile_map.request_updating_tile_batch();
-	}
+        if offset.x != 0.0 || offset.y != 0.0 {
+            self.map.tile_map.request_redraw();
+            self.map.tile_map.request_updating_tile_batch();
+        }
     }
-    
+
     fn right_key_handler(&mut self) {
         self.player
             .get_mut_character_object()
@@ -529,29 +527,29 @@ impl ShopScene {
     fn camera_focus_character_x(&mut self) {
         let chara_pos = self.player.get_map_position();
 
-	let x = if chara_pos.x <= 683.0 {
-	    0.0
-	} else if chara_pos.x >= 853.0 {
-	    170.0
-	} else {
-	    chara_pos.x - 683.0
-	};
-	
-	self.set_camera_x(x);
+        let x = if chara_pos.x <= 683.0 {
+            0.0
+        } else if chara_pos.x >= 853.0 {
+            170.0
+        } else {
+            chara_pos.x - 683.0
+        };
+
+        self.set_camera_x(x);
     }
 
     fn camera_focus_character_y(&mut self) {
         let chara_pos = self.player.get_map_position();
 
-	let y = if chara_pos.y <= 384.0 {
-	    0.0
-	} else if chara_pos.y >= 1344.0 {
-	    960.0
-	} else {
-	    chara_pos.y - 384.0
-	};
-	
-	self.set_camera_y(y);
+        let y = if chara_pos.y <= 384.0 {
+            0.0
+        } else if chara_pos.y >= 1344.0 {
+            960.0
+        } else {
+            chara_pos.y - 384.0
+        };
+
+        self.set_camera_y(y);
     }
 
     ///
@@ -611,7 +609,7 @@ impl ShopScene {
             .get_mut_character_object()
             .update_display_position(&self.camera.borrow());
 
-	self.camera_focus_character_x();
+        self.camera_focus_character_x();
     }
 
     ///
@@ -634,7 +632,7 @@ impl ShopScene {
             .update_display_position(&self.camera.borrow());
 
         // カメラをプレイヤーにフォーカス
-	self.camera_focus_character_y();
+        self.camera_focus_character_y();
     }
 
     ///
@@ -679,7 +677,7 @@ impl ShopScene {
         }
 
         // カメラをプレイヤーに合わせる
-	self.camera_focus_character_x();
+        self.camera_focus_character_x();
     }
 
     ///
@@ -724,12 +722,15 @@ impl ShopScene {
         }
 
         // カメラをプレイヤーに合わせる
-	self.camera_focus_character_y();
+        self.camera_focus_character_y();
     }
 
     fn move_playable_character_x(&mut self, ctx: &mut ggez::Context, t: Clock) {
         // プレイヤーのX方向の移動
-        self.player.move_map_current_speed_x(ctx, numeric::Vector2f::new(0.0, self.map.tile_map.get_map_size().x));
+        self.player.move_map_current_speed_x(
+            ctx,
+            numeric::Vector2f::new(0.0, self.map.tile_map.get_map_size().x),
+        );
 
         // マップ座標を更新, これで、衝突判定を行えるようになる
         self.player
@@ -745,7 +746,10 @@ impl ShopScene {
 
     fn move_playable_character_y(&mut self, ctx: &mut ggez::Context, t: Clock) {
         // プレイヤーのY方向の移動
-        self.player.move_map_current_speed_y(ctx, numeric::Vector2f::new(0.0, self.map.tile_map.get_map_size().y));
+        self.player.move_map_current_speed_y(
+            ctx,
+            numeric::Vector2f::new(0.0, self.map.tile_map.get_map_size().y),
+        );
         // マップ座標を更新, これで、衝突判定を行えるようになる
         self.player
             .get_mut_character_object()
@@ -965,10 +969,8 @@ impl ShopScene {
         if let Some((boxed, shelving)) = select_result {
             ctx.savable_data.task_result.not_shelved_books = boxed;
             self.player.update_shelving_book(shelving);
-            self.shop_menu.update_contents(
-                ctx,
-                self.player.get_shelving_book(),
-            );
+            self.shop_menu
+                .update_contents(ctx, self.player.get_shelving_book());
             self.dark_effect_panel
                 .new_effect(8, self.get_current_clock(), 200, 0);
         }
@@ -980,10 +982,8 @@ impl ShopScene {
             .hide_storing_select_ui(self.get_current_clock());
         if let Some((_stored, shelving)) = store_result {
             self.player.update_shelving_book(shelving);
-            self.shop_menu.update_contents(
-                ctx,
-                self.player.get_shelving_book(),
-            );
+            self.shop_menu
+                .update_contents(ctx, self.player.get_shelving_book());
             self.dark_effect_panel
                 .new_effect(8, self.get_current_clock(), 200, 0);
         }
@@ -1012,7 +1012,7 @@ impl ShopScene {
     }
 
     pub fn clone_begning_save_data(&self) -> SavableData {
-	self.begining_save_data.clone()
+        self.begining_save_data.clone()
     }
 
     pub fn check_shop_clock_regular<'a>(&mut self, ctx: &mut SuzuContext<'a>, t: Clock) {
@@ -1193,9 +1193,7 @@ impl SceneManager for ShopScene {
             }
 
             for customer in &mut rising_customers {
-                if let Some(request) =
-                    customer.check_rise_hand(ctx)
-                {
+                if let Some(request) = customer.check_rise_hand(ctx) {
                     self.customer_request_queue.push_back(request);
                 }
             }
@@ -1269,25 +1267,25 @@ impl SceneManager for ShopScene {
         self.character_group.draw(ctx).unwrap();
 
         for customer in self.character_group.iter_mut() {
-	    if customer.
-		get_character_object()
-		.obj()
-		.get_drawing_area(ctx)
-		.overlaps(&numeric::Rect::new(0.0, 0.0, 1366.0, 768.0))
-	    {
-		map_obj_drawer.add(customer);
-	    }
+            if customer
+                .get_character_object()
+                .obj()
+                .get_drawing_area(ctx)
+                .overlaps(&numeric::Rect::new(0.0, 0.0, 1366.0, 768.0))
+            {
+                map_obj_drawer.add(customer);
+            }
         }
 
         for customer in &mut self.customer_queue {
-	    if customer.
-		get_character_object()
-		.obj()
-		.get_drawing_area(ctx)
-		.overlaps(&numeric::Rect::new(0.0, 0.0, 1366.0, 768.0))
-	    {
-		map_obj_drawer.add(customer);
-	    }
+            if customer
+                .get_character_object()
+                .obj()
+                .get_drawing_area(ctx)
+                .overlaps(&numeric::Rect::new(0.0, 0.0, 1366.0, 768.0))
+            {
+                map_obj_drawer.add(customer);
+            }
         }
 
         map_obj_drawer.sort(ctx);

@@ -1,12 +1,12 @@
 use torifune::core::Clock;
+use torifune::device::*;
 use torifune::graphics::drawable::*;
 use torifune::graphics::object::*;
-use torifune::device::*;
 
 use crate::core::{SuzuContext, TextureID, TileBatchTextureID};
-use crate::scene::*;
 use crate::object::effect_object;
 use crate::object::title_object::*;
+use crate::scene::*;
 
 use crate::flush_delay_event;
 
@@ -23,15 +23,15 @@ pub struct TitleScene {
 
 impl TitleScene {
     pub fn new<'a>(ctx: &mut SuzuContext<'a>) -> Self {
-	let background = UniTexture::new(
-	    ctx.resource.ref_texture(TextureID::JpHouseTexture),
-	    numeric::Point2f::new(0.0, 0.0),
-	    numeric::Vector2f::new(0.7, 0.7),
-	    0.0,
-	    0
-	);
+        let background = UniTexture::new(
+            ctx.resource.ref_texture(TextureID::JpHouseTexture),
+            numeric::Point2f::new(0.0, 0.0),
+            numeric::Vector2f::new(0.7, 0.7),
+            0.0,
+            0,
+        );
 
-	let scene_transition_effect = Some(effect_object::ScreenTileEffect::new(
+        let scene_transition_effect = Some(effect_object::ScreenTileEffect::new(
             ctx,
             TileBatchTextureID::Shoji,
             numeric::Rect::new(
@@ -52,24 +52,30 @@ impl TitleScene {
             Box::new(move |slf: &mut Self, _, _| {
                 slf.scene_transition_effect = None;
             }),
-	    31,
+            31,
         );
 
-	let mut title_contents_set = TitleContentsSet::from_file(ctx, "./resources/title_contents/title_contents_list.toml");
-	
+        let mut title_contents_set =
+            TitleContentsSet::from_file(ctx, "./resources/title_contents/title_contents_list.toml");
+
         TitleScene {
-	    background: background,
-	    event_list: event_list,
-	    scene_transition_effect: scene_transition_effect,
+            background: background,
+            event_list: event_list,
+            scene_transition_effect: scene_transition_effect,
             scene_transition: SceneID::Save,
-	    scene_transition_type: SceneTransition::Keep,
-	    current_title_contents: title_contents_set.remove_pickup("init-menu"),
-	    title_contents_set: title_contents_set,
-	    clock: 0,
+            scene_transition_type: SceneTransition::Keep,
+            current_title_contents: title_contents_set.remove_pickup("init-menu"),
+            title_contents_set: title_contents_set,
+            clock: 0,
         }
     }
 
-    pub fn transition_selected_scene<'a>(&mut self, ctx: &mut SuzuContext<'a>, scene_id: SceneID, t: Clock) {
+    pub fn transition_selected_scene<'a>(
+        &mut self,
+        ctx: &mut SuzuContext<'a>,
+        scene_id: SceneID,
+        t: Clock,
+    ) {
         self.scene_transition_effect = Some(effect_object::ScreenTileEffect::new(
             ctx,
             TileBatchTextureID::Shoji,
@@ -86,70 +92,86 @@ impl TitleScene {
             t,
         ));
 
-	self.event_list.add_event(
+        self.event_list.add_event(
             Box::new(move |slf: &mut Self, _, _| {
-		slf.scene_transition = scene_id;
-		slf.scene_transition_type = SceneTransition::SwapTransition;
+                slf.scene_transition = scene_id;
+                slf.scene_transition_type = SceneTransition::SwapTransition;
             }),
-	    t + 31,
+            t + 31,
         );
     }
 
-    pub fn contents_mouse_motion_handler<'a>(&mut self, ctx: &mut SuzuContext<'a>, point: numeric::Point2f) {
-	if self.current_title_contents.is_none() {
-	    return;
-	}
-	
-	match &mut self.current_title_contents.as_mut().unwrap() {
-	    TitleContents::InitialMenu(contents) => contents.update_highlight(ctx, point),
-	}
+    pub fn contents_mouse_motion_handler<'a>(
+        &mut self,
+        ctx: &mut SuzuContext<'a>,
+        point: numeric::Point2f,
+    ) {
+        if self.current_title_contents.is_none() {
+            return;
+        }
+
+        match &mut self.current_title_contents.as_mut().unwrap() {
+            TitleContents::InitialMenu(contents) => contents.update_highlight(ctx, point),
+        }
     }
-    
-    pub fn contents_mouse_click_handler<'a>(&mut self, ctx: &mut SuzuContext<'a>, point: numeric::Point2f, t: Clock) {
-	if self.current_title_contents.is_none() {
-	    return;
-	}
-	
-	match &mut self.current_title_contents.as_mut().unwrap() {
-	    TitleContents::InitialMenu(contents) => {
-		let maybe_event = contents.click_handler(ctx, point);
-		if let Some(event) = maybe_event {
-		    match event {
-			TitleContentsEvent::NextContents(content_name) => {
-			    let next_content = self.title_contents_set.remove_pickup(&content_name);
-			    if next_content.is_none() {
-				print!("{}?", content_name);
-				panic!("target title contents not found.");
-			    }
-			    let old = std::mem::replace(&mut self.current_title_contents, next_content);
-			    self.title_contents_set.add(old.as_ref().unwrap().get_content_name(), old.unwrap());
-			},
-			TitleContentsEvent::SceneTransition(scene_id) => {
-			    self.transition_selected_scene(ctx, scene_id, t);
-			}
-		    }
-		}
-	    }
-	}	
+
+    fn switch_current_content(&mut self, content_name: String) {
+        let next_content = self.title_contents_set.remove_pickup(&content_name);
+        if next_content.is_none() {
+            print!("{}?", content_name);
+            panic!("target title contents not found.");
+        }
+
+        // contentの切り替え
+        let old = std::mem::replace(&mut self.current_title_contents, next_content);
+        self.title_contents_set
+            .add(old.as_ref().unwrap().get_content_name(), old.unwrap());
+    }
+
+    pub fn contents_mouse_click_handler<'a>(
+        &mut self,
+        ctx: &mut SuzuContext<'a>,
+        point: numeric::Point2f,
+        t: Clock,
+    ) {
+        if self.current_title_contents.is_none() {
+            return;
+        }
+
+        match &mut self.current_title_contents.as_mut().unwrap() {
+            TitleContents::InitialMenu(contents) => {
+                let maybe_event = contents.click_handler(ctx, point);
+                if let Some(event) = maybe_event {
+                    match event {
+                        TitleContentsEvent::NextContents(content_name) => {
+                            self.switch_current_content(content_name);
+                        }
+                        TitleContentsEvent::SceneTransition(scene_id) => {
+                            self.transition_selected_scene(ctx, scene_id, t);
+                        }
+                    }
+                }
+            }
+        }
     }
 }
 
 impl SceneManager for TitleScene {
     fn key_up_event<'a>(&mut self, ctx: &mut SuzuContext<'a>, vkey: tdev::VirtualKey) {
-	let t = self.get_current_clock();
-	
-	match vkey {
-	    VirtualKey::Action1 => {
-		self.transition_selected_scene(ctx, SceneID::Scenario, t);
-	    },
-	    _ => (),
-	}
+        let t = self.get_current_clock();
+
+        match vkey {
+            VirtualKey::Action1 => {
+                self.transition_selected_scene(ctx, SceneID::Scenario, t);
+            }
+            _ => (),
+        }
     }
-    
+
     fn pre_process<'a>(&mut self, ctx: &mut SuzuContext<'a>) {
-	let t = self.get_current_clock();
-	
-	if let Some(transition_effect) = self.scene_transition_effect.as_mut() {
+        let t = self.get_current_clock();
+
+        if let Some(transition_effect) = self.scene_transition_effect.as_mut() {
             transition_effect.effect(ctx.context, t);
         }
 
@@ -157,13 +179,13 @@ impl SceneManager for TitleScene {
     }
 
     fn drawing_process(&mut self, ctx: &mut ggez::Context) {
-	self.background.draw(ctx).unwrap();
+        self.background.draw(ctx).unwrap();
 
-	if let Some(contetns) = self.current_title_contents.as_mut() {
-	    contetns.draw(ctx).unwrap();
-	}
-	
-	if let Some(transition_effect) = self.scene_transition_effect.as_mut() {
+        if let Some(contetns) = self.current_title_contents.as_mut() {
+            contetns.draw(ctx).unwrap();
+        }
+
+        if let Some(transition_effect) = self.scene_transition_effect.as_mut() {
             transition_effect.draw(ctx).unwrap();
         }
     }
@@ -171,26 +193,26 @@ impl SceneManager for TitleScene {
     fn post_process<'a>(&mut self, _ctx: &mut SuzuContext<'a>) -> SceneTransition {
         self.update_current_clock();
 
-	self.scene_transition_type
+        self.scene_transition_type
     }
 
     fn mouse_button_up_event<'a>(
-	&mut self,
-	ctx: &mut SuzuContext<'a>,
-	_button: ginput::mouse::MouseButton,
-	point: numeric::Point2f
+        &mut self,
+        ctx: &mut SuzuContext<'a>,
+        _button: ginput::mouse::MouseButton,
+        point: numeric::Point2f,
     ) {
-	let t = self.get_current_clock();
-	self.contents_mouse_click_handler(ctx, point, t);
+        let t = self.get_current_clock();
+        self.contents_mouse_click_handler(ctx, point, t);
     }
 
     fn mouse_motion_event<'a>(
-	&mut self,
-	ctx: &mut SuzuContext<'a>,
-	point: numeric::Point2f,
-	_offset: numeric::Vector2f
+        &mut self,
+        ctx: &mut SuzuContext<'a>,
+        point: numeric::Point2f,
+        _offset: numeric::Vector2f,
     ) {
-	self.contents_mouse_motion_handler(ctx, point);
+        self.contents_mouse_motion_handler(ctx, point);
     }
 
     fn transition(&self) -> SceneID {

@@ -73,12 +73,12 @@ impl TaskScene {
             task_table: TaskTable::new(
                 ctx,
                 numeric::Rect::new(0.0, 0.0, 1366.0, 768.0),
-		numeric::Rect::new(0.0, 0.0, 300.0, 768.0),
+                numeric::Rect::new(0.0, 0.0, 300.0, 768.0),
                 numeric::Rect::new(300.0, 0.0, 1066.0, 300.0),
                 numeric::Rect::new(300.0, 300.0, 766.0, 468.0),
                 numeric::Rect::new(1066.0, 300.0, 300.0, 468.0),
                 record_book_data,
-		customer_request.clone(),
+                customer_request.clone(),
                 0,
             ),
             clock: 0,
@@ -120,12 +120,12 @@ impl TaskScene {
     }
 
     fn check_done_today_work<'a>(&mut self, ctx: &mut SuzuContext<'a>, request: CustomerRequest) {
-	let task_result = &mut ctx.savable_data.task_result;
+        let task_result = &mut ctx.savable_data.task_result;
         match request {
             CustomerRequest::Borrowing(request_information) => {
                 // 貸出本を記録
-		task_result.done_works += 1;
-		task_result.total_money += request_information.calc_fee();
+                task_result.done_works += 1;
+                task_result.total_money += request_information.calc_fee();
                 task_result
                     .borrowing_books
                     .extend(request_information.borrowing);
@@ -275,9 +275,7 @@ impl SceneManager for TaskScene {
         let t = self.get_current_clock();
         self.task_table.update(ctx, self.get_current_clock());
 
-        if self.status == TaskSceneStatus::CustomerEvent
-            && self.task_table.task_is_done()
-        {
+        if self.status == TaskSceneStatus::CustomerEvent && self.task_table.task_is_done() {
             debug::debug_screen_push_text(&format!("register delay process!!"));
             self.event_list.add_event(
                 Box::new(|scene: &mut TaskScene, _, _| {

@@ -33,31 +33,30 @@ impl KosuzuMemory {
     pub fn new() -> Self {
         KosuzuMemory {
             remembered_book_info: Vec::new(),
-	    book_black_list: Vec::new(),
+            book_black_list: Vec::new(),
             customers_name: Vec::new(),
             dates: Vec::new(),
         }
     }
 
     pub fn add_book_info(&mut self, book_info: BookInformation) {
-	if !self.is_in_blacklist(&book_info) {
-	    self.remembered_book_info.push(book_info);
-	}
+        if !self.is_in_blacklist(&book_info) {
+            self.remembered_book_info.push(book_info);
+        }
     }
 
     pub fn is_in_blacklist(&self, book_info: &BookInformation) -> bool {
-	self.book_black_list.contains(book_info)
-	
+        self.book_black_list.contains(book_info)
     }
 
     pub fn full_of_blacklist(&self, book_info_list: &Vec<BookInformation>) -> bool {
-	for info in book_info_list.iter() {
-	    if !self.is_in_blacklist(info) {
-		return false;
-	    }
-	}
+        for info in book_info_list.iter() {
+            if !self.is_in_blacklist(info) {
+                return false;
+            }
+        }
 
-	return true;
+        return true;
     }
 
     pub fn add_customer_name(&mut self, name: String) {
@@ -69,7 +68,7 @@ impl KosuzuMemory {
     }
 
     pub fn add_book_to_black_list(&mut self, book_info: BookInformation) {
-	self.book_black_list.push(book_info);
+        self.book_black_list.push(book_info);
     }
 
     pub fn get_book_info_remove(&mut self, index: usize) -> Option<BookInformation> {
@@ -483,7 +482,7 @@ impl BookTitleMenu {
             numeric::Vector2f::new(32.0, 32.0),
             ggraphics::Color::from_rgba_u32(0xff),
         );
-	
+
         let title_table_frame = TableFrame::new(
             ctx.resource,
             numeric::Point2f::new(48.0, 32.0),
@@ -974,7 +973,7 @@ impl PaymentMenu {
             select_table_frame: select_table_frame,
             select_vtext: select_vtext,
             drwob_essential: DrawableObjectEssential::new(true, drawing_depth),
-	    price: price,
+            price: price,
             last_clicked: None,
         }
     }
@@ -995,7 +994,7 @@ impl PaymentMenu {
     }
 
     pub fn get_price(&self) -> u32 {
-	self.price
+        self.price
     }
 }
 
@@ -2193,7 +2192,8 @@ impl RecordBookMenuGroup {
         kosuzu_memory: &KosuzuMemory,
         t: Clock,
     ) {
-        let book_title_menu = BookTitleMenu::new(ctx, kosuzu_memory.remembered_book_info.clone(), 0);
+        let book_title_menu =
+            BookTitleMenu::new(ctx, kosuzu_memory.remembered_book_info.clone(), 0);
 
         let frame_size = book_title_menu.get_title_frame_size();
 
@@ -2283,7 +2283,7 @@ impl RecordBookMenuGroup {
         &mut self,
         ctx: &mut SuzuContext,
         position: numeric::Point2f,
-	price: u32,
+        price: u32,
         t: Clock,
     ) {
         let payment_menu = PaymentMenu::new(ctx, price, 0);
@@ -2310,13 +2310,13 @@ impl RecordBookMenuGroup {
     }
 
     pub fn get_payment_menu_price(&self) -> Option<u32> {
-	if let Some(menu) = self.payment_menu.as_ref() {
-	    Some(menu.get_component().get_price())
-	} else {
-	    None
-	}
+        if let Some(menu) = self.payment_menu.as_ref() {
+            Some(menu.get_component().get_price())
+        } else {
+            None
+        }
     }
-    
+
     pub fn update<'a>(&mut self, ctx: &mut SuzuContext<'a>, t: Clock) {
         flush_delay_event!(self, self.event_list, ctx, t);
 
@@ -2425,10 +2425,13 @@ impl DeskBookMenu {
             0,
         );
 
-	for (index, s) in vec!["題名を記憶", "状態確認", "貸出を断る"].iter().enumerate() {
-	    let choice_str_element = s.to_string();
-	    
-	    let mut vtext = VerticalText::new(
+        for (index, s) in vec!["題名を記憶", "状態確認", "貸出を断る"]
+            .iter()
+            .enumerate()
+        {
+            let choice_str_element = s.to_string();
+
+            let mut vtext = VerticalText::new(
                 choice_str_element,
                 numeric::Point2f::new(0.0, 0.0),
                 numeric::Vector2f::new(1.0, 1.0),
@@ -2436,7 +2439,7 @@ impl DeskBookMenu {
                 drawing_depth,
                 font_info,
             );
-	    
+
             set_table_frame_cell_center!(
                 ctx.context,
                 select_table_frame,
@@ -2445,7 +2448,7 @@ impl DeskBookMenu {
             );
 
             choice_vtext.push(vtext);
-	}
+        }
 
         DeskBookMenu {
             book_info: book_info,
@@ -2768,11 +2771,7 @@ impl OnDeskMenuGroup {
         book_info: BookInformation,
         t: Clock,
     ) {
-        let menu = DeskBookMenu::new(
-            ctx,
-            book_info,
-            0,
-        );
+        let menu = DeskBookMenu::new(ctx, book_info, 0);
 
         let frame_size = menu.get_date_frame_size();
 

@@ -12,29 +12,23 @@ pub fn create_dobj_book<'a>(
     t: Clock,
 ) -> TaskItem {
     let texture = *util::random_select(LARGE_BOOK_TEXTURE.iter()).unwrap();
-    TaskItem::Book(
-	TaskBook::new(
-            OnDeskTexture::new(
-		ctx.context,
-		UniTexture::new(
-                    ctx.resource.ref_texture(texture),
-                    numeric::Point2f::new(0.0, 0.0),
-                    numeric::Vector2f::new(0.1, 0.1),
-                    0.0,
-                    0,
-		),
-		OnDeskType::Book,
+    TaskItem::Book(TaskBook::new(
+        OnDeskTexture::new(
+            ctx.context,
+            UniTexture::new(
+                ctx.resource.ref_texture(texture),
+                numeric::Point2f::new(0.0, 0.0),
+                numeric::Vector2f::new(0.1, 0.1),
+                0.0,
+                0,
             ),
-	    OnDeskBook::new(
-		ctx,
-		texture,
-		book_info
-	    ),
-            0,
-	    true,
-	    true,
-            obj_type,
-            t,
-	)
-    )
+            OnDeskType::Book,
+        ),
+        OnDeskBook::new(ctx, texture, book_info),
+        0,
+        true,
+        true,
+        obj_type,
+        t,
+    ))
 }

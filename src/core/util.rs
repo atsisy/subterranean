@@ -62,12 +62,10 @@ impl ToString for DayOfWeek {
 
 #[macro_export]
 macro_rules! perf_measure {
-  ( $x:expr) => {
-    {
-	let start = std::time::Instant::now();
-	let result = $x;
-	let end = start.elapsed();
-	end.subsec_nanos()
-    }
-  };
+    ( $x:expr) => {{
+        let start = std::time::Instant::now();
+        let result = $x;
+        let end = start.elapsed();
+        end.subsec_nanos()
+    }};
 }

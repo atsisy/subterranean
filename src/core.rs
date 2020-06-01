@@ -26,20 +26,19 @@ use std::collections::VecDeque;
 use std::rc::Rc;
 use std::str::FromStr;
 
-use crate::scene;
 use crate::perf_measure;
+use crate::scene;
 
 use std::fs;
-use std::io::{BufReader, Read, Write};
 use std::fs::File;
+use std::io::{BufReader, Read, Write};
 
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 extern crate serde_json;
 
 use number_to_jk::number_to_jk;
 
 extern crate num;
-
 
 pub const WINDOW_SIZE_X: i16 = 1366;
 pub const WINDOW_SIZE_Y: i16 = 768;
@@ -146,13 +145,13 @@ pub enum FontID {
 impl FromStr for FontID {
     type Err = ();
     fn from_str(s: &str) -> Result<Self, ()> {
-	match s {
-	    "Default" => Ok(FontID::DEFAULT),
-	    "JpFude1" => Ok(FontID::JpFude1),
-	    "CorpMincho" => Ok(FontID::CorpMincho),
-	    "Cinema" => Ok(FontID::Cinema),
-	    _ => Err(()),
-	}
+        match s {
+            "Default" => Ok(FontID::DEFAULT),
+            "JpFude1" => Ok(FontID::JpFude1),
+            "CorpMincho" => Ok(FontID::CorpMincho),
+            "Cinema" => Ok(FontID::Cinema),
+            _ => Err(()),
+        }
     }
 }
 
@@ -202,9 +201,9 @@ impl FromStr for TextureID {
             "ResetButton" => Ok(Self::ResetButton),
             "MenuArt1" => Ok(Self::MenuArt1),
             "MenuArt2" => Ok(Self::MenuArt2),
-	    "JpHouseTexture" => Ok(Self::JpHouseTexture),
-	    "BookBoxFront" => Ok(Self::BookBoxFront),
-	    "BookBoxBack" => Ok(Self::BookBoxBack),
+            "JpHouseTexture" => Ok(Self::JpHouseTexture),
+            "BookBoxFront" => Ok(Self::BookBoxFront),
+            "BookBoxBack" => Ok(Self::BookBoxBack),
             _ => Err(()),
         }
     }
@@ -255,9 +254,9 @@ impl TextureID {
             39 => Some(Self::ResetButton),
             40 => Some(Self::MenuArt1),
             41 => Some(Self::MenuArt2),
-	    42 => Some(Self::JpHouseTexture),
-	    43 => Some(Self::BookBoxFront),
-	    44 => Some(Self::BookBoxBack),
+            42 => Some(Self::JpHouseTexture),
+            43 => Some(Self::BookBoxFront),
+            44 => Some(Self::BookBoxBack),
             _ => None,
         }
     }
@@ -333,8 +332,6 @@ impl RentalLimit {
             RentalLimit::Today => 0.0,
         }
     }
-
-    
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
@@ -371,21 +368,22 @@ impl GensoDate {
     }
 
     pub fn to_month_string_eng_short(&self) -> String {
-	match self.month {
-	    1 => "Jan.",
-	    2 => "Feb.",
-	    3 => "Mar.",
-	    4 => "Apr.",
-	    5 => "May",
-	    6 => "Jun.",
-	    7 => "Jul.",
-	    8 => "Aug.",
-	    9 => "Sep.",
-	    10 => "Oct.",
-	    11 => "Nov.",
-	    12 => "Dec.",
-	    _ => panic!("Invalid month"),
-	}.to_string()
+        match self.month {
+            1 => "Jan.",
+            2 => "Feb.",
+            3 => "Mar.",
+            4 => "Apr.",
+            5 => "May",
+            6 => "Jun.",
+            7 => "Jul.",
+            8 => "Aug.",
+            9 => "Sep.",
+            10 => "Oct.",
+            11 => "Nov.",
+            12 => "Dec.",
+            _ => panic!("Invalid month"),
+        }
+        .to_string()
     }
 
     pub fn add_day(&mut self, day: u8) {
@@ -887,10 +885,10 @@ pub struct SuzunaAnStatus {
 
 impl SuzunaAnStatus {
     pub fn new() -> Self {
-	SuzunaAnStatus {
-	    jinyou_balance: 0.0,
-	    reputation: 50.0,
-	}
+        SuzunaAnStatus {
+            jinyou_balance: 0.0,
+            reputation: 50.0,
+        }
     }
 }
 
@@ -928,9 +926,12 @@ impl BorrowingInformation {
     }
 
     pub fn calc_fee(&self) -> i32 {
-	(self.borrowing.iter()
-	    .map(|info| info.base_price)
-	    .fold(0, |sum, price| sum + price) as f32 * self.rental_limit.fee_rate()) as i32
+        (self
+            .borrowing
+            .iter()
+            .map(|info| info.base_price)
+            .fold(0, |sum, price| sum + price) as f32
+            * self.rental_limit.fee_rate()) as i32
     }
 }
 
@@ -978,7 +979,6 @@ impl ReturnBookInformation {
     }
 }
 
-
 #[derive(Clone, Serialize, Deserialize)]
 pub struct SuzunaBookPool {
     books: Vec<BookInformation>,
@@ -1017,12 +1017,15 @@ impl SuzunaBookPool {
             borrowing_books.push(book_info);
         }
 
-	println!("generated books count: {}, books_len = {}", borrowing_books.len(), self.books.len());
+        println!(
+            "generated books count: {}, books_len = {}",
+            borrowing_books.len(),
+            self.books.len()
+        );
 
         BorrowingInformation::new(borrowing_books, customer_name, borrow_date, rental_limit)
     }
 }
-
 
 #[derive(Clone, Serialize, Deserialize)]
 pub struct ReturningRequestPool {
@@ -1032,16 +1035,16 @@ pub struct ReturningRequestPool {
 impl ReturningRequestPool {
     pub fn new(game_data: &GameResource, today: GensoDate) -> Self {
         let mut returning_request = Vec::new();
-	
+
         for _ in 1..=5 {
-	    let mut return_date = today.clone();
-	    
-	    match rand::random::<u32>() % 2 {
-		0 => return_date.add_day(14),
-		1 => return_date.add_day(7),
-		_ => (),
-	    }
-	    
+            let mut return_date = today.clone();
+
+            match rand::random::<u32>() % 2 {
+                0 => return_date.add_day(14),
+                1 => return_date.add_day(7),
+                _ => (),
+            }
+
             returning_request.push(ReturnBookInformation::new_random(
                 game_data,
                 today,
@@ -1093,49 +1096,49 @@ pub struct SavableData {
 
 impl SavableData {
     pub fn new(game_data: &GameResource) -> Self {
-	let date = GensoDate::new(112, 7, 23);
-	
-	SavableData {
+        let date = GensoDate::new(112, 7, 23);
+
+        SavableData {
             date: date.clone(),
             task_result: TaskResult::new(),
-	    suzunaan_status: SuzunaAnStatus::new(),
-	    suzuna_book_pool: SuzunaBookPool::new(game_data),
-	    returning_request_pool: ReturningRequestPool::new(game_data, date),
+            suzunaan_status: SuzunaAnStatus::new(),
+            suzuna_book_pool: SuzunaBookPool::new(game_data),
+            returning_request_pool: ReturningRequestPool::new(game_data, date),
         }
     }
-    
-    pub fn save(&self, slot: u8) -> Result<(), Box<dyn std::error::Error>> {
-	let mut file = File::create(&format!("./resources/save{}.json", slot))?;
 
-	write!(file, "{}", serde_json::to_string(self).unwrap())?;
-	file.flush()?;
-	
-	Ok(())
+    pub fn save(&self, slot: u8) -> Result<(), Box<dyn std::error::Error>> {
+        let mut file = File::create(&format!("./resources/save{}.json", slot))?;
+
+        write!(file, "{}", serde_json::to_string(self).unwrap())?;
+        file.flush()?;
+
+        Ok(())
     }
 
     pub fn delete(slot: u8) {
-	std::fs::remove_file(&format!("./resources/save{}.json", slot)).unwrap();
+        std::fs::remove_file(&format!("./resources/save{}.json", slot)).unwrap();
     }
 
     pub fn new_load(slot: u8) -> Result<SavableData, ()> {
-	let content = fs::read_to_string(&format!("./resources/save{}.json", slot));
+        let content = fs::read_to_string(&format!("./resources/save{}.json", slot));
 
-	if content.is_err() {
-	    return Err(());
-	}
-	
-	let savable_data = serde_json::from_str(&content.unwrap());
+        if content.is_err() {
+            return Err(());
+        }
 
-	if savable_data.is_err() {
-	    Err(())
-	} else {
-	    Ok(savable_data.unwrap())   
-	}
+        let savable_data = serde_json::from_str(&content.unwrap());
+
+        if savable_data.is_err() {
+            Err(())
+        } else {
+            Ok(savable_data.unwrap())
+        }
     }
 
     pub fn replace(&mut self, data: SavableData) {
-	self.date = data.date;
-	self.task_result = data.task_result;
+        self.date = data.date;
+        self.task_result = data.task_result;
     }
 }
 
@@ -1158,8 +1161,8 @@ impl TopScene {
         match self {
             TopScene::ScenarioScene(scene) => scene,
             TopScene::SuzunaScene(scene) => scene,
-	    TopScene::SaveScene(scene) => scene,
-	    TopScene::TitleScene(scene) => scene,
+            TopScene::SaveScene(scene) => scene,
+            TopScene::TitleScene(scene) => scene,
             TopScene::Null(scene) => scene,
         }
     }
@@ -1168,8 +1171,8 @@ impl TopScene {
         match self {
             TopScene::ScenarioScene(scene) => scene,
             TopScene::SuzunaScene(scene) => scene,
-	    TopScene::SaveScene(scene) => scene,
-	    TopScene::TitleScene(scene) => scene,
+            TopScene::SaveScene(scene) => scene,
+            TopScene::TitleScene(scene) => scene,
             TopScene::Null(scene) => scene,
         }
     }
@@ -1216,8 +1219,8 @@ impl SceneController {
                 ggraphics::Color::from_rgba_u32(0xffffffa0),
             ),
         );
-	debug::debug_screen_hide();
-	
+        debug::debug_screen_hide();
+
         let mut game_status = SavableData::new(game_data);
 
         // let current_scene = scene::scenario_scene::ScenarioScene::new(&mut SuzuContext {
@@ -1225,7 +1228,7 @@ impl SceneController {
         //     resource: game_data,
         //     savable_data: &mut game_status,
         // });
-	let current_scene = scene::title_scene::TitleScene::new(&mut SuzuContext {
+        let current_scene = scene::title_scene::TitleScene::new(&mut SuzuContext {
             context: ctx,
             resource: game_data,
             savable_data: &mut game_status,
@@ -1233,7 +1236,7 @@ impl SceneController {
 
         SceneController {
             //current_scene: TopScene::ScenarioScene(current_scene),
-	    current_scene: TopScene::TitleScene(current_scene),
+            current_scene: TopScene::TitleScene(current_scene),
             scene_stack: SceneStack::new(),
             key_map: tdev::ProgramableGenericKey::new(),
             global_clock: 0,
@@ -1262,26 +1265,25 @@ impl SceneController {
             scene::SceneID::Scenario => match self.current_scene {
                 TopScene::SuzunaScene(_) => {
                     self.current_scene =
-                        TopScene::ScenarioScene(
-			    scene::scenario_scene::ScenarioScene::new(
-				&mut ctx,
-				scene::scenario_scene::ScenarioSelect::DayBegin,
-			    ))
-                },
-		TopScene::SaveScene(_) => {
-		    self.current_scene =
                         TopScene::ScenarioScene(scene::scenario_scene::ScenarioScene::new(
-			    &mut ctx,
-			    scene::scenario_scene::ScenarioSelect::DayBegin,
-			))
-		},
-		TopScene::TitleScene(_) => {
-		    self.current_scene =
+                            &mut ctx,
+                            scene::scenario_scene::ScenarioSelect::DayBegin,
+                        ))
+                }
+                TopScene::SaveScene(_) => {
+                    self.current_scene =
                         TopScene::ScenarioScene(scene::scenario_scene::ScenarioScene::new(
-			    &mut ctx,
-			    scene::scenario_scene::ScenarioSelect::DayBegin,
-			))
-		}
+                            &mut ctx,
+                            scene::scenario_scene::ScenarioSelect::DayBegin,
+                        ))
+                }
+                TopScene::TitleScene(_) => {
+                    self.current_scene =
+                        TopScene::ScenarioScene(scene::scenario_scene::ScenarioScene::new(
+                            &mut ctx,
+                            scene::scenario_scene::ScenarioSelect::DayBegin,
+                        ))
+                }
                 _ => (),
             },
             scene::SceneID::Null => self.current_scene = TopScene::Null(scene::NullScene::new()),
@@ -1302,18 +1304,15 @@ impl SceneController {
         };
 
         let next_scene = match next_scene_id {
-	    scene::SceneID::SuzunaShop =>
-		Some(TopScene::SuzunaScene(
-                    scene::suzuna_scene::SuzunaScene::new(&mut ctx, 0),
-		)),
-	    scene::SceneID::Save =>
-		Some(TopScene::SaveScene(
-                    scene::save_scene::SaveScene::new(&mut ctx),
-		)),
-	    scene::SceneID::Null =>
-		Some(TopScene::Null(scene::NullScene::new())),
-	    _ => None,
-	};
+            scene::SceneID::SuzunaShop => Some(TopScene::SuzunaScene(
+                scene::suzuna_scene::SuzunaScene::new(&mut ctx, 0),
+            )),
+            scene::SceneID::Save => Some(TopScene::SaveScene(scene::save_scene::SaveScene::new(
+                &mut ctx,
+            ))),
+            scene::SceneID::Null => Some(TopScene::Null(scene::NullScene::new())),
+            _ => None,
+        };
 
         if let Some(mut scene) = next_scene {
             std::mem::swap(&mut self.current_scene, &mut scene);
@@ -1322,30 +1321,30 @@ impl SceneController {
     }
 
     fn run_pre_process(&mut self, ctx: &mut ggez::Context, game_data: &GameResource) {
-	//println!("{}", perf_measure!(
-	    {
-		self.current_scene.abs_mut().pre_process(&mut SuzuContext {
-		    context: ctx,
-		    resource: game_data,
-		    savable_data: &mut self.game_status,
-		});
-	    }
-	//));
+        //println!("{}", perf_measure!(
+        {
+            self.current_scene.abs_mut().pre_process(&mut SuzuContext {
+                context: ctx,
+                resource: game_data,
+                savable_data: &mut self.game_status,
+            });
+        }
+        //));
     }
 
     fn run_drawing_process(&mut self, ctx: &mut ggez::Context) {
-	//println!("{}", perf_measure!(
-	    {
-		sub_screen::stack_screen(ctx, &self.root_screen);
-		
-		self.current_scene.abs_mut().drawing_process(ctx);
-		
-		debug::debug_screen_draw(ctx);
-		
-		sub_screen::pop_screen(ctx);
-		self.root_screen.draw(ctx).unwrap();
-	    }
-	//) as f32 / 1000000.0);
+        //println!("{}", perf_measure!(
+        {
+            sub_screen::stack_screen(ctx, &self.root_screen);
+
+            self.current_scene.abs_mut().drawing_process(ctx);
+
+            debug::debug_screen_draw(ctx);
+
+            sub_screen::pop_screen(ctx);
+            self.root_screen.draw(ctx).unwrap();
+        }
+        //) as f32 / 1000000.0);
     }
 
     fn run_post_process<'a>(&mut self, ctx: &mut ggez::Context, game_data: &'a GameResource) {
@@ -1369,12 +1368,14 @@ impl SceneController {
                 );
             }
             scene::SceneTransition::PoppingTransition => {
-		if let Some(scene) = self.scene_stack.pop() {
-		    self.current_scene = scene;
-		    self.current_scene.abs_mut().scene_popping_return_handler(&mut suzu_ctx);
-		} else {
-		    eprintln!("Scene Stack is Empty!!");
-		}
+                if let Some(scene) = self.scene_stack.pop() {
+                    self.current_scene = scene;
+                    self.current_scene
+                        .abs_mut()
+                        .scene_popping_return_handler(&mut suzu_ctx);
+                } else {
+                    eprintln!("Scene Stack is Empty!!");
+                }
             }
         }
 
@@ -1396,14 +1397,14 @@ impl SceneController {
             std::process::exit(0);
         }
 
-	if keycode == KeyCode::F1 {
-	    debug::debug_screen_appear();
-	}
+        if keycode == KeyCode::F1 {
+            debug::debug_screen_appear();
+        }
 
-	if keycode == KeyCode::F2 {
-	    debug::debug_screen_hide();
-	}
-	
+        if keycode == KeyCode::F2 {
+            debug::debug_screen_hide();
+        }
+
         self.current_scene.abs_mut().key_down_event(
             &mut SuzuContext {
                 context: ctx,
@@ -1611,22 +1612,24 @@ impl<'data> State<'data> {
     }
 }
 
-pub fn font_information_from_toml_value<'a>(game_data: &'a GameResource, toml_value: &toml::Value) -> FontInformation {
+pub fn font_information_from_toml_value<'a>(
+    game_data: &'a GameResource,
+    toml_value: &toml::Value,
+) -> FontInformation {
     let font_str = toml_value["FontID"].as_str().unwrap();
 
     let scale_table = toml_value["scale"].as_table().unwrap();
 
     let scale = numeric::Vector2f::new(
-	scale_table["x"].as_float().unwrap() as f32,
-	scale_table["y"].as_float().unwrap() as f32
+        scale_table["x"].as_float().unwrap() as f32,
+        scale_table["y"].as_float().unwrap() as f32,
     );
 
     let color_hex_code = toml_value["color"].as_integer().unwrap() as u32;
-    
+
     FontInformation::new(
-	game_data.get_font(FontID::from_str(font_str).unwrap()),
-	scale,
-	ggraphics::Color::from_rgba_u32(color_hex_code),
+        game_data.get_font(FontID::from_str(font_str).unwrap()),
+        scale,
+        ggraphics::Color::from_rgba_u32(color_hex_code),
     )
-    
 }

@@ -9,11 +9,11 @@ use torifune::graphics::object::shape as tshape;
 
 use ggez::graphics as ggraphics;
 
-use crate::set_table_frame_cell_center;
-use torifune::roundup2f;
 use super::*;
 use crate::core::{FontID, GameResource, TextureID, TileBatchTextureID};
 use crate::object::util_object::*;
+use crate::set_table_frame_cell_center;
+use torifune::roundup2f;
 
 use number_to_jk::number_to_jk;
 
@@ -473,26 +473,26 @@ impl ScenarioMenuContents {
             ggraphics::Color::from_rgba_u32(0x000000ff),
         );
 
-	let table_frame = TableFrame::new(
-	    ctx.resource,
-	    numeric::Point2f::new(50.0, 150.0),
-	    TileBatchTextureID::OldStyleFrame,
-	    FrameData::new(vec![250.0, 250.0], vec![50.0; 3]),
-	    numeric::Vector2f::new(0.25, 0.25),
-	    0
-	);
+        let table_frame = TableFrame::new(
+            ctx.resource,
+            numeric::Point2f::new(50.0, 150.0),
+            TileBatchTextureID::OldStyleFrame,
+            FrameData::new(vec![250.0, 250.0], vec![50.0; 3]),
+            numeric::Vector2f::new(0.25, 0.25),
+            0,
+        );
 
-	let mut desc_text = Vec::new();
+        let mut desc_text = Vec::new();
 
-	for (index, s) in vec!["評判", "習熟度", "所持金"].iter().enumerate() {
-	    let mut vtext = VerticalText::new(
-		s.to_string(),
-		numeric::Point2f::new(0.0, 0.0),
-		numeric::Vector2f::new(1.0, 1.0),
-		0.0,
-		0,
-		normal_scale_font
-	    );
+        for (index, s) in vec!["評判", "習熟度", "所持金"].iter().enumerate() {
+            let mut vtext = VerticalText::new(
+                s.to_string(),
+                numeric::Point2f::new(0.0, 0.0),
+                numeric::Vector2f::new(1.0, 1.0),
+                0.0,
+                0,
+                normal_scale_font,
+            );
 
             set_table_frame_cell_center!(
                 ctx.context,
@@ -500,43 +500,46 @@ impl ScenarioMenuContents {
                 vtext,
                 numeric::Vector2u::new(index as u32, 0)
             );
-	    
-	    desc_text.push(vtext);
-	}
 
-	let mut reputation_text = VerticalText::new(
-	    number_to_jk(ctx.savable_data.suzunaan_status.reputation as u64),
-	    numeric::Point2f::new(0.0, 0.0),
-	    numeric::Vector2f::new(1.0, 1.0),
-	    0.0,
-	    0,
-	    normal_scale_font
-	);
-	
-	set_table_frame_cell_center!(
+            desc_text.push(vtext);
+        }
+
+        let mut reputation_text = VerticalText::new(
+            number_to_jk(ctx.savable_data.suzunaan_status.reputation as u64),
+            numeric::Point2f::new(0.0, 0.0),
+            numeric::Vector2f::new(1.0, 1.0),
+            0.0,
+            0,
+            normal_scale_font,
+        );
+
+        set_table_frame_cell_center!(
             ctx.context,
             table_frame,
             reputation_text,
             numeric::Vector2u::new(0, 1)
         );
 
-	let mut money_text = VerticalText::new(
-	    format!("{}円", number_to_jk(ctx.savable_data.task_result.total_money as u64)),
-	    numeric::Point2f::new(0.0, 0.0),
-	    numeric::Vector2f::new(1.0, 1.0),
-	    0.0,
-	    0,
-	    normal_scale_font
-	);
-	
-	set_table_frame_cell_center!(
+        let mut money_text = VerticalText::new(
+            format!(
+                "{}円",
+                number_to_jk(ctx.savable_data.task_result.total_money as u64)
+            ),
+            numeric::Point2f::new(0.0, 0.0),
+            numeric::Vector2f::new(1.0, 1.0),
+            0.0,
+            0,
+            normal_scale_font,
+        );
+
+        set_table_frame_cell_center!(
             ctx.context,
             table_frame,
-	    money_text,
+            money_text,
             numeric::Vector2u::new(2, 1)
         );
 
-	let mut kosuzu_level_text = VerticalText::new(
+        let mut kosuzu_level_text = VerticalText::new(
             format!("{}", number_to_jk(0)),
             numeric::Point2f::new(0.0, 0.0),
             numeric::Vector2f::new(1.0, 1.0),
@@ -545,27 +548,30 @@ impl ScenarioMenuContents {
             normal_scale_font,
         );
 
-	set_table_frame_cell_center!(
+        set_table_frame_cell_center!(
             ctx.context,
             table_frame,
             kosuzu_level_text,
             numeric::Vector2u::new(1, 1)
         );
-	
-	
+
         ScenarioMenuContents {
-	    table_frame: table_frame,
-	    reputation_text: reputation_text,
-	    desc_text: desc_text,
+            table_frame: table_frame,
+            reputation_text: reputation_text,
+            desc_text: desc_text,
             day_text: UniText::new(
-                format!("{}, {}", ctx.savable_data.date.day, ctx.savable_data.date.to_month_string_eng_short()),
+                format!(
+                    "{}, {}",
+                    ctx.savable_data.date.day,
+                    ctx.savable_data.date.to_month_string_eng_short()
+                ),
                 numeric::Point2f::new(40.0, 70.0),
                 numeric::Vector2f::new(1.0, 1.0),
                 0.0,
                 0,
                 large_scale_font,
             ),
-	    money_text: money_text,
+            money_text: money_text,
             kosuzu_level_text: kosuzu_level_text,
             drwob_essential: DrawableObjectEssential::new(true, 0),
         }
@@ -575,22 +581,22 @@ impl ScenarioMenuContents {
 impl DrawableComponent for ScenarioMenuContents {
     fn draw(&mut self, ctx: &mut ggez::Context) -> ggez::GameResult<()> {
         if self.is_visible() {
-	    self.table_frame.draw(ctx).unwrap();
+            self.table_frame.draw(ctx).unwrap();
             self.day_text.draw(ctx).unwrap();
 
-	    for vtext in self.desc_text.iter_mut() {
-		vtext.draw(ctx).unwrap();
-	    }
+            for vtext in self.desc_text.iter_mut() {
+                vtext.draw(ctx).unwrap();
+            }
 
-	    self.reputation_text.draw(ctx).unwrap();
-	    self.money_text.draw(ctx).unwrap();
-	    
+            self.reputation_text.draw(ctx).unwrap();
+            self.money_text.draw(ctx).unwrap();
+
             self.kosuzu_level_text.draw(ctx).unwrap();
         }
 
         Ok(())
     }
-    
+
     #[inline(always)]
     fn hide(&mut self) {
         self.drwob_essential.visible = false;
@@ -634,13 +640,13 @@ impl ScenarioMenu {
             ),
             background: UniTexture::new(
                 ctx.resource.ref_texture(TextureID::MenuArt1),
-		numeric::Point2f::new(size.x - 1366.0, 0.0),
-		numeric::Vector2f::new(1.0, 1.0),
-		0.0,
-		0,
+                numeric::Point2f::new(size.x - 1366.0, 0.0),
+                numeric::Vector2f::new(1.0, 1.0),
+                0.0,
+                0,
             ),
             contents: ScenarioMenuContents::new(ctx),
-	}
+        }
     }
 }
 

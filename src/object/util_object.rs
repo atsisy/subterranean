@@ -157,19 +157,18 @@ impl TableFrame {
         (length / tile_size.x) as usize
     }
 
-    
     fn tile_remaining_vline(&self, length: f32) -> f32 {
-	let tile_size = self.get_scaled_tile_size();
+        let tile_size = self.get_scaled_tile_size();
         let num = self.tile_per_vline(length) as f32;
-	length - (num * tile_size.y)
+        length - (num * tile_size.y)
     }
 
     fn tile_remaining_hline(&self, length: f32) -> f32 {
-	let tile_size = self.get_scaled_tile_size();
+        let tile_size = self.get_scaled_tile_size();
         let num = self.tile_per_hline(length) as f32;
-	length - (num * tile_size.x)
+        length - (num * tile_size.x)
     }
-    
+
     pub fn size(&self) -> numeric::Vector2f {
         numeric::Vector2f::new(self.real_width(), self.real_height())
     }
@@ -355,23 +354,23 @@ impl TableFrame {
             top_dest_pos.x += tile_size.x;
             bottom_dest_pos.x += tile_size.x;
         }
-	let last_scale = numeric::Vector2f::new(
-	    self.tile_remaining_hline(width) / (self.tile_batch.get_tile_size().x as f32),
-	    self.frame_scale.y
-	);
-	self.tile_batch.add_batch_tile_position(
+        let last_scale = numeric::Vector2f::new(
+            self.tile_remaining_hline(width) / (self.tile_batch.get_tile_size().x as f32),
+            self.frame_scale.y,
+        );
+        self.tile_batch.add_batch_tile_position(
             numeric::Vector2u::new(1, 0),
-	    top_dest_pos,
+            top_dest_pos,
             last_scale,
             ggraphics::Color::from_rgb_u32(0xffffffff),
         );
-	self.tile_batch.add_batch_tile_position(
+        self.tile_batch.add_batch_tile_position(
             numeric::Vector2u::new(1, 2),
             bottom_dest_pos,
             last_scale,
             ggraphics::Color::from_rgb_u32(0xffffffff),
         );
-	
+
         //
         // 垂直方向の枠だけ描画
         //
@@ -394,17 +393,17 @@ impl TableFrame {
             left_dest_pos.y += tile_size.y;
             right_dest_pos.y += tile_size.y;
         }
-	let last_scale = numeric::Vector2f::new(
-	    self.frame_scale.x,
-	    self.tile_remaining_vline(height) / (self.tile_batch.get_tile_size().y as f32),
-	);
-	self.tile_batch.add_batch_tile_position(
+        let last_scale = numeric::Vector2f::new(
+            self.frame_scale.x,
+            self.tile_remaining_vline(height) / (self.tile_batch.get_tile_size().y as f32),
+        );
+        self.tile_batch.add_batch_tile_position(
             numeric::Vector2u::new(0, 1),
-	    left_dest_pos,
+            left_dest_pos,
             last_scale,
             ggraphics::Color::from_rgb_u32(0xffffffff),
         );
-	self.tile_batch.add_batch_tile_position(
+        self.tile_batch.add_batch_tile_position(
             numeric::Vector2u::new(2, 1),
             right_dest_pos,
             last_scale,
@@ -464,9 +463,9 @@ impl TableFrame {
     }
 
     pub fn make_center(&mut self, point: numeric::Point2f) {
-	let half_size = numeric::Vector2f::new(self.real_width() / 2.0, self.real_height() / 2.0);
-	let next_position = numeric::Point2f::new(point.x - half_size.x, point.y - half_size.y);
-	self.set_position(next_position);
+        let half_size = numeric::Vector2f::new(self.real_width() / 2.0, self.real_height() / 2.0);
+        let next_position = numeric::Point2f::new(point.x - half_size.x, point.y - half_size.y);
+        self.set_position(next_position);
     }
 }
 
@@ -671,23 +670,23 @@ impl TileBatchFrame {
             top_dest_pos.x += tile_size.x;
             bottom_dest_pos.x += tile_size.x;
         }
-	let last_scale = numeric::Vector2f::new(
-	    self.tile_remaining_hline(width) / (self.tile_batch.get_tile_size().x as f32),
-	    self.frame_scale.y
-	);
-	self.tile_batch.add_batch_tile_position(
+        let last_scale = numeric::Vector2f::new(
+            self.tile_remaining_hline(width) / (self.tile_batch.get_tile_size().x as f32),
+            self.frame_scale.y,
+        );
+        self.tile_batch.add_batch_tile_position(
             numeric::Vector2u::new(1, 0),
-	    top_dest_pos,
+            top_dest_pos,
             last_scale,
             ggraphics::Color::from_rgb_u32(0xffffffff),
         );
-	self.tile_batch.add_batch_tile_position(
+        self.tile_batch.add_batch_tile_position(
             numeric::Vector2u::new(1, 2),
             bottom_dest_pos,
             last_scale,
             ggraphics::Color::from_rgb_u32(0xffffffff),
         );
-	
+
         //
         // 垂直方向の枠だけ描画
         //
@@ -710,17 +709,17 @@ impl TileBatchFrame {
             left_dest_pos.y += tile_size.y;
             right_dest_pos.y += tile_size.y;
         }
-	let last_scale = numeric::Vector2f::new(
-	    self.frame_scale.x,
-	    self.tile_remaining_vline(height) / (self.tile_batch.get_tile_size().y as f32),
-	);
-	self.tile_batch.add_batch_tile_position(
+        let last_scale = numeric::Vector2f::new(
+            self.frame_scale.x,
+            self.tile_remaining_vline(height) / (self.tile_batch.get_tile_size().y as f32),
+        );
+        self.tile_batch.add_batch_tile_position(
             numeric::Vector2u::new(0, 1),
-	    left_dest_pos,
+            left_dest_pos,
             last_scale,
             ggraphics::Color::from_rgb_u32(0xffffffff),
         );
-	self.tile_batch.add_batch_tile_position(
+        self.tile_batch.add_batch_tile_position(
             numeric::Vector2u::new(2, 1),
             right_dest_pos,
             last_scale,
@@ -765,9 +764,9 @@ impl TileBatchFrame {
     }
 
     fn tile_remaining_vline(&self, length: f32) -> f32 {
-	let tile_size = self.get_scaled_tile_size();
+        let tile_size = self.get_scaled_tile_size();
         let num = self.tile_per_vline(length) as f32;
-	length - (num * tile_size.y)
+        length - (num * tile_size.y)
     }
 
     fn tile_per_hline(&self, length: f32) -> usize {
@@ -776,9 +775,9 @@ impl TileBatchFrame {
     }
 
     fn tile_remaining_hline(&self, length: f32) -> f32 {
-	let tile_size = self.get_scaled_tile_size();
+        let tile_size = self.get_scaled_tile_size();
         let num = self.tile_per_hline(length) as f32;
-	length - (num * tile_size.x)
+        length - (num * tile_size.x)
     }
 
     fn get_scaled_tile_size(&self) -> numeric::Vector2f {
