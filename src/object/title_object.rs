@@ -11,10 +11,26 @@ use torifune::numeric;
 use crate::core::{font_information_from_toml_value, SuzuContext};
 use crate::scene::SceneID;
 
+#[derive(Clone, Copy)]
+pub enum TitleBuiltinCommand {
+    Exit,
+}
+
+impl FromStr for TitleBuiltinCommand {
+    type Err = ();
+    fn from_str(s: &str) -> Result<Self, ()> {
+        match s {
+            "exit" => Ok(TitleBuiltinCommand::Exit),
+            _ => Err(()),
+        }
+    }
+}
+
 #[derive(Clone)]
 pub enum TitleContentsEvent {
     NextContents(String),
     SceneTransition(SceneID),
+    BuiltinEvent(TitleBuiltinCommand),
 }
 
 impl TitleContentsEvent {
@@ -26,14 +42,20 @@ impl TitleContentsEvent {
                 let next_scene_str = toml_value["next-scene"].as_str().expect("error");
                 let next_scene = SceneID::from_str(next_scene_str).expect("Unknown next scene");
                 Some(TitleContentsEvent::SceneTransition(next_scene))
-            }
+            },
             "NextContents" => {
                 let next_scene_str = toml_value["next-contents-name"]
                     .as_str()
                     .expect("error")
                     .to_string();
                 Some(TitleContentsEvent::NextContents(next_scene_str))
-            }
+            },
+	    "BuiltinCommand" => {
+		let command = toml_value["builtin-command"]
+                    .as_str()
+                    .expect("error");
+                Some(TitleContentsEvent::BuiltinEvent(TitleBuiltinCommand::from_str(command).unwrap()))
+	    },
             _ => None,
         }
     }

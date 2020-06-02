@@ -40,5 +40,5 @@ next-scene = "Scenario"
 
 [[each_entry_data]]
 text = "退場"
-event-type = "NextContents"
-next-contents-name = "init-menu" 
+event-type = "BuiltinCommand"
+builtin-command = "exit" 

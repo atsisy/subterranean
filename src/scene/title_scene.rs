@@ -128,6 +128,12 @@ impl TitleScene {
             .add(old.as_ref().unwrap().get_content_name(), old.unwrap());
     }
 
+    fn run_builtin_command(&mut self, command: TitleBuiltinCommand) {
+	match command {
+	    TitleBuiltinCommand::Exit => std::process::exit(0),
+	}
+    }
+
     pub fn contents_mouse_click_handler<'a>(
         &mut self,
         ctx: &mut SuzuContext<'a>,
@@ -145,10 +151,13 @@ impl TitleScene {
                     match event {
                         TitleContentsEvent::NextContents(content_name) => {
                             self.switch_current_content(content_name);
-                        }
+                        },
                         TitleContentsEvent::SceneTransition(scene_id) => {
                             self.transition_selected_scene(ctx, scene_id, t);
-                        }
+                        },
+			TitleContentsEvent::BuiltinEvent(command) => {
+			    self.run_builtin_command(command);
+			},
                     }
                 }
             }

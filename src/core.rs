@@ -463,6 +463,7 @@ impl ScenarioTable {
         if let Some(s) = self.scenario_table.get(&date) {
             Some(s.to_string())
         } else {
+	    println!("Error: Invalid Date => {:?}", date);
             None
         }
     }

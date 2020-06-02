@@ -4,3 +4,10 @@ path = "./resources/scenario/day_7_23.toml"
 season = 112		
 month = 7
 day = 23
+
+[[scenario-table]]
+path = "./resources/scenario/day_7_24.toml"
+[scenario-table.date]
+season = 112		
+month = 7
+day = 24
