@@ -57,7 +57,7 @@ pub struct GeneralNotificationContents {
 impl GeneralNotificationContents {
     pub fn new(ctx: &mut SuzuContext, data: NotificationContentsData, depth: i8) -> Self {
         let font_info = FontInformation::new(
-            ctx.resource.get_font(FontID::JpFude1),
+            ctx.resource.get_font(FontID::Cinema),
             numeric::Vector2f::new(28.0, 28.0),
             ggraphics::Color::from_rgba_u32(0xff),
         );

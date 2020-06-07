@@ -131,7 +131,7 @@ impl DrawableTaskResult {
                 None,
                 t,
             ),
-            vec![effect::appear_bale_down_from_top(100, t + 100)],
+            vec![effect::appear_bale_down_from_top(100, t + 150)],
         );
         done_work_num_text.set_crop(init_crop);
         set_table_frame_cell_center!(
@@ -179,7 +179,7 @@ impl DrawableTaskResult {
                 None,
                 t,
             ),
-            vec![effect::appear_bale_down_from_top(100, t + 100)],
+            vec![effect::appear_bale_down_from_top(100, t + 250)],
         );
         money_text.set_crop(init_crop);
         set_table_frame_cell_center!(
@@ -203,7 +203,7 @@ impl DrawableTaskResult {
                 None,
                 t,
             ),
-            vec![effect::appear_bale_down_from_top(100, t + 200)],
+            vec![effect::appear_bale_down_from_top(100, t + 300)],
         );
         total_money_desc_text.set_crop(init_crop);
         set_table_frame_cell_center!(
@@ -230,7 +230,7 @@ impl DrawableTaskResult {
                 None,
                 t,
             ),
-            vec![effect::appear_bale_down_from_top(100, t + 100)],
+            vec![effect::appear_bale_down_from_top(100, t + 350)],
         );
         total_money_text.set_crop(init_crop);
         set_table_frame_cell_center!(
