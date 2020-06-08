@@ -112,6 +112,7 @@ impl TitleScene {
 
         match &mut self.current_title_contents.as_mut().unwrap() {
             TitleContents::InitialMenu(contents) => contents.update_highlight(ctx, point),
+	    TitleContents::TitleSoundPlayer(_) => (),
         }
     }
 
@@ -160,7 +161,8 @@ impl TitleScene {
 			},
                     }
                 }
-            }
+            },
+	    TitleContents::TitleSoundPlayer(_) => (),
         }
     }
 }

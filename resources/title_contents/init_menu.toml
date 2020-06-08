@@ -31,7 +31,7 @@ next-scene = "Scenario"
 [[each_entry_data]]
 text = "蓄音機"
 event-type = "NextContents"
-next-contents-name = "init-menu"
+next-contents-name = "sound-player"
 
 [[each_entry_data]]
 text = "設定"

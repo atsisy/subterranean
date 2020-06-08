@@ -229,15 +229,116 @@ impl DrawableComponent for VTextList {
     }
 }
 
+pub struct TitleSoundPlayerData {
+    font_info: FontInformation,
+    position: numeric::Point2f,
+    text: String,
+}
+
+impl TitleSoundPlayerData {
+    pub fn from_toml<'a>(ctx: &mut SuzuContext<'a>, path: &str) -> Self {
+	let content = match std::fs::read_to_string(path) {
+            Ok(c) => c,
+            Err(_) => panic!("Failed to read: {}", path),
+        };
+	
+        let root = content.parse::<toml::Value>().unwrap();
+
+	let text = root["text"].as_str().unwrap();
+
+	let position_table = root["position"].as_table().unwrap();
+	
+        let position = numeric::Point2f::new(
+            position_table["x"].as_float().unwrap() as f32,
+            position_table["y"].as_float().unwrap() as f32,
+        );
+
+        let font_info = font_information_from_toml_value(
+	    ctx.resource,
+	    &root["font_info"]
+	);
+
+	TitleSoundPlayerData {
+	    font_info: font_info,
+	    position: position,
+	    text: text.to_string(),
+	}
+    }
+}
+
+pub struct TitleSoundPlayer {
+    main_text: VerticalText,
+    name: String,
+    drwob_essential: DrawableObjectEssential,
+}
+
+impl TitleSoundPlayer {
+    pub fn new<'a>(
+	ctx: &mut SuzuContext<'a>,
+	name: String,
+	data: TitleSoundPlayerData,
+    ) -> Self {
+	let main_text = VerticalText::new(
+	    data.text.to_string(),
+	    data.position,
+	    numeric::Vector2f::new(1.0, 1.0),
+	    0.0,
+	    0,
+	    data.font_info
+	);
+
+	TitleSoundPlayer {
+	    main_text: main_text,
+	    name: name,
+	    drwob_essential: DrawableObjectEssential::new(true, 0),
+	}
+    }
+
+    pub fn get_name(&self) -> String {
+	self.name.to_string()
+    }
+}
+
+impl DrawableComponent for TitleSoundPlayer {
+    fn draw(&mut self, ctx: &mut ggez::Context) -> ggez::GameResult<()> {
+        if self.is_visible() {
+	    self.main_text.draw(ctx)?;
+        }
+
+        Ok(())
+    }
+
+    fn hide(&mut self) {
+        self.drwob_essential.visible = false;
+    }
+
+    fn appear(&mut self) {
+        self.drwob_essential.visible = true;
+    }
+
+    fn is_visible(&self) -> bool {
+        self.drwob_essential.visible
+    }
+
+    fn set_drawing_depth(&mut self, depth: i8) {
+        self.drwob_essential.drawing_depth = depth;
+    }
+
+    fn get_drawing_depth(&self) -> i8 {
+        self.drwob_essential.drawing_depth
+    }
+}
+
 pub enum TitleContents {
     InitialMenu(VTextList),
+    TitleSoundPlayer(TitleSoundPlayer),
 }
 
 impl TitleContents {
     pub fn from_toml_object<'a>(
         ctx: &mut SuzuContext<'a>,
         toml_src: &toml::Value,
-    ) -> Option<(String, TitleContents)> {
+    ) -> Option<TitleContents> {
         let name = toml_src
             .get("name")
             .expect("name field is missing")
@@ -259,11 +360,17 @@ impl TitleContents {
         match contents_type {
             "VTextList" => {
                 let menu_data = TextMenuData::from_file(ctx, name.to_string(), details_source_file);
-                Some((
-                    name.to_string(),
+                Some(
                     TitleContents::InitialMenu(VTextList::new(menu_data, 0)),
-                ))
-            }
+                )
+            },
+	    "TitleSoundPlayer" => {
+		let data = TitleSoundPlayerData::from_toml(ctx, details_source_file);
+		let sound_player = TitleSoundPlayer::new(ctx, name.to_string(), data);
+		Some(
+		    TitleContents::TitleSoundPlayer(sound_player),
+		)
+	    },
             _ => None,
         }
     }
@@ -271,6 +378,7 @@ impl TitleContents {
     pub fn get_content_name(&self) -> String {
         match self {
             TitleContents::InitialMenu(menu) => menu.contents_name.to_string(),
+	    TitleContents::TitleSoundPlayer(player) => player.get_name(),
         }
     }
 }
@@ -279,36 +387,42 @@ impl DrawableComponent for TitleContents {
     fn draw(&mut self, ctx: &mut ggez::Context) -> ggez::GameResult<()> {
         match self {
             TitleContents::InitialMenu(contents) => contents.draw(ctx),
+	    TitleContents::TitleSoundPlayer(contents) => contents.draw(ctx),
         }
     }
 
     fn hide(&mut self) {
         match self {
             TitleContents::InitialMenu(contents) => contents.hide(),
+	    TitleContents::TitleSoundPlayer(contents) => contents.hide(),
         }
     }
 
     fn appear(&mut self) {
         match self {
             TitleContents::InitialMenu(contents) => contents.appear(),
+	    TitleContents::TitleSoundPlayer(contents) => contents.appear(),
         }
     }
 
     fn is_visible(&self) -> bool {
         match self {
             TitleContents::InitialMenu(contents) => contents.is_visible(),
+	    TitleContents::TitleSoundPlayer(contents) => contents.is_visible(),
         }
     }
 
     fn set_drawing_depth(&mut self, depth: i8) {
         match self {
             TitleContents::InitialMenu(contents) => contents.set_drawing_depth(depth),
+	    TitleContents::TitleSoundPlayer(contents) => contents.set_drawing_depth(depth),
         }
     }
 
     fn get_drawing_depth(&self) -> i8 {
         match self {
             TitleContents::InitialMenu(contents) => contents.get_drawing_depth(),
+	    TitleContents::TitleSoundPlayer(contents) => contents.get_drawing_depth(),
         }
     }
 }
@@ -336,8 +450,8 @@ impl TitleContentsSet {
         let mut contents_set = HashMap::new();
 
         for content in contents_list {
-            let (name, title_content) = TitleContents::from_toml_object(ctx, content).unwrap();
-            contents_set.insert(name, title_content);
+            let title_content = TitleContents::from_toml_object(ctx, content).unwrap();
+            contents_set.insert(title_content.get_content_name(), title_content);
         }
 
         TitleContentsSet {

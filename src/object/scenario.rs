@@ -81,12 +81,6 @@ impl ScenarioTextSegment {
         unsafe { self.text.as_str().get_unchecked(begin..end) }
     }
 
-    fn count_indent(&self) -> usize {
-        self.text
-            .chars()
-            .fold(0, |sum, ch| sum + if ch == '\n' { 1 } else { 0 })
-    }
-
     fn end_with_indent(&self) -> bool {
         self.text.chars().last().unwrap() == '\n'
     }
