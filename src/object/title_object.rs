@@ -274,7 +274,6 @@ pub struct TitleSoundPlayer {
 
 impl TitleSoundPlayer {
     pub fn new<'a>(
-	ctx: &mut SuzuContext<'a>,
 	name: String,
 	data: TitleSoundPlayerData,
     ) -> Self {
@@ -366,7 +365,7 @@ impl TitleContents {
             },
 	    "TitleSoundPlayer" => {
 		let data = TitleSoundPlayerData::from_toml(ctx, details_source_file);
-		let sound_player = TitleSoundPlayer::new(ctx, name.to_string(), data);
+		let sound_player = TitleSoundPlayer::new(name.to_string(), data);
 		Some(
 		    TitleContents::TitleSoundPlayer(sound_player),
 		)

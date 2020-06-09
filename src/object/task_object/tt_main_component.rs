@@ -1746,6 +1746,97 @@ impl DrawableComponent for KosuzuPhrase {
     }
 }
 
+struct FloatingMemoryObject {
+    header_text: UniText,
+    text: Vec<UniText>,
+    appearance_frame: TileBatchFrame,
+    canvas: SubScreen,
+    padding: f32,
+}
+
+impl FloatingMemoryObject {
+    pub fn new<'a>(
+	ctx: &mut SuzuContext<'a>,
+	init_rect: numeric::Rect,
+	title: String,
+	padding: f32,
+	appear_frame_id: TileBatchTextureID,
+	depth: i8
+    ) -> Self {
+	let header_text = UniText::new(
+	    title,
+	    numeric::Point2f::new(0.0, 0.0),
+	    numeric::Vector2f::new(1.0, 1.0),
+	    0.0,
+	    0,
+	    FontInformation::new(
+		ctx.resource.get_font(FontID::Cinema),
+		numeric::Vector2f::new(28.0, 28.0),
+		ggraphics::Color::from_rgba_u32(0xff)
+	    ),
+	);
+	
+	FloatingMemoryObject {
+	    header_text: header_text,
+	    text: Vec::new(),
+	    appearance_frame: TileBatchFrame::new(
+		ctx.resource,
+		appear_frame_id,
+		numeric::Rect::new(0.0, 0.0, 200.0, 200.0),
+		numeric::Vector2f::new(0.5, 0.5),
+		0
+	    ),
+	    canvas: SubScreen::new(
+		ctx.context,
+		init_rect,
+		depth,
+		ggraphics::Color::from_rgba_u32(0xff)
+	    ),
+	    padding: padding,
+	}
+    }
+}
+
+impl DrawableComponent for FloatingMemoryObject {
+    fn draw(&mut self, ctx: &mut ggez::Context) -> ggez::GameResult<()> {
+        if self.is_visible() {
+            sub_screen::stack_screen(ctx, &self.canvas);
+
+	    self.header_text.draw(ctx)?;
+	    
+	    for uni_text in self.text.iter_mut() {
+		uni_text.draw(ctx)?;
+	    }
+
+            self.appearance_frame.draw(ctx)?;
+
+            sub_screen::pop_screen(ctx);
+            self.canvas.draw(ctx).unwrap();
+        }
+        Ok(())
+    }
+
+    fn hide(&mut self) {
+        self.canvas.hide();
+    }
+
+    fn appear(&mut self) {
+        self.canvas.appear();
+    }
+
+    fn is_visible(&self) -> bool {
+        self.canvas.is_visible()
+    }
+
+    fn set_drawing_depth(&mut self, depth: i8) {
+        self.canvas.set_drawing_depth(depth);
+    }
+
+    fn get_drawing_depth(&self) -> i8 {
+        self.canvas.get_drawing_depth()
+    }
+}
+
 ///
 /// メニューに表示するやつ
 ///
@@ -1790,7 +1881,7 @@ impl TaskInfoContents {
         );
 
         let mut header_text = UniText::new(
-            "報情客接".to_string(),
+            "Memory".to_string(),
             numeric::Point2f::new(0.0, 0.0),
             numeric::Vector2f::new(1.0, 1.0),
             0.0,
@@ -1960,3 +2051,4 @@ impl DrawableComponent for TaskInfoPanel {
         self.canvas.get_drawing_depth()
     }
 }
+

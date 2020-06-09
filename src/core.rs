@@ -26,7 +26,6 @@ use std::collections::VecDeque;
 use std::rc::Rc;
 use std::str::FromStr;
 
-use crate::perf_measure;
 use crate::scene;
 
 use std::fs;

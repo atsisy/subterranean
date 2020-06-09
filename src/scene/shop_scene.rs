@@ -81,10 +81,6 @@ impl CharacterGroup {
         });
     }
 
-    pub fn len(&self) -> usize {
-        self.group.len()
-    }
-
     pub fn move_and_collision_check(
         &mut self,
         ctx: &mut ggez::Context,
