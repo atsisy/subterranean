@@ -999,6 +999,9 @@ impl TaskTable {
         if let Some(index) = self.on_desk_menu.desk_book_menu_last_clicked() {
             if let Some(book_info) = self.on_desk_menu.get_desk_menu_target_book_info() {
                 return match index {
+		    //
+		    // 題名を記憶する
+		    //
                     0 => {
                         if self.kosuzu_memory.is_in_blacklist(&book_info) {
                             self.kosuzu_phrase.insert_new_phrase(
@@ -1008,6 +1011,10 @@ impl TaskTable {
                             );
                         } else {
                             println!("Ok, This book info is not in blacklist");
+			    // info panel
+			    self.info_panel.add_book_info(ctx, book_info.clone());
+
+			    // internal memory
                             self.kosuzu_memory.add_book_info(book_info);
                         }
                         true
@@ -1452,3 +1459,4 @@ impl Clickable for TaskTable {
         cursor_status
     }
 }
+

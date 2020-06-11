@@ -608,6 +608,7 @@ impl TextureObject for SelectButton {
 
 pub struct TileBatchFrame {
     tile_batch: TileBatch,
+    tile_batch_texture_id: TileBatchTextureID,
     rect: numeric::Rect,
     drwob_essential: DrawableObjectEssential,
     frame_scale: numeric::Vector2f,
@@ -626,6 +627,7 @@ impl TileBatchFrame {
 
         let mut frame = TileBatchFrame {
             tile_batch: tile_batch,
+	    tile_batch_texture_id: tile_batch_texture,
             rect: rect_pos,
             drwob_essential: DrawableObjectEssential::new(true, draw_depth),
             frame_scale: frame_scale,
@@ -634,6 +636,10 @@ impl TileBatchFrame {
         frame.update_tile_batch();
 
         frame
+    }
+
+    pub fn get_frame_texture_id(&self) -> TileBatchTextureID {
+	self.tile_batch_texture_id
     }
 
     ///

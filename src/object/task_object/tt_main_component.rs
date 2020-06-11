@@ -440,19 +440,6 @@ struct TaskSilhouette {
 }
 
 impl TaskSilhouette {
-    pub fn new(
-        ctx: &mut ggez::Context,
-        pos_rect: numeric::Rect,
-        char_obj: SimpleObject,
-        name: &str,
-    ) -> Self {
-        TaskSilhouette {
-            character: Some(char_obj),
-            name: Some(name.to_string()),
-            canvas: SubScreen::new(ctx, pos_rect, 0, ggraphics::Color::from_rgba_u32(0)),
-        }
-    }
-
     pub fn new_empty(ctx: &mut ggez::Context, pos_rect: numeric::Rect) -> Self {
         TaskSilhouette {
             character: None,
@@ -1752,6 +1739,7 @@ struct FloatingMemoryObject {
     appearance_frame: TileBatchFrame,
     canvas: SubScreen,
     padding: f32,
+    font_info: FontInformation,
 }
 
 impl FloatingMemoryObject {
@@ -1763,18 +1751,21 @@ impl FloatingMemoryObject {
 	appear_frame_id: TileBatchTextureID,
 	depth: i8
     ) -> Self {
-	let header_text = UniText::new(
+	let font_info = FontInformation::new(
+	    ctx.resource.get_font(FontID::Cinema),
+	    numeric::Vector2f::new(28.0, 28.0),
+	    ggraphics::Color::from_rgba_u32(0xff)
+	);
+	
+	let mut header_text = UniText::new(
 	    title,
 	    numeric::Point2f::new(0.0, 0.0),
 	    numeric::Vector2f::new(1.0, 1.0),
 	    0.0,
 	    0,
-	    FontInformation::new(
-		ctx.resource.get_font(FontID::Cinema),
-		numeric::Vector2f::new(28.0, 28.0),
-		ggraphics::Color::from_rgba_u32(0xff)
-	    ),
+	    font_info.clone(),
 	);
+	header_text.make_center(ctx.context, numeric::Point2f::new(init_rect.w / 2.0, padding + 28.0));
 	
 	FloatingMemoryObject {
 	    header_text: header_text,
@@ -1782,18 +1773,96 @@ impl FloatingMemoryObject {
 	    appearance_frame: TileBatchFrame::new(
 		ctx.resource,
 		appear_frame_id,
-		numeric::Rect::new(0.0, 0.0, 200.0, 200.0),
-		numeric::Vector2f::new(0.5, 0.5),
+		numeric::Rect::new(0.0, 0.0, 250.0, 200.0),
+		numeric::Vector2f::new(0.6, 0.6),
 		0
 	    ),
 	    canvas: SubScreen::new(
 		ctx.context,
 		init_rect,
 		depth,
-		ggraphics::Color::from_rgba_u32(0xff)
+		ggraphics::Color::from_rgba_u32(0x0)
 	    ),
 	    padding: padding,
+	    font_info: font_info,
 	}
+    }
+
+    fn next_position_y(&self) -> f32 {
+	((self.padding + self.font_info.scale.y) * (self.text.len() as f32)) + 74.0
+    }
+
+    fn center_position_x(&self, ctx: &mut ggez::Context) -> f32 {
+	self.canvas.get_drawing_size(ctx).x / 2.0
+    }
+    
+    fn required_canvas_size(&self, _ctx: &mut ggez::Context) -> numeric::Vector2f {
+	let outer_frame_width = 2.0 * self.padding;
+	let height = self.next_position_y() + outer_frame_width + 16.0;
+
+	numeric::Vector2f::new(250.0, height)
+    }
+
+    fn update_canvas<'a>(&mut self, ctx: &mut SuzuContext<'a>) {
+	let new_size = self.required_canvas_size(ctx.context);
+	let position = self.canvas.get_position();
+	let depth = self.canvas.get_drawing_depth();
+
+	println!("required size: {:?}", new_size);
+	
+	let new_canvas = SubScreen::new(
+	    ctx.context,
+	    numeric::Rect::new(position.x, position.y, new_size.x, new_size.y),
+	    depth,
+	    ggraphics::Color::from_rgba_u32(0)
+	);
+
+	self.canvas = new_canvas;
+
+	let canvas_size = self.canvas.get_drawing_size(ctx.context);
+	
+	let appr_frame = TileBatchFrame::new(
+	    ctx.resource,
+	    self.appearance_frame.get_frame_texture_id(),
+	    numeric::Rect::new(0.0, 0.0, canvas_size.x, canvas_size.y),
+	    numeric::Vector2f::new(0.6, 0.6),
+	    0
+	);
+	self.appearance_frame = appr_frame;
+    }
+
+    fn contains_text(&self, text: &str) -> bool {
+	for uni_text in self.text.iter() {
+	    if uni_text.get_text() == text {
+		return true;
+	    }
+	}
+
+	false
+    }
+    
+    pub fn add_text_line<'a>(&mut self, ctx: &mut SuzuContext<'a>, text: String) {
+	if self.contains_text(&text) {
+	    return;
+	}
+
+	let mut uni_text = UniText::new(
+	    text,
+	    numeric::Point2f::new(0.0, 0.0),
+	    numeric::Vector2f::new(1.0, 1.0),
+	    0.0,
+	    0,
+	    self.font_info.clone()
+	);
+
+	let center_position = numeric::Point2f::new(self.center_position_x(ctx.context), self.next_position_y());
+	uni_text.make_center(ctx.context, center_position);
+	
+	self.text.push(
+	    uni_text
+	);
+
+	self.update_canvas(ctx);
     }
 }
 
@@ -1841,8 +1910,8 @@ impl DrawableComponent for FloatingMemoryObject {
 /// メニューに表示するやつ
 ///
 struct TaskInfoContents {
-    book_table_frame: TableFrame,
-    general_info_frame: TableFrame,
+    book_info_memory: FloatingMemoryObject,
+    general_table_frame: TableFrame,
     header_text: UniText,
     desc_text: Vec<VerticalText>,
     drwob_essential: DrawableObjectEssential,
@@ -1862,20 +1931,11 @@ impl TaskInfoContents {
             ggraphics::Color::from_rgba_u32(0x000000ff),
         );
 
-        let book_frame = TableFrame::new(
+        let general_frame = TableFrame::new(
             ctx.resource,
             numeric::Point2f::new(50.0, 65.0),
             TileBatchTextureID::OldStyleFrame,
             FrameData::new(vec![130.0, 130.0], vec![45.0; 4]),
-            numeric::Vector2f::new(0.25, 0.25),
-            0,
-        );
-
-        let general_frame = TableFrame::new(
-            ctx.resource,
-            numeric::Point2f::new(50.0, 400.0),
-            TileBatchTextureID::OldStyleFrame,
-            FrameData::new(vec![300.0], vec![45.0; 4]),
             numeric::Vector2f::new(0.25, 0.25),
             0,
         );
@@ -1907,7 +1967,7 @@ impl TaskInfoContents {
 
             set_table_frame_cell_center!(
                 ctx.context,
-                book_frame,
+                general_frame,
                 vtext,
                 numeric::Vector2u::new(index as u32, 0)
             );
@@ -1930,28 +1990,41 @@ impl TaskInfoContents {
 
         set_table_frame_cell_center!(
             ctx.context,
-            book_frame,
+            general_frame,
             request_type_vtext,
             numeric::Vector2u::new(1, 1)
         );
 
         desc_text.push(request_type_vtext);
 
+	let book_floating = FloatingMemoryObject::new(
+	    ctx,
+	    numeric::Rect::new(25.0, 400.0, 250.0, 250.0),
+	    "Books".to_string(),
+	    10.0,
+	    TileBatchTextureID::TaishoStyle1,
+	    0
+	);
+
         TaskInfoContents {
-            general_info_frame: general_frame,
-            book_table_frame: book_frame,
+	    book_info_memory: book_floating,
+            general_table_frame: general_frame,
             header_text: header_text,
             desc_text: desc_text,
             drwob_essential: DrawableObjectEssential::new(true, 0),
         }
+    }
+
+    pub fn add_book_info<'a>(&mut self, ctx: &mut SuzuContext<'a>, book_info: BookInformation) {
+	self.book_info_memory.add_text_line(ctx, book_info.name);
     }
 }
 
 impl DrawableComponent for TaskInfoContents {
     fn draw(&mut self, ctx: &mut ggez::Context) -> ggez::GameResult<()> {
         if self.is_visible() {
-            self.book_table_frame.draw(ctx)?;
-            self.general_info_frame.draw(ctx)?;
+	    self.book_info_memory.draw(ctx)?;
+            self.general_table_frame.draw(ctx)?;
 
             self.header_text.draw(ctx)?;
 
@@ -2018,6 +2091,10 @@ impl TaskInfoPanel {
             contents: TaskInfoContents::new(ctx, customer_request),
         }
     }
+
+    pub fn add_book_info<'a>(&mut self, ctx: &mut SuzuContext<'a>, book_info: BookInformation) {
+	self.contents.add_book_info(ctx, book_info);
+    }
 }
 
 impl DrawableComponent for TaskInfoPanel {
@@ -2051,4 +2128,3 @@ impl DrawableComponent for TaskInfoPanel {
         self.canvas.get_drawing_depth()
     }
 }
-
