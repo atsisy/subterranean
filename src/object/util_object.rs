@@ -1,4 +1,5 @@
 use std::rc::Rc;
+use std::collections::HashMap;
 
 use ggez::graphics as ggraphics;
 
@@ -843,6 +844,15 @@ pub enum ScrollDirection {
     Horizon,
 }
 
+
+#[derive(Clone, Copy, PartialEq, Eq, Hash)]
+pub enum ObjectDirection {
+    Up,
+    Down,
+    Right,
+    Left,
+}
+
 pub struct ScrollableWindow<D>
 where
     D: Scrollable,
@@ -1085,26 +1095,34 @@ impl SeqTexture {
 }
 
 pub struct TextureAnimation {
-    textures: Vec<SeqTexture>,
-    current_mode: usize,
+    textures: HashMap<ObjectDirection, SeqTexture>,
+    current_mode: ObjectDirection,
     object: SimpleObject,
     animation_type: AnimationType,
-    next_mode: usize,
+    next_mode: ObjectDirection,
     frame_speed: Clock,
 }
 
 impl TextureAnimation {
     pub fn new(
         obj: SimpleObject,
+	mode_order: Vec<ObjectDirection>,
         textures: Vec<Vec<Rc<ggraphics::Image>>>,
-        mode: usize,
+        mode: ObjectDirection,
         frame_speed: Clock,
     ) -> Self {
+
+	let mut texture_table = HashMap::new();
+
+	for (index, texure_vec) in textures.iter().enumerate() {
+	    texture_table.insert(
+		mode_order.get(index).unwrap().clone(),
+		SeqTexture::new(texure_vec.to_vec())
+	    );
+	}
+	
         TextureAnimation {
-            textures: textures
-                .iter()
-                .map(|vec| SeqTexture::new(vec.to_vec()))
-                .collect(),
+            textures: texture_table,
             current_mode: mode,
             object: obj,
             animation_type: AnimationType::Loop,
@@ -1121,17 +1139,20 @@ impl TextureAnimation {
         &mut self.object
     }
 
-    pub fn change_mode(&mut self, mode: usize, animation_type: AnimationType, next_mode: usize) {
+    pub fn change_mode(&mut self, mode: ObjectDirection, animation_type: AnimationType, next_mode: ObjectDirection) {
         if self.current_mode != mode {
             self.current_mode = mode;
             self.next_mode = next_mode;
             self.animation_type = animation_type;
-            self.textures[self.current_mode].reset();
+            self.textures.get_mut(&self.current_mode).as_mut().unwrap().reset();
         }
     }
 
     fn next_frame(&mut self) {
-        match self.textures[self.current_mode].next_frame(self.animation_type) {
+	let current_mode = self.current_mode;
+	let current_texture = self.textures.get_mut(&current_mode).unwrap();
+	
+        match current_texture.next_frame(self.animation_type) {
             // アニメーションは再生中. 特に操作は行わず、ただテクスチャを切り替える
             Ok(texture) => self.get_mut_object().replace_texture(texture),
 
@@ -1158,8 +1179,8 @@ impl TextureAnimation {
                                 // まだループする予定
                                 if cur < lim {
                                     // 最初のテクスチャに戻し、アニメーションを再開
-                                    self.textures[self.current_mode].reset();
-                                    let texture = self.textures[self.current_mode].current_frame();
+				    current_texture.reset();
+                                    let texture = current_texture.current_frame();
                                     self.get_mut_object().replace_texture(texture);
                                 } else {
                                     // OneShotの場合と同じく、デフォルトのループに切り替える
@@ -1180,5 +1201,9 @@ impl TextureAnimation {
         if t % self.frame_speed == 0 {
             self.next_frame();
         }
+    }
+
+    pub fn get_current_mode(&self) -> ObjectDirection {
+	self.current_mode.clone()
     }
 }

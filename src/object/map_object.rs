@@ -70,8 +70,9 @@ pub struct MapObject {
 impl MapObject {
     pub fn new(
         obj: SimpleObject,
+	mode_order: Vec<ObjectDirection>,
         textures: Vec<Vec<Rc<ggraphics::Image>>>,
-        mode: usize,
+        mode: ObjectDirection,
         speed_info: TextureSpeedInfo,
         map_position: numeric::Point2f,
         collision_crop: numeric::Rect,
@@ -84,11 +85,15 @@ impl MapObject {
                 current: map_position,
             },
             speed_info: speed_info,
-            object: TextureAnimation::new(obj, textures, mode, frame_speed),
+            object: TextureAnimation::new(obj, mode_order, textures, mode, frame_speed),
             collision_crop: collision_crop,
         }
     }
 
+    pub fn current_direction(&self) -> ObjectDirection {
+	self.object.get_current_mode()
+    }
+    
     ///
     /// 当たり判定のある領域を返すメソッド
     ///
@@ -140,7 +145,7 @@ impl MapObject {
     ///
     /// アニメーションモードを変更するメソッド
     ///
-    pub fn change_animation_mode(&mut self, mode: usize) {
+    pub fn change_animation_mode(&mut self, mode: ObjectDirection) {
         self.object.change_mode(mode, AnimationType::Loop, mode);
     }
 
@@ -691,16 +696,16 @@ impl CustomerCharacter {
     fn update_animation_mode_with_rad(&mut self, rad: f32) {
         if rad >= 45.0_f32.to_radians() && rad < 135.0_f32.to_radians() {
             // 上向き
-            self.get_mut_character_object().change_animation_mode(0);
+            self.get_mut_character_object().change_animation_mode(ObjectDirection::Down);
         } else if rad >= 135.0_f32.to_radians() && rad < 225.0_f32.to_radians() {
             // 左向き
-            self.get_mut_character_object().change_animation_mode(3);
+            self.get_mut_character_object().change_animation_mode(ObjectDirection::Left);
         } else if rad >= 225.0_f32.to_radians() && rad < 315.0_f32.to_radians() {
             // 下向き
-            self.get_mut_character_object().change_animation_mode(1);
+            self.get_mut_character_object().change_animation_mode(ObjectDirection::Up);
         } else {
             // 右向き
-            self.get_mut_character_object().change_animation_mode(2);
+            self.get_mut_character_object().change_animation_mode(ObjectDirection::Right);
         }
     }
 
@@ -859,7 +864,7 @@ impl CustomerCharacter {
         if !self.shopping_is_done
             && map_data.map_position_to_tile_position(current_pos).unwrap() == counter
         {
-            self.character.change_animation_mode(3);
+            self.character.change_animation_mode(ObjectDirection::Left);
             self.customer_status = CustomerCharacterStatus::WaitOnClerk;
             self.shopping_is_done = true;
         }

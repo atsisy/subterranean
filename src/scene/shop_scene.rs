@@ -20,6 +20,7 @@ use crate::core::map_parser as mp;
 use crate::core::{FontID, GameResource, SavableData, SuzuContext, TileBatchTextureID};
 use crate::flush_delay_event;
 use crate::object::effect_object;
+use crate::object::util_object::*;
 use crate::object::map_object::*;
 use crate::object::notify;
 use crate::object::scenario::*;
@@ -176,13 +177,17 @@ impl MapData {
         }
     }
 
+    pub fn get_tile_size(&self) -> numeric::Vector2f {
+	self.tile_map.get_tile_drawing_size()
+    }
+    
     pub fn check_event_panel(
         &self,
         trigger: EventTrigger,
         point: numeric::Point2f,
         _t: Clock,
     ) -> Option<&MapEventElement> {
-        let tile_size = self.tile_map.get_tile_drawing_size();
+        let tile_size = self.get_tile_size();
         self.event_map.check_event(
             trigger,
             numeric::Point2i::new(
@@ -466,28 +471,28 @@ impl ShopScene {
     fn right_key_handler(&mut self) {
         self.player
             .get_mut_character_object()
-            .change_animation_mode(2);
+            .change_animation_mode(ObjectDirection::Right);
         self.player.set_speed_x(4.0);
     }
 
     fn left_key_handler(&mut self) {
         self.player
             .get_mut_character_object()
-            .change_animation_mode(3);
+            .change_animation_mode(ObjectDirection::Left);
         self.player.set_speed_x(-4.0);
     }
 
     fn up_key_handler(&mut self) {
         self.player
             .get_mut_character_object()
-            .change_animation_mode(1);
+            .change_animation_mode(ObjectDirection::Up);
         self.player.set_speed_y(-4.0);
     }
 
     fn down_key_handler(&mut self) {
         self.player
             .get_mut_character_object()
-            .change_animation_mode(0);
+            .change_animation_mode(ObjectDirection::Down);
         self.player.set_speed_y(4.0);
     }
 
@@ -804,11 +809,16 @@ impl ShopScene {
         ));
     }
 
-    fn check_event_panel_onmap<'a>(&mut self, ctx: &mut SuzuContext<'a>, trigger: EventTrigger) {
+    fn run_event_panel_onmap_at<'a>(
+	&mut self,
+	ctx: &mut SuzuContext<'a>,
+	trigger: EventTrigger,
+	map_position: numeric::Point2f,
+    ) -> Option<EventTrigger> {
         let t = self.get_current_clock();
         let target_event = self.map.check_event_panel(
             trigger,
-            self.player.get_center_map_position(ctx.context),
+            map_position,
             self.get_current_clock(),
         );
 
@@ -872,7 +882,30 @@ impl ShopScene {
                     self.run_builtin_event(ctx, builtin_event);
                 }
             }
+
+	    return Some(trigger);
         }
+
+	return  None;
+    }
+
+    fn check_event_panel_onmap<'a>(&mut self, ctx: &mut SuzuContext<'a>, trigger: EventTrigger) {
+	let map_position = self.player.get_center_map_position(ctx.context);
+	let result = self.run_event_panel_onmap_at(ctx, trigger, map_position);
+
+	if result.is_none() {
+	    let mut sub_map_position = map_position;
+	    let tile_size = self.map.get_tile_size();
+	    
+	    match self.player.get_character_object().current_direction() {
+		ObjectDirection::Down => sub_map_position.y += tile_size.y,
+		ObjectDirection::Up => sub_map_position.y -= tile_size.y,
+		ObjectDirection::Right => sub_map_position.x += tile_size.x,
+		ObjectDirection::Left => sub_map_position.x -= tile_size.x,
+	    }
+
+	    let _ = self.run_event_panel_onmap_at(ctx, trigger, sub_map_position);
+	}
     }
 
     fn update_playable_character_texture(&mut self, rad: f32) {
@@ -880,21 +913,21 @@ impl ShopScene {
             // 上向き
             self.player
                 .get_mut_character_object()
-                .change_animation_mode(0);
+                .change_animation_mode(ObjectDirection::Down);
         }
 
         if rad >= 135.0_f32.to_radians() && rad < 225.0_f32.to_radians() {
             // 左向き
             self.player
                 .get_mut_character_object()
-                .change_animation_mode(3);
+                .change_animation_mode(ObjectDirection::Left);
         }
 
         if rad >= 225.0_f32.to_radians() && rad < 315.0_f32.to_radians() {
             // 下向き
             self.player
                 .get_mut_character_object()
-                .change_animation_mode(1);
+                .change_animation_mode(ObjectDirection::Up);
         }
 
         if (rad >= 315.0_f32.to_radians() && rad <= 360.0_f32.to_radians())
@@ -903,7 +936,7 @@ impl ShopScene {
             // 右向き
             self.player
                 .get_mut_character_object()
-                .change_animation_mode(2);
+                .change_animation_mode(ObjectDirection::Right);
         }
     }
 

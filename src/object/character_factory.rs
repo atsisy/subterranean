@@ -23,6 +23,12 @@ fn create_playable_doremy1(
             ),
             vec![],
         ),
+	vec![
+	    ObjectDirection::Down,
+	    ObjectDirection::Up,
+	    ObjectDirection::Right,
+	    ObjectDirection::Left
+	],
         vec![
             vec![
                 game_data.ref_texture(TextureID::KosuzuDotFront2),
@@ -41,7 +47,7 @@ fn create_playable_doremy1(
                 game_data.ref_texture(TextureID::KosuzuDotLeft3),
             ],
         ],
-        0,
+	ObjectDirection::Down,
         TextureSpeedInfo::new(
             numeric::Vector2f::new(0.0, 0.0),
             SpeedBorder {
@@ -75,6 +81,12 @@ fn create_customer_sample(
             ),
             vec![],
         ),
+	vec![
+	    ObjectDirection::Down,
+	    ObjectDirection::Up,
+	    ObjectDirection::Right,
+	    ObjectDirection::Left
+	],
         vec![
             vec![
                 game_data.ref_texture(TextureID::KosuzuDotFront2),
@@ -93,7 +105,7 @@ fn create_customer_sample(
                 game_data.ref_texture(TextureID::KosuzuDotLeft3),
             ],
         ],
-        0,
+        ObjectDirection::Down,
         TextureSpeedInfo::new(
             numeric::Vector2f::new(0.0, 0.0),
             SpeedBorder {
