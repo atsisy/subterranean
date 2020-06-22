@@ -146,6 +146,8 @@ pub struct NotificationArea {
     default_animation_time: Clock,
     background: UniTexture,
     appearance_frame: Option<TileBatchFrame>,
+    shadow_frame: Option<TileBatchFrame>,
+    shadow_width: f32,
     event_list: DelayEventList<Self>,
     right_top_position: numeric::Point2f,
     queued_contents: VecDeque<Box<dyn NotificationContents>>,
@@ -167,6 +169,8 @@ impl NotificationArea {
         NotificationArea {
             default_animation_time: 40,
             appearance_frame: None,
+	    shadow_frame: None,
+	    shadow_width: 16.0,
             background: texture,
             event_list: DelayEventList::new(),
             right_top_position: right_top_position,
@@ -179,13 +183,38 @@ impl NotificationArea {
 
     fn new_appearance_frame<'a>(&mut self, ctx: &mut SuzuContext<'a>) {
         let size = self.area.as_ref().unwrap().get_drawing_size(ctx.context);
+	let size_without_shadow = numeric::Vector2f::new(
+	    size.x - self.shadow_width,
+	    size.y - self.shadow_width,
+	);
+	
         self.appearance_frame = Some(TileBatchFrame::new(
             ctx.resource,
             TileBatchTextureID::TaishoStyle1,
-            numeric::Rect::new(0.0, 0.0, size.x, size.y),
+            numeric::Rect::new(0.0, 0.0, size_without_shadow.x, size_without_shadow.y),
             numeric::Vector2f::new(0.5, 0.5),
             0,
         ));
+
+	let background_size = self.background.get_texture_size(ctx.context);
+	self.background.set_crop(
+	    numeric::Rect::new(
+		0.0,
+		0.0,
+		size_without_shadow.x / background_size.x,
+		size_without_shadow.y / background_size.y
+	    )
+	);
+
+	self.shadow_frame = Some(
+	    TileBatchFrame::new(
+		ctx.resource,
+		TileBatchTextureID::BlackFrame2,
+		numeric::Rect::new(0.0, 0.0, size.x, size.y),
+		numeric::Vector2f::new(0.25, 0.25),
+		0,
+            )
+	);
     }
 
     pub fn insert_new_contents<'a>(
@@ -268,7 +297,11 @@ impl NotificationArea {
     }
 
     fn update_area_canvas(&mut self, ctx: &mut ggez::Context, t: Clock) {
-        let area_size = self.contents.as_ref().unwrap().required_size();
+        let mut area_size = self.contents.as_ref().unwrap().required_size();
+
+	area_size.x += self.shadow_width;
+	area_size.y += self.shadow_width;
+	
         self.area = Some(EffectableWrap::new(
             MovableWrap::new(
                 Box::new(SubScreen::new(
@@ -305,6 +338,10 @@ impl DrawableComponent for NotificationArea {
             if let Some(canvas) = self.area.as_mut() {
                 sub_screen::stack_screen(ctx, canvas);
 
+		if let Some(frame) = self.shadow_frame.as_mut() {
+                    frame.draw(ctx)?;
+                }
+		
                 self.background.draw(ctx)?;
 
                 if let Some(frame) = self.appearance_frame.as_mut() {

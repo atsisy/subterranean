@@ -88,6 +88,8 @@ impl DrawableSaveEntry {
             )),
         );
 
+	// 影を表示する領域を確保するために
+	// 背景テクスチャを微妙に切り出し
         let drawing_size = background.get_drawing_size(ctx.context);
         background.set_crop(numeric::Rect::new(
             0.0,
@@ -366,10 +368,10 @@ impl SaveEntryTable {
         let mut pos_rect = numeric::Rect::new(50.0, 125.0, 288.0, 496.0);
 
         let texture_vec = vec![
-            TextureID::Paper4,
-            TextureID::Paper5,
-            TextureID::Paper6,
-            TextureID::Paper7,
+            TextureID::TextBackground,
+            TextureID::TextBackground,
+            TextureID::TextBackground,
+            TextureID::TextBackground,
         ];
         for (index, maybe_save_data) in save_data_list.iter().enumerate() {
             entries.push(DrawableSaveEntry::new(
