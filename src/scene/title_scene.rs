@@ -174,7 +174,18 @@ impl SceneManager for TitleScene {
         match vkey {
             VirtualKey::Action1 => {
                 self.transition_selected_scene(ctx, SceneID::Scenario, t);
-            }
+            },
+	    VirtualKey::Action2 => {
+		
+		if let Some(content) = self.current_title_contents.as_mut() {
+		    match content {
+			TitleContents::TitleSoundPlayer(player) => {
+			},
+			_ => (),
+		    }
+		}
+		
+	    },
             _ => (),
         }
     }
@@ -185,6 +196,15 @@ impl SceneManager for TitleScene {
         if let Some(transition_effect) = self.scene_transition_effect.as_mut() {
             transition_effect.effect(ctx.context, t);
         }
+
+	if let Some(content) = self.current_title_contents.as_mut() {
+	    match content {
+		TitleContents::TitleSoundPlayer(player) => {
+		    player.move_with_func(t);
+		},
+		_ => (),
+	    }
+	}
 
         flush_delay_event!(self, self.event_list, ctx, self.get_current_clock());
     }

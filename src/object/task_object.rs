@@ -568,7 +568,6 @@ impl TaskTable {
         match info {
             CustomerRequest::Borrowing(info) => self.start_borrowing_customer_event(ctx, info, t),
             CustomerRequest::Returning(info) => self.start_returning_customer_event(ctx, info, t),
-            CustomerRequest::Copying(_) => (),
         }
     }
 
@@ -650,7 +649,6 @@ impl TaskTable {
         self.task_is_done = match self.current_customer_request.as_ref().unwrap() {
             CustomerRequest::Borrowing(_) => self.check_borrowing_task_is_done(),
             CustomerRequest::Returning(_) => self.check_returning_task_is_done(),
-            _ => true,
         };
     }
 

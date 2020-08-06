@@ -1559,18 +1559,6 @@ impl ShopMenuContents {
             large_scale_font,
         );
 
-        self.copy_request_num = VerticalText::new(
-            format!(
-                "{}件",
-                number_to_jk(task_result.remain_copy_request.len() as u64)
-            ),
-            numeric::Point2f::new(260.0, 150.0),
-            numeric::Vector2f::new(1.0, 1.0),
-            0.0,
-            0,
-            large_scale_font,
-        );
-
         self.wait_for_return_num = VerticalText::new(
             format!(
                 "{}冊",

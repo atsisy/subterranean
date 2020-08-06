@@ -137,13 +137,6 @@ impl TaskScene {
                     .not_shelved_books
                     .extend(request_information.returning);
             }
-            CustomerRequest::Copying(copying_request_information) => {
-                // 写本依頼を記録
-                task_result.done_works += 1;
-                task_result
-                    .remain_copy_request
-                    .push(copying_request_information);
-            }
         }
     }
 

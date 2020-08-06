@@ -10,8 +10,6 @@ use torifune::numeric;
 use crate::core::{GensoDate, SuzuContext};
 use crate::scene::*;
 
-use crate::object::task_object::tt_sub_component::CopyingRequestInformation;
-
 use suzuna_sub_scene::*;
 
 pub struct SuzunaScene {
@@ -44,12 +42,6 @@ impl SuzunaScene {
             debug::debug_screen_push_text("switch shop -> result");
             self.sub_scene
                 .switch_shop_to_day_result(ctx, transition_status);
-        }
-
-        if self.sub_scene.get_shop_scene_mut().unwrap().transition() == SceneID::Copying {
-            debug::debug_screen_push_text("switch shop -> copying");
-            self.sub_scene
-                .switch_shop_to_copying(ctx, transition_status);
         }
     }
 }
@@ -132,7 +124,6 @@ impl SceneManager for SuzunaScene {
             SuzunaSceneStatus::DayResult => {
                 return transition_status;
             }
-            SuzunaSceneStatus::Copying => {}
         }
 
         SceneTransition::Keep

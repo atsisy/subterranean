@@ -1363,7 +1363,6 @@ impl HoldData {
 pub enum CustomerRequest {
     Borrowing(BorrowingInformation),
     Returning(ReturnBookInformation),
-    Copying(CopyingRequestInformation),
 }
 
 impl CustomerRequest {
@@ -1371,7 +1370,6 @@ impl CustomerRequest {
         match self {
             CustomerRequest::Borrowing(info) => info.borrower.clone(),
             CustomerRequest::Returning(info) => info.borrower.clone(),
-            CustomerRequest::Copying(info) => info.customer.clone(),
         }
     }
 }
@@ -1381,7 +1379,6 @@ impl ToString for CustomerRequest {
         match self {
             CustomerRequest::Borrowing(_) => "貸出",
             CustomerRequest::Returning(_) => "返却",
-            CustomerRequest::Copying(_) => "写本",
         }
         .to_string()
     }

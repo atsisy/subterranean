@@ -1,8 +1,12 @@
 use std::collections::HashMap;
 
+use std::rc::Rc;
 use std::str::FromStr;
 
 use ggez::graphics as ggraphics;
+
+use torifune::impl_drawable_object_for_wrapped;
+use torifune::impl_texture_object_for_wrapped;
 
 use torifune::graphics::drawable::*;
 use torifune::graphics::object::*;
@@ -328,9 +332,19 @@ impl DrawableComponent for TitleSoundPlayer {
     }
 }
 
+impl DrawableObject for TitleSoundPlayer {
+    impl_drawable_object_for_wrapped!{main_text}
+}
+
+impl TextureObject for TitleSoundPlayer {
+    impl_texture_object_for_wrapped!{main_text}
+}
+
+type DynamicTitleSoundPlayer = MovableWrap<TitleSoundPlayer>;
+
 pub enum TitleContents {
     InitialMenu(VTextList),
-    TitleSoundPlayer(TitleSoundPlayer),
+    TitleSoundPlayer(DynamicTitleSoundPlayer),
 }
 
 impl TitleContents {
@@ -365,7 +379,11 @@ impl TitleContents {
             },
 	    "TitleSoundPlayer" => {
 		let data = TitleSoundPlayerData::from_toml(ctx, details_source_file);
-		let sound_player = TitleSoundPlayer::new(name.to_string(), data);
+		let sound_player = MovableWrap::new(
+		    Box::new(TitleSoundPlayer::new(name.to_string(), data)),
+		    None,
+		    0
+		);
 		Some(
 		    TitleContents::TitleSoundPlayer(sound_player),
 		)

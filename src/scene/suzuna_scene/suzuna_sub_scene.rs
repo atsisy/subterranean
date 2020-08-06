@@ -1,4 +1,3 @@
-pub mod copy_scene;
 pub mod task_result_scene;
 pub mod task_scene;
 
@@ -12,7 +11,6 @@ use crate::scene::*;
 
 use crate::scene::shop_scene::ShopScene;
 
-use copy_scene::*;
 use task_result_scene::*;
 use task_scene::*;
 
@@ -24,7 +22,6 @@ pub enum SuzunaSceneStatus {
     Shop,
     DeskWork,
     DayResult,
-    Copying,
 }
 
 ///
@@ -34,7 +31,6 @@ pub struct SuzunaSubScene {
     pub shop_scene: Option<Box<ShopScene>>,
     pub desk_work_scene: Option<Box<TaskScene>>,
     pub day_result_scene: Option<Box<TaskResultScene>>,
-    pub copying_scene: Option<Box<CopyingScene>>,
     scene_status: SuzunaSceneStatus,
     borrowing_record_book_data: Option<BorrowingRecordBookData>,
     date: GensoDate,
@@ -58,7 +54,6 @@ impl SuzunaSubScene {
             shop_scene: Some(Box::new(ShopScene::new(ctx, map_id))),
             desk_work_scene: None,
             day_result_scene: None,
-            copying_scene: None,
             scene_status: SuzunaSceneStatus::Shop,
             borrowing_record_book_data: Some(borrowing_record_book_data),
             date: ctx.savable_data.date.clone(),
@@ -122,7 +117,6 @@ impl SuzunaSubScene {
                         println!("returning count: {}", request.returning.len());
                         CustomerRequest::Returning(request)
                     }
-                    _ => return,
                 };
 
                 let record_book_data =
@@ -174,17 +168,6 @@ impl SuzunaSubScene {
             self.shop_scene.as_mut().unwrap().switched_and_restart(ctx);
         }
     }
-
-    pub fn switch_shop_to_copying<'a>(
-        &mut self,
-        ctx: &mut SuzuContext<'a>,
-        transition: SceneTransition,
-    ) {
-        if transition == SceneTransition::StackingTransition {
-            self.scene_status = SuzunaSceneStatus::Copying;
-            self.copying_scene = Some(Box::new(CopyingScene::new(ctx, Vec::new())));
-        }
-    }
 }
 
 impl SceneManager for SuzunaSubScene {
@@ -201,12 +184,6 @@ impl SceneManager for SuzunaSubScene {
             }
             SuzunaSceneStatus::DayResult => {
                 self.day_result_scene
-                    .as_mut()
-                    .unwrap()
-                    .key_down_event(ctx, vkey);
-            }
-            SuzunaSceneStatus::Copying => {
-                self.copying_scene
                     .as_mut()
                     .unwrap()
                     .key_down_event(ctx, vkey);
@@ -230,9 +207,6 @@ impl SceneManager for SuzunaSubScene {
                     .as_mut()
                     .unwrap()
                     .key_up_event(ctx, vkey);
-            }
-            SuzunaSceneStatus::Copying => {
-                self.copying_scene.as_mut().unwrap().key_up_event(ctx, vkey);
             }
         }
     }
@@ -258,12 +232,6 @@ impl SceneManager for SuzunaSubScene {
             }
             SuzunaSceneStatus::DayResult => {
                 self.day_result_scene
-                    .as_mut()
-                    .unwrap()
-                    .mouse_motion_event(ctx, point, offset);
-            }
-            SuzunaSceneStatus::Copying => {
-                self.copying_scene
                     .as_mut()
                     .unwrap()
                     .mouse_motion_event(ctx, point, offset);
@@ -296,12 +264,6 @@ impl SceneManager for SuzunaSubScene {
                     .unwrap()
                     .mouse_button_down_event(ctx, button, point);
             }
-            SuzunaSceneStatus::Copying => {
-                self.copying_scene
-                    .as_mut()
-                    .unwrap()
-                    .mouse_button_down_event(ctx, button, point);
-            }
         }
     }
 
@@ -326,12 +288,6 @@ impl SceneManager for SuzunaSubScene {
             }
             SuzunaSceneStatus::DayResult => {
                 self.day_result_scene
-                    .as_mut()
-                    .unwrap()
-                    .mouse_button_up_event(ctx, button, point);
-            }
-            SuzunaSceneStatus::Copying => {
-                self.copying_scene
                     .as_mut()
                     .unwrap()
                     .mouse_button_up_event(ctx, button, point);
@@ -365,12 +321,6 @@ impl SceneManager for SuzunaSubScene {
                     .unwrap()
                     .mouse_wheel_event(ctx, point, x, y);
             }
-            SuzunaSceneStatus::Copying => {
-                self.copying_scene
-                    .as_mut()
-                    .unwrap()
-                    .mouse_wheel_event(ctx, point, x, y);
-            }
         }
     }
 
@@ -384,9 +334,6 @@ impl SceneManager for SuzunaSubScene {
             }
             SuzunaSceneStatus::DayResult => {
                 self.day_result_scene.as_mut().unwrap().pre_process(ctx);
-            }
-            SuzunaSceneStatus::Copying => {
-                self.copying_scene.as_mut().unwrap().pre_process(ctx);
             }
         }
     }
@@ -402,9 +349,6 @@ impl SceneManager for SuzunaSubScene {
             SuzunaSceneStatus::DayResult => {
                 self.day_result_scene.as_mut().unwrap().drawing_process(ctx);
             }
-            SuzunaSceneStatus::Copying => {
-                self.copying_scene.as_mut().unwrap().drawing_process(ctx);
-            }
         }
     }
 
@@ -415,7 +359,6 @@ impl SceneManager for SuzunaSubScene {
             SuzunaSceneStatus::DayResult => {
                 self.day_result_scene.as_mut().unwrap().post_process(ctx)
             }
-            SuzunaSceneStatus::Copying => self.copying_scene.as_mut().unwrap().post_process(ctx),
         }
     }
 
@@ -424,7 +367,6 @@ impl SceneManager for SuzunaSubScene {
             SuzunaSceneStatus::Shop => self.shop_scene.as_ref().unwrap().transition(),
             SuzunaSceneStatus::DeskWork => self.desk_work_scene.as_ref().unwrap().transition(),
             SuzunaSceneStatus::DayResult => self.day_result_scene.as_ref().unwrap().transition(),
-            SuzunaSceneStatus::Copying => self.copying_scene.as_ref().unwrap().transition(),
         }
     }
 
@@ -437,7 +379,6 @@ impl SceneManager for SuzunaSubScene {
             SuzunaSceneStatus::DayResult => {
                 self.day_result_scene.as_ref().unwrap().get_current_clock()
             }
-            SuzunaSceneStatus::Copying => self.copying_scene.as_ref().unwrap().get_current_clock(),
         }
     }
 
@@ -454,9 +395,6 @@ impl SceneManager for SuzunaSubScene {
                 .as_mut()
                 .unwrap()
                 .update_current_clock(),
-            SuzunaSceneStatus::Copying => {
-                self.copying_scene.as_mut().unwrap().update_current_clock()
-            }
         }
     }
 }

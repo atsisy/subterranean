@@ -16,7 +16,6 @@ use torifune::hash;
 use torifune::numeric;
 use torifune::sound;
 
-use crate::object::task_object::tt_sub_component::CopyingRequestInformation;
 use ggez::input as ginput;
 use ggez::input::keyboard::*;
 use ginput::mouse::MouseButton;
@@ -818,7 +817,6 @@ pub struct TaskResult {
     pub done_works: u32,                                     // 総仕事数
     pub not_shelved_books: Vec<BookInformation>,             // 返却済, 未配架
     pub borrowing_books: Vec<BookInformation>,               // 貸出中
-    pub remain_copy_request: Vec<CopyingRequestInformation>, // 写本待
     pub total_money: i32,                                    // 稼いだ金額
 }
 
@@ -829,7 +827,6 @@ impl TaskResult {
             not_shelved_books: Vec::new(),
             total_money: 0,
             borrowing_books: Vec::new(),
-            remain_copy_request: Vec::new(),
         }
     }
 
@@ -839,8 +836,6 @@ impl TaskResult {
             .extend(task_result.not_shelved_books.clone());
         self.borrowing_books
             .extend(task_result.borrowing_books.clone());
-        self.remain_copy_request
-            .extend(task_result.remain_copy_request.clone());
         self.total_money += task_result.total_money;
 
         self
@@ -850,7 +845,6 @@ impl TaskResult {
         self.done_works = 0;
         self.not_shelved_books.clear();
         self.borrowing_books.clear();
-        self.remain_copy_request.clear();
         self.total_money = 0;
 
         self
