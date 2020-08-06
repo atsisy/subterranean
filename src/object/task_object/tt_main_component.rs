@@ -1918,7 +1918,7 @@ impl TaskInfoContents {
     pub fn new<'a>(ctx: &mut SuzuContext<'a>, customer_request: Option<CustomerRequest>) -> Self {
         let normal_scale_font = FontInformation::new(
             ctx.resource.get_font(FontID::Cinema),
-            numeric::Vector2f::new(25.0, 25.0),
+            numeric::Vector2f::new(24.0, 24.0),
             ggraphics::Color::from_rgba_u32(0x000000ff),
         );
 
@@ -2073,10 +2073,10 @@ impl TaskInfoPanel {
     ) -> Self {
         TaskInfoPanel {
             canvas: SubScreen::new(
-                ctx.context,
-                size,
-                0,
-                ggraphics::Color::from_rgba_u32(0xffffffff),
+		ctx.context,
+		size,
+		0,
+		ggraphics::Color::from_rgba_u32(0xffffffff),
             ),
             background: UniTexture::new(
                 ctx.resource.ref_texture(TextureID::MenuArt1),
