@@ -112,7 +112,7 @@ impl TitleScene {
 
         match &mut self.current_title_contents.as_mut().unwrap() {
             TitleContents::InitialMenu(contents) => contents.update_highlight(ctx, point),
-	    TitleContents::TitleSoundPlayer(_) => (),
+            TitleContents::TitleSoundPlayer(_) => (),
         }
     }
 
@@ -130,9 +130,9 @@ impl TitleScene {
     }
 
     fn run_builtin_command(&mut self, command: TitleBuiltinCommand) {
-	match command {
-	    TitleBuiltinCommand::Exit => std::process::exit(0),
-	}
+        match command {
+            TitleBuiltinCommand::Exit => std::process::exit(0),
+        }
     }
 
     pub fn contents_mouse_click_handler<'a>(
@@ -152,17 +152,17 @@ impl TitleScene {
                     match event {
                         TitleContentsEvent::NextContents(content_name) => {
                             self.switch_current_content(content_name);
-                        },
+                        }
                         TitleContentsEvent::SceneTransition(scene_id) => {
                             self.transition_selected_scene(ctx, scene_id, t);
-                        },
-			TitleContentsEvent::BuiltinEvent(command) => {
-			    self.run_builtin_command(command);
-			},
+                        }
+                        TitleContentsEvent::BuiltinEvent(command) => {
+                            self.run_builtin_command(command);
+                        }
                     }
                 }
-            },
-	    TitleContents::TitleSoundPlayer(_) => (),
+            }
+            TitleContents::TitleSoundPlayer(_) => (),
         }
     }
 }
@@ -174,18 +174,15 @@ impl SceneManager for TitleScene {
         match vkey {
             VirtualKey::Action1 => {
                 self.transition_selected_scene(ctx, SceneID::Scenario, t);
-            },
-	    VirtualKey::Action2 => {
-		
-		if let Some(content) = self.current_title_contents.as_mut() {
-		    match content {
-			TitleContents::TitleSoundPlayer(player) => {
-			},
-			_ => (),
-		    }
-		}
-		
-	    },
+            }
+            VirtualKey::Action2 => {
+                if let Some(content) = self.current_title_contents.as_mut() {
+                    match content {
+                        TitleContents::TitleSoundPlayer(player) => {}
+                        _ => (),
+                    }
+                }
+            }
             _ => (),
         }
     }
@@ -197,14 +194,14 @@ impl SceneManager for TitleScene {
             transition_effect.effect(ctx.context, t);
         }
 
-	if let Some(content) = self.current_title_contents.as_mut() {
-	    match content {
-		TitleContents::TitleSoundPlayer(player) => {
-		    player.move_with_func(t);
-		},
-		_ => (),
-	    }
-	}
+        if let Some(content) = self.current_title_contents.as_mut() {
+            match content {
+                TitleContents::TitleSoundPlayer(player) => {
+                    player.move_with_func(t);
+                }
+                _ => (),
+            }
+        }
 
         flush_delay_event!(self, self.event_list, ctx, self.get_current_clock());
     }

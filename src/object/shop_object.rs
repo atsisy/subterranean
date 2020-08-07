@@ -58,7 +58,7 @@ impl SelectBookWindowContents {
         ));
 
         SelectBookWindowContents {
-	    table_frame_init_position: table_frame.get_position(),
+            table_frame_init_position: table_frame.get_position(),
             table_frame: table_frame,
             book_title_text: Vec::new(),
             billing_number_text: Vec::new(),
@@ -192,18 +192,17 @@ impl Scrollable for SelectBookWindowContents {
     ) {
         self.table_frame.move_diff(offset);
 
-	if self.table_frame.get_position().x < self.table_frame_init_position.x {
-	    self.table_frame.set_position(self.table_frame_init_position.clone());
-	}
+        if self.table_frame.get_position().x < self.table_frame_init_position.x {
+            self.table_frame
+                .set_position(self.table_frame_init_position.clone());
+        }
 
-	if self.table_frame.get_position().x >= 20.0 {
-	    self.table_frame.set_position(
-		numeric::Point2f::new(
-		    20.0,
-		    self.table_frame.get_position().y
-		)
-	    );
-	}
+        if self.table_frame.get_position().x >= 20.0 {
+            self.table_frame.set_position(numeric::Point2f::new(
+                20.0,
+                self.table_frame.get_position().y,
+            ));
+        }
 
         for vtext in &mut self.book_title_text {
             vtext.move_diff(offset);
@@ -295,13 +294,13 @@ impl SelectBookWindow {
 
         let contents = SelectBookWindowContents::new(ctx.resource, font_info, window_rect);
 
-	let background = UniTexture::new(
-	    ctx.resource.ref_texture(TextureID::TextBackground),
-	    numeric::Point2f::new(0.0, 0.0),
-	    numeric::Vector2f::new(1.0, 1.0),
-	    0.0,
-	    100
-	);
+        let background = UniTexture::new(
+            ctx.resource.ref_texture(TextureID::TextBackground),
+            numeric::Point2f::new(0.0, 0.0),
+            numeric::Vector2f::new(1.0, 1.0),
+            0.0,
+            100,
+        );
 
         let mut window = SelectBookWindow {
             canvas: SubScreen::new(
@@ -329,7 +328,7 @@ impl SelectBookWindow {
                 numeric::Vector2f::new(15.0, 15.0),
                 ScrollDirection::Horizon,
             ),
-	    background: background,
+            background: background,
         };
 
         window.update_contents(ctx.context, &book_info);
@@ -377,7 +376,7 @@ impl DrawableComponent for SelectBookWindow {
         if self.is_visible() {
             sub_screen::stack_screen(ctx, &self.canvas);
 
-	    self.background.draw(ctx)?;
+            self.background.draw(ctx)?;
 
             self.appearance_frame.draw(ctx)?;
 

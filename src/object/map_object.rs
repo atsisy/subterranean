@@ -70,7 +70,7 @@ pub struct MapObject {
 impl MapObject {
     pub fn new(
         obj: SimpleObject,
-	mode_order: Vec<ObjectDirection>,
+        mode_order: Vec<ObjectDirection>,
         textures: Vec<Vec<Rc<ggraphics::Image>>>,
         mode: ObjectDirection,
         speed_info: TextureSpeedInfo,
@@ -91,9 +91,9 @@ impl MapObject {
     }
 
     pub fn current_direction(&self) -> ObjectDirection {
-	self.object.get_current_mode()
+        self.object.get_current_mode()
     }
-    
+
     ///
     /// 当たり判定のある領域を返すメソッド
     ///
@@ -696,16 +696,20 @@ impl CustomerCharacter {
     fn update_animation_mode_with_rad(&mut self, rad: f32) {
         if rad >= 45.0_f32.to_radians() && rad < 135.0_f32.to_radians() {
             // 上向き
-            self.get_mut_character_object().change_animation_mode(ObjectDirection::Down);
+            self.get_mut_character_object()
+                .change_animation_mode(ObjectDirection::Down);
         } else if rad >= 135.0_f32.to_radians() && rad < 225.0_f32.to_radians() {
             // 左向き
-            self.get_mut_character_object().change_animation_mode(ObjectDirection::Left);
+            self.get_mut_character_object()
+                .change_animation_mode(ObjectDirection::Left);
         } else if rad >= 225.0_f32.to_radians() && rad < 315.0_f32.to_radians() {
             // 下向き
-            self.get_mut_character_object().change_animation_mode(ObjectDirection::Up);
+            self.get_mut_character_object()
+                .change_animation_mode(ObjectDirection::Up);
         } else {
             // 右向き
-            self.get_mut_character_object().change_animation_mode(ObjectDirection::Right);
+            self.get_mut_character_object()
+                .change_animation_mode(ObjectDirection::Right);
         }
     }
 

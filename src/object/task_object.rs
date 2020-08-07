@@ -460,7 +460,7 @@ impl TaskTable {
         self.customer_silhouette_menu.update(ctx, t);
         self.on_desk_menu.update(ctx, t);
         self.kosuzu_phrase.update(ctx, t);
-	self.info_panel.update(t);
+        self.info_panel.update(t);
 
         self.check_task_is_done();
     }
@@ -998,9 +998,9 @@ impl TaskTable {
         if let Some(index) = self.on_desk_menu.desk_book_menu_last_clicked() {
             if let Some(book_info) = self.on_desk_menu.get_desk_menu_target_book_info() {
                 return match index {
-		    //
-		    // 題名を記憶する
-		    //
+                    //
+                    // 題名を記憶する
+                    //
                     0 => {
                         if self.kosuzu_memory.is_in_blacklist(&book_info) {
                             self.kosuzu_phrase.insert_new_phrase(
@@ -1010,26 +1010,16 @@ impl TaskTable {
                             );
                         } else {
                             println!("Ok, This book info is not in blacklist");
-			    // info panel
-			    self.info_panel.add_book_info(ctx, book_info.clone(), point, t);
+                            // info panel
+                            self.info_panel
+                                .add_book_info(ctx, book_info.clone(), point, t);
 
-			    // internal memory
+                            // internal memory
                             self.kosuzu_memory.add_book_info(book_info);
                         }
                         true
                     }
                     1 => {
-                        // すぐに表示すると順番的にclose_allされてしまうので、遅らせる
-                        self.event_list.add_event(
-                            Box::new(move |slf: &mut Self, ctx, t| {
-                                slf.on_desk_menu
-                                    .show_book_info_area(ctx, point, book_info, t);
-                            }),
-                            t + 1,
-                        );
-                        true
-                    }
-                    2 => {
                         let target_book_info =
                             self.on_desk_menu.get_desk_menu_target_book_info().unwrap();
                         self.kosuzu_memory.add_book_to_black_list(target_book_info);
@@ -1458,4 +1448,3 @@ impl Clickable for TaskTable {
         cursor_status
     }
 }
-

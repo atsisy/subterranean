@@ -20,12 +20,12 @@ use crate::core::map_parser as mp;
 use crate::core::{FontID, GameResource, SavableData, SuzuContext, TileBatchTextureID};
 use crate::flush_delay_event;
 use crate::object::effect_object;
-use crate::object::util_object::*;
 use crate::object::map_object::*;
 use crate::object::notify;
 use crate::object::scenario::*;
 use crate::object::shop_object::*;
 use crate::object::task_object::tt_main_component::CustomerRequest;
+use crate::object::util_object::*;
 use crate::object::*;
 use effect_object::{SceneTransitionEffectType, TilingEffectType};
 use notify::*;
@@ -178,9 +178,9 @@ impl MapData {
     }
 
     pub fn get_tile_size(&self) -> numeric::Vector2f {
-	self.tile_map.get_tile_drawing_size()
+        self.tile_map.get_tile_drawing_size()
     }
-    
+
     pub fn check_event_panel(
         &self,
         trigger: EventTrigger,
@@ -810,17 +810,15 @@ impl ShopScene {
     }
 
     fn run_event_panel_onmap_at<'a>(
-	&mut self,
-	ctx: &mut SuzuContext<'a>,
-	trigger: EventTrigger,
-	map_position: numeric::Point2f,
+        &mut self,
+        ctx: &mut SuzuContext<'a>,
+        trigger: EventTrigger,
+        map_position: numeric::Point2f,
     ) -> Option<EventTrigger> {
         let t = self.get_current_clock();
-        let target_event = self.map.check_event_panel(
-            trigger,
-            map_position,
-            self.get_current_clock(),
-        );
+        let target_event =
+            self.map
+                .check_event_panel(trigger, map_position, self.get_current_clock());
 
         if let Some(event_element) = target_event {
             match event_element {
@@ -883,29 +881,29 @@ impl ShopScene {
                 }
             }
 
-	    return Some(trigger);
+            return Some(trigger);
         }
 
-	return  None;
+        return None;
     }
 
     fn check_event_panel_onmap<'a>(&mut self, ctx: &mut SuzuContext<'a>, trigger: EventTrigger) {
-	let map_position = self.player.get_center_map_position(ctx.context);
-	let result = self.run_event_panel_onmap_at(ctx, trigger, map_position);
+        let map_position = self.player.get_center_map_position(ctx.context);
+        let result = self.run_event_panel_onmap_at(ctx, trigger, map_position);
 
-	if result.is_none() {
-	    let mut sub_map_position = map_position;
-	    let tile_size = self.map.get_tile_size();
-	    
-	    match self.player.get_character_object().current_direction() {
-		ObjectDirection::Down => sub_map_position.y += tile_size.y,
-		ObjectDirection::Up => sub_map_position.y -= tile_size.y,
-		ObjectDirection::Right => sub_map_position.x += tile_size.x,
-		ObjectDirection::Left => sub_map_position.x -= tile_size.x,
-	    }
+        if result.is_none() {
+            let mut sub_map_position = map_position;
+            let tile_size = self.map.get_tile_size();
 
-	    let _ = self.run_event_panel_onmap_at(ctx, trigger, sub_map_position);
-	}
+            match self.player.get_character_object().current_direction() {
+                ObjectDirection::Down => sub_map_position.y += tile_size.y,
+                ObjectDirection::Up => sub_map_position.y -= tile_size.y,
+                ObjectDirection::Right => sub_map_position.x += tile_size.x,
+                ObjectDirection::Left => sub_map_position.x -= tile_size.x,
+            }
+
+            let _ = self.run_event_panel_onmap_at(ctx, trigger, sub_map_position);
+        }
     }
 
     fn update_playable_character_texture(&mut self, rad: f32) {

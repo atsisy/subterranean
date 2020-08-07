@@ -1,5 +1,5 @@
-use std::rc::Rc;
 use std::collections::HashMap;
+use std::rc::Rc;
 
 use ggez::graphics as ggraphics;
 
@@ -626,7 +626,7 @@ impl TileBatchFrame {
 
         let mut frame = TileBatchFrame {
             tile_batch: tile_batch,
-	    tile_batch_texture_id: tile_batch_texture,
+            tile_batch_texture_id: tile_batch_texture,
             rect: rect_pos,
             drwob_essential: DrawableObjectEssential::new(true, draw_depth),
             frame_scale: frame_scale,
@@ -638,7 +638,7 @@ impl TileBatchFrame {
     }
 
     pub fn get_frame_texture_id(&self) -> TileBatchTextureID {
-	self.tile_batch_texture_id
+        self.tile_batch_texture_id
     }
 
     ///
@@ -841,7 +841,6 @@ pub enum ScrollDirection {
     Vertical = 0,
     Horizon,
 }
-
 
 #[derive(Clone, Copy, PartialEq, Eq, Hash)]
 pub enum ObjectDirection {
@@ -1104,21 +1103,20 @@ pub struct TextureAnimation {
 impl TextureAnimation {
     pub fn new(
         obj: SimpleObject,
-	mode_order: Vec<ObjectDirection>,
+        mode_order: Vec<ObjectDirection>,
         textures: Vec<Vec<Rc<ggraphics::Image>>>,
         mode: ObjectDirection,
         frame_speed: Clock,
     ) -> Self {
+        let mut texture_table = HashMap::new();
 
-	let mut texture_table = HashMap::new();
+        for (index, texure_vec) in textures.iter().enumerate() {
+            texture_table.insert(
+                mode_order.get(index).unwrap().clone(),
+                SeqTexture::new(texure_vec.to_vec()),
+            );
+        }
 
-	for (index, texure_vec) in textures.iter().enumerate() {
-	    texture_table.insert(
-		mode_order.get(index).unwrap().clone(),
-		SeqTexture::new(texure_vec.to_vec())
-	    );
-	}
-	
         TextureAnimation {
             textures: texture_table,
             current_mode: mode,
@@ -1137,19 +1135,28 @@ impl TextureAnimation {
         &mut self.object
     }
 
-    pub fn change_mode(&mut self, mode: ObjectDirection, animation_type: AnimationType, next_mode: ObjectDirection) {
+    pub fn change_mode(
+        &mut self,
+        mode: ObjectDirection,
+        animation_type: AnimationType,
+        next_mode: ObjectDirection,
+    ) {
         if self.current_mode != mode {
             self.current_mode = mode;
             self.next_mode = next_mode;
             self.animation_type = animation_type;
-            self.textures.get_mut(&self.current_mode).as_mut().unwrap().reset();
+            self.textures
+                .get_mut(&self.current_mode)
+                .as_mut()
+                .unwrap()
+                .reset();
         }
     }
 
     fn next_frame(&mut self) {
-	let current_mode = self.current_mode;
-	let current_texture = self.textures.get_mut(&current_mode).unwrap();
-	
+        let current_mode = self.current_mode;
+        let current_texture = self.textures.get_mut(&current_mode).unwrap();
+
         match current_texture.next_frame(self.animation_type) {
             // アニメーションは再生中. 特に操作は行わず、ただテクスチャを切り替える
             Ok(texture) => self.get_mut_object().replace_texture(texture),
@@ -1177,7 +1184,7 @@ impl TextureAnimation {
                                 // まだループする予定
                                 if cur < lim {
                                     // 最初のテクスチャに戻し、アニメーションを再開
-				    current_texture.reset();
+                                    current_texture.reset();
                                     let texture = current_texture.current_frame();
                                     self.get_mut_object().replace_texture(texture);
                                 } else {
@@ -1202,6 +1209,6 @@ impl TextureAnimation {
     }
 
     pub fn get_current_mode(&self) -> ObjectDirection {
-	self.current_mode.clone()
+        self.current_mode.clone()
     }
 }

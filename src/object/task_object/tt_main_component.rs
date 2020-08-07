@@ -1741,140 +1741,146 @@ struct FloatingMemoryObject {
 
 impl FloatingMemoryObject {
     pub fn new<'a>(
-	ctx: &mut SuzuContext<'a>,
-	init_rect: numeric::Rect,
-	title: String,
-	padding: f32,
-	appear_frame_id: TileBatchTextureID,
-	depth: i8
+        ctx: &mut SuzuContext<'a>,
+        init_rect: numeric::Rect,
+        title: String,
+        padding: f32,
+        appear_frame_id: TileBatchTextureID,
+        depth: i8,
     ) -> Self {
-	let font_info = FontInformation::new(
-	    ctx.resource.get_font(FontID::Cinema),
-	    numeric::Vector2f::new(28.0, 28.0),
-	    ggraphics::Color::from_rgba_u32(0xff)
-	);
-	
-	let mut header_text = UniText::new(
-	    title,
-	    numeric::Point2f::new(0.0, 0.0),
-	    numeric::Vector2f::new(1.0, 1.0),
-	    0.0,
-	    0,
-	    font_info.clone(),
-	);
-	header_text.make_center(ctx.context, numeric::Point2f::new(init_rect.w / 2.0, padding + 28.0));
-	
-	FloatingMemoryObject {
-	    header_text: header_text,
-	    text: Vec::new(),
-	    appearance_frame: TileBatchFrame::new(
-		ctx.resource,
-		appear_frame_id,
-		numeric::Rect::new(0.0, 0.0, 250.0, 200.0),
-		numeric::Vector2f::new(0.6, 0.6),
-		0
-	    ),
-	    canvas: SubScreen::new(
-		ctx.context,
-		init_rect,
-		depth,
-		ggraphics::Color::from_rgba_u32(0x0)
-	    ),
-	    padding: padding,
-	    font_info: font_info,
-	}
+        let font_info = FontInformation::new(
+            ctx.resource.get_font(FontID::Cinema),
+            numeric::Vector2f::new(28.0, 28.0),
+            ggraphics::Color::from_rgba_u32(0xff),
+        );
+
+        let mut header_text = UniText::new(
+            title,
+            numeric::Point2f::new(0.0, 0.0),
+            numeric::Vector2f::new(1.0, 1.0),
+            0.0,
+            0,
+            font_info.clone(),
+        );
+        header_text.make_center(
+            ctx.context,
+            numeric::Point2f::new(init_rect.w / 2.0, padding + 28.0),
+        );
+
+        FloatingMemoryObject {
+            header_text: header_text,
+            text: Vec::new(),
+            appearance_frame: TileBatchFrame::new(
+                ctx.resource,
+                appear_frame_id,
+                numeric::Rect::new(0.0, 0.0, 250.0, 200.0),
+                numeric::Vector2f::new(0.6, 0.6),
+                0,
+            ),
+            canvas: SubScreen::new(
+                ctx.context,
+                init_rect,
+                depth,
+                ggraphics::Color::from_rgba_u32(0x0),
+            ),
+            padding: padding,
+            font_info: font_info,
+        }
     }
 
     fn next_position_y(&self) -> f32 {
-	((self.padding + self.font_info.scale.y) * (self.text.len() as f32)) + 74.0
+        ((self.padding + self.font_info.scale.y) * (self.text.len() as f32)) + 74.0
     }
 
     fn center_position_x(&self, ctx: &mut ggez::Context) -> f32 {
-	self.canvas.get_drawing_size(ctx).x / 2.0
+        self.canvas.get_drawing_size(ctx).x / 2.0
     }
-    
-    fn required_canvas_size(&self, _ctx: &mut ggez::Context) -> numeric::Vector2f {
-	let outer_frame_width = 2.0 * self.padding;
-	let height = self.next_position_y() + outer_frame_width + 16.0;
 
-	numeric::Vector2f::new(250.0, height)
+    fn required_canvas_size(&self, _ctx: &mut ggez::Context) -> numeric::Vector2f {
+        let outer_frame_width = 2.0 * self.padding;
+        let height = self.next_position_y() + outer_frame_width + 16.0;
+
+        numeric::Vector2f::new(250.0, height)
     }
 
     fn update_canvas<'a>(&mut self, ctx: &mut SuzuContext<'a>) {
-	let new_size = self.required_canvas_size(ctx.context);
-	let position = self.canvas.get_position();
-	let depth = self.canvas.get_drawing_depth();
+        let new_size = self.required_canvas_size(ctx.context);
+        let position = self.canvas.get_position();
+        let depth = self.canvas.get_drawing_depth();
 
-	println!("required size: {:?}", new_size);
-	
-	let new_canvas = SubScreen::new(
-	    ctx.context,
-	    numeric::Rect::new(position.x, position.y, new_size.x, new_size.y),
-	    depth,
-	    ggraphics::Color::from_rgba_u32(0)
-	);
+        println!("required size: {:?}", new_size);
 
-	self.canvas = new_canvas;
+        let new_canvas = SubScreen::new(
+            ctx.context,
+            numeric::Rect::new(position.x, position.y, new_size.x, new_size.y),
+            depth,
+            ggraphics::Color::from_rgba_u32(0),
+        );
 
-	let canvas_size = self.canvas.get_drawing_size(ctx.context);
-	
-	let appr_frame = TileBatchFrame::new(
-	    ctx.resource,
-	    self.appearance_frame.get_frame_texture_id(),
-	    numeric::Rect::new(0.0, 0.0, canvas_size.x, canvas_size.y),
-	    numeric::Vector2f::new(0.6, 0.6),
-	    0
-	);
-	self.appearance_frame = appr_frame;
+        self.canvas = new_canvas;
+
+        let canvas_size = self.canvas.get_drawing_size(ctx.context);
+
+        let appr_frame = TileBatchFrame::new(
+            ctx.resource,
+            self.appearance_frame.get_frame_texture_id(),
+            numeric::Rect::new(0.0, 0.0, canvas_size.x, canvas_size.y),
+            numeric::Vector2f::new(0.6, 0.6),
+            0,
+        );
+        self.appearance_frame = appr_frame;
     }
 
     fn contains_text(&self, text: &str) -> bool {
-	for uni_text in self.text.iter() {
-	    if uni_text.get_text() == text {
-		return true;
-	    }
-	}
+        for uni_text in self.text.iter() {
+            if uni_text.get_text() == text {
+                return true;
+            }
+        }
 
-	false
+        false
     }
-    
-    pub fn add_text_line<'a>(&mut self, ctx: &mut SuzuContext<'a>, text: String, init_text_pos: numeric::Point2f, now: Clock) {
-	if self.contains_text(&text) {
-	    return;
-	}
 
-	let mut uni_text = Box::new(
-	    UniText::new(
-		text,
-		numeric::Point2f::new(0.0, 0.0),
-		numeric::Vector2f::new(1.0, 1.0),
-		0.0,
-		0,
-		self.font_info.clone()
-	    )
-	);
+    pub fn add_text_line<'a>(
+        &mut self,
+        ctx: &mut SuzuContext<'a>,
+        text: String,
+        init_text_pos: numeric::Point2f,
+        now: Clock,
+    ) {
+        if self.contains_text(&text) {
+            return;
+        }
 
-	let center_position = numeric::Point2f::new(self.center_position_x(ctx.context), self.next_position_y());
-	uni_text.make_center(ctx.context, center_position);
+        let mut uni_text = Box::new(UniText::new(
+            text,
+            numeric::Point2f::new(0.0, 0.0),
+            numeric::Vector2f::new(1.0, 1.0),
+            0.0,
+            0,
+            self.font_info.clone(),
+        ));
 
-	let goal = uni_text.get_position();
-	uni_text.set_position(init_text_pos);
-	
-	self.text.push(
-	    MovableWrap::new(
-		uni_text,
-		move_fn::devide_distance(goal, 0.3),
-		now,
-	    )
-	);
+        let center_position =
+            numeric::Point2f::new(self.center_position_x(ctx.context), self.next_position_y());
+        uni_text.make_center(ctx.context, center_position);
 
-	self.update_canvas(ctx);
+        let goal = uni_text.get_position();
+        uni_text.set_position(init_text_pos);
+
+        self.text.push(MovableWrap::new(
+            uni_text,
+            move_fn::devide_distance(goal, 0.3),
+            now,
+        ));
+
+        self.update_canvas(ctx);
     }
 
     pub fn update(&mut self, t: Clock) {
-	for text in self.text.iter_mut() {
-	    text.move_with_func(t);
-	}
+        for text in self.text.iter_mut() {
+            text.move_with_func(t);
+        }
     }
 }
 
@@ -1883,11 +1889,11 @@ impl DrawableComponent for FloatingMemoryObject {
         if self.is_visible() {
             sub_screen::stack_screen(ctx, &self.canvas);
 
-	    self.header_text.draw(ctx)?;
-	    
-	    for uni_text in self.text.iter_mut() {
-		uni_text.draw(ctx)?;
-	    }
+            self.header_text.draw(ctx)?;
+
+            for uni_text in self.text.iter_mut() {
+                uni_text.draw(ctx)?;
+            }
 
             self.appearance_frame.draw(ctx)?;
 
@@ -2009,16 +2015,16 @@ impl TaskInfoContents {
 
         desc_text.push(request_type_vtext);
 
-	let book_floating = FloatingMemoryObject::new(
-	    ctx,
-	    numeric::Rect::new(25.0, 400.0, 250.0, 250.0),
-	    "-Books-".to_string(),
-	    10.0,
-	    TileBatchTextureID::TaishoStyle1,
-	    0
-	);
+        let book_floating = FloatingMemoryObject::new(
+            ctx,
+            numeric::Rect::new(25.0, 400.0, 250.0, 250.0),
+            "-Books-".to_string(),
+            10.0,
+            TileBatchTextureID::TaishoStyle1,
+            0,
+        );
         TaskInfoContents {
-	    book_info_memory: book_floating,
+            book_info_memory: book_floating,
             general_table_frame: general_frame,
             header_text: header_text,
             desc_text: desc_text,
@@ -2027,24 +2033,25 @@ impl TaskInfoContents {
     }
 
     pub fn add_book_info<'a>(
-	&mut self,
-	ctx: &mut SuzuContext<'a>,
-	book_info: BookInformation,
-	init_text_pos: numeric::Point2f,
-	now: Clock
+        &mut self,
+        ctx: &mut SuzuContext<'a>,
+        book_info: BookInformation,
+        init_text_pos: numeric::Point2f,
+        now: Clock,
     ) {
-	self.book_info_memory.add_text_line(ctx, book_info.name, init_text_pos, now);
+        self.book_info_memory
+            .add_text_line(ctx, book_info.name, init_text_pos, now);
     }
 
     pub fn update(&mut self, t: Clock) {
-	self.book_info_memory.update(t);
+        self.book_info_memory.update(t);
     }
 }
 
 impl DrawableComponent for TaskInfoContents {
     fn draw(&mut self, ctx: &mut ggez::Context) -> ggez::GameResult<()> {
         if self.is_visible() {
-	    self.book_info_memory.draw(ctx)?;
+            self.book_info_memory.draw(ctx)?;
             self.general_table_frame.draw(ctx)?;
 
             self.header_text.draw(ctx)?;
@@ -2097,10 +2104,10 @@ impl TaskInfoPanel {
     ) -> Self {
         TaskInfoPanel {
             canvas: SubScreen::new(
-		ctx.context,
-		size,
-		0,
-		ggraphics::Color::from_rgba_u32(0xffffffff),
+                ctx.context,
+                size,
+                0,
+                ggraphics::Color::from_rgba_u32(0xffffffff),
             ),
             background: UniTexture::new(
                 ctx.resource.ref_texture(TextureID::TextBackground),
@@ -2113,12 +2120,19 @@ impl TaskInfoPanel {
         }
     }
 
-    pub fn add_book_info<'a>(&mut self, ctx: &mut SuzuContext<'a>, book_info: BookInformation, init_text_pos: numeric::Point2f, now: Clock) {
-	self.contents.add_book_info(ctx, book_info, init_text_pos, now);
+    pub fn add_book_info<'a>(
+        &mut self,
+        ctx: &mut SuzuContext<'a>,
+        book_info: BookInformation,
+        init_text_pos: numeric::Point2f,
+        now: Clock,
+    ) {
+        self.contents
+            .add_book_info(ctx, book_info, init_text_pos, now);
     }
 
     pub fn update(&mut self, t: Clock) {
-	self.contents.update(t);
+        self.contents.update(t);
     }
 }
 

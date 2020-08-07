@@ -46,20 +46,20 @@ impl TitleContentsEvent {
                 let next_scene_str = toml_value["next-scene"].as_str().expect("error");
                 let next_scene = SceneID::from_str(next_scene_str).expect("Unknown next scene");
                 Some(TitleContentsEvent::SceneTransition(next_scene))
-            },
+            }
             "NextContents" => {
                 let next_scene_str = toml_value["next-contents-name"]
                     .as_str()
                     .expect("error")
                     .to_string();
                 Some(TitleContentsEvent::NextContents(next_scene_str))
-            },
-	    "BuiltinCommand" => {
-		let command = toml_value["builtin-command"]
-                    .as_str()
-                    .expect("error");
-                Some(TitleContentsEvent::BuiltinEvent(TitleBuiltinCommand::from_str(command).unwrap()))
-	    },
+            }
+            "BuiltinCommand" => {
+                let command = toml_value["builtin-command"].as_str().expect("error");
+                Some(TitleContentsEvent::BuiltinEvent(
+                    TitleBuiltinCommand::from_str(command).unwrap(),
+                ))
+            }
             _ => None,
         }
     }
@@ -241,32 +241,29 @@ pub struct TitleSoundPlayerData {
 
 impl TitleSoundPlayerData {
     pub fn from_toml<'a>(ctx: &mut SuzuContext<'a>, path: &str) -> Self {
-	let content = match std::fs::read_to_string(path) {
+        let content = match std::fs::read_to_string(path) {
             Ok(c) => c,
             Err(_) => panic!("Failed to read: {}", path),
         };
-	
+
         let root = content.parse::<toml::Value>().unwrap();
 
-	let text = root["text"].as_str().unwrap();
+        let text = root["text"].as_str().unwrap();
 
-	let position_table = root["position"].as_table().unwrap();
-	
+        let position_table = root["position"].as_table().unwrap();
+
         let position = numeric::Point2f::new(
             position_table["x"].as_float().unwrap() as f32,
             position_table["y"].as_float().unwrap() as f32,
         );
 
-        let font_info = font_information_from_toml_value(
-	    ctx.resource,
-	    &root["font_info"]
-	);
+        let font_info = font_information_from_toml_value(ctx.resource, &root["font_info"]);
 
-	TitleSoundPlayerData {
-	    font_info: font_info,
-	    position: position,
-	    text: text.to_string(),
-	}
+        TitleSoundPlayerData {
+            font_info: font_info,
+            position: position,
+            text: text.to_string(),
+        }
     }
 }
 
@@ -277,35 +274,32 @@ pub struct TitleSoundPlayer {
 }
 
 impl TitleSoundPlayer {
-    pub fn new<'a>(
-	name: String,
-	data: TitleSoundPlayerData,
-    ) -> Self {
-	let main_text = VerticalText::new(
-	    data.text.to_string(),
-	    data.position,
-	    numeric::Vector2f::new(1.0, 1.0),
-	    0.0,
-	    0,
-	    data.font_info
-	);
+    pub fn new<'a>(name: String, data: TitleSoundPlayerData) -> Self {
+        let main_text = VerticalText::new(
+            data.text.to_string(),
+            data.position,
+            numeric::Vector2f::new(1.0, 1.0),
+            0.0,
+            0,
+            data.font_info,
+        );
 
-	TitleSoundPlayer {
-	    main_text: main_text,
-	    name: name,
-	    drwob_essential: DrawableObjectEssential::new(true, 0),
-	}
+        TitleSoundPlayer {
+            main_text: main_text,
+            name: name,
+            drwob_essential: DrawableObjectEssential::new(true, 0),
+        }
     }
 
     pub fn get_name(&self) -> String {
-	self.name.to_string()
+        self.name.to_string()
     }
 }
 
 impl DrawableComponent for TitleSoundPlayer {
     fn draw(&mut self, ctx: &mut ggez::Context) -> ggez::GameResult<()> {
         if self.is_visible() {
-	    self.main_text.draw(ctx)?;
+            self.main_text.draw(ctx)?;
         }
 
         Ok(())
@@ -333,11 +327,11 @@ impl DrawableComponent for TitleSoundPlayer {
 }
 
 impl DrawableObject for TitleSoundPlayer {
-    impl_drawable_object_for_wrapped!{main_text}
+    impl_drawable_object_for_wrapped! {main_text}
 }
 
 impl TextureObject for TitleSoundPlayer {
-    impl_texture_object_for_wrapped!{main_text}
+    impl_texture_object_for_wrapped! {main_text}
 }
 
 type DynamicTitleSoundPlayer = MovableWrap<TitleSoundPlayer>;
@@ -373,21 +367,17 @@ impl TitleContents {
         match contents_type {
             "VTextList" => {
                 let menu_data = TextMenuData::from_file(ctx, name.to_string(), details_source_file);
-                Some(
-                    TitleContents::InitialMenu(VTextList::new(menu_data, 0)),
-                )
-            },
-	    "TitleSoundPlayer" => {
-		let data = TitleSoundPlayerData::from_toml(ctx, details_source_file);
-		let sound_player = MovableWrap::new(
-		    Box::new(TitleSoundPlayer::new(name.to_string(), data)),
-		    None,
-		    0
-		);
-		Some(
-		    TitleContents::TitleSoundPlayer(sound_player),
-		)
-	    },
+                Some(TitleContents::InitialMenu(VTextList::new(menu_data, 0)))
+            }
+            "TitleSoundPlayer" => {
+                let data = TitleSoundPlayerData::from_toml(ctx, details_source_file);
+                let sound_player = MovableWrap::new(
+                    Box::new(TitleSoundPlayer::new(name.to_string(), data)),
+                    None,
+                    0,
+                );
+                Some(TitleContents::TitleSoundPlayer(sound_player))
+            }
             _ => None,
         }
     }
@@ -395,7 +385,7 @@ impl TitleContents {
     pub fn get_content_name(&self) -> String {
         match self {
             TitleContents::InitialMenu(menu) => menu.contents_name.to_string(),
-	    TitleContents::TitleSoundPlayer(player) => player.get_name(),
+            TitleContents::TitleSoundPlayer(player) => player.get_name(),
         }
     }
 }
@@ -404,42 +394,42 @@ impl DrawableComponent for TitleContents {
     fn draw(&mut self, ctx: &mut ggez::Context) -> ggez::GameResult<()> {
         match self {
             TitleContents::InitialMenu(contents) => contents.draw(ctx),
-	    TitleContents::TitleSoundPlayer(contents) => contents.draw(ctx),
+            TitleContents::TitleSoundPlayer(contents) => contents.draw(ctx),
         }
     }
 
     fn hide(&mut self) {
         match self {
             TitleContents::InitialMenu(contents) => contents.hide(),
-	    TitleContents::TitleSoundPlayer(contents) => contents.hide(),
+            TitleContents::TitleSoundPlayer(contents) => contents.hide(),
         }
     }
 
     fn appear(&mut self) {
         match self {
             TitleContents::InitialMenu(contents) => contents.appear(),
-	    TitleContents::TitleSoundPlayer(contents) => contents.appear(),
+            TitleContents::TitleSoundPlayer(contents) => contents.appear(),
         }
     }
 
     fn is_visible(&self) -> bool {
         match self {
             TitleContents::InitialMenu(contents) => contents.is_visible(),
-	    TitleContents::TitleSoundPlayer(contents) => contents.is_visible(),
+            TitleContents::TitleSoundPlayer(contents) => contents.is_visible(),
         }
     }
 
     fn set_drawing_depth(&mut self, depth: i8) {
         match self {
             TitleContents::InitialMenu(contents) => contents.set_drawing_depth(depth),
-	    TitleContents::TitleSoundPlayer(contents) => contents.set_drawing_depth(depth),
+            TitleContents::TitleSoundPlayer(contents) => contents.set_drawing_depth(depth),
         }
     }
 
     fn get_drawing_depth(&self) -> i8 {
         match self {
             TitleContents::InitialMenu(contents) => contents.get_drawing_depth(),
-	    TitleContents::TitleSoundPlayer(contents) => contents.get_drawing_depth(),
+            TitleContents::TitleSoundPlayer(contents) => contents.get_drawing_depth(),
         }
     }
 }

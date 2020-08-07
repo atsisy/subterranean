@@ -461,7 +461,7 @@ impl ScenarioTable {
         if let Some(s) = self.scenario_table.get(&date) {
             Some(s.to_string())
         } else {
-	    println!("Error: Invalid Date => {:?}", date);
+            println!("Error: Invalid Date => {:?}", date);
             None
         }
     }
@@ -814,10 +814,10 @@ impl MouseInformation {
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct TaskResult {
-    pub done_works: u32,                                     // 総仕事数
-    pub not_shelved_books: Vec<BookInformation>,             // 返却済, 未配架
-    pub borrowing_books: Vec<BookInformation>,               // 貸出中
-    pub total_money: i32,                                    // 稼いだ金額
+    pub done_works: u32,                         // 総仕事数
+    pub not_shelved_books: Vec<BookInformation>, // 返却済, 未配架
+    pub borrowing_books: Vec<BookInformation>,   // 貸出中
+    pub total_money: i32,                        // 稼いだ金額
 }
 
 impl TaskResult {
@@ -1145,11 +1145,11 @@ pub struct GameConfig {
 
 impl GameConfig {
     pub fn new_from_toml(path: &str) -> Self {
-	let s = match read_whole_file(path.to_string()) {
+        let s = match read_whole_file(path.to_string()) {
             Ok(s) => s,
             Err(e) => panic!("Failed to read file: {}", e),
         };
-	
+
         let raw_data: Result<GameConfig, toml::de::Error> = toml::from_str(&s);
         match raw_data {
             Ok(p) => p,
@@ -1239,9 +1239,8 @@ impl SceneController {
         );
         debug::debug_screen_hide();
 
-	
         let mut game_status = SavableData::new(game_data);
-	let mut game_config = GameConfig::new_from_toml("./resources/default_game_config.toml");
+        let mut game_config = GameConfig::new_from_toml("./resources/default_game_config.toml");
 
         // let current_scene = scene::scenario_scene::ScenarioScene::new(&mut SuzuContext {
         //     context: ctx,
@@ -1252,7 +1251,7 @@ impl SceneController {
             context: ctx,
             resource: game_data,
             savable_data: &mut game_status,
-	    config: &mut game_config,
+            config: &mut game_config,
         });
 
         SceneController {
@@ -1263,7 +1262,7 @@ impl SceneController {
             global_clock: 0,
             root_screen: root_screen,
             game_status: game_status,
-	    game_config: game_config,
+            game_config: game_config,
         }
     }
 
@@ -1277,7 +1276,7 @@ impl SceneController {
             context: ctx,
             resource: game_data,
             savable_data: &mut self.game_status,
-	    config: &mut self.game_config,
+            config: &mut self.game_config,
         };
 
         match next_scene_id {
@@ -1324,7 +1323,7 @@ impl SceneController {
             context: ctx,
             resource: game_data,
             savable_data: &mut self.game_status,
-	    config: &mut self.game_config,
+            config: &mut self.game_config,
         };
 
         let next_scene = match next_scene_id {
@@ -1351,7 +1350,7 @@ impl SceneController {
                 context: ctx,
                 resource: game_data,
                 savable_data: &mut self.game_status,
-		config: &mut self.game_config,
+                config: &mut self.game_config,
             });
         }
         //));
@@ -1377,7 +1376,7 @@ impl SceneController {
             context: ctx,
             resource: game_data,
             savable_data: &mut self.game_status,
-	    config: &mut self.game_config,
+            config: &mut self.game_config,
         };
 
         match self.current_scene.abs_mut().post_process(&mut suzu_ctx) {
@@ -1436,7 +1435,7 @@ impl SceneController {
                 context: ctx,
                 resource: game_data,
                 savable_data: &mut self.game_status,
-		config: &mut self.game_config,
+                config: &mut self.game_config,
             },
             self.key_map.real_to_virtual(keycode),
         );
@@ -1454,7 +1453,7 @@ impl SceneController {
                 context: ctx,
                 resource: game_data,
                 savable_data: &mut self.game_status,
-		config: &mut self.game_config,
+                config: &mut self.game_config,
             },
             self.key_map.real_to_virtual(keycode),
         );
@@ -1472,7 +1471,7 @@ impl SceneController {
                 context: ctx,
                 resource: game_data,
                 savable_data: &mut self.game_status,
-		config: &mut self.game_config,
+                config: &mut self.game_config,
             },
             point,
             offset,
@@ -1491,7 +1490,7 @@ impl SceneController {
                 context: ctx,
                 resource: game_data,
                 savable_data: &mut self.game_status,
-		config: &mut self.game_config,
+                config: &mut self.game_config,
             },
             button,
             point,
@@ -1510,7 +1509,7 @@ impl SceneController {
                 context: ctx,
                 resource: game_data,
                 savable_data: &mut self.game_status,
-		config: &mut self.game_config,
+                config: &mut self.game_config,
             },
             button,
             point,
@@ -1530,7 +1529,7 @@ impl SceneController {
                 context: ctx,
                 resource: game_data,
                 savable_data: &mut self.game_status,
-		config: &mut self.game_config,
+                config: &mut self.game_config,
             },
             numeric::Point2f::new(point.x, point.y),
             x,

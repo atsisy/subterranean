@@ -11,8 +11,8 @@ use torifune::numeric;
 
 use crate::core::{FontID, GameResource, SuzuContext, TextureID, TileBatchTextureID};
 use crate::flush_delay_event;
-use crate::object::{effect, move_fn};
 use crate::object::util_object::*;
+use crate::object::{effect, move_fn};
 use crate::scene::*;
 
 #[derive(Clone, PartialEq)]
@@ -229,19 +229,12 @@ impl NotificationArea {
     fn set_hide_animation(&mut self, t: Clock) {
         if let Some(area) = self.area.as_mut() {
             area.clear_effect();
-            area.add_effect(
-		vec![
-		    effect::fade_out(
-			self.default_animation_time,
-			t,
-		    ),
-		    effect::constant_rotating(
-			0.005,
-			t
-		    ),
-		]);
+            area.add_effect(vec![
+                effect::fade_out(self.default_animation_time, t),
+                effect::constant_rotating(0.005, t),
+            ]);
 
-	    area.override_move_func(move_fn::gravity_move(0.0, 10.0, 1080.0, 8.0), t);
+            area.override_move_func(move_fn::gravity_move(0.0, 10.0, 1080.0, 8.0), t);
 
             let scheduled = t + self.default_animation_time;
             self.event_list.add_event(
@@ -261,10 +254,7 @@ impl NotificationArea {
     fn set_appear_animation(&mut self, t: Clock) {
         if let Some(area) = self.area.as_mut() {
             area.clear_effect();
-            area.add_effect(vec![effect::fade_in(
-                self.default_animation_time,
-                t,
-            )]);
+            area.add_effect(vec![effect::fade_in(self.default_animation_time, t)]);
 
             let scheduled = t + 120;
             self.event_list.add_event(
