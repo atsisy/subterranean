@@ -29,7 +29,7 @@ use torifune::impl_texture_object_for_wrapped;
 use torifune::numeric;
 
 use crate::core::map_parser as mp;
-use crate::core::{GameResource, SuzuContext, TextureID};
+use crate::core::{SuzuContext, TextureID};
 
 pub trait Clickable {
     fn button_down<'a>(
@@ -89,8 +89,8 @@ pub struct BlackOutTexture {
 }
 
 impl BlackOutTexture {
-    pub fn new(
-        game_data: &mut GameResource,
+    pub fn new<'a>(
+	ctx: &mut SuzuContext<'a>,
         texture_id: TextureID,
         pos: numeric::Point2f,
         drawing_depth: i8,
@@ -100,7 +100,7 @@ impl BlackOutTexture {
             texture: EffectableWrap::new(
                 MovableWrap::new(
                     Box::new(UniTexture::new(
-                        game_data.ref_texture(texture_id),
+                        ctx.ref_texture(texture_id),
                         pos,
                         numeric::Vector2f::new(1.0, 1.0),
                         0.0,

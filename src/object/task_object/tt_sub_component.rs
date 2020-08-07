@@ -347,7 +347,7 @@ impl OnDeskBook {
         texture_id: TextureID,
         info: BookInformation,
     ) -> Self {
-        let texture = ctx.resource.ref_texture(texture_id);
+        let texture = ctx.ref_texture(texture_id);
         let book_texture = UniTexture::new(
             texture,
             numeric::Point2f::new(6.0, 6.0),
@@ -594,7 +594,7 @@ impl SignFrame {
 
     pub fn sign_borrowing_frame(&mut self, ctx: &mut SuzuContext) {
         let mut sign_texture = UniTexture::new(
-            ctx.resource.ref_texture(TextureID::ChoicePanel1),
+            ctx.ref_texture(TextureID::ChoicePanel1),
             numeric::Point2f::new(0.0, 0.0),
             numeric::Vector2f::new(0.25, 0.25),
             0.0,
@@ -615,7 +615,7 @@ impl SignFrame {
 
     pub fn sign_returning_frame(&mut self, ctx: &mut SuzuContext) {
         let mut sign_texture = UniTexture::new(
-            ctx.resource.ref_texture(TextureID::ChoicePanel2),
+            ctx.ref_texture(TextureID::ChoicePanel2),
             numeric::Point2f::new(0.0, 0.0),
             numeric::Vector2f::new(0.25, 0.25),
             0.0,
@@ -1160,7 +1160,7 @@ impl BorrowingRecordBookPage {
 
         let paper_texture = SimpleObject::new(
             MovableUniTexture::new(
-                ctx.resource.ref_texture(paper_tid),
+                ctx.ref_texture(paper_tid),
                 numeric::Point2f::new(0.0, 0.0),
                 numeric::Vector2f::new(1.0, 1.0),
                 0.0,

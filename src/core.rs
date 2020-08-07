@@ -77,7 +77,7 @@ fn read_whole_file(path: String) -> Result<String, String> {
     Ok(file_content)
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, Eq, PartialEq, Hash)]
 pub enum TextureID {
     Ghost1 = 0,
     LotusPink,
@@ -202,6 +202,11 @@ impl FromStr for TextureID {
             "JpHouseTexture" => Ok(Self::JpHouseTexture),
             "BookBoxFront" => Ok(Self::BookBoxFront),
             "BookBoxBack" => Ok(Self::BookBoxBack),
+	    "Paper3" => Ok(Self::Paper3),
+	    "Paper4" => Ok(Self::Paper4),
+	    "Paper5" => Ok(Self::Paper5),
+	    "Paper6" => Ok(Self::Paper6),
+	    "Paper7" => Ok(Self::Paper7),
             _ => Err(()),
         }
     }
@@ -255,6 +260,11 @@ impl TextureID {
             42 => Some(Self::JpHouseTexture),
             43 => Some(Self::BookBoxFront),
             44 => Some(Self::BookBoxBack),
+	    45 => Some(Self::Paper3),
+	    46 => Some(Self::Paper4),
+	    47 => Some(Self::Paper5),
+	    48 => Some(Self::Paper6),
+	    49 => Some(Self::Paper7),
             _ => None,
         }
     }
@@ -529,7 +539,8 @@ impl RawConfigFile {
 }
 
 pub struct GameResource {
-    textures: Vec<Rc<ggraphics::Image>>,
+    texture_resource_paths: HashMap<TextureID, String>,
+    textures: HashMap<TextureID, Rc<ggraphics::Image>>,
     fonts: Vec<ggraphics::Font>,
     tile_batchs: Vec<TileBatch>,
     customers_name: Vec<String>,
@@ -547,16 +558,17 @@ impl GameResource {
 
         let src_file = RawConfigFile::new(file_path);
 
-        let mut textures = Vec::new();
+        let textures = HashMap::new();
         let mut fonts = Vec::new();
         let mut sprite_batchs = Vec::new();
         let mut sounds = Vec::new();
+	let mut texture_paths_map = HashMap::new();
 
-        for texture_path in &src_file.texture_paths {
-            print!("Loading texture {}...", texture_path);
-            textures.push(Rc::new(ggraphics::Image::new(ctx, texture_path).unwrap()));
-            println!(" done!");
+	print!("Setup textures delay loading ... ");
+        for (index, texture_path) in src_file.texture_paths.iter().enumerate() {
+	    texture_paths_map.insert(TextureID::from_u32(index as u32).unwrap(), texture_path.clone());
         }
+	println!("done");
 
         for font_path in &src_file.font_paths {
             print!("Loading font {}...", font_path);
@@ -583,6 +595,7 @@ impl GameResource {
         let scenario_table = ScenarioTable::new(&src_file.scenario_table_path);
 
         GameResource {
+	    texture_resource_paths: texture_paths_map,
             textures: textures,
             fonts: fonts,
             tile_batchs: sprite_batchs,
@@ -595,13 +608,30 @@ impl GameResource {
         }
     }
 
-    pub fn ref_texture(&self, id: TextureID) -> Rc<ggraphics::Image> {
-        let maybe_texture = self.textures.get(id as usize);
+    fn load_texture_delay(&mut self, ctx: &mut ggez::Context, id: TextureID) -> Rc<ggraphics::Image> {
+	let path = self.texture_resource_paths.get(&id).expect("Delay texture load: Invalid TextureID");	
+	print!("delay texture loading -> {} ... ", path);
+	let texture = Rc::new(
+	    ggraphics::Image::new(
+		ctx, path
+	    ).expect("Delay texture load: Invalid Path")
+	);
+	self.textures.insert(
+	    id,
+	    texture.clone()
+	);
+	println!("done!");
+
+	texture
+    }
+    
+    pub fn ref_texture(&mut self, ctx: &mut ggez::Context, id: TextureID) -> Rc<ggraphics::Image> {
+        let maybe_texture = self.textures.get(&id);
 
         if let Some(texture) = maybe_texture {
             texture.clone()
         } else {
-            panic!("Unknown Texture ID: {}", id as i32)
+	    self.load_texture_delay(ctx, id)
         }
     }
 
@@ -1160,9 +1190,15 @@ impl GameConfig {
 
 pub struct SuzuContext<'ctx> {
     pub context: &'ctx mut ggez::Context,
-    pub resource: &'ctx GameResource,
+    pub resource: &'ctx mut GameResource,
     pub savable_data: &'ctx mut SavableData,
     pub config: &'ctx mut GameConfig,
+}
+
+impl<'ctx> SuzuContext<'ctx> {
+    pub fn ref_texture(&mut self, id: TextureID) -> Rc<ggraphics::Image> {
+	self.resource.ref_texture(self.context, id)
+    }
 }
 
 pub enum TopScene {
@@ -1213,7 +1249,7 @@ struct SceneController {
 }
 
 impl SceneController {
-    pub fn new<'a>(ctx: &mut ggez::Context, game_data: &'a GameResource) -> SceneController {
+    pub fn new<'a>(ctx: &mut ggez::Context, game_data: &'a mut GameResource) -> SceneController {
         let window_size = ggraphics::drawable_size(ctx);
 
         let mut root_screen = SubScreen::new(
@@ -1269,7 +1305,7 @@ impl SceneController {
     fn switch_scene_with_swap<'a>(
         &mut self,
         ctx: &mut ggez::Context,
-        game_data: &'a GameResource,
+        game_data: &'a mut GameResource,
         next_scene_id: scene::SceneID,
     ) {
         let mut ctx = SuzuContext {
@@ -1316,7 +1352,7 @@ impl SceneController {
     fn switch_scene_with_stacking<'a>(
         &mut self,
         ctx: &mut ggez::Context,
-        game_data: &'a GameResource,
+        game_data: &'a mut GameResource,
         next_scene_id: scene::SceneID,
     ) {
         let mut ctx = SuzuContext {
@@ -1343,7 +1379,7 @@ impl SceneController {
         }
     }
 
-    fn run_pre_process(&mut self, ctx: &mut ggez::Context, game_data: &GameResource) {
+    fn run_pre_process(&mut self, ctx: &mut ggez::Context, game_data: &mut GameResource) {
         //println!("{}", perf_measure!(
         {
             self.current_scene.abs_mut().pre_process(&mut SuzuContext {
@@ -1371,7 +1407,7 @@ impl SceneController {
         //) as f32 / 1000000.0);
     }
 
-    fn run_post_process<'a>(&mut self, ctx: &mut ggez::Context, game_data: &'a GameResource) {
+    fn run_post_process<'a>(&mut self, ctx: &mut ggez::Context, game_data: &'a mut GameResource) {
         let mut suzu_ctx = SuzuContext {
             context: ctx,
             resource: game_data,
@@ -1413,7 +1449,7 @@ impl SceneController {
     fn key_down_event(
         &mut self,
         ctx: &mut Context,
-        game_data: &GameResource,
+        game_data: &mut GameResource,
         keycode: KeyCode,
         _keymods: KeyMods,
         _repeat: bool,
@@ -1444,7 +1480,7 @@ impl SceneController {
     fn key_up_event(
         &mut self,
         ctx: &mut Context,
-        game_data: &GameResource,
+        game_data: &mut GameResource,
         keycode: KeyCode,
         _keymods: KeyMods,
     ) {
@@ -1462,7 +1498,7 @@ impl SceneController {
     fn mouse_motion_event<'a>(
         &mut self,
         ctx: &mut Context,
-        game_data: &GameResource,
+        game_data: &mut GameResource,
         point: numeric::Point2f,
         offset: numeric::Vector2f,
     ) {
@@ -1481,7 +1517,7 @@ impl SceneController {
     fn mouse_button_down_event(
         &mut self,
         ctx: &mut ggez::Context,
-        game_data: &GameResource,
+        game_data: &mut GameResource,
         button: ginput::mouse::MouseButton,
         point: numeric::Point2f,
     ) {
@@ -1500,7 +1536,7 @@ impl SceneController {
     fn mouse_button_up_event(
         &mut self,
         ctx: &mut ggez::Context,
-        game_data: &GameResource,
+        game_data: &mut GameResource,
         button: ginput::mouse::MouseButton,
         point: numeric::Point2f,
     ) {
@@ -1519,7 +1555,7 @@ impl SceneController {
     fn mouse_wheel_scroll_event<'a>(
         &mut self,
         ctx: &mut ggez::Context,
-        game_data: &GameResource,
+        game_data: &mut GameResource,
         x: f32,
         y: f32,
     ) {
@@ -1542,7 +1578,7 @@ pub struct State<'data> {
     clock: Clock,
     fps: f64,
     scene_controller: SceneController,
-    game_data: &'data GameResource,
+    game_data: &'data mut GameResource,
 }
 
 impl<'data> ggez::event::EventHandler for State<'data> {
@@ -1631,12 +1667,12 @@ impl<'data> ggez::event::EventHandler for State<'data> {
 }
 
 impl<'data> State<'data> {
-    pub fn new(ctx: &mut Context, game_data: &'data GameResource) -> GameResult<State<'data>> {
+    pub fn new(ctx: &mut Context, game_data: &'data mut GameResource) -> GameResult<State<'data>> {
         let s = State {
             clock: 0,
             fps: 0.0,
+	    scene_controller: SceneController::new(ctx, game_data),
             game_data: game_data,
-            scene_controller: SceneController::new(ctx, game_data),
         };
 
         Ok(s)

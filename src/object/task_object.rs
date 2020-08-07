@@ -73,27 +73,30 @@ impl TaskTable {
 
         let mut desk = DeskObjects::new(ctx, desk_rect);
 
+	let texture = UniTexture::new(
+            ctx.ref_texture(TextureID::Chobo1),
+            numeric::Point2f::new(0.0, 0.0),
+            numeric::Vector2f::new(0.2, 0.2),
+            0.0,
+            -1,
+        );
+
+	let chobo_texture = UniTexture::new(
+            ctx.ref_texture(TextureID::Chobo1),
+            numeric::Point2f::new(0.0, 0.0),
+            numeric::Vector2f::new(0.5, 0.5),
+            0.0,
+            -1,
+        );
         let mut record_book = TaskTexture::new(
             OnDeskTexture::new(
                 ctx.context,
-                UniTexture::new(
-                    ctx.resource.ref_texture(TextureID::Chobo1),
-                    numeric::Point2f::new(0.0, 0.0),
-                    numeric::Vector2f::new(0.2, 0.2),
-                    0.0,
-                    -1,
-                ),
+                texture,
                 OnDeskType::BorrowingRecordBook,
             ),
             OnDeskTexture::new(
                 ctx.context,
-                UniTexture::new(
-                    ctx.resource.ref_texture(TextureID::Chobo1),
-                    numeric::Point2f::new(0.0, 0.0),
-                    numeric::Vector2f::new(0.5, 0.5),
-                    0.0,
-                    -1,
-                ),
+                chobo_texture,
                 OnDeskType::BorrowingRecordBook,
             ),
             0,
@@ -492,7 +495,7 @@ impl TaskTable {
 
         let mut new_silhouette = SimpleObject::new(
             MovableUniTexture::new(
-                ctx.resource.ref_texture(TextureID::JunkoTachieDefault),
+                ctx.ref_texture(TextureID::JunkoTachieDefault),
                 numeric::Point2f::new(100.0, 20.0),
                 numeric::Vector2f::new(0.1, 0.1),
                 0.0,
@@ -537,7 +540,7 @@ impl TaskTable {
 
         let mut new_silhouette = SimpleObject::new(
             MovableUniTexture::new(
-                ctx.resource.ref_texture(TextureID::JunkoTachieDefault),
+                ctx.ref_texture(TextureID::JunkoTachieDefault),
                 numeric::Point2f::new(100.0, 20.0),
                 numeric::Vector2f::new(0.1, 0.1),
                 0.0,

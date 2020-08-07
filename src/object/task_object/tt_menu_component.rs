@@ -132,7 +132,7 @@ where
         t: Clock,
     ) -> DropDownArea<D> {
         let background = UniTexture::new(
-            ctx.resource.ref_texture(TextureID::TextBackground),
+            ctx.ref_texture(TextureID::TextBackground),
             numeric::Point2f::new(0.0, 0.0),
             numeric::Vector2f::new(1.0, 1.0),
             0.0,
@@ -376,7 +376,7 @@ impl BookStatusButtonGroup {
             let texture = textures.swap_remove(0);
 
             let mut button_texture = UniTexture::new(
-                ctx.resource.ref_texture(texture),
+                ctx.ref_texture(texture),
                 numeric::Point2f::new(0.0, 0.0),
                 numeric::Vector2f::new(1.0, 1.0),
                 0.0,

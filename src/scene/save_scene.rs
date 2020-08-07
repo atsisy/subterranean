@@ -38,7 +38,7 @@ impl SaveScene {
         );
 
         let background = UniTexture::new(
-            ctx.resource.ref_texture(TextureID::JpHouseTexture),
+            ctx.ref_texture(TextureID::JpHouseTexture),
             numeric::Point2f::new(0.0, 0.0),
             numeric::Vector2f::new(0.7, 0.7),
             0.0,
@@ -61,6 +61,13 @@ impl SaveScene {
             0,
         ));
 
+	let texture = Box::new(UniTexture::new(
+            ctx.ref_texture(TextureID::ChoicePanel1),
+            numeric::Point2f::new(0.0, 0.0),
+            numeric::Vector2f::new(1.0, 1.0),
+            0.0,
+            0,
+        ));
         let exit_button = SelectButton::new(
             ctx,
             numeric::Rect::new(
@@ -69,13 +76,7 @@ impl SaveScene {
                 100.0,
                 50.0,
             ),
-            Box::new(UniTexture::new(
-                ctx.resource.ref_texture(TextureID::ChoicePanel1),
-                numeric::Point2f::new(0.0, 0.0),
-                numeric::Vector2f::new(1.0, 1.0),
-                0.0,
-                0,
-            )),
+            texture,
         );
 
         let mut event_list = DelayEventList::new();

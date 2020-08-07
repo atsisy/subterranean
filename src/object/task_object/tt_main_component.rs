@@ -120,7 +120,7 @@ impl DeskObjects {
             dragging: None,
             table_texture: SimpleObject::new(
                 MovableUniTexture::new(
-                    ctx.resource.ref_texture(TextureID::Wood1),
+                    ctx.ref_texture(TextureID::Wood1),
                     numeric::Point2f::new(0.0, 0.0),
                     numeric::Vector2f::new(1.0, 1.0),
                     0.0,
@@ -1069,25 +1069,28 @@ impl SuzuMiniSight {
             0,
         );
 
+	let silhouette_paper_texture = MovableUniTexture::new(
+            ctx.ref_texture(TextureID::Paper1),
+            numeric::Point2f::new(0.0, 0.0),
+            numeric::Vector2f::new(1.2, 1.2),
+            0.0,
+            0,
+            move_fn::stop(),
+            0,
+        );
+	let silhouette = SuzuMiniSightSilhouette::new(
+            ctx,
+            rect,
+            silhouette_paper_texture,
+            t,
+        );
+
         SuzuMiniSight {
             canvas: SubScreen::new(ctx.context, rect, 0, ggraphics::Color::from_rgba_u32(0)),
             dragging: None,
             dropping: Vec::new(),
             dropping_to_desk: Vec::new(),
-            silhouette: SuzuMiniSightSilhouette::new(
-                ctx,
-                rect,
-                MovableUniTexture::new(
-                    ctx.resource.ref_texture(TextureID::Paper1),
-                    numeric::Point2f::new(0.0, 0.0),
-                    numeric::Vector2f::new(1.2, 1.2),
-                    0.0,
-                    0,
-                    move_fn::stop(),
-                    0,
-                ),
-                t,
-            ),
+            silhouette: silhouette,
             appearance_frame: appr_frame,
         }
     }
@@ -1400,7 +1403,7 @@ impl ShelvingBookBox {
         dparam.dest = numeric::Point2f::new(rect.x, rect.y).into();
 
         let box_back = UniTexture::new(
-            ctx.resource.ref_texture(TextureID::BookBoxBack),
+            ctx.ref_texture(TextureID::BookBoxBack),
             numeric::Point2f::new(0.0, rect.h - 300.0),
             numeric::Vector2f::new(0.586, 0.586),
             0.0,
@@ -1408,7 +1411,7 @@ impl ShelvingBookBox {
         );
 
         let box_front = UniTexture::new(
-            ctx.resource.ref_texture(TextureID::BookBoxFront),
+            ctx.ref_texture(TextureID::BookBoxFront),
             numeric::Point2f::new(0.0, rect.h - 300.0),
             numeric::Vector2f::new(0.586, 0.586),
             0.0,
@@ -1434,7 +1437,7 @@ impl ShelvingBookBox {
             dragging: None,
             table_texture: SimpleObject::new(
                 MovableUniTexture::new(
-                    ctx.resource.ref_texture(TextureID::Wood1),
+                    ctx.ref_texture(TextureID::Wood1),
                     numeric::Point2f::new(0.0, 0.0),
                     numeric::Vector2f::new(1.0, 1.0),
                     0.0,
@@ -2110,7 +2113,7 @@ impl TaskInfoPanel {
                 ggraphics::Color::from_rgba_u32(0xffffffff),
             ),
             background: UniTexture::new(
-                ctx.resource.ref_texture(TextureID::TextBackground),
+                ctx.ref_texture(TextureID::TextBackground),
                 numeric::Point2f::new(0.0, 0.0),
                 numeric::Vector2f::new(1.0, 1.0),
                 0.0,

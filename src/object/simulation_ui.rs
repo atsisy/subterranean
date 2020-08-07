@@ -10,7 +10,7 @@ use torifune::graphics::object::shape as tshape;
 use ggez::graphics as ggraphics;
 
 use super::*;
-use crate::core::{FontID, GameResource, TextureID, TileBatchTextureID};
+use crate::core::{FontID, TextureID, TileBatchTextureID};
 use crate::object::util_object::*;
 use crate::set_table_frame_cell_center;
 use torifune::roundup2f;
@@ -249,11 +249,11 @@ struct Choice {
 }
 
 impl Choice {
-    pub fn new(
+    pub fn new<'a>(
+	ctx: &mut SuzuContext<'a>,
         choice_text: Vec<&str>,
         textures: Vec<TextureID>,
         select_tid: TextureID,
-        game_data: &GameResource,
     ) -> Self {
         Choice {
             choice_text: choice_text
@@ -268,7 +268,7 @@ impl Choice {
                                 0.0,
                                 0,
                                 FontInformation::new(
-                                    game_data.get_font(FontID::DEFAULT),
+                                    ctx.resource.get_font(FontID::DEFAULT),
                                     numeric::Vector2f::new(24.0, 24.0),
                                     ggraphics::BLACK,
                                 ),
@@ -285,7 +285,7 @@ impl Choice {
                 .map(|tid| {
                     SimpleObject::new(
                         MovableUniTexture::new(
-                            game_data.ref_texture(*tid),
+                            ctx.ref_texture(*tid),
                             numeric::Point2f::new(0.0, 0.0),
                             numeric::Vector2f::new(1.0, 1.0),
                             0.0,
@@ -299,7 +299,7 @@ impl Choice {
                 .collect(),
             selecting: SimpleObject::new(
                 MovableUniTexture::new(
-                    game_data.ref_texture(select_tid),
+                    ctx.ref_texture(select_tid),
                     numeric::Point2f::new(0.0, 0.0),
                     numeric::Vector2f::new(1.0, 1.0),
                     0.0,
@@ -380,10 +380,10 @@ impl SimulationStatus {
                 1000.0,
             ),
             choice: Choice::new(
+		ctx,
                 vec!["test1", "test2"],
                 vec![TextureID::LotusBlue, TextureID::LotusPink],
                 TextureID::LotusYellow,
-                ctx.resource,
             ),
             canvas: SubScreen::new(
                 ctx.context,
@@ -392,7 +392,7 @@ impl SimulationStatus {
                 ggraphics::Color::from_rgba_u32(0xe6cde3ff),
             ),
             background: MovableUniTexture::new(
-                ctx.resource.ref_texture(TextureID::WafuTexture2),
+                ctx.ref_texture(TextureID::WafuTexture2),
                 numeric::Point2f::new(0.0, 0.0),
                 numeric::Vector2f::new(1.0, 1.0),
                 0.0,
@@ -639,7 +639,7 @@ impl ScenarioMenu {
                 ggraphics::Color::from_rgba_u32(0xffffffff),
             ),
             background: UniTexture::new(
-                ctx.resource.ref_texture(TextureID::MenuArt1),
+                ctx.ref_texture(TextureID::MenuArt1),
                 numeric::Point2f::new(size.x - 1366.0, 0.0),
                 numeric::Vector2f::new(1.0, 1.0),
                 0.0,

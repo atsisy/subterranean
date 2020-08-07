@@ -59,8 +59,7 @@ impl SceneManager for ScenarioScene {
             tdev::VirtualKey::Action1 => {
                 println!("Action1 down!");
                 self.scenario_event.key_down_action1(
-                    ctx.context,
-                    ctx.resource,
+                    ctx,
                     self.get_current_clock(),
                 );
             }

@@ -138,7 +138,7 @@ impl EffectableHangi {
     pub fn new<'a>(ctx: &mut SuzuContext<'a>, rect: numeric::Rect) -> Self {
         EffectableHangi {
             hangi_texture: UniTexture::new(
-                ctx.resource.ref_texture(TextureID::Wood1),
+                ctx.ref_texture(TextureID::Wood1),
                 numeric::Point2f::new(0.0, 0.0),
                 numeric::Vector2f::new(1.0, 1.0),
                 0.0,

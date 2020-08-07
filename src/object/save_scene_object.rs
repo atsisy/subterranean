@@ -45,47 +45,51 @@ impl DrawableSaveEntry {
         slot_id: u8,
     ) -> Self {
         let mut background = UniTexture::new(
-            ctx.resource.ref_texture(texture_id),
+            ctx.ref_texture(texture_id),
             numeric::Point2f::new(0.0, 0.0),
             numeric::Vector2f::new(1.0, 1.0),
             0.0,
             0,
         );
 
+	let button_texture = Box::new(UniTexture::new(
+            ctx.ref_texture(TextureID::ChoicePanel1),
+            numeric::Point2f::new(0.0, 0.0),
+            numeric::Vector2f::new(1.0, 1.0),
+            0.0,
+            0,
+        ));
+	
         let save_button = SelectButton::new(
             ctx,
             numeric::Rect::new(30.0, pos_rect.h - 80.0, 60.0, 60.0),
-            Box::new(UniTexture::new(
-                ctx.resource.ref_texture(TextureID::ChoicePanel1),
-                numeric::Point2f::new(0.0, 0.0),
-                numeric::Vector2f::new(1.0, 1.0),
-                0.0,
-                0,
-            )),
+	    button_texture,
         );
 
+	let button_texture = Box::new(UniTexture::new(
+            ctx.ref_texture(TextureID::ChoicePanel2),
+            numeric::Point2f::new(0.0, 0.0),
+            numeric::Vector2f::new(1.0, 1.0),
+            0.0,
+            0,
+        ));
         let delete_button = SelectButton::new(
             ctx,
             numeric::Rect::new(110.0, pos_rect.h - 80.0, 60.0, 60.0),
-            Box::new(UniTexture::new(
-                ctx.resource.ref_texture(TextureID::ChoicePanel2),
-                numeric::Point2f::new(0.0, 0.0),
-                numeric::Vector2f::new(1.0, 1.0),
-                0.0,
-                0,
-            )),
+	    button_texture
         );
 
+	let button_texture = Box::new(UniTexture::new(
+            ctx.ref_texture(TextureID::ChoicePanel3),
+            numeric::Point2f::new(0.0, 0.0),
+            numeric::Vector2f::new(1.0, 1.0),
+            0.0,
+            0,
+        ));
         let load_button = SelectButton::new(
             ctx,
             numeric::Rect::new(190.0, pos_rect.h - 80.0, 60.0, 60.0),
-            Box::new(UniTexture::new(
-                ctx.resource.ref_texture(TextureID::ChoicePanel3),
-                numeric::Point2f::new(0.0, 0.0),
-                numeric::Vector2f::new(1.0, 1.0),
-                0.0,
-                0,
-            )),
+            button_texture,
         );
 
         let drawing_size = background.get_drawing_size(ctx.context);
@@ -402,7 +406,7 @@ impl SaveEntryTable {
         );
 
         let background = UniTexture::new(
-            ctx.resource.ref_texture(TextureID::Paper1),
+            ctx.ref_texture(TextureID::Paper1),
             numeric::Point2f::new(0.0, 0.0),
             numeric::Vector2f::new(1.4, 1.4),
             0.0,

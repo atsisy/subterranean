@@ -39,10 +39,10 @@ pub fn main() {
         .build()
         .unwrap();
 
-    let game_data: GameResource = GameResource::new(ctx, "game_data.toml".to_owned());
+    let mut game_data: GameResource = GameResource::new(ctx, "game_data.toml".to_owned());
 
     {
-        let state = &mut State::new(ctx, &game_data).unwrap();
+        let state = &mut State::new(ctx, &mut game_data).unwrap();
         event::run(ctx, event_loop, state).unwrap();
     }
 }

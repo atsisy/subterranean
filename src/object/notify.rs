@@ -9,7 +9,7 @@ use torifune::graphics::object::sub_screen;
 use torifune::graphics::object::*;
 use torifune::numeric;
 
-use crate::core::{FontID, GameResource, SuzuContext, TextureID, TileBatchTextureID};
+use crate::core::{FontID, SuzuContext, TextureID, TileBatchTextureID};
 use crate::flush_delay_event;
 use crate::object::util_object::*;
 use crate::object::{effect, move_fn};
@@ -155,9 +155,9 @@ pub struct NotificationArea {
 }
 
 impl NotificationArea {
-    pub fn new(game_data: &GameResource, right_top_position: numeric::Point2f, depth: i8) -> Self {
+    pub fn new<'a>(ctx: &mut SuzuContext<'a>, right_top_position: numeric::Point2f, depth: i8) -> Self {
         let texture = UniTexture::new(
-            game_data.ref_texture(TextureID::Paper1),
+            ctx.ref_texture(TextureID::Paper1),
             numeric::Point2f::new(0.0, 0.0),
             numeric::Vector2f::new(1.0, 1.0),
             0.0,

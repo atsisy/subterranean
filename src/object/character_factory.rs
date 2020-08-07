@@ -2,18 +2,18 @@ use torifune::numeric;
 
 use super::map_object::*;
 use super::*;
-use crate::core::{GameResource, TextureID};
+use crate::core::{TextureID};
 use crate::object::util_object::*;
 
-fn create_playable_doremy1(
-    game_data: &GameResource,
+fn create_playable_doremy1<'a>(
+    ctx: &mut SuzuContext<'a>,
     camera: &numeric::Rect,
     map_position: numeric::Point2f,
 ) -> MapObject {
     MapObject::new(
         tobj::SimpleObject::new(
             tobj::MovableUniTexture::new(
-                game_data.ref_texture(TextureID::KosuzuDotFront1),
+                ctx.ref_texture(TextureID::KosuzuDotFront1),
                 mp::map_to_display(&map_position, camera),
                 numeric::Vector2f::new(1.5, 1.5),
                 0.0,
@@ -31,20 +31,20 @@ fn create_playable_doremy1(
         ],
         vec![
             vec![
-                game_data.ref_texture(TextureID::KosuzuDotFront2),
-                game_data.ref_texture(TextureID::KosuzuDotFront3),
+                ctx.ref_texture(TextureID::KosuzuDotFront2),
+                ctx.ref_texture(TextureID::KosuzuDotFront3),
             ],
             vec![
-                game_data.ref_texture(TextureID::KosuzuDotBack2),
-                game_data.ref_texture(TextureID::KosuzuDotBack3),
+                ctx.ref_texture(TextureID::KosuzuDotBack2),
+                ctx.ref_texture(TextureID::KosuzuDotBack3),
             ],
             vec![
-                game_data.ref_texture(TextureID::KosuzuDotRight2),
-                game_data.ref_texture(TextureID::KosuzuDotRight3),
+                ctx.ref_texture(TextureID::KosuzuDotRight2),
+                ctx.ref_texture(TextureID::KosuzuDotRight3),
             ],
             vec![
-                game_data.ref_texture(TextureID::KosuzuDotLeft2),
-                game_data.ref_texture(TextureID::KosuzuDotLeft3),
+                ctx.ref_texture(TextureID::KosuzuDotLeft2),
+                ctx.ref_texture(TextureID::KosuzuDotLeft3),
             ],
         ],
         ObjectDirection::Down,
@@ -63,15 +63,15 @@ fn create_playable_doremy1(
     )
 }
 
-fn create_customer_sample(
-    game_data: &GameResource,
+fn create_customer_sample<'a>(
+    ctx: &mut SuzuContext<'a>,
     camera: &numeric::Rect,
     map_position: numeric::Point2f,
 ) -> MapObject {
     MapObject::new(
         tobj::SimpleObject::new(
             tobj::MovableUniTexture::new(
-                game_data.ref_texture(TextureID::KosuzuDotFront1),
+                ctx.ref_texture(TextureID::KosuzuDotFront1),
                 mp::map_to_display(&map_position, camera),
                 numeric::Vector2f::new(1.5, 1.5),
                 0.0,
@@ -89,20 +89,20 @@ fn create_customer_sample(
         ],
         vec![
             vec![
-                game_data.ref_texture(TextureID::KosuzuDotFront2),
-                game_data.ref_texture(TextureID::KosuzuDotFront3),
+                ctx.ref_texture(TextureID::KosuzuDotFront2),
+                ctx.ref_texture(TextureID::KosuzuDotFront3),
             ],
             vec![
-                game_data.ref_texture(TextureID::KosuzuDotBack2),
-                game_data.ref_texture(TextureID::KosuzuDotBack3),
+                ctx.ref_texture(TextureID::KosuzuDotBack2),
+                ctx.ref_texture(TextureID::KosuzuDotBack3),
             ],
             vec![
-                game_data.ref_texture(TextureID::KosuzuDotRight2),
-                game_data.ref_texture(TextureID::KosuzuDotRight3),
+                ctx.ref_texture(TextureID::KosuzuDotRight2),
+                ctx.ref_texture(TextureID::KosuzuDotRight3),
             ],
             vec![
-                game_data.ref_texture(TextureID::KosuzuDotLeft2),
-                game_data.ref_texture(TextureID::KosuzuDotLeft3),
+                ctx.ref_texture(TextureID::KosuzuDotLeft2),
+                ctx.ref_texture(TextureID::KosuzuDotLeft3),
             ],
         ],
         ObjectDirection::Down,
@@ -127,18 +127,18 @@ pub enum CharacterFactoryOrder {
     CustomerSample,
 }
 
-pub fn create_character(
+pub fn create_character<'a>(
     order: CharacterFactoryOrder,
-    game_data: &GameResource,
+    ctx: &mut SuzuContext<'a>,
     camera: &numeric::Rect,
     map_position: numeric::Point2f,
 ) -> MapObject {
     match order {
         CharacterFactoryOrder::PlayableDoremy1 => {
-            create_playable_doremy1(game_data, camera, map_position)
+            create_playable_doremy1(ctx, camera, map_position)
         }
         CharacterFactoryOrder::CustomerSample => {
-            create_customer_sample(game_data, camera, map_position)
+            create_customer_sample(ctx, camera, map_position)
         }
     }
 }

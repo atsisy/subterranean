@@ -295,7 +295,7 @@ impl SelectBookWindow {
         let contents = SelectBookWindowContents::new(ctx.resource, font_info, window_rect);
 
         let background = UniTexture::new(
-            ctx.resource.ref_texture(TextureID::TextBackground),
+            ctx.ref_texture(TextureID::TextBackground),
             numeric::Point2f::new(0.0, 0.0),
             numeric::Vector2f::new(1.0, 1.0),
             0.0,
@@ -470,6 +470,33 @@ impl SelectShelvingBookUI {
         box_book_info.sort_by(|a, b| a.billing_number.cmp(&b.billing_number));
         shelving_book.sort_by(|a, b| a.billing_number.cmp(&b.billing_number));
 
+	let texture = Box::new(UniTexture::new(
+            ctx.ref_texture(TextureID::ArrowRight),
+            numeric::Point2f::new(0.0, 0.0),
+            numeric::Vector2f::new(0.5, 0.5),
+            0.0,
+            0,
+        ));
+	let move_box_to_shelving_button = SelectButton::new(
+            ctx,
+            numeric::Rect::new(650.0, 200.0, 100.0, 50.0),
+	    texture
+        );
+
+	let texture = Box::new(UniTexture::new(
+            ctx.ref_texture(TextureID::ArrowLeft),
+            numeric::Point2f::new(0.0, 0.0),
+            numeric::Vector2f::new(0.5, 0.5),
+            0.0,
+            0,
+        ));
+
+	let move_shelving_to_box_button = SelectButton::new(
+            ctx,
+            numeric::Rect::new(650.0, 500.0, 100.0, 50.0),
+            texture,
+        );
+	
         SelectShelvingBookUI {
             canvas: SubScreen::new(ctx.context, ui_rect, 0, ggraphics::Color::from_rgba_u32(0)),
             box_info_window: SelectBookWindow::new(
@@ -486,28 +513,8 @@ impl SelectShelvingBookUI {
             ),
             boxed_books: box_book_info,
             shelving_books: shelving_book,
-            move_box_to_shelving_button: SelectButton::new(
-                ctx,
-                numeric::Rect::new(650.0, 200.0, 100.0, 50.0),
-                Box::new(UniTexture::new(
-                    ctx.resource.ref_texture(TextureID::ArrowRight),
-                    numeric::Point2f::new(0.0, 0.0),
-                    numeric::Vector2f::new(0.5, 0.5),
-                    0.0,
-                    0,
-                )),
-            ),
-            move_shelving_to_box_button: SelectButton::new(
-                ctx,
-                numeric::Rect::new(650.0, 500.0, 100.0, 50.0),
-                Box::new(UniTexture::new(
-                    ctx.resource.ref_texture(TextureID::ArrowLeft),
-                    numeric::Point2f::new(0.0, 0.0),
-                    numeric::Vector2f::new(0.5, 0.5),
-                    0.0,
-                    0,
-                )),
-            ),
+            move_box_to_shelving_button: move_box_to_shelving_button,
+            move_shelving_to_box_button: move_shelving_to_box_button,
         }
     }
 
@@ -1052,6 +1059,32 @@ impl SelectStoreBookUI {
     ) -> Self {
         shelving_book.sort_by(|a, b| a.billing_number.cmp(&b.billing_number));
 
+	let texture = Box::new(UniTexture::new(
+            ctx.ref_texture(TextureID::StoreButton),
+            numeric::Point2f::new(0.0, 0.0),
+            numeric::Vector2f::new(0.5, 0.5),
+            0.0,
+            0,
+        ));
+	let store_button = SelectButton::new(
+            ctx,
+            numeric::Rect::new(1000.0, 200.0, 100.0, 50.0),
+            texture,
+        );
+
+	let texture = Box::new(UniTexture::new(
+            ctx.ref_texture(TextureID::ResetButton),
+            numeric::Point2f::new(0.0, 0.0),
+            numeric::Vector2f::new(0.5, 0.5),
+            0.0,
+            0,
+        ));
+	let reset_select_button = SelectButton::new(
+            ctx,
+            numeric::Rect::new(1000.0, 500.0, 100.0, 50.0),
+            texture,
+        );
+	
         SelectStoreBookUI {
             canvas: SubScreen::new(ctx.context, ui_rect, 0, ggraphics::Color::from_rgba_u32(0)),
             select_book_window: SelectStoringBookWindow::new(
@@ -1063,28 +1096,8 @@ impl SelectStoreBookUI {
             ),
             shelving_books: shelving_book,
             stored_books: Vec::new(),
-            store_button: SelectButton::new(
-                ctx,
-                numeric::Rect::new(1000.0, 200.0, 100.0, 50.0),
-                Box::new(UniTexture::new(
-                    ctx.resource.ref_texture(TextureID::StoreButton),
-                    numeric::Point2f::new(0.0, 0.0),
-                    numeric::Vector2f::new(0.5, 0.5),
-                    0.0,
-                    0,
-                )),
-            ),
-            reset_select_button: SelectButton::new(
-                ctx,
-                numeric::Rect::new(1000.0, 500.0, 100.0, 50.0),
-                Box::new(UniTexture::new(
-                    ctx.resource.ref_texture(TextureID::ResetButton),
-                    numeric::Point2f::new(0.0, 0.0),
-                    numeric::Vector2f::new(0.5, 0.5),
-                    0.0,
-                    0,
-                )),
-            ),
+            store_button: store_button,
+            reset_select_button: reset_select_button,
             book_shelf_info: book_shelf_info,
         }
     }
@@ -1264,7 +1277,7 @@ impl ShelvingDetailContents {
         set_table_frame_cell_center!(ctx.context, frame, cell_desc2, numeric::Vector2u::new(5, 1));
 
         let background = UniTexture::new(
-            ctx.resource.ref_texture(TextureID::MenuArt2),
+            ctx.ref_texture(TextureID::MenuArt2),
             numeric::Point2f::new(menu_rect.w - 1366.0, 0.0),
             numeric::Vector2f::new(1.0, 1.0),
             0.0,
@@ -1661,7 +1674,7 @@ impl ShopMenu {
         ShopMenu {
             canvas: MovableWrap::new(Box::new(canvas), None, t),
             background: UniTexture::new(
-                ctx.resource.ref_texture(TextureID::MenuArt1),
+                ctx.ref_texture(TextureID::MenuArt1),
                 numeric::Point2f::new(size.x - 1366.0, 0.0),
                 numeric::Vector2f::new(1.0, 1.0),
                 0.0,

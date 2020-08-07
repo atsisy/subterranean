@@ -33,7 +33,7 @@ impl TaskResultScene {
         date: GensoDate,
     ) -> Self {
         let mut background_object = MovableUniTexture::new(
-            ctx.resource.ref_texture(TextureID::Paper1),
+            ctx.ref_texture(TextureID::Paper1),
             numeric::Point2f::new(0.0, 0.0),
             numeric::Vector2f::new(1.0, 1.0),
             0.0,
@@ -50,16 +50,17 @@ impl TaskResultScene {
             ),
         );
 
+	let panel_texture = Box::new(UniTexture::new(
+            ctx.ref_texture(TextureID::ChoicePanel1),
+            numeric::Point2f::new(0.0, 0.0),
+            numeric::Vector2f::new(1.0, 1.0),
+            0.0,
+            0,
+        ));
         let ok_button = SelectButton::new(
             ctx,
             numeric::Rect::new(120.0, 608.0, 80.0, 80.0),
-            Box::new(UniTexture::new(
-                ctx.resource.ref_texture(TextureID::ChoicePanel1),
-                numeric::Point2f::new(0.0, 0.0),
-                numeric::Vector2f::new(1.0, 1.0),
-                0.0,
-                0,
-            )),
+            panel_texture,
         );
 
         let scene_transition = Some(effect_object::ScreenTileEffect::new(

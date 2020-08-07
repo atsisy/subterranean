@@ -24,7 +24,7 @@ pub struct TitleScene {
 impl TitleScene {
     pub fn new<'a>(ctx: &mut SuzuContext<'a>) -> Self {
         let background = UniTexture::new(
-            ctx.resource.ref_texture(TextureID::JpHouseTexture),
+            ctx.ref_texture(TextureID::JpHouseTexture),
             numeric::Point2f::new(0.0, 0.0),
             numeric::Vector2f::new(0.7, 0.7),
             0.0,
@@ -178,7 +178,7 @@ impl SceneManager for TitleScene {
             VirtualKey::Action2 => {
                 if let Some(content) = self.current_title_contents.as_mut() {
                     match content {
-                        TitleContents::TitleSoundPlayer(player) => {}
+                        TitleContents::TitleSoundPlayer(_) => {}
                         _ => (),
                     }
                 }

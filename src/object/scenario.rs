@@ -145,12 +145,12 @@ pub struct ScenarioTachie {
 }
 
 impl ScenarioTachie {
-    pub fn new(game_data: &GameResource, tid_array: Vec<TextureID>, t: Clock) -> Self {
+    pub fn new<'a>(ctx: &mut SuzuContext<'a>, tid_array: Vec<TextureID>, t: Clock) -> Self {
         // left
         let left_texture = if tid_array.len() > 0 {
             Some(SimpleObject::new(
                 MovableUniTexture::new(
-                    game_data.ref_texture(tid_array[0]),
+                    ctx.ref_texture(tid_array[0]),
                     numeric::Point2f::new(50.0, 100.0),
                     numeric::Vector2f::new(0.12, 0.12),
                     0.0,
@@ -167,7 +167,7 @@ impl ScenarioTachie {
         let right_texture = if tid_array.len() > 1 {
             Some(SimpleObject::new(
                 MovableUniTexture::new(
-                    game_data.ref_texture(tid_array[1]),
+                    ctx.ref_texture(tid_array[1]),
                     numeric::Point2f::new(800.0, 100.0),
                     numeric::Vector2f::new(0.12, 0.12),
                     0.0,
@@ -486,8 +486,7 @@ impl ChoiceBox {
 
         for _ in 0..size {
             choice_panels.push(ChoicePanel::new(UniTexture::new(
-                ctx.resource
-                    .ref_texture(TextureID::from_u32(panel).unwrap()),
+                ctx.ref_texture(TextureID::from_u32(panel).unwrap()),
                 pos,
                 numeric::Vector2f::new(1.0, 1.0),
                 0.0,
@@ -874,7 +873,7 @@ impl TextBox {
         );
 
         let mut line_arrow = UniTexture::new(
-            ctx.resource.ref_texture(TextureID::ChoicePanel1),
+            ctx.ref_texture(TextureID::ChoicePanel1),
             numeric::Point2f::new(0.0, 0.0),
             numeric::Vector2f::new(1.0, 1.0),
             0.0,
@@ -1087,7 +1086,7 @@ impl ScenarioBox {
     pub fn new<'a>(ctx: &mut SuzuContext, rect: numeric::Rect, t: Clock) -> Self {
         let background = tobj::SimpleObject::new(
             tobj::MovableUniTexture::new(
-                ctx.resource.ref_texture(TextureID::TextBackground),
+                ctx.ref_texture(TextureID::TextBackground),
                 numeric::Point2f::new(20.0, 20.0),
                 numeric::Vector2f::new(1.0, 1.0),
                 0.0,
@@ -1120,7 +1119,7 @@ impl ScenarioBox {
     ) -> Self {
         let background = tobj::SimpleObject::new(
             tobj::MovableUniTexture::new(
-                ctx.resource.ref_texture(TextureID::TextBackground),
+                ctx.ref_texture(TextureID::TextBackground),
                 numeric::Point2f::new(20.0, 20.0),
                 numeric::Vector2f::new(0.8, 0.8),
                 0.0,
@@ -1264,7 +1263,7 @@ impl ScenarioEvent {
         let scenario = Scenario::new(file_path, ctx.resource);
 
         let event_background = if let Some(mut texture) =
-            Self::update_event_background_sub(ctx.resource, scenario.ref_current_element())
+            Self::update_event_background_sub(ctx, scenario.ref_current_element())
         {
             texture.fit_scale(ctx.context, numeric::Vector2f::new(rect.w, rect.h));
             Some(texture)
@@ -1273,7 +1272,7 @@ impl ScenarioEvent {
         };
 
         let event_tachie =
-            Self::update_event_tachie_sub(ctx.resource, scenario.ref_current_element(), t);
+            Self::update_event_tachie_sub(ctx, scenario.ref_current_element(), t);
 
         let appr_frame = TileBatchFrame::new(
             ctx.resource,
@@ -1300,8 +1299,8 @@ impl ScenarioEvent {
         }
     }
 
-    pub fn update_event_background_sub(
-        game_data: &GameResource,
+    pub fn update_event_background_sub<'a>(
+        ctx: &mut SuzuContext<'a>,
         scenario_element: &ScenarioElement,
     ) -> Option<UniTexture> {
         // ScenarioEventの背景を設定
@@ -1309,7 +1308,7 @@ impl ScenarioEvent {
         if let Some(texture_id) = scenario_element.get_background_texture() {
             // 持っていたので、テクスチャを生成し、画面にフィットさせる
             Some(UniTexture::new(
-                game_data.ref_texture(texture_id),
+                ctx.ref_texture(texture_id),
                 numeric::Point2f::new(0.0, 0.0),
                 numeric::Vector2f::new(1.0, 1.0),
                 0.0,
@@ -1320,37 +1319,37 @@ impl ScenarioEvent {
         }
     }
 
-    pub fn update_event_background(&mut self, ctx: &mut ggez::Context, game_data: &GameResource) {
+    pub fn update_event_background<'a>(&mut self, ctx: &mut SuzuContext<'a>) {
         // 現在のScenarioElementに背景がある場合、背景を変更
         // そうでない場合は、何もしない
         if let Some(mut texture) =
-            Self::update_event_background_sub(game_data, self.scenario.ref_current_element())
+            Self::update_event_background_sub(ctx, self.scenario.ref_current_element())
         {
-            let canvas_size = self.canvas.get_drawing_size(ctx);
-            texture.fit_scale(ctx, canvas_size);
+            let canvas_size = self.canvas.get_drawing_size(ctx.context);
+            texture.fit_scale(ctx.context, canvas_size);
             self.background = Some(texture);
         }
     }
 
-    pub fn update_event_tachie_sub(
-        game_data: &GameResource,
+    pub fn update_event_tachie_sub<'a>(
+        ctx: &mut SuzuContext<'a>,
         scenario_element: &ScenarioElement,
         t: Clock,
     ) -> Option<ScenarioTachie> {
         // ScenarioEventの立ち絵データ取り出し
         // ScenarioElementが立ち絵情報を持っていれば、取り出す
         if let Some(tachie_vec) = scenario_element.get_tachie_info() {
-            Some(ScenarioTachie::new(game_data, tachie_vec, t))
+            Some(ScenarioTachie::new(ctx, tachie_vec, t))
         } else {
             None
         }
     }
 
-    pub fn update_event_tachie(&mut self, game_data: &GameResource, t: Clock) {
+    pub fn update_event_tachie<'a>(&mut self, ctx: &mut SuzuContext<'a>, t: Clock) {
         // 現在のScenarioElementに立ち絵がある場合、立ち絵データを取り込み
         // そうでない場合は、何もしない
         let scenario_tachie =
-            Self::update_event_tachie_sub(game_data, self.scenario.ref_current_element(), t);
+            Self::update_event_tachie_sub(ctx, self.scenario.ref_current_element(), t);
         if scenario_tachie.is_some() {
             self.tachie = scenario_tachie;
         }
@@ -1430,10 +1429,9 @@ impl ScenarioEvent {
     ///
     /// Action1キーが押されたときの、ScenarioEventの挙動
     ///
-    pub fn key_down_action1(
+    pub fn key_down_action1<'a>(
         &mut self,
-        ctx: &mut ggez::Context,
-        game_data: &GameResource,
+        ctx: &mut SuzuContext<'a>,
         _: Clock,
     ) {
         match self.scenario.ref_current_element_mut() {
@@ -1444,8 +1442,8 @@ impl ScenarioEvent {
                 // 最後まで到達していた場合、新しいScenarioElementに遷移し、テキストボックスをリセット
                 if scenario_text.iterator_finish() {
                     self.scenario.go_next_scenario_from_text_scenario();
-                    self.update_event_background(ctx, game_data);
-                    self.update_event_tachie(game_data, 0);
+                    self.update_event_background(ctx);
+                    self.update_event_tachie(ctx, 0);
                     self.scenario_box.reset_head_line();
                     return;
                 }
@@ -1464,8 +1462,8 @@ impl ScenarioEvent {
                 self.scenario.go_next_scenario_from_choice_scenario(
                     self.scenario_box.get_choice_selecting_index().unwrap(),
                 );
-                self.update_event_background(ctx, game_data);
-                self.update_event_tachie(game_data, 0);
+                self.update_event_background(ctx);
+                self.update_event_tachie(ctx, 0);
 
                 // choice_boxは消す
                 self.scenario_box.insert_choice_box(None);

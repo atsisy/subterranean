@@ -17,7 +17,7 @@ use torifune::numeric;
 
 use super::*;
 use crate::core::map_parser as mp;
-use crate::core::{FontID, GameResource, SavableData, SuzuContext, TileBatchTextureID};
+use crate::core::{FontID, SavableData, SuzuContext, TileBatchTextureID};
 use crate::flush_delay_event;
 use crate::object::effect_object;
 use crate::object::map_object::*;
@@ -333,20 +333,21 @@ impl ShopScene {
 
         let player = PlayableCharacter::new(character_factory::create_character(
             character_factory::CharacterFactoryOrder::PlayableDoremy1,
-            ctx.resource,
+            ctx,
             &camera.borrow(),
             map_position,
         ));
 
+	let character = character_factory::create_character(
+            character_factory::CharacterFactoryOrder::CustomerSample,
+            ctx,
+            &camera.borrow(),
+            numeric::Point2f::new(1824.0, 1344.0),
+        );
         let mut character_group = CharacterGroup::new();
         character_group.add(CustomerCharacter::new(
             ctx.resource,
-            character_factory::create_character(
-                character_factory::CharacterFactoryOrder::CustomerSample,
-                ctx.resource,
-                &camera.borrow(),
-                numeric::Point2f::new(1824.0, 1344.0),
-            ),
+	    character,
             CustomerDestPoint::new(vec![
                 numeric::Vector2u::new(10, 4),
                 numeric::Vector2u::new(6, 4),
@@ -379,7 +380,7 @@ impl ShopScene {
             transition_status: SceneTransition::Keep,
             scene_transition_effect: None,
             notification_area: NotificationArea::new(
-                ctx.resource,
+                ctx,
                 numeric::Point2f::new((crate::core::WINDOW_SIZE_X - 20) as f32, 20.0),
                 0,
             ),
@@ -1056,18 +1057,17 @@ impl ShopScene {
         }
     }
 
-    fn random_add_customer(&mut self, game_data: &GameResource) {
-        if
-        /* self.shop_clock.minute % 1 == 0 && */
-        rand::random::<usize>() % 150 == 0 {
-            self.character_group.add(CustomerCharacter::new(
-                game_data,
-                character_factory::create_character(
-                    character_factory::CharacterFactoryOrder::CustomerSample,
-                    game_data,
-                    &self.camera.borrow(),
-                    numeric::Point2f::new(1824.0, 1344.0),
-                ),
+    fn random_add_customer<'a>(&mut self, ctx: &mut SuzuContext<'a>) {
+        if rand::random::<usize>() % 150 == 0 {
+	    let character = character_factory::create_character(
+                character_factory::CharacterFactoryOrder::CustomerSample,
+                ctx,
+                &self.camera.borrow(),
+                numeric::Point2f::new(1824.0, 1344.0),
+            );
+	    self.character_group.add(CustomerCharacter::new(
+                ctx.resource,
+                character,
                 CustomerDestPoint::new(vec![
                     numeric::Vector2u::new(10, 4),
                     numeric::Vector2u::new(6, 4),
@@ -1199,7 +1199,7 @@ impl SceneManager for ShopScene {
         flush_delay_event!(self, self.event_list, ctx, t);
 
         if !self.shop_menu.first_menu_is_open() && !self.shop_special_object.is_enable_now() {
-            self.random_add_customer(ctx.resource);
+            self.random_add_customer(ctx);
             self.move_playable_character(ctx.context, t);
             self.check_event_panel_onmap(ctx, EventTrigger::Touch);
 
