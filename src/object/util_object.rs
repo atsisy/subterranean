@@ -330,8 +330,6 @@ impl TableFrame {
         let width = self.real_width();
         let height = self.real_height();
 
-        println!("width:height = {}:{}", width, height);
-
         //
         // 水平方向の枠だけ描画
         //

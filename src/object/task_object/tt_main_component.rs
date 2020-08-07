@@ -1732,7 +1732,7 @@ impl DrawableComponent for KosuzuPhrase {
 
 struct FloatingMemoryObject {
     header_text: UniText,
-    text: Vec<UniText>,
+    text: Vec<MovableWrap<UniText>>,
     appearance_frame: TileBatchFrame,
     canvas: SubScreen,
     padding: f32,
@@ -1838,28 +1838,43 @@ impl FloatingMemoryObject {
 	false
     }
     
-    pub fn add_text_line<'a>(&mut self, ctx: &mut SuzuContext<'a>, text: String) {
+    pub fn add_text_line<'a>(&mut self, ctx: &mut SuzuContext<'a>, text: String, init_text_pos: numeric::Point2f, now: Clock) {
 	if self.contains_text(&text) {
 	    return;
 	}
 
-	let mut uni_text = UniText::new(
-	    text,
-	    numeric::Point2f::new(0.0, 0.0),
-	    numeric::Vector2f::new(1.0, 1.0),
-	    0.0,
-	    0,
-	    self.font_info.clone()
+	let mut uni_text = Box::new(
+	    UniText::new(
+		text,
+		numeric::Point2f::new(0.0, 0.0),
+		numeric::Vector2f::new(1.0, 1.0),
+		0.0,
+		0,
+		self.font_info.clone()
+	    )
 	);
 
 	let center_position = numeric::Point2f::new(self.center_position_x(ctx.context), self.next_position_y());
 	uni_text.make_center(ctx.context, center_position);
+
+	let goal = uni_text.get_position();
+	uni_text.set_position(init_text_pos);
 	
 	self.text.push(
-	    uni_text
+	    MovableWrap::new(
+		uni_text,
+		move_fn::devide_distance(goal, 0.3),
+		now,
+	    )
 	);
 
 	self.update_canvas(ctx);
+    }
+
+    pub fn update(&mut self, t: Clock) {
+	for text in self.text.iter_mut() {
+	    text.move_with_func(t);
+	}
     }
 }
 
@@ -1997,12 +2012,11 @@ impl TaskInfoContents {
 	let book_floating = FloatingMemoryObject::new(
 	    ctx,
 	    numeric::Rect::new(25.0, 400.0, 250.0, 250.0),
-	    "Books".to_string(),
+	    "-Books-".to_string(),
 	    10.0,
 	    TileBatchTextureID::TaishoStyle1,
 	    0
 	);
-
         TaskInfoContents {
 	    book_info_memory: book_floating,
             general_table_frame: general_frame,
@@ -2012,8 +2026,18 @@ impl TaskInfoContents {
         }
     }
 
-    pub fn add_book_info<'a>(&mut self, ctx: &mut SuzuContext<'a>, book_info: BookInformation) {
-	self.book_info_memory.add_text_line(ctx, book_info.name);
+    pub fn add_book_info<'a>(
+	&mut self,
+	ctx: &mut SuzuContext<'a>,
+	book_info: BookInformation,
+	init_text_pos: numeric::Point2f,
+	now: Clock
+    ) {
+	self.book_info_memory.add_text_line(ctx, book_info.name, init_text_pos, now);
+    }
+
+    pub fn update(&mut self, t: Clock) {
+	self.book_info_memory.update(t);
     }
 }
 
@@ -2079,7 +2103,7 @@ impl TaskInfoPanel {
 		ggraphics::Color::from_rgba_u32(0xffffffff),
             ),
             background: UniTexture::new(
-                ctx.resource.ref_texture(TextureID::MenuArt1),
+                ctx.resource.ref_texture(TextureID::TextBackground),
                 numeric::Point2f::new(0.0, 0.0),
                 numeric::Vector2f::new(1.0, 1.0),
                 0.0,
@@ -2089,8 +2113,12 @@ impl TaskInfoPanel {
         }
     }
 
-    pub fn add_book_info<'a>(&mut self, ctx: &mut SuzuContext<'a>, book_info: BookInformation) {
-	self.contents.add_book_info(ctx, book_info);
+    pub fn add_book_info<'a>(&mut self, ctx: &mut SuzuContext<'a>, book_info: BookInformation, init_text_pos: numeric::Point2f, now: Clock) {
+	self.contents.add_book_info(ctx, book_info, init_text_pos, now);
+    }
+
+    pub fn update(&mut self, t: Clock) {
+	self.contents.update(t);
     }
 }
 

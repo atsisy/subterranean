@@ -460,6 +460,7 @@ impl TaskTable {
         self.customer_silhouette_menu.update(ctx, t);
         self.on_desk_menu.update(ctx, t);
         self.kosuzu_phrase.update(ctx, t);
+	self.info_panel.update(t);
 
         self.check_task_is_done();
     }
@@ -1010,7 +1011,7 @@ impl TaskTable {
                         } else {
                             println!("Ok, This book info is not in blacklist");
 			    // info panel
-			    self.info_panel.add_book_info(ctx, book_info.clone());
+			    self.info_panel.add_book_info(ctx, book_info.clone(), point, t);
 
 			    // internal memory
                             self.kosuzu_memory.add_book_info(book_info);

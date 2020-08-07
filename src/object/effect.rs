@@ -27,6 +27,18 @@ pub fn fade_in(required_time: Clock, start: Clock) -> GenericEffectFn {
     )
 }
 
+pub fn constant_rotating(speed_rad: f32, start: Clock) -> GenericEffectFn {
+    Box::new(
+        move |obj: &mut dyn MovableObject, _: &ggez::Context, t: Clock| {
+            if start <= t {
+		let rotation_rad = obj.get_rotation();
+		obj.set_rotation(rotation_rad + speed_rad);
+            }
+	    EffectFnStatus::EffectContinue
+        },
+    )    
+}
+
 ///
 /// # required_time
 /// アニメーションにかける時間
