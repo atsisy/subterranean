@@ -13,6 +13,8 @@ use crate::object::effect_object;
 use crate::object::task_object::*;
 use crate::scene::{SceneID, SceneTransition};
 
+use crate::perf_measure;
+
 use crate::flush_delay_event;
 use crate::object::task_object::tt_main_component::*;
 use crate::object::task_object::tt_sub_component::*;
@@ -266,6 +268,7 @@ impl SceneManager for TaskScene {
 
     fn pre_process<'a>(&mut self, ctx: &mut SuzuContext<'a>) {
         let t = self.get_current_clock();
+
         self.task_table.update(ctx, self.get_current_clock());
 
         if self.status == TaskSceneStatus::CustomerEvent && self.task_table.task_is_done() {
@@ -306,15 +309,19 @@ impl SceneManager for TaskScene {
             transition_effect.effect(ctx.context, t);
         }
 
-        flush_delay_event!(self, self.event_list, ctx, self.get_current_clock());
+	flush_delay_event!(self, self.event_list, ctx, self.get_current_clock());
     }
 
     fn drawing_process(&mut self, ctx: &mut ggez::Context) {
+		println!("{}", perf_measure!(
+	    {
         self.task_table.draw(ctx).unwrap();
 
         if let Some(transition_effect) = self.scene_transition_effect.as_mut() {
             transition_effect.draw(ctx).unwrap();
         }
+		
+			    }));
     }
 
     fn post_process<'a>(&mut self, _ctx: &mut SuzuContext<'a>) -> SceneTransition {

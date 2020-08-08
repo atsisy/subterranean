@@ -207,6 +207,10 @@ impl TaskTable {
             move_fn::devide_distance(numeric::Point2f::new(320.0, 100.0), 0.1),
             t,
         );
+        self.event_list.add_event(
+            Box::new(|tt: &mut TaskTable, _, t| tt.borrowing_record_book.override_move_func(None, t)),
+            t + 100,
+        );
     }
 
     fn slide_hide_record_book(&mut self, t: Clock) {

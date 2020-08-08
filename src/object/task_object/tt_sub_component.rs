@@ -1472,7 +1472,7 @@ impl BorrowingRecordBookPage {
         ctx: &mut SuzuContext<'a>,
         menu_position: numeric::Point2f,
         book_info: BookInformation,
-    ) {
+    ) -> DrawRequest {
         let grid_pos = self
             .books_table
             .get_grid_position(ctx.context, menu_position)
@@ -1480,7 +1480,7 @@ impl BorrowingRecordBookPage {
 
         // 本の状態は、このメソッドからは設定できない
         if grid_pos.y == 1 {
-            return;
+            return DrawRequest::Skip;
         }
 
         let info = self.borrow_book.get_mut(&grid_pos).unwrap();
@@ -1496,6 +1496,8 @@ impl BorrowingRecordBookPage {
             self.count_written_book_title(),
             self.base_price_of_written_book(),
         );
+
+	DrawRequest::Draw
     }
 
     ///
@@ -1507,7 +1509,7 @@ impl BorrowingRecordBookPage {
         menu_position: numeric::Point2f,
         date: GensoDate,
         rental_limit: RentalLimit,
-    ) {
+    ) -> DrawRequest {
         let grid_pos = self
             .customer_info_table
             .get_grid_position(ctx.context, menu_position)
@@ -1515,7 +1517,7 @@ impl BorrowingRecordBookPage {
 
         // 挿入先が日時のエントリではない
         if !(grid_pos == numeric::Vector2u::new(0, 1) || grid_pos == numeric::Vector2u::new(1, 1)) {
-            return;
+            return DrawRequest::Skip;
         }
 
         let info = self.request_information.get_mut(&grid_pos).unwrap();
@@ -1533,6 +1535,8 @@ impl BorrowingRecordBookPage {
                 self.base_price_of_written_book(),
             );
         }
+
+	DrawRequest::Draw
     }
 
     ///
@@ -1543,7 +1547,7 @@ impl BorrowingRecordBookPage {
         ctx: &mut ggez::Context,
         menu_position: numeric::Point2f,
         customer_name: String,
-    ) {
+    ) -> DrawRequest {
         let grid_pos = self
             .customer_info_table
             .get_grid_position(ctx, menu_position)
@@ -1551,7 +1555,7 @@ impl BorrowingRecordBookPage {
 
         // 挿入先が日時のエントリではない
         if grid_pos != numeric::Vector2u::new(2, 1) {
-            return;
+            return DrawRequest::Skip;
         }
 
         let info = self.request_information.get_mut(&grid_pos).unwrap();
@@ -1561,6 +1565,8 @@ impl BorrowingRecordBookPage {
             self.customer_info_table
                 .get_center_of(grid_pos, self.customer_info_table.get_position()),
         );
+
+	DrawRequest::Draw
     }
 
     pub fn replace_borrower_name(&mut self, game_data: &GameResource, name: &str) -> &mut Self {
@@ -1751,6 +1757,7 @@ impl DrawableComponent for BorrowingRecordBookPage {
 }
 
 pub struct BorrowingRecordBook {
+    redraw_request: DrawRequest,
     pages: Vec<BorrowingRecordBookPage>,
     rect: numeric::Rect,
     current_page: usize,
@@ -1813,6 +1820,7 @@ impl BorrowingRecordBook {
         prev_page_ope.hide();
 
         BorrowingRecordBook {
+	    redraw_request: DrawRequest::InitDraw,
             pages: pages,
             rect: rect,
             current_page: 0,
@@ -1832,6 +1840,8 @@ impl BorrowingRecordBook {
     }
 
     pub fn add_empty_page<'a>(&mut self, ctx: &mut SuzuContext<'a>, t: Clock) -> &Self {
+	self.redraw_request = DrawRequest::Draw;
+	
         self.pages.push(BorrowingRecordBookPage::new_empty(
             ctx,
             self.rect,
@@ -1845,6 +1855,9 @@ impl BorrowingRecordBook {
         self.pages.get(self.current_page)
     }
 
+    /// このメソッドをpubにしてはいけない
+    /// 理由: mut参照を返すメソッドを外に公開すると、変更がどこで行われているのか
+    ///       追跡できなくなるから
     fn get_current_page_mut(&mut self) -> Option<&mut BorrowingRecordBookPage> {
         self.pages.get_mut(self.current_page)
     }
@@ -1858,6 +1871,7 @@ impl BorrowingRecordBook {
     /// 存在しない場合は、falseを返す
     ///
     fn next_page<'a>(&mut self, ctx: &mut SuzuContext<'a>, t: Clock) {
+	self.redraw_request = DrawRequest::Draw;
         self.current_page += 1;
         if self.current_page >= self.pages.len() {
             self.add_empty_page(ctx, t);
@@ -1865,6 +1879,7 @@ impl BorrowingRecordBook {
     }
 
     fn prev_page(&mut self) {
+	self.redraw_request = DrawRequest::Draw;
         if self.current_page > 0 {
             self.current_page -= 1;
         }
@@ -1878,7 +1893,7 @@ impl BorrowingRecordBook {
     ) {
         let rpoint = self.relative_point(menu_position);
         if let Some(page) = self.get_current_page_mut() {
-            page.try_insert_data_in_borrowing_books_frame(ctx, rpoint, book_info);
+            self.redraw_request = page.try_insert_data_in_borrowing_books_frame(ctx, rpoint, book_info);
         }
     }
 
@@ -1899,7 +1914,7 @@ impl BorrowingRecordBook {
     ) {
         let rpoint = self.relative_point(menu_position);
         if let Some(page) = self.get_current_page_mut() {
-            page.try_insert_date_data_in_cutomer_info_frame(ctx, rpoint, date, rental_limit);
+            self.redraw_request = page.try_insert_date_data_in_cutomer_info_frame(ctx, rpoint, date, rental_limit);
         }
     }
 
@@ -1916,10 +1931,10 @@ impl BorrowingRecordBook {
         ctx: &mut ggez::Context,
         menu_position: numeric::Point2f,
         customer_name: String,
-    ) {
+    ) {	
         let rpoint = self.relative_point(menu_position);
         if let Some(page) = self.get_current_page_mut() {
-            page.try_insert_customer_name_in_cutomer_info_frame(ctx, rpoint, customer_name);
+            self.redraw_request = page.try_insert_customer_name_in_cutomer_info_frame(ctx, rpoint, customer_name);
         }
     }
 
@@ -1960,10 +1975,15 @@ impl BorrowingRecordBook {
         ctx: &mut SuzuContext<'a>,
         point: numeric::Point2f,
     ) -> Option<SignFrameEntry> {
+	
         let rpoint = self.relative_point(point);
 
         if let Some(page) = self.get_current_page_mut() {
-            page.sign_with_mouse_click(ctx, rpoint)
+            let ret = page.sign_with_mouse_click(ctx, rpoint);
+	    if ret.is_some() {
+		self.redraw_request = DrawRequest::Draw;
+	    }
+	    ret
         } else {
             None
         }
@@ -1974,7 +1994,10 @@ impl BorrowingRecordBook {
     }
 
     pub fn update(&mut self, t: Clock) {
-        self.move_with_func(t);
+	if !self.is_stop() {
+	    self.redraw_request = DrawRequest::Draw;
+	    self.move_with_func(t);
+	}
     }
 
     pub fn get_book_info_frame_grid_position(
@@ -2023,10 +2046,11 @@ impl BorrowingRecordBook {
         ctx: &mut ggez::Context,
         status_index: usize,
         menu_position: numeric::Point2f,
-    ) {
+    ) {	
         let rpoint = self.relative_point(menu_position);
         if let Some(page) = self.get_current_page_mut() {
             page.insert_book_status_data(ctx, status_index as i32, rpoint);
+	    self.redraw_request = DrawRequest::Draw;
         }
     }
 
@@ -2036,14 +2060,23 @@ impl BorrowingRecordBook {
         let next_area = numeric::Rect::new(0.0, 0.0, 30.0, self.rect.h);
         let prev_area = numeric::Rect::new(self.rect.w - 20.0, 0.0, 30.0, self.rect.h);
 
-        self.next_page_ope_mesh.hide();
-        self.prev_page_ope_mesh.hide();
-
         if next_area.contains(rpoint) {
             self.next_page_ope_mesh.appear();
+	    self.redraw_request = DrawRequest::Draw;
         } else if prev_area.contains(rpoint) {
             self.prev_page_ope_mesh.appear();
-        }
+	    self.redraw_request = DrawRequest::Draw;
+        } else {
+	    if self.next_page_ope_mesh.is_visible() {
+		self.next_page_ope_mesh.hide();
+		self.redraw_request = DrawRequest::Draw;
+	    }
+
+	    if self.prev_page_ope_mesh.is_visible() {
+		self.prev_page_ope_mesh.hide();
+		self.redraw_request = DrawRequest::Draw;
+	    }
+	}
     }
 }
 
@@ -2051,16 +2084,20 @@ impl DrawableComponent for BorrowingRecordBook {
     #[inline(always)]
     fn draw(&mut self, ctx: &mut ggez::Context) -> ggez::GameResult<()> {
         if self.is_visible() {
-            sub_screen::stack_screen(ctx, &self.canvas);
-
-            if self.pages.len() > 0 {
-                self.pages.get_mut(self.current_page).unwrap().draw(ctx)?;
-            }
-
-            self.prev_page_ope_mesh.draw(ctx)?;
-            self.next_page_ope_mesh.draw(ctx)?;
-
-            sub_screen::pop_screen(ctx);
+	    if self.redraw_request != DrawRequest::Skip {
+		self.redraw_request = DrawRequest::Skip;
+		println!("redraw!!!!!!!!!!");
+		sub_screen::stack_screen(ctx, &self.canvas);
+		
+		if self.pages.len() > 0 {
+                    self.pages.get_mut(self.current_page).unwrap().draw(ctx)?;
+		}
+		
+		self.prev_page_ope_mesh.draw(ctx)?;
+		self.next_page_ope_mesh.draw(ctx)?;
+		
+		sub_screen::pop_screen(ctx);
+	    }
             self.canvas.draw(ctx).unwrap();
         }
         Ok(())

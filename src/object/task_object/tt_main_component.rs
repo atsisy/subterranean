@@ -1880,10 +1880,17 @@ impl FloatingMemoryObject {
         self.update_canvas(ctx);
     }
 
-    pub fn update(&mut self, t: Clock) {
+    pub fn update(&mut self, t: Clock) -> DrawRequest {
+	let mut request = DrawRequest::Skip;
+	
         for text in self.text.iter_mut() {
-            text.move_with_func(t);
+	    if !text.is_stop() {
+		request = DrawRequest::Draw;
+	    }
+	    text.move_with_func(t);
         }
+
+	request
     }
 }
 
@@ -2046,8 +2053,8 @@ impl TaskInfoContents {
             .add_text_line(ctx, book_info.name, init_text_pos, now);
     }
 
-    pub fn update(&mut self, t: Clock) {
-        self.book_info_memory.update(t);
+    pub fn update(&mut self, t: Clock) -> DrawRequest {
+        self.book_info_memory.update(t)
     }
 }
 
@@ -2095,6 +2102,7 @@ impl DrawableComponent for TaskInfoContents {
 
 pub struct TaskInfoPanel {
     canvas: SubScreen,
+    draw_request: DrawRequest,
     contents: TaskInfoContents,
     background: UniTexture,
 }
@@ -2112,6 +2120,7 @@ impl TaskInfoPanel {
                 0,
                 ggraphics::Color::from_rgba_u32(0xffffffff),
             ),
+	    draw_request: DrawRequest::InitDraw,
             background: UniTexture::new(
                 ctx.ref_texture(TextureID::TextBackground),
                 numeric::Point2f::new(0.0, 0.0),
@@ -2135,18 +2144,24 @@ impl TaskInfoPanel {
     }
 
     pub fn update(&mut self, t: Clock) {
-        self.contents.update(t);
+        let go_draw = self.contents.update(t);
+	if self.draw_request != DrawRequest::InitDraw {
+	    self.draw_request = go_draw;
+	}
     }
 }
 
 impl DrawableComponent for TaskInfoPanel {
     fn draw(&mut self, ctx: &mut ggez::Context) -> ggez::GameResult<()> {
-        sub_screen::stack_screen(ctx, &self.canvas);
-
-        self.background.draw(ctx)?;
-        self.contents.draw(ctx)?;
-
-        sub_screen::pop_screen(ctx);
+	if self.draw_request != DrawRequest::Skip {
+	    self.draw_request = DrawRequest::Skip;
+            sub_screen::stack_screen(ctx, &self.canvas);
+	    
+            self.background.draw(ctx)?;
+            self.contents.draw(ctx)?;
+	    
+            sub_screen::pop_screen(ctx);
+	}
         self.canvas.draw(ctx)
     }
 

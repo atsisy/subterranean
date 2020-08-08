@@ -77,6 +77,13 @@ fn read_whole_file(path: String) -> Result<String, String> {
     Ok(file_content)
 }
 
+#[derive(Copy, Clone, Eq, PartialEq)]
+pub enum DrawRequest {
+    InitDraw,
+    Draw,
+    Skip,
+}
+
 #[derive(Debug, Clone, Copy, Eq, PartialEq, Hash)]
 pub enum TextureID {
     Ghost1 = 0,
