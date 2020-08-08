@@ -704,10 +704,10 @@ impl DrawableComponent for SimpleMessageMenu {
 impl Clickable for SimpleMessageMenu {
     fn on_click<'a>(
         &mut self,
-        ctx: &mut SuzuContext<'a>,
+        _: &mut SuzuContext<'a>,
         _t: Clock,
         _button: ggez::event::MouseButton,
-        point: numeric::Point2f,
+        _: numeric::Point2f,
     ) {
     }
 }
@@ -2289,6 +2289,7 @@ impl RecordBookMenuGroup {
         self.close_customer_name_menu(t);
         self.close_date_menu(t);
         self.close_payment_menu(t);
+	self.close_simple_message_menu(t);
     }
 
     pub fn show_book_status_menu<'a>(
@@ -2330,6 +2331,11 @@ impl RecordBookMenuGroup {
         kosuzu_memory: &KosuzuMemory,
         t: Clock,
     ) {
+	if kosuzu_memory.remembered_book_info.is_empty() {
+	    self.show_simple_message_menu(ctx, position, "".to_string(), "なんていう本だっけ".to_string(), t);
+	    return;
+	}
+	
         let book_title_menu =
             BookTitleMenu::new(ctx, kosuzu_memory.remembered_book_info.clone(), 0);
 
@@ -2355,11 +2361,18 @@ impl RecordBookMenuGroup {
         self.book_title_menu = Some(book_title_menu_area);
     }
 
-    fn show_simple_message_menu<'a>(&mut self, ctx: &mut SuzuContext<'a>, position: numeric::Point2f, t: Clock) {
+    fn show_simple_message_menu<'a>(
+	&mut self,
+	ctx: &mut SuzuContext<'a>,
+	position: numeric::Point2f,
+	title: String,
+	message: String,
+	t: Clock
+    ) {
 	let menu = SimpleMessageMenu::new(
 	    ctx,
-	    "".to_string(),
-	    "お名前を聞かないと".to_string(),
+	    title,
+	    message,
 	    28.0,
 	    28.0,
 	    0
@@ -2388,7 +2401,7 @@ impl RecordBookMenuGroup {
             )
 	};
 	
-	let drop_menu = SimpleMessageDropMenu::new(
+	let mut drop_menu = SimpleMessageDropMenu::new(
 	    ctx,
 	    position,
 	    rect,
@@ -2396,6 +2409,8 @@ impl RecordBookMenuGroup {
 	    menu,
 	    t
 	);
+
+	drop_menu.add_effect(vec![effect::fade_in(10, t)]);
 
 	self.simple_message_menu = Some(drop_menu);
     }
@@ -2408,7 +2423,7 @@ impl RecordBookMenuGroup {
         t: Clock,
     ) {
 	if kosuzu_memory.customers_name.is_empty() {
-	    self.show_simple_message_menu(ctx, position, t);
+	    self.show_simple_message_menu(ctx, position, "".to_string(), "お名前聞かないと".to_string(), t);
 	    return;
 	}
 	

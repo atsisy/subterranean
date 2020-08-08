@@ -82,7 +82,7 @@ where T: PartialOrd {
 macro_rules! perf_measure {
     ( $x:expr) => {{
         let start = std::time::Instant::now();
-        let result = $x;
+        let _ = $x;
         let end = start.elapsed();
         end.subsec_nanos()
     }};
