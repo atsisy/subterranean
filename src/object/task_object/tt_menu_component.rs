@@ -605,6 +605,115 @@ impl Clickable for BookTitleMenu {
 
 pub type BookTitleDropMenu = DropDownArea<BookTitleMenu>;
 
+pub struct SimpleMessageMenu {
+    title: VerticalText,
+    message: VerticalText,
+    menu_size: numeric::Vector2f,
+    drwob_essential: DrawableObjectEssential,
+}
+
+impl SimpleMessageMenu {
+    pub fn new<'a>(
+        ctx: &mut SuzuContext<'a>,
+	title: String,
+	message: String,
+	title_font_scale: f32,
+	msg_font_scale: f32,
+        drawing_depth: i8,
+    ) -> Self {
+	let menu_size = numeric::Vector2f::new(
+	    msg_font_scale + title_font_scale + 120.0,
+	    util::max(title.len() as f32 * title_font_scale, message.len() as f32 * msg_font_scale) / 2.0
+	);
+
+	let title_font_info = FontInformation::new(
+            ctx.resource.get_font(FontID::Cinema),
+            numeric::Vector2f::new(title_font_scale, title_font_scale),
+            ggraphics::Color::from_rgba_u32(0xff),
+	);
+	
+        let msg_font_info = FontInformation::new(
+            ctx.resource.get_font(FontID::Cinema),
+            numeric::Vector2f::new(msg_font_scale, msg_font_scale),
+            ggraphics::Color::from_rgba_u32(0xff),
+        );
+
+	let title_text = VerticalText::new(
+	    title,
+	    numeric::Point2f::new(menu_size.x - title_font_scale - 40.0, 35.0),
+	    numeric::Vector2f::new(1.0, 1.0),
+	    0.0,
+	    0,
+	    title_font_info
+	);
+
+	let mut msg_text = VerticalText::new(
+	    message,
+	    numeric::Point2f::new(0.0, 0.0),
+	    numeric::Vector2f::new(1.0, 1.0),
+	    0.0,
+	    0,
+	    msg_font_info
+	);
+
+	msg_text.make_center(ctx.context, numeric::Point2f::new(menu_size.x / 2.0, menu_size.y / 2.0));
+
+	SimpleMessageMenu {
+	    title: title_text,
+	    message: msg_text,
+	    menu_size: menu_size,
+	    drwob_essential: DrawableObjectEssential::new(true, drawing_depth),
+	}
+    }
+
+    pub fn get_size(&self) -> numeric::Vector2f {
+	self.menu_size
+    }
+}
+
+impl DrawableComponent for SimpleMessageMenu {
+    fn draw(&mut self, ctx: &mut ggez::Context) -> ggez::GameResult<()> {
+        if self.is_visible() {
+	    self.message.draw(ctx)?;
+	    self.title.draw(ctx)?;
+        }
+        Ok(())
+    }
+
+    fn hide(&mut self) {
+        self.drwob_essential.visible = false;
+    }
+
+    fn appear(&mut self) {
+        self.drwob_essential.visible = true;
+    }
+
+    fn is_visible(&self) -> bool {
+        self.drwob_essential.visible
+    }
+
+    fn set_drawing_depth(&mut self, depth: i8) {
+        self.drwob_essential.drawing_depth = depth;
+    }
+
+    fn get_drawing_depth(&self) -> i8 {
+        self.drwob_essential.drawing_depth
+    }
+}
+
+impl Clickable for SimpleMessageMenu {
+    fn on_click<'a>(
+        &mut self,
+        ctx: &mut SuzuContext<'a>,
+        _t: Clock,
+        _button: ggez::event::MouseButton,
+        point: numeric::Point2f,
+    ) {
+    }
+}
+
+pub type SimpleMessageDropMenu = DropDownArea<SimpleMessageMenu>;
+
 pub struct CustomerNameMenu {
     raw_data: Vec<String>,
     name_table_frame: TableFrame,
@@ -1802,6 +1911,7 @@ pub struct RecordBookMenuGroup {
     book_status_menu: Option<BookStatusMenu>,
     book_title_menu: Option<BookTitleDropMenu>,
     customer_name_menu: Option<CustomerNameDropMenu>,
+    simple_message_menu: Option<SimpleMessageDropMenu>,
     date_menu: Option<DateDropMenu>,
     payment_menu: Option<PaymentDropMenu>,
     drwob_essential: DrawableObjectEssential,
@@ -1814,6 +1924,7 @@ impl RecordBookMenuGroup {
             book_status_menu: None,
             book_title_menu: None,
             customer_name_menu: None,
+	    simple_message_menu: None,
             date_menu: None,
             payment_menu: None,
             drwob_essential: DrawableObjectEssential::new(true, drawing_depth),
@@ -1826,6 +1937,7 @@ impl RecordBookMenuGroup {
             || self.customer_name_menu.is_some()
             || self.date_menu.is_some()
             || self.payment_menu.is_some()
+	    || self.simple_message_menu.is_some()
     }
 
     pub fn close_book_status_menu(&mut self, t: Clock) {
@@ -1888,6 +2000,18 @@ impl RecordBookMenuGroup {
         );
     }
 
+    pub fn close_simple_message_menu(&mut self, t: Clock) {
+        let msg_menu = match self.simple_message_menu.as_mut() {
+            Some(it) => it,
+            _ => return,
+        };
+        msg_menu.add_effect(vec![effect::fade_out(10, t)]);
+        self.event_list.add_event(
+            Box::new(|slf: &mut RecordBookMenuGroup, _, _| slf.simple_message_menu = None),
+            t + 11,
+        );
+    }
+
     pub fn contains_book_status_menu(
         &self,
         ctx: &mut ggez::Context,
@@ -1927,12 +2051,18 @@ impl RecordBookMenuGroup {
         self.payment_menu.is_some() && self.payment_menu.as_ref().unwrap().contains(ctx, point)
     }
 
+    pub fn contains_simple_message_menu(&self, ctx: &mut ggez::Context, point: numeric::Point2f) -> bool {
+        self.simple_message_menu.is_some() && self.simple_message_menu.as_ref().unwrap().contains(ctx, point)
+    }
+
+
     pub fn is_contains_any_menus(&self, ctx: &mut ggez::Context, point: numeric::Point2f) -> bool {
         self.contains_book_title_menu(ctx, point)
             || self.contains_book_status_menu(ctx, point)
             || self.contains_customer_name_menu(ctx, point)
             || self.contains_date_menu(ctx, point)
             || self.contains_payment_menu(ctx, point)
+	    || self.contains_simple_message_menu(ctx, point)
     }
 
     pub fn get_book_status_menu_position(&self) -> Option<numeric::Point2f> {
@@ -1970,6 +2100,14 @@ impl RecordBookMenuGroup {
     pub fn get_payment_menu_position(&self) -> Option<numeric::Point2f> {
         if let Some(payment_menu) = self.payment_menu.as_ref() {
             Some(payment_menu.get_click_position())
+        } else {
+            None
+        }
+    }
+
+    pub fn get_simple_message_menu_position(&self) -> Option<numeric::Point2f> {
+        if let Some(menu) = self.simple_message_menu.as_ref() {
+            Some(menu.get_click_position())
         } else {
             None
         }
@@ -2217,6 +2355,51 @@ impl RecordBookMenuGroup {
         self.book_title_menu = Some(book_title_menu_area);
     }
 
+    fn show_simple_message_menu<'a>(&mut self, ctx: &mut SuzuContext<'a>, position: numeric::Point2f, t: Clock) {
+	let menu = SimpleMessageMenu::new(
+	    ctx,
+	    "".to_string(),
+	    "お名前を聞かないと".to_string(),
+	    28.0,
+	    28.0,
+	    0
+	);
+
+	let menu_size = menu.get_size();
+
+	
+	let rect = if (position.y + menu_size.y) as i16 <= core::WINDOW_SIZE_Y && (position.x + menu_size.x) as i16 <= core::WINDOW_SIZE_X {
+	    numeric::Rect::new(position.x, position.y, menu_size.x, menu_size.y)
+        } else if (position.y + menu_size.y) as i16 <= core::WINDOW_SIZE_Y {
+	    numeric::Rect::new(position.x - menu_size.x, position.y, menu_size.x, menu_size.y)
+	} else if (position.x + menu_size.x) as i16 <= core::WINDOW_SIZE_X {
+	    numeric::Rect::new(
+                position.x,
+                position.y - menu_size.y,
+                menu_size.x,
+                menu_size.y,
+            )
+	} else {
+	    numeric::Rect::new(
+                position.x - menu_size.x,
+                position.y - menu_size.y,
+                menu_size.x,
+                menu_size.y,
+            )
+	};
+	
+	let drop_menu = SimpleMessageDropMenu::new(
+	    ctx,
+	    position,
+	    rect,
+	    0,
+	    menu,
+	    t
+	);
+
+	self.simple_message_menu = Some(drop_menu);
+    }
+
     pub fn show_customer_name_menu<'a>(
         &mut self,
         ctx: &mut SuzuContext<'a>,
@@ -2224,6 +2407,11 @@ impl RecordBookMenuGroup {
         kosuzu_memory: &KosuzuMemory,
         t: Clock,
     ) {
+	if kosuzu_memory.customers_name.is_empty() {
+	    self.show_simple_message_menu(ctx, position, t);
+	    return;
+	}
+	
         let customer_name_menu =
             CustomerNameMenu::new(ctx, kosuzu_memory.customers_name.clone(), 0);
 
@@ -2344,6 +2532,11 @@ impl RecordBookMenuGroup {
             payment_menu.move_with_func(t);
             payment_menu.effect(ctx.context, t);
         }
+
+	if let Some(msg_menu) = self.simple_message_menu.as_mut() {
+	    msg_menu.move_with_func(t);
+	    msg_menu.effect(ctx.context, t);
+	}
     }
 }
 
@@ -2369,6 +2562,10 @@ impl DrawableComponent for RecordBookMenuGroup {
             if let Some(payment_menu) = self.payment_menu.as_mut() {
                 payment_menu.draw(ctx)?;
             }
+
+	    if let Some(msg_menu) = self.simple_message_menu.as_mut() {
+		msg_menu.draw(ctx)?;
+	    }
         }
         Ok(())
     }

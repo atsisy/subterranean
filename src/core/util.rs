@@ -60,6 +60,24 @@ impl ToString for DayOfWeek {
     }
 }
 
+pub fn max<T>(a: T, b: T) -> T
+where T: PartialOrd {
+    if a > b {
+	a
+    } else {
+	b
+    }
+}
+
+pub fn min<T>(a: T, b: T) -> T
+where T: PartialOrd {
+    if a < b {
+	a
+    } else {
+	b
+    }
+}
+
 #[macro_export]
 macro_rules! perf_measure {
     ( $x:expr) => {{
