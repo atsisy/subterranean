@@ -190,6 +190,7 @@ impl Scrollable for SelectBookWindowContents {
         _: numeric::Point2f,
         offset: numeric::Vector2f,
     ) {
+	let start_position = self.table_frame.get_position();
         self.table_frame.move_diff(offset);
 
         if self.table_frame.get_position().x < self.table_frame_init_position.x {
@@ -204,6 +205,13 @@ impl Scrollable for SelectBookWindowContents {
             ));
         }
 
+	let end_position = self.table_frame.get_position();
+	
+	let offset = numeric::Vector2f::new(
+	    end_position.x - start_position.x,
+	    end_position.y - start_position.y,
+	);
+	
         for vtext in &mut self.book_title_text {
             vtext.move_diff(offset);
         }
