@@ -194,7 +194,9 @@ impl<T> DelayEventList<T> {
 
 #[macro_export]
 macro_rules! flush_delay_event {
-    ($slf: expr, $event_list: expr, $ctx: expr, $t: expr) => {
+    ($slf: expr, $event_list: expr, $ctx: expr, $t: expr) => {{
+	let mut macro_loop_count: usize = 0;
+	
 	while let Some(event) = $event_list.move_top() {
             // 時間が来ていない場合は、取り出した要素をリストに戻して処理ループを抜ける
             if event.run_time > $t {
@@ -204,6 +206,9 @@ macro_rules! flush_delay_event {
 
             // 所有権を移動しているため、selfを渡してもエラーにならない
             (event.func)($slf, $ctx, $t);
+	    macro_loop_count += 1;
         }
-    };
+
+	macro_loop_count
+    }};
 }

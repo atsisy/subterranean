@@ -92,6 +92,7 @@ pub struct DeskObjects {
     pub table_texture: SimpleObject,
     event_list: DelayEventList<Self>,
     appearance_frame: TileBatchFrame,
+    draw_request: DrawRequest,
 }
 
 impl DeskObjects {
@@ -132,6 +133,7 @@ impl DeskObjects {
             ),
             event_list: DelayEventList::new(),
             appearance_frame: appr_frame,
+	    draw_request: DrawRequest::InitDraw,
         }
     }
 
@@ -163,6 +165,8 @@ impl DeskObjects {
                         .set_position(numeric::Point2f::new(canvas_size.x - area.w, area.y));
                 }
             }
+
+	    self.draw_request = DrawRequest::Draw;
         }
     }
 
@@ -220,6 +224,7 @@ impl DeskObjects {
             self.dragging = Some(dragging);
 
             self.desk_objects.sort_with_depth();
+	    self.draw_request = DrawRequest::Draw;
         }
     }
 
@@ -234,6 +239,7 @@ impl DeskObjects {
 
             self.desk_objects.add_item(dragged);
             self.desk_objects.sort_with_depth();
+	    self.draw_request = DrawRequest::Draw;
         }
     }
 
@@ -241,6 +247,10 @@ impl DeskObjects {
         flush_delay_event!(self, self.event_list, ctx, t);
 
         for p in self.desk_objects.get_raw_container_mut() {
+	    if !p.as_movable_object().is_stop() || !p.as_effectable_object().is_empty_effect() {
+		self.draw_request = DrawRequest::Draw;
+	    }
+	    
             p.as_movable_object_mut().move_with_func(t);
             p.as_effectable_object().effect(ctx.context, t);
         }
@@ -275,12 +285,14 @@ impl DeskObjects {
 
         if click_flag {
             self.desk_objects.sort_with_depth();
+	    self.draw_request = DrawRequest::Draw;
         }
 
         object_type
     }
 
     pub fn add_object(&mut self, obj: TaskItem) {
+	self.draw_request = DrawRequest::Draw;
         self.desk_objects.add_item(obj);
         self.desk_objects.sort_with_depth();
     }
@@ -303,10 +315,12 @@ impl DeskObjects {
         let d = std::mem::replace(&mut self.dragging, Some(obj));
         if d.is_some() {
             self.desk_objects.add_item(d.unwrap());
+	    self.draw_request = DrawRequest::Draw;
         }
     }
 
     pub fn release_dragging(&mut self) -> Option<TaskItem> {
+	self.draw_request = DrawRequest::Draw;
         std::mem::replace(&mut self.dragging, None)
     }
 
@@ -344,6 +358,7 @@ impl DeskObjects {
 
         for dobj in self.desk_objects.get_raw_container_mut().iter_mut().rev() {
             if dobj.get_object_mut().contains(ctx.context, rpoint) {
+		self.draw_request = DrawRequest::Draw;
                 dobj.get_object_mut().button_up(ctx, t, button, rpoint);
 
                 return true;
@@ -377,30 +392,29 @@ impl DeskObjects {
     pub fn get_desk_objects_list(&self) -> &Vec<TaskItem> {
         self.desk_objects.get_raw_container()
     }
-
-    pub fn get_desk_objects_list_mut(&mut self) -> &mut Vec<TaskItem> {
-        self.desk_objects.get_raw_container_mut()
-    }
 }
 
 impl DrawableComponent for DeskObjects {
     fn draw(&mut self, ctx: &mut ggez::Context) -> ggez::GameResult<()> {
         if self.is_visible() {
-            sub_screen::stack_screen(ctx, &self.canvas);
-
-            self.table_texture.draw(ctx)?;
-
-            for obj in self.desk_objects.get_raw_container_mut() {
-                obj.get_object_mut().draw(ctx)?;
-            }
-
-            if let Some(d) = self.dragging.as_mut() {
-                d.get_object_mut().draw(ctx)?;
-            }
-
-            self.appearance_frame.draw(ctx)?;
-
-            sub_screen::pop_screen(ctx);
+	    if self.draw_request != DrawRequest::Skip {
+		self.draw_request = DrawRequest::Skip;
+		sub_screen::stack_screen(ctx, &self.canvas);
+		
+		self.table_texture.draw(ctx)?;
+		
+		for obj in self.desk_objects.get_raw_container_mut() {
+                    obj.get_object_mut().draw(ctx)?;
+		}
+		
+		if let Some(d) = self.dragging.as_mut() {
+                    d.get_object_mut().draw(ctx)?;
+		}
+		
+		self.appearance_frame.draw(ctx)?;
+		
+		sub_screen::pop_screen(ctx);
+	    }
             self.canvas.draw(ctx).unwrap();
         }
         Ok(())
@@ -911,19 +925,28 @@ impl SuzuMiniSightSilhouette {
         self.replace_character(chara, name);
     }
 
-    fn run_effect<'a>(&mut self, ctx: &mut SuzuContext<'a>, t: Clock) {
-        flush_delay_event!(self, self.event_list, ctx, t);
+    fn run_effect<'a>(&mut self, ctx: &mut SuzuContext<'a>, t: Clock) -> DrawRequest {
+	let mut draw_request = DrawRequest::Skip;
+	
+        if flush_delay_event!(self, self.event_list, ctx, t) > 0 {
+	    draw_request = DrawRequest::Draw;
+	}
 
-        if self.silhouette.is_some() {
-            self.silhouette.get_object_mut().unwrap().move_with_func(t);
-            self.silhouette
-                .get_object_mut()
-                .unwrap()
-                .effect(ctx.context, t);
+        if let Some(obj) = self.silhouette.get_object_mut() {
+	    if !obj.is_stop() || !obj.is_empty_effect() {
+		draw_request = DrawRequest::Draw;
+	    }
+	    obj.move_with_func(t);
+	    obj.effect(ctx.context, t);
         }
 
-        self.text_balloon.update_mesh(ctx.context);
-        self.text_balloon.effect(ctx.context, t);
+	if !self.text_balloon.is_empty_effect() {
+	    self.text_balloon.update_mesh(ctx.context);
+            self.text_balloon.effect(ctx.context, t);
+	    draw_request = DrawRequest::Draw;
+	}
+
+	draw_request
     }
 
     pub fn replace_text(
@@ -1057,6 +1080,7 @@ pub struct SuzuMiniSight {
     pub dropping_to_desk: Vec<TaskItem>,
     pub silhouette: SuzuMiniSightSilhouette,
     appearance_frame: TileBatchFrame,
+    draw_request: DrawRequest,
 }
 
 impl SuzuMiniSight {
@@ -1092,6 +1116,7 @@ impl SuzuMiniSight {
             dropping_to_desk: Vec::new(),
             silhouette: silhouette,
             appearance_frame: appr_frame,
+	    draw_request: DrawRequest::InitDraw,
         }
     }
 
@@ -1105,6 +1130,7 @@ impl SuzuMiniSight {
     ) {
         self.silhouette
             .new_customer_update(ctx, chara, name, dialogue, t);
+	self.draw_request = DrawRequest::Draw;
     }
 
     pub fn count_not_forbidden_book_items(&self, kosuzu_memory: &KosuzuMemory) -> usize {
@@ -1139,6 +1165,7 @@ impl SuzuMiniSight {
         if let Some(obj) = &mut self.dragging {
             obj.get_object_mut()
                 .move_diff(numeric::Vector2f::new(point.x - last.x, point.y - last.y));
+	    self.draw_request = DrawRequest::Draw;
         }
     }
 
@@ -1154,22 +1181,31 @@ impl SuzuMiniSight {
 
     pub fn finish_customer_event(&mut self, now: Clock) {
         self.silhouette.run_hide_effect(now);
+	self.draw_request = DrawRequest::Draw;
     }
 
     pub fn update<'a>(&mut self, ctx: &mut SuzuContext<'a>, t: Clock) {
         self.dropping.retain(|d| !d.as_movable_object().is_stop());
 
         for d in &mut self.dropping {
-            d.as_movable_object_mut().move_with_func(t);
+	    if !d.as_movable_object().is_stop() || !d.as_effectable_object().is_empty_effect() {
+		self.draw_request = DrawRequest::Draw;
+	    }
+	    d.as_movable_object_mut().move_with_func(t);
             d.as_effectable_object().effect(ctx.context, t);
         }
 
         for d in &mut self.dropping_to_desk {
+	    if !d.as_movable_object().is_stop() || !d.as_effectable_object().is_empty_effect() {
+		self.draw_request = DrawRequest::Draw;
+	    }
             d.as_movable_object_mut().move_with_func(t);
             d.as_effectable_object().effect(ctx.context, t);
         }
 
-        self.silhouette.run_effect(ctx, t);
+        if self.silhouette.run_effect(ctx, t) == DrawRequest::Draw {
+	    self.draw_request = DrawRequest::Draw;
+	}
     }
 
     pub fn check_drop_desk(&mut self) -> Vec<TaskItem> {
@@ -1184,6 +1220,7 @@ impl SuzuMiniSight {
                 .as_movable_object()
                 .is_stop();
             if stop {
+		self.draw_request = DrawRequest::Draw;
                 drop_to_desk.push(self.dropping_to_desk.swap_remove(index));
             }
             index += 1;
@@ -1193,6 +1230,7 @@ impl SuzuMiniSight {
     }
 
     pub fn add_object(&mut self, obj: TaskItem) {
+	self.draw_request = DrawRequest::Draw;
         self.dropping.push(obj);
     }
 
@@ -1207,6 +1245,7 @@ impl SuzuMiniSight {
     pub fn insert_dragging(&mut self, obj: TaskItem) {
         let d = std::mem::replace(&mut self.dragging, Some(obj));
         if d.is_some() {
+	    self.draw_request = DrawRequest::Draw;
             self.dropping.push(d.unwrap());
         }
     }
@@ -1255,11 +1294,13 @@ impl SuzuMiniSight {
         point: numeric::Point2f,
     ) -> HoldData {
         let rpoint = self.canvas.relative_point(point);
-
-        self.silhouette.click_hold_data(ctx, rpoint)
+	self.draw_request = DrawRequest::Draw;
+	
+        self.silhouette.click_hold_data(ctx, rpoint)	    
     }
 
     pub fn release_dragging(&mut self) -> Option<TaskItem> {
+	self.draw_request = DrawRequest::Draw;
         std::mem::replace(&mut self.dragging, None)
     }
 
@@ -1284,25 +1325,28 @@ impl SuzuMiniSight {
 impl DrawableComponent for SuzuMiniSight {
     fn draw(&mut self, ctx: &mut ggez::Context) -> ggez::GameResult<()> {
         if self.is_visible() {
-            sub_screen::stack_screen(ctx, &self.canvas);
-
-            self.silhouette.draw(ctx)?;
-
-            for d in &mut self.dropping {
-                d.get_object_mut().draw(ctx)?;
-            }
-
-            for d in &mut self.dropping_to_desk {
-                d.get_object_mut().draw(ctx)?;
-            }
-
-            if let Some(ref mut d) = self.dragging {
-                d.get_object_mut().draw(ctx)?;
-            }
-
-            self.appearance_frame.draw(ctx)?;
-
-            sub_screen::pop_screen(ctx);
+	    if self.draw_request != DrawRequest::Skip {
+		self.draw_request = DrawRequest::Skip;
+		sub_screen::stack_screen(ctx, &self.canvas);
+		
+		self.silhouette.draw(ctx)?;
+		
+		for d in &mut self.dropping {
+                    d.get_object_mut().draw(ctx)?;
+		}
+		
+		for d in &mut self.dropping_to_desk {
+                    d.get_object_mut().draw(ctx)?;
+		}
+		
+		if let Some(ref mut d) = self.dragging {
+                    d.get_object_mut().draw(ctx)?;
+		}
+		
+		self.appearance_frame.draw(ctx)?;
+		
+		sub_screen::pop_screen(ctx);
+	    }
             self.canvas.draw(ctx).unwrap();
         }
         Ok(())
@@ -1601,7 +1645,6 @@ impl DrawableComponent for ShelvingBookBox {
         if self.is_visible() {
 	    if self.draw_request != DrawRequest::Skip {
 		self.draw_request = DrawRequest::Skip;
-		println!("redraw");
 		
 		sub_screen::stack_screen(ctx, &self.canvas);
 		

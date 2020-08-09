@@ -1204,8 +1204,8 @@ impl TaskTable {
     ) -> bool {
         let rpoint = self.desk.canvas.relative_point(click_point);
 
-        for dobj in self.desk.get_desk_objects_list_mut().iter_mut().rev() {
-            if dobj.get_object_mut().contains(ctx.context, rpoint) {
+        for dobj in self.desk.get_desk_objects_list().iter().rev() {
+            if dobj.get_object().contains(ctx.context, rpoint) {
                 let dobj_ref = &dobj.get_object();
                 let obj_type = dobj_ref.get_type();
                 let hold_data = dobj_ref.click_hold_data(ctx.context, rpoint);
