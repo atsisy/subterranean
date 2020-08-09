@@ -2086,7 +2086,6 @@ impl DrawableComponent for BorrowingRecordBook {
         if self.is_visible() {
 	    if self.redraw_request != DrawRequest::Skip {
 		self.redraw_request = DrawRequest::Skip;
-		println!("redraw!!!!!!!!!!");
 		sub_screen::stack_screen(ctx, &self.canvas);
 		
 		if self.pages.len() > 0 {

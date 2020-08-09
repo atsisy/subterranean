@@ -1395,6 +1395,7 @@ pub struct ShelvingBookBox {
     box_back: UniTexture,
     box_front: UniTexture,
     appearance_frame: TileBatchFrame,
+    draw_request: DrawRequest,
 }
 
 impl ShelvingBookBox {
@@ -1450,6 +1451,7 @@ impl ShelvingBookBox {
             box_front: box_front,
             box_back: box_back,
             appearance_frame: appr_frame,
+	    draw_request: DrawRequest::InitDraw,
         }
     }
 
@@ -1468,6 +1470,7 @@ impl ShelvingBookBox {
             let contains = obj.get_object().get_drawing_area(ctx).contains(rpoint);
             if contains {
                 clicked_data = obj.get_object_mut().click_hold_data(ctx, rpoint);
+		self.draw_request = DrawRequest::Draw;
                 break;
             }
         }
@@ -1479,6 +1482,7 @@ impl ShelvingBookBox {
         if let Some(obj) = &mut self.dragging {
             obj.get_object_mut()
                 .move_diff(numeric::Vector2f::new(point.x - last.x, point.y - last.y));
+	    self.draw_request = DrawRequest::Draw;
         }
     }
 
@@ -1489,7 +1493,8 @@ impl ShelvingBookBox {
                 .override_move_func(move_fn::gravity_move(1.0, 10.0, 310.0, 0.3), t);
             dragged.as_effectable_object().add_effect(vec![Box::new(
                 |obj: &mut dyn MovableObject, _: &ggez::Context, t: Clock| {
-                    if obj.get_position().y > 350.0 {
+		    println!("{}", obj.get_position().y);
+                    if obj.get_position().y >= 310.0 {
                         obj.override_move_func(None, t);
                         EffectFnStatus::EffectFinish
                     } else {
@@ -1499,24 +1504,31 @@ impl ShelvingBookBox {
             )]);
             let dragged_object = std::mem::replace(&mut self.dragging, None);
             self.shelved.push(dragged_object.unwrap());
+	    self.draw_request = DrawRequest::Draw;
         }
     }
 
     pub fn update(&mut self, ctx: &mut ggez::Context, t: Clock) {
         for p in &mut self.shelved {
-            p.as_movable_object_mut().move_with_func(t);
+	    if !p.as_movable_object().is_stop() || !p.as_effectable_object().is_empty_effect() {
+		self.draw_request = DrawRequest::Draw;
+	    }
+	    
+	    p.as_movable_object_mut().move_with_func(t);
             p.as_effectable_object().effect(ctx, t);
         }
     }
 
     pub fn add_object(&mut self, obj: TaskItem) {
         self.shelved.push(obj);
+	self.draw_request = DrawRequest::Draw;
     }
 
     pub fn add_customer_object_vec(&mut self, mut obj_vec: Vec<TaskItem>) {
         while obj_vec.len() != 0 {
             self.add_object(obj_vec.pop().unwrap());
         }
+	self.draw_request = DrawRequest::Draw;
     }
 
     pub fn has_dragging(&self) -> bool {
@@ -1527,10 +1539,12 @@ impl ShelvingBookBox {
         let d = std::mem::replace(&mut self.dragging, Some(obj));
         if d.is_some() {
             self.add_object(d.unwrap());
+	    self.draw_request = DrawRequest::Draw;
         }
     }
 
     pub fn release_dragging(&mut self) -> Option<TaskItem> {
+	self.draw_request = DrawRequest::Draw;
         std::mem::replace(&mut self.dragging, None)
     }
 
@@ -1555,6 +1569,7 @@ impl ShelvingBookBox {
         for dobj in &mut self.shelved {
             if dobj.get_object_mut().contains(ctx.context, rpoint) {
                 dobj.get_object_mut().button_up(ctx, t, button, rpoint);
+		self.draw_request = DrawRequest::Draw;
             }
         }
     }
@@ -1584,25 +1599,30 @@ impl ShelvingBookBox {
 impl DrawableComponent for ShelvingBookBox {
     fn draw(&mut self, ctx: &mut ggez::Context) -> ggez::GameResult<()> {
         if self.is_visible() {
-            sub_screen::stack_screen(ctx, &self.canvas);
-
-            self.table_texture.draw(ctx)?;
-
-            self.box_back.draw(ctx)?;
-
-            for obj in &mut self.shelved {
-                obj.get_object_mut().draw(ctx)?;
-            }
-
-            if let Some(ref mut d) = self.dragging {
-                d.get_object_mut().draw(ctx)?;
-            }
-
-            self.box_front.draw(ctx)?;
-
-            self.appearance_frame.draw(ctx)?;
-
-            sub_screen::pop_screen(ctx);
+	    if self.draw_request != DrawRequest::Skip {
+		self.draw_request = DrawRequest::Skip;
+		println!("redraw");
+		
+		sub_screen::stack_screen(ctx, &self.canvas);
+		
+		self.table_texture.draw(ctx)?;
+		
+		self.box_back.draw(ctx)?;
+		
+		for obj in &mut self.shelved {
+                    obj.get_object_mut().draw(ctx)?;
+		}
+		
+		if let Some(ref mut d) = self.dragging {
+                    d.get_object_mut().draw(ctx)?;
+		}
+		
+		self.box_front.draw(ctx)?;
+		
+		self.appearance_frame.draw(ctx)?;
+		
+		sub_screen::pop_screen(ctx);
+	    }
             self.canvas.draw(ctx).unwrap();
         }
         Ok(())

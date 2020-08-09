@@ -305,6 +305,10 @@ where
     fn clear_effect(&mut self) {
         self.canvas.clear_effect();
     }
+
+    fn is_empty_effect(&self) -> bool {
+	self.canvas.is_empty_effect()
+    }
 }
 
 impl<D> Clickable for DropDownArea<D>
