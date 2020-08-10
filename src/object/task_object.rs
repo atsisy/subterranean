@@ -943,9 +943,6 @@ impl TaskTable {
         if !self
             .customer_silhouette_menu
             .click_customer_question_menu(ctx, button, point, t)
-            && !self
-                .customer_silhouette_menu
-                .click_remember_name_menu(ctx, button, point, t)
         {
             // メニューをクリックしていない場合はfalseをクリックして終了
             println!("not clicked");
@@ -957,24 +954,16 @@ impl TaskTable {
             .question_menu_last_clicked_index()
         {
             match index {
-                0 => self.insert_custmer_name_phrase(t),
-                1 => self.insert_rental_limit_phrase(t),
-                _ => panic!("Exceptin"),
-            }
-
-            return true;
-        }
-
-        if let Some(index) = self.customer_silhouette_menu.remember_name_clicked_index() {
-            match index {
                 0 => {
-                    let name = self
-                        .customer_silhouette_menu
-                        .get_remembered_customer_name()
-                        .unwrap();
-                    self.kosuzu_memory.add_customer_name(name);
-                }
-                _ => panic!("Exceptin"),
+		    if let Some(customer_request) = self.current_customer_request.as_ref() {
+			let name = customer_request.get_customer_name();
+			self.kosuzu_memory.add_customer_name(name.clone());
+			self.info_panel.set_customer_name(ctx, name);
+			self.insert_custmer_name_phrase(t);
+		    }
+		},
+                1 => self.insert_rental_limit_phrase(t),
+                _ => panic!("Exception"),
             }
 
             return true;
@@ -1150,9 +1139,6 @@ impl TaskTable {
         let phrase_type = self.sight.silhouette.get_text_balloon_phrase_type();
 
         match phrase_type {
-            TextBalloonPhraseType::CustomerName(name) => self
-                .customer_silhouette_menu
-                .show_remember_name_menu(ctx, click_point, name.clone(), t),
             _ => self
                 .customer_silhouette_menu
                 .show_text_balloon_ok_menu(ctx, click_point, t),

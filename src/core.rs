@@ -84,6 +84,30 @@ pub enum DrawRequest {
     Skip,
 }
 
+impl std::ops::BitOr for DrawRequest {
+    type Output = Self;
+
+    fn bitor(self, rhs: Self) -> Self::Output {
+	match self {
+	    Self::InitDraw => {
+		DrawRequest::InitDraw
+	    },
+	    Self::Draw => {
+		DrawRequest::InitDraw
+	    },
+	    Self::Skip => {
+		rhs
+	    },
+	}
+    }
+}
+
+impl std::ops::BitOrAssign for DrawRequest {
+    fn bitor_assign(&mut self, rhs: Self) {
+	*self = *self | rhs;
+    }
+}
+
 #[derive(Debug, Clone, Copy, Eq, PartialEq, Hash)]
 pub enum TextureID {
     Ghost1 = 0,

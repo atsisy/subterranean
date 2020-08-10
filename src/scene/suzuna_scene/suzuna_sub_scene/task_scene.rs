@@ -313,7 +313,7 @@ impl SceneManager for TaskScene {
     }
 
     fn drawing_process(&mut self, ctx: &mut ggez::Context) {
-	println!("{}", perf_measure!(
+	//println!("{}", perf_measure!(
 	    {
         self.task_table.draw(ctx).unwrap();
 
@@ -321,7 +321,7 @@ impl SceneManager for TaskScene {
             transition_effect.draw(ctx).unwrap();
         }
 		
-	    }));
+	    }//));
     }
 
     fn post_process<'a>(&mut self, _ctx: &mut SuzuContext<'a>) -> SceneTransition {

@@ -1,4 +1,5 @@
 use std::rc::Rc;
+use std::collections::HashMap;
 
 use ggez::graphics as ggraphics;
 use ggez::input as ginput;
@@ -2005,6 +2006,7 @@ struct TaskInfoContents {
     general_table_frame: TableFrame,
     header_text: UniText,
     desc_text: Vec<VerticalText>,
+    request_info_text: HashMap<String, VerticalText>,
     drwob_essential: DrawableObjectEssential,
 }
 
@@ -2042,6 +2044,7 @@ impl TaskInfoContents {
         header_text.make_center(ctx.context, numeric::Point2f::new(150.0, 30.0));
 
         let mut desc_text = Vec::new();
+	let mut request_text = HashMap::new();
 
         for (index, s) in vec!["妖怪疑念度", "要件", "氏名", "本日"]
             .iter()
@@ -2086,7 +2089,7 @@ impl TaskInfoContents {
             numeric::Vector2u::new(1, 1)
         );
 
-        desc_text.push(request_type_vtext);
+        request_text.insert("youken".to_string(), request_type_vtext);
 
         let book_floating = FloatingMemoryObject::new(
             ctx,
@@ -2101,6 +2104,7 @@ impl TaskInfoContents {
             general_table_frame: general_frame,
             header_text: header_text,
             desc_text: desc_text,
+	    request_info_text: request_text,
             drwob_essential: DrawableObjectEssential::new(true, 0),
         }
     }
@@ -2114,6 +2118,40 @@ impl TaskInfoContents {
     ) {
         self.book_info_memory
             .add_text_line(ctx, book_info.name, init_text_pos, now);
+    }
+
+    pub fn set_customer_name<'a>(&mut self, ctx: &mut SuzuContext<'a>, name: String) {
+	let normal_scale_font = FontInformation::new(
+            ctx.resource.get_font(FontID::Cinema),
+            numeric::Vector2f::new(24.0, 24.0),
+            ggraphics::Color::from_rgba_u32(0x000000ff),
+        );
+
+	let key = "name";
+
+	println!("set name !! => {}", name);
+
+	if self.request_info_text.contains_key(key) {
+	    self.request_info_text.remove(key);
+	}
+	
+        let mut vtext = VerticalText::new(
+            name.to_string(),
+            numeric::Point2f::new(0.0, 0.0),
+            numeric::Vector2f::new(1.0, 1.0),
+            0.0,
+            0,
+            normal_scale_font,
+        );
+
+        set_table_frame_cell_center!(
+            ctx.context,
+            self.general_table_frame,
+            vtext,
+            numeric::Vector2u::new(2, 1)
+        );
+
+        self.request_info_text.insert(key.to_string(), vtext);
     }
 
     pub fn update(&mut self, t: Clock) -> DrawRequest {
@@ -2130,6 +2168,10 @@ impl DrawableComponent for TaskInfoContents {
             self.header_text.draw(ctx)?;
 
             for vtext in self.desc_text.iter_mut() {
+                vtext.draw(ctx).unwrap();
+            }
+
+	    for (_, vtext) in self.request_info_text.iter_mut() {
                 vtext.draw(ctx).unwrap();
             }
         }
@@ -2206,10 +2248,19 @@ impl TaskInfoPanel {
             .add_book_info(ctx, book_info, init_text_pos, now);
     }
 
+    pub fn set_customer_name<'a>(
+	&mut self,
+	ctx: &mut SuzuContext<'a>,
+	name: String,
+    ) {
+	self.contents.set_customer_name(ctx, name);
+	self.draw_request = DrawRequest::Draw;
+    }
+
     pub fn update(&mut self, t: Clock) {
         let go_draw = self.contents.update(t);
 	if self.draw_request != DrawRequest::InitDraw {
-	    self.draw_request = go_draw;
+	    self.draw_request |= go_draw;
 	}
     }
 }

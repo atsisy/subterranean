@@ -1531,7 +1531,6 @@ pub type OkDropMenu = DropDownArea<OkMenu>;
 pub struct CustomerMenuGroup {
     event_list: DelayEventList<Self>,
     customer_question_menu: Option<CustomerQuestionDropMenu>,
-    remember_name_menu: Option<RememberCustomerNameDropMenu>,
     text_balloon_ok_menu: Option<OkDropMenu>,
     drwob_essential: DrawableObjectEssential,
 }
@@ -1541,7 +1540,6 @@ impl CustomerMenuGroup {
         CustomerMenuGroup {
             event_list: DelayEventList::new(),
             customer_question_menu: None,
-            remember_name_menu: None,
             text_balloon_ok_menu: None,
             drwob_essential: DrawableObjectEssential::new(true, drawing_depth),
         }
@@ -1549,7 +1547,6 @@ impl CustomerMenuGroup {
 
     pub fn is_some_menu_opened(&self) -> bool {
         self.customer_question_menu.is_some()
-            || self.remember_name_menu.is_some()
             || self.text_balloon_ok_menu.is_some()
     }
 
@@ -1558,16 +1555,6 @@ impl CustomerMenuGroup {
             customer_question.add_effect(vec![effect::fade_out(10, t)]);
             self.event_list.add_event(
                 Box::new(|slf: &mut CustomerMenuGroup, _, _| slf.customer_question_menu = None),
-                t + 11,
-            );
-        }
-    }
-
-    pub fn close_remember_name_menu(&mut self, t: Clock) {
-        if let Some(remember_name_menu) = self.remember_name_menu.as_mut() {
-            remember_name_menu.add_effect(vec![effect::fade_out(10, t)]);
-            self.event_list.add_event(
-                Box::new(|slf: &mut CustomerMenuGroup, _, _| slf.remember_name_menu = None),
                 t + 11,
             );
         }
@@ -1596,19 +1583,6 @@ impl CustomerMenuGroup {
                 .contains(ctx, point)
     }
 
-    pub fn contains_remember_name_menu(
-        &self,
-        ctx: &mut ggez::Context,
-        point: numeric::Point2f,
-    ) -> bool {
-        self.remember_name_menu.is_some()
-            && self
-                .remember_name_menu
-                .as_ref()
-                .unwrap()
-                .contains(ctx, point)
-    }
-
     pub fn contains_text_balloon_ok_menu(
         &self,
         ctx: &mut ggez::Context,
@@ -1624,21 +1598,12 @@ impl CustomerMenuGroup {
 
     pub fn is_contains_any_menus(&self, ctx: &mut ggez::Context, point: numeric::Point2f) -> bool {
         self.contains_customer_question_menu(ctx, point)
-            || self.contains_remember_name_menu(ctx, point)
             || self.contains_text_balloon_ok_menu(ctx, point)
     }
 
     pub fn get_customer_question_position(&self) -> Option<numeric::Point2f> {
         if let Some(question_menu) = self.customer_question_menu.as_ref() {
             Some(question_menu.get_position())
-        } else {
-            None
-        }
-    }
-
-    pub fn get_remember_name_position(&self) -> Option<numeric::Point2f> {
-        if let Some(remember_name_menu) = self.remember_name_menu.as_ref() {
-            Some(remember_name_menu.get_position())
         } else {
             None
         }
@@ -1678,29 +1643,6 @@ impl CustomerMenuGroup {
     ///
     /// メニューのエントリをクリックしていたらtrueを返し、そうでなければfalseを返す
     ///
-    pub fn click_remember_name_menu<'a>(
-        &mut self,
-        ctx: &mut SuzuContext<'a>,
-        button: ggez::input::mouse::MouseButton,
-        point: numeric::Point2f,
-        t: Clock,
-    ) -> bool {
-        // ボタンエリア内をクリックしていない場合は、即終了
-        if !self.contains_remember_name_menu(ctx.context, point) {
-            return false;
-        }
-
-        if let Some(remember_name_menu) = self.remember_name_menu.as_mut() {
-            remember_name_menu.on_click(ctx, t, button, point);
-            true
-        } else {
-            false
-        }
-    }
-
-    ///
-    /// メニューのエントリをクリックしていたらtrueを返し、そうでなければfalseを返す
-    ///
     pub fn click_text_balloon_ok_menu<'a>(
         &mut self,
         ctx: &mut SuzuContext<'a>,
@@ -1731,22 +1673,6 @@ impl CustomerMenuGroup {
         }
     }
 
-    pub fn remember_name_clicked_index(&mut self) -> Option<usize> {
-        if let Some(remember_name_menu) = self.remember_name_menu.as_mut() {
-            remember_name_menu.get_component().get_last_clicked_index()
-        } else {
-            None
-        }
-    }
-
-    pub fn get_remembered_customer_name(&self) -> Option<String> {
-        if let Some(remember_menu) = self.remember_name_menu.as_ref() {
-            Some(remember_menu.get_component().get_remembered_customer_name())
-        } else {
-            None
-        }
-    }
-
     pub fn get_text_balloon_ok_index(&self) -> Option<usize> {
         if let Some(ok_menu) = self.text_balloon_ok_menu.as_ref() {
             ok_menu.get_component().get_last_clicked_index()
@@ -1757,7 +1683,6 @@ impl CustomerMenuGroup {
 
     pub fn close_all(&mut self, t: Clock) {
         self.close_customer_question_menu(t);
-        self.close_remember_name_menu(t);
         self.close_text_balloon_ok_menu(t);
     }
 
@@ -1788,38 +1713,6 @@ impl CustomerMenuGroup {
         customer_question_menu_area.add_effect(vec![effect::fade_in(10, t)]);
 
         self.customer_question_menu = Some(customer_question_menu_area);
-    }
-
-    pub fn show_remember_name_menu<'a>(
-        &mut self,
-        ctx: &mut SuzuContext<'a>,
-        position: numeric::Point2f,
-        customer_name: String,
-        t: Clock,
-    ) {
-        let remember_name_menu = RememberCustomerNameMenu::new(ctx, 0, customer_name);
-
-        let frame_size = remember_name_menu.get_date_frame_size();
-
-        let menu_size = numeric::Point2f::new(frame_size.x + 96.0, frame_size.y + 40.0);
-
-        let menu_rect = if (position.y + menu_size.y) as i16 <= core::WINDOW_SIZE_Y {
-            numeric::Rect::new(position.x, position.y, menu_size.x, menu_size.y)
-        } else {
-            numeric::Rect::new(
-                position.x,
-                position.y - menu_size.y,
-                menu_size.x,
-                menu_size.y,
-            )
-        };
-
-        let mut remember_name_menu_area =
-            RememberCustomerNameDropMenu::new(ctx, position, menu_rect, 0, remember_name_menu, t);
-
-        remember_name_menu_area.add_effect(vec![effect::fade_in(10, t)]);
-
-        self.remember_name_menu = Some(remember_name_menu_area);
     }
 
     pub fn show_text_balloon_ok_menu<'a>(
@@ -1859,11 +1752,6 @@ impl CustomerMenuGroup {
             customer_question_menu.effect(ctx.context, t);
         }
 
-        if let Some(remember_name_menu) = self.remember_name_menu.as_mut() {
-            remember_name_menu.move_with_func(t);
-            remember_name_menu.effect(ctx.context, t);
-        }
-
         if let Some(ok_menu) = self.text_balloon_ok_menu.as_mut() {
             ok_menu.move_with_func(t);
             ok_menu.effect(ctx.context, t);
@@ -1876,10 +1764,6 @@ impl DrawableComponent for CustomerMenuGroup {
         if self.is_visible() {
             if let Some(customer_question_menu) = self.customer_question_menu.as_mut() {
                 customer_question_menu.draw(ctx)?;
-            }
-
-            if let Some(remember_name_menu) = self.remember_name_menu.as_mut() {
-                remember_name_menu.draw(ctx)?;
             }
 
             if let Some(ok_menu) = self.text_balloon_ok_menu.as_mut() {
