@@ -26,6 +26,7 @@ use std::rc::Rc;
 use std::str::FromStr;
 
 use crate::scene;
+use crate::parse_toml_file;
 
 use std::fs;
 use std::fs::File;
@@ -479,11 +480,7 @@ impl ScenarioTable {
     pub fn new(table_toml_path: &str) -> Self {
         let mut table = HashMap::new();
 
-        let content = match std::fs::read_to_string(table_toml_path) {
-            Ok(c) => c,
-            Err(_) => panic!("Failed to read: {}", table_toml_path),
-        };
-        let root = content.parse::<toml::Value>().unwrap();
+        let root = parse_toml_file!(table_toml_path);
         let array = root["scenario-table"].as_array().unwrap();
 
         for elem in array {

@@ -88,6 +88,18 @@ macro_rules! perf_measure {
     }};
 }
 
+#[macro_export]
+macro_rules! parse_toml_file {
+    ( $path:expr) => {{
+	let content = match std::fs::read_to_string($path) {
+            Ok(c) => c,
+            Err(_) => panic!("Failed to read: {}", $path),
+        };
+
+	content.parse::<toml::Value>().expect("Failed to parse toml file")
+    }};
+}
+
 pub fn clock_needle_angle(hour: u8, minute: u8) -> (f32, f32) {
     let hour = hour % 12;
 

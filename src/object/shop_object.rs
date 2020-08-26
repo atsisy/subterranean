@@ -24,6 +24,7 @@ use crate::scene::DelayEventList;
 use crate::set_table_frame_cell_center;
 
 use crate::flush_delay_event;
+use crate::parse_toml_file;
 
 use number_to_jk::number_to_jk;
 
@@ -2235,11 +2236,7 @@ pub struct DrawableShopClock {
 
 impl DrawableShopClock {
     pub fn from_toml<'a>(ctx: &mut SuzuContext<'a>, path: &str, time: ShopClock) -> Self {
-	let content = match std::fs::read_to_string(path) {
-            Ok(c) => c,
-            Err(_) => panic!("Failed to read: {}", path),
-        };
-        let root = content.parse::<toml::Value>().unwrap();
+	let root = parse_toml_file!(path);
 
 	let background_texture_id = root["background-texture"].as_str().unwrap();
 	let short_needle_texture_id = root["short-needle-texture"].as_str().unwrap();
@@ -2342,8 +2339,6 @@ impl DrawableShopClock {
 
 	self.long_needle.set_rotation(long_needle_angle);
 	self.short_needle.set_rotation(short_needle_angle);
-
-	println!("angle: {}, {}", self.long_needle.get_rotation(), self.short_needle.get_rotation());
     }
 
     pub fn update_time(&mut self, time: &ShopClock) {
@@ -2386,3 +2381,4 @@ impl DrawableComponent for DrawableShopClock {
         self.drwob_essential.drawing_depth
     }
 }
+

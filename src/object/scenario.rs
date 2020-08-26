@@ -14,6 +14,7 @@ use super::*;
 use crate::core::{FontID, GameResource, SuzuContext, TextureID, TileBatchTextureID};
 use crate::object::util_object::*;
 use crate::scene::{SceneID, SceneTransition};
+use crate::parse_toml_file;
 use std::str::FromStr;
 
 pub type ScenarioElementID = i32;
@@ -658,12 +659,7 @@ impl Scenario {
     pub fn new(file_path: &str, game_data: &GameResource) -> Self {
         let mut scenario = Vec::new();
 
-        let content = match std::fs::read_to_string(file_path) {
-            Ok(c) => c,
-            Err(_) => panic!("Failed to read: {}", file_path),
-        };
-
-        let root = content.parse::<toml::Value>().unwrap();
+	let root = parse_toml_file!(file_path);
 
         let first_scenario_id = root["first-scenario-id"].as_integer().unwrap();
 
