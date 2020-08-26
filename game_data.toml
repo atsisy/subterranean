@@ -48,7 +48,10 @@ texture_paths = [
 	      "/textures/paper4.jpg",
 	      "/textures/paper5.jpg",
 	      "/textures/paper6.jpg",
-	      "/textures/paper7.jpg"]
+	      "/textures/paper7.jpg",
+	      "/textures/clock1.png",
+	      "/textures/clock_needle1.png"
+	      ]
 font_paths = ["/fonts/azuki.ttf", "/fonts/RiiT_F.ttf", "/fonts/OradanoGSRR.ttf", "/fonts/cinecaption226.ttf"]
 tileset_paths = ["./resources/maps/suzunaan2/main.tmx"]
 scenario_table_path = "./resources/scenario_table.toml"

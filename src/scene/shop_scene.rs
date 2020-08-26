@@ -231,53 +231,6 @@ impl<'a> MapObjectDrawer<'a> {
     }
 }
 
-struct ShopClock {
-    hour: u8,
-    minute: u8,
-}
-
-impl ShopClock {
-    pub fn new(hour: u8, minute: u8) -> Self {
-        ShopClock {
-            hour: hour,
-            minute: minute,
-        }
-    }
-
-    pub fn add_minute(&mut self, minute: u8) {
-        self.minute += minute;
-
-        self.add_hour(self.minute / 60);
-
-        self.minute = self.minute % 60;
-    }
-
-    pub fn add_hour(&mut self, hour: u8) {
-        self.hour += hour;
-        self.hour = self.hour % 24;
-    }
-
-    pub fn is_past(&self, hour: u8, minute: u8) -> bool {
-        match self.hour.cmp(&hour) {
-            std::cmp::Ordering::Greater => true,
-            std::cmp::Ordering::Equal => match self.minute.cmp(&minute) {
-                std::cmp::Ordering::Greater => true,
-                _ => false,
-            },
-            std::cmp::Ordering::Less => false,
-        }
-    }
-
-    pub fn equals(&self, hour: u8, minute: u8) -> bool {
-        self.hour == hour && self.minute == minute
-    }
-}
-
-impl std::fmt::Display for ShopClock {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-        write!(f, "({}:{})", self.hour, self.minute)
-    }
-}
 
 ///
 /// # 夢の中のステージ
@@ -320,6 +273,7 @@ pub struct ShopScene {
     scene_transition_effect: Option<effect_object::ScreenTileEffect>,
     notification_area: NotificationArea,
     begining_save_data: SavableData,
+    drawable_shop_clock: DrawableShopClock,
 }
 
 impl ShopScene {
@@ -358,13 +312,20 @@ impl ShopScene {
         let mut map = MapData::new(ctx, map_id, camera.clone());
         map.tile_map.build_collision_map();
 
+	let shop_time = ShopClock::new(8, 0);
+	let drawble_shop_clock = DrawableShopClock::from_toml(
+	    ctx,
+	    "resources/other_config/shop_clock.toml",
+	    shop_time.clone()
+	);
+
         ShopScene {
             player: player,
             character_group: character_group,
             shop_special_object: ShopSpecialObject::new(),
             key_listener: key_listener,
             clock: 0,
-            shop_clock: ShopClock::new(8, 0),
+            shop_clock: shop_time,
             map: map,
             event_list: DelayEventList::new(),
             shop_menu: ShopMenuMaster::new(ctx, numeric::Vector2f::new(450.0, 768.0), 0),
@@ -385,6 +346,7 @@ impl ShopScene {
                 0,
             ),
             begining_save_data: ctx.savable_data.clone(),
+            drawable_shop_clock: drawble_shop_clock,
         }
     }
 
@@ -849,6 +811,7 @@ impl ShopScene {
 
                                 if slf.transition_scene == SceneID::MainDesk {
                                     slf.shop_clock.add_minute(10);
+				    slf.drawable_shop_clock.update_time(&slf.shop_clock);
                                 }
 
                                 let mut customer = slf.customer_queue.pop_front().unwrap();
@@ -1022,8 +985,9 @@ impl ShopScene {
     }
 
     pub fn update_shop_clock_regular<'a>(&mut self, ctx: &mut SuzuContext<'a>, t: Clock) {
-        if self.get_current_clock() % 40 == 0 {
-            self.shop_clock.add_minute(2);
+        if self.get_current_clock() % 20 == 0 {
+            self.shop_clock.add_minute(1);
+	    self.drawable_shop_clock.update_time(&self.shop_clock);
 
             if self.shop_clock.equals(12, 0) {
                 self.notification_area.insert_new_contents_generic(
@@ -1321,6 +1285,8 @@ impl SceneManager for ShopScene {
         if let Some(scenario_box) = self.map.scenario_box.as_mut() {
             scenario_box.draw(ctx).unwrap();
         }
+
+	self.drawable_shop_clock.draw(ctx).unwrap();
 
         self.dark_effect_panel.draw(ctx).unwrap();
 

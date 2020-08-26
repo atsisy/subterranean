@@ -87,3 +87,21 @@ macro_rules! perf_measure {
         end.subsec_nanos()
     }};
 }
+
+pub fn clock_needle_angle(hour: u8, minute: u8) -> (f32, f32) {
+    let hour = hour % 12;
+
+    let angle_per_hour = 2.0 * std::f32::consts::PI / (12.0 * 60.0);
+    let angle_per_minute = 2.0 * std::f32::consts::PI / 60.0;
+    
+    (((hour as f32 * 60.0) + minute as f32) * angle_per_hour, minute as f32 * angle_per_minute)
+}
+
+pub fn clock_needle_angle_inverse(hour: u8, minute: u8) -> (f32, f32) {
+    let mut t = clock_needle_angle(hour, minute);
+
+    t.0 += std::f32::consts::PI;
+    t.1 += std::f32::consts::PI;
+
+    t
+}

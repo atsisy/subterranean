@@ -1,4 +1,5 @@
 use std::rc::Rc;
+use std::str::FromStr;
 
 use ggez::graphics as ggraphics;
 use ggez::input::mouse::MouseButton;
@@ -2146,6 +2147,218 @@ impl DrawableComponent for ShopSpecialObject {
         }
 
         Ok(())
+    }
+
+    #[inline(always)]
+    fn hide(&mut self) {
+        self.drwob_essential.visible = false;
+    }
+
+    #[inline(always)]
+    fn appear(&mut self) {
+        self.drwob_essential.visible = true;
+    }
+
+    #[inline(always)]
+    fn is_visible(&self) -> bool {
+        self.drwob_essential.visible
+    }
+
+    #[inline(always)]
+    fn set_drawing_depth(&mut self, depth: i8) {
+        self.drwob_essential.drawing_depth = depth;
+    }
+
+    #[inline(always)]
+    fn get_drawing_depth(&self) -> i8 {
+        self.drwob_essential.drawing_depth
+    }
+}
+
+#[derive(Clone)]
+pub struct ShopClock {
+    hour: u8,
+    minute: u8,
+}
+
+impl ShopClock {
+    pub fn new(hour: u8, minute: u8) -> Self {
+        ShopClock {
+            hour: hour,
+            minute: minute,
+        }
+    }
+
+    pub fn add_minute(&mut self, minute: u8) {
+        self.minute += minute;
+
+        self.add_hour(self.minute / 60);
+
+        self.minute = self.minute % 60;
+    }
+
+    pub fn add_hour(&mut self, hour: u8) {
+        self.hour += hour;
+        self.hour = self.hour % 24;
+    }
+
+    pub fn is_past(&self, hour: u8, minute: u8) -> bool {
+        match self.hour.cmp(&hour) {
+            std::cmp::Ordering::Greater => true,
+            std::cmp::Ordering::Equal => match self.minute.cmp(&minute) {
+                std::cmp::Ordering::Greater => true,
+                _ => false,
+            },
+            std::cmp::Ordering::Less => false,
+        }
+    }
+
+    pub fn equals(&self, hour: u8, minute: u8) -> bool {
+        self.hour == hour && self.minute == minute
+    }
+}
+
+impl std::fmt::Display for ShopClock {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        write!(f, "({}:{})", self.hour, self.minute)
+    }
+}
+
+pub struct DrawableShopClock {
+    background: UniTexture,
+    long_needle: UniTexture,
+    short_needle: UniTexture,
+    time: ShopClock,
+    center_position: numeric::Vector2f,
+    drwob_essential: DrawableObjectEssential,
+}
+
+impl DrawableShopClock {
+    pub fn from_toml<'a>(ctx: &mut SuzuContext<'a>, path: &str, time: ShopClock) -> Self {
+	let content = match std::fs::read_to_string(path) {
+            Ok(c) => c,
+            Err(_) => panic!("Failed to read: {}", path),
+        };
+        let root = content.parse::<toml::Value>().unwrap();
+
+	let background_texture_id = root["background-texture"].as_str().unwrap();
+	let short_needle_texture_id = root["short-needle-texture"].as_str().unwrap();
+	let long_needle_texture_id = root["long-needle-texture"].as_str().unwrap();
+
+	let background_pos = {
+	    let clock_texture_position = root["clock-texture-position"].as_table().unwrap();
+	    numeric::Point2f::new(
+		clock_texture_position["x"].as_float().unwrap() as f32,
+		clock_texture_position["y"].as_float().unwrap() as f32,
+	    )
+	};
+
+	let background_origin = {
+	    let clock_texture_position = root["clock-origin"].as_table().unwrap();
+	    numeric::Vector2f::new(
+		clock_texture_position["x"].as_float().unwrap() as f32,
+		clock_texture_position["y"].as_float().unwrap() as f32,
+	    )
+	};
+
+	let background_scale = {
+	    let clock_texture_position = root["clock-texture-scale"].as_table().unwrap();
+	    numeric::Vector2f::new(
+		clock_texture_position["x"].as_float().unwrap() as f32,
+		clock_texture_position["y"].as_float().unwrap() as f32,
+	    )
+	};
+
+	let needle_scale = {
+	    let clock_texture_position = root["needle-texture-scale"].as_table().unwrap();
+	    numeric::Vector2f::new(
+		clock_texture_position["x"].as_float().unwrap() as f32,
+		clock_texture_position["y"].as_float().unwrap() as f32,
+	    )
+	};
+
+	let short_needle_offset = {
+	    let clock_texture_position = root["short-needle-offset"].as_table().unwrap();
+	    numeric::Vector2f::new(
+		clock_texture_position["x"].as_float().unwrap() as f32,
+		clock_texture_position["y"].as_float().unwrap() as f32,
+	    )
+	};
+
+	let long_needle_offset = {
+	    let clock_texture_position = root["long-needle-offset"].as_table().unwrap();
+	    numeric::Vector2f::new(
+		clock_texture_position["x"].as_float().unwrap() as f32,
+		clock_texture_position["y"].as_float().unwrap() as f32,
+	    )
+	};
+	
+	let background_texture = UniTexture::new(
+	    ctx.ref_texture(TextureID::from_str(background_texture_id).expect("Invalid TextureID")),
+	    background_pos,
+	    background_scale,
+	    0.0,
+	    0
+	);
+
+	let (short_needle_angle, long_needle_angle) =
+	    util::clock_needle_angle_inverse(
+		time.hour,
+		time.minute
+	    );
+
+	let long_needle_texture = UniTexture::new(
+	    ctx.ref_texture(TextureID::from_str(long_needle_texture_id).expect("Invalid TextureID")),
+	    background_pos + background_origin + long_needle_offset,
+	    needle_scale,
+	    long_needle_angle,
+	    0
+	);
+
+	let short_needle_texture = UniTexture::new(
+	    ctx.ref_texture(TextureID::from_str(short_needle_texture_id).expect("Invalid TextureID")),
+	    background_pos + background_origin + short_needle_offset,
+	    needle_scale,
+	    short_needle_angle,
+	    0
+	);
+	
+	DrawableShopClock {
+	    background: background_texture,
+	    long_needle: long_needle_texture,
+	    short_needle: short_needle_texture,
+	    time: time,
+	    center_position: background_origin,
+	    drwob_essential: DrawableObjectEssential::new(true, 0),
+	}
+    }
+
+    pub fn update_needle_angle(&mut self) {
+	let (short_needle_angle, long_needle_angle) =
+	    util::clock_needle_angle_inverse(
+		self.time.hour,
+		self.time.minute
+	    );
+
+	self.long_needle.set_rotation(long_needle_angle);
+	self.short_needle.set_rotation(short_needle_angle);
+
+	println!("angle: {}, {}", self.long_needle.get_rotation(), self.short_needle.get_rotation());
+    }
+
+    pub fn update_time(&mut self, time: &ShopClock) {
+	self.time = time.clone();
+	self.update_needle_angle();
+    }
+}
+
+impl DrawableComponent for DrawableShopClock {
+    fn draw(&mut self, ctx: &mut ggez::Context) -> ggez::GameResult<()> {
+	self.background.draw(ctx)?;
+	self.short_needle.draw(ctx)?;
+	self.long_needle.draw(ctx)?;
+
+	Ok(())
     }
 
     #[inline(always)]
