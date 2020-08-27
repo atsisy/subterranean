@@ -1,0 +1,31 @@
+background-texture = "Clock1"
+short-needle-texture = "ShortClockNeedle1"
+long-needle-texture = "ClockNeedle1"
+
+[clock-origin]
+x = 82.0
+y = 86.0
+
+[clock-texture-position]
+x = 20.0
+y = 0.0
+
+[clock-texture-scale]
+x = 0.3
+y = 0.3
+
+[long-needle-texture-scale]
+x = 0.32
+y = 0.20
+
+[short-needle-texture-scale]
+x = 0.40
+y = 0.23
+
+[short-needle-offset]
+x = 0.0
+y = 1.0
+
+[long-needle-offset]
+x = -1.0
+y = 2.0

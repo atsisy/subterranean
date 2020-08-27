@@ -2266,8 +2266,16 @@ impl DrawableShopClock {
 	    )
 	};
 
-	let needle_scale = {
-	    let clock_texture_position = root["needle-texture-scale"].as_table().unwrap();
+	let short_needle_scale = {
+	    let clock_texture_position = root["short-needle-texture-scale"].as_table().unwrap();
+	    numeric::Vector2f::new(
+		clock_texture_position["x"].as_float().unwrap() as f32,
+		clock_texture_position["y"].as_float().unwrap() as f32,
+	    )
+	};
+
+	let long_needle_scale = {
+	    let clock_texture_position = root["long-needle-texture-scale"].as_table().unwrap();
 	    numeric::Vector2f::new(
 		clock_texture_position["x"].as_float().unwrap() as f32,
 		clock_texture_position["y"].as_float().unwrap() as f32,
@@ -2304,21 +2312,24 @@ impl DrawableShopClock {
 		time.minute
 	    );
 
-	let long_needle_texture = UniTexture::new(
+	let mut long_needle_texture = UniTexture::new(
 	    ctx.ref_texture(TextureID::from_str(long_needle_texture_id).expect("Invalid TextureID")),
 	    background_pos + background_origin + long_needle_offset,
-	    needle_scale,
+	    long_needle_scale,
 	    long_needle_angle,
 	    0
 	);
 
-	let short_needle_texture = UniTexture::new(
+	let mut short_needle_texture = UniTexture::new(
 	    ctx.ref_texture(TextureID::from_str(short_needle_texture_id).expect("Invalid TextureID")),
 	    background_pos + background_origin + short_needle_offset,
-	    needle_scale,
+	    short_needle_scale,
 	    short_needle_angle,
 	    0
 	);
+
+	long_needle_texture.set_transform_offset(numeric::Point2f::new(0.5, 0.0));
+	short_needle_texture.set_transform_offset(numeric::Point2f::new(0.5, 0.0));
 	
 	DrawableShopClock {
 	    background: background_texture,
