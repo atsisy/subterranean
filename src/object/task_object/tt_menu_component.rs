@@ -372,7 +372,7 @@ impl BookStatusButtonGroup {
     ) -> Self {
         let mut buttons = Vec::new();
 
-        button_rect.y += padding;
+        button_rect.y += padding * 1.5;
 
         for text_str in vec!["良", "可", "悪"] {
             button_rect.x += padding;
@@ -723,7 +723,7 @@ pub struct CustomerNameMenu {
     raw_data: Vec<String>,
     name_table_frame: TableFrame,
     name_vtext: Vec<VerticalText>,
-    header_text: VerticalText,
+    header_text: UniText,
     drwob_essential: DrawableObjectEssential,
     last_clicked: Option<usize>,
 }
@@ -738,7 +738,7 @@ impl CustomerNameMenu {
 
         let font_info = FontInformation::new(
             ctx.resource.get_font(FontID::Cinema),
-            numeric::Vector2f::new(32.0, 32.0),
+            numeric::Vector2f::new(24.0, 24.0),
             ggraphics::Color::from_rgba_u32(0xff),
         );
 
@@ -746,7 +746,7 @@ impl CustomerNameMenu {
             ctx.resource,
             numeric::Point2f::new(48.0, 20.0),
             TileBatchTextureID::OldStyleFrame,
-            FrameData::new(vec![250.0], vec![64.0; customer_name_data.len()]),
+            FrameData::new(vec![250.0], vec![56.0; customer_name_data.len()]),
             numeric::Vector2f::new(0.3, 0.3),
             0,
         );
@@ -772,9 +772,9 @@ impl CustomerNameMenu {
             title_vtext.push(vtext);
         }
 
-        let header_text = VerticalText::new(
+        let header_text = UniText::new(
             "御客一覧".to_string(),
-            numeric::Point2f::new(name_table_frame.real_width() + 20.0, 30.0),
+            numeric::Point2f::new(0.0, 0.0),
             numeric::Vector2f::new(1.0, 1.0),
             0.0,
             0,
@@ -790,7 +790,22 @@ impl CustomerNameMenu {
             header_text: header_text,
         }
     }
+    
+    pub fn set_to_center<'a>(&mut self, ctx: &mut SuzuContext<'a>, center: numeric::Point2f) {
+	self.name_table_frame.make_center(numeric::Point2f::new(center.x, center.y + 15.0));
+	self.header_text.make_center(ctx.context, numeric::Point2f::new(center.x, 35.0));
 
+	for (index, text) in self.name_vtext.iter_mut().enumerate() {
+	    set_table_frame_cell_center!(
+                ctx.context,
+                self.name_table_frame,
+                text,
+                numeric::Vector2u::new((self.raw_data.len() - index - 1) as u32, 0)
+            );
+	}
+    }
+
+    
     pub fn click_handler(&mut self, ctx: &mut ggez::Context, point: numeric::Point2f) {
         let maybe_grid_position = self.name_table_frame.get_grid_position(ctx, point);
         if let Some(grid_position) = maybe_grid_position {
@@ -869,7 +884,7 @@ pub struct DateMenu {
     date_table_frame: TableFrame,
     date_vtext: Vec<VerticalText>,
     desc_vtext: Vec<VerticalText>,
-    header_text: VerticalText,
+    header_text: UniText,
     drwob_essential: DrawableObjectEssential,
     last_clicked: Option<usize>,
 }
@@ -882,15 +897,15 @@ impl DateMenu {
 
         let font_info = FontInformation::new(
             ctx.resource.get_font(FontID::Cinema),
-            numeric::Vector2f::new(22.0, 22.0),
+            numeric::Vector2f::new(20.0, 20.0),
             ggraphics::Color::from_rgba_u32(0xff),
         );
 
         let date_table_frame = TableFrame::new(
             ctx.resource,
-            numeric::Point2f::new(48.0, 10.0),
+            numeric::Point2f::new(48.0, 50.0),
             TileBatchTextureID::OldStyleFrame,
-            FrameData::new(vec![125.0, 255.0], vec![64.0; 3]),
+            FrameData::new(vec![110.0, 256.0], vec![56.0; 3]),
             numeric::Vector2f::new(0.3, 0.3),
             0,
         );
@@ -939,15 +954,17 @@ impl DateMenu {
             desc_vtext.push(vtext);
         }
 
-        let header_text = VerticalText::new(
+        let mut header_text = UniText::new(
             "日付情報".to_string(),
-            numeric::Point2f::new(date_table_frame.real_width() + 20.0, 30.0),
+            numeric::Point2f::new(0.0, 0.0),
             numeric::Vector2f::new(1.0, 1.0),
             0.0,
             0,
             font_info,
         );
 
+	header_text.make_center(ctx.context, numeric::Point2f::new((date_table_frame.size().x / 2.0) + 40.0, 35.0));
+	
         DateMenu {
             date_data: date_data,
             date_table_frame: date_table_frame,
@@ -957,6 +974,29 @@ impl DateMenu {
             last_clicked: None,
             header_text: header_text,
         }
+    }
+
+    pub fn set_to_center<'a>(&mut self, ctx: &mut SuzuContext<'a>, center: numeric::Point2f) {
+	self.date_table_frame.make_center(numeric::Point2f::new(center.x, center.y + 15.0));
+	self.header_text.make_center(ctx.context, numeric::Point2f::new(center.x, 35.0));
+
+	for (index, text) in self.date_vtext.iter_mut().enumerate() {
+	    set_table_frame_cell_center!(
+                ctx.context,
+                self.date_table_frame,
+                text,
+                numeric::Vector2u::new(index as u32, 1)
+            );
+	}
+
+	for (index, text) in self.desc_vtext.iter_mut().enumerate() {
+	    set_table_frame_cell_center!(
+                ctx.context,
+                self.date_table_frame,
+                text,
+                numeric::Vector2u::new(index as u32, 0)
+            );
+	}
     }
 
     pub fn click_handler(&mut self, ctx: &mut ggez::Context, point: numeric::Point2f) {
@@ -1162,7 +1202,7 @@ pub type PaymentDropMenu = DropDownArea<PaymentMenu>;
 pub struct CustomerQuestionMenu {
     question_table_frame: TableFrame,
     question_vtext: Vec<VerticalText>,
-    header_text: VerticalText,
+    header_text: UniText,
     drwob_essential: DrawableObjectEssential,
     last_clicked: Option<usize>,
 }
@@ -1206,9 +1246,9 @@ impl CustomerQuestionMenu {
             question_vtext.push(vtext);
         }
 
-        let header_text = VerticalText::new(
+        let header_text = UniText::new(
             "質問".to_string(),
-            numeric::Point2f::new(question_table_frame.real_width() + 20.0, 30.0),
+            numeric::Point2f::new(0.0, 0.0),
             numeric::Vector2f::new(1.0, 1.0),
             0.0,
             0,
@@ -1222,6 +1262,19 @@ impl CustomerQuestionMenu {
             last_clicked: None,
             header_text: header_text,
         }
+    }
+
+    pub fn set_to_center<'a>(&mut self, ctx: &mut SuzuContext<'a>, center: numeric::Point2f) {
+	self.header_text.make_center(ctx.context, numeric::Point2f::new(center.x, 40.0));
+	self.question_table_frame.make_center(numeric::Point2f::new(center.x, center.y + 20.0));
+	for (index, text) in self.question_vtext.iter_mut().enumerate() {
+	    set_table_frame_cell_center!(
+                ctx.context,
+                self.question_table_frame,
+                text,
+                numeric::Vector2u::new(index as u32, 0)
+            );
+	}
     }
 
     pub fn click_handler(&mut self, ctx: &mut ggez::Context, point: numeric::Point2f) {
@@ -1693,18 +1746,25 @@ impl CustomerMenuGroup {
         position: numeric::Point2f,
         t: Clock,
     ) {
-        let question_menu = CustomerQuestionMenu::new(ctx, 0);
+        let mut question_menu = CustomerQuestionMenu::new(ctx, 0);
 
         let frame_size = question_menu.get_date_frame_size();
 
+	let canvas_size = numeric::Vector2f::new(
+	    frame_size.x + 64.0,
+            frame_size.y + 100.0
+	);
+
+	question_menu.set_to_center(ctx, numeric::Point2f::new(canvas_size.x / 2.0, canvas_size.y / 2.0));
+	
         let mut customer_question_menu_area = DropDownArea::new(
             ctx,
             position,
             numeric::Rect::new(
                 position.x,
                 position.y,
-                frame_size.x + 128.0,
-                frame_size.y + 64.0,
+		canvas_size.x,
+		canvas_size.y,
             ),
             0,
             question_menu,
@@ -2197,7 +2257,7 @@ impl RecordBookMenuGroup {
         let mut button_group_area = DropDownArea::new(
             ctx,
             position,
-            numeric::Rect::new(position.x, position.y, 290.0, 220.0),
+            numeric::Rect::new(position.x, position.y, 290.0, 180.0),
             0,
             button_group,
             t,
@@ -2311,24 +2371,27 @@ impl RecordBookMenuGroup {
 	    return;
 	}
 	
-        let customer_name_menu =
+        let mut customer_name_menu =
             CustomerNameMenu::new(ctx, kosuzu_memory.customers_name.clone(), 0);
 
         let frame_size = customer_name_menu.get_name_frame_size();
 
-        let menu_size = numeric::Point2f::new(frame_size.x + 96.0, frame_size.y + 40.0);
+        let menu_size = numeric::Point2f::new(frame_size.x + 96.0, frame_size.y + 96.0);
 
-        let menu_rect = if (position.y + menu_size.y) as i16 <= core::WINDOW_SIZE_Y {
-            numeric::Rect::new(position.x, position.y, menu_size.x, menu_size.y)
-        } else {
-            numeric::Rect::new(
-                position.x,
-                position.y - menu_size.y,
-                menu_size.x,
-                menu_size.y,
-            )
-        };
+	customer_name_menu.set_to_center(ctx, numeric::Point2f::new(menu_size.x / 2.0, menu_size.y / 2.0));
 
+	let pos = util::find_proper_window_position(
+	    numeric::Rect::new(position.x, position.y, menu_size.x, menu_size.y),
+	    numeric::Rect::new(0.0, 0.0, core::WINDOW_SIZE_X as f32, core::WINDOW_SIZE_Y as f32),
+	);
+	
+        let menu_rect = numeric::Rect::new(
+	    pos.x,
+	    pos.y,
+            menu_size.x,
+            menu_size.y,
+        );
+	
         let mut customer_name_menu_area =
             DropDownArea::new(ctx, position, menu_rect, 0, customer_name_menu, t);
         customer_name_menu_area.add_effect(vec![effect::fade_in(10, t)]);
@@ -2343,22 +2406,20 @@ impl RecordBookMenuGroup {
         today: GensoDate,
         t: Clock,
     ) {
-        let date_menu = DateMenu::new(ctx, today, 0);
+        let mut date_menu = DateMenu::new(ctx, today, 0);
 
         let frame_size = date_menu.get_date_frame_size();
 
-        let menu_size = numeric::Point2f::new(frame_size.x + 96.0, frame_size.y + 20.0);
+        let menu_size = numeric::Point2f::new(frame_size.x + 80.0, frame_size.y + 80.0);
 
-        let menu_rect = if (position.y + menu_size.y) as i16 <= core::WINDOW_SIZE_Y {
-            numeric::Rect::new(position.x, position.y, menu_size.x, menu_size.y)
-        } else {
-            numeric::Rect::new(
-                position.x,
-                position.y - menu_size.y,
-                menu_size.x,
-                menu_size.y,
-            )
-        };
+	let pos = util::find_proper_window_position(
+	    numeric::Rect::new(position.x, position.y, menu_size.x, menu_size.y),
+	    numeric::Rect::new(0.0, 0.0, core::WINDOW_SIZE_X as f32, core::WINDOW_SIZE_Y as f32),
+	);
+
+	let menu_rect = numeric::Rect::new(pos.x, pos.y, menu_size.x, menu_size.y);
+
+	date_menu.set_to_center(ctx, numeric::Point2f::new(menu_size.x / 2.0, menu_size.y / 2.0));
 
         let mut date_menu_area = DropDownArea::new(ctx, position, menu_rect, 0, date_menu, t);
         date_menu_area.add_effect(vec![effect::fade_in(10, t)]);

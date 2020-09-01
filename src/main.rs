@@ -21,7 +21,7 @@ pub fn main() {
         .window_setup(
             conf::WindowSetup::default()
                 .title("suzu")
-                .samples(ggez::conf::NumSamples::One),
+                .samples(ggez::conf::NumSamples::Four),
         )
         .add_resource_path(resource_dir)
         .window_mode(WindowMode {

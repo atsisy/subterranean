@@ -1,3 +1,5 @@
+use torifune::numeric;
+
 pub fn year_to_season(year: i64) -> i64 {
     year
 }
@@ -116,4 +118,22 @@ pub fn clock_needle_angle_inverse(hour: u8, minute: u8) -> (f32, f32) {
     t.1 += std::f32::consts::PI;
 
     t
+}
+
+pub fn find_proper_window_position(window_rect: numeric::Rect, outer_rect: numeric::Rect) -> numeric::Point2f {
+    let mut found_pos = window_rect.point();
+    
+    if window_rect.right() > outer_rect.right() {
+	found_pos.x -= window_rect.right() - outer_rect.right();
+    } else if window_rect.left() < outer_rect.left() {
+	found_pos.x += outer_rect.left() - window_rect.right();
+    }
+
+    if window_rect.bottom() > outer_rect.bottom() {
+	found_pos.y -= window_rect.bottom() - outer_rect.bottom();
+    } else if window_rect.left() < outer_rect.left() {
+	found_pos.x += outer_rect.top() - window_rect.top();
+    }
+
+    found_pos.into()
 }

@@ -617,6 +617,7 @@ impl CustomerDialogue {
 
 pub struct TextBalloon {
     canvas: SubScreen,
+    back_canvas: SubScreen,
     text: VerticalText,
     phrase_type: TextBalloonPhraseType,
     balloon_inner: shape::Ellipse,
@@ -652,7 +653,7 @@ impl TextBalloon {
             numeric::Point2f::new((vtext_size.x + 100.0) / 2.0, (vtext_size.y + 60.0) / 2.0),
             (vtext_size.x + 60.0) / 2.0,
             (vtext_size.y + 50.0) / 2.0,
-            0.01,
+            0.001,
             ggraphics::DrawMode::fill(),
             ggraphics::Color::from_rgba_u32(0xffffffff),
         );
@@ -660,7 +661,7 @@ impl TextBalloon {
             numeric::Point2f::new((vtext_size.x + 100.0) / 2.0, (vtext_size.y + 60.0) / 2.0),
             ((vtext_size.x + 60.0) / 2.0) + 3.0,
             ((vtext_size.y + 50.0) / 2.0) + 3.0,
-            0.01,
+            0.001,
             ggraphics::DrawMode::fill(),
             ggraphics::Color::from_rgba_u32(0x371905ff),
         );
@@ -669,6 +670,7 @@ impl TextBalloon {
         ellipse.add_to_builder(ellipse_outer.add_to_builder(&mut mesh_builder));
 
         TextBalloon {
+	    back_canvas: SubScreen::new(ctx, balloon_rect, 0, ggraphics::Color::from_rgba_u32(0x00)),
             canvas: SubScreen::new(ctx, balloon_rect, 0, ggraphics::Color::from_rgba_u32(0x00)),
             text: vtext,
             phrase_type: phrase_type,
@@ -691,7 +693,7 @@ impl TextBalloon {
             numeric::Point2f::new((vtext_size.x + 100.0) / 2.0, (vtext_size.y + 60.0) / 2.0),
             (vtext_size.x + 60.0) / 2.0,
             (vtext_size.y + 50.0) / 2.0,
-            0.01,
+            0.001,
             ggraphics::DrawMode::fill(),
             ggraphics::Color::from_rgba_u32(0xffffffff),
         );
@@ -699,7 +701,7 @@ impl TextBalloon {
             numeric::Point2f::new((vtext_size.x + 100.0) / 2.0, (vtext_size.y + 60.0) / 2.0),
             ((vtext_size.x + 60.0) / 2.0) + 3.0,
             ((vtext_size.y + 50.0) / 2.0) + 3.0,
-            0.01,
+            0.001,
             ggraphics::DrawMode::fill(),
             ggraphics::Color::from_rgba_u32(0x371905ff),
         );
@@ -798,9 +800,15 @@ impl TextureObject for TextBalloon {
 impl DrawableComponent for TextBalloon {
     fn draw(&mut self, ctx: &mut ggez::Context) -> ggez::GameResult<()> {
         if self.is_visible() {
-            sub_screen::stack_screen(ctx, &self.canvas);
+            sub_screen::stack_screen(ctx, &self.back_canvas);
 
             ggraphics::draw(ctx, &self.mesh, ggraphics::DrawParam::default())?;
+
+            sub_screen::pop_screen(ctx);
+            self.back_canvas.draw(ctx).unwrap();
+
+	    sub_screen::stack_screen(ctx, &self.canvas);
+
             self.text.draw(ctx)?;
 
             sub_screen::pop_screen(ctx);
