@@ -51,7 +51,8 @@ texture_paths = [
 	      "/textures/paper7.jpg",
 	      "/textures/clock1.png",
 	      "/textures/clock_needle1.png",
-	      "/textures/clock_short_needle.png"
+	      "/textures/clock_short_needle.png",
+	      "/textures/hanko.png"
 	      ]
 font_paths = ["/fonts/azuki.ttf", "/fonts/RiiT_F.ttf", "/fonts/OradanoGSRR.ttf", "/fonts/cinecaption226.ttf"]
 tileset_paths = ["./resources/maps/suzunaan2/main.tmx"]
