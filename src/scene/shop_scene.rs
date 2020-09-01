@@ -1022,7 +1022,7 @@ impl ShopScene {
     }
 
     fn random_add_customer<'a>(&mut self, ctx: &mut SuzuContext<'a>) {
-        if rand::random::<usize>() % 150 == 0 {
+        if rand::random::<usize>() % 500 == 0 {
 	    let character = character_factory::create_character(
                 character_factory::CharacterFactoryOrder::CustomerSample,
                 ctx,

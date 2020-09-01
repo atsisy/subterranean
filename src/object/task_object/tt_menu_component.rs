@@ -368,31 +368,32 @@ impl BookStatusButtonGroup {
         ctx: &mut SuzuContext<'a>,
         mut button_rect: numeric::Rect,
         padding: f32,
-        mut textures: Vec<TextureID>,
         drawing_depth: i8,
     ) -> Self {
         let mut buttons = Vec::new();
 
         button_rect.y += padding;
 
-        while textures.len() > 0 {
+        for text_str in vec!["良", "可", "悪"] {
             button_rect.x += padding;
-            let texture = textures.swap_remove(0);
-
-            let mut button_texture = UniTexture::new(
-                ctx.ref_texture(texture),
-                numeric::Point2f::new(0.0, 0.0),
-                numeric::Vector2f::new(1.0, 1.0),
-                0.0,
-                0,
-            );
-
-            button_texture.fit_scale(
-                ctx.context,
-                numeric::Vector2f::new(button_rect.w, button_rect.h),
-            );
-
-            let button = SelectButton::new(ctx, button_rect, Box::new(button_texture));
+	    
+	    let font_info = FontInformation::new(
+		ctx.resource.get_font(FontID::Cinema),
+		numeric::Vector2f::new(42.0, 42.0),
+		ggraphics::Color::from_rgba_u32(0xff)
+	    );
+	    
+	    let text_texture = TextButtonTexture::new(
+		ctx,
+		numeric::Point2f::new(0.0, 0.0),
+		text_str.to_string(),
+		font_info,
+		10.0,
+		ggraphics::Color::from_rgba_u32(0xe8b5a2ff),
+		0
+	    );
+	    
+            let button = SelectButton::new(ctx, button_rect, Box::new(text_texture));
 
             buttons.push(button);
             button_rect.x += button_rect.w;
@@ -2190,11 +2191,6 @@ impl RecordBookMenuGroup {
             ctx,
             numeric::Rect::new(0.0, 0.0, 70.0, 70.0),
             20.0,
-            vec![
-                TextureID::ChoicePanel1,
-                TextureID::ChoicePanel2,
-                TextureID::ChoicePanel3,
-            ],
             0,
         );
 

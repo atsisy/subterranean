@@ -594,9 +594,9 @@ impl SignFrame {
 
     pub fn sign_borrowing_frame(&mut self, ctx: &mut SuzuContext) {
         let mut sign_texture = UniTexture::new(
-            ctx.ref_texture(TextureID::ChoicePanel1),
+            ctx.ref_texture(TextureID::Hanko),
             numeric::Point2f::new(0.0, 0.0),
-            numeric::Vector2f::new(0.25, 0.25),
+            numeric::Vector2f::new(0.5, 0.5),
             0.0,
             0,
         );
@@ -615,9 +615,9 @@ impl SignFrame {
 
     pub fn sign_returning_frame(&mut self, ctx: &mut SuzuContext) {
         let mut sign_texture = UniTexture::new(
-            ctx.ref_texture(TextureID::ChoicePanel2),
+            ctx.ref_texture(TextureID::Hanko),
             numeric::Point2f::new(0.0, 0.0),
-            numeric::Vector2f::new(0.25, 0.25),
+            numeric::Vector2f::new(0.5, 0.5),
             0.0,
             0,
         );

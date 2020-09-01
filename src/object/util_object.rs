@@ -9,6 +9,7 @@ use torifune::graphics::drawable::*;
 use torifune::graphics::object::sub_screen;
 use torifune::graphics::object::tile_batch::*;
 use torifune::graphics::object::*;
+use torifune::graphics::object::shape::MeshShape;
 use torifune::impl_drawable_object_for_wrapped;
 use torifune::impl_texture_object_for_wrapped;
 use torifune::numeric;
@@ -603,6 +604,160 @@ impl DrawableObject for SelectButton {
 
 impl TextureObject for SelectButton {
     impl_texture_object_for_wrapped! {canvas}
+}
+
+pub struct TextButtonTexture {
+    text: UniText,
+    background: ggraphics::Mesh,
+    drwob_essential: DrawableObjectEssential,
+    button_pos: numeric::Rect,
+}
+
+impl TextButtonTexture {
+    pub fn new<'a>(
+	ctx: &mut SuzuContext<'a>,
+	pos: numeric::Point2f,
+	text_str: String,
+	font_info: FontInformation,
+	padding: f32,
+	bg_color: ggraphics::Color,
+	depth: i8
+    ) -> Self {
+	let text_pos = numeric::Point2f::new(pos.x + padding, pos.y + padding);
+	let text = UniText::new(
+	    text_str,
+	    text_pos,
+	    numeric::Vector2f::new(1.0, 1.0),
+	    0.0,
+	    depth,
+	    font_info
+	);
+
+	let text_size = text.get_drawing_size(ctx.context);
+
+	let background_size = numeric::Vector2f::new(text_size.x + (2.0 * padding), text_size.y + (2.0 * padding));
+	
+	let background_shape = shape::Rectangle::new(
+	    numeric::Rect::new(0.0, 0.0, background_size.x, background_size.y),
+	    ggraphics::DrawMode::fill(),
+	    bg_color
+	);
+
+	let mut builder = ggraphics::MeshBuilder::new();
+	background_shape.add_to_builder(&mut builder);
+	
+	TextButtonTexture {
+	    text: text,
+	    background: builder.build(ctx.context).unwrap(),
+	    drwob_essential: DrawableObjectEssential::new(true, depth),
+	    button_pos: numeric::Rect::new(pos.x, pos.y, background_size.x, background_size.y),
+	}
+    }
+
+    fn get_padding(&self) -> f32 {
+	self.text.get_position().x - self.button_pos.x
+    }
+}
+
+impl DrawableComponent for TextButtonTexture {
+    fn draw(&mut self, ctx: &mut ggez::Context) -> ggez::GameResult<()> {
+	if self.is_visible() {
+	    ggraphics::draw(ctx, &self.background, ggraphics::DrawParam {
+	        dest: numeric::Point2f::new(self.button_pos.x, self.button_pos.y).into(),
+		..Default::default()
+	    })?;
+	    self.text.draw(ctx)?;
+	}
+
+	Ok(())
+    }
+
+    fn hide(&mut self) {
+        self.drwob_essential.visible = false;
+    }
+
+    fn appear(&mut self) {
+        self.drwob_essential.visible = true;
+    }
+
+    fn is_visible(&self) -> bool {
+        self.drwob_essential.visible
+    }
+
+    fn set_drawing_depth(&mut self, depth: i8) {
+        self.drwob_essential.drawing_depth = depth;
+    }
+
+    fn get_drawing_depth(&self) -> i8 {
+        self.drwob_essential.drawing_depth
+    }
+}
+
+impl DrawableObject for TextButtonTexture {
+    fn set_position(&mut self, pos: numeric::Point2f) {
+	let diff = pos - self.get_position();
+	self.move_diff(diff);
+    }
+
+    fn get_position(&self) -> numeric::Point2f {
+	self.button_pos.point().into()
+    }
+
+    fn move_diff(&mut self, offset: numeric::Vector2f) {
+	self.button_pos.x += offset.x;
+	self.button_pos.y += offset.y;
+	self.text.move_diff(offset);
+    }
+}
+
+impl TextureObject for TextButtonTexture {
+    fn set_scale(&mut self, _scale: numeric::Vector2f) {}
+
+    fn get_scale(&self) -> numeric::Vector2f {
+	numeric::Vector2f::new(1.0, 1.0)
+    }
+
+    fn set_rotation(&mut self, _rad: f32) {}
+
+    fn get_rotation(&self) -> f32 {
+	0.0
+    }
+
+    fn set_crop(&mut self, _crop: ggraphics::Rect) {}
+
+    fn get_crop(&self) -> ggraphics::Rect {
+	numeric::Rect::new(0.0, 0.0, 1.0, 1.0)
+    }
+
+    fn set_drawing_color(&mut self, _color: ggraphics::Color) {}
+
+    fn get_drawing_color(&self) -> ggraphics::Color {
+	ggraphics::WHITE
+    }
+
+    fn set_alpha(&mut self, _alpha: f32) {}
+
+    fn get_alpha(&self) -> f32 {
+	1.0
+    }
+
+    fn set_transform_offset(&mut self, _offset: numeric::Point2f) {}
+
+    fn get_transform_offset(&self) -> numeric::Point2f {
+	numeric::Point2f::new(0.0, 0.0)
+    }
+
+    fn get_texture_size(&self, _ctx: &mut ggez::Context) -> numeric::Vector2f {
+	numeric::Vector2f::new(self.button_pos.x, self.button_pos.y)
+    }
+
+    fn replace_texture(&mut self, _texture: Rc<ggraphics::Image>) {}
+
+    fn set_color(&mut self, _color: ggraphics::Color) {}
+
+    fn get_color(&mut self) -> ggraphics::Color {
+	ggraphics::WHITE
+    }
 }
 
 pub struct TileBatchFrame {

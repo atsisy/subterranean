@@ -652,15 +652,15 @@ impl TextBalloon {
             numeric::Point2f::new((vtext_size.x + 100.0) / 2.0, (vtext_size.y + 60.0) / 2.0),
             (vtext_size.x + 60.0) / 2.0,
             (vtext_size.y + 50.0) / 2.0,
-            0.1,
+            0.01,
             ggraphics::DrawMode::fill(),
-            ggraphics::Color::from_rgba_u32(0xffffeeff),
+            ggraphics::Color::from_rgba_u32(0xffffffff),
         );
         let ellipse_outer = shape::Ellipse::new(
             numeric::Point2f::new((vtext_size.x + 100.0) / 2.0, (vtext_size.y + 60.0) / 2.0),
-            ((vtext_size.x + 60.0) / 2.0) + 5.0,
-            ((vtext_size.y + 50.0) / 2.0) + 5.0,
-            0.1,
+            ((vtext_size.x + 60.0) / 2.0) + 3.0,
+            ((vtext_size.y + 50.0) / 2.0) + 3.0,
+            0.01,
             ggraphics::DrawMode::fill(),
             ggraphics::Color::from_rgba_u32(0x371905ff),
         );
@@ -691,15 +691,15 @@ impl TextBalloon {
             numeric::Point2f::new((vtext_size.x + 100.0) / 2.0, (vtext_size.y + 60.0) / 2.0),
             (vtext_size.x + 60.0) / 2.0,
             (vtext_size.y + 50.0) / 2.0,
-            0.1,
+            0.01,
             ggraphics::DrawMode::fill(),
-            ggraphics::Color::from_rgba_u32(0xffffeeff),
+            ggraphics::Color::from_rgba_u32(0xffffffff),
         );
         self.balloon_outer = shape::Ellipse::new(
             numeric::Point2f::new((vtext_size.x + 100.0) / 2.0, (vtext_size.y + 60.0) / 2.0),
-            ((vtext_size.x + 60.0) / 2.0) + 5.0,
-            ((vtext_size.y + 50.0) / 2.0) + 5.0,
-            0.1,
+            ((vtext_size.x + 60.0) / 2.0) + 3.0,
+            ((vtext_size.y + 50.0) / 2.0) + 3.0,
+            0.01,
             ggraphics::DrawMode::fill(),
             ggraphics::Color::from_rgba_u32(0x371905ff),
         );

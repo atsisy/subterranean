@@ -164,6 +164,7 @@ pub enum TextureID {
     Clock1,
     ClockNeedle1,
     ShortClockNeedle1,
+    Hanko,
     Unknown,
 }
 
@@ -245,6 +246,7 @@ impl FromStr for TextureID {
 	    "Clock1" => Ok(Self::Clock1),
 	    "ClockNeedle1" => Ok(Self::ClockNeedle1),
 	    "ShortClockNeedle1" => Ok(Self::ShortClockNeedle1),
+	    "Hanko" => Ok(Self::Hanko),
             _ => Err(()),
         }
     }
@@ -306,6 +308,7 @@ impl TextureID {
 	    50 => Some(Self::Clock1),
 	    51 => Some(Self::ClockNeedle1),
 	    52 => Some(Self::ShortClockNeedle1),
+	    53 => Some(Self::Hanko),
             _ => None,
         }
     }
