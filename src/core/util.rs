@@ -121,7 +121,9 @@ pub fn clock_needle_angle_inverse(hour: u8, minute: u8) -> (f32, f32) {
 }
 
 pub fn find_proper_window_position(window_rect: numeric::Rect, outer_rect: numeric::Rect) -> numeric::Point2f {
-    let mut found_pos = window_rect.point();
+    let rect_pos = window_rect.point();
+    let mut found_pos = numeric::Point2f::new(rect_pos.x, rect_pos.y - window_rect.h);
+    let window_rect = numeric::Rect::new(window_rect.x, rect_pos.y - window_rect.h, window_rect.w, window_rect.h);
     
     if window_rect.right() > outer_rect.right() {
 	found_pos.x -= window_rect.right() - outer_rect.right();
@@ -131,8 +133,8 @@ pub fn find_proper_window_position(window_rect: numeric::Rect, outer_rect: numer
 
     if window_rect.bottom() > outer_rect.bottom() {
 	found_pos.y -= window_rect.bottom() - outer_rect.bottom();
-    } else if window_rect.left() < outer_rect.left() {
-	found_pos.x += outer_rect.top() - window_rect.top();
+    } else if window_rect.top() < outer_rect.top() {
+	found_pos.y += outer_rect.top() - window_rect.top();
     }
 
     found_pos.into()

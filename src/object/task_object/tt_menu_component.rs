@@ -1756,16 +1756,24 @@ impl CustomerMenuGroup {
 	);
 
 	question_menu.set_to_center(ctx, numeric::Point2f::new(canvas_size.x / 2.0, canvas_size.y / 2.0));
+
+
+	let pos = util::find_proper_window_position(
+	    numeric::Rect::new(position.x, position.y, canvas_size.x, canvas_size.y),
+	    numeric::Rect::new(0.0, 0.0, core::WINDOW_SIZE_X as f32, core::WINDOW_SIZE_Y as f32),
+	);
+	
+        let menu_rect = numeric::Rect::new(
+	    pos.x,
+	    pos.y,
+            canvas_size.x,
+            canvas_size.y,
+        );
 	
         let mut customer_question_menu_area = DropDownArea::new(
             ctx,
             position,
-            numeric::Rect::new(
-                position.x,
-                position.y,
-		canvas_size.x,
-		canvas_size.y,
-            ),
+            menu_rect,
             0,
             question_menu,
             t,
@@ -2287,16 +2295,17 @@ impl RecordBookMenuGroup {
 
         let menu_size = numeric::Point2f::new(frame_size.x + 128.0, frame_size.y + 64.0);
 
-        let menu_rect = if (position.y + menu_size.y) as i16 <= core::WINDOW_SIZE_Y {
-            numeric::Rect::new(position.x, position.y, menu_size.x, menu_size.y)
-        } else {
-            numeric::Rect::new(
-                position.x,
-                position.y - menu_size.y,
-                menu_size.x,
-                menu_size.y,
-            )
-        };
+	let pos = util::find_proper_window_position(
+	    numeric::Rect::new(position.x, position.y, menu_size.x, menu_size.y),
+	    numeric::Rect::new(0.0, 0.0, core::WINDOW_SIZE_X as f32, core::WINDOW_SIZE_Y as f32),
+	);
+	
+        let menu_rect = numeric::Rect::new(
+	    pos.x,
+	    pos.y,
+            menu_size.x,
+            menu_size.y,
+        );
 
         let mut book_title_menu_area =
             DropDownArea::new(ctx, position, menu_rect, 0, book_title_menu, t);
@@ -2440,16 +2449,17 @@ impl RecordBookMenuGroup {
 
         let menu_size = numeric::Point2f::new(frame_size.x + 96.0, frame_size.y + 40.0);
 
-        let menu_rect = if (position.y + menu_size.y) as i16 <= core::WINDOW_SIZE_Y {
-            numeric::Rect::new(position.x, position.y, menu_size.x, menu_size.y)
-        } else {
-            numeric::Rect::new(
-                position.x,
-                position.y - menu_size.y,
-                menu_size.x,
-                menu_size.y,
-            )
-        };
+	let pos = util::find_proper_window_position(
+	    numeric::Rect::new(position.x, position.y, menu_size.x, menu_size.y),
+	    numeric::Rect::new(0.0, 0.0, core::WINDOW_SIZE_X as f32, core::WINDOW_SIZE_Y as f32),
+	);
+	
+        let menu_rect = numeric::Rect::new(
+	    pos.x,
+	    pos.y,
+            menu_size.x,
+            menu_size.y,
+        );
 
         let mut payment_menu_area = DropDownArea::new(ctx, position, menu_rect, 0, payment_menu, t);
         payment_menu_area.add_effect(vec![effect::fade_in(10, t)]);
@@ -2958,17 +2968,18 @@ impl OnDeskMenuGroup {
 
         let menu_size = numeric::Point2f::new(frame_size.x, frame_size.y);
 
-        let menu_rect = if (position.y + menu_size.y) as i16 <= core::WINDOW_SIZE_Y {
-            numeric::Rect::new(position.x, position.y, menu_size.x, menu_size.y)
-        } else {
-            numeric::Rect::new(
-                position.x,
-                position.y - menu_size.y,
-                menu_size.x,
-                menu_size.y,
-            )
-        };
-
+	let pos = util::find_proper_window_position(
+	    numeric::Rect::new(position.x, position.y, menu_size.x, menu_size.y),
+	    numeric::Rect::new(0.0, 0.0, core::WINDOW_SIZE_X as f32, core::WINDOW_SIZE_Y as f32),
+	);
+	
+        let menu_rect = numeric::Rect::new(
+	    pos.x,
+	    pos.y,
+            menu_size.x,
+            menu_size.y,
+        );
+	
         let mut dd_area = DropDownArea::new(ctx, position, menu_rect, 0, menu, t);
 
         dd_area.add_effect(vec![effect::fade_in(10, t)]);
