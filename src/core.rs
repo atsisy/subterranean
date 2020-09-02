@@ -1,5 +1,7 @@
 pub mod map_parser;
 pub mod util;
+pub mod book_management;
+
 use ggez::graphics as ggraphics;
 use ggez::*;
 

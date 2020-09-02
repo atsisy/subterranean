@@ -8,6 +8,7 @@ use torifune::numeric;
 
 use crate::core::*;
 use crate::scene::*;
+use crate::core::book_management::*;
 
 use crate::scene::shop_scene::ShopScene;
 
@@ -33,6 +34,7 @@ pub struct SuzunaSubScene {
     pub day_result_scene: Option<Box<TaskResultScene>>,
     scene_status: SuzunaSceneStatus,
     borrowing_record_book_data: Option<BorrowingRecordBookData>,
+    new_book_schedule: NewBookSchedule,
     date: GensoDate,
 }
 
@@ -50,12 +52,15 @@ impl SuzunaSubScene {
                 .collect(),
         };
 
+	let new_book_schedule = NewBookSchedule::from_toml("./resources/other_config/new_book_schedule.toml");
+
         SuzunaSubScene {
             shop_scene: Some(Box::new(ShopScene::new(ctx, map_id))),
             desk_work_scene: None,
             day_result_scene: None,
             scene_status: SuzunaSceneStatus::Shop,
             borrowing_record_book_data: Some(borrowing_record_book_data),
+	    new_book_schedule: new_book_schedule,
             date: ctx.savable_data.date.clone(),
         }
     }
