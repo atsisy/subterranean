@@ -52,16 +52,20 @@ impl SuzunaSubScene {
                 .collect(),
         };
 
+	let date = ctx.savable_data.date.clone();
+
 	let new_book_schedule = NewBookSchedule::from_toml("./resources/other_config/new_book_schedule.toml");
+	
+	let todays_new_books = new_book_schedule.get_schedule_at(&date).unwrap().clone();
 
         SuzunaSubScene {
-            shop_scene: Some(Box::new(ShopScene::new(ctx, map_id))),
+            shop_scene: Some(Box::new(ShopScene::new(ctx, map_id, todays_new_books.get_new_books()))),
             desk_work_scene: None,
             day_result_scene: None,
             scene_status: SuzunaSceneStatus::Shop,
             borrowing_record_book_data: Some(borrowing_record_book_data),
 	    new_book_schedule: new_book_schedule,
-            date: ctx.savable_data.date.clone(),
+            date: date,
         }
     }
 

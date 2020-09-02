@@ -1882,6 +1882,168 @@ impl DrawableComponent for ShopDetailMenuContents {
     }
 }
 
+
+pub struct SimpleBookListViewer {
+    canvas: SubScreen,
+    books_data: Vec<BookInformation>,
+    books_window: SelectBookWindow,
+    ok_button: SelectButton,
+}
+
+impl SimpleBookListViewer {
+    pub fn new<'a>(
+        ctx: &mut SuzuContext<'a>,
+        window_rect: numeric::Rect,
+        mut books_data: Vec<BookInformation>,
+    ) -> Self {
+        books_data.sort_by(|a, b| a.billing_number.cmp(&b.billing_number));
+
+	let font_info = FontInformation::new(
+	    ctx.resource.get_font(FontID::Cinema),
+	    numeric::Vector2f::new(28.0, 28.0),
+	    ggraphics::Color::from_rgba_u32(0xff)
+	);
+
+	let text_texture = Box::new(
+	    TextButtonTexture::new(
+		ctx,
+		numeric::Point2f::new(0.0, 0.0),
+		"確認".to_string(),
+		font_info,
+		8.0,
+		ggraphics::Color::from_rgba_u32(0xe8b5a2ff),
+		0
+	    )
+	);
+	
+	let mut ok_button = SelectButton::new(
+            ctx,
+            numeric::Rect::new(650.0, 200.0, 100.0, 50.0),
+	    text_texture,
+        );
+	ok_button.make_center(ctx.context, numeric::Point2f::new(window_rect.w - 100.0, window_rect.h - 40.0));
+	
+        SimpleBookListViewer {
+            canvas: SubScreen::new(ctx.context, window_rect, 0, ggraphics::Color::from_rgba_u32(0)),
+            books_window: SelectBookWindow::new(
+                ctx,
+                numeric::Rect::new(0.0, 0.0, window_rect.w, window_rect.h - 40.0),
+                "新規納品済",
+                books_data.clone(),
+            ),
+            books_data: books_data,
+	    ok_button: ok_button,
+        }
+    }
+
+    ///
+    /// 請求番号を昇順に並べ替えるメソッド
+    ///
+    fn sort_book_info_greater(&mut self) {
+        self.books_data
+            .sort_by(|a, b| a.billing_number.cmp(&b.billing_number));
+    }
+
+    ///
+    /// Windowに描画される内容を更新するメソッド
+    ///
+    fn update_window(&mut self, ctx: &mut ggez::Context) {
+        // 請求番号でソートする
+        self.sort_book_info_greater();
+
+        // 描画コンテンツを更新
+        self.books_window.update_contents(ctx, &self.books_data);
+    }
+
+    pub fn scroll_handler<'a>(
+        &mut self,
+        ctx: &mut SuzuContext<'a>,
+        point: numeric::Point2f,
+        x: f32,
+        y: f32,
+    ) {
+        let rpoint = self.canvas.relative_point(point);
+        self.books_window.scroll_handler(ctx, rpoint, x, y);
+    }
+
+    pub fn click_and_maybe_hide<'a>(
+        &mut self,
+        ctx: &mut SuzuContext<'a>,
+        _clock: Clock,
+        _button: ggez::input::mouse::MouseButton,
+        point: numeric::Point2f,
+    ) -> bool {
+        // それぞれのオブジェクトに処理を渡すだけ
+	let rpoint = self.canvas.relative_point(point);
+        self
+            .ok_button
+            .contains(ctx.context, rpoint)
+    }
+}
+
+impl DrawableComponent for SimpleBookListViewer {
+    fn draw(&mut self, ctx: &mut ggez::Context) -> ggez::GameResult<()> {
+        if self.is_visible() {
+            sub_screen::stack_screen(ctx, &self.canvas);
+
+            self.books_window.draw(ctx)?;
+	    self.ok_button.draw(ctx)?;
+
+            sub_screen::pop_screen(ctx);
+            self.canvas.draw(ctx).unwrap();
+        }
+
+        Ok(())
+    }
+
+    fn hide(&mut self) {
+        self.canvas.hide();
+    }
+
+    fn appear(&mut self) {
+        self.canvas.appear();
+    }
+
+    fn is_visible(&self) -> bool {
+        self.canvas.is_visible()
+    }
+
+    fn set_drawing_depth(&mut self, depth: i8) {
+        self.canvas.set_drawing_depth(depth);
+    }
+
+    fn get_drawing_depth(&self) -> i8 {
+        self.canvas.get_drawing_depth()
+    }
+}
+
+impl DrawableObject for SimpleBookListViewer {
+    impl_drawable_object_for_wrapped! {canvas}
+}
+
+impl TextureObject for SimpleBookListViewer {
+    impl_texture_object_for_wrapped! {canvas}
+}
+
+impl Clickable for SimpleBookListViewer {
+    fn on_click<'a>(
+        &mut self,
+        _ctx: &mut SuzuContext<'a>,
+        _clock: Clock,
+        _button: ggez::input::mouse::MouseButton,
+        _point: numeric::Point2f,
+    ) {
+    }
+
+    fn clickable_status(
+        &mut self,
+        _ctx: &mut ggez::Context,
+        _point: numeric::Point2f,
+    ) -> ggez::input::mouse::MouseCursor {
+        ggez::input::mouse::MouseCursor::Default
+    }
+}
+
 pub struct ShopMenuMaster {
     first_menu: ShopMenu,
     detail_menu: ShopDetailMenuContents,
@@ -1993,6 +2155,7 @@ pub struct ShopSpecialObject {
     event_list: DelayEventList<Self>,
     shelving_select_ui: Option<MovableWrap<SelectShelvingBookUI>>,
     storing_select_ui: Option<MovableWrap<SelectStoreBookUI>>,
+    new_books_viewer: Option<MovableWrap<SimpleBookListViewer>>,
     drwob_essential: DrawableObjectEssential,
 }
 
@@ -2002,6 +2165,7 @@ impl ShopSpecialObject {
             event_list: DelayEventList::new(),
             shelving_select_ui: None,
             storing_select_ui: None,
+	    new_books_viewer: None,
             drwob_essential: DrawableObjectEssential::new(true, 0),
         }
     }
@@ -2041,6 +2205,27 @@ impl ShopSpecialObject {
                     player_shelving_books,
                 )),
                 move_fn::devide_distance(numeric::Point2f::new(0.0, 0.0), 0.4),
+                t,
+            ));
+        }
+    }
+
+    pub fn show_new_books_viewer(
+        &mut self,
+        ctx: &mut SuzuContext,
+        new_books: Vec<BookInformation>,
+        t: Clock,
+    ) {
+        if self.new_books_viewer.is_none() {
+            self.new_books_viewer = Some(MovableWrap::new(
+                Box::new(
+		    SimpleBookListViewer::new(
+			ctx,
+			numeric::Rect::new(283.0, -768.0, 800.0, 730.0),
+			new_books
+		    )
+		),
+                move_fn::devide_distance(numeric::Point2f::new(283.0, 28.0), 0.4),
                 t,
             ));
         }
@@ -2090,8 +2275,25 @@ impl ShopSpecialObject {
         }
     }
 
+    pub fn hide_new_books_viewer(&mut self, t: Clock) {
+        if let Some(ui) = self.new_books_viewer.as_mut() {
+            ui.override_move_func(
+                move_fn::devide_distance(numeric::Point2f::new(283.0, -768.0), 0.4),
+                t,
+            );
+            self.event_list.add_event(
+                Box::new(|shop_special_object, _, _| {
+                    shop_special_object.new_books_viewer = None;
+                }),
+                t + 7,
+            );
+        }
+    }
+
     pub fn is_enable_now(&self) -> bool {
-        self.shelving_select_ui.is_some() || self.storing_select_ui.is_some()
+        self.shelving_select_ui.is_some() ||
+	    self.storing_select_ui.is_some() ||
+	    self.new_books_viewer.is_some()
     }
 
     pub fn mouse_down_action<'a>(
@@ -2108,6 +2310,12 @@ impl ShopSpecialObject {
         if let Some(ui) = self.storing_select_ui.as_mut() {
             ui.on_click(ctx, t, button, point);
         }
+
+	if let Some(ui) = self.new_books_viewer.as_mut() {
+            if ui.click_and_maybe_hide(ctx, t, button, point) {
+		self.hide_new_books_viewer(t);
+	    }
+        }
     }
 
     pub fn mouse_wheel_scroll_action<'a>(
@@ -2118,6 +2326,10 @@ impl ShopSpecialObject {
         y: f32,
     ) {
         if let Some(ui) = self.shelving_select_ui.as_mut() {
+            ui.scroll_handler(ctx, point, x, y);
+        }
+
+	if let Some(ui) = self.new_books_viewer.as_mut() {
             ui.scroll_handler(ctx, point, x, y);
         }
     }
@@ -2132,6 +2344,10 @@ impl ShopSpecialObject {
         if let Some(storing_ui) = self.storing_select_ui.as_mut() {
             storing_ui.move_with_func(t);
         }
+
+	if let Some(ui) = self.new_books_viewer.as_mut() {
+            ui.move_with_func(t);
+        }
     }
 }
 
@@ -2144,6 +2360,10 @@ impl DrawableComponent for ShopSpecialObject {
 
             if let Some(store_ui) = self.storing_select_ui.as_mut() {
                 store_ui.draw(ctx)?;
+            }
+
+	    if let Some(ui) = self.new_books_viewer.as_mut() {
+                ui.draw(ctx)?;
             }
         }
 

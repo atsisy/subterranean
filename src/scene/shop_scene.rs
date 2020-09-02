@@ -17,7 +17,7 @@ use torifune::numeric;
 
 use super::*;
 use crate::core::map_parser as mp;
-use crate::core::{FontID, SavableData, SuzuContext, TileBatchTextureID};
+use crate::core::{FontID, SavableData, SuzuContext, TileBatchTextureID, BookInformation};
 use crate::flush_delay_event;
 use crate::object::effect_object;
 use crate::object::map_object::*;
@@ -277,7 +277,7 @@ pub struct ShopScene {
 }
 
 impl ShopScene {
-    pub fn new<'a>(ctx: &mut SuzuContext<'a>, map_id: u32) -> ShopScene {
+    pub fn new<'a>(ctx: &mut SuzuContext<'a>, map_id: u32, new_books: Vec<BookInformation>) -> ShopScene {
         let key_listener =
             tdev::KeyboardListener::new_masked(vec![tdev::KeyInputDevice::GenericKeyboard], vec![]);
 
@@ -319,6 +319,18 @@ impl ShopScene {
 	    shop_time.clone()
 	);
 
+	for new_book in new_books.iter() {
+	    ctx.savable_data.task_result.not_shelved_books.push(new_book.clone());
+	}
+
+	let mut delay_event_list = DelayEventList::new();
+	delay_event_list.add_event(
+            Box::new(move |slf: &mut ShopScene, ctx, t| {
+		slf.shop_special_object.show_new_books_viewer(ctx, new_books, t);
+            }),
+            31,
+        );
+	
         ShopScene {
             player: player,
             character_group: character_group,
@@ -327,7 +339,7 @@ impl ShopScene {
             clock: 0,
             shop_clock: shop_time,
             map: map,
-            event_list: DelayEventList::new(),
+            event_list: delay_event_list,
             shop_menu: ShopMenuMaster::new(ctx, numeric::Vector2f::new(450.0, 768.0), 0),
             customer_request_queue: VecDeque::new(),
             customer_queue: VecDeque::new(),
