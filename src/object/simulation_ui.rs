@@ -122,7 +122,7 @@ impl<T: std::fmt::Display + std::ops::AddAssign + Clone + Copy + std::ops::AddAs
     }
 }
 
-struct Meter {
+pub struct Meter {
     counter: Counter<f32>,
     max: f32,
     frame: tshape::Rectangle,
@@ -173,6 +173,17 @@ impl Meter {
 
     pub fn add(&mut self, value: f32) {
         self.counter.add(value);
+
+	let mut counter_rect = self.count_fill.get_bounds();
+	counter_rect.w = self.empty_fill.get_bounds().w * (self.counter.get_value() / self.max);
+	
+	let new_fill = tshape::Rectangle::new(
+	    counter_rect,
+	    self.count_fill.get_mode(),
+	    self.count_fill.get_color()
+	);
+
+	self.count_fill = new_fill;
     }
 
     pub fn get_value(&self) -> f32 {
@@ -185,10 +196,6 @@ impl Meter {
         } else {
             self.counter.set_value(self.max);
         }
-    }
-
-    pub fn update(&mut self) {
-        self.count_fill.get_bounds();
     }
 }
 

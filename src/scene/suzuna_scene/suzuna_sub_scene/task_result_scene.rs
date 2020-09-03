@@ -1,4 +1,6 @@
-use ginput::mouse::MouseButton;
+use ggez::graphics as ggraphics;
+
+use ggez::input::mouse::MouseButton;
 use torifune::core::*;
 use torifune::numeric;
 
@@ -7,13 +9,14 @@ use torifune::graphics::object::*;
 
 use super::super::*;
 
-use crate::core::{MouseInformation, SavableData, TextureID, TileBatchTextureID};
+use crate::core::{MouseInformation, SavableData, TextureID, TileBatchTextureID, FontID};
 use crate::flush_delay_event;
 use crate::object::effect_object;
 use crate::object::task_result_object::*;
 use crate::object::util_object::SelectButton;
 use crate::scene::{SceneID, SceneTransition};
 use effect_object::TilingEffectType;
+use crate::object::util_object::TextButtonTexture;
 
 pub struct TaskResultScene {
     clock: Clock,
@@ -50,13 +53,21 @@ impl TaskResultScene {
             ),
         );
 
-	let panel_texture = Box::new(UniTexture::new(
-            ctx.ref_texture(TextureID::ChoicePanel1),
-            numeric::Point2f::new(0.0, 0.0),
-            numeric::Vector2f::new(1.0, 1.0),
-            0.0,
-            0,
-        ));
+	let panel_texture = Box::new(
+	    TextButtonTexture::new(
+		ctx,
+		numeric::Point2f::new(0.0, 0.0),
+		"戸締まり".to_string(),
+		FontInformation::new(
+		    ctx.resource.get_font(FontID::Cinema),
+		    numeric::Vector2f::new(28.0, 28.0),
+		    ggraphics::Color::from_rgba_u32(0xff),
+		),
+		10.0,
+		ggraphics::Color::from_rgba_u32(0xe8b5a2ff),
+		0
+	    )
+        );
         let ok_button = SelectButton::new(
             ctx,
             numeric::Rect::new(120.0, 608.0, 80.0, 80.0),
@@ -86,7 +97,7 @@ impl TaskResultScene {
             }),
             31,
         );
-
+	
         TaskResultScene {
             clock: 0,
             mouse_info: MouseInformation::new(),

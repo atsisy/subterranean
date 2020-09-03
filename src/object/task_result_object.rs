@@ -16,11 +16,125 @@ use crate::object::effect;
 use crate::object::util_object::*;
 use crate::set_table_frame_cell_center;
 
+use crate::object::simulation_ui as sim;
+
 use number_to_jk::number_to_jk;
+
+pub struct ResultMeter {
+    meter: sim::Meter,
+    desc_text: UniText,
+    diff_text: EffectableWrap<MovableWrap<UniText>>,
+    drwob_essential: DrawableObjectEssential,
+    reputation_goal: f32,
+}
+
+impl ResultMeter {
+    pub fn new<'a>(
+	ctx: &mut SuzuContext<'a>,
+	pos: numeric::Point2f,
+	before: f32,
+	after: f32,
+	depth: i8,
+	t: Clock
+    ) -> Self {
+	let meter = sim::Meter::new(
+	    numeric::Point2f::new(pos.x, pos.y + 30.0),
+	    numeric::Rect::new(0.0, 0.0, 500.0, 60.0),
+	    ggraphics::Color::from_rgba_u32(0x362d33ff),
+	    numeric::Rect::new(6.0, 6.0, 488.0, 48.0),
+	    ggraphics::Color::from_rgba_u32(0x463d43ff),
+	    ggraphics::Color::from_rgba_u32(0xf6e1d5ff),
+	    before,
+	    100.0,
+	);
+
+	let desc_text = UniText::new(
+	    "評判".to_string(),
+	    pos,
+	    numeric::Vector2f::new(1.0, 1.0),
+	    0.0,
+	    depth,
+	    FontInformation::new(
+		ctx.resource.get_font(FontID::Cinema),
+		numeric::Vector2f::new(20.0, 20.0),
+		ggraphics::Color::from_rgba_u32(0xff),
+	    ));
+
+	let diff_text = UniText::new(
+	    format!("{:+}", after - before),
+	    numeric::Point2f::new(pos.x + 100.0, pos.y),
+	    numeric::Vector2f::new(1.0, 1.0),
+	    0.0,
+	    depth,
+	    FontInformation::new(
+		ctx.resource.get_font(FontID::Cinema),
+		numeric::Vector2f::new(20.0, 20.0),
+		ggraphics::Color::from_rgba_u32(0x00ff00ff),
+	    ));
+	
+	ResultMeter {
+	    meter: meter,
+	    desc_text: desc_text,
+	    diff_text: EffectableWrap::new(
+		MovableWrap::new(Box::new(diff_text), None, t),
+		vec![effect::fade_in(20, t)]
+	    ),
+	    reputation_goal: after,
+	    drwob_essential: DrawableObjectEssential::new(true, depth),
+	}
+    }
+}
+
+impl DrawableComponent for ResultMeter {
+    fn draw(&mut self, ctx: &mut ggez::Context) -> ggez::GameResult<()> {
+	if self.is_visible() {
+	    self.meter.draw(ctx)?;
+	    self.desc_text.draw(ctx)?;
+	    self.diff_text.draw(ctx)?;
+	}
+
+	Ok(())
+    }
+
+    #[inline(always)]
+    fn hide(&mut self) {
+        self.drwob_essential.visible = false;
+    }
+
+    #[inline(always)]
+    fn appear(&mut self) {
+        self.drwob_essential.visible = true;
+    }
+
+    #[inline(always)]
+    fn is_visible(&self) -> bool {
+        self.drwob_essential.visible
+    }
+
+    #[inline(always)]
+    fn set_drawing_depth(&mut self, depth: i8) {
+        self.drwob_essential.drawing_depth = depth;
+    }
+
+    #[inline(always)]
+    fn get_drawing_depth(&self) -> i8 {
+        self.drwob_essential.drawing_depth
+    }
+}
+
+impl Effectable for ResultMeter {
+    fn effect(&mut self, _ctx: &mut ggez::Context, t: Clock) {
+	self.diff_text.move_with_func(t);
+	if self.meter.get_value() < self.reputation_goal {
+	    self.meter.add(0.05);
+	}
+    }
+}
 
 pub struct DrawableTaskResult {
     result_frame: TableFrame,
     fixed_text: Vec<EffectableWrap<MovableWrap<VerticalText>>>,
+    meters: ResultMeter,
     background: SimpleObject,
     canvas: SubScreen,
 }
@@ -241,9 +355,12 @@ impl DrawableTaskResult {
         );
         fixed_text.push(total_money_text);
 
+	let meters = ResultMeter::new(ctx, numeric::Point2f::new(350.0, 650.0), 50.0, 60.0, 1, t);
+
         DrawableTaskResult {
             result_frame: result_frame,
             fixed_text: fixed_text,
+	    meters: meters,
             background: background,
             canvas: SubScreen::new(ctx.context, rect_pos, 0, ggraphics::Color::from_rgba_u32(0)),
         }
@@ -256,8 +373,8 @@ impl DrawableComponent for DrawableTaskResult {
             sub_screen::stack_screen(ctx, &self.canvas);
 
             self.background.draw(ctx)?;
-
             self.result_frame.draw(ctx)?;
+	    self.meters.draw(ctx)?;
 
             for vtext in self.fixed_text.iter_mut() {
                 vtext.draw(ctx)?;
@@ -303,5 +420,7 @@ impl Effectable for DrawableTaskResult {
         for vtext in self.fixed_text.iter_mut() {
             vtext.effect(ctx, t);
         }
+
+	self.meters.effect(ctx, t);
     }
 }
