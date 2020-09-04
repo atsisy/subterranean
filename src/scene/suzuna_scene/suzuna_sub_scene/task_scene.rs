@@ -8,7 +8,7 @@ use torifune::numeric;
 use super::super::*;
 use crate::object::Clickable;
 
-use crate::core::{MouseActionRecord, MouseInformation, TileBatchTextureID};
+use crate::core::{MouseActionRecord, MouseInformation, TileBatchTextureID, ReputationEvent};
 use crate::object::effect_object;
 use crate::object::task_object::*;
 use crate::scene::{SceneID, SceneTransition};
@@ -171,6 +171,8 @@ impl TaskScene {
             -128,
             t,
         ));
+
+	ctx.savable_data.suzunaan_status.eval_reputation(ReputationEvent::DoneDeskTask);
     }
 
     pub fn export_borrowing_record_book_data(&self) -> BorrowingRecordBookData {

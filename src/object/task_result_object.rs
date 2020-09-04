@@ -123,10 +123,12 @@ impl DrawableComponent for ResultMeter {
 }
 
 impl Effectable for ResultMeter {
-    fn effect(&mut self, _ctx: &mut ggez::Context, t: Clock) {
+    fn effect(&mut self, ctx: &mut ggez::Context, t: Clock) {
 	self.diff_text.move_with_func(t);
+	self.diff_text.effect(ctx, t);
+	
 	if self.meter.get_value() < self.reputation_goal {
-	    self.meter.add(0.05);
+	    self.meter.add(0.1);
 	}
     }
 }
@@ -355,7 +357,14 @@ impl DrawableTaskResult {
         );
         fixed_text.push(total_money_text);
 
-	let meters = ResultMeter::new(ctx, numeric::Point2f::new(350.0, 650.0), 50.0, 60.0, 1, t);
+	let meters = ResultMeter::new(
+	    ctx,
+	    numeric::Point2f::new(350.0, 650.0),
+	    initial_save_data.suzunaan_status.reputation,
+	    ctx.savable_data.suzunaan_status.reputation,
+	    1,
+	    t
+	);
 
         DrawableTaskResult {
             result_frame: result_frame,

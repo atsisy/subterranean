@@ -998,14 +998,14 @@ impl ShopScene {
 
     pub fn update_shop_clock_regular<'a>(&mut self, ctx: &mut SuzuContext<'a>, t: Clock) {
         if self.get_current_clock() % 20 == 0 {
-            self.shop_clock.add_minute(120);
+            self.shop_clock.add_minute(1);
 	    self.drawable_shop_clock.update_time(&self.shop_clock);
 
             if self.shop_clock.equals(12, 0) {
                 self.notification_area.insert_new_contents_generic(
                     ctx,
                     NotificationContentsData::new(
-                        "セラ知オ".to_string(),
+                        "おしらせ".to_string(),
                         "十二時ヲ過ギマシタ".to_string(),
                         NotificationType::Time,
                     ),

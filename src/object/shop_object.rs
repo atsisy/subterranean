@@ -716,6 +716,7 @@ pub struct SelectStoringBookWindow {
     book_title_text: Vec<VerticalText>,
     selecting_book_index: Vec<usize>,
     book_storable: Vec<bool>,
+    background: UniTexture,
     book_font: FontInformation,
 }
 
@@ -811,6 +812,14 @@ impl SelectStoringBookWindow {
             numeric::Vector2u::new(table_pos_x, 2)
         );
 
+	let background_texture = UniTexture::new(
+	    ctx.ref_texture(TextureID::TextBackground),
+	    numeric::Point2f::new(0.0, 0.0),
+	    numeric::Vector2f::new(1.0, 1.0),
+	    0.0,
+	    0
+	); 
+
         let mut window = SelectStoringBookWindow {
             canvas: SubScreen::new(
                 ctx.context,
@@ -834,6 +843,7 @@ impl SelectStoringBookWindow {
             book_title_text: Vec::new(),
             selecting_book_index: Vec::new(),
             book_storable: Vec::new(),
+	    background: background_texture,
             book_font: normal_font_info,
         };
 
@@ -948,6 +958,7 @@ impl DrawableComponent for SelectStoringBookWindow {
         if self.is_visible() {
             sub_screen::stack_screen(ctx, &self.canvas);
 
+	    self.background.draw(ctx)?;
             self.appearance_frame.draw(ctx)?;
             self.table_frame.draw(ctx)?;
 
@@ -1097,7 +1108,7 @@ impl SelectStoreBookUI {
 	
         SelectStoreBookUI {
             canvas: SubScreen::new(ctx.context, ui_rect, 0, ggraphics::Color::from_rgba_u32(0)),
-            select_book_window: SelectStoringBookWindow::new(
+	    select_book_window: SelectStoringBookWindow::new(
                 ctx,
                 numeric::Rect::new(70.0, 50.0, 850.0, 690.0),
                 "配架中",
@@ -1147,7 +1158,7 @@ impl DrawableComponent for SelectStoreBookUI {
     fn draw(&mut self, ctx: &mut ggez::Context) -> ggez::GameResult<()> {
         if self.is_visible() {
             sub_screen::stack_screen(ctx, &self.canvas);
-
+	    
             self.select_book_window.draw(ctx)?;
 
             self.reset_select_button.draw(ctx)?;

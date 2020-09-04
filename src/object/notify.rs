@@ -229,12 +229,7 @@ impl NotificationArea {
     fn set_hide_animation(&mut self, t: Clock) {
         if let Some(area) = self.area.as_mut() {
             area.clear_effect();
-            area.add_effect(vec![
-                effect::fade_out(self.default_animation_time, t),
-                effect::constant_rotating(0.005, t),
-            ]);
-
-            area.override_move_func(move_fn::gravity_move(0.0, 10.0, 1080.0, 8.0), t);
+            area.override_move_func(move_fn::devide_distance(numeric::Point2f::new(1366.0, 10.0), 0.2), t);
 
             let scheduled = t + self.default_animation_time;
             self.event_list.add_event(

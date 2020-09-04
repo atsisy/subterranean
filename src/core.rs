@@ -949,12 +949,22 @@ pub struct SuzunaAnStatus {
     pub reputation: f32,
 }
 
+pub enum ReputationEvent {
+    DoneDeskTask,
+}
+
 impl SuzunaAnStatus {
     pub fn new() -> Self {
         SuzunaAnStatus {
             jinyou_balance: 0.0,
             reputation: 50.0,
         }
+    }
+
+    pub fn eval_reputation(&mut self, event_type: ReputationEvent) {
+	match event_type {
+	    ReputationEvent::DoneDeskTask => self.reputation += 2.0,
+	}
     }
 }
 

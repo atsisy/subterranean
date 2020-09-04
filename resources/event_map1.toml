@@ -81,7 +81,7 @@ trigger = "action"
 symbol = "select-shelving-book"	
 [event-panel.position]
 x = 2
-y = 16
+y = 15
 
 [[event-panel]]
 type = "builtin-event"
@@ -90,13 +90,4 @@ trigger = "action"
 symbol = "select-shelving-book"	
 [event-panel.position]
 x = 3
-y = 16
-
-[[event-panel]]
-type = "builtin-event"
-trigger = "action"
-[event-panel.builtin-event-info]
-symbol = "select-shelving-book"	
-[event-panel.position]
-x = 3
-y = 17
+y = 15
