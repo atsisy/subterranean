@@ -16,6 +16,8 @@ use torifune::numeric;
 
 use crate::core::*;
 
+extern crate mint;
+
 pub struct FrameData {
     each_cols_size: Vec<f32>,
     each_rows_size: Vec<f32>,
@@ -1366,4 +1368,105 @@ impl TextureAnimation {
     pub fn get_current_mode(&self) -> ObjectDirection {
         self.current_mode.clone()
     }
+}
+
+pub struct GraphDrawer {
+    canvas: SubScreen,
+    graph_area: numeric::Rect,
+    data: Vec<numeric::Vector2f>,
+    shapes: ggraphics::Mesh,
+}
+
+impl GraphDrawer {
+    pub fn new<'a>(
+	ctx: &mut SuzuContext<'a>,
+	rect: numeric::Rect,
+	graph_area: numeric::Rect,
+	data: Vec<numeric::Vector2f>,
+	point_radius: f32,
+	point_color: ggraphics::Color,
+	line_width: f32,
+	line_color: ggraphics::Color,
+	depth: i8
+    ) -> Self {
+	let mut builder = ggraphics::MeshBuilder::new();
+
+	let max_data = data.iter().fold(
+	    numeric::Vector2f::new(0.0, 0.0),
+	    |m, v| {
+		numeric::Vector2f::new(
+		    m.x.max(v.x),
+		    m.y.max(v.y),
+		)
+	    }
+	);
+
+	let scaled_points: Vec<numeric::Point2f> = data.iter()
+	    .map(|p| numeric::Point2f::new(
+		graph_area.w * (p.x / max_data.x),
+		graph_area.h * (p.y / max_data.y),
+	    )).collect();
+	
+	for scaled_point in scaled_points.iter() {
+	    builder.circle(
+		ggraphics::DrawMode::fill(),
+		mint::Point2::from_slice(&[scaled_point.x, scaled_point.y]),
+		point_radius,
+		0.01,
+		point_color
+	    );
+	}
+
+	let mint_p_vec: Vec<mint::Point2<f32>> = scaled_points.iter().map(|p| mint::Point2::from_slice(&[p.x, p.y])).collect();
+	builder.line(mint_p_vec.as_slice(), line_width, line_color);
+	
+	GraphDrawer {
+	    canvas: SubScreen::new(ctx.context, rect, depth, ggraphics::Color::from_rgba_u32(0x00)),
+	    graph_area: graph_area,
+	    data: data,
+	    shapes: builder.build(ctx.context).unwrap(),
+	}
+    }
+}
+
+impl DrawableComponent for GraphDrawer {
+    fn draw(&mut self, ctx: &mut ggez::Context) -> ggez::GameResult<()> {
+	if self.is_visible() {
+	    sub_screen::stack_screen(ctx, &self.canvas);
+
+	    ggraphics::draw(ctx, &self.shapes, ggraphics::DrawParam::default()).unwrap();
+	    
+            sub_screen::pop_screen(ctx);
+            self.canvas.draw(ctx).unwrap();
+        }
+        Ok(())
+    }
+
+    fn hide(&mut self) {
+        self.canvas.hide();
+    }
+
+    fn appear(&mut self) {
+        self.canvas.appear();
+    }
+
+    fn is_visible(&self) -> bool {
+        self.canvas.is_visible()
+    }
+
+    fn set_drawing_depth(&mut self, depth: i8) {
+        self.canvas.set_drawing_depth(depth);
+    }
+
+    fn get_drawing_depth(&self) -> i8 {
+        self.canvas.get_drawing_depth()
+    }
+}
+
+impl DrawableObject for GraphDrawer {
+    impl_drawable_object_for_wrapped! {canvas}
+}
+
+impl TextureObject for GraphDrawer {
+    impl_texture_object_for_wrapped! {canvas}
 }

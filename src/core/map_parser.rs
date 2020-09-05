@@ -706,6 +706,7 @@ impl DrawableComponent for StageObjectMap {
 
     fn hide(&mut self) {
         self.canvas.hide();
+	
     }
 
     fn appear(&mut self) {

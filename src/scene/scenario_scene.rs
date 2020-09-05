@@ -1,3 +1,5 @@
+use ggez::graphics as ggraphics;
+
 use torifune::core::Clock;
 use torifune::device as tdev;
 use torifune::numeric;
@@ -7,6 +9,7 @@ use crate::core::SuzuContext;
 use crate::object::scenario::*;
 use crate::object::simulation_ui::*;
 use torifune::graphics::drawable::*;
+use crate::object::util_object::*;
 
 use super::*;
 
@@ -20,6 +23,7 @@ pub enum ScenarioSelect {
 pub struct ScenarioScene {
     scenario_event: ScenarioEvent,
     scenario_menu: ScenarioMenu,
+    graph_sample: GraphDrawer,
     scene_transition_type: SceneTransition,
     scene_transition: SceneID,
     clock: Clock,
@@ -43,9 +47,23 @@ impl ScenarioScene {
             0,
         );
 
+	let graph_drawer = GraphDrawer::new(
+	    ctx,
+	    numeric::Rect::new(300.0, 100.0, 700.0, 600.0),
+	    numeric::Rect::new(10.0, 10.0, 680.0, 580.0),
+	    vec![numeric::Vector2f::new(0.0, 0.0), numeric::Vector2f::new(10.0, 10.0), numeric::Vector2f::new(20.0, 20.0),
+		 numeric::Vector2f::new(50.0, 50.0)],
+	    6.0,
+	    ggraphics::Color::from_rgba_u32(0x00ff00ff),
+	    2.0,
+	    ggraphics::Color::from_rgba_u32(0xff),
+	    0
+	);
+
         ScenarioScene {
             scenario_event: scenario,
             scenario_menu: ScenarioMenu::new(ctx, numeric::Vector2f::new(300.0, 768.0)),
+	    graph_sample: graph_drawer,
             scene_transition: SceneID::Scenario,
             scene_transition_type: SceneTransition::Keep,
             clock: 0,
@@ -89,6 +107,7 @@ impl SceneManager for ScenarioScene {
     fn drawing_process(&mut self, ctx: &mut ggez::Context) {
         self.scenario_event.draw(ctx).unwrap();
         self.scenario_menu.draw(ctx).unwrap();
+	self.graph_sample.draw(ctx).unwrap();
     }
 
     fn post_process<'a>(&mut self, _ctx: &mut SuzuContext<'a>) -> SceneTransition {
