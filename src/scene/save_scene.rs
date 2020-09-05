@@ -1,8 +1,10 @@
+use ggez::graphics as ggraphics;
+
 use torifune::core::Clock;
 use torifune::graphics::drawable::*;
 use torifune::graphics::object::*;
 
-use crate::core::{SavableData, SuzuContext, TextureID, TileBatchTextureID};
+use crate::core::{SavableData, SuzuContext, TextureID, TileBatchTextureID, FontID};
 use crate::object::effect_object;
 use crate::object::save_scene_object::*;
 use crate::object::util_object::*;
@@ -61,18 +63,26 @@ impl SaveScene {
             0,
         ));
 
-	let texture = Box::new(UniTexture::new(
-            ctx.ref_texture(TextureID::ChoicePanel1),
-            numeric::Point2f::new(0.0, 0.0),
-            numeric::Vector2f::new(1.0, 1.0),
-            0.0,
-            0,
-        ));
+	let texture = Box::new(TextButtonTexture::new(
+	    ctx,
+	    numeric::Point2f::new(0.0, 0.0),
+	    "戻る".to_string(),
+	    FontInformation::new(
+		ctx.resource.get_font(FontID::Cinema),
+		numeric::Vector2f::new(24.0, 24.0),
+		ggraphics::Color::from_rgba_u32(0xf6e1d5ff)
+	    ),
+	    10.0,
+	    ggraphics::Color::from_rgba_u32(0x5a4f3fff),
+	    0)
+	);
+
+	
         let exit_button = SelectButton::new(
             ctx,
             numeric::Rect::new(
-                1000.0,
-                (crate::core::WINDOW_SIZE_Y as f32) - 80.0,
+                1050.0,
+                (crate::core::WINDOW_SIZE_Y as f32) - 120.0,
                 100.0,
                 50.0,
             ),

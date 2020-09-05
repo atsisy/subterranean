@@ -52,13 +52,19 @@ impl DrawableSaveEntry {
             0,
         );
 
-	let button_texture = Box::new(UniTexture::new(
-            ctx.ref_texture(TextureID::ChoicePanel1),
-            numeric::Point2f::new(0.0, 0.0),
-            numeric::Vector2f::new(1.0, 1.0),
-            0.0,
-            0,
-        ));
+	let button_texture = Box::new(TextButtonTexture::new(
+	    ctx,
+	    numeric::Point2f::new(0.0, 0.0),
+	    "記録".to_string(),
+	    FontInformation::new(
+		ctx.resource.get_font(FontID::Cinema),
+		numeric::Vector2f::new(18.0, 18.0),
+		ggraphics::Color::from_rgba_u32(0xf6e1d5ff)
+	    ),
+	    5.0,
+	    ggraphics::Color::from_rgba_u32(0x5a4f3fff),
+	    0)
+	);
 	
         let save_button = SelectButton::new(
             ctx,
@@ -66,26 +72,40 @@ impl DrawableSaveEntry {
 	    button_texture,
         );
 
-	let button_texture = Box::new(UniTexture::new(
-            ctx.ref_texture(TextureID::ChoicePanel2),
-            numeric::Point2f::new(0.0, 0.0),
-            numeric::Vector2f::new(1.0, 1.0),
-            0.0,
-            0,
-        ));
+	let button_texture = Box::new(TextButtonTexture::new(
+	    ctx,
+	    numeric::Point2f::new(0.0, 0.0),
+	    "削除".to_string(),
+	    FontInformation::new(
+		ctx.resource.get_font(FontID::Cinema),
+		numeric::Vector2f::new(18.0, 18.0),
+		ggraphics::Color::from_rgba_u32(0xf6e1d5ff)
+	    ),
+	    5.0,
+	    ggraphics::Color::from_rgba_u32(0x5a4f3fff),
+	    0)
+	);
+	
         let delete_button = SelectButton::new(
             ctx,
             numeric::Rect::new(110.0, pos_rect.h - 80.0, 60.0, 60.0),
 	    button_texture
         );
 
-	let button_texture = Box::new(UniTexture::new(
-            ctx.ref_texture(TextureID::ChoicePanel3),
-            numeric::Point2f::new(0.0, 0.0),
-            numeric::Vector2f::new(1.0, 1.0),
-            0.0,
-            0,
-        ));
+	let button_texture = Box::new(TextButtonTexture::new(
+	    ctx,
+	    numeric::Point2f::new(0.0, 0.0),
+	    "再開".to_string(),
+	    FontInformation::new(
+		ctx.resource.get_font(FontID::Cinema),
+		numeric::Vector2f::new(18.0, 18.0),
+		ggraphics::Color::from_rgba_u32(0xf6e1d5ff)
+	    ),
+	    5.0,
+	    ggraphics::Color::from_rgba_u32(0x5a4f3fff),
+	    0)
+	);
+	
         let load_button = SelectButton::new(
             ctx,
             numeric::Rect::new(190.0, pos_rect.h - 80.0, 60.0, 60.0),
@@ -367,7 +387,7 @@ impl SaveEntryTable {
         );
 
         let mut entries = Vec::new();
-        let mut pos_rect = numeric::Rect::new(50.0, 125.0, 288.0, 496.0);
+        let mut pos_rect = numeric::Rect::new(40.0, 100.0, 288.0, 496.0);
 
         let texture_vec = vec![
             TextureID::Paper4,
@@ -395,14 +415,14 @@ impl SaveEntryTable {
             0,
             FontInformation::new(
                 ctx.resource.get_font(FontID::Cinema),
-                numeric::Vector2f::new(40.0, 40.0),
+                numeric::Vector2f::new(36.0, 36.0),
                 ggraphics::Color::from_rgba_u32(0xff),
             ),
         );
 
         title_text.make_center(
             ctx.context,
-            numeric::Point2f::new(window_rect.w / 2.0, 70.0),
+            numeric::Point2f::new(window_rect.w / 2.0, 60.0),
         );
 
         let background = UniTexture::new(
