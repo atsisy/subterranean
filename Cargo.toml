@@ -8,6 +8,7 @@ edition = "2018"
 
 [dependencies]
 ggez = "0.5.1"
+mint = "0.5.5"
 toml = "0.5.6"
 collision = "0.20.1"
 serde = { version = "1.0.106", features = ["derive"] }
@@ -16,8 +17,8 @@ cgmath = "0.17.0"
 rand = "0.7.2"
 num = "*"
 number_to_jk = { git = "https://github.com/atsisy/number_to_jk.git" }
-tiled = { git = "https://github.com/mattyhall/rs-tiled" }
-torifune = { git = "https://github.com/atsisy/torifune.git" }
+tiled = { git = "https://github.com/mattyhall/rs-tiled", rev = "43b29c6c4644d7b5632e21c29aea6d1d87fe3b87" }
+torifune = { git = "https://github.com/atsisy/torifune.git", rev = "a3b0dc2a28b777f81232baea603932839bacd035" }
 pathfinding = "2.0.4"
 
 [profile.dev]
