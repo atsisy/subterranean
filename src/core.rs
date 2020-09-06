@@ -1209,11 +1209,26 @@ impl GameConfig {
     }
 }
 
+pub struct ProcessUtility<'ctx> {
+    pub redraw_request: &'ctx mut scene::DrawRequest,
+}
+
+impl<'ctx> ProcessUtility<'ctx> {
+    pub fn redraw(&mut self) {
+	*self.redraw_request = scene::DrawRequest::Draw;
+    }
+
+    pub fn redraw_or(&mut self, request: scene::DrawRequest) {
+	*self.redraw_request |= request;
+    }
+}
+
 pub struct SuzuContext<'ctx> {
     pub context: &'ctx mut ggez::Context,
     pub resource: &'ctx mut GameResource,
     pub savable_data: &'ctx mut SavableData,
     pub config: &'ctx mut GameConfig,
+    pub process_utility: ProcessUtility<'ctx>,
 }
 
 impl<'ctx> SuzuContext<'ctx> {
@@ -1300,6 +1315,8 @@ impl SceneController {
         let mut game_status = SavableData::new(game_data);
         let mut game_config = GameConfig::new_from_toml("./resources/default_game_config.toml");
 
+	let mut _redraw_request = scene::DrawRequest::Draw;
+	
         // let current_scene = scene::scenario_scene::ScenarioScene::new(&mut SuzuContext {
         //     context: ctx,
         //     resource: game_data,
@@ -1310,6 +1327,7 @@ impl SceneController {
             resource: game_data,
             savable_data: &mut game_status,
             config: &mut game_config,
+	    process_utility: ProcessUtility { redraw_request: &mut _redraw_request },
         });
 
         SceneController {
@@ -1336,6 +1354,7 @@ impl SceneController {
             resource: game_data,
             savable_data: &mut self.game_status,
             config: &mut self.game_config,
+	    process_utility: ProcessUtility { redraw_request: &mut self.redraw_request },
         };
 
         match next_scene_id {
@@ -1383,6 +1402,7 @@ impl SceneController {
             resource: game_data,
             savable_data: &mut self.game_status,
             config: &mut self.game_config,
+	    process_utility: ProcessUtility { redraw_request: &mut self.redraw_request },
         };
 
         let next_scene = match next_scene_id {
@@ -1405,11 +1425,12 @@ impl SceneController {
     fn run_pre_process(&mut self, ctx: &mut ggez::Context, game_data: &mut GameResource) {
         //println!("{}", perf_measure!(
         {
-            self.redraw_request |= self.current_scene.abs_mut().pre_process(&mut SuzuContext {
+            self.current_scene.abs_mut().pre_process(&mut SuzuContext {
                 context: ctx,
                 resource: game_data,
                 savable_data: &mut self.game_status,
                 config: &mut self.game_config,
+		process_utility: ProcessUtility { redraw_request: &mut self.redraw_request },
             });
         }
         //));
@@ -1436,6 +1457,7 @@ impl SceneController {
             resource: game_data,
             savable_data: &mut self.game_status,
             config: &mut self.game_config,
+	    process_utility: ProcessUtility { redraw_request: &mut self.redraw_request },
         };
 
         match self.current_scene.abs_mut().post_process(&mut suzu_ctx) {
@@ -1464,7 +1486,7 @@ impl SceneController {
         }
 
         if self.global_clock % 120 == 0 {
-            //println!("fps: {}", ggez::timer::fps(ctx));
+            println!("fps: {}", ggez::timer::fps(ctx));
         }
         self.global_clock += 1;
 	self.redraw_request = scene::DrawRequest::Skip;
@@ -1496,6 +1518,7 @@ impl SceneController {
                 resource: game_data,
                 savable_data: &mut self.game_status,
                 config: &mut self.game_config,
+		process_utility: ProcessUtility { redraw_request: &mut self.redraw_request },
             },
             self.key_map.real_to_virtual(keycode),
         );
@@ -1516,6 +1539,7 @@ impl SceneController {
                 resource: game_data,
                 savable_data: &mut self.game_status,
                 config: &mut self.game_config,
+		process_utility: ProcessUtility { redraw_request: &mut self.redraw_request },
             },
             self.key_map.real_to_virtual(keycode),
         );
@@ -1536,6 +1560,7 @@ impl SceneController {
                 resource: game_data,
                 savable_data: &mut self.game_status,
                 config: &mut self.game_config,
+		process_utility: ProcessUtility { redraw_request: &mut self.redraw_request },
             },
             point,
             offset,
@@ -1557,6 +1582,7 @@ impl SceneController {
                 resource: game_data,
                 savable_data: &mut self.game_status,
                 config: &mut self.game_config,
+		process_utility: ProcessUtility { redraw_request: &mut self.redraw_request },
             },
             button,
             point,
@@ -1576,6 +1602,7 @@ impl SceneController {
                 resource: game_data,
                 savable_data: &mut self.game_status,
                 config: &mut self.game_config,
+		process_utility: ProcessUtility { redraw_request: &mut self.redraw_request },
             },
             button,
             point,
@@ -1596,6 +1623,7 @@ impl SceneController {
                 resource: game_data,
                 savable_data: &mut self.game_status,
                 config: &mut self.game_config,
+		process_utility: ProcessUtility { redraw_request: &mut self.redraw_request },
             },
             numeric::Point2f::new(point.x, point.y),
             x,
@@ -1632,11 +1660,12 @@ impl<'data> ggez::event::EventHandler for State<'data> {
 	    scene::DrawRequest::Draw | scene::DrawRequest::InitDraw => {
 		graphics::clear(ctx, [0.0, 0.0, 0.0, 0.0].into());
 		self.scene_controller.run_drawing_process(ctx);
-		graphics::present(ctx)?;
 	    },
 	    _ => (),
 	}
 
+	graphics::present(ctx)?;
+	
         self.scene_controller.run_post_process(ctx, self.game_data);
 
         Ok(())
