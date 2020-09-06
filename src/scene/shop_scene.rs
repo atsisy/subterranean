@@ -996,6 +996,9 @@ impl ShopScene {
         self.customer_request_queue.pop_front()
     }
 
+    ///
+    /// # 再描画要求有り
+    ///
     pub fn update_shop_clock_regular<'a>(&mut self, ctx: &mut SuzuContext<'a>, t: Clock) {
         if self.get_current_clock() % 20 == 0 {
             self.shop_clock.add_minute(1);
@@ -1012,6 +1015,8 @@ impl ShopScene {
                     t,
                 );
             }
+
+	    ctx.process_utility.redraw();
         }
     }
 
@@ -1019,6 +1024,9 @@ impl ShopScene {
         self.begining_save_data.clone()
     }
 
+    ///
+    /// # 再描画要求有り
+    ///
     pub fn check_shop_clock_regular<'a>(&mut self, ctx: &mut SuzuContext<'a>, t: Clock) {
         if self.shop_clock.equals(18, 0) {
             self.event_list.add_event(
@@ -1030,6 +1038,7 @@ impl ShopScene {
             );
 
             self.scene_transition_close_effect(ctx, t);
+	    ctx.process_utility.redraw();
         }
     }
 
@@ -1169,10 +1178,12 @@ impl SceneManager for ShopScene {
             .mouse_wheel_scroll_action(ctx, point, x, y);
     }
 
-    fn pre_process<'a>(&mut self, ctx: &mut SuzuContext<'a>) -> DrawRequest {
+    fn pre_process<'a>(&mut self, ctx: &mut SuzuContext<'a>) {
         let t = self.get_current_clock();
 
-        flush_delay_event!(self, self.event_list, ctx, t);
+        if flush_delay_event!(self, self.event_list, ctx, t) > 0 {
+	    ctx.process_utility.redraw();
+	}
 
         if !self.shop_menu.first_menu_is_open() && !self.shop_special_object.is_enable_now() {
             self.random_add_customer(ctx);
@@ -1237,6 +1248,8 @@ impl SceneManager for ShopScene {
 
             // マップ描画の準備
             self.map.tile_map.update(ctx.context, t);
+
+	    ctx.process_utility.redraw();
         }
 
         // 時刻の更新
@@ -1244,22 +1257,25 @@ impl SceneManager for ShopScene {
         self.check_shop_clock_regular(ctx, t);
 
         // 暗転の描画
-        self.dark_effect_panel.run_effect(ctx.context, t);
+        self.dark_effect_panel.run_effect(ctx, t);
 
+	// 通知の更新
         self.notification_area.update(ctx, t);
 
         if let Some(transition_effect) = self.scene_transition_effect.as_mut() {
             transition_effect.effect(ctx.context, t);
+	    ctx.process_utility.redraw();
         }
 
         // select_uiなどの更新
-        flush_delay_event!(self, self.event_list, ctx, t);
+        if flush_delay_event!(self, self.event_list, ctx, t) > 0 {
+	    ctx.process_utility.redraw();
+	}
+	
         self.shop_special_object.update(ctx, t);
 
         // メニューの更新
-        self.shop_menu.update(ctx.context, t);
-
-	DrawRequest::Draw
+        self.shop_menu.update(ctx, t);
     }
 
     fn drawing_process(&mut self, ctx: &mut ggez::Context) {

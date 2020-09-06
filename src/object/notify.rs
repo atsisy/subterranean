@@ -283,12 +283,18 @@ impl NotificationArea {
         ));
     }
 
+    ///
+    /// # 再描画要求有り
+    ///
     pub fn update<'a>(&mut self, ctx: &mut SuzuContext<'a>, t: Clock) {
-        flush_delay_event!(self, self.event_list, ctx, t);
+        if flush_delay_event!(self, self.event_list, ctx, t) > 0 {
+	    ctx.process_utility.redraw();
+	}
 
         if let Some(area) = self.area.as_mut() {
             area.move_with_func(t);
             area.effect(ctx.context, t);
+	    ctx.process_utility.redraw();
         }
     }
 }

@@ -268,7 +268,7 @@ impl SceneManager for TaskScene {
             .set_last_up(button, point, self.get_current_clock());
     }
 
-    fn pre_process<'a>(&mut self, ctx: &mut SuzuContext<'a>) -> DrawRequest {
+    fn pre_process<'a>(&mut self, ctx: &mut SuzuContext<'a>) {
         let t = self.get_current_clock();
 
         self.task_table.update(ctx, self.get_current_clock());
@@ -312,8 +312,7 @@ impl SceneManager for TaskScene {
         }
 
 	flush_delay_event!(self, self.event_list, ctx, self.get_current_clock());
-
-	DrawRequest::Draw
+	ctx.process_utility.redraw();
     }
 
     fn drawing_process(&mut self, ctx: &mut ggez::Context) {

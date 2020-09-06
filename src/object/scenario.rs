@@ -1371,6 +1371,9 @@ impl ScenarioEvent {
 
                     // どこまで表示したかを更新
                     scenario_text.set_current_segment(current_segment);
+
+		    // 再描画要求
+		    ctx.process_utility.redraw();
                 }
             }
             ScenarioElement::ChoiceSwitch(choice_pattern) => {
@@ -1391,6 +1394,9 @@ impl ScenarioEvent {
                         ));
                     // 状態を選択中に変更
                     self.status = ScenarioEventStatus::Choice;
+
+		    // 再描画要求
+		    ctx.process_utility.redraw();
                 }
             }
             ScenarioElement::SceneTransition(transition_data) => {
@@ -1398,6 +1404,9 @@ impl ScenarioEvent {
                 self.status = ScenarioEventStatus::SceneTransition;
                 self.transition_scene = Some(transition_data.0);
                 self.transition_type = Some(transition_data.1);
+
+		// 再描画要求
+		ctx.process_utility.redraw();
             }
         }
     }

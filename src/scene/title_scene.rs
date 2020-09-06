@@ -187,25 +187,27 @@ impl SceneManager for TitleScene {
         }
     }
 
-    fn pre_process<'a>(&mut self, ctx: &mut SuzuContext<'a>) -> DrawRequest {
+    fn pre_process<'a>(&mut self, ctx: &mut SuzuContext<'a>) {
         let t = self.get_current_clock();
 
         if let Some(transition_effect) = self.scene_transition_effect.as_mut() {
             transition_effect.effect(ctx.context, t);
+	    ctx.process_utility.redraw();
         }
 
         if let Some(content) = self.current_title_contents.as_mut() {
             match content {
                 TitleContents::TitleSoundPlayer(player) => {
                     player.move_with_func(t);
+		    ctx.process_utility.redraw();
                 }
                 _ => (),
             }
         }
 
-        flush_delay_event!(self, self.event_list, ctx, self.get_current_clock());
-
-	DrawRequest::Draw
+        if flush_delay_event!(self, self.event_list, ctx, self.get_current_clock()) > 0 {
+	    ctx.process_utility.redraw();
+	}
     }
 
     fn drawing_process(&mut self, ctx: &mut ggez::Context) {
@@ -218,6 +220,8 @@ impl SceneManager for TitleScene {
         if let Some(transition_effect) = self.scene_transition_effect.as_mut() {
             transition_effect.draw(ctx).unwrap();
         }
+
+	println!("draw");
     }
 
     fn post_process<'a>(&mut self, _ctx: &mut SuzuContext<'a>) -> SceneTransition {

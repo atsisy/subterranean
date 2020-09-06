@@ -24,6 +24,7 @@ use crate::scene::DelayEventList;
 use crate::set_table_frame_cell_center;
 
 use crate::flush_delay_event;
+use crate::flush_delay_event_and_redraw_check;
 use crate::parse_toml_file;
 
 use number_to_jk::number_to_jk;
@@ -1398,11 +1399,15 @@ impl ShelvingDetailContents {
             t,
         );
     }
-}
 
-impl Updatable for ShelvingDetailContents {
-    fn update(&mut self, _: &mut ggez::Context, t: Clock) {
-        self.canvas.move_with_func(t);
+    ///
+    /// # 再描画要求有り
+    ///
+    pub fn move_and_effect<'a>(&mut self, ctx: &mut SuzuContext<'a>, t: Clock) {
+	if !self.canvas.is_stop() {
+	    self.canvas.move_with_func(t);
+	    ctx.process_utility.redraw();
+	}
     }
 }
 
@@ -1732,11 +1737,15 @@ impl ShopMenu {
     pub fn update_menu_contents<'a>(&mut self, ctx: &mut SuzuContext<'a>) {
         self.menu_contents.update_contents(ctx);
     }
-}
 
-impl Updatable for ShopMenu {
-    fn update(&mut self, _: &mut ggez::Context, t: Clock) {
-        self.canvas.move_with_func(t);
+    ///
+    /// # 再描画要求有り
+    ///
+    fn move_and_effect<'a>(&mut self, ctx: &mut SuzuContext<'a>, t: Clock) {
+	if !self.canvas.is_stop() {
+	    self.canvas.move_with_func(t);
+	    ctx.process_utility.redraw();
+	}
     }
 }
 
@@ -1850,11 +1859,12 @@ impl ShopDetailMenuContents {
     pub fn set_slide_contents(&mut self, contents_switch: ShopDetailMenuSymbol) {
         self.contents_switch = contents_switch;
     }
-}
 
-impl Updatable for ShopDetailMenuContents {
-    fn update(&mut self, ctx: &mut ggez::Context, t: Clock) {
-        self.shelving_info.update(ctx, t);
+    ///
+    /// # 再描画要求有り
+    ///
+    pub fn move_and_effect<'a>(&mut self, ctx: &mut SuzuContext<'a>, t: Clock) {
+        self.shelving_info.move_and_effect(ctx, t);
     }
 }
 
@@ -2117,12 +2127,13 @@ impl ShopMenuMaster {
             _ => (),
         }
     }
-}
 
-impl Updatable for ShopMenuMaster {
-    fn update(&mut self, ctx: &mut ggez::Context, t: Clock) {
-        self.first_menu.update(ctx, t);
-        self.detail_menu.update(ctx, t);
+    ///
+    /// # 再描画要求有り
+    ///
+    pub fn update<'a>(&mut self, ctx: &mut SuzuContext<'a>, t: Clock) {
+        self.first_menu.move_and_effect(ctx, t);
+        self.detail_menu.move_and_effect(ctx, t);
     }
 }
 
@@ -2345,19 +2356,25 @@ impl ShopSpecialObject {
         }
     }
 
+    ///
+    /// # 再描画要求有り
+    ///
     pub fn update<'a>(&mut self, ctx: &mut SuzuContext<'a>, t: Clock) {
-        flush_delay_event!(self, self.event_list, ctx, t);
+        flush_delay_event_and_redraw_check!(self, self.event_list, ctx, t);
 
         if let Some(ui) = self.shelving_select_ui.as_mut() {
             ui.move_with_func(t);
+	    ctx.process_utility.redraw();
         }
 
         if let Some(storing_ui) = self.storing_select_ui.as_mut() {
             storing_ui.move_with_func(t);
+	    ctx.process_utility.redraw();
         }
 
 	if let Some(ui) = self.new_books_viewer.as_mut() {
             ui.move_with_func(t);
+	    ctx.process_utility.redraw();
         }
     }
 }

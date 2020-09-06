@@ -200,8 +200,14 @@ impl DarkEffectPanel {
         )]);
     }
 
-    pub fn run_effect(&mut self, ctx: &mut ggez::Context, t: Clock) {
-        self.canvas.effect(ctx, t);
+    ///
+    /// # 再描画要求有り
+    ///
+    pub fn run_effect<'a>(&mut self, ctx: &mut SuzuContext<'a>, t: Clock) {
+	if !self.canvas.is_empty_effect() {
+	    ctx.process_utility.redraw();
+	    self.canvas.effect(ctx.context, t);
+	}
     }
 }
 

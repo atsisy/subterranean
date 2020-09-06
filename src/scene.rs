@@ -120,7 +120,7 @@ pub trait SceneManager {
 
     fn scene_popping_return_handler<'a>(&mut self, _: &mut SuzuContext<'a>) {}
 
-    fn pre_process<'a>(&mut self, _ctx: &mut SuzuContext<'a>) -> DrawRequest { DrawRequest::Skip }
+    fn pre_process<'a>(&mut self, _ctx: &mut SuzuContext<'a>);
 
     fn drawing_process(&mut self, ctx: &mut ggez::Context);
     fn post_process<'a>(&mut self, ctx: &mut SuzuContext<'a>) -> SceneTransition;
@@ -140,7 +140,7 @@ impl NullScene {
 }
 
 impl SceneManager for NullScene {
-    fn pre_process<'a>(&mut self, _ctx: &mut SuzuContext<'a>) -> DrawRequest { DrawRequest::Skip }
+    fn pre_process<'a>(&mut self, _ctx: &mut SuzuContext<'a>) {}
 
     fn drawing_process(&mut self, _ctx: &mut ggez::Context) {}
     fn post_process<'a>(&mut self, _ctx: &mut SuzuContext<'a>) -> SceneTransition {
@@ -241,5 +241,14 @@ macro_rules! flush_delay_event {
         }
 
 	macro_loop_count
+    }};
+}
+
+#[macro_export]
+macro_rules! flush_delay_event_and_redraw_check {
+    ($slf: expr, $event_list: expr, $ctx: expr, $t: expr) => {{
+	if flush_delay_event!($slf, $event_list, $ctx, $t) > 0 {
+	    $ctx.process_utility.redraw();
+	}
     }};
 }
