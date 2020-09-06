@@ -5,7 +5,7 @@ use ggez::graphics as ggraphics;
 use ggez::input::mouse::MouseButton;
 
 use sub_screen::SubScreen;
-use torifune::core::{Clock, Updatable};
+use torifune::core::Clock;
 use torifune::debug;
 use torifune::device::*;
 use torifune::graphics::drawable::*;

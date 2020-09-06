@@ -19,6 +19,7 @@ use super::*;
 use crate::core::map_parser as mp;
 use crate::core::{FontID, SavableData, SuzuContext, TileBatchTextureID, BookInformation};
 use crate::flush_delay_event;
+use crate::flush_delay_event_and_redraw_check;
 use crate::object::effect_object;
 use crate::object::map_object::*;
 use crate::object::notify;
@@ -1180,10 +1181,8 @@ impl SceneManager for ShopScene {
 
     fn pre_process<'a>(&mut self, ctx: &mut SuzuContext<'a>) {
         let t = self.get_current_clock();
-
-        if flush_delay_event!(self, self.event_list, ctx, t) > 0 {
-	    ctx.process_utility.redraw();
-	}
+	
+	flush_delay_event_and_redraw_check!(self, self.event_list, ctx, t);
 
         if !self.shop_menu.first_menu_is_open() && !self.shop_special_object.is_enable_now() {
             self.random_add_customer(ctx);
@@ -1267,10 +1266,7 @@ impl SceneManager for ShopScene {
 	    ctx.process_utility.redraw();
         }
 
-        // select_uiなどの更新
-        if flush_delay_event!(self, self.event_list, ctx, t) > 0 {
-	    ctx.process_utility.redraw();
-	}
+	flush_delay_event_and_redraw_check!(self, self.event_list, ctx, t);
 	
         self.shop_special_object.update(ctx, t);
 

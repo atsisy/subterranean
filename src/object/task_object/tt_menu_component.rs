@@ -17,6 +17,7 @@ use crate::core;
 use crate::core::*;
 use crate::core::{FontID, GensoDate, TextureID, TileBatchTextureID};
 use crate::flush_delay_event;
+use crate::flush_delay_event_and_redraw_check;
 use crate::object::effect;
 use crate::object::util_object::*;
 use crate::scene::*;
@@ -1813,15 +1814,27 @@ impl CustomerMenuGroup {
         self.text_balloon_ok_menu = Some(ok_menu_area);
     }
 
+    ///
+    /// # 再描画要求有り
+    ///
     pub fn update<'a>(&mut self, ctx: &mut SuzuContext<'a>, t: Clock) {
-        flush_delay_event!(self, self.event_list, ctx, t);
+        flush_delay_event_and_redraw_check!(self, self.event_list, ctx, t);
 
         if let Some(customer_question_menu) = self.customer_question_menu.as_mut() {
-            customer_question_menu.move_with_func(t);
+	    if !customer_question_menu.is_stop() || !customer_question_menu.is_empty_effect() {
+		ctx.process_utility.redraw();
+	    }
+
+	    customer_question_menu.move_with_func(t);
             customer_question_menu.effect(ctx.context, t);
+
         }
 
         if let Some(ok_menu) = self.text_balloon_ok_menu.as_mut() {
+	    if !ok_menu.is_stop() || !ok_menu.is_empty_effect() {
+		ctx.process_utility.redraw();
+	    }
+	    
             ok_menu.move_with_func(t);
             ok_menu.effect(ctx.context, t);
         }
@@ -2475,37 +2488,46 @@ impl RecordBookMenuGroup {
         }
     }
 
+    ///
+    /// # 再描画要求有り
+    ///
     pub fn update<'a>(&mut self, ctx: &mut SuzuContext<'a>, t: Clock) {
-        flush_delay_event!(self, self.event_list, ctx, t);
+        flush_delay_event_and_redraw_check!(self, self.event_list, ctx, t);
 
         if let Some(book_status_menu) = self.book_status_menu.as_mut() {
             book_status_menu.move_with_func(t);
             book_status_menu.effect(ctx.context, t);
+	    ctx.process_utility.redraw();
         }
 
         if let Some(book_title_menu) = self.book_title_menu.as_mut() {
             book_title_menu.move_with_func(t);
             book_title_menu.effect(ctx.context, t);
+	    ctx.process_utility.redraw();
         }
 
         if let Some(customer_name_menu) = self.customer_name_menu.as_mut() {
             customer_name_menu.move_with_func(t);
             customer_name_menu.effect(ctx.context, t);
+	    ctx.process_utility.redraw();
         }
 
         if let Some(date_menu) = self.date_menu.as_mut() {
             date_menu.move_with_func(t);
             date_menu.effect(ctx.context, t);
+	    ctx.process_utility.redraw();
         }
 
         if let Some(payment_menu) = self.payment_menu.as_mut() {
             payment_menu.move_with_func(t);
             payment_menu.effect(ctx.context, t);
+	    ctx.process_utility.redraw();
         }
 
 	if let Some(msg_menu) = self.simple_message_menu.as_mut() {
 	    msg_menu.move_with_func(t);
 	    msg_menu.effect(ctx.context, t);
+	    ctx.process_utility.redraw();
 	}
     }
 }
@@ -2987,10 +3009,16 @@ impl OnDeskMenuGroup {
         self.desk_book_menu = Some(dd_area);
     }
 
+    ///
+    /// # 再描画要求有り
+    ///
     pub fn update<'a>(&mut self, ctx: &mut SuzuContext<'a>, t: Clock) {
-        flush_delay_event!(self, self.event_list, ctx, t);
+        flush_delay_event_and_redraw_check!(self, self.event_list, ctx, t);
 
         if let Some(desk_book_menu) = self.desk_book_menu.as_mut() {
+	    if !desk_book_menu.is_stop() || !desk_book_menu.is_empty_effect() {
+		ctx.process_utility.redraw();
+	    }
             desk_book_menu.move_with_func(t);
             desk_book_menu.effect(ctx.context, t);
         }

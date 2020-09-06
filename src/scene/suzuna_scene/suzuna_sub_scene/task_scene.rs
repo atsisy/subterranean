@@ -17,7 +17,7 @@ use crate::perf_measure;
 
 use crate::flush_delay_event;
 use crate::object::task_object::tt_main_component::*;
-use crate::object::task_object::tt_sub_component::*;
+use crate::{flush_delay_event_and_redraw_check, object::task_object::tt_sub_component::*};
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum TaskSceneStatus {
@@ -296,6 +296,8 @@ impl SceneManager for TaskScene {
                     t + 150,
                 );
             }
+	    
+	    ctx.process_utility.redraw();
         }
 
         if self.status == TaskSceneStatus::CustomerFree {
@@ -305,21 +307,23 @@ impl SceneManager for TaskScene {
             }
             self.customer_request = None;
             self.status = TaskSceneStatus::CustomerWait;
+
+	    ctx.process_utility.redraw();
         }
 
         if let Some(transition_effect) = self.scene_transition_effect.as_mut() {
             transition_effect.effect(ctx.context, t);
+	    ctx.process_utility.redraw();
         }
 
-	flush_delay_event!(self, self.event_list, ctx, self.get_current_clock());
-	ctx.process_utility.redraw();
+	flush_delay_event_and_redraw_check!(self, self.event_list, ctx, self.get_current_clock());
     }
 
     fn drawing_process(&mut self, ctx: &mut ggez::Context) {
 	//println!("{}", perf_measure!(
 	    {
         self.task_table.draw(ctx).unwrap();
-
+		
         if let Some(transition_effect) = self.scene_transition_effect.as_mut() {
             transition_effect.draw(ctx).unwrap();
         }

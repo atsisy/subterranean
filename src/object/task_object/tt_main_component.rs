@@ -18,6 +18,7 @@ use torifune::roundup2f;
 use torifune::{debug, numeric};
 
 use crate::flush_delay_event;
+use crate::flush_delay_event_and_redraw_check;
 use crate::object::util_object::*;
 use crate::object::{effect, move_fn};
 use crate::scene::*;
@@ -244,12 +245,16 @@ impl DeskObjects {
         }
     }
 
+    ///
+    /// # 再描画要求有り
+    ///
     pub fn update<'a>(&mut self, ctx: &mut SuzuContext<'a>, t: Clock) {
-        flush_delay_event!(self, self.event_list, ctx, t);
+        flush_delay_event_and_redraw_check!(self, self.event_list, ctx, t);
 
         for p in self.desk_objects.get_raw_container_mut() {
 	    if !p.as_movable_object().is_stop() || !p.as_effectable_object().is_empty_effect() {
 		self.draw_request = DrawRequest::Draw;
+		ctx.process_utility.redraw();
 	    }
 	    
             p.as_movable_object_mut().move_with_func(t);
@@ -1193,12 +1198,16 @@ impl SuzuMiniSight {
 	self.draw_request = DrawRequest::Draw;
     }
 
+    ///
+    /// # 再描画要求有り
+    ///
     pub fn update<'a>(&mut self, ctx: &mut SuzuContext<'a>, t: Clock) {
         self.dropping.retain(|d| !d.as_movable_object().is_stop());
 
         for d in &mut self.dropping {
 	    if !d.as_movable_object().is_stop() || !d.as_effectable_object().is_empty_effect() {
 		self.draw_request = DrawRequest::Draw;
+		ctx.process_utility.redraw();
 	    }
 	    d.as_movable_object_mut().move_with_func(t);
             d.as_effectable_object().effect(ctx.context, t);
@@ -1207,6 +1216,7 @@ impl SuzuMiniSight {
         for d in &mut self.dropping_to_desk {
 	    if !d.as_movable_object().is_stop() || !d.as_effectable_object().is_empty_effect() {
 		self.draw_request = DrawRequest::Draw;
+		ctx.process_utility.redraw();
 	    }
             d.as_movable_object_mut().move_with_func(t);
             d.as_effectable_object().effect(ctx.context, t);
@@ -1214,6 +1224,7 @@ impl SuzuMiniSight {
 
         if self.silhouette.run_effect(ctx, t) == DrawRequest::Draw {
 	    self.draw_request = DrawRequest::Draw;
+	    ctx.process_utility.redraw();
 	}
     }
 
@@ -1230,7 +1241,6 @@ impl SuzuMiniSight {
                 .is_stop();
             if stop {
 		self.draw_request = DrawRequest::Draw;
-                drop_to_desk.push(self.dropping_to_desk.swap_remove(index));
             }
             index += 1;
         }
@@ -1561,14 +1571,18 @@ impl ShelvingBookBox {
         }
     }
 
-    pub fn update(&mut self, ctx: &mut ggez::Context, t: Clock) {
+    ///
+    /// # 再描画要求有り
+    ///
+    pub fn update<'a>(&mut self, ctx: &mut SuzuContext<'a>, t: Clock) {
         for p in &mut self.shelved {
 	    if !p.as_movable_object().is_stop() || !p.as_effectable_object().is_empty_effect() {
 		self.draw_request = DrawRequest::Draw;
+		ctx.process_utility.redraw();
 	    }
 	    
 	    p.as_movable_object_mut().move_with_func(t);
-            p.as_effectable_object().effect(ctx, t);
+            p.as_effectable_object().effect(ctx.context, t);
         }
     }
 
@@ -1759,10 +1773,17 @@ impl KosuzuPhrase {
         }
     }
 
+    ///
+    /// # 再描画要求有り
+    ///
     pub fn update<'a>(&mut self, ctx: &mut SuzuContext<'a>, t: Clock) {
-        flush_delay_event!(self, self.event_list, ctx, t);
+        flush_delay_event_and_redraw_check!(self, self.event_list, ctx, t);
 
         if let Some(balloon) = self.text_balloon.as_mut() {
+	    if !balloon.is_stop() || !balloon.is_empty_effect() {
+		ctx.process_utility.redraw();
+	    }
+	    
             balloon.effect(ctx.context, t);
             balloon.move_with_func(t);
         }
@@ -2265,10 +2286,20 @@ impl TaskInfoPanel {
 	self.draw_request = DrawRequest::Draw;
     }
 
-    pub fn update(&mut self, t: Clock) {
+    ///
+    /// # 再描画要求有り
+    ///
+    pub fn update<'a>(&mut self, ctx: &mut SuzuContext<'a>, t: Clock) {
         let go_draw = self.contents.update(t);
 	if self.draw_request != DrawRequest::InitDraw {
 	    self.draw_request |= go_draw;
+	}
+
+	match self.draw_request {
+	    DrawRequest::Draw | DrawRequest::InitDraw => {
+		ctx.process_utility.redraw();
+	    },
+	    _ => (),
 	}
     }
 }

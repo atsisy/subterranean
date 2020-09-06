@@ -21,6 +21,7 @@ use torifune::impl_texture_object_for_wrapped;
 use torifune::numeric;
 
 use crate::flush_delay_event;
+use crate::flush_delay_event_and_redraw_check;
 use crate::object::util_object::*;
 use crate::object::{effect, move_fn};
 use crate::scene::*;
@@ -421,12 +422,19 @@ impl TaskTable {
         numeric::Point2f::new(rpoint.x, 0.0)
     }
 
+    ///
+    /// # 再描画要求有り
+    ///
     fn check_sight_drop_to_desk<'a>(&mut self, ctx: &mut SuzuContext<'a>, t: Clock) {
         let converted = self.sight.check_drop_desk();
         if converted.len() == 0 {
             return ();
         }
 
+	// convertedの要素が複数あるため、再描画要求を行う
+	// convertedの要素はDeskへの移動でエフェクトがかかる
+	ctx.process_utility.redraw();
+	
         let min = self.desk.desk_objects.get_minimum_depth();
         let converted = converted
             .into_iter()
@@ -455,21 +463,23 @@ impl TaskTable {
         self.desk.add_customer_object_vec(converted);
     }
 
+    ///
+    /// # 再描画要求有り
+    ///
     pub fn update<'a>(&mut self, ctx: &mut SuzuContext<'a>, t: Clock) {
-        flush_delay_event!(self, self.event_list, ctx, t);
+        flush_delay_event_and_redraw_check!(self, self.event_list, ctx, t);
 
         self.sight.update(ctx, t);
         self.desk.update(ctx, t);
-        self.shelving_box.update(ctx.context, t);
+        self.shelving_box.update(ctx, t);
         self.check_sight_drop_to_desk(ctx, t);
-        self.borrowing_record_book.update(t);
+        self.borrowing_record_book.update(ctx, t);
         self.record_book_menu.update(ctx, t);
         self.customer_silhouette_menu.update(ctx, t);
         self.on_desk_menu.update(ctx, t);
         self.kosuzu_phrase.update(ctx, t);
-        self.info_panel.update(t);
-
-        self.check_task_is_done();
+        self.info_panel.update(ctx, t);
+        self.check_task_is_done(ctx);
     }
 
     pub fn finish_customer_event(&mut self, now: Clock) {
@@ -648,16 +658,23 @@ impl TaskTable {
         book_count == 0
     }
 
-    fn check_task_is_done(&mut self) {
+    ///
+    /// # 再描画要求有り
+    ///
+    fn check_task_is_done<'a>(&mut self, ctx: &mut SuzuContext<'a>) {
         if self.current_customer_request.is_none() {
             self.task_is_done = false;
             return;
         }
-
+	
         self.task_is_done = match self.current_customer_request.as_ref().unwrap() {
             CustomerRequest::Borrowing(_) => self.check_borrowing_task_is_done(),
             CustomerRequest::Returning(_) => self.check_returning_task_is_done(),
         };
+
+	if self.task_is_done {
+	    ctx.process_utility.redraw();
+	}
     }
 
     pub fn get_shelving_box(&self) -> &ShelvingBookBox {
