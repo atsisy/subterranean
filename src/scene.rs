@@ -49,6 +49,37 @@ impl FromStr for SceneID {
     }
 }
 
+#[derive(Copy, Clone, Eq, PartialEq)]
+pub enum DrawRequest {
+    InitDraw,
+    Draw,
+    Skip,
+}
+
+impl std::ops::BitOr for DrawRequest {
+    type Output = Self;
+
+    fn bitor(self, rhs: Self) -> Self::Output {
+	match self {
+	    Self::InitDraw => {
+		DrawRequest::InitDraw
+	    },
+	    Self::Draw => {
+		DrawRequest::InitDraw
+	    },
+	    Self::Skip => {
+		rhs
+	    },
+	}
+    }
+}
+
+impl std::ops::BitOrAssign for DrawRequest {
+    fn bitor_assign(&mut self, rhs: Self) {
+	*self = *self | rhs;
+    }
+}
+
 pub trait SceneManager {
     fn key_down_event<'a>(&mut self, _: &mut SuzuContext<'a>, _vkey: tdev::VirtualKey) {}
 
@@ -89,7 +120,7 @@ pub trait SceneManager {
 
     fn scene_popping_return_handler<'a>(&mut self, _: &mut SuzuContext<'a>) {}
 
-    fn pre_process<'a>(&mut self, ctx: &mut SuzuContext<'a>);
+    fn pre_process<'a>(&mut self, _ctx: &mut SuzuContext<'a>) -> DrawRequest { DrawRequest::Skip }
 
     fn drawing_process(&mut self, ctx: &mut ggez::Context);
     fn post_process<'a>(&mut self, ctx: &mut SuzuContext<'a>) -> SceneTransition;
@@ -109,7 +140,7 @@ impl NullScene {
 }
 
 impl SceneManager for NullScene {
-    fn pre_process<'a>(&mut self, _ctx: &mut SuzuContext<'a>) {}
+    fn pre_process<'a>(&mut self, _ctx: &mut SuzuContext<'a>) -> DrawRequest { DrawRequest::Skip }
 
     fn drawing_process(&mut self, _ctx: &mut ggez::Context) {}
     fn post_process<'a>(&mut self, _ctx: &mut SuzuContext<'a>) -> SceneTransition {

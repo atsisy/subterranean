@@ -23,6 +23,7 @@ use crate::set_table_frame_cell_center;
 
 use super::Clickable;
 use crate::core::*;
+use crate::scene::DrawRequest;
 
 use number_to_jk::number_to_jk;
 

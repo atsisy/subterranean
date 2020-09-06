@@ -333,16 +333,16 @@ impl SceneManager for SuzunaSubScene {
         }
     }
 
-    fn pre_process<'a>(&mut self, ctx: &mut SuzuContext<'a>) {
+    fn pre_process<'a>(&mut self, ctx: &mut SuzuContext<'a>) -> DrawRequest {
         match self.scene_status {
             SuzunaSceneStatus::Shop => {
-                self.shop_scene.as_mut().unwrap().pre_process(ctx);
+                self.shop_scene.as_mut().unwrap().pre_process(ctx)
             }
             SuzunaSceneStatus::DeskWork => {
-                self.desk_work_scene.as_mut().unwrap().pre_process(ctx);
+                self.desk_work_scene.as_mut().unwrap().pre_process(ctx)
             }
             SuzunaSceneStatus::DayResult => {
-                self.day_result_scene.as_mut().unwrap().pre_process(ctx);
+                self.day_result_scene.as_mut().unwrap().pre_process(ctx)
             }
         }
     }

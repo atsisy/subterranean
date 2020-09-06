@@ -92,8 +92,8 @@ impl SceneManager for SuzunaScene {
         self.sub_scene.mouse_wheel_event(ctx, point, x, y);
     }
 
-    fn pre_process<'a>(&mut self, ctx: &mut SuzuContext<'a>) {
-        self.sub_scene.pre_process(ctx);
+    fn pre_process<'a>(&mut self, ctx: &mut SuzuContext<'a>) -> DrawRequest {
+        self.sub_scene.pre_process(ctx)
     }
 
     fn drawing_process(&mut self, ctx: &mut ggez::Context) {

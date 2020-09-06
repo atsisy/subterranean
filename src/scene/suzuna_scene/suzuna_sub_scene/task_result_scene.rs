@@ -190,7 +190,7 @@ impl SceneManager for TaskResultScene {
             .set_last_up(button, point, self.get_current_clock());
     }
 
-    fn pre_process<'a>(&mut self, ctx: &mut SuzuContext<'a>) {
+    fn pre_process<'a>(&mut self, ctx: &mut SuzuContext<'a>) -> DrawRequest {
         let t = self.get_current_clock();
 
         flush_delay_event!(self, self.event_list, ctx, t);
@@ -201,6 +201,8 @@ impl SceneManager for TaskResultScene {
         if let Some(effect) = self.scene_transition_effect.as_mut() {
             effect.effect(ctx.context, t);
         }
+
+	DrawRequest::Draw
     }
 
     fn drawing_process(&mut self, ctx: &mut ggez::Context) {

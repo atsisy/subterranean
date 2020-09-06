@@ -1169,7 +1169,7 @@ impl SceneManager for ShopScene {
             .mouse_wheel_scroll_action(ctx, point, x, y);
     }
 
-    fn pre_process<'a>(&mut self, ctx: &mut SuzuContext<'a>) {
+    fn pre_process<'a>(&mut self, ctx: &mut SuzuContext<'a>) -> DrawRequest {
         let t = self.get_current_clock();
 
         flush_delay_event!(self, self.event_list, ctx, t);
@@ -1258,6 +1258,8 @@ impl SceneManager for ShopScene {
 
         // メニューの更新
         self.shop_menu.update(ctx.context, t);
+
+	DrawRequest::Draw
     }
 
     fn drawing_process(&mut self, ctx: &mut ggez::Context) {

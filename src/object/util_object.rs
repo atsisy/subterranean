@@ -6,10 +6,10 @@ use ggez::graphics as ggraphics;
 use sub_screen::SubScreen;
 use torifune::core::Clock;
 use torifune::graphics::drawable::*;
+use torifune::graphics::object::shape::MeshShape;
 use torifune::graphics::object::sub_screen;
 use torifune::graphics::object::tile_batch::*;
 use torifune::graphics::object::*;
-use torifune::graphics::object::shape::MeshShape;
 use torifune::impl_drawable_object_for_wrapped;
 use torifune::impl_texture_object_for_wrapped;
 use torifune::numeric;
@@ -617,61 +617,66 @@ pub struct TextButtonTexture {
 
 impl TextButtonTexture {
     pub fn new<'a>(
-	ctx: &mut SuzuContext<'a>,
-	pos: numeric::Point2f,
-	text_str: String,
-	font_info: FontInformation,
-	padding: f32,
-	bg_color: ggraphics::Color,
-	depth: i8
+        ctx: &mut SuzuContext<'a>,
+        pos: numeric::Point2f,
+        text_str: String,
+        font_info: FontInformation,
+        padding: f32,
+        bg_color: ggraphics::Color,
+        depth: i8,
     ) -> Self {
-	let text_pos = numeric::Point2f::new(pos.x + padding, pos.y + padding);
-	let text = UniText::new(
-	    text_str,
-	    text_pos,
-	    numeric::Vector2f::new(1.0, 1.0),
-	    0.0,
-	    depth,
-	    font_info
-	);
+        let text_pos = numeric::Point2f::new(pos.x + padding, pos.y + padding);
+        let text = UniText::new(
+            text_str,
+            text_pos,
+            numeric::Vector2f::new(1.0, 1.0),
+            0.0,
+            depth,
+            font_info,
+        );
 
-	let text_size = text.get_drawing_size(ctx.context);
+        let text_size = text.get_drawing_size(ctx.context);
 
-	let background_size = numeric::Vector2f::new(text_size.x + (2.0 * padding), text_size.y + (2.0 * padding));
-	
-	let background_shape = shape::Rectangle::new(
-	    numeric::Rect::new(0.0, 0.0, background_size.x, background_size.y),
-	    ggraphics::DrawMode::fill(),
-	    bg_color
-	);
+        let background_size =
+            numeric::Vector2f::new(text_size.x + (2.0 * padding), text_size.y + (2.0 * padding));
 
-	let mut builder = ggraphics::MeshBuilder::new();
-	background_shape.add_to_builder(&mut builder);
-	
-	TextButtonTexture {
-	    text: text,
-	    background: builder.build(ctx.context).unwrap(),
-	    drwob_essential: DrawableObjectEssential::new(true, depth),
-	    button_pos: numeric::Rect::new(pos.x, pos.y, background_size.x, background_size.y),
-	}
+        let background_shape = shape::Rectangle::new(
+            numeric::Rect::new(0.0, 0.0, background_size.x, background_size.y),
+            ggraphics::DrawMode::fill(),
+            bg_color,
+        );
+
+        let mut builder = ggraphics::MeshBuilder::new();
+        background_shape.add_to_builder(&mut builder);
+
+        TextButtonTexture {
+            text: text,
+            background: builder.build(ctx.context).unwrap(),
+            drwob_essential: DrawableObjectEssential::new(true, depth),
+            button_pos: numeric::Rect::new(pos.x, pos.y, background_size.x, background_size.y),
+        }
     }
 
     fn get_padding(&self) -> f32 {
-	self.text.get_position().x - self.button_pos.x
+        self.text.get_position().x - self.button_pos.x
     }
 }
 
 impl DrawableComponent for TextButtonTexture {
     fn draw(&mut self, ctx: &mut ggez::Context) -> ggez::GameResult<()> {
-	if self.is_visible() {
-	    ggraphics::draw(ctx, &self.background, ggraphics::DrawParam {
-	        dest: numeric::Point2f::new(self.button_pos.x, self.button_pos.y).into(),
-		..Default::default()
-	    })?;
-	    self.text.draw(ctx)?;
-	}
+        if self.is_visible() {
+            ggraphics::draw(
+                ctx,
+                &self.background,
+                ggraphics::DrawParam {
+                    dest: numeric::Point2f::new(self.button_pos.x, self.button_pos.y).into(),
+                    ..Default::default()
+                },
+            )?;
+            self.text.draw(ctx)?;
+        }
 
-	Ok(())
+        Ok(())
     }
 
     fn hide(&mut self) {
@@ -697,18 +702,18 @@ impl DrawableComponent for TextButtonTexture {
 
 impl DrawableObject for TextButtonTexture {
     fn set_position(&mut self, pos: numeric::Point2f) {
-	let diff = pos - self.get_position();
-	self.move_diff(diff);
+        let diff = pos - self.get_position();
+        self.move_diff(diff);
     }
 
     fn get_position(&self) -> numeric::Point2f {
-	self.button_pos.point().into()
+        self.button_pos.point().into()
     }
 
     fn move_diff(&mut self, offset: numeric::Vector2f) {
-	self.button_pos.x += offset.x;
-	self.button_pos.y += offset.y;
-	self.text.move_diff(offset);
+        self.button_pos.x += offset.x;
+        self.button_pos.y += offset.y;
+        self.text.move_diff(offset);
     }
 }
 
@@ -716,41 +721,41 @@ impl TextureObject for TextButtonTexture {
     fn set_scale(&mut self, _scale: numeric::Vector2f) {}
 
     fn get_scale(&self) -> numeric::Vector2f {
-	numeric::Vector2f::new(1.0, 1.0)
+        numeric::Vector2f::new(1.0, 1.0)
     }
 
     fn set_rotation(&mut self, _rad: f32) {}
 
     fn get_rotation(&self) -> f32 {
-	0.0
+        0.0
     }
 
     fn set_crop(&mut self, _crop: ggraphics::Rect) {}
 
     fn get_crop(&self) -> ggraphics::Rect {
-	numeric::Rect::new(0.0, 0.0, 1.0, 1.0)
+        numeric::Rect::new(0.0, 0.0, 1.0, 1.0)
     }
 
     fn set_drawing_color(&mut self, _color: ggraphics::Color) {}
 
     fn get_drawing_color(&self) -> ggraphics::Color {
-	ggraphics::WHITE
+        ggraphics::WHITE
     }
 
     fn set_alpha(&mut self, _alpha: f32) {}
 
     fn get_alpha(&self) -> f32 {
-	1.0
+        1.0
     }
 
     fn set_transform_offset(&mut self, _offset: numeric::Point2f) {}
 
     fn get_transform_offset(&self) -> numeric::Point2f {
-	numeric::Point2f::new(0.0, 0.0)
+        numeric::Point2f::new(0.0, 0.0)
     }
 
     fn get_texture_size(&self, _ctx: &mut ggez::Context) -> numeric::Vector2f {
-	numeric::Vector2f::new(self.button_pos.x, self.button_pos.y)
+        numeric::Vector2f::new(self.button_pos.x, self.button_pos.y)
     }
 
     fn replace_texture(&mut self, _texture: Rc<ggraphics::Image>) {}
@@ -758,7 +763,7 @@ impl TextureObject for TextButtonTexture {
     fn set_color(&mut self, _color: ggraphics::Color) {}
 
     fn get_color(&mut self) -> ggraphics::Color {
-	ggraphics::WHITE
+        ggraphics::WHITE
     }
 }
 
@@ -1379,63 +1384,69 @@ pub struct GraphDrawer {
 
 impl GraphDrawer {
     pub fn new<'a>(
-	ctx: &mut SuzuContext<'a>,
-	rect: numeric::Rect,
-	graph_area: numeric::Rect,
-	data: Vec<numeric::Vector2f>,
-	point_radius: f32,
-	point_color: ggraphics::Color,
-	line_width: f32,
-	line_color: ggraphics::Color,
-	depth: i8
+        ctx: &mut SuzuContext<'a>,
+        rect: numeric::Rect,
+        graph_area: numeric::Rect,
+        data: Vec<numeric::Vector2f>,
+        point_radius: f32,
+        point_color: ggraphics::Color,
+        line_width: f32,
+        line_color: ggraphics::Color,
+        depth: i8,
     ) -> Self {
-	let mut builder = ggraphics::MeshBuilder::new();
+        let mut builder = ggraphics::MeshBuilder::new();
 
-	let max_data = data.iter().fold(
-	    numeric::Vector2f::new(0.0, 0.0),
-	    |m, v| {
-		numeric::Vector2f::new(
-		    m.x.max(v.x),
-		    m.y.max(v.y),
-		)
-	    }
-	);
+        let max_data = data.iter().fold(numeric::Vector2f::new(0.0, 0.0), |m, v| {
+            numeric::Vector2f::new(m.x.max(v.x), m.y.max(v.y))
+        });
 
-	let scaled_points: Vec<numeric::Point2f> = data.iter()
-	    .map(|p| numeric::Point2f::new(
-		graph_area.w * (p.x / max_data.x),
-		graph_area.h * (p.y / max_data.y),
-	    )).collect();
-	
-	for scaled_point in scaled_points.iter() {
-	    builder.circle(
-		ggraphics::DrawMode::fill(),
-		mint::Point2::from_slice(&[scaled_point.x, scaled_point.y]),
-		point_radius,
-		0.01,
-		point_color
-	    );
-	}
+        let scaled_points: Vec<numeric::Point2f> = data
+            .iter()
+            .map(|p| {
+                numeric::Point2f::new(
+                    graph_area.w * (p.x / max_data.x),
+                    graph_area.h - (graph_area.h * (p.y / max_data.y)),
+                )
+            })
+            .collect();
 
-	let mint_p_vec: Vec<mint::Point2<f32>> = scaled_points.iter().map(|p| mint::Point2::from_slice(&[p.x, p.y])).collect();
-	builder.line(mint_p_vec.as_slice(), line_width, line_color);
-	
-	GraphDrawer {
-	    canvas: SubScreen::new(ctx.context, rect, depth, ggraphics::Color::from_rgba_u32(0x00)),
-	    graph_area: graph_area,
-	    data: data,
-	    shapes: builder.build(ctx.context).unwrap(),
-	}
+        for scaled_point in scaled_points.iter() {
+            builder.circle(
+                ggraphics::DrawMode::fill(),
+                mint::Point2::from_slice(&[scaled_point.x, scaled_point.y]),
+                point_radius,
+                0.01,
+                point_color,
+            );
+        }
+
+        let mint_p_vec: Vec<mint::Point2<f32>> = scaled_points
+            .iter()
+            .map(|p| mint::Point2::from_slice(&[p.x, p.y]))
+            .collect();
+        builder.line(mint_p_vec.as_slice(), line_width, line_color).unwrap();
+
+        GraphDrawer {
+            canvas: SubScreen::new(
+                ctx.context,
+                rect,
+                depth,
+                ggraphics::Color::from_rgba_u32(0x00),
+            ),
+            graph_area: graph_area,
+            data: data,
+            shapes: builder.build(ctx.context).unwrap(),
+        }
     }
 }
 
 impl DrawableComponent for GraphDrawer {
     fn draw(&mut self, ctx: &mut ggez::Context) -> ggez::GameResult<()> {
-	if self.is_visible() {
-	    sub_screen::stack_screen(ctx, &self.canvas);
+        if self.is_visible() {
+            sub_screen::stack_screen(ctx, &self.canvas);
 
-	    ggraphics::draw(ctx, &self.shapes, ggraphics::DrawParam::default()).unwrap();
-	    
+            ggraphics::draw(ctx, &self.shapes, ggraphics::DrawParam::default()).unwrap();
+
             sub_screen::pop_screen(ctx);
             self.canvas.draw(ctx).unwrap();
         }

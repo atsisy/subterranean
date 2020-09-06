@@ -80,37 +80,6 @@ fn read_whole_file(path: String) -> Result<String, String> {
     Ok(file_content)
 }
 
-#[derive(Copy, Clone, Eq, PartialEq)]
-pub enum DrawRequest {
-    InitDraw,
-    Draw,
-    Skip,
-}
-
-impl std::ops::BitOr for DrawRequest {
-    type Output = Self;
-
-    fn bitor(self, rhs: Self) -> Self::Output {
-	match self {
-	    Self::InitDraw => {
-		DrawRequest::InitDraw
-	    },
-	    Self::Draw => {
-		DrawRequest::InitDraw
-	    },
-	    Self::Skip => {
-		rhs
-	    },
-	}
-    }
-}
-
-impl std::ops::BitOrAssign for DrawRequest {
-    fn bitor_assign(&mut self, rhs: Self) {
-	*self = *self | rhs;
-    }
-}
-
 #[derive(Debug, Clone, Copy, Eq, PartialEq, Hash)]
 pub enum TextureID {
     Ghost1 = 0,
@@ -1298,6 +1267,7 @@ struct SceneController {
     root_screen: SubScreen,
     game_status: SavableData,
     game_config: GameConfig,
+    redraw_request: scene::DrawRequest,
 }
 
 impl SceneController {
@@ -1351,6 +1321,7 @@ impl SceneController {
             root_screen: root_screen,
             game_status: game_status,
             game_config: game_config,
+	    redraw_request: scene::DrawRequest::Draw,
         }
     }
 
@@ -1434,7 +1405,7 @@ impl SceneController {
     fn run_pre_process(&mut self, ctx: &mut ggez::Context, game_data: &mut GameResource) {
         //println!("{}", perf_measure!(
         {
-            self.current_scene.abs_mut().pre_process(&mut SuzuContext {
+            self.redraw_request |= self.current_scene.abs_mut().pre_process(&mut SuzuContext {
                 context: ctx,
                 resource: game_data,
                 savable_data: &mut self.game_status,
@@ -1493,9 +1464,10 @@ impl SceneController {
         }
 
         if self.global_clock % 120 == 0 {
-            println!("fps: {}", ggez::timer::fps(ctx));
+            //println!("fps: {}", ggez::timer::fps(ctx));
         }
         self.global_clock += 1;
+	self.redraw_request = scene::DrawRequest::Skip;
     }
 
     fn key_down_event(
@@ -1527,6 +1499,8 @@ impl SceneController {
             },
             self.key_map.real_to_virtual(keycode),
         );
+
+	self.redraw_request = scene::DrawRequest::Draw;
     }
 
     fn key_up_event(
@@ -1545,6 +1519,8 @@ impl SceneController {
             },
             self.key_map.real_to_virtual(keycode),
         );
+
+	self.redraw_request = scene::DrawRequest::Draw;
     }
 
     fn mouse_motion_event<'a>(
@@ -1564,6 +1540,8 @@ impl SceneController {
             point,
             offset,
         );
+
+	self.redraw_request = scene::DrawRequest::Draw;
     }
 
     fn mouse_button_down_event(
@@ -1624,6 +1602,10 @@ impl SceneController {
             y,
         );
     }
+
+    fn redraw_request_status(&self) -> scene::DrawRequest {
+	self.redraw_request
+    }
 }
 
 pub struct State<'data> {
@@ -1646,11 +1628,14 @@ impl<'data> ggez::event::EventHandler for State<'data> {
     }
 
     fn draw(&mut self, ctx: &mut Context) -> GameResult<()> {
-        graphics::clear(ctx, [0.0, 0.0, 0.0, 0.0].into());
-
-        self.scene_controller.run_drawing_process(ctx);
-
-        graphics::present(ctx)?;
+	match self.scene_controller.redraw_request_status() {
+	    scene::DrawRequest::Draw | scene::DrawRequest::InitDraw => {
+		graphics::clear(ctx, [0.0, 0.0, 0.0, 0.0].into());
+		self.scene_controller.run_drawing_process(ctx);
+		graphics::present(ctx)?;
+	    },
+	    _ => (),
+	}
 
         self.scene_controller.run_post_process(ctx, self.game_data);
 

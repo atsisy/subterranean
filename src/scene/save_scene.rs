@@ -186,14 +186,18 @@ impl SceneManager for SaveScene {
         }
     }
 
-    fn pre_process<'a>(&mut self, ctx: &mut SuzuContext<'a>) {
+    fn pre_process<'a>(&mut self, ctx: &mut SuzuContext<'a>) -> DrawRequest {
         let t = self.get_current_clock();
 
         if let Some(transition_effect) = self.scene_transition_effect.as_mut() {
             transition_effect.effect(ctx.context, t);
         }
 
-        flush_delay_event!(self, self.event_list, ctx, self.get_current_clock());
+        if flush_delay_event!(self, self.event_list, ctx, self.get_current_clock()) > 0 {
+	    DrawRequest::Draw
+	} else {
+	    DrawRequest::Skip
+	}
     }
 
     fn drawing_process(&mut self, ctx: &mut ggez::Context) {

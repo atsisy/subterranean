@@ -100,8 +100,10 @@ impl SceneManager for ScenarioScene {
             .turn_back_scenario_offset(1);
     }
 
-    fn pre_process<'a>(&mut self, ctx: &mut SuzuContext<'a>) {
+    fn pre_process<'a>(&mut self, ctx: &mut SuzuContext<'a>) -> DrawRequest {
         self.scenario_event.update_text(ctx);
+
+	DrawRequest::Draw
     }
 
     fn drawing_process(&mut self, ctx: &mut ggez::Context) {
