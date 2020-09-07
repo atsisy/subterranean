@@ -400,6 +400,25 @@ impl BookStatusButtonGroup {
             button_rect.x += button_rect.w;
         }
 
+	let font_info = FontInformation::new(
+		ctx.resource.get_font(FontID::Cinema),
+		numeric::Vector2f::new(36.0, 36.0),
+		ggraphics::Color::from_rgba_u32(0xff)
+	    );
+	    
+	let remove_texture = TextButtonTexture::new(
+	    ctx,
+	    numeric::Point2f::new(0.0, 0.0),
+	    "削除".to_string(),
+	    font_info,
+	    10.0,
+	    ggraphics::Color::from_rgba_u32(0xe8b5a2ff),
+	    0
+	);
+	    
+        let remove_button = SelectButton::new(ctx, numeric::Rect::new(95.0, 110.0, 100.0, 50.0), Box::new(remove_texture));
+	buttons.push(remove_button);
+
         BookStatusButtonGroup {
             buttons: buttons,
             drwob_essential: DrawableObjectEssential::new(true, drawing_depth),

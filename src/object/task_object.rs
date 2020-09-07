@@ -812,11 +812,20 @@ impl TaskTable {
                 .record_book_menu
                 .get_book_status_menu_position()
                 .unwrap();
-            self.borrowing_record_book.insert_book_status_via_choice(
-                ctx.context,
-                index,
-                menu_position,
-            );
+	    if index <= 2 {
+		// 良, 可, 悪
+		self.borrowing_record_book.insert_book_status_via_choice(
+                    ctx.context,
+                    index,
+                    menu_position,
+		);
+	    } else {
+		// 削除
+		self.borrowing_record_book.remove_book_status_at(
+                    ctx.context,
+                    menu_position,
+		);
+	    }
 
             return true;
         }

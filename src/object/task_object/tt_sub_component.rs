@@ -1606,6 +1606,19 @@ impl BorrowingRecordBookPage {
         );
     }
 
+    fn remove_book_status_data(
+        &mut self,
+        ctx: &mut ggez::Context,
+        menu_position: numeric::Point2f,
+    ) {
+        let grid_position = self
+            .books_table
+            .get_grid_position(ctx, menu_position)
+            .unwrap();
+        let info = self.borrow_book.get_mut(&grid_position).unwrap();
+        info.reset(HoldData::None);
+    }
+
     pub fn export_page_data(&self) -> BorrowingRecordBookPageData {
         let mut borrow_book_title = HashMap::new();
         let mut borrow_book_status = HashMap::new();
@@ -2055,6 +2068,19 @@ impl BorrowingRecordBook {
 	    self.redraw_request = DrawRequest::Draw;
         }
     }
+
+    pub fn remove_book_status_at(
+        &mut self,
+        ctx: &mut ggez::Context,
+        menu_position: numeric::Point2f,
+    ) {	
+        let rpoint = self.relative_point(menu_position);
+        if let Some(page) = self.get_current_page_mut() {
+            page.remove_book_status_data(ctx, rpoint);
+	    self.redraw_request = DrawRequest::Draw;
+        }
+    }
+
 
     pub fn mouse_motion_handler(&mut self, point: numeric::Point2f) {
         let rpoint = self.canvas.relative_point(point);
