@@ -1500,10 +1500,6 @@ impl SceneController {
         _keymods: KeyMods,
         _repeat: bool,
     ) {
-        if keycode == KeyCode::Escape {
-            std::process::exit(0);
-        }
-
         if keycode == KeyCode::F1 {
             debug::debug_screen_appear();
         }
