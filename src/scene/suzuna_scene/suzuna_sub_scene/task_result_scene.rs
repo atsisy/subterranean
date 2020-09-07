@@ -70,7 +70,7 @@ impl TaskResultScene {
         );
         let ok_button = SelectButton::new(
             ctx,
-            numeric::Rect::new(120.0, 608.0, 80.0, 80.0),
+            numeric::Rect::new(100.0, 608.0, 140.0, 80.0),
             panel_texture,
         );
 
