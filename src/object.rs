@@ -8,6 +8,7 @@ pub mod move_fn;
 pub mod notify;
 pub mod save_scene_object;
 pub mod scenario;
+pub mod scenario_object;
 pub mod shop_object;
 pub mod simulation_ui;
 pub mod task_object;

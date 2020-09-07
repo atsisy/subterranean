@@ -1241,6 +1241,7 @@ impl SuzuMiniSight {
                 .is_stop();
             if stop {
 		self.draw_request = DrawRequest::Draw;
+		drop_to_desk.push(self.dropping_to_desk.swap_remove(index));
             }
             index += 1;
         }

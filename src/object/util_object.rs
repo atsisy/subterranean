@@ -1404,8 +1404,8 @@ impl GraphDrawer {
             .iter()
             .map(|p| {
                 numeric::Point2f::new(
-                    graph_area.w * (p.x / max_data.x),
-                    graph_area.h - (graph_area.h * (p.y / max_data.y)),
+                    graph_area.x + (graph_area.w * (p.x / max_data.x)),
+                    graph_area.y + (graph_area.h - (graph_area.h * (p.y / max_data.y))),
                 )
             })
             .collect();
@@ -1431,7 +1431,7 @@ impl GraphDrawer {
                 ctx.context,
                 rect,
                 depth,
-                ggraphics::Color::from_rgba_u32(0x00),
+                ggraphics::Color::from_rgba_u32(0xffffffff),
             ),
             graph_area: graph_area,
             data: data,
