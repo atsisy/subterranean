@@ -269,6 +269,7 @@ impl SceneManager for TaskScene {
     }
 
     fn pre_process<'a>(&mut self, ctx: &mut SuzuContext<'a>) {
+	//println!("{}", perf_measure!({
         let t = self.get_current_clock();
 
         self.task_table.update(ctx, self.get_current_clock());
@@ -317,6 +318,7 @@ impl SceneManager for TaskScene {
         }
 
 	flush_delay_event_and_redraw_check!(self, self.event_list, ctx, self.get_current_clock());
+    //}));
     }
 
     fn drawing_process(&mut self, ctx: &mut ggez::Context) {

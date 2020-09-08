@@ -2009,7 +2009,6 @@ impl BorrowingRecordBook {
 
     pub fn update<'a>(&mut self, ctx: &mut SuzuContext<'a>, t: Clock) {
 	if !self.is_stop() {
-	    self.redraw_request = DrawRequest::Draw;
 	    ctx.process_utility.redraw();
 	    self.move_with_func(t);
 	}
