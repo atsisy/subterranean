@@ -193,6 +193,7 @@ impl Scrollable for SelectBookWindowContents {
         _: numeric::Point2f,
         offset: numeric::Vector2f,
     ) {
+	let offset = numeric::Vector2f::new(offset.x, 0.0);
 	let start_position = self.table_frame.get_position();
         self.table_frame.move_diff(offset);
 
