@@ -159,7 +159,7 @@ impl DrawableTaskResult {
         );
         let font_info = FontInformation::new(
             ctx.resource.get_font(FontID::JpFude1),
-            numeric::Vector2f::new(35.0, 35.0),
+            numeric::Vector2f::new(32.0, 32.0),
             ggraphics::Color::from_rgba_u32(0x000000ff),
         );
         let init_crop = numeric::Rect::new(0.0, 0.0, 1.0, 0.0);
@@ -168,7 +168,7 @@ impl DrawableTaskResult {
             ctx.resource,
             numeric::Point2f::new(250.0, 80.0),
             TileBatchTextureID::OldStyleFrame,
-            FrameData::new(vec![300.0, 250.0], vec![50.0; 3]),
+            FrameData::new(vec![280.0, 270.0], vec![50.0; 3]),
             numeric::Vector2f::new(0.5, 0.5),
             0,
         );

@@ -33,7 +33,7 @@ impl SuzunaStatusMainPage {
     pub fn new<'a>(ctx: &mut SuzuContext<'a>) -> Self {
 	let normal_scale_font = FontInformation::new(
             ctx.resource.get_font(FontID::Cinema),
-            numeric::Vector2f::new(28.0, 28.0),
+            numeric::Vector2f::new(24.0, 24.0),
             ggraphics::Color::from_rgba_u32(0x000000ff),
         );
 
@@ -45,9 +45,9 @@ impl SuzunaStatusMainPage {
 
         let table_frame = TableFrame::new(
             ctx.resource,
-            numeric::Point2f::new(150.0, 50.0),
+            numeric::Point2f::new(150.0, 30.0),
             TileBatchTextureID::OldStyleFrame,
-            FrameData::new(vec![150.0, 150.0], vec![40.0; 3]),
+            FrameData::new(vec![120.0, 220.0], vec![40.0; 3]),
             numeric::Vector2f::new(0.25, 0.25),
             0,
         );
