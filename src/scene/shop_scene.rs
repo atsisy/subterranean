@@ -269,6 +269,7 @@ pub struct ShopScene {
     customer_queue: VecDeque<CustomerCharacter>,
     camera: Rc<RefCell<numeric::Rect>>,
     dark_effect_panel: DarkEffectPanel,
+    pause_screen_set: Option<PauseScreenSet>,
     transition_status: SceneTransition,
     transition_scene: SceneID,
     scene_transition_effect: Option<effect_object::ScreenTileEffect>,
@@ -349,6 +350,7 @@ impl ShopScene {
                 numeric::Rect::new(0.0, 0.0, 1366.0, 768.0),
                 0,
             ),
+	    pause_screen_set: None,
             camera: camera,
             transition_scene: SceneID::SuzunaShop,
             transition_status: SceneTransition::Keep,
@@ -1081,6 +1083,18 @@ impl ShopScene {
         self.transition_status = SceneTransition::StackingTransition;
         self.transition_scene = SceneID::Copying;
     }
+
+    fn exit_pause_screen(&mut self, t: Clock) {
+	self.dark_effect_panel
+            .new_effect(8, t, 200, 0);
+	self.pause_screen_set = None;
+    }
+    
+    fn enter_pause_screen<'a>(&mut self, ctx: &mut SuzuContext<'a>, t: Clock) {
+	self.dark_effect_panel
+            .new_effect(8, t, 0, 200);
+	self.pause_screen_set = Some(PauseScreenSet::new(ctx, 0));
+    }
 }
 
 impl SceneManager for ShopScene {
@@ -1110,7 +1124,12 @@ impl SceneManager for ShopScene {
                 self.try_hide_storing_select_ui(ctx);
             }
             tdev::VirtualKey::Action4 => {
-                self.transition_to_copy_scene();
+		let t = self.get_current_clock();
+		if self.pause_screen_set.is_some() {
+		    self.exit_pause_screen(t);
+		} else {
+		    self.enter_pause_screen(ctx, t);
+		}
             }
             tdev::VirtualKey::Action5 => {
                 self.transition_status = SceneTransition::StackingTransition;
@@ -1315,6 +1334,10 @@ impl SceneManager for ShopScene {
 	self.drawable_shop_clock.draw(ctx).unwrap();
 
         self.dark_effect_panel.draw(ctx).unwrap();
+
+	if let Some(pause_screen) = self.pause_screen_set.as_mut() {
+	    pause_screen.draw(ctx).unwrap();
+	}
 
         self.shop_special_object.draw(ctx).unwrap();
         self.shop_menu.draw(ctx).unwrap();

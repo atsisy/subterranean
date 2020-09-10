@@ -2642,3 +2642,77 @@ impl DrawableComponent for DrawableShopClock {
     }
 }
 
+pub struct PauseScreenSet {
+    entries: Vec<VerticalText>,
+    drwob_essential: DrawableObjectEssential,
+}
+
+impl PauseScreenSet {
+    pub fn new<'a>(ctx: &mut SuzuContext<'a>, depth: i8) -> Self {
+	let font_info = FontInformation::new(
+	    ctx.resource.get_font(FontID::Cinema),
+	    numeric::Vector2f::new(28.0, 28.0),
+	    ggraphics::BLACK
+	);
+	
+	let mut entries_vtext = Vec::new();
+	let mut text_pos = numeric::Point2f::new(750.0, 200.0);
+	
+	for text in vec!["開始画面へ", "ポーズから戻る"] {
+	    entries_vtext.push(
+		VerticalText::new(
+		    text.to_string(),
+		    text_pos,
+		    numeric::Vector2f::new(1.0, 1.0),
+		    0.0,
+		    0,
+		    font_info.clone()
+		)
+	    );
+
+	    text_pos.x -= 50.0;
+	}
+	
+	PauseScreenSet {
+	    entries: entries_vtext,
+	    drwob_essential: DrawableObjectEssential::new(true, depth),
+	}
+    }
+}
+
+impl DrawableComponent for PauseScreenSet {
+    fn draw(&mut self, ctx: &mut ggez::Context) -> ggez::GameResult<()> {
+	if self.is_visible() {
+	    for vtext in self.entries.iter_mut() {
+		vtext.draw(ctx)?;
+	    }
+	}
+	
+	Ok(())
+    }
+
+    #[inline(always)]
+    fn hide(&mut self) {
+        self.drwob_essential.visible = false;
+    }
+
+    #[inline(always)]
+    fn appear(&mut self) {
+        self.drwob_essential.visible = true;
+    }
+
+    #[inline(always)]
+    fn is_visible(&self) -> bool {
+        self.drwob_essential.visible
+    }
+
+    #[inline(always)]
+    fn set_drawing_depth(&mut self, depth: i8) {
+        self.drwob_essential.drawing_depth = depth;
+    }
+
+    #[inline(always)]
+    fn get_drawing_depth(&self) -> i8 {
+        self.drwob_essential.drawing_depth
+    }
+}
