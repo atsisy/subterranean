@@ -29,20 +29,31 @@ impl SuzunaScene {
         &mut self,
         ctx: &mut SuzuContext<'a>,
         transition_status: SceneTransition,
-    ) {
+    ) -> SceneTransition {
         if transition_status == SceneTransition::StackingTransition {
             if self.sub_scene.get_shop_scene_mut().unwrap().transition() == SceneID::MainDesk {
                 debug::debug_screen_push_text("switch shop -> work");
                 self.sub_scene
                     .switch_shop_to_deskwork(ctx, transition_status);
             }
+
+	    return SceneTransition::Keep;
         }
 
         if self.sub_scene.get_shop_scene_mut().unwrap().transition() == SceneID::DayResult {
             debug::debug_screen_push_text("switch shop -> result");
             self.sub_scene
                 .switch_shop_to_day_result(ctx, transition_status);
+
+	    return SceneTransition::Keep;
         }
+
+        if self.sub_scene.get_shop_scene_mut().unwrap().transition() == SceneID::Title {
+            debug::debug_screen_push_text("switch shop -> title");
+	    return SceneTransition::SwapTransition;
+        }
+
+	return SceneTransition::Keep;
     }
 }
 
@@ -105,7 +116,7 @@ impl SceneManager for SuzunaScene {
 
         match self.sub_scene.get_scene_status() {
             SuzunaSceneStatus::Shop => {
-                self.transition_shop_scene_to_others(ctx, transition_status);
+                return self.transition_shop_scene_to_others(ctx, transition_status);
             }
             SuzunaSceneStatus::DeskWork => {
                 if transition_status == SceneTransition::PoppingTransition {

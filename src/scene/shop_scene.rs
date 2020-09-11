@@ -1079,27 +1079,43 @@ impl ShopScene {
             .insert_new_contents(ctx, notification, t);
     }
 
-    fn transition_to_copy_scene(&mut self) {
-        self.transition_status = SceneTransition::StackingTransition;
-        self.transition_scene = SceneID::Copying;
+    fn transition_to_title_scene(&mut self) {
+        self.transition_status = SceneTransition::SwapTransition;
+        self.transition_scene = SceneID::Title;
     }
 
     fn exit_pause_screen(&mut self, t: Clock) {
 	self.dark_effect_panel
-            .new_effect(8, t, 200, 0);
+            .new_effect(8, t, 220, 0);
 	self.pause_screen_set = None;
     }
     
     fn enter_pause_screen<'a>(&mut self, ctx: &mut SuzuContext<'a>, t: Clock) {
 	self.dark_effect_panel
-            .new_effect(8, t, 0, 200);
+            .new_effect(8, t, 0, 220);
 	self.pause_screen_set = Some(PauseScreenSet::new(ctx, 0));
     }
-}
 
-impl SceneManager for ShopScene {
-    fn key_down_event<'a>(&mut self, ctx: &mut SuzuContext<'a>, vkey: tdev::VirtualKey) {
-        match vkey {
+    fn now_paused(&self) -> bool {
+	self.pause_screen_set.is_some()
+    }
+
+    fn pause_screen_click_handler<'a>(&mut self, ctx: &mut SuzuContext<'a>, point: numeric::Point2f, t: Clock) {
+	let pause_screen_set = match self.pause_screen_set.as_ref() {
+	    Some(it) => it,
+	    _ => return,
+	};
+	
+	if let Some(pause_result) = pause_screen_set.mouse_click_handler(ctx, point) {
+	    match pause_result {
+		PauseResult::GoToTitle => self.transition_to_title_scene(),
+		PauseResult::ReleasePause => self.exit_pause_screen(t),
+	    }
+	}
+    }
+
+    fn non_paused_key_down_event<'a>(&mut self, ctx: &mut SuzuContext<'a>, vkey: tdev::VirtualKey) {
+	match vkey {
             tdev::VirtualKey::Action1 => {
                 if let Some(scenario_box) = self.map.scenario_box.as_mut() {
                     if scenario_box.get_text_box_status() == TextBoxStatus::FixedText {
@@ -1125,11 +1141,7 @@ impl SceneManager for ShopScene {
             }
             tdev::VirtualKey::Action4 => {
 		let t = self.get_current_clock();
-		if self.pause_screen_set.is_some() {
-		    self.exit_pause_screen(t);
-		} else {
-		    self.enter_pause_screen(ctx, t);
-		}
+		self.enter_pause_screen(ctx, t);
             }
             tdev::VirtualKey::Action5 => {
                 self.transition_status = SceneTransition::StackingTransition;
@@ -1138,8 +1150,24 @@ impl SceneManager for ShopScene {
             _ => (),
         }
 
-        self.shop_menu
+	self.shop_menu
             .menu_key_action(vkey, self.get_current_clock());
+    }
+}
+
+impl SceneManager for ShopScene {
+    fn key_down_event<'a>(&mut self, ctx: &mut SuzuContext<'a>, vkey: tdev::VirtualKey) {
+	if self.now_paused() {
+	    match vkey {
+		tdev::VirtualKey::Action4 => {
+		    let t = self.get_current_clock();
+		    self.exit_pause_screen(t);
+		},
+		_ => (),
+	    }
+	} else {
+            self.non_paused_key_down_event(ctx, vkey);
+	}
     }
 
     fn mouse_motion_event<'a>(
@@ -1148,9 +1176,15 @@ impl SceneManager for ShopScene {
         point: numeric::Point2f,
         _offset: numeric::Vector2f,
     ) {
-        if ggez::input::mouse::button_pressed(ctx.context, MouseButton::Left) {
-            self.start_mouse_move(ctx.context, point);
-        }
+	if self.now_paused() {
+	    if let Some(pause_screen_set) = self.pause_screen_set.as_mut() {
+		pause_screen_set.mouse_motion_handler(ctx, point);
+	    }
+	} else {
+	    if ggez::input::mouse::button_pressed(ctx.context, MouseButton::Left) {
+		self.start_mouse_move(ctx.context, point);
+            }
+	}
     }
 
     fn mouse_button_down_event<'a>(
@@ -1159,32 +1193,47 @@ impl SceneManager for ShopScene {
         button: MouseButton,
         point: numeric::Point2f,
     ) {
-        match button {
-            MouseButton::Left => {
-                self.start_mouse_move(ctx.context, point);
+	if self.now_paused() {
+	} else {
+	    match button {
+		MouseButton::Left => {
+                    self.start_mouse_move(ctx.context, point);
+		}
+		MouseButton::Right => {
+                    self.player.reset_speed();
+		}
+		_ => (),
             }
-            MouseButton::Right => {
-                self.player.reset_speed();
-            }
-            _ => (),
-        }
-
-        self.shop_special_object
-            .mouse_down_action(ctx, button, point, self.get_current_clock());
+	    
+            self.shop_special_object
+		.mouse_down_action(ctx, button, point, self.get_current_clock());
+	}
     }
-
+    
     fn mouse_button_up_event<'a>(
         &mut self,
-        _ctx: &mut SuzuContext<'a>,
+        ctx: &mut SuzuContext<'a>,
         button: MouseButton,
-        _point: numeric::Point2f,
+        point: numeric::Point2f,
     ) {
-        match button {
-            MouseButton::Left => {
-                self.player.reset_speed();
+	if self.now_paused() {
+	    match button {
+		MouseButton::Left => {
+		    let t = self.get_current_clock();
+		    self.pause_screen_click_handler(ctx, point, t);
+		}
+		_ => (),
             }
-            _ => (),
-        }
+	    
+	    return;
+	} else {
+	    match button {
+		MouseButton::Left => {
+                    self.player.reset_speed();
+		}
+		_ => (),
+            }
+	}
     }
 
     fn mouse_wheel_event<'a>(
@@ -1194,8 +1243,11 @@ impl SceneManager for ShopScene {
         x: f32,
         y: f32,
     ) {
-        self.shop_special_object
-            .mouse_wheel_scroll_action(ctx, point, x, y);
+	if self.now_paused() {
+	} else {
+	    self.shop_special_object
+		.mouse_wheel_scroll_action(ctx, point, x, y);   
+	}
     }
 
     fn pre_process<'a>(&mut self, ctx: &mut SuzuContext<'a>) {
@@ -1203,7 +1255,7 @@ impl SceneManager for ShopScene {
 	
 	flush_delay_event_and_redraw_check!(self, self.event_list, ctx, t);
 
-        if !self.shop_menu.first_menu_is_open() && !self.shop_special_object.is_enable_now() {
+        if !self.shop_menu.first_menu_is_open() && !self.shop_special_object.is_enable_now() && !self.now_paused() {
             self.random_add_customer(ctx);
             self.move_playable_character(ctx.context, t);
             self.check_event_panel_onmap(ctx, EventTrigger::Touch);
@@ -1267,25 +1319,24 @@ impl SceneManager for ShopScene {
             // マップ描画の準備
             self.map.tile_map.update(ctx.context, t);
 
+	    
+            // 時刻の更新
+            self.update_shop_clock_regular(ctx, t);
+            self.check_shop_clock_regular(ctx, t);
+
 	    ctx.process_utility.redraw();
         }
-
-        // 時刻の更新
-        self.update_shop_clock_regular(ctx, t);
-        self.check_shop_clock_regular(ctx, t);
-
-        // 暗転の描画
-        self.dark_effect_panel.run_effect(ctx, t);
 
 	// 通知の更新
         self.notification_area.update(ctx, t);
 
+	// 暗転の描画
+        self.dark_effect_panel.run_effect(ctx, t);
+	
         if let Some(transition_effect) = self.scene_transition_effect.as_mut() {
             transition_effect.effect(ctx.context, t);
 	    ctx.process_utility.redraw();
         }
-
-	flush_delay_event_and_redraw_check!(self, self.event_list, ctx, t);
 	
         self.shop_special_object.update(ctx, t);
 
@@ -1335,14 +1386,14 @@ impl SceneManager for ShopScene {
 
         self.dark_effect_panel.draw(ctx).unwrap();
 
-	if let Some(pause_screen) = self.pause_screen_set.as_mut() {
-	    pause_screen.draw(ctx).unwrap();
-	}
-
         self.shop_special_object.draw(ctx).unwrap();
         self.shop_menu.draw(ctx).unwrap();
 
         self.notification_area.draw(ctx).unwrap();
+
+	if let Some(pause_screen) = self.pause_screen_set.as_mut() {
+	    pause_screen.draw(ctx).unwrap();
+	}
 
         if let Some(transition_effect) = self.scene_transition_effect.as_mut() {
             transition_effect.draw(ctx).unwrap();

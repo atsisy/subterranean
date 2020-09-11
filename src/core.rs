@@ -1386,6 +1386,7 @@ impl SceneController {
                 }
                 _ => (),
             },
+	    scene::SceneID::Title => self.current_scene = TopScene::TitleScene(scene::title_scene::TitleScene::new(&mut ctx)),
             scene::SceneID::Null => self.current_scene = TopScene::Null(scene::NullScene::new()),
             _ => (),
         }
@@ -1462,7 +1463,7 @@ impl SceneController {
 
         match self.current_scene.abs_mut().post_process(&mut suzu_ctx) {
             scene::SceneTransition::Keep => (),
-            scene::SceneTransition::Reset => println!("FIXME!!"),
+            scene::SceneTransition::Reset => (),
             scene::SceneTransition::SwapTransition => {
                 self.switch_scene_with_swap(ctx, game_data, self.current_scene.abs().transition())
             }

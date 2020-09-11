@@ -2642,8 +2642,14 @@ impl DrawableComponent for DrawableShopClock {
     }
 }
 
+pub enum PauseResult {
+    ReleasePause,
+    GoToTitle,
+}
+
 pub struct PauseScreenSet {
     entries: Vec<VerticalText>,
+    cursored_index: Option<usize>,
     drwob_essential: DrawableObjectEssential,
 }
 
@@ -2658,7 +2664,7 @@ impl PauseScreenSet {
 	let mut entries_vtext = Vec::new();
 	let mut text_pos = numeric::Point2f::new(750.0, 200.0);
 	
-	for text in vec!["開始画面へ", "ポーズから戻る"] {
+	for text in vec!["開始画面へ", "再開"] {
 	    entries_vtext.push(
 		VerticalText::new(
 		    text.to_string(),
@@ -2676,7 +2682,59 @@ impl PauseScreenSet {
 	PauseScreenSet {
 	    entries: entries_vtext,
 	    drwob_essential: DrawableObjectEssential::new(true, depth),
+	    cursored_index: None,
 	}
+    }
+
+    ///
+    /// 再描画要求有り
+    ///
+    fn select_entries_handler<'a>(&mut self, ctx: &mut SuzuContext<'a>, index: usize) {
+	if let Some(cursored_index) = self.cursored_index {
+	    if cursored_index == index {
+		return;
+	    }
+	}
+	
+	self.entries.get_mut(index).unwrap().set_color(ggraphics::Color::from_rgba_u32(0x222222ff));
+
+	self.cursored_index = Some(index);
+	ctx.process_utility.redraw();
+    }
+
+    fn unselect_entries_handler(&mut self) {
+	for vtext in self.entries.iter_mut() {
+	    vtext.set_color(ggraphics::BLACK);
+	}
+    }
+
+    pub fn mouse_motion_handler<'a>(&mut self, ctx: &mut SuzuContext<'a>, point: numeric::Point2f) {
+	for (index, vtext) in self.entries.iter().enumerate() {
+	    if vtext.contains(ctx.context, point) {
+		self.select_entries_handler(ctx, index);
+		return;
+	    }
+	}
+
+	// ここまで到達するのは、すべてのテキストにカーソルが重なっていなかった場合
+	if self.cursored_index.is_some() {
+	    self.unselect_entries_handler();
+	    self.cursored_index = None;
+	}
+    }
+
+    pub fn mouse_click_handler<'a>(&self, ctx: &mut SuzuContext<'a>, point: numeric::Point2f) -> Option<PauseResult> {
+	for (index, vtext) in self.entries.iter().enumerate() {
+	    if vtext.contains(ctx.context, point) {
+		return match index {
+		    0 => Some(PauseResult::GoToTitle),
+		    1 => Some(PauseResult::ReleasePause),
+		    _ => panic!("index is out of bounds"),
+		};
+	    }
+	}
+
+	None
     }
 }
 
