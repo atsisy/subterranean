@@ -119,18 +119,22 @@ impl SceneManager for SuzunaScene {
                 return self.transition_shop_scene_to_others(ctx, transition_status);
             }
             SuzunaSceneStatus::DeskWork => {
-                if transition_status == SceneTransition::PoppingTransition {
-                    if self
+		let transition = self
                         .sub_scene
                         .get_deskwork_scene_mut()
                         .unwrap()
-                        .transition()
-                        == SceneID::SuzunaShop
-                    {
+                    .transition();
+		
+                if transition_status == SceneTransition::PoppingTransition {
+                    if transition == SceneID::SuzunaShop {
                         self.sub_scene
                             .switch_deskwork_to_shop(ctx, transition_status);
                     }
-                }
+                } else if transition_status == SceneTransition::SwapTransition {
+		    if transition == SceneID::Title {
+			return SceneTransition::SwapTransition;
+                    }
+		}
             }
             SuzunaSceneStatus::DayResult => {
                 return transition_status;

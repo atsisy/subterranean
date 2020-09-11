@@ -1079,9 +1079,15 @@ impl ShopScene {
             .insert_new_contents(ctx, notification, t);
     }
 
-    fn transition_to_title_scene(&mut self) {
-        self.transition_status = SceneTransition::SwapTransition;
-        self.transition_scene = SceneID::Title;
+    fn transition_to_title_scene<'a>(&mut self, ctx: &mut SuzuContext<'a>, t: Clock) {
+        self.event_list.add_event(
+            Box::new(|slf: &mut Self, _, _| {
+		slf.transition_status = SceneTransition::SwapTransition;
+		slf.transition_scene = SceneID::Title;
+	    }),
+	    t + 60
+	);
+	self.scene_transition_close_effect(ctx, t);
     }
 
     fn exit_pause_screen(&mut self, t: Clock) {
@@ -1108,7 +1114,7 @@ impl ShopScene {
 	
 	if let Some(pause_result) = pause_screen_set.mouse_click_handler(ctx, point) {
 	    match pause_result {
-		PauseResult::GoToTitle => self.transition_to_title_scene(),
+		PauseResult::GoToTitle => self.transition_to_title_scene(ctx, t),
 		PauseResult::ReleasePause => self.exit_pause_screen(t),
 	    }
 	}
