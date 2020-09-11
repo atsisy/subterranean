@@ -2753,8 +2753,8 @@ pub struct DeskBookMenu {
     header_text: UniText,
     book_info_drawer: BookInfoDrawer,
     book_info: BookInformation,
-    select_table_frame: TableFrame,
-    choice_element_text: Vec<UniText>,
+    memo_button: SelectButton,
+    deny_button: SelectButton,
     drwob_essential: DrawableObjectEssential,
     last_clicked: Option<usize>,
 }
@@ -2765,7 +2765,6 @@ impl DeskBookMenu {
         book_info: BookInformation,
         drawing_depth: i8,
     ) -> Self {
-        let mut choice_vtext = Vec::new();
 
         let font_info = FontInformation::new(
             ctx.resource.get_font(FontID::Cinema),
@@ -2785,36 +2784,31 @@ impl DeskBookMenu {
 	let book_info_drawer = BookInfoDrawer::new(ctx, book_info.clone(), 0);
 	let book_info_size = book_info_drawer.get_book_info_frame_size();
 
-        let select_table_frame = TableFrame::new(
-            ctx.resource,
-            numeric::Point2f::new(20.0, book_info_size.y + 12.0),
-            TileBatchTextureID::OldStyleFrame,
-            FrameData::new(vec![56.0], vec![100.0, 150.0]),
-            numeric::Vector2f::new(0.3, 0.3),
-            0,
-        );
-
+	let mut button_rect = numeric::Rect::new(30.0, 410.0, 140.0, 50.0);
+	let mut buttons = Vec::new();
         for s in vec!["メモ", "貸出拒否"].iter() {
-            let choice_str_element = s.to_string();
+	    let text_texture = TextButtonTexture::new(
+		ctx,
+		numeric::Point2f::new(0.0, 0.0),
+		s.to_string(),
+		font_info,
+		10.0,
+		ggraphics::Color::from_rgba_u32(0xe8b5a2ff),
+		0
+	    );
+	    
+            let button = SelectButton::new(ctx, button_rect, Box::new(text_texture));
 
-            let vtext = UniText::new(
-                choice_str_element,
-                numeric::Point2f::new(0.0, 0.0),
-                numeric::Vector2f::new(1.0, 1.0),
-                0.0,
-                drawing_depth,
-                font_info,
-            );
-
-            choice_vtext.push(vtext);
+            buttons.push(button);
+            button_rect.x += button_rect.w - 15.0;
         }
 
         let mut menu = DeskBookMenu {
 	    header_text: header_text,
 	    book_info_drawer: book_info_drawer,
             book_info: book_info,
-            select_table_frame: select_table_frame,
-            choice_element_text: choice_vtext,
+	    deny_button: buttons.pop().unwrap(),
+	    memo_button: buttons.pop().unwrap(),
             drwob_essential: DrawableObjectEssential::new(true, drawing_depth),
             last_clicked: None,
         };
@@ -2823,25 +2817,18 @@ impl DeskBookMenu {
 
 	menu.header_text.make_center(ctx.context, numeric::Point2f::new(size.x / 2.0, 44.0));
 	menu.book_info_drawer.make_center(ctx, numeric::Point2f::new(size.x / 2.0, (size.y / 2.0) - 12.0));
-	menu.select_table_frame.make_center(numeric::Point2f::new(size.x / 2.0, size.y - 56.0));
 	
-	for (index, vtext) in menu.choice_element_text.iter_mut().enumerate() {
-	    set_table_frame_cell_center!(
-                ctx.context,
-                menu.select_table_frame,
-                vtext,
-                numeric::Vector2u::new(index as u32, 0)
-            );
-	}
-
 	menu
     }
 
     pub fn click_handler(&mut self, ctx: &mut ggez::Context, point: numeric::Point2f) {
-        let maybe_grid_position = self.select_table_frame.get_grid_position(ctx, point);
-        if let Some(grid_position) = maybe_grid_position {
-            self.last_clicked = Some(grid_position.x as usize);
-        }
+	if self.memo_button.contains(ctx, point) {
+	    self.last_clicked = Some(0 as usize);
+	}
+
+	if self.deny_button.contains(ctx, point) {
+	    self.last_clicked = Some(1 as usize);
+	}
     }
 
     pub fn get_last_clicked(&self) -> Option<usize> {
@@ -2855,10 +2842,10 @@ impl DeskBookMenu {
     pub fn get_date_frame_size(&self) -> numeric::Vector2f {
 	let header_text_size = self.header_text.get_font_scale();
 	let book_info_size = self.book_info_drawer.get_book_info_frame_size();
-        let choice_box_size = self.select_table_frame.size();
+
 	numeric::Vector2f::new(
-	    if book_info_size.x > choice_box_size.x { book_info_size.x } else { choice_box_size.x } + 64.0,
-	    header_text_size.y + book_info_size.y + choice_box_size.y + 96.0,
+	    314.0,
+	    header_text_size.y + book_info_size.y + 150.0,
 	)
     }
 }
@@ -2868,11 +2855,9 @@ impl DrawableComponent for DeskBookMenu {
         if self.is_visible() {
 	    self.header_text.draw(ctx)?;
 	    self.book_info_drawer.draw(ctx)?;
-            self.select_table_frame.draw(ctx)?;
 
-            for vtext in &mut self.choice_element_text {
-                vtext.draw(ctx)?;
-            }
+	    self.memo_button.draw(ctx)?;
+	    self.deny_button.draw(ctx)?;
         }
         Ok(())
     }
