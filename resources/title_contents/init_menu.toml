@@ -6,14 +6,14 @@ y = 550.0
 
 [normal_font]
 FontID = "Cinema"
-color = 0xff
+color = 0xbbbbbbff
 [normal_font.scale]
 x = 30.0
 y = 30.0
 
 [large_font]
 FontID = "Cinema"
-color = 0xff
+color = 0xbbbbbbff
 [large_font.scale]
 x = 30.0
 y = 30.0
