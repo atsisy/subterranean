@@ -263,14 +263,6 @@ impl TaskScene {
         button: MouseButton,
         point: numeric::Point2f,
     ) {
-        let info: &MouseActionRecord = &self.mouse_info.last_clicked.get(&button).unwrap();
-        if info.point == point {
-            if (self.get_current_clock() - info.t) < 40 {
-                self.task_table
-                    .double_click_handler(ctx, point, self.get_current_clock());
-            }
-        }
-
         self.mouse_info
             .set_last_clicked(button, point, self.get_current_clock());
         self.mouse_info

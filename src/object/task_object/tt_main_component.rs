@@ -262,7 +262,7 @@ impl DeskObjects {
         }
     }
 
-    pub fn double_click_handler<'a>(
+    pub fn check_clicked_desk_object_type<'a>(
         &mut self,
         ctx: &mut SuzuContext<'a>,
         point: numeric::Point2f,

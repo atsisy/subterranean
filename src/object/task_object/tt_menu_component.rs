@@ -2782,7 +2782,6 @@ impl DeskBookMenu {
 	);
 
 	let book_info_drawer = BookInfoDrawer::new(ctx, book_info.clone(), 0);
-	let book_info_size = book_info_drawer.get_book_info_frame_size();
 
 	let mut button_rect = numeric::Rect::new(30.0, 410.0, 140.0, 50.0);
 	let mut buttons = Vec::new();

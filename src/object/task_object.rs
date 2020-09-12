@@ -29,7 +29,7 @@ use tt_main_component::*;
 use tt_menu_component::*;
 use tt_sub_component::*;
 
-use super::Clickable;
+use super::{Clickable, DarkEffectPanel};
 use crate::core::{
     BorrowingInformation, GensoDate, RentalLimit, ReturnBookInformation, SuzuContext, TextureID,
     TileBatchTextureID,
@@ -44,6 +44,7 @@ pub struct TaskTable {
     desk: DeskObjects,
     staging_object: Option<TaskTableStagingObject>,
     kosuzu_memory: KosuzuMemory,
+    dark_effect_panel: DarkEffectPanel,
     shelving_box: ShelvingBookBox,
     event_list: DelayEventList<TaskTable>,
     borrowing_record_book: BorrowingRecordBook,
@@ -142,6 +143,11 @@ impl TaskTable {
             sight: sight,
             desk: desk,
             staging_object: None,
+	    dark_effect_panel: DarkEffectPanel::new(
+                ctx.context,
+                numeric::Rect::new(0.0, 0.0, 1366.0, 768.0),
+                0,
+            ),
             kosuzu_memory: KosuzuMemory::new(),
             shelving_box: shelving_box,
             event_list: DelayEventList::new(),
@@ -205,13 +211,16 @@ impl TaskTable {
         self.borrowing_record_book.appear();
 
         self.borrowing_record_book.override_move_func(
-            move_fn::devide_distance(numeric::Point2f::new(320.0, 100.0), 0.1),
+            move_fn::devide_distance(numeric::Point2f::new(320.0, 100.0), 0.15),
             t,
         );
         self.event_list.add_event(
             Box::new(|tt: &mut TaskTable, _, t| tt.borrowing_record_book.override_move_func(None, t)),
             t + 100,
         );
+
+	self.dark_effect_panel
+            .new_effect(8, t, 0, 200);
     }
 
     fn slide_hide_record_book(&mut self, t: Clock) {
@@ -221,23 +230,26 @@ impl TaskTable {
         );
 
         self.borrowing_record_book.override_move_func(
-            move_fn::devide_distance(numeric::Point2f::new(320.0, -550.0), 0.1),
+            move_fn::devide_distance(numeric::Point2f::new(320.0, -550.0), 0.15),
             t,
         );
         self.record_book_is_staged = false;
 
         self.record_book_menu.close_all(t);
+
+	self.dark_effect_panel
+            .new_effect(8, t, 200, 0);
     }
 
-    pub fn double_click_handler<'a>(
+    fn try_open_borrowing_record_book<'a>(
         &mut self,
         ctx: &mut SuzuContext<'a>,
         point: numeric::Point2f,
         t: Clock,
-    ) {
+    ) -> bool {
         let rpoint = self.canvas.relative_point(point);
 
-        let clicked_object_type = self.desk.double_click_handler(ctx, rpoint);
+        let clicked_object_type = self.desk.check_clicked_desk_object_type(ctx, rpoint);
 
         if clicked_object_type.is_some() {
             match clicked_object_type.unwrap() {
@@ -245,10 +257,13 @@ impl TaskTable {
                     debug::debug_screen_push_text("slide appear record book");
                     self.slide_appear_record_book(t);
                     self.record_book_is_staged = true;
+		    return true;
                 }
                 _ => (),
             }
         }
+
+	false
     }
 
     pub fn dragging_handler<'a>(
@@ -480,6 +495,8 @@ impl TaskTable {
         self.kosuzu_phrase.update(ctx, t);
         self.info_panel.update(ctx, t);
         self.check_task_is_done(ctx);
+
+	self.dark_effect_panel.run_effect(ctx, t);
     }
 
     pub fn finish_customer_event(&mut self, now: Clock) {
@@ -1287,6 +1304,7 @@ impl TaskTable {
         }
 
         if self.record_book_is_staged {
+	    self.slide_hide_record_book(t);
             return;
         }
 
@@ -1310,9 +1328,11 @@ impl DrawableComponent for TaskTable {
                 staging_object.draw(ctx)?;
             }
 
+	    self.dark_effect_panel.draw(ctx).unwrap();
+	    
             self.borrowing_record_book.draw(ctx)?;
             self.kosuzu_phrase.draw(ctx)?;
-
+	    
             self.customer_silhouette_menu.draw(ctx)?;
             self.record_book_menu.draw(ctx)?;
             self.on_desk_menu.draw(ctx)?;
@@ -1426,6 +1446,10 @@ impl Clickable for TaskTable {
             }
             return;
         }
+
+	if self.try_open_borrowing_record_book(ctx, rpoint, t) {
+	    return;
+	}
 
         if self.click_customer_silhouette_menu(ctx, button, rpoint, t) {
             self.customer_silhouette_menu.close_all(t);

@@ -9,7 +9,6 @@ use torifune::graphics::object::Effectable;
 use crate::core::{SuzuContext, TileBatchTextureID};
 
 use crate::object::scenario::*;
-use crate::object::simulation_ui::*;
 use torifune::graphics::drawable::*;
 use crate::object::util_object::*;
 use crate::object::scenario_object::*;
