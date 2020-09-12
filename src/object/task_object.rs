@@ -211,12 +211,8 @@ impl TaskTable {
         self.borrowing_record_book.appear();
 
         self.borrowing_record_book.override_move_func(
-            move_fn::devide_distance(numeric::Point2f::new(320.0, 100.0), 0.15),
+            move_fn::devide_distance(numeric::Point2f::new(320.0, 100.0), 0.2),
             t,
-        );
-        self.event_list.add_event(
-            Box::new(|tt: &mut TaskTable, _, t| tt.borrowing_record_book.override_move_func(None, t)),
-            t + 100,
         );
 
 	self.dark_effect_panel
@@ -225,12 +221,14 @@ impl TaskTable {
 
     fn slide_hide_record_book(&mut self, t: Clock) {
         self.event_list.add_event(
-            Box::new(|tt: &mut TaskTable, _, _| tt.borrowing_record_book.hide()),
-            t + 30,
+            Box::new(|tt: &mut TaskTable, _, t| {
+		tt.borrowing_record_book.hide();
+	    }),
+            t + 25,
         );
 
         self.borrowing_record_book.override_move_func(
-            move_fn::devide_distance(numeric::Point2f::new(320.0, -550.0), 0.15),
+            move_fn::devide_distance(numeric::Point2f::new(320.0, -550.0), 0.2),
             t,
         );
         self.record_book_is_staged = false;
