@@ -198,7 +198,7 @@ impl SceneManager for TaskResultScene {
         flush_delay_event!(self, self.event_list, ctx, t);
 
         self.drawable_task_result
-            .effect(ctx.context, self.get_current_clock());
+            .run_effect(ctx, self.get_current_clock());
 
         if let Some(effect) = self.scene_transition_effect.as_mut() {
             effect.effect(ctx.context, t);

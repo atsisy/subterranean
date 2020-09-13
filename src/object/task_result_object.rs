@@ -136,7 +136,7 @@ impl Effectable for ResultMeter {
 struct DrawableEvaluationFlow {
     eval_frame: TableFrame,
     desc_text: Vec<VerticalText>,
-    result_text: Vec<VerticalText>,
+    result_text: Vec<EffectableWrap<MovableWrap<VerticalText>>>,
     drwob_essential: DrawableObjectEssential,
 }
 
@@ -145,7 +145,9 @@ impl DrawableEvaluationFlow {
 	ctx: &mut SuzuContext<'a>,
 	pos: numeric::Point2f,
 	result_report: ResultReport,
+	effect_clock_offset: Clock,
 	depth: i8,
+	t: Clock
     ) -> Self {
 	let eval_frame = TableFrame::new(
             ctx.resource,
@@ -154,7 +156,8 @@ impl DrawableEvaluationFlow {
             FrameData::new(vec![250.0, 250.0], vec![50.0; 3]),
             numeric::Vector2f::new(0.5, 0.5),
             0,
-        );
+        );	
+        let init_crop = numeric::Rect::new(0.0, 0.0, 1.0, 0.0);
 
 	let mut desc_text = Vec::new();
 	let mut result_text = Vec::new();
@@ -187,15 +190,23 @@ impl DrawableEvaluationFlow {
 
 	let result_report_string_table = result_report.create_table();
 	
-	let mut shelving_vtext = VerticalText::new(
-	    result_report_string_table.shelving_is_done,
-	    numeric::Point2f::new(0.0, 0.0),
-	    numeric::Vector2f::new(1.0, 1.0),
-	    0.0,
-	    0,
-	    font_info.clone()
+	let mut shelving_vtext = EffectableWrap::new(
+	    MovableWrap::new(
+		Box::new(VerticalText::new(
+		    result_report_string_table.shelving_is_done,
+		    numeric::Point2f::new(0.0, 0.0),
+		    numeric::Vector2f::new(1.0, 1.0),
+		    0.0,
+		    0,
+		    font_info.clone()
+		)),
+		None,
+		t,
+	    ),
+	    vec![effect::appear_bale_down_from_top(100, t + effect_clock_offset + 100)],
 	);
 
+	shelving_vtext.set_crop(init_crop);
 	set_table_frame_cell_center!(
 	    ctx.context,
 	    eval_frame,
@@ -204,14 +215,22 @@ impl DrawableEvaluationFlow {
         );
 	result_text.push(shelving_vtext);
 	
-	let mut waiting_vtext = VerticalText::new(
-	    result_report_string_table.total_customers_waiting_time,
-	    numeric::Point2f::new(0.0, 0.0),
-	    numeric::Vector2f::new(1.0, 1.0),
-	    0.0,
-	    0,
-	    font_info.clone()
+	let mut waiting_vtext = EffectableWrap::new(
+	    MovableWrap::new(
+		Box::new(VerticalText::new(
+		    result_report_string_table.total_customers_waiting_time,
+		    numeric::Point2f::new(0.0, 0.0),
+		    numeric::Vector2f::new(1.0, 1.0),
+		    0.0,
+		    0,
+		    font_info.clone()
+		)),
+		None,
+		t,
+	    ),
+	    vec![effect::appear_bale_down_from_top(100, t + effect_clock_offset + 50)],
 	);
+	waiting_vtext.set_crop(init_crop);
 
 	set_table_frame_cell_center!(
 	    ctx.context,
@@ -226,6 +245,20 @@ impl DrawableEvaluationFlow {
 	    desc_text: desc_text,
 	    result_text: result_text,
 	    drwob_essential: DrawableObjectEssential::new(true, depth),
+	}
+    }
+
+    ///
+    /// # 描画要求有り
+    ///
+    pub fn run_effect<'a>(&mut self, ctx: &mut SuzuContext<'a>, t: Clock) {
+	for vtext in self.result_text.iter_mut() {
+	    if vtext.is_empty_effect() && vtext.is_stop() {
+		continue;
+	    }
+	    
+	    vtext.effect(ctx.context, t);
+	    ctx.process_utility.redraw();
 	}
     }
 }
@@ -512,7 +545,9 @@ impl DrawableTaskResult {
 	    ctx,
 	    numeric::Point2f::new(250.0, 80.0),
 	    result_report,
-	    0
+	    350 as Clock,
+	    0,
+	    t
 	);
 	
         DrawableTaskResult {
@@ -523,6 +558,21 @@ impl DrawableTaskResult {
             background: background,
             canvas: SubScreen::new(ctx.context, rect_pos, 0, ggraphics::Color::from_rgba_u32(0)),
         }
+    }
+
+    pub fn run_effect<'a>(&mut self, ctx: &mut SuzuContext<'a>, t: Clock) {
+        for vtext in self.fixed_text.iter_mut() {
+	    if vtext.is_empty_effect() && vtext.is_stop() {
+		continue;
+	    }
+
+	    ctx.process_utility.redraw();
+            vtext.effect(ctx.context, t);
+        }
+
+	self.evaluation.run_effect(ctx, t);
+
+	self.meters.effect(ctx.context, t);
     }
 }
 
@@ -574,14 +624,4 @@ impl DrawableObject for DrawableTaskResult {
 
 impl TextureObject for DrawableTaskResult {
     impl_texture_object_for_wrapped! {canvas}
-}
-
-impl Effectable for DrawableTaskResult {
-    fn effect(&mut self, ctx: &mut ggez::Context, t: Clock) {
-        for vtext in self.fixed_text.iter_mut() {
-            vtext.effect(ctx, t);
-        }
-
-	self.meters.effect(ctx, t);
-    }
 }

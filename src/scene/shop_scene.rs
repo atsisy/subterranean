@@ -7,7 +7,6 @@ use torifune::device as tdev;
 use torifune::graphics::object::*;
 
 use ggez::graphics as ggraphics;
-use tdev::VirtualKey;
 use torifune::core::Clock;
 use torifune::core::Updatable;
 use torifune::graphics::drawable::*;
