@@ -368,46 +368,6 @@ impl ShopScene {
     }
 
     ///
-    /// キー入力のイベントハンドラ
-    ///
-    fn check_key_event(&mut self, ctx: &ggez::Context) {
-        if self.map.scenario_box.is_none() {
-            //self.player.reset_speed();
-            if self
-                .key_listener
-                .current_key_status(ctx, &VirtualKey::RightSub)
-                == tdev::KeyStatus::Pressed
-            {
-                self.right_key_handler();
-            }
-
-            if self
-                .key_listener
-                .current_key_status(ctx, &VirtualKey::LeftSub)
-                == tdev::KeyStatus::Pressed
-            {
-                self.left_key_handler();
-            }
-
-            if self
-                .key_listener
-                .current_key_status(ctx, &VirtualKey::UpSub)
-                == tdev::KeyStatus::Pressed
-            {
-                self.up_key_handler();
-            }
-
-            if self
-                .key_listener
-                .current_key_status(ctx, &VirtualKey::DownSub)
-                == tdev::KeyStatus::Pressed
-            {
-                self.down_key_handler();
-            }
-        }
-    }
-
-    ///
     /// カメラを動かすメソッド
     ///
     pub fn move_camera(&mut self, offset: numeric::Vector2f) {
@@ -446,34 +406,6 @@ impl ShopScene {
             self.map.tile_map.request_redraw();
             self.map.tile_map.request_updating_tile_batch();
         }
-    }
-
-    fn right_key_handler(&mut self) {
-        self.player
-            .get_mut_character_object()
-            .change_animation_mode(ObjectDirection::Right);
-        self.player.set_speed_x(4.0);
-    }
-
-    fn left_key_handler(&mut self) {
-        self.player
-            .get_mut_character_object()
-            .change_animation_mode(ObjectDirection::Left);
-        self.player.set_speed_x(-4.0);
-    }
-
-    fn up_key_handler(&mut self) {
-        self.player
-            .get_mut_character_object()
-            .change_animation_mode(ObjectDirection::Up);
-        self.player.set_speed_y(-4.0);
-    }
-
-    fn down_key_handler(&mut self) {
-        self.player
-            .get_mut_character_object()
-            .change_animation_mode(ObjectDirection::Down);
-        self.player.set_speed_y(4.0);
     }
 
     pub fn customer_move_and_collision_check(
@@ -745,8 +677,6 @@ impl ShopScene {
 
     fn move_playable_character(&mut self, ctx: &mut ggez::Context, t: Clock) {
         // キーのチェック
-        self.check_key_event(ctx);
-
         self.player.get_mut_character_object().update_texture(t);
 
         self.move_playable_character_x(ctx, t);

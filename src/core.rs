@@ -1222,10 +1222,7 @@ impl ResultReport {
 impl ResultReportStringTable {
     pub fn new(result_report: &ResultReport) -> Self {
 	ResultReportStringTable {
-	    total_customers_waiting_time: format!(
-		"{}",
-		result_report.total_customers_waiting_time
-	    ),
+	    total_customers_waiting_time: number_to_jk::number_to_jk(result_report.total_customers_waiting_time / 60),
 	    shelving_is_done: if result_report.shelving_is_done { "達成" } else { "未達成" }.to_string(),
 	}
     }
