@@ -9,7 +9,7 @@ use torifune::graphics::object::*;
 
 use super::super::*;
 
-use crate::core::{MouseInformation, SavableData, TextureID, TileBatchTextureID, FontID};
+use crate::core::{MouseInformation, SavableData, TextureID, TileBatchTextureID, FontID, ResultReport};
 use crate::flush_delay_event;
 use crate::object::effect_object;
 use crate::object::task_result_object::*;
@@ -33,6 +33,7 @@ impl TaskResultScene {
     pub fn new<'a>(
         ctx: &mut SuzuContext<'a>,
         initial_save_data: SavableData,
+	result_report: ResultReport,
         date: GensoDate,
     ) -> Self {
         let mut background_object = MovableUniTexture::new(
@@ -107,6 +108,7 @@ impl TaskResultScene {
                 numeric::Rect::new(0.0, 0.0, 1366.0, 768.0),
                 SimpleObject::new(background_object, Vec::new()),
                 initial_save_data,
+		result_report,
                 date,
                 0,
             ),

@@ -221,7 +221,7 @@ impl TaskTable {
 
     fn slide_hide_record_book(&mut self, t: Clock) {
         self.event_list.add_event(
-            Box::new(|tt: &mut TaskTable, _, t| {
+            Box::new(|tt: &mut TaskTable, _, _| {
 		tt.borrowing_record_book.hide();
 	    }),
             t + 25,

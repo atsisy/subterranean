@@ -149,10 +149,13 @@ impl SuzunaSubScene {
         if transition == SceneTransition::SwapTransition {
             if let Some(shop_scene) = self.shop_scene.as_ref() {
                 let init_data = shop_scene.clone_begning_save_data();
+		let result_report = shop_scene.clone_result_report();
+		
                 self.scene_status = SuzunaSceneStatus::DayResult;
                 self.day_result_scene = Some(Box::new(TaskResultScene::new(
                     ctx,
                     init_data,
+		    result_report,
                     self.date.clone(),
                 )));
             }

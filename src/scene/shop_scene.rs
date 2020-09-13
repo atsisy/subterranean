@@ -17,7 +17,7 @@ use torifune::numeric;
 
 use super::*;
 use crate::core::map_parser as mp;
-use crate::core::{FontID, SavableData, SuzuContext, TileBatchTextureID, BookInformation};
+use crate::core::{FontID, SavableData, SuzuContext, TileBatchTextureID, BookInformation, ResultReport};
 use crate::flush_delay_event;
 use crate::flush_delay_event_and_redraw_check;
 use crate::object::effect_object;
@@ -264,6 +264,7 @@ pub struct ShopScene {
     shop_clock: ShopClock,
     map: MapData,
     event_list: DelayEventList<Self>,
+    result_report: ResultReport,
     shop_menu: ShopMenuMaster,
     customer_request_queue: VecDeque<CustomerRequest>,
     customer_queue: VecDeque<CustomerCharacter>,
@@ -342,6 +343,7 @@ impl ShopScene {
             shop_clock: shop_time,
             map: map,
             event_list: delay_event_list,
+	    result_report: ResultReport::new(),
             shop_menu: ShopMenuMaster::new(ctx, numeric::Vector2f::new(450.0, 768.0), 0),
             customer_request_queue: VecDeque::new(),
             customer_queue: VecDeque::new(),
@@ -1027,13 +1029,22 @@ impl ShopScene {
         self.begining_save_data.clone()
     }
 
+    pub fn clone_result_report(&self) -> ResultReport {
+	self.result_report.clone()
+    }
+
     ///
     /// # 再描画要求有り
     ///
     pub fn check_shop_clock_regular<'a>(&mut self, ctx: &mut SuzuContext<'a>, t: Clock) {
         if self.shop_clock.equals(18, 0) {
             self.event_list.add_event(
-                Box::new(move |slf: &mut Self, _, _| {
+                Box::new(move |slf: &mut Self, ctx, _| {
+		    // reportに配架予定本をすべて配架したことをマークする
+		    if ctx.savable_data.task_result.not_shelved_books.len() == 0 {
+			slf.result_report.mark_shelving_is_done();
+		    }
+		    
                     slf.transition_status = SceneTransition::SwapTransition;
                     slf.transition_scene = SceneID::DayResult;
                 }),
@@ -1300,6 +1311,7 @@ impl SceneManager for ShopScene {
                 customer.get_mut_character_object().update_texture(t);
             }
 
+	    self.result_report.add_customers_waiting_time(self.customer_queue.len() as Clock);
             for customer in &mut self.customer_queue {
                 Self::customer_move_and_collision_check(
                     ctx.context,
