@@ -1316,6 +1316,8 @@ impl TaskTable {
             return;
         }
 
+	// BorrowingRecordBookが表示されていない場合、
+	// OnDeskBookに関するメニューの表示をチェックする
         if !self.try_show_menus_regarding_customer_silhoutte(ctx, click_point, t) {
             self.try_show_menus_regarding_ondesk_book_info(ctx, click_point, t);
         }
@@ -1455,10 +1457,6 @@ impl Clickable for TaskTable {
             return;
         }
 
-	if self.try_open_borrowing_record_book(ctx, rpoint, t) {
-	    return;
-	}
-
         if self.click_customer_silhouette_menu(ctx, button, rpoint, t) {
             self.customer_silhouette_menu.close_all(t);
             return;
@@ -1471,6 +1469,10 @@ impl Clickable for TaskTable {
 
         // メニューをクリックしていない場合に、新しいメニュー表示処理を走らせる
         self.try_show_menus(ctx, rpoint, t);
+
+	if self.try_open_borrowing_record_book(ctx, rpoint, t) {
+	    return;
+	}
 
         if self.desk.click_handler(ctx, t, button, rpoint) {
             // クリックハンドラが呼び出されたので終了
