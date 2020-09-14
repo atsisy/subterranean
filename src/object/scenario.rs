@@ -869,7 +869,7 @@ impl TextBox {
         );
 
         let mut line_arrow = UniTexture::new(
-            ctx.ref_texture(TextureID::ChoicePanel1),
+            ctx.ref_texture(TextureID::NextLineIcon),
             numeric::Point2f::new(0.0, 0.0),
             numeric::Vector2f::new(1.0, 1.0),
             0.0,
