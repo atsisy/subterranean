@@ -38,6 +38,7 @@ pub struct SelectBookWindowContents {
     book_font: FontInformation,
     drwob_essential: DrawableObjectEssential,
     position: numeric::Point2f,
+    select_limit: usize,
 }
 
 impl SelectBookWindowContents {
@@ -45,6 +46,7 @@ impl SelectBookWindowContents {
         game_data: &GameResource,
         font_info: FontInformation,
         window_rect: numeric::Rect,
+	select_limit: usize,
     ) -> SelectBookWindowContents {
         let mut table_frame = TableFrame::new(
             game_data,
@@ -69,6 +71,7 @@ impl SelectBookWindowContents {
             book_font: font_info,
             drwob_essential: DrawableObjectEssential::new(true, 0),
             position: numeric::Point2f::new(0.0, 0.0),
+	    select_limit: select_limit,
         }
     }
 
@@ -141,6 +144,10 @@ impl SelectBookWindowContents {
             vtext.set_color(ggraphics::Color::from_rgba_u32(0xee0000ff));
             self.selecting_book_index.push(index);
         }
+    }
+
+    pub fn remaining_books_capacity(&self) -> usize {
+	self.select_limit - self.book_title_text.len()
     }
 }
 
@@ -244,6 +251,7 @@ impl SelectBookWindow {
         window_rect: numeric::Rect,
         title: &str,
         book_info: Vec<BookInformation>,
+	select_limit: usize,
     ) -> Self {
         let appr_frame = TileBatchFrame::new(
             ctx.resource,
@@ -304,7 +312,7 @@ impl SelectBookWindow {
             numeric::Vector2u::new(0, 1)
         );
 
-        let contents = SelectBookWindowContents::new(ctx.resource, font_info, window_rect);
+        let contents = SelectBookWindowContents::new(ctx.resource, font_info, window_rect, select_limit);
 
         let background = UniTexture::new(
             ctx.ref_texture(TextureID::TextBackground),
@@ -380,6 +388,10 @@ impl SelectBookWindow {
         if self.contents.contains(ctx.context, rpoint) {
             self.contents.scroll(ctx, rpoint, x, y);
         }
+    }
+
+    pub fn remaining_books_capacity(&self) -> usize {
+	self.contents.ref_object().remaining_books_capacity()
     }
 }
 
@@ -516,12 +528,14 @@ impl SelectShelvingBookUI {
                 numeric::Rect::new(70.0, 50.0, 550.0, 650.0),
                 "返却済み",
                 box_book_info.clone(),
+		65535,
             ),
             shelving_window: SelectBookWindow::new(
                 ctx,
                 numeric::Rect::new(770.0, 50.0, 550.0, 650.0),
                 "配架中",
                 shelving_book.clone(),
+		5,
             ),
             boxed_books: box_book_info,
             shelving_books: shelving_book,
@@ -560,10 +574,16 @@ impl SelectShelvingBookUI {
         // 選択された本のインデックスを降順にソート
         self.box_info_window.sort_selecting_index_less();
 
+	let remaining_capacity = self.shelving_window.remaining_books_capacity();
+
         // インデックスは降順でソートされているため、本のデータを後ろから取り出していくことになる
         // したがって、インデックスをそのまま使える。
         // 結果的に、選択された本をすべてshelving_booksに追加することができる
-        for selecting_index in self.box_info_window.get_selecting_index().iter() {
+        for (enum_index, selecting_index) in self.box_info_window.get_selecting_index().iter().enumerate() {
+	    // 許容限界に達したので、追加は中止する
+	    if remaining_capacity == enum_index {
+		break;
+	    }
             debug::debug_screen_push_text(&format!("remove book: {}", selecting_index));
             let select_book = self.boxed_books.swap_remove(*selecting_index);
             self.shelving_books.push(select_book);
@@ -1341,46 +1361,43 @@ impl ShelvingDetailContents {
             ggraphics::Color::from_rgba_u32(0xff),
         );
 
-        player_shelving
-            .iter()
-            .enumerate()
-            .for_each(|(index, book_info)| {
-                let mut billing_number_text = VerticalText::new(
-                    format!("{}", number_to_jk(book_info.billing_number as u64)),
-                    numeric::Point2f::new(0.0, 0.0),
-                    numeric::Vector2f::new(1.0, 1.0),
-                    0.0,
-                    0,
-                    book_font_information.clone(),
-                );
-
-                let mut book_title_text = VerticalText::new(
-                    book_info.name.clone(),
-                    numeric::Point2f::new(0.0, 0.0),
-                    numeric::Vector2f::new(1.0, 1.0),
-                    0.0,
-                    0,
-                    book_font_information.clone(),
-                );
-
-                let table_pos_x = (self.book_info_frame.get_rows() - 2 - index) as u32;
-
-                set_table_frame_cell_center!(
-                    ctx.context,
-                    self.book_info_frame,
-                    billing_number_text,
-                    numeric::Vector2u::new(table_pos_x, 0)
-                );
-                set_table_frame_cell_center!(
-                    ctx.context,
-                    self.book_info_frame,
-                    book_title_text,
-                    numeric::Vector2u::new(table_pos_x, 1)
-                );
-
-                self.book_billing_number_text.push(billing_number_text);
-                self.book_title_text.push(book_title_text);
-            });
+	for (index, book_info) in player_shelving.iter().enumerate() {
+            let mut billing_number_text = VerticalText::new(
+                format!("{}", number_to_jk(book_info.billing_number as u64)),
+                numeric::Point2f::new(0.0, 0.0),
+                numeric::Vector2f::new(1.0, 1.0),
+                0.0,
+                0,
+                book_font_information.clone(),
+            );
+	    
+            let mut book_title_text = VerticalText::new(
+                book_info.name.clone(),
+                numeric::Point2f::new(0.0, 0.0),
+                numeric::Vector2f::new(1.0, 1.0),
+                0.0,
+                0,
+                book_font_information.clone(),
+            );
+	    
+            let table_pos_x = (self.book_info_frame.get_rows() - 2 - index) as u32;
+	    
+            set_table_frame_cell_center!(
+                ctx.context,
+                self.book_info_frame,
+                billing_number_text,
+                numeric::Vector2u::new(table_pos_x, 0)
+            );
+            set_table_frame_cell_center!(
+                ctx.context,
+                self.book_info_frame,
+                book_title_text,
+                numeric::Vector2u::new(table_pos_x, 1)
+            );
+	    
+            self.book_billing_number_text.push(billing_number_text);
+            self.book_title_text.push(book_title_text);
+        }
     }
 
     ///
@@ -1952,6 +1969,7 @@ impl SimpleBookListViewer {
                 numeric::Rect::new(0.0, 0.0, window_rect.w, window_rect.h - 40.0),
                 "新規納品済",
                 books_data.clone(),
+		65535,
             ),
             books_data: books_data,
 	    ok_button: ok_button,
