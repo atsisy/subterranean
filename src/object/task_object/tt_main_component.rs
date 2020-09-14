@@ -1277,7 +1277,7 @@ impl SuzuMiniSight {
             if self.check_object_drop(ctx, &dragged) {
                 dragged
                     .as_movable_object_mut()
-                    .override_move_func(move_fn::gravity_move(1.0, 10.0, 310.0, 0.3), t);
+                    .override_move_func(move_fn::gravity_move(1.0, 10.0, 310.0, 0.5), t);
                 dragged.as_effectable_object().add_effect(vec![Box::new(
                     |obj: &mut dyn MovableObject, _: &ggez::Context, t: Clock| {
                         if obj.get_position().y > 350.0 {
@@ -1292,7 +1292,7 @@ impl SuzuMiniSight {
             } else {
                 dragged
                     .as_movable_object_mut()
-                    .override_move_func(move_fn::gravity_move(1.0, 10.0, 310.0, 0.3), t);
+                    .override_move_func(move_fn::gravity_move(1.0, 10.0, 310.0, 0.5), t);
                 dragged.as_effectable_object().add_effect(vec![Box::new(
                     |obj: &mut dyn MovableObject, _: &ggez::Context, t: Clock| {
                         if obj.get_position().y > 300.0 {
@@ -1554,7 +1554,7 @@ impl ShelvingBookBox {
         if let Some(dragged) = &mut self.dragging {
             dragged
                 .as_movable_object_mut()
-                .override_move_func(move_fn::gravity_move(1.0, 10.0, 310.0, 0.3), t);
+                .override_move_func(move_fn::gravity_move(1.0, 10.0, 310.0, 0.5), t);
             dragged.as_effectable_object().add_effect(vec![Box::new(
                 |obj: &mut dyn MovableObject, _: &ggez::Context, t: Clock| {
 		    println!("{}", obj.get_position().y);

@@ -345,13 +345,14 @@ pub struct OnDeskBook {
 impl OnDeskBook {
     pub fn new<'a>(
         ctx: &mut SuzuContext<'a>,
+	position: numeric::Point2f,
         texture_id: TextureID,
         info: BookInformation,
     ) -> Self {
         let texture = ctx.ref_texture(texture_id);
         let book_texture = UniTexture::new(
             texture,
-            numeric::Point2f::new(6.0, 6.0),
+	    numeric::Point2f::new(6.0, 6.0),
             numeric::Vector2f::new(0.16, 0.16),
             0.0,
             0,
@@ -372,7 +373,7 @@ impl OnDeskBook {
 
         let canvas = SubScreen::new(
             ctx.context,
-            shadow_bounds,
+            numeric::Rect::new(position.x, position.y, shadow_bounds.w, shadow_bounds.h),
             0,
             ggraphics::Color::from_rgba_u32(0x00000000),
         );

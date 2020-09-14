@@ -455,7 +455,7 @@ impl TaskTable {
                 self.apply_s2d_point_convertion(ctx.context, &mut obj);
                 obj.as_effectable_object().clear_effect();
                 obj.as_movable_object_mut()
-                    .override_move_func(move_fn::gravity_move(1.0, 10.0, 400.0, 0.3), t);
+                    .override_move_func(move_fn::gravity_move(1.0, 10.0, 400.0, 0.4), t);
                 obj.get_object_mut().set_drawing_depth(min);
                 obj.get_object_mut().finish_dragging(ctx);
 
@@ -511,15 +511,20 @@ impl TaskTable {
         info: BorrowingInformation,
         t: Clock,
     ) {
+	let mut position = numeric::Point2f::new(0.0, 0.0);
+	
         for book_info in &info.borrowing {
             let mut obj = factory::create_dobj_book(
                 ctx,
                 DeskObjectType::CustomerObject,
+		position,
                 book_info.clone(),
                 t,
             );
             obj.enable_large();
             self.desk.add_customer_object(obj);
+	    
+	    position.x += 20.0;
         }
 
         let mut new_silhouette = SimpleObject::new(
@@ -556,15 +561,20 @@ impl TaskTable {
         info: ReturnBookInformation,
         t: Clock,
     ) {
+	let mut position = numeric::Point2f::new(0.0, 0.0);
+	
         for book_info in &info.returning {
             let mut obj = factory::create_dobj_book(
                 ctx,
                 DeskObjectType::CustomerObject,
+		position,
                 book_info.clone(),
                 t,
             );
             obj.enable_large();
             self.desk.add_customer_object(obj);
+
+	    position.x += 20.0;
         }
 
         let mut new_silhouette = SimpleObject::new(
