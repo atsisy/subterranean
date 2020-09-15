@@ -1,3 +1,4 @@
+use std::cell::RefCell;
 use torifune::numeric;
 
 pub fn year_to_season(year: i64) -> i64 {
@@ -138,4 +139,16 @@ pub fn find_proper_window_position(window_rect: numeric::Rect, outer_rect: numer
     }
 
     found_pos.into()
+}
+
+thread_local! {
+    static unique_id: RefCell<u64> = RefCell::new(0);
+}
+
+pub fn get_unique_id() -> u64 {
+    unique_id.with(|id| {
+        // インクリメント
+        *id.borrow_mut() += 1;
+	id.borrow().clone()
+    })
 }

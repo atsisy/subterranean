@@ -387,9 +387,15 @@ impl DeskObjects {
             // 取り出すことができる
             for obj in self.desk_objects.get_raw_container_mut().iter_mut().rev() {
                 if obj.get_object().get_drawing_area(ctx).contains(rpoint) {
-                    return MouseCursor::Grab;
+                    return MouseCursor::Grabbing;
                 }
             }
+
+	    if let Some(dragging) = self.dragging.as_ref() {
+		if dragging.get_object().contains(ctx, rpoint) {
+		    return MouseCursor::Grabbing;
+		}
+	    }
         }
 
         MouseCursor::Default

@@ -316,6 +316,45 @@ pub enum SoundID {
     Unknown = 0,
 }
 
+pub enum BookCondition {
+    Good,
+    Fair,
+    Bad,
+}
+
+impl BookCondition {
+    fn from_u32(value: u32) -> Self {
+	match value {
+	    0 => Self::Good,
+	    1 => Self::Fair,
+	    2 => Self::Bad,
+	    _ => panic!(""),
+	}
+    }
+			
+    pub fn probability_random(pb: &[u8]) -> Self {
+	let mut random = rand::random::<usize>() % 100;
+
+	for (index, p) in pb.iter().enumerate() {
+	    if random < *p as usize {
+		return Self::from_u32(index as u32);
+	    }
+
+	    random -= *p as usize;
+	}
+
+	panic!("The summation of pb is over 100");
+    }
+
+    pub fn to_string(&self) -> String {
+	match self {
+	    Self::Good => "良",
+	    Self::Fair => "可",
+	    Self::Bad => "悪",
+	}.to_string()
+    }
+}
+
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct BookInformation {
     pub name: String,
@@ -326,6 +365,22 @@ pub struct BookInformation {
 }
 
 impl BookInformation {
+    pub fn new(
+	name: String,
+	pages: usize,
+	size: String,
+	billing_number: u16,
+	base_price: u32
+    ) -> Self {
+	BookInformation {
+	    name: name,
+	    pages: pages,
+	    size: size,
+	    billing_number: billing_number,
+	    base_price: base_price,
+	}
+    }
+    
     pub fn get_name(&self) -> &str {
         &self.name
     }

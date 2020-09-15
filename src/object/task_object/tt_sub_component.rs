@@ -337,6 +337,7 @@ impl OnDesk for OnDeskTexture {
 pub struct OnDeskBook {
     info: BookInformation,
     book_texture: UniTexture,
+    //scratch_texture: UniTexture,
     shadow: ShadowShape,
     title: VerticalText,
     canvas: SubScreen,
