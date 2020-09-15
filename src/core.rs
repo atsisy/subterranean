@@ -432,6 +432,15 @@ impl BookInformation {
 	}
     }
 
+    pub fn clone_with_new_id_condition(&self) -> Self {
+	let mut cloned = self.clone();
+
+	cloned.condition = BookCondition::probability_random(&[70, 20, 10]);
+	cloned.unique_id = util::get_unique_id();
+
+	return cloned;
+    }
+
     pub fn get_condition_string(&self) -> String {
 	self.condition.to_string()
     }
@@ -786,8 +795,8 @@ impl GameResource {
             .unwrap()
     }
 
-    pub fn clone_available_books(&self) -> Vec<BookInformation> {
-        self.books_information.clone()
+    pub fn iter_available_books(&self) -> std::slice::Iter<BookInformation> {
+        self.books_information.iter()
     }
 
     pub fn customer_random_select(&self) -> &str {
@@ -1121,7 +1130,7 @@ impl ReturnBookInformation {
     }
 
     pub fn new_random(
-        game_data: &GameResource,
+	game_data: &GameResource,
         borrow_date: GensoDate,
         return_date: GensoDate,
     ) -> Self {
@@ -1148,8 +1157,17 @@ pub struct SuzunaBookPool {
 
 impl SuzunaBookPool {
     pub fn new(game_data: &GameResource) -> Self {
+	let mut books = Vec::new();
+
+	for book_info in game_data.iter_available_books() {
+	    for _ in 0..5 {
+		let cloned = book_info.clone_with_new_id_condition();
+		books.push(cloned);
+	    }
+	}
+	
         SuzunaBookPool {
-            books: game_data.clone_available_books(),
+            books: books,
         }
     }
 
@@ -1187,6 +1205,40 @@ impl SuzunaBookPool {
 
         BorrowingInformation::new(borrowing_books, customer_name, borrow_date, rental_limit)
     }
+
+    pub fn generate_returning_request(
+        &mut self,
+        customer_name: &str,
+        borrow_date: GensoDate,
+        rental_limit: RentalLimit,
+    ) -> ReturnBookInformation {
+        let mut returning_books = Vec::new();
+	
+        for _ in 0..((rand::random::<u32>() % 5) + 1) {
+            if self.books.is_empty() {
+                break;
+            }
+	    
+            let book_info = self
+                .books
+                .swap_remove(rand::random::<usize>() % self.books.len());
+            returning_books.push(book_info);
+        }
+
+	let mut return_date = borrow_date.clone();
+	match rental_limit {
+	    RentalLimit::ShortTerm => return_date.add_day(7),
+	    RentalLimit::LongTerm => return_date.add_day(14),
+	    _ => (),
+	};
+
+	ReturnBookInformation {
+	    returning: returning_books,
+	    borrower: customer_name.to_string(),
+	    borrow_date: borrow_date,
+	    return_date: return_date,
+        }
+    }
 }
 
 #[derive(Clone, Serialize, Deserialize)]
@@ -1195,23 +1247,24 @@ pub struct ReturningRequestPool {
 }
 
 impl ReturningRequestPool {
-    pub fn new(game_data: &GameResource, today: GensoDate) -> Self {
+    pub fn new(book_pool: &mut SuzunaBookPool, game_data: &GameResource, today: GensoDate) -> Self {
         let mut returning_request = Vec::new();
 
         for _ in 1..=5 {
-            let mut return_date = today.clone();
 
-            match rand::random::<u32>() % 2 {
-                0 => return_date.add_day(14),
-                1 => return_date.add_day(7),
-                _ => (),
-            }
+            let rental_limit = match rand::random::<u32>() % 2 {
+                0 => RentalLimit::ShortTerm,
+                1 => RentalLimit::LongTerm,
+                _ => panic!(""),
+            };
 
-            returning_request.push(ReturnBookInformation::new_random(
-                game_data,
-                today,
-                return_date,
-            ));
+            returning_request.push(
+		book_pool.generate_returning_request(
+		    game_data.customer_random_select(),
+		    today,
+		    rental_limit
+		)
+	    );
         }
 
         ReturningRequestPool {
@@ -1260,12 +1313,15 @@ impl SavableData {
     pub fn new(game_data: &GameResource) -> Self {
         let date = GensoDate::new(112, 7, 23);
 
+	let mut suzuna_book_pool = SuzunaBookPool::new(game_data);
+	let returning_request_pool = ReturningRequestPool::new(&mut suzuna_book_pool, game_data, date);
+	
         SavableData {
             date: date.clone(),
             task_result: TaskResult::new(),
             suzunaan_status: SuzunaAnStatus::new(),
-            suzuna_book_pool: SuzunaBookPool::new(game_data),
-            returning_request_pool: ReturningRequestPool::new(game_data, date),
+            suzuna_book_pool: suzuna_book_pool,
+            returning_request_pool: returning_request_pool,
         }
     }
 
