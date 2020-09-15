@@ -19,13 +19,13 @@ impl DayNewBooks {
 
 	    let book_num = struct_table["num"].as_integer().unwrap();
 
-	    let book_info = BookInformation {
-	        name: struct_table["name"].as_str().unwrap().to_string(),
-	        pages: struct_table["pages"].as_integer().unwrap() as usize,
-	        size: struct_table["size"].as_str().unwrap().to_string(),
-	        billing_number: struct_table["billing_number"].as_integer().unwrap() as u16,
-	        base_price: struct_table["base_price"].as_integer().unwrap() as u32,
-	    };
+	    let book_info = BookInformation::new(
+	        struct_table["name"].as_str().unwrap().to_string(),
+	        struct_table["pages"].as_integer().unwrap() as usize,
+	        struct_table["size"].as_str().unwrap().to_string(),
+	        struct_table["billing_number"].as_integer().unwrap() as u16,
+	        struct_table["base_price"].as_integer().unwrap() as u32,
+	    );
 
 	    for _ in 0..book_num {
 		new_books.push(book_info.clone());

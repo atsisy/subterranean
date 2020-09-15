@@ -137,6 +137,14 @@ pub enum TextureID {
     ShortClockNeedle1,
     Hanko,
     NextLineIcon,
+    LargeBookScratchFair1,
+    LargeBookScratchFair2,
+    LargeBookScratchFair3,
+    LargeBookScratchFair4,
+    LargeBookScratchBad1,
+    LargeBookScratchBad2,
+    LargeBookScratchBad3,
+    LargeBookScratchBad4,
     Unknown,
 }
 
@@ -220,6 +228,14 @@ impl FromStr for TextureID {
 	    "ShortClockNeedle1" => Ok(Self::ShortClockNeedle1),
 	    "Hanko" => Ok(Self::Hanko),
 	    "NextLineIcon" => Ok(Self::NextLineIcon),
+	    "LargeBookScratchFair1" => Ok(Self::LargeBookScratchFair1),
+	    "LargeBookScratchFair2" => Ok(Self::LargeBookScratchFair2),
+	    "LargeBookScratchFair3" => Ok(Self::LargeBookScratchFair3),
+	    "LargeBookScratchFair4" => Ok(Self::LargeBookScratchFair4),
+	    "LargeBookScratchBad1" => Ok(Self::LargeBookScratchBad1),
+	    "LargeBookScratchBad2" => Ok(Self::LargeBookScratchBad2),
+	    "LargeBookScratchBad3" => Ok(Self::LargeBookScratchBad3),
+	    "LargeBookScratchBad4" => Ok(Self::LargeBookScratchBad4),
             _ => Err(()),
         }
     }
@@ -283,6 +299,14 @@ impl TextureID {
 	    52 => Some(Self::ShortClockNeedle1),
 	    53 => Some(Self::Hanko),
 	    54 => Some(Self::NextLineIcon),
+	    55 => Some(Self::LargeBookScratchFair1),
+	    56 => Some(Self::LargeBookScratchFair2),
+	    57 => Some(Self::LargeBookScratchFair3),
+	    58 => Some(Self::LargeBookScratchFair4),
+	    59 => Some(Self::LargeBookScratchBad1),
+	    60 => Some(Self::LargeBookScratchBad2),
+	    61 => Some(Self::LargeBookScratchBad3),
+	    62 => Some(Self::LargeBookScratchBad4),
             _ => None,
         }
     }
@@ -291,6 +315,28 @@ impl TextureID {
 impl TextureID {
     pub fn select_random() -> Self {
         TextureID::from_u32(rand::random::<u32>() % (Self::Unknown as u32)).unwrap()
+    }
+
+    pub fn random_large_book_scratch_fair() -> TextureID {
+	let candidate = [
+	    TextureID::LargeBookScratchFair1,
+	    TextureID::LargeBookScratchFair2,
+	    TextureID::LargeBookScratchFair3,
+	    TextureID::LargeBookScratchFair4,
+	];
+
+	util::random_select(candidate.iter()).unwrap().clone()
+    }
+
+    pub fn random_large_book_scratch_bad() -> TextureID {
+	let candidate = [
+	    TextureID::LargeBookScratchBad1,
+	    TextureID::LargeBookScratchBad2,
+	    TextureID::LargeBookScratchBad3,
+	    TextureID::LargeBookScratchBad4,
+	];
+
+	util::random_select(candidate.iter()).unwrap().clone()
     }
 }
 
@@ -316,6 +362,7 @@ pub enum SoundID {
     Unknown = 0,
 }
 
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub enum BookCondition {
     Good,
     Fair,
@@ -362,6 +409,8 @@ pub struct BookInformation {
     pub size: String,
     pub billing_number: u16,
     pub base_price: u32,
+    condition: BookCondition,
+    unique_id: u64,
 }
 
 impl BookInformation {
@@ -378,7 +427,17 @@ impl BookInformation {
 	    size: size,
 	    billing_number: billing_number,
 	    base_price: base_price,
+	    condition: BookCondition::probability_random(&[70, 20, 10]),
+	    unique_id: util::get_unique_id(),
 	}
+    }
+
+    pub fn get_condition_string(&self) -> String {
+	self.condition.to_string()
+    }
+
+    pub fn get_condition(&self) -> BookCondition {
+	self.condition.clone()
     }
     
     pub fn get_name(&self) -> &str {

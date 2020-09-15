@@ -53,7 +53,15 @@ texture_paths = [
 	      "/textures/clock_needle1.png",
 	      "/textures/clock_short_needle.png",
 	      "/textures/hanko.png",
-	      "/textures/next_line_icon.png"
+	      "/textures/next_line_icon.png",
+	      "/textures/large_book_scratch_fair1.png",
+	      "/textures/large_book_scratch_fair2.png",
+	      "/textures/large_book_scratch_fair3.png",
+	      "/textures/large_book_scratch_fair4.png",
+	      "/textures/large_book_scratch_bad1.png",	
+	      "/textures/large_book_scratch_bad2.png",
+	      "/textures/large_book_scratch_bad3.png",
+	      "/textures/large_book_scratch_bad4.png",
 	      ]
 font_paths = ["/fonts/azuki.ttf", "/fonts/RiiT_F.ttf", "/fonts/OradanoGSRR.ttf", "/fonts/cinecaption226.ttf"]
 tileset_paths = ["./resources/maps/suzunaan2/main.tmx"]
@@ -73,6 +81,8 @@ pages = 128
 size = "大判本"
 billing_number = 1
 base_price = 100
+condition = "Bad"
+unique_id = 0
 
 [[books_information]]
 name = "テスト本 弐"
@@ -80,6 +90,8 @@ pages = 128
 size = "中判本"
 billing_number = 1
 base_price = 100
+condition = "Bad"
+unique_id = 0
 
 [[books_information]]
 name = "テスト本 参"
@@ -87,6 +99,8 @@ pages = 128
 size = "大判本"
 billing_number = 1
 base_price = 100
+condition = "Bad"
+unique_id = 0
 
 [[books_information]]
 name = "テスト本 肆"
@@ -94,6 +108,8 @@ pages = 128
 size = "中判本"
 billing_number = 1
 base_price = 100
+condition = "Bad"
+unique_id = 0
 
 [[books_information]]
 name = "テスト本 伍"
@@ -101,6 +117,8 @@ pages = 128
 size = "大判本"
 billing_number = 1
 base_price = 100
+condition = "Bad"
+unique_id = 0
 
 [[books_information]]
 name = "テスト本 陸"
@@ -108,6 +126,8 @@ pages = 128
 size = "中判本"
 billing_number = 1
 base_price = 100
+condition = "Bad"
+unique_id = 0
 
 [[books_information]]
 name = "テスト本 漆"
@@ -115,6 +135,8 @@ pages = 128
 size = "大判本"
 billing_number = 1
 base_price = 100
+condition = "Bad"
+unique_id = 0
 
 [[books_information]]
 name = "テスト本 捌"
@@ -122,6 +144,8 @@ pages = 128
 size = "中判本"
 billing_number = 1
 base_price = 100
+condition = "Bad"
+unique_id = 0
 
 [[books_information]]
 name = "テスト本 玖"
@@ -129,6 +153,8 @@ pages = 128
 size = "中判本"
 billing_number = 1
 base_price = 100
+condition = "Good"
+unique_id = 0
 
 [[books_information]]
 name = "テスト本 拾"
@@ -136,6 +162,8 @@ pages = 128
 size = "中判本"
 billing_number = 1
 base_price = 100
+condition = "Good"
+unique_id = 0
 
 [[books_information]]
 name = "越中史料"
@@ -143,6 +171,8 @@ pages = 128
 size = "中判本"
 billing_number = 2
 base_price = 100
+condition = "Good"
+unique_id = 0
 
 [[books_information]]
 name = "尾張名所図会"
@@ -150,6 +180,8 @@ pages = 128
 size = "中判本"
 billing_number = 2
 base_price = 100
+condition = "Good"
+unique_id = 0
 
 # 啓蒙, 思想 3
 [[books_information]]
@@ -158,6 +190,8 @@ pages = 128
 size = "中判本"
 billing_number = 3
 base_price = 100
+condition = "Good"
+unique_id = 0
 
 [[books_information]]
 name = "善の研究"
@@ -165,6 +199,8 @@ pages = 128
 size = "中判本"
 billing_number = 3
 base_price = 100
+condition = "Good"
+unique_id = 0
 
 [[books_information]]
 name = "学問のすゝめ"
@@ -172,6 +208,8 @@ pages = 128
 size = "中判本"
 billing_number = 3
 base_price = 100
+condition = "Good"
+unique_id = 0
 
 # 見聞録 4
 [[books_information]]
@@ -180,6 +218,8 @@ pages = 128
 size = "中判本"
 billing_number = 4
 base_price = 100
+condition = "Good"
+unique_id = 0
 
 # 小説, 物語 5
 [[books_information]]
@@ -188,6 +228,8 @@ pages = 128
 size = "中判本"
 billing_number = 5
 base_price = 100
+condition = "Good"
+unique_id = 0
 
 [[books_information]]
 name = "北越奇談"
@@ -195,6 +237,8 @@ pages = 128
 size = "中判本"
 billing_number = 5
 base_price = 100
+condition = "Good"
+unique_id = 0
 
 [[books_information]]
 name = "名所江戸百景"
@@ -202,6 +246,8 @@ pages = 128
 size = "中判本"
 billing_number = 5
 base_price = 100
+condition = "Good"
+unique_id = 0
 
 [[books_information]]
 name = "絵本百物語"
@@ -209,6 +255,8 @@ pages = 128
 size = "中判本"
 billing_number = 5
 base_price = 100
+condition = "Good"
+unique_id = 0
 
 [[books_information]]
 name = "狂歌百物語"
@@ -216,6 +264,8 @@ pages = 128
 size = "中判本"
 billing_number = 5
 base_price = 100
+condition = "Good"
+unique_id = 0
 
 [[books_information]]
 name = "遠野物語"
@@ -223,6 +273,8 @@ pages = 128
 size = "中判本"
 billing_number = 5
 base_price = 100
+condition = "Good"
+unique_id = 0
 
 [[books_information]]
 name = "名将言行録"
@@ -230,6 +282,8 @@ pages = 128
 size = "中判本"
 billing_number = 5
 base_price = 100
+condition = "Good"
+unique_id = 0
 
 [[books_information]]
 name = "幕末百話"
@@ -237,6 +291,8 @@ pages = 128
 size = "中判本"
 billing_number = 5
 base_price = 100
+condition = "Good"
+unique_id = 0
 
 # 宗教 6
 [[books_information]]
@@ -245,6 +301,8 @@ pages = 128
 size = "中判本"
 billing_number = 6
 base_price = 100
+condition = "Good"
+unique_id = 0
 
 [[sprite_batch_information]]
 sprite_x_size = 16

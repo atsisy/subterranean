@@ -2654,7 +2654,7 @@ impl BookInfoDrawer {
             header_text.push(vtext);
         }
 
-        for (index, s) in vec!["良".to_string(), book_info.size.clone(), "100".to_string()]
+        for (index, s) in vec![book_info.get_condition_string(), book_info.size.clone(), "100".to_string()]
             .iter()
             .enumerate()
         {

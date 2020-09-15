@@ -337,7 +337,7 @@ impl OnDesk for OnDeskTexture {
 pub struct OnDeskBook {
     info: BookInformation,
     book_texture: UniTexture,
-    //scratch_texture: UniTexture,
+    scratch_texture: Option<UniTexture>,
     shadow: ShadowShape,
     title: VerticalText,
     canvas: SubScreen,
@@ -360,7 +360,33 @@ impl OnDeskBook {
         );
         let book_size = book_texture.get_drawing_size(ctx.context);
         let book_title = info.get_name().to_string();
-
+	
+        let scratch_texture = match info.get_condition() {
+	    BookCondition::Good => None,
+	    BookCondition::Fair => {
+		Some(
+		    UniTexture::new(
+			ctx.ref_texture(TextureID::random_large_book_scratch_fair()),
+			numeric::Point2f::new(6.0, 6.0),
+			numeric::Vector2f::new(0.16, 0.16),
+			0.0,
+			0,
+		    )
+		)
+	    },
+	    BookCondition::Bad => {
+		Some(
+		    UniTexture::new(
+			ctx.ref_texture(TextureID::random_large_book_scratch_bad()),
+			numeric::Point2f::new(6.0, 6.0),
+			numeric::Vector2f::new(0.16, 0.16),
+			0.0,
+			0,
+		    )
+		)
+	    },
+	};
+	    
         let shadow_bounds = numeric::Rect::new(0.0, 0.0, book_size.x + 12.0, book_size.y + 12.0);
 
         let mut shadow = ShadowShape::new(
@@ -382,6 +408,7 @@ impl OnDeskBook {
         OnDeskBook {
             info: info,
             book_texture: book_texture,
+	    scratch_texture: scratch_texture,
             shadow: shadow,
             title: VerticalText::new(
                 book_title,
@@ -421,6 +448,10 @@ impl DrawableComponent for OnDeskBook {
 
             self.book_texture.draw(ctx)?;
             self.title.draw(ctx)?;
+
+	    if let Some(scratch_texture) = self.scratch_texture.as_mut() {
+		scratch_texture.draw(ctx)?;
+	    }
 
             sub_screen::pop_screen(ctx);
             self.canvas.draw(ctx).unwrap();
