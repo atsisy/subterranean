@@ -252,10 +252,11 @@ impl TaskTable {
         if clicked_object_type.is_some() {
             match clicked_object_type.unwrap() {
                 OnDeskType::BorrowingRecordBook => {
-                    debug::debug_screen_push_text("slide appear record book");
-                    self.slide_appear_record_book(t);
-                    self.record_book_is_staged = true;
-		    return true;
+		    if !self.record_book_is_staged {
+			self.slide_appear_record_book(t);
+			self.record_book_is_staged = true;
+			return true;
+		    }
                 }
                 _ => (),
             }
