@@ -1097,7 +1097,18 @@ impl TaskTable {
             .borrowing_record_book
             .get_book_info_frame_grid_position(ctx.context, click_point);
 
+	let books_table_rows = self.borrowing_record_book.get_books_table_rows();
+	let books_table_rows = match books_table_rows {
+	    Some(it) => it,
+	    None => return false,
+	};
+	
         if grid_pos.is_some() {
+	    
+	    if grid_pos.unwrap().x == books_table_rows as u32 - 1 {
+		return false;
+	    }
+	    
             match grid_pos.unwrap().y {
                 0 => self.record_book_menu.show_book_title_menu(
                     ctx,

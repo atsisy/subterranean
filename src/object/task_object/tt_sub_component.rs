@@ -1383,6 +1383,10 @@ impl BorrowingRecordBookPage {
         }
     }
 
+    pub fn get_books_table_rows(&self) -> usize {
+	self.books_table.get_rows()
+    }
+
     pub fn get_calculated_price(&self) -> Option<u32> {
         self.pay_frame.get_calculated_price()
     }
@@ -2136,6 +2140,14 @@ impl BorrowingRecordBook {
 		self.prev_page_ope_mesh.hide();
 		self.redraw_request = DrawRequest::Draw;
 	    }
+	}
+    }
+
+    pub fn get_books_table_rows(&self) -> Option<usize> {
+        if let Some(page) = self.get_current_page() {
+            Some(page.get_books_table_rows())
+        } else {
+	    None
 	}
     }
 }
