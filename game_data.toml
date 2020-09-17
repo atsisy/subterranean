@@ -62,6 +62,7 @@ texture_paths = [
 	      "/textures/large_book_scratch_bad2.png",
 	      "/textures/large_book_scratch_bad3.png",
 	      "/textures/large_book_scratch_bad4.png",
+	      "/textures/manual_title_detail_page.png",
 	      ]
 font_paths = ["/fonts/azuki.ttf", "/fonts/RiiT_F.ttf", "/fonts/OradanoGSRR.ttf", "/fonts/cinecaption226.ttf"]
 tileset_paths = ["./resources/maps/suzunaan2/main.tmx"]

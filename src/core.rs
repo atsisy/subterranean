@@ -145,6 +145,7 @@ pub enum TextureID {
     LargeBookScratchBad2,
     LargeBookScratchBad3,
     LargeBookScratchBad4,
+    ManualPageBookTitles,
     Unknown,
 }
 
@@ -236,6 +237,7 @@ impl FromStr for TextureID {
 	    "LargeBookScratchBad2" => Ok(Self::LargeBookScratchBad2),
 	    "LargeBookScratchBad3" => Ok(Self::LargeBookScratchBad3),
 	    "LargeBookScratchBad4" => Ok(Self::LargeBookScratchBad4),
+	    "ManualPageBookTitles" => Ok(Self::ManualPageBookTitles),
             _ => Err(()),
         }
     }
@@ -307,6 +309,7 @@ impl TextureID {
 	    60 => Some(Self::LargeBookScratchBad2),
 	    61 => Some(Self::LargeBookScratchBad3),
 	    62 => Some(Self::LargeBookScratchBad4),
+	    63 => Some(Self::ManualPageBookTitles),
             _ => None,
         }
     }
@@ -1368,7 +1371,6 @@ impl SavableData {
 pub struct ResultReportStringTable {
     pub total_customers_waiting_time: String,
     pub shelving_is_done: String,
-    
 }
 
 #[derive(Clone)]
@@ -1407,7 +1409,7 @@ impl ResultReport {
 	for new_books_id in self.new_books_id.iter() {
 	    for yet_id in self.yet_shelved_books_id.iter() {
 		if new_books_id == yet_id {
-		    return true;
+		    return false;
 		}
 	    }
 	}

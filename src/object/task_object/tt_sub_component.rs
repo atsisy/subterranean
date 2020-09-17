@@ -204,6 +204,7 @@ impl ToString for HoldData {
 pub enum OnDeskType {
     Book = 0,
     BorrowingRecordBook,
+    ManualBook,
     CopyingPaper,
     Silhouette,
     Goods,
@@ -2435,6 +2436,7 @@ pub type TaskTexture = TaskItemStruct<OnDeskTexture, OnDeskTexture>;
 pub enum DeskObjectType {
     CustomerObject = 0,
     BorrowRecordBook,
+    ManualBook,
     SuzunaObject,
 }
 
@@ -2670,4 +2672,91 @@ impl DeskObjectContainer {
             }
         }
     }
+}
+
+pub struct TaskManualBook {
+    pages: Vec<Box<dyn DrawableComponent>>,
+    background: UniTexture,
+    current_page_index: usize,
+    canvas: SubScreen,
+}
+
+impl TaskManualBook {
+    pub fn new<'a>(ctx: &mut SuzuContext<'a>, rect: numeric::Rect, depth: i8) -> Self {
+	let mut title_details = Box::new(UniTexture::new(
+	    ctx.ref_texture(TextureID::ManualPageBookTitles), numeric::Point2f::new(0.0, 0.0),
+	    numeric::Vector2f::new(1.0, 1.0),
+	    0.0,
+	    0
+	));
+	title_details.fit_scale(ctx.context, numeric::Vector2f::new(rect.w, rect.h));
+	
+	let pages = vec![
+	    title_details as Box<dyn DrawableComponent>,
+	];
+	
+	TaskManualBook {
+	    pages: pages,
+	    current_page_index: 0,
+	    background: UniTexture::new(
+		ctx.ref_texture(TextureID::TextBackground),
+		numeric::Point2f::new(0.0, 0.0),
+		numeric::Vector2f::new(1.0, 1.0),
+		0.0,
+		0
+	    ),
+	    canvas: SubScreen::new(ctx.context, rect, depth, ggraphics::Color::from_rgba_u32(0xff)),
+	}
+    }
+
+    pub fn get_current_page_mut(&mut self) -> Option<&mut Box<dyn DrawableComponent>> {
+	self.pages.get_mut(self.current_page_index)
+    }
+}
+
+impl DrawableComponent for TaskManualBook {
+    fn draw(&mut self, ctx: &mut ggez::Context) -> ggez::GameResult<()> {
+	if self.is_visible() {
+	    sub_screen::stack_screen(ctx, &self.canvas);
+
+	    self.background.draw(ctx)?;
+
+	    if let Some(page) = self.get_current_page_mut() {
+		page.draw(ctx)?;
+	    }
+	    
+            sub_screen::pop_screen(ctx);
+            self.canvas.draw(ctx).unwrap();
+	}
+
+	Ok(())
+    }
+
+    fn hide(&mut self) {
+        self.canvas.hide();
+    }
+
+    fn appear(&mut self) {
+        self.canvas.appear();
+    }
+
+    fn is_visible(&self) -> bool {
+        self.canvas.is_visible()
+    }
+
+    fn set_drawing_depth(&mut self, depth: i8) {
+        self.canvas.set_drawing_depth(depth);
+    }
+
+    fn get_drawing_depth(&self) -> i8 {
+        self.canvas.get_drawing_depth()
+    }
+}
+
+impl DrawableObject for TaskManualBook {
+    impl_drawable_object_for_wrapped! {canvas}
+}
+
+impl TextureObject for TaskManualBook {
+    impl_texture_object_for_wrapped! {canvas}
 }

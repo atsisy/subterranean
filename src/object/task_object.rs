@@ -48,6 +48,7 @@ pub struct TaskTable {
     shelving_box: ShelvingBookBox,
     event_list: DelayEventList<TaskTable>,
     borrowing_record_book: BorrowingRecordBook,
+    manual_book: EffectableWrap<MovableWrap<TaskManualBook>>,
     record_book_is_staged: bool,
     customer_silhouette_menu: CustomerMenuGroup,
     on_desk_menu: OnDeskMenuGroup,
@@ -110,6 +111,43 @@ impl TaskTable {
         record_book.enable_large();
         desk.add_object(TaskItem::Texture(record_book));
 
+
+	let texture = UniTexture::new(
+            ctx.ref_texture(TextureID::Chobo1),
+            numeric::Point2f::new(0.0, 0.0),
+            numeric::Vector2f::new(0.2, 0.2),
+            0.0,
+            -1,
+        );
+
+	let chobo_texture = UniTexture::new(
+            ctx.ref_texture(TextureID::Chobo1),
+            numeric::Point2f::new(0.0, 0.0),
+            numeric::Vector2f::new(0.5, 0.5),
+            0.0,
+            -1,
+        );
+	let mut manual_book = TaskTexture::new(
+            OnDeskTexture::new(
+                ctx.context,
+                texture,
+                OnDeskType::ManualBook,
+            ),
+            OnDeskTexture::new(
+                ctx.context,
+                chobo_texture,
+                OnDeskType::ManualBook,
+            ),
+            0,
+            true,
+            true,
+            DeskObjectType::ManualBook,
+            t,
+        );
+        manual_book.enable_large();
+        desk.add_object(TaskItem::Texture(manual_book));
+
+	
         let appr_frame = TileBatchFrame::new(
             ctx.resource,
             TileBatchTextureID::BlackFrame,
@@ -122,7 +160,7 @@ impl TaskTable {
 
         let mut record_book = BorrowingRecordBook::new(
             ctx,
-            ggraphics::Rect::new(320.0, -550.0, 1000.0, 550.0),
+            numeric::Rect::new(320.0, -550.0, 1000.0, 550.0),
             0,
             record_book_data,
             t,
@@ -155,6 +193,14 @@ impl TaskTable {
             record_book_is_staged: false,
             customer_silhouette_menu: CustomerMenuGroup::new(0),
             record_book_menu: RecordBookMenuGroup::new(0),
+	    manual_book: EffectableWrap::new(
+		MovableWrap::new(
+		    Box::new(TaskManualBook::new(ctx, numeric::Rect::new(320.0, -550.0, 1000.0, 550.0), 0)),
+		    None,
+		    0
+		),
+		Vec::new(),
+	    ),
             on_desk_menu: OnDeskMenuGroup::new(0),
             current_customer_request: None,
             kosuzu_phrase: KosuzuPhrase::new(ctx, 0),
@@ -219,6 +265,18 @@ impl TaskTable {
             .new_effect(8, t, 0, 200);
     }
 
+    fn slide_appear_manual_book(&mut self, t: Clock) {
+        self.manual_book.appear();
+
+        self.manual_book.override_move_func(
+            move_fn::devide_distance(numeric::Point2f::new(320.0, 100.0), 0.2),
+            t,
+        );
+
+	self.dark_effect_panel
+            .new_effect(8, t, 0, 200);
+    }
+
     fn slide_hide_record_book(&mut self, t: Clock) {
         self.event_list.add_event(
             Box::new(|tt: &mut TaskTable, _, _| {
@@ -234,6 +292,24 @@ impl TaskTable {
         self.record_book_is_staged = false;
 
         self.record_book_menu.close_all(t);
+
+	self.dark_effect_panel
+            .new_effect(8, t, 200, 0);
+    }
+
+    fn slide_hide_manual_book(&mut self, t: Clock) {
+        self.event_list.add_event(
+            Box::new(|tt: &mut TaskTable, _, _| {
+		tt.manual_book.hide();
+	    }),
+            t + 25,
+        );
+
+        self.manual_book.override_move_func(
+            move_fn::devide_distance(numeric::Point2f::new(320.0, -550.0), 0.2),
+            t,
+        );
+        self.record_book_is_staged = false;
 
 	self.dark_effect_panel
             .new_effect(8, t, 200, 0);
@@ -257,7 +333,14 @@ impl TaskTable {
 			self.record_book_is_staged = true;
 			return true;
 		    }
-                }
+                },
+		OnDeskType::ManualBook => {
+		    if !self.record_book_is_staged {
+			self.slide_appear_manual_book(t);
+			self.record_book_is_staged = true;
+			return true;
+		    }
+                },
                 _ => (),
             }
         }
@@ -496,6 +579,16 @@ impl TaskTable {
         self.check_task_is_done(ctx);
 
 	self.dark_effect_panel.run_effect(ctx, t);
+
+	if !self.manual_book.is_stop() {
+	    self.manual_book.move_with_func(t);
+	    ctx.process_utility.redraw();
+	}
+
+	if !self.manual_book.is_empty_effect() {
+	    self.manual_book.effect(ctx.context, t);
+	    ctx.process_utility.redraw();
+	}
     }
 
     pub fn finish_customer_event(&mut self, now: Clock) {
@@ -729,6 +822,7 @@ impl TaskTable {
                 }
 
                 self.slide_hide_record_book(t);
+		self.slide_hide_manual_book(t);
             }
             _ => (),
         }
@@ -1353,6 +1447,7 @@ impl DrawableComponent for TaskTable {
 	    self.dark_effect_panel.draw(ctx).unwrap();
 	    
             self.borrowing_record_book.draw(ctx)?;
+	    self.manual_book.draw(ctx)?;
             self.kosuzu_phrase.draw(ctx)?;
 	    
             self.customer_silhouette_menu.draw(ctx)?;
