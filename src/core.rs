@@ -456,6 +456,11 @@ impl BookInformation {
     pub fn get_pages(&self) -> usize {
         self.pages
     }
+
+    
+    pub fn get_unique_id(&self) -> u64 {
+	self.unique_id
+    }
 }
 
 #[derive(PartialEq, Clone)]
@@ -1363,32 +1368,51 @@ impl SavableData {
 pub struct ResultReportStringTable {
     pub total_customers_waiting_time: String,
     pub shelving_is_done: String,
+    
 }
 
 #[derive(Clone)]
 pub struct ResultReport {
+    new_books_id: Vec<u64>,
+    yet_shelved_books_id: Vec<u64>,
     total_customers_waiting_time: Clock,
-    shelving_is_done: bool,
 }
 
 impl ResultReport {
     pub fn new() -> Self {
 	ResultReport {
+	    new_books_id: Vec::new(),
+	    yet_shelved_books_id: Vec::new(),
 	    total_customers_waiting_time: 0,
-	    shelving_is_done: false,
 	}
+    }
+
+    pub fn add_new_book_id(&mut self, id: u64) {
+	self.new_books_id.push(id);
+    }
+
+    pub fn add_yet_shelved_book_id(&mut self, id: u64) {
+	self.yet_shelved_books_id.push(id);
     }
 
     pub fn add_customers_waiting_time(&mut self, additional: Clock) {
 	self.total_customers_waiting_time += additional;
     }
-
-    pub fn mark_shelving_is_done(&mut self) {
-	self.shelving_is_done = true;
-    }
-
+    
     pub fn create_table(&self) -> ResultReportStringTable {
 	ResultReportStringTable::new(self)
+    }
+
+    pub fn new_books_shelving_is_done(&self) -> bool {
+	for new_books_id in self.new_books_id.iter() {
+	    for yet_id in self.yet_shelved_books_id.iter() {
+		if new_books_id == yet_id {
+		    return true;
+		}
+	    }
+	}
+
+	return false;
     }
 }
 
@@ -1396,7 +1420,7 @@ impl ResultReportStringTable {
     pub fn new(result_report: &ResultReport) -> Self {
 	ResultReportStringTable {
 	    total_customers_waiting_time: number_to_jk::number_to_jk(result_report.total_customers_waiting_time / 60),
-	    shelving_is_done: if result_report.shelving_is_done { "達成" } else { "未達成" }.to_string(),
+	    shelving_is_done: if result_report.new_books_shelving_is_done() { "達成" } else { "未達成" }.to_string(),
 	}
     }
 }

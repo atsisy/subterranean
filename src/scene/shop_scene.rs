@@ -321,8 +321,10 @@ impl ShopScene {
 	    shop_time.clone()
 	);
 
+	let mut result_report = ResultReport::new();
 	for new_book in new_books.iter() {
 	    ctx.savable_data.task_result.not_shelved_books.push(new_book.clone());
+	    result_report.add_new_book_id(new_book.get_unique_id());
 	}
 
 	let mut delay_event_list = DelayEventList::new();
@@ -342,7 +344,7 @@ impl ShopScene {
             shop_clock: shop_time,
             map: map,
             event_list: delay_event_list,
-	    result_report: ResultReport::new(),
+	    result_report: result_report,
             shop_menu: ShopMenuMaster::new(ctx, numeric::Vector2f::new(450.0, 768.0), 0),
             customer_request_queue: VecDeque::new(),
             customer_queue: VecDeque::new(),
@@ -969,9 +971,9 @@ impl ShopScene {
         if self.shop_clock.equals(18, 0) {
             self.event_list.add_event(
                 Box::new(move |slf: &mut Self, ctx, _| {
-		    // reportに配架予定本をすべて配架したことをマークする
-		    if ctx.savable_data.task_result.not_shelved_books.len() == 0 {
-			slf.result_report.mark_shelving_is_done();
+		    // reportに未配架の本のIDをメモする
+		    for book_info in ctx.savable_data.task_result.not_shelved_books.iter() {
+			slf.result_report.add_yet_shelved_book_id(book_info.get_unique_id());
 		    }
 		    
                     slf.transition_status = SceneTransition::SwapTransition;

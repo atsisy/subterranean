@@ -28,7 +28,7 @@ impl DayNewBooks {
 	    );
 
 	    for _ in 0..book_num {
-		new_books.push(book_info.clone());
+		new_books.push(book_info.clone_with_new_id_condition());
 	    }
 	}
 
