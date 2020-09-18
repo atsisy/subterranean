@@ -1419,6 +1419,7 @@ impl TaskTable {
 
         if self.record_book_is_staged {
 	    self.slide_hide_record_book(t);
+	    self.slide_hide_manual_book(t);
             return;
         }
 
@@ -1552,6 +1553,10 @@ impl Clickable for TaskTable {
             // クリックハンドラが呼び出されたので終了
             return;
         }
+
+	if self.manual_book.click_handler(ctx, point) {
+	    return;
+	}
 
         if let Some(sign_entry) = self
             .borrowing_record_book

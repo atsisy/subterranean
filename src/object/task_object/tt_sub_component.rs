@@ -2676,6 +2676,8 @@ impl DeskObjectContainer {
 
 pub struct TaskManualBook {
     pages: Vec<Box<dyn DrawableComponent>>,
+    go_left_texture: UniTexture,
+    go_right_texture: UniTexture,    
     background: UniTexture,
     current_page_index: usize,
     canvas: SubScreen,
@@ -2683,6 +2685,22 @@ pub struct TaskManualBook {
 
 impl TaskManualBook {
     pub fn new<'a>(ctx: &mut SuzuContext<'a>, rect: numeric::Rect, depth: i8) -> Self {
+	let mut borrowing_flow = Box::new(UniTexture::new(
+	    ctx.ref_texture(TextureID::ManualPageBorrowingFlow), numeric::Point2f::new(0.0, 0.0),
+	    numeric::Vector2f::new(1.0, 1.0),
+	    0.0,
+	    0
+	));
+	borrowing_flow.fit_scale(ctx.context, numeric::Vector2f::new(rect.w, rect.h));
+
+	let mut return_flow = Box::new(UniTexture::new(
+	    ctx.ref_texture(TextureID::ManualPageReturnFlow), numeric::Point2f::new(0.0, 0.0),
+	    numeric::Vector2f::new(1.0, 1.0),
+	    0.0,
+	    0
+	));
+	return_flow.fit_scale(ctx.context, numeric::Vector2f::new(rect.w, rect.h));
+	
 	let mut title_details = Box::new(UniTexture::new(
 	    ctx.ref_texture(TextureID::ManualPageBookTitles), numeric::Point2f::new(0.0, 0.0),
 	    numeric::Vector2f::new(1.0, 1.0),
@@ -2692,11 +2710,31 @@ impl TaskManualBook {
 	title_details.fit_scale(ctx.context, numeric::Vector2f::new(rect.w, rect.h));
 	
 	let pages = vec![
+	    borrowing_flow as Box<dyn DrawableComponent>,
+	    return_flow as Box<dyn DrawableComponent>,
 	    title_details as Box<dyn DrawableComponent>,
 	];
+
+	let left = UniTexture::new(
+	    ctx.ref_texture(TextureID::GoNextPageLeft),
+	    numeric::Point2f::new(0.0, rect.h - 32.0),
+	    numeric::Vector2f::new(0.5, 0.5),
+	    0.0,
+	    0
+	);
+
+	let right = UniTexture::new(
+	    ctx.ref_texture(TextureID::GoNextPageRight),
+	    numeric::Point2f::new(rect.w - 32.0, rect.h - 32.0),
+	    numeric::Vector2f::new(0.5, 0.5),
+	    0.0,
+	    0
+	);
 	
 	TaskManualBook {
 	    pages: pages,
+	    go_left_texture: left,
+	    go_right_texture: right,
 	    current_page_index: 0,
 	    background: UniTexture::new(
 		ctx.ref_texture(TextureID::TextBackground),
@@ -2709,8 +2747,37 @@ impl TaskManualBook {
 	}
     }
 
+    fn go_right<'a>(&mut self, ctx: &mut SuzuContext<'a>) {
+	if self.current_page_index != self.pages.len() - 1 {
+	    ctx.process_utility.redraw();
+	    self.current_page_index += 1;
+	}
+    }
+
+    fn go_left<'a>(&mut self, ctx: &mut SuzuContext<'a>) {
+	if self.current_page_index != 0 {
+	    ctx.process_utility.redraw();
+	    self.current_page_index -= 1;
+	}
+    }
+
     pub fn get_current_page_mut(&mut self) -> Option<&mut Box<dyn DrawableComponent>> {
 	self.pages.get_mut(self.current_page_index)
+    }
+
+    pub fn click_handler<'a>(&mut self, ctx: &mut SuzuContext<'a>, point: numeric::Point2f) -> bool {
+	if !self.canvas.contains(point) {
+	    return false;
+	}
+	
+	let rpoint = self.canvas.relative_point(point);
+	if self.go_left_texture.contains(ctx.context, rpoint) {
+	    self.go_left(ctx);
+	} else if self.go_right_texture.contains(ctx.context, rpoint) {
+	    self.go_right(ctx);
+	}
+
+	true
     }
 }
 
@@ -2724,6 +2791,9 @@ impl DrawableComponent for TaskManualBook {
 	    if let Some(page) = self.get_current_page_mut() {
 		page.draw(ctx)?;
 	    }
+
+	    self.go_left_texture.draw(ctx)?;
+	    self.go_right_texture.draw(ctx)?;
 	    
             sub_screen::pop_screen(ctx);
             self.canvas.draw(ctx).unwrap();

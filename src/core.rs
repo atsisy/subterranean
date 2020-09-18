@@ -146,6 +146,10 @@ pub enum TextureID {
     LargeBookScratchBad3,
     LargeBookScratchBad4,
     ManualPageBookTitles,
+    ManualPageBorrowingFlow,
+    ManualPageReturnFlow,
+    GoNextPageLeft,
+    GoNextPageRight,
     Unknown,
 }
 
@@ -238,6 +242,10 @@ impl FromStr for TextureID {
 	    "LargeBookScratchBad3" => Ok(Self::LargeBookScratchBad3),
 	    "LargeBookScratchBad4" => Ok(Self::LargeBookScratchBad4),
 	    "ManualPageBookTitles" => Ok(Self::ManualPageBookTitles),
+	    "ManualPageBorrowingFlow" => Ok(Self::ManualPageBorrowingFlow),
+	    "ManualPageReturnFlow" => Ok(Self::ManualPageReturnFlow),
+	    "GoNextPageLeft" => Ok(Self::GoNextPageLeft),
+	    "GoNextPageRight" => Ok(Self::GoNextPageRight),
             _ => Err(()),
         }
     }
@@ -310,6 +318,10 @@ impl TextureID {
 	    61 => Some(Self::LargeBookScratchBad3),
 	    62 => Some(Self::LargeBookScratchBad4),
 	    63 => Some(Self::ManualPageBookTitles),
+	    64 => Some(Self::ManualPageBorrowingFlow),
+	    65 => Some(Self::ManualPageReturnFlow),
+	    66 => Some(Self::GoNextPageLeft),
+	    67 => Some(Self::GoNextPageRight),
             _ => None,
         }
     }
