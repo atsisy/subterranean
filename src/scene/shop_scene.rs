@@ -873,7 +873,7 @@ impl ShopScene {
 	&mut self,
 	ctx: &mut SuzuContext<'a>,
 	elapsed_clock: Clock,
-	condition_eval_report: BookConditionEvalReport,
+	condition_eval_report: Option<BookConditionEvalReport>,
     ) {
         let t = self.get_current_clock();
         let animation_time = 30;
@@ -897,7 +897,9 @@ impl ShopScene {
         ));
 
 	self.shop_clock.add_minute((elapsed_clock / 1000) as u8);
-	self.result_report.add_condition_eval_mistakes(condition_eval_report.count_mistake());
+	if let Some(report) = condition_eval_report {
+	    self.result_report.add_condition_eval_mistakes(report.count_mistake());
+	}
 
         // self.event_list.add_event(
         //     Box::new(move |slf: &mut ShopScene, _, _| { slf.scene_transition_effect = None; }),

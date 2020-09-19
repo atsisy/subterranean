@@ -179,7 +179,7 @@ impl SuzunaSubScene {
             self.shop_scene.as_mut().unwrap().switched_and_restart(
 		ctx,
 		self.desk_work_scene.as_ref().unwrap().get_elapsed_clock(),
-		self.desk_work_scene.as_ref().unwrap().get_target_page_book_condition_eval_report().unwrap()
+		self.desk_work_scene.as_ref().unwrap().get_target_page_book_condition_eval_report()
 	    );
 	    self.desk_work_scene = None;
         }

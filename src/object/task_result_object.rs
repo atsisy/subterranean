@@ -153,7 +153,7 @@ impl DrawableEvaluationFlow {
             ctx.resource,
             pos,
             TileBatchTextureID::OldStyleFrame,
-            FrameData::new(vec![250.0, 250.0], vec![50.0; 3]),
+            FrameData::new(vec![250.0, 250.0], vec![50.0; 4]),
             numeric::Vector2f::new(0.5, 0.5),
             0,
         );	
@@ -168,7 +168,7 @@ impl DrawableEvaluationFlow {
 	    ggraphics::Color::from_rgba_u32(0xff),
 	);
 
-	for (index, s) in vec!["総合評価", "配架完了", "客を待たせた時間"].iter().enumerate() {
+	for (index, s) in vec!["総合評価", "誤評価数", "配架完了", "客を待たせた時間"].iter().enumerate() {
 	    let mut vtext = VerticalText::new(
 		s.to_string(),
 		numeric::Point2f::new(0.0, 0.0),
@@ -189,6 +189,31 @@ impl DrawableEvaluationFlow {
 	}
 
 	let result_report_string_table = result_report.create_table();
+
+	let mut eval_mistakes_vtext = EffectableWrap::new(
+	    MovableWrap::new(
+		Box::new(VerticalText::new(
+		    result_report_string_table.condition_eval_mistakes,
+		    numeric::Point2f::new(0.0, 0.0),
+		    numeric::Vector2f::new(1.0, 1.0),
+		    0.0,
+		    0,
+		    font_info.clone()
+		)),
+		None,
+		t,
+	    ),
+	    vec![effect::appear_bale_down_from_top(100, t + effect_clock_offset + 150)],
+	);
+
+	eval_mistakes_vtext.set_crop(init_crop);
+	set_table_frame_cell_center!(
+	    ctx.context,
+	    eval_frame,
+	    eval_mistakes_vtext,
+	    numeric::Vector2u::new(1, 1)
+        );
+	result_text.push(eval_mistakes_vtext);
 	
 	let mut shelving_vtext = EffectableWrap::new(
 	    MovableWrap::new(
@@ -211,7 +236,7 @@ impl DrawableEvaluationFlow {
 	    ctx.context,
 	    eval_frame,
 	    shelving_vtext,
-	    numeric::Vector2u::new(1, 1)
+	    numeric::Vector2u::new(2, 1)
         );
 	result_text.push(shelving_vtext);
 	
@@ -236,7 +261,7 @@ impl DrawableEvaluationFlow {
 	    ctx.context,
 	    eval_frame,
 	    waiting_vtext,
-	    numeric::Vector2u::new(2, 1)
+	    numeric::Vector2u::new(3, 1)
         );
 	result_text.push(waiting_vtext);
 

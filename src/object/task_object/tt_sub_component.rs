@@ -1416,11 +1416,14 @@ impl BorrowingRecordBookPage {
 	    let key = numeric::Vector2u::new(index as u32, 0);
 	    let book_info = match self.borrow_book.get(&key).as_ref().unwrap().ref_hold_data() {
 		HoldData::BookName(info) => info,
+		HoldData::None => continue,
 		_ => panic!("BUG"),
 	    };
 
+	    let key = numeric::Vector2u::new(index as u32, 1);
 	    let eval = match self.borrow_book.get(&key).unwrap().ref_hold_data() {
 		HoldData::BookCondition(status) => status,
+		HoldData::None => continue,
 		_ => panic!("BUG"),
 	    };
 
