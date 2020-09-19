@@ -58,6 +58,7 @@ pub struct TaskTable {
     today: GensoDate,
     task_is_done: bool,
     appearance_frame: TileBatchFrame,
+    current_page_book_condition_report: Option<BookConditionEvalReport>,
 }
 
 impl TaskTable {
@@ -207,6 +208,7 @@ impl TaskTable {
             today: ctx.savable_data.date,
             task_is_done: false,
             appearance_frame: appr_frame,
+	    current_page_book_condition_report: None,
         }
     }
 
@@ -869,7 +871,7 @@ impl TaskTable {
         );
     }
 
-    pub fn signing_returning_handler<'a>(&mut self, ctx: &mut SuzuContext<'a>, t: Clock) {
+    pub fn signing_returning_handler<'a>(&mut self, ctx: &mut SuzuContext<'a>, t: Clock) -> Option<BookConditionEvalReport> {
         self.event_list.add_event(
             Box::new(move |slf: &mut Self, _, t| {
                 slf.slide_hide_record_book(t);
@@ -897,6 +899,8 @@ impl TaskTable {
                 _ => (),
             }
         }
+
+	self.borrowing_record_book.get_current_page_condition_eval_report()
     }
 
     ///
@@ -1375,6 +1379,10 @@ impl TaskTable {
         false
     }
 
+    pub fn get_target_page_book_condition_eval_report(&self) -> Option<&BookConditionEvalReport> {
+	self.current_page_book_condition_report.as_ref()
+    }
+    
     fn try_show_menus<'a>(
         &mut self,
         ctx: &mut SuzuContext<'a>,
@@ -1564,7 +1572,9 @@ impl Clickable for TaskTable {
         {
             match sign_entry {
                 SignFrameEntry::BorrowingSign => self.signing_borrowing_handler(ctx, t),
-                SignFrameEntry::ReturningSign => self.signing_returning_handler(ctx, t),
+                SignFrameEntry::ReturningSign => {
+		    self.current_page_book_condition_report = self.signing_returning_handler(ctx, t);
+		},
             }
             return;
         }

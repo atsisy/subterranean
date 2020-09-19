@@ -25,6 +25,7 @@ use crate::object::notify;
 use crate::object::scenario::*;
 use crate::object::shop_object::*;
 use crate::object::task_object::tt_main_component::CustomerRequest;
+use crate::object::task_object::tt_sub_component::BookConditionEvalReport;
 use crate::object::util_object::*;
 use crate::object::*;
 use effect_object::{SceneTransitionEffectType, TilingEffectType};
@@ -868,7 +869,12 @@ impl ShopScene {
         self.update_playable_character_texture(rad);
     }
 
-    pub fn switched_and_restart<'a>(&mut self, ctx: &mut SuzuContext<'a>) {
+    pub fn switched_and_restart<'a>(
+	&mut self,
+	ctx: &mut SuzuContext<'a>,
+	elapsed_clock: Clock,
+	condition_eval_report: BookConditionEvalReport,
+    ) {
         let t = self.get_current_clock();
         let animation_time = 30;
 
@@ -889,6 +895,9 @@ impl ShopScene {
             -128,
             t,
         ));
+
+	self.shop_clock.add_minute((elapsed_clock / 1000) as u8);
+	self.result_report.add_condition_eval_mistakes(condition_eval_report.count_mistake());
 
         // self.event_list.add_event(
         //     Box::new(move |slf: &mut ShopScene, _, _| { slf.scene_transition_effect = None; }),

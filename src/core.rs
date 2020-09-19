@@ -384,6 +384,17 @@ pub enum BookCondition {
     Bad,
 }
 
+impl From<i32> for BookCondition {
+    fn from(integer: i32) -> Self {
+        match integer {
+            0 => BookCondition::Good,
+            1 => BookCondition::Fair,
+            2 => BookCondition::Bad,
+            _ => panic!("Not reserved number"),
+        }
+    }
+}
+
 impl BookCondition {
     fn from_u32(value: u32) -> Self {
 	match value {
@@ -1383,6 +1394,7 @@ impl SavableData {
 pub struct ResultReportStringTable {
     pub total_customers_waiting_time: String,
     pub shelving_is_done: String,
+    pub condition_eval_mistakes: String,
 }
 
 #[derive(Clone)]
@@ -1390,6 +1402,7 @@ pub struct ResultReport {
     new_books_id: Vec<u64>,
     yet_shelved_books_id: Vec<u64>,
     total_customers_waiting_time: Clock,
+    condition_eval_mistakes: usize,
 }
 
 impl ResultReport {
@@ -1398,11 +1411,16 @@ impl ResultReport {
 	    new_books_id: Vec::new(),
 	    yet_shelved_books_id: Vec::new(),
 	    total_customers_waiting_time: 0,
+	    condition_eval_mistakes: 0,
 	}
     }
 
     pub fn add_new_book_id(&mut self, id: u64) {
 	self.new_books_id.push(id);
+    }
+
+    pub fn add_condition_eval_mistakes(&mut self, mistakes: usize) {
+	self.condition_eval_mistakes += mistakes;
     }
 
     pub fn add_yet_shelved_book_id(&mut self, id: u64) {
@@ -1435,6 +1453,7 @@ impl ResultReportStringTable {
 	ResultReportStringTable {
 	    total_customers_waiting_time: number_to_jk::number_to_jk(result_report.total_customers_waiting_time / 60),
 	    shelving_is_done: if result_report.new_books_shelving_is_done() { "達成" } else { "未達成" }.to_string(),
+	    condition_eval_mistakes: number_to_jk::number_to_jk(result_report.condition_eval_mistakes as u64),
 	}
     }
 }

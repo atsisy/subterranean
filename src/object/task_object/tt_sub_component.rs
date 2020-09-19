@@ -27,34 +27,6 @@ use crate::scene::DrawRequest;
 
 use number_to_jk::number_to_jk;
 
-#[derive(Clone, Copy, PartialEq)]
-pub enum BookStatus {
-    Good = 0,
-    Ok,
-    Bad,
-}
-
-impl ToString for BookStatus {
-    fn to_string(&self) -> String {
-        match self {
-            &BookStatus::Good => "良".to_string(),
-            &BookStatus::Ok => "可".to_string(),
-            &BookStatus::Bad => "悪".to_string(),
-        }
-    }
-}
-
-impl From<i32> for BookStatus {
-    fn from(integer: i32) -> Self {
-        match integer {
-            0 => BookStatus::Good,
-            1 => BookStatus::Ok,
-            2 => BookStatus::Bad,
-            _ => panic!("Not reserved number"),
-        }
-    }
-}
-
 pub struct HoldDataVText {
     pub data: HoldData,
     pub vtext: VerticalText,
@@ -144,7 +116,7 @@ pub enum HoldData {
     BookName(BookInformation),
     CustomerName(String),
     Date(GensoDate),
-    BookStatus(BookStatus),
+    BookCondition(BookCondition),
     None,
 }
 
@@ -154,7 +126,7 @@ impl HoldData {
             HoldData::BookName(_) => "題目".to_string(),
             HoldData::CustomerName(_) => "御客氏名".to_string(),
             HoldData::Date(_) => "日付".to_string(),
-            HoldData::BookStatus(_) => "状態".to_string(),
+            HoldData::BookCondition(_) => "状態".to_string(),
             HoldData::None => "".to_string(),
         }
     }
@@ -180,9 +152,9 @@ impl HoldData {
         }
     }
 
-    pub fn to_book_status(&self) -> Option<BookStatus> {
+    pub fn to_book_status(&self) -> Option<BookCondition> {
         match self {
-            HoldData::BookStatus(status) => Some(status.clone()),
+            HoldData::BookCondition(status) => Some(status.clone()),
             _ => None,
         }
     }
@@ -194,7 +166,7 @@ impl ToString for HoldData {
             HoldData::BookName(book_info) => book_info.name.to_string(),
             HoldData::CustomerName(name) => name.to_string(),
             HoldData::Date(date) => date.to_string(),
-            HoldData::BookStatus(status) => status.to_string(),
+            HoldData::BookCondition(status) => status.to_string(),
             HoldData::None => "".to_string(),
         }
     }
@@ -413,7 +385,7 @@ impl OnDeskBook {
             shadow: shadow,
             title: VerticalText::new(
                 book_title,
-                numeric::Point2f::new(40.0, 30.0),
+                numeric::Point2f::new(35.0, 30.0),
                 numeric::Vector2f::new(1.0, 1.0),
                 0.0,
                 0,
@@ -528,9 +500,39 @@ impl OnDesk for OnDeskBook {
 }
 
 #[derive(Clone)]
+pub struct BookConditionEvalReport {
+    originals: Vec<BookInformation>,
+    each_evaluation: Vec<BookCondition>,
+}
+
+impl BookConditionEvalReport {
+    pub fn new(originals: Vec<BookInformation>, each_evaluation: Vec<BookCondition>) -> Self {
+	BookConditionEvalReport {
+	    originals: originals,
+	    each_evaluation: each_evaluation,
+	}
+    }
+
+    pub fn count_mistake(&self) -> usize {
+	let mut count: usize = 0;
+	
+	for index in 0..self.originals.len() {
+	    let original = self.originals.get(index).as_ref().unwrap().get_condition();
+	    let eval = self.each_evaluation.get(index).as_ref().unwrap().clone();
+
+	    if original == *eval {
+		count += 1;
+	    }
+	}
+
+	count
+    }
+}
+
+#[derive(Clone)]
 pub struct BorrowingRecordBookPageData {
     pub borrowing_book_title: HashMap<numeric::Vector2u, BookInformation>,
-    pub borrowing_book_status: HashMap<numeric::Vector2u, BookStatus>,
+    pub borrowing_book_status: HashMap<numeric::Vector2u, BookCondition>,
     pub customer_name: Option<String>,
     pub return_date: Option<GensoDate>,
     pub rental_date: Option<GensoDate>,
@@ -1007,7 +1009,7 @@ impl BorrowingRecordBookPage {
 
         for (position, book_status) in page_data.borrowing_book_status.iter() {
             let info = page.borrow_book.get_mut(&position).unwrap();
-            info.reset(HoldData::BookStatus(book_status.clone()));
+            info.reset(HoldData::BookCondition(book_status.clone()));
             info.vtext.make_center(
                 ctx.context,
                 page.books_table
@@ -1404,6 +1406,30 @@ impl BorrowingRecordBookPage {
 
         book_info
     }
+    
+    pub fn create_current_book_condition_report(&self) -> BookConditionEvalReport {
+	let mut originals = Vec::new();
+	let mut evals = Vec::new();
+
+	let size = self.books_table.get_rows();
+	for index in 0..size {
+	    let key = numeric::Vector2u::new(index as u32, 0);
+	    let book_info = match self.borrow_book.get(&key).as_ref().unwrap().ref_hold_data() {
+		HoldData::BookName(info) => info,
+		_ => panic!("BUG"),
+	    };
+
+	    let eval = match self.borrow_book.get(&key).unwrap().ref_hold_data() {
+		HoldData::BookCondition(status) => status,
+		_ => panic!("BUG"),
+	    };
+
+	    originals.push(book_info.clone());
+	    evals.push(eval.clone());
+	}
+
+	BookConditionEvalReport::new(originals, evals)
+    }
 
     pub fn try_insert_data_in_info_frame(
         &mut self,
@@ -1491,7 +1517,7 @@ impl BorrowingRecordBookPage {
                             .unwrap()
                             .data
                         {
-                            HoldData::BookStatus(_) => (),
+                            HoldData::BookCondition(_) => (),
                             _ => return false, // 本の状態の情報が無い場合、書き漏れがあるとして、falseを返す
                         }
                     }
@@ -1636,7 +1662,7 @@ impl BorrowingRecordBookPage {
             .get_grid_position(ctx, menu_position)
             .unwrap();
         let info = self.borrow_book.get_mut(&grid_position).unwrap();
-        info.reset(HoldData::BookStatus(BookStatus::from(status_index)));
+        info.reset(HoldData::BookCondition(BookCondition::from(status_index)));
         info.vtext.make_center(
             ctx,
             self.books_table
@@ -1684,7 +1710,7 @@ impl BorrowingRecordBookPage {
             if let Some(hold_data_vtext) = hold_data_vtext {
                 if !hold_data_vtext.is_none() {
                     match hold_data_vtext.copy_hold_data() {
-                        HoldData::BookStatus(status) => {
+                        HoldData::BookCondition(status) => {
                             borrow_book_status.insert(position, status);
                         }
                         _ => (),
@@ -1998,6 +2024,13 @@ impl BorrowingRecordBook {
                 .map(|page| page.export_page_data())
                 .collect(),
         }
+    }
+
+    pub fn get_current_page_condition_eval_report(&self) -> Option<BookConditionEvalReport> {
+	match self.get_current_page() {
+	    Some(page) => Some(page.create_current_book_condition_report()),
+	    None => None,
+	}
     }
 
     pub fn click_handler<'a>(
@@ -2715,18 +2748,19 @@ impl TaskManualBook {
 	    title_details as Box<dyn DrawableComponent>,
 	];
 
-	let left = UniTexture::new(
+	let mut left = UniTexture::new(
 	    ctx.ref_texture(TextureID::GoNextPageLeft),
-	    numeric::Point2f::new(0.0, rect.h - 32.0),
-	    numeric::Vector2f::new(0.5, 0.5),
+	    numeric::Point2f::new(0.0, rect.h - 48.0),
+	    numeric::Vector2f::new(0.75, 0.75),
 	    0.0,
 	    0
 	);
+	left.hide();
 
 	let right = UniTexture::new(
 	    ctx.ref_texture(TextureID::GoNextPageRight),
-	    numeric::Point2f::new(rect.w - 32.0, rect.h - 32.0),
-	    numeric::Vector2f::new(0.5, 0.5),
+	    numeric::Point2f::new(rect.w - 48.0, rect.h - 48.0),
+	    numeric::Vector2f::new(0.75, 0.75),
 	    0.0,
 	    0
 	);
@@ -2747,10 +2781,22 @@ impl TaskManualBook {
 	}
     }
 
+    fn check_move_page_icon_visibility(&mut self) {
+	self.go_right_texture.appear();
+	self.go_left_texture.appear();
+	
+	if self.current_page_index == 0 {
+	    self.go_left_texture.hide();
+	} else if self.current_page_index == self.pages.len() - 1 {
+	    self.go_right_texture.hide();
+	}
+    }
+
     fn go_right<'a>(&mut self, ctx: &mut SuzuContext<'a>) {
 	if self.current_page_index != self.pages.len() - 1 {
 	    ctx.process_utility.redraw();
 	    self.current_page_index += 1;
+	    self.check_move_page_icon_visibility();
 	}
     }
 
@@ -2758,6 +2804,7 @@ impl TaskManualBook {
 	if self.current_page_index != 0 {
 	    ctx.process_utility.redraw();
 	    self.current_page_index -= 1;
+	    self.check_move_page_icon_visibility();
 	}
     }
 

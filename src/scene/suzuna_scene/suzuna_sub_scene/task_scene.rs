@@ -220,6 +220,10 @@ impl TaskScene {
 	self.pause_screen_set.is_some()
     }
 
+    pub fn get_elapsed_clock(&self) -> Clock {
+	self.get_current_clock()
+    }
+
     fn pause_screen_click_handler<'a>(&mut self, ctx: &mut SuzuContext<'a>, point: numeric::Point2f, t: Clock) {
 	let pause_screen_set = match self.pause_screen_set.as_ref() {
 	    Some(it) => it,
@@ -273,6 +277,14 @@ impl TaskScene {
 
         self.task_table
             .button_down(ctx, self.get_current_clock(), button, point);
+    }
+
+    pub fn get_target_page_book_condition_eval_report(&self) -> Option<BookConditionEvalReport> {
+	if let Some(report) = self.task_table.get_target_page_book_condition_eval_report() {
+	    Some(report.clone())
+	} else {
+	    None
+	}
     }
 }
 
