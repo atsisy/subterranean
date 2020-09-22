@@ -860,7 +860,13 @@ impl ShopScene {
 
     pub fn start_mouse_move(&mut self, ctx: &mut ggez::Context, point: numeric::Point2f) {
         let current = self.player.get_character_object().obj().get_center(ctx);
+	
         let offset = numeric::Point2f::new(point.x - current.x, point.y - current.y);
+
+	if offset.x == 0.0 && offset.y == 0.0 {
+	    return;
+	}
+	
         let rad = if offset.x >= 0.0 {
             if offset.y >= 0.0 {
                 (offset.y / offset.x).atan()
