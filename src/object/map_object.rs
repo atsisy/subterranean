@@ -211,7 +211,7 @@ impl MapObject {
         info: &CollisionInformation,
         _: Clock,
     ) -> f32 {
-        (info.object1_position.unwrap().y + info.object1_position.unwrap().h + 0.1)
+        (info.object1_position.unwrap().y + info.object1_position.unwrap().h)
             - info.object2_position.unwrap().y
     }
 
@@ -226,7 +226,7 @@ impl MapObject {
         _: Clock,
     ) -> f32 {
         let area = self.get_collision_size(ctx);
-        info.object1_position.unwrap().y - (info.object2_position.unwrap().y + area.y) - 1.0
+        info.object1_position.unwrap().y - (info.object2_position.unwrap().y + area.y)
     }
 
     ///
@@ -240,7 +240,7 @@ impl MapObject {
         _: Clock,
     ) -> f32 {
         let area = self.get_collision_size(ctx);
-        (info.object1_position.unwrap().x - 2.0) - (info.object2_position.unwrap().x + area.x)
+        info.object1_position.unwrap().x - (info.object2_position.unwrap().x + area.x)
     }
 
     ///
@@ -253,7 +253,7 @@ impl MapObject {
         info: &CollisionInformation,
         _t: Clock,
     ) -> f32 {
-        (info.object1_position.unwrap().x + info.object1_position.unwrap().w + 0.5)
+        (info.object1_position.unwrap().x + info.object1_position.unwrap().w)
             - info.object2_position.unwrap().x
     }
 

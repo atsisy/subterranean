@@ -1842,8 +1842,8 @@ pub struct BorrowingRecordBook {
     pages: Vec<BorrowingRecordBookPage>,
     rect: numeric::Rect,
     current_page: usize,
-    next_page_ope_mesh: shape::DrawableShape<shape::Rectangle>,
-    prev_page_ope_mesh: shape::DrawableShape<shape::Rectangle>,
+    next_page_ope_mesh: UniTexture,
+    prev_page_ope_mesh: UniTexture,
     canvas: MovableWrap<SubScreen>,
 }
 
@@ -1874,39 +1874,30 @@ impl BorrowingRecordBook {
             Vec::new()
         };
 
-        let mut next_page_ope = shape::DrawableShape::new(
-            ctx.context,
-            shape::Rectangle::new(
-                numeric::Rect::new(0.0, 0.0, 30.0, rect.h),
-                ggraphics::DrawMode::fill(),
-                ggraphics::Color::from_rgba_u32(0x80),
-            ),
-            0,
-            ggraphics::WHITE,
-        );
+	let next = UniTexture::new(
+	    ctx.ref_texture(TextureID::GoNextPageLeft),
+	    numeric::Point2f::new(0.0, rect.h - 32.0),
+	    numeric::Vector2f::new(0.5, 0.5),
+	    0.0,
+	    0
+	);
 
-        next_page_ope.hide();
-
-        let mut prev_page_ope = shape::DrawableShape::new(
-            ctx.context,
-            shape::Rectangle::new(
-                numeric::Rect::new(rect.w - 30.0, 0.0, 30.0, rect.h),
-                ggraphics::DrawMode::fill(),
-                ggraphics::Color::from_rgba_u32(0x80),
-            ),
-            0,
-            ggraphics::WHITE,
-        );
-
-        prev_page_ope.hide();
+	let mut prev = UniTexture::new(
+	    ctx.ref_texture(TextureID::GoNextPageRight),
+	    numeric::Point2f::new(rect.w - 32.0, rect.h - 32.0),
+	    numeric::Vector2f::new(0.5, 0.5),
+	    0.0,
+	    0
+	);
+	prev.hide();
 
         BorrowingRecordBook {
 	    redraw_request: DrawRequest::InitDraw,
             pages: pages,
             rect: rect,
             current_page: 0,
-            next_page_ope_mesh: next_page_ope,
-            prev_page_ope_mesh: prev_page_ope,
+            next_page_ope_mesh: next,
+            prev_page_ope_mesh: prev,
             canvas: MovableWrap::new(
                 Box::new(SubScreen::new(
                     ctx.context,
@@ -1957,12 +1948,19 @@ impl BorrowingRecordBook {
         if self.current_page >= self.pages.len() {
             self.add_empty_page(ctx, t);
         }
+	self.prev_page_ope_mesh.appear();
     }
 
     fn prev_page(&mut self) {
 	self.redraw_request = DrawRequest::Draw;
+	self.prev_page_ope_mesh.appear();
+	
         if self.current_page > 0 {
             self.current_page -= 1;
+
+	    if self.current_page == 0 {
+		self.prev_page_ope_mesh.hide();
+	    }
         }
     }
 
@@ -2044,13 +2042,10 @@ impl BorrowingRecordBook {
     ) -> bool {
         let rpoint = self.relative_point(point);
 
-        let next_area = numeric::Rect::new(0.0, 0.0, 30.0, self.rect.h);
-        let prev_area = numeric::Rect::new(self.rect.w - 20.0, 0.0, 30.0, self.rect.h);
-
-        if next_area.contains(rpoint) {
+        if self.next_page_ope_mesh.contains(ctx.context, rpoint) {
             self.next_page(ctx, t);
             return true;
-        } else if prev_area.contains(rpoint) {
+        } else if self.prev_page_ope_mesh.contains(ctx.context, rpoint) {
             self.prev_page();
             return true;
         }
@@ -2154,30 +2149,8 @@ impl BorrowingRecordBook {
         }
     }
 
-
     pub fn mouse_motion_handler(&mut self, point: numeric::Point2f) {
         let rpoint = self.canvas.relative_point(point);
-
-        let next_area = numeric::Rect::new(0.0, 0.0, 30.0, self.rect.h);
-        let prev_area = numeric::Rect::new(self.rect.w - 20.0, 0.0, 30.0, self.rect.h);
-
-        if next_area.contains(rpoint) {
-            self.next_page_ope_mesh.appear();
-	    self.redraw_request = DrawRequest::Draw;
-        } else if prev_area.contains(rpoint) {
-            self.prev_page_ope_mesh.appear();
-	    self.redraw_request = DrawRequest::Draw;
-        } else {
-	    if self.next_page_ope_mesh.is_visible() {
-		self.next_page_ope_mesh.hide();
-		self.redraw_request = DrawRequest::Draw;
-	    }
-
-	    if self.prev_page_ope_mesh.is_visible() {
-		self.prev_page_ope_mesh.hide();
-		self.redraw_request = DrawRequest::Draw;
-	    }
-	}
     }
 
     pub fn get_books_table_rows(&self) -> Option<usize> {
@@ -2714,7 +2687,7 @@ pub struct TaskManualBook {
     redraw_request: DrawRequest,
     pages: Vec<Box<dyn DrawableComponent>>,
     go_left_texture: UniTexture,
-    go_right_texture: UniTexture,    
+    go_right_texture: UniTexture,
     background: UniTexture,
     current_page_index: usize,
     canvas: SubScreen,
