@@ -1065,6 +1065,7 @@ impl ShopScene {
     fn enter_pause_screen<'a>(&mut self, ctx: &mut SuzuContext<'a>, t: Clock) {
 	self.dark_effect_panel
             .new_effect(8, t, 0, 220);
+	self.player.reset_speed();
 	self.pause_screen_set = Some(PauseScreenSet::new(ctx, 0));
     }
 
