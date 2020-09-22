@@ -520,7 +520,7 @@ impl BookConditionEvalReport {
 	    let original = self.originals.get(index).as_ref().unwrap().get_condition();
 	    let eval = self.each_evaluation.get(index).as_ref().unwrap().clone();
 
-	    if original == *eval {
+	    if original != *eval {
 		count += 1;
 	    }
 	}
@@ -2711,6 +2711,7 @@ impl DeskObjectContainer {
 }
 
 pub struct TaskManualBook {
+    redraw_request: DrawRequest,
     pages: Vec<Box<dyn DrawableComponent>>,
     go_left_texture: UniTexture,
     go_right_texture: UniTexture,    
@@ -2769,6 +2770,7 @@ impl TaskManualBook {
 	);
 	
 	TaskManualBook {
+	    redraw_request: DrawRequest::InitDraw,
 	    pages: pages,
 	    go_left_texture: left,
 	    go_right_texture: right,
@@ -2798,6 +2800,7 @@ impl TaskManualBook {
     fn go_right<'a>(&mut self, ctx: &mut SuzuContext<'a>) {
 	if self.current_page_index != self.pages.len() - 1 {
 	    ctx.process_utility.redraw();
+	    self.redraw_request = DrawRequest::Draw;
 	    self.current_page_index += 1;
 	    self.check_move_page_icon_visibility();
 	}
@@ -2805,14 +2808,19 @@ impl TaskManualBook {
 
     fn go_left<'a>(&mut self, ctx: &mut SuzuContext<'a>) {
 	if self.current_page_index != 0 {
+	    self.redraw_request = DrawRequest::Draw;
 	    ctx.process_utility.redraw();
 	    self.current_page_index -= 1;
 	    self.check_move_page_icon_visibility();
 	}
     }
 
-    pub fn get_current_page_mut(&mut self) -> Option<&mut Box<dyn DrawableComponent>> {
-	self.pages.get_mut(self.current_page_index)
+    fn draw_current_page(&mut self, ctx: &mut ggez::Context) -> ggez::GameResult<()> {
+	if let Some(page) = self.pages.get_mut(self.current_page_index) {
+	    page.draw(ctx)?;
+	}
+
+	Ok(())
     }
 
     pub fn click_handler<'a>(&mut self, ctx: &mut SuzuContext<'a>, point: numeric::Point2f) -> bool {
@@ -2834,18 +2842,21 @@ impl TaskManualBook {
 impl DrawableComponent for TaskManualBook {
     fn draw(&mut self, ctx: &mut ggez::Context) -> ggez::GameResult<()> {
 	if self.is_visible() {
-	    sub_screen::stack_screen(ctx, &self.canvas);
+	    if self.redraw_request != DrawRequest::Skip {
+		self.redraw_request = DrawRequest::Skip;
+		println!("draw");
+		
+		sub_screen::stack_screen(ctx, &self.canvas);
+		
+		self.background.draw(ctx)?;
 
-	    self.background.draw(ctx)?;
-
-	    if let Some(page) = self.get_current_page_mut() {
-		page.draw(ctx)?;
+		self.draw_current_page(ctx)?;
+		
+		self.go_left_texture.draw(ctx)?;
+		self.go_right_texture.draw(ctx)?;
+		
+		sub_screen::pop_screen(ctx);
 	    }
-
-	    self.go_left_texture.draw(ctx)?;
-	    self.go_right_texture.draw(ctx)?;
-	    
-            sub_screen::pop_screen(ctx);
             self.canvas.draw(ctx).unwrap();
 	}
 

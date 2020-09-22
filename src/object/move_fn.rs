@@ -55,7 +55,6 @@ pub fn devide_distance(
             }
 
             let offset = numeric::Vector2f::new(dest.x - current_pos.x, dest.y - current_pos.y);
-	    println!("offset -> {:?}", offset);
             numeric::Point2f::new(
                 current_pos.x + (offset.x * divide_c),
                 current_pos.y + (offset.y * divide_c),

@@ -50,6 +50,7 @@ pub struct TaskTable {
     borrowing_record_book: BorrowingRecordBook,
     manual_book: EffectableWrap<MovableWrap<TaskManualBook>>,
     record_book_is_staged: bool,
+    manual_book_is_staged: bool,
     customer_silhouette_menu: CustomerMenuGroup,
     on_desk_menu: OnDeskMenuGroup,
     record_book_menu: RecordBookMenuGroup,
@@ -182,7 +183,7 @@ impl TaskTable {
             sight: sight,
             desk: desk,
             staging_object: None,
-	    dark_effect_panel: DarkEffectPanel::new(
+	        dark_effect_panel: DarkEffectPanel::new(
                 ctx.context,
                 numeric::Rect::new(0.0, 0.0, 1366.0, 768.0),
                 0,
@@ -192,6 +193,7 @@ impl TaskTable {
             event_list: DelayEventList::new(),
             borrowing_record_book: record_book,
             record_book_is_staged: false,
+            manual_book_is_staged: false,
             customer_silhouette_menu: CustomerMenuGroup::new(0),
             record_book_menu: RecordBookMenuGroup::new(0),
 	    manual_book: EffectableWrap::new(
@@ -212,6 +214,10 @@ impl TaskTable {
         }
     }
 
+    fn some_full_screen_object_is_appeared(&self) -> bool {
+        self.manual_book_is_staged || self.record_book_is_staged
+    }
+
     pub fn get_kosuzu_memory(&self) -> &KosuzuMemory {
         &self.kosuzu_memory
     }
@@ -221,7 +227,7 @@ impl TaskTable {
 
         // メニューがオブジェクトの上に表示されている場合、ドラッグする
         // オブジェクトの走査は行わない
-        if self.record_book_is_staged {
+        if self.some_full_screen_object_is_appeared() {
             return ();
         }
 
@@ -280,13 +286,6 @@ impl TaskTable {
     }
 
     fn slide_hide_record_book(&mut self, t: Clock) {
-        self.event_list.add_event(
-            Box::new(|tt: &mut TaskTable, _, _| {
-		tt.borrowing_record_book.hide();
-	    }),
-            t + 25,
-        );
-
         self.borrowing_record_book.override_move_func(
             move_fn::devide_distance(numeric::Point2f::new(320.0, -550.0), 0.2),
             t,
@@ -295,23 +294,16 @@ impl TaskTable {
 
         self.record_book_menu.close_all(t);
 
-	self.dark_effect_panel
+	    self.dark_effect_panel
             .new_effect(8, t, 200, 0);
     }
 
     fn slide_hide_manual_book(&mut self, t: Clock) {
-        self.event_list.add_event(
-            Box::new(|tt: &mut TaskTable, _, _| {
-		tt.manual_book.hide();
-	    }),
-            t + 25,
-        );
-
         self.manual_book.override_move_func(
             move_fn::devide_distance(numeric::Point2f::new(320.0, -550.0), 0.2),
             t,
         );
-        self.record_book_is_staged = false;
+        self.manual_book_is_staged = false;
 
 	self.dark_effect_panel
             .new_effect(8, t, 200, 0);
@@ -330,16 +322,16 @@ impl TaskTable {
         if clicked_object_type.is_some() {
             match clicked_object_type.unwrap() {
                 OnDeskType::BorrowingRecordBook => {
-		    if !self.record_book_is_staged {
+		    if !self.some_full_screen_object_is_appeared() {
 			self.slide_appear_record_book(t);
 			self.record_book_is_staged = true;
 			return true;
 		    }
                 },
 		OnDeskType::ManualBook => {
-		    if !self.record_book_is_staged {
+		    if !self.some_full_screen_object_is_appeared(){
 			self.slide_appear_manual_book(t);
-			self.record_book_is_staged = true;
+			self.manual_book_is_staged = true;
 			return true;
 		    }
                 },
@@ -1423,13 +1415,21 @@ impl TaskTable {
             .contains(ctx.context, click_point)
         {
             return;
-        }
+        } else {
+	    if self.record_book_is_staged {
+		    self.slide_hide_record_book(t);
+		return;
+	    }
+	}
 
-        if self.record_book_is_staged {
-	    self.slide_hide_record_book(t);
-	    self.slide_hide_manual_book(t);
-            return;
-        }
+	if self.manual_book.contains(ctx.context, click_point) {
+	    return;
+	} else {
+	    if self.manual_book_is_staged {
+		self.slide_hide_manual_book(t);
+		return;
+	    }
+	}
 
 	// BorrowingRecordBookが表示されていない場合、
 	// OnDeskBookに関するメニューの表示をチェックする
