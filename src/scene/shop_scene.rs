@@ -866,6 +866,9 @@ impl ShopScene {
 	if offset.x == 0.0 && offset.y == 0.0 {
 	    return;
 	}
+
+	let d = (offset.x.powf(2.0) + offset.y.powf(2.0)).sqrt();
+	let speed_k = if d > 300.0 { 300.0 } else { d } / 200.0;
 	
         let rad = if offset.x >= 0.0 {
             if offset.y >= 0.0 {
@@ -876,7 +879,7 @@ impl ShopScene {
         } else {
             (offset.y / offset.x).atan() + 180.0_f32.to_radians()
         };
-        let speed = numeric::Vector2f::new(rad.cos() * 4.0, rad.sin() * 4.0);
+        let speed = numeric::Vector2f::new(rad.cos() * 4.0 * speed_k, rad.sin() * 4.0 * speed_k);
 
         self.player.set_speed(speed);
         self.update_playable_character_texture(rad);
