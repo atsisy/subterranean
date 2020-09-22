@@ -232,7 +232,6 @@ impl<'a> MapObjectDrawer<'a> {
     }
 }
 
-
 ///
 /// # 夢の中のステージ
 ///
@@ -266,6 +265,8 @@ pub struct ShopScene {
     event_list: DelayEventList<Self>,
     result_report: ResultReport,
     shop_menu: ShopMenuMaster,
+    shop_map: MovableWrap<ShopMapViewer>,
+    shop_map_is_staged: bool,
     customer_request_queue: VecDeque<CustomerRequest>,
     customer_queue: VecDeque<CustomerCharacter>,
     camera: Rc<RefCell<numeric::Rect>>,
@@ -347,6 +348,12 @@ impl ShopScene {
             event_list: delay_event_list,
 	    result_report: result_report,
             shop_menu: ShopMenuMaster::new(ctx, numeric::Vector2f::new(450.0, 768.0), 0),
+	    shop_map: MovableWrap::new(
+		Box::new(ShopMapViewer::new(ctx, numeric::Rect::new(1366.0, 70.0, 1000.0, 628.0), 0)),
+		None,
+		0
+	    ),
+	    shop_map_is_staged: false,
             customer_request_queue: VecDeque::new(),
             customer_queue: VecDeque::new(),
             dark_effect_panel: DarkEffectPanel::new(
@@ -1189,6 +1196,19 @@ impl SceneManager for ShopScene {
 	    match button {
 		MouseButton::Left => {
                     self.player.reset_speed();
+		},
+		MouseButton::Right => {
+		    if self.shop_map_is_staged {
+			self.shop_map.override_move_func(move_fn::devide_distance(
+			    numeric::Point2f::new(1366.0, 70.0), 0.25), self.get_current_clock()
+			);
+		    } else {
+			self.shop_map.override_move_func(move_fn::devide_distance(
+			    numeric::Point2f::new(158.0, 70.0), 0.25), self.get_current_clock()
+			);
+		    }
+
+		    self.shop_map_is_staged = !self.shop_map_is_staged;
 		}
 		_ => (),
             }
@@ -1279,6 +1299,8 @@ impl SceneManager for ShopScene {
             // マップ描画の準備
             self.map.tile_map.update(ctx.context, t);
 
+	    self.shop_map.move_with_func(t);
+
 	    
             // 時刻の更新
             self.update_shop_clock_regular(ctx, t);
@@ -1342,6 +1364,8 @@ impl SceneManager for ShopScene {
             scenario_box.draw(ctx).unwrap();
         }
 
+	self.shop_map.draw(ctx).unwrap();
+	
 	self.drawable_shop_clock.draw(ctx).unwrap();
 
         self.dark_effect_panel.draw(ctx).unwrap();

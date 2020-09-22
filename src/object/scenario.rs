@@ -1388,7 +1388,7 @@ impl ScenarioEvent {
                     // テキストボックスに選択肢の文字列を表示する
                     self.scenario_box
                         .display_choice_box_text(FontInformation::new(
-                            ctx.resource.get_font(FontID::JpFude1),
+                            ctx.resource.get_font(FontID::Cinema),
                             numeric::Vector2f::new(32.0, 32.0),
                             ggraphics::Color::from_rgba_u32(0x000000ff),
                         ));
@@ -1485,7 +1485,7 @@ impl ScenarioEvent {
             choice.move_right();
             self.scenario_box
                 .display_choice_box_text(FontInformation::new(
-                    ctx.resource.get_font(FontID::JpFude1),
+                    ctx.resource.get_font(FontID::Cinema),
                     numeric::Vector2f::new(32.0, 32.0),
                     ggraphics::Color::from_rgba_u32(0x000000ff),
                 ));
@@ -1500,7 +1500,7 @@ impl ScenarioEvent {
             choice.move_left();
             self.scenario_box
                 .display_choice_box_text(FontInformation::new(
-                    ctx.resource.get_font(FontID::JpFude1),
+                    ctx.resource.get_font(FontID::Cinema),
                     numeric::Vector2f::new(32.0, 32.0),
                     ggraphics::Color::from_rgba_u32(0x000000ff),
                 ));

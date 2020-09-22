@@ -198,6 +198,8 @@ pub struct SuzunaStatusScreen {
     canvas: SubScreen,
     background: UniTexture,
     main_page: SuzunaStatusMainPage,
+    go_left_texture: UniTexture,
+    go_right_texture: UniTexture,
 }
 
 impl SuzunaStatusScreen {
@@ -209,12 +211,38 @@ impl SuzunaStatusScreen {
 	    0.0,
 	    0
 	);
+
+	let mut left = UniTexture::new(
+	    ctx.ref_texture(TextureID::GoNextPageLeft),
+	    numeric::Point2f::new(0.0, rect.h - 32.0),
+	    numeric::Vector2f::new(0.5, 0.5),
+	    0.0,
+	    0
+	);
+	left.hide();
+
+	let right = UniTexture::new(
+	    ctx.ref_texture(TextureID::GoNextPageRight),
+	    numeric::Point2f::new(rect.w - 32.0, rect.h - 32.0),
+	    numeric::Vector2f::new(0.5, 0.5),
+	    0.0,
+	    0
+	);
 	
 	SuzunaStatusScreen {
 	    canvas: SubScreen::new(ctx.context, rect, depth, ggraphics::Color::from_rgba_u32(0xffffffff)),
 	    background: background_texture,
 	    main_page: SuzunaStatusMainPage::new(ctx),
+	    go_left_texture: left,
+	    go_right_texture: right,
 	}
+    }
+
+    pub fn click_handler<'a>(&mut self, ctx: &mut SuzuContext<'a>, click_point: numeric::Point2f) {
+	if !self.canvas.contains(click_point) {
+	    return;
+	}
+	
     }
 }
 
@@ -225,6 +253,9 @@ impl DrawableComponent for SuzunaStatusScreen {
 
 	    self.background.draw(ctx)?;
 	    self.main_page.draw(ctx)?;
+
+	    self.go_right_texture.draw(ctx)?;
+	    self.go_left_texture.draw(ctx)?;
 
 	    sub_screen::pop_screen(ctx);
             self.canvas.draw(ctx).unwrap();

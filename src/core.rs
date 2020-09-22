@@ -1444,7 +1444,7 @@ impl ResultReport {
 	    }
 	}
 
-	return false;
+	return true;
     }
 }
 

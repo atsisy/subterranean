@@ -2659,3 +2659,69 @@ impl DrawableComponent for DrawableShopClock {
         self.drwob_essential.drawing_depth
     }
 }
+
+pub struct ShopMapViewer {
+    canvas: SubScreen,
+    map_texture: UniTexture,
+}
+
+impl ShopMapViewer {
+    pub fn new<'a>(ctx: &mut SuzuContext<'a>, rect: numeric::Rect, depth: i8) -> Self {
+	let canvas = SubScreen::new(ctx.context, rect, depth, ggraphics::Color::from_rgba_u32(0));
+	
+	ShopMapViewer {
+	    canvas: canvas,
+	    map_texture: UniTexture::new(
+		ctx.ref_texture(TextureID::Paper1),
+		numeric::Point2f::new(0.0, 0.0),
+		numeric::Vector2f::new(1.0, 1.0),
+		0.0,
+		0
+	    ),
+	}
+    }
+}
+
+
+impl DrawableComponent for ShopMapViewer {
+    fn draw(&mut self, ctx: &mut ggez::Context) -> ggez::GameResult<()> {
+        if self.is_visible() {
+            sub_screen::stack_screen(ctx, &self.canvas);
+
+	    self.map_texture.draw(ctx)?;
+	    
+            sub_screen::pop_screen(ctx);
+            self.canvas.draw(ctx)?;
+        }
+
+        Ok(())
+    }
+
+    fn hide(&mut self) {
+        self.canvas.hide();
+    }
+
+    fn appear(&mut self) {
+        self.canvas.appear();
+    }
+
+    fn is_visible(&self) -> bool {
+        self.canvas.is_visible()
+    }
+
+    fn set_drawing_depth(&mut self, depth: i8) {
+        self.canvas.set_drawing_depth(depth);
+    }
+
+    fn get_drawing_depth(&self) -> i8 {
+        self.canvas.get_drawing_depth()
+    }
+}
+
+impl DrawableObject for ShopMapViewer {
+    impl_drawable_object_for_wrapped! {canvas}
+}
+
+impl TextureObject for ShopMapViewer {
+    impl_texture_object_for_wrapped! {canvas}
+}

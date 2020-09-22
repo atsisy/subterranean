@@ -19,6 +19,9 @@ left = "JunkoTachieDefault"
    fpc = 0.2
    font_scale = 32.0
    color = 0x000000ff
+
+   [[scenario-group.text]]
+   text = """テスト用テキスト"""
    	 
    [[scenario-group.text]]
    text = """テスト用テキスト"""
