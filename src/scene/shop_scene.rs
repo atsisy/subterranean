@@ -268,7 +268,7 @@ pub struct ShopScene {
     shop_map: MovableWrap<ShopMapViewer>,
     shop_map_is_staged: bool,
     customer_request_queue: VecDeque<CustomerRequest>,
-    customer_queue: VecDeque<CustomerCharacter>,
+    customer_queue: VecDeque<(CustomerCharacter, Clock)>,
     camera: Rc<RefCell<numeric::Rect>>,
     dark_effect_panel: DarkEffectPanel,
     pause_screen_set: Option<PauseScreenSet>,
@@ -641,7 +641,7 @@ impl ShopScene {
 	    Self::check_character_collision_x_sub(ctx, &mut self.player, e, &self.camera.borrow(), t);
         }
 
-	for e in self.customer_queue.iter_mut() {
+	for (e, _) in self.customer_queue.iter_mut() {
 	    Self::check_character_collision_x_sub(ctx, &mut self.player, e, &self.camera.borrow(), t);
 	}
 
@@ -664,7 +664,7 @@ impl ShopScene {
         }
 
 	// 他キャラクターすべてとの衝突判定を行う
-        for e in self.customer_queue.iter_mut() {
+        for (e, _) in self.customer_queue.iter_mut() {
 	    Self::check_character_collision_y_sub(ctx, &mut self.player, e, &self.camera.borrow(), t);
         }
 
@@ -795,7 +795,7 @@ impl ShopScene {
 				    slf.drawable_shop_clock.update_time(&slf.shop_clock);
                                 }
 
-                                let mut customer = slf.customer_queue.pop_front().unwrap();
+                                let (mut customer, _) = slf.customer_queue.pop_front().unwrap();
 
                                 customer.set_destination_forced(
                                     ctx.context,
@@ -1115,6 +1115,28 @@ impl ShopScene {
 	}
     }
 
+    fn check_waiting_customer_giveup<'a>(&mut self, ctx: &mut SuzuContext<'a>, now: Clock) {
+	let mut giveup_customers = Vec::new();
+
+        for index in (0..self.customer_queue.len()).rev() {
+	    let (_, t) = self.customer_queue.get(index).unwrap();
+
+	    if (now - t) > 1200 {
+		let (giveup, _) = self.customer_queue.remove(index).unwrap();
+		giveup_customers.push(giveup);
+	    }
+        }
+
+	for mut customer in giveup_customers {
+	    customer.set_destination_forced(
+		ctx.context,
+		&self.map.tile_map,
+		numeric::Vector2u::new(15, 14),
+            );
+            self.character_group.add(customer);
+	}
+    }
+
     fn non_paused_key_down_event<'a>(&mut self, ctx: &mut SuzuContext<'a>, vkey: tdev::VirtualKey) {
 	match vkey {
             tdev::VirtualKey::Action1 => {
@@ -1296,7 +1318,12 @@ impl SceneManager for ShopScene {
                 }
             }
 
-            self.customer_queue.extend(rising_customers);
+	    for customer in rising_customers {
+		self.customer_queue.push_back((customer, t));
+	    }
+
+	    self.check_waiting_customer_giveup(ctx, t);
+	    
             for customer in self.character_group.iter_mut() {
                 customer.try_update_move_effect(
                     ctx,
@@ -1309,7 +1336,7 @@ impl SceneManager for ShopScene {
             }
 
 	    self.result_report.add_customers_waiting_time(self.customer_queue.len() as Clock);
-            for customer in &mut self.customer_queue {
+            for (customer, _) in &mut self.customer_queue {
                 Self::customer_move_and_collision_check(
                     ctx.context,
                     customer,
@@ -1381,7 +1408,7 @@ impl SceneManager for ShopScene {
             }
         }
 
-        for customer in &mut self.customer_queue {
+        for (customer, _) in &mut self.customer_queue {
             if customer
                 .get_character_object()
                 .obj()
