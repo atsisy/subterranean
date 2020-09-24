@@ -374,7 +374,8 @@ pub const LARGE_BOOK_TEXTURE: [TextureID; 3] = [
 
 #[derive(Clone)]
 pub enum SoundID {
-    Unknown = 0,
+    Title = 0,
+    Unknown,
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -757,6 +758,7 @@ impl GameResource {
 
         for sound_path in &src_file.sound_file_path {
             let sound_data = sound::SoundData::new(ctx, sound_path).unwrap();
+	    println!("sound path -> {}, canplay? => {:?}", sound_path, sound_data.can_play());
             sounds.push(sound_data);
         }
 
@@ -1505,6 +1507,10 @@ pub struct SuzuContext<'ctx> {
 impl<'ctx> SuzuContext<'ctx> {
     pub fn ref_texture(&mut self, id: TextureID) -> Rc<ggraphics::Image> {
 	self.resource.ref_texture(self.context, id)
+    }
+
+    pub fn play_sound(&mut self, sound_id: SoundID, flags: Option<sound::SoundPlayFlags>) -> sound::SoundHandler {
+	self.resource.play_sound(self.context, sound_id, flags)
     }
 }
 

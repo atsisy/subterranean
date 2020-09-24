@@ -2,8 +2,9 @@ use torifune::core::Clock;
 use torifune::device::*;
 use torifune::graphics::drawable::*;
 use torifune::graphics::object::*;
+use torifune::sound::*;
 
-use crate::core::{SuzuContext, TextureID, TileBatchTextureID};
+use crate::core::{SuzuContext, TextureID, TileBatchTextureID, SoundID};
 use crate::object::effect_object;
 use crate::object::title_object::*;
 use crate::scene::*;
@@ -57,6 +58,8 @@ impl TitleScene {
 
         let mut title_contents_set =
             TitleContentsSet::from_file(ctx, "./resources/title_contents/title_contents_list.toml");
+
+	ctx.play_sound(SoundID::Title, Some(SoundPlayFlags::new(0, 1.0, true, 1.0)));
 
         TitleScene {
             background: background,
