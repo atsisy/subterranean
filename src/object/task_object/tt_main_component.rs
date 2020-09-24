@@ -2446,9 +2446,12 @@ impl MoneyBox {
 	}
     }
 
-    pub fn add_coin(&mut self, coin_item: TaskItem) {
+    pub fn add_coin(&mut self, mut coin_item: TaskItem) {
 	match coin_item {
-	    TaskItem::Coin(_) => {
+	    TaskItem::Coin(ref mut texture) => {
+		texture.get_small_object_mut().disable_shadow();
+		texture.get_large_object_mut().disable_shadow();
+		
 		self.draw_request = DrawRequest::Draw;
 		self.coin_set.add_item(coin_item);
 	    },
