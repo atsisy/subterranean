@@ -42,6 +42,7 @@ pub struct TaskTable {
     info_panel: TaskInfoPanel,
     sight: SuzuMiniSight,
     desk: DeskObjects,
+    money_box: MovableWrap<MoneyBox>,
     staging_object: Option<TaskTableStagingObject>,
     kosuzu_memory: KosuzuMemory,
     dark_effect_panel: DarkEffectPanel,
@@ -51,6 +52,7 @@ pub struct TaskTable {
     manual_book: EffectableWrap<MovableWrap<TaskManualBook>>,
     record_book_is_staged: bool,
     manual_book_is_staged: bool,
+    money_box_is_pulled: bool,
     customer_silhouette_menu: CustomerMenuGroup,
     on_desk_menu: OnDeskMenuGroup,
     record_book_menu: RecordBookMenuGroup,
@@ -182,21 +184,22 @@ impl TaskTable {
             info_panel: TaskInfoPanel::new(ctx, info_panel_rect, customer_request),
             sight: sight,
             desk: desk,
+	    money_box: MovableWrap::new(
+		Box::new(MoneyBox::new(ctx, numeric::Rect::new(250.0, 720.0, 300.0, 300.0), 0)),
+		None,
+		0,
+	    ),
             staging_object: None,
-	        dark_effect_panel: DarkEffectPanel::new(
+	        kosuzu_memory: KosuzuMemory::new(),
+            dark_effect_panel: DarkEffectPanel::new(
                 ctx.context,
                 numeric::Rect::new(0.0, 0.0, 1366.0, 768.0),
                 0,
             ),
-            kosuzu_memory: KosuzuMemory::new(),
             shelving_box: shelving_box,
             event_list: DelayEventList::new(),
             borrowing_record_book: record_book,
-            record_book_is_staged: false,
-            manual_book_is_staged: false,
-            customer_silhouette_menu: CustomerMenuGroup::new(0),
-            record_book_menu: RecordBookMenuGroup::new(0),
-	    manual_book: EffectableWrap::new(
+            manual_book: EffectableWrap::new(
 		MovableWrap::new(
 		    Box::new(TaskManualBook::new(ctx, numeric::Rect::new(320.0, -550.0, 1000.0, 550.0), 0)),
 		    None,
@@ -204,7 +207,12 @@ impl TaskTable {
 		),
 		Vec::new(),
 	    ),
-            on_desk_menu: OnDeskMenuGroup::new(0),
+            record_book_is_staged: false,
+            manual_book_is_staged: false,
+	    money_box_is_pulled: false,
+            customer_silhouette_menu: CustomerMenuGroup::new(0),
+	    on_desk_menu: OnDeskMenuGroup::new(0),
+            record_book_menu: RecordBookMenuGroup::new(0),
             current_customer_request: None,
             kosuzu_phrase: KosuzuPhrase::new(ctx, 0),
             today: ctx.savable_data.date,
@@ -487,6 +495,22 @@ impl TaskTable {
         }
     }
 
+    pub fn try_moneybox_hand_over<'a>(&mut self, ctx: &mut SuzuContext<'a>, click_point: numeric::Point2f) {
+	if !self.desk.has_dragging() {
+	    return;
+	}
+
+	if !self.money_box.contains(ctx.context, click_point) {
+	    return;
+	}
+
+	if let Some(mut dragging) = self.desk.release_dragging() {
+	    let mbox_position = self.money_box.relative_point(click_point);
+	    dragging.get_object_mut().set_position(mbox_position);
+	    self.money_box.add_coin(dragging);
+        }
+    }
+
     fn desk_border(&mut self, ctx: &mut ggez::Context) -> f32 {
         let sight_edge =
             self.sight.canvas.get_position().y + self.sight.canvas.get_texture_size(ctx).y;
@@ -571,6 +595,7 @@ impl TaskTable {
         self.kosuzu_phrase.update(ctx, t);
         self.info_panel.update(ctx, t);
         self.check_task_is_done(ctx);
+	self.money_box.move_with_func(t);
 
 	self.dark_effect_panel.run_effect(ctx, t);
 
@@ -702,6 +727,11 @@ impl TaskTable {
         }
     }
 
+    pub fn add_fee_coins<'a>(&mut self, ctx: &mut SuzuContext<'a>, price: u32, t: Clock) {
+	let coins = factory::create_coin(ctx, price, numeric::Point2f::new(0.0, 0.0), t);
+	self.desk.add_object(coins);
+    }
+    
     fn check_borrowing_task_is_done(&self) -> bool {
         let mut book_count = 0;
         for obj in self.desk.desk_objects.get_raw_container().iter() {
@@ -835,6 +865,7 @@ impl TaskTable {
             t + 30,
         );
         self.show_kosuzu_payment_message(ctx, price, t);
+	self.add_fee_coins(ctx, price, t);
 
         // 本の情報が帳簿に記載されていた場合
         // 対応する本のハンドオーバーロックを解除する
@@ -1448,6 +1479,7 @@ impl DrawableComponent for TaskTable {
             self.sight.draw(ctx).unwrap();
             self.desk.draw(ctx).unwrap();
             self.shelving_box.draw(ctx).unwrap();
+	    self.money_box.draw(ctx)?;
 
             if let Some(staging_object) = self.staging_object.as_mut() {
                 staging_object.draw(ctx)?;
@@ -1564,6 +1596,30 @@ impl Clickable for TaskTable {
 
 	if self.manual_book.click_handler(ctx, point) {
 	    return;
+	}
+
+	if self.money_box.contains(ctx.context, rpoint) {
+	    if !self.money_box_is_pulled {
+		self.money_box.override_move_func(
+		    move_fn::devide_distance(numeric::Point2f::new(250.0, 420.0), 0.3),
+		    t
+		);
+	    } else {
+		self.money_box.override_move_func(
+		    move_fn::devide_distance(numeric::Point2f::new(250.0, 720.0), 0.3),
+		    t
+		);
+	    }
+
+	    self.money_box_is_pulled = !self.money_box_is_pulled;
+	} else {
+	    if self.money_box_is_pulled {
+		self.money_box.override_move_func(
+		    move_fn::devide_distance(numeric::Point2f::new(250.0, 720.0), 0.3),
+		    t
+		);
+		self.money_box_is_pulled = false;
+	    }
 	}
 
         if let Some(sign_entry) = self

@@ -238,7 +238,7 @@ impl SuzunaStatusScreen {
 	}
     }
 
-    pub fn click_handler<'a>(&mut self, ctx: &mut SuzuContext<'a>, click_point: numeric::Point2f) {
+    pub fn click_handler<'a>(&mut self, _ctx: &mut SuzuContext<'a>, click_point: numeric::Point2f) {
 	if !self.canvas.contains(click_point) {
 	    return;
 	}

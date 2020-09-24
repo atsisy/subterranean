@@ -144,6 +144,7 @@ impl DeskObjects {
             let area = match obj {
                 TaskItem::Book(item) => item.get_large_object().get_drawing_area(ctx.context),
                 TaskItem::Texture(item) => item.get_large_object().get_drawing_area(ctx.context),
+		TaskItem::Coin(item) => item.get_large_object().get_drawing_area(ctx.context),
             };
 
             let canvas_size = self.canvas.get_drawing_size(ctx.context);
@@ -216,6 +217,7 @@ impl DeskObjects {
             let object_area = match &dragging {
                 TaskItem::Book(item) => item.get_large_object().get_drawing_area(ctx.context),
                 TaskItem::Texture(item) => item.get_large_object().get_drawing_area(ctx.context),
+		TaskItem::Coin(item) => item.get_large_object().get_drawing_area(ctx.context),
             };
 
             dragging.set_drag_point(numeric::Vector2f::new(
@@ -2345,3 +2347,99 @@ impl DrawableComponent for TaskInfoPanel {
         self.canvas.get_drawing_depth()
     }
 }
+
+pub struct MoneyBox {
+    draw_request: DrawRequest,
+    canvas: SubScreen,
+    coin_set: DeskObjectContainer,
+    box_texture: UniTexture,
+}
+
+impl MoneyBox {
+    pub fn new<'a>(ctx: &mut SuzuContext<'a>, pos_rect: numeric::Rect, depth: i8) -> Self {
+	MoneyBox {
+	    draw_request: DrawRequest::InitDraw,
+	    canvas: SubScreen::new(ctx.context, pos_rect, depth, ggraphics::Color::from_rgba_u32(0)),
+	    box_texture: UniTexture::new(
+		ctx.ref_texture(TextureID::Paper1),
+		numeric::Point2f::new(0.0, 0.0),
+		numeric::Vector2f::new(1.0, 1.0),
+		0.0,
+		1
+	    ),
+	    coin_set: DeskObjectContainer::new(),
+	}
+    }
+
+    pub fn is_acceptable_for_moneybox(item: &TaskItem) -> bool {
+	match item {
+	    TaskItem::Coin(_) => true,
+	    _ => false,
+	}
+    }
+
+    pub fn add_coin(&mut self, coin_item: TaskItem) {
+	match coin_item {
+	    TaskItem::Coin(_) => {
+		self.draw_request = DrawRequest::Draw;
+		self.coin_set.add_item(coin_item);
+	    },
+	    _ => (),
+	}
+    }
+
+    pub fn relative_point(&self, point: numeric::Point2f) -> numeric::Point2f {
+	self.canvas.relative_point(point)
+    }
+}
+
+impl DrawableComponent for MoneyBox {
+    fn draw(&mut self, ctx: &mut ggez::Context) -> ggez::GameResult<()> {
+	if self.is_visible() {
+	    if self.draw_request != DrawRequest::Skip {
+		self.draw_request = DrawRequest::Skip;
+		sub_screen::stack_screen(ctx, &self.canvas);
+		
+		self.box_texture.draw(ctx)?;
+
+		for obj in self.coin_set.get_raw_container_mut() {
+                    obj.get_object_mut().draw(ctx)?;
+		}
+		
+		sub_screen::pop_screen(ctx);
+	    }
+            self.canvas.draw(ctx)?;
+	}
+	
+	Ok(())
+    }
+
+    fn hide(&mut self) {
+        self.canvas.hide();
+    }
+
+    fn appear(&mut self) {
+        self.canvas.appear();
+    }
+
+    fn is_visible(&self) -> bool {
+        self.canvas.is_visible()
+    }
+
+    fn set_drawing_depth(&mut self, depth: i8) {
+        self.canvas.set_drawing_depth(depth);
+    }
+
+    fn get_drawing_depth(&self) -> i8 {
+        self.canvas.get_drawing_depth()
+    }
+}
+
+impl DrawableObject for MoneyBox {
+    impl_drawable_object_for_wrapped! {canvas}
+}
+
+impl TextureObject for MoneyBox {
+    impl_texture_object_for_wrapped! {canvas}
+}
+

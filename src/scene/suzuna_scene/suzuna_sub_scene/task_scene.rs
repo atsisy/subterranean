@@ -238,6 +238,14 @@ impl TaskScene {
 	}
     }
 
+    fn check_moneybox_hand_over<'a>(
+	&mut self,
+	ctx: &mut SuzuContext<'a>,
+        point: numeric::Point2f,
+    ) {
+	self.task_table.try_moneybox_hand_over(ctx, point);
+    }
+
     fn non_paused_mouse_button_up_event<'a>(
 	&mut self,
 	ctx: &mut SuzuContext<'a>,
@@ -245,6 +253,9 @@ impl TaskScene {
         point: numeric::Point2f,
     ) {
 	self.mouse_info.update_dragging(button, false);
+
+	self.check_moneybox_hand_over(ctx, point);
+	
         //self.paper.button_up(ctx, button, point);
         self.unselect_dragging_object(ctx, self.get_current_clock());
 
@@ -285,6 +296,33 @@ impl TaskScene {
 	} else {
 	    None
 	}
+    }
+
+    fn after_task_done_process<'a>(&mut self, ctx: &mut SuzuContext<'a>, t: Clock) {
+	debug::debug_screen_push_text(&format!("register delay process!!"));
+	self.event_list.add_event(
+            Box::new(|scene: &mut TaskScene, _, _| {
+		scene
+                    .task_table
+                    .finish_customer_event(scene.get_current_clock());
+		debug::debug_screen_push_text(&format!("run delay process!! finish!!"));
+		scene.status = TaskSceneStatus::CustomerFree;
+            }),
+            self.get_current_clock() + 30,
+	);
+	
+	self.status = TaskSceneStatus::CustomerWait;
+	
+	if self.customer_request.is_none() {
+            self.event_list.add_event(
+		Box::new(move |scene: &mut TaskScene, ctx, _| {
+                    scene.ready_to_finish_scene(ctx, scene.get_current_clock());
+		}),
+		t + 150,
+            );
+	}
+	
+	ctx.process_utility.redraw();
     }
 }
 
@@ -375,30 +413,7 @@ impl SceneManager for TaskScene {
             self.task_table.update(ctx, self.get_current_clock());
 	    
             if self.status == TaskSceneStatus::CustomerEvent && self.task_table.task_is_done() {
-		debug::debug_screen_push_text(&format!("register delay process!!"));
-		self.event_list.add_event(
-                    Box::new(|scene: &mut TaskScene, _, _| {
-			scene
-                            .task_table
-                            .finish_customer_event(scene.get_current_clock());
-			debug::debug_screen_push_text(&format!("run delay process!! finish!!"));
-			scene.status = TaskSceneStatus::CustomerFree;
-                    }),
-                    self.get_current_clock() + 30,
-		);
-		
-		self.status = TaskSceneStatus::CustomerWait;
-		
-		if self.customer_request.is_none() {
-                    self.event_list.add_event(
-			Box::new(move |scene: &mut TaskScene, ctx, _| {
-                            scene.ready_to_finish_scene(ctx, scene.get_current_clock());
-			}),
-			t + 150,
-                    );
-		}
-		
-		ctx.process_utility.redraw();
+		self.after_task_done_process(ctx, t);
             }
 	    
             if self.status == TaskSceneStatus::CustomerFree {

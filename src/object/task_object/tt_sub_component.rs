@@ -181,6 +181,7 @@ pub enum OnDeskType {
     Silhouette,
     Goods,
     Texture,
+    Coin,
 }
 
 pub trait OnDesk: TextureObject + Clickable {
@@ -2150,7 +2151,7 @@ impl BorrowingRecordBook {
     }
 
     pub fn mouse_motion_handler(&mut self, point: numeric::Point2f) {
-        let rpoint = self.canvas.relative_point(point);
+        let _rpoint = self.canvas.relative_point(point);
     }
 
     pub fn get_books_table_rows(&self) -> Option<usize> {
@@ -2447,11 +2448,13 @@ pub enum DeskObjectType {
     BorrowRecordBook,
     ManualBook,
     SuzunaObject,
+    Coin,
 }
 
 pub enum TaskItem {
     Book(TaskBook),
     Texture(TaskTexture),
+    Coin(TaskTexture),
 }
 
 impl TaskItem {
@@ -2459,6 +2462,7 @@ impl TaskItem {
         match self {
             TaskItem::Book(item) => item.enable_small(),
             TaskItem::Texture(item) => item.enable_small(),
+	    TaskItem::Coin(item) => item.enable_small(),
         }
     }
 
@@ -2466,6 +2470,7 @@ impl TaskItem {
         match self {
             TaskItem::Book(item) => item.enable_large(),
             TaskItem::Texture(item) => item.enable_large(),
+	    TaskItem::Coin(item) => item.enable_large(),
         }
     }
 
@@ -2473,6 +2478,7 @@ impl TaskItem {
         match self {
             TaskItem::Book(item) => item.get_object_type(),
             TaskItem::Texture(item) => item.get_object_type(),
+	    TaskItem::Coin(item) => item.get_object_type(),
         }
     }
 
@@ -2480,6 +2486,7 @@ impl TaskItem {
         match self {
             TaskItem::Book(item) => item.get_object(),
             TaskItem::Texture(item) => item.get_object(),
+	    TaskItem::Coin(item) => item.get_object(),
         }
     }
 
@@ -2487,6 +2494,7 @@ impl TaskItem {
         match self {
             TaskItem::Book(item) => item.get_object_mut(),
             TaskItem::Texture(item) => item.get_object_mut(),
+	    TaskItem::Coin(item) => item.get_object_mut(),
         }
     }
 
@@ -2494,6 +2502,7 @@ impl TaskItem {
         match self {
             TaskItem::Book(item) => item.get_movable_object(),
             TaskItem::Texture(item) => item.get_movable_object(),
+	    TaskItem::Coin(item) => item.get_movable_object(),
         }
     }
 
@@ -2501,6 +2510,7 @@ impl TaskItem {
         match self {
             TaskItem::Book(item) => item.get_movable_object_mut(),
             TaskItem::Texture(item) => item.get_movable_object_mut(),
+	    TaskItem::Coin(item) => item.get_movable_object_mut(),
         }
     }
 
@@ -2508,6 +2518,7 @@ impl TaskItem {
         match self {
             TaskItem::Book(item) => item.get_effectable_object(),
             TaskItem::Texture(item) => item.get_effectable_object(),
+	    TaskItem::Coin(item) => item.get_effectable_object(),
         }
     }
 
@@ -2515,6 +2526,7 @@ impl TaskItem {
         match self {
             TaskItem::Book(item) => item.is_handover_locked(),
             TaskItem::Texture(item) => item.is_handover_locked(),
+	    TaskItem::Coin(item) => item.is_handover_locked(),
         }
     }
 
@@ -2522,6 +2534,7 @@ impl TaskItem {
         match self {
             TaskItem::Book(item) => item.lock_handover(),
             TaskItem::Texture(item) => item.lock_handover(),
+	    TaskItem::Coin(item) => item.lock_handover(),
         }
     }
 
@@ -2529,6 +2542,7 @@ impl TaskItem {
         match self {
             TaskItem::Book(item) => item.unlock_handover(),
             TaskItem::Texture(item) => item.unlock_handover(),
+	    TaskItem::Coin(item) => item.unlock_handover(),
         }
     }
 
@@ -2536,6 +2550,7 @@ impl TaskItem {
         match self {
             TaskItem::Book(item) => item.is_shelving_box_handover_locked(),
             TaskItem::Texture(item) => item.is_shelving_box_handover_locked(),
+	    TaskItem::Coin(item) => item.is_shelving_box_handover_locked(),
         }
     }
 
@@ -2543,6 +2558,7 @@ impl TaskItem {
         match self {
             TaskItem::Book(item) => item.lock_shelving_box_handover(),
             TaskItem::Texture(item) => item.lock_shelving_box_handover(),
+	    TaskItem::Coin(item) => item.lock_shelving_box_handover(),
         }
     }
 
@@ -2550,6 +2566,7 @@ impl TaskItem {
         match self {
             TaskItem::Book(item) => item.unlock_shelving_box_handover(),
             TaskItem::Texture(item) => item.unlock_shelving_box_handover(),
+	    TaskItem::Coin(item) => item.unlock_shelving_box_handover(),
         }
     }
 
@@ -2557,6 +2574,7 @@ impl TaskItem {
         match self {
             TaskItem::Book(item) => item.get_drag_point(),
             TaskItem::Texture(item) => item.get_drag_point(),
+	    TaskItem::Coin(item) => item.get_drag_point(),
         }
     }
 
@@ -2564,6 +2582,7 @@ impl TaskItem {
         match self {
             TaskItem::Book(item) => item.set_drag_point(drag_point),
             TaskItem::Texture(item) => item.set_drag_point(drag_point),
+	    TaskItem::Coin(item) => item.set_drag_point(drag_point),
         }
     }
 }
@@ -2573,6 +2592,7 @@ impl DrawableComponent for TaskItem {
         match self {
             TaskItem::Book(item) => item.get_object_mut().draw(ctx),
             TaskItem::Texture(item) => item.get_object_mut().draw(ctx),
+	    TaskItem::Coin(item) => item.get_object_mut().draw(ctx),
         }
     }
 
@@ -2580,6 +2600,7 @@ impl DrawableComponent for TaskItem {
         match self {
             TaskItem::Book(item) => item.get_object_mut().hide(),
             TaskItem::Texture(item) => item.get_object_mut().hide(),
+	    TaskItem::Coin(item) => item.get_object_mut().hide(),
         }
     }
 
@@ -2587,6 +2608,7 @@ impl DrawableComponent for TaskItem {
         match self {
             TaskItem::Book(item) => item.get_object_mut().appear(),
             TaskItem::Texture(item) => item.get_object_mut().appear(),
+	    TaskItem::Coin(item) => item.get_object_mut().appear(),
         }
     }
 
@@ -2594,6 +2616,7 @@ impl DrawableComponent for TaskItem {
         match self {
             TaskItem::Book(item) => item.get_object().is_visible(),
             TaskItem::Texture(item) => item.get_object().is_visible(),
+	    TaskItem::Coin(item) => item.get_object().is_visible(),
         }
     }
 
@@ -2601,6 +2624,7 @@ impl DrawableComponent for TaskItem {
         match self {
             TaskItem::Book(item) => item.get_object_mut().set_drawing_depth(depth),
             TaskItem::Texture(item) => item.get_object_mut().set_drawing_depth(depth),
+	    TaskItem::Coin(item) => item.get_object_mut().set_drawing_depth(depth),
         }
     }
 
@@ -2608,6 +2632,7 @@ impl DrawableComponent for TaskItem {
         match self {
             TaskItem::Book(item) => item.get_object().get_drawing_depth(),
             TaskItem::Texture(item) => item.get_object().get_drawing_depth(),
+	    TaskItem::Coin(item) => item.get_object().get_drawing_depth(),
         }
     }
 }
