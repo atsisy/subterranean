@@ -708,7 +708,7 @@ impl TaskTable {
     }
     
     fn check_borrowing_task_is_done(&self) -> bool {
-        let mut book_count = 0;
+        let mut item_counts = 0;
         for obj in self.desk.desk_objects.get_raw_container().iter() {
             match obj {
                 TaskItem::Book(item) => {
@@ -716,14 +716,15 @@ impl TaskTable {
                         .kosuzu_memory
                         .is_in_blacklist(item.get_large_object().get_book_info())
                     {
-                        book_count += 1;
+                        item_counts += 1;
                     }
-                }
+                },
+		TaskItem::Coin(_) => item_counts += 1,
                 _ => (),
             }
         }
 
-        book_count += self
+        item_counts += self
             .sight
             .count_not_forbidden_book_items(&self.kosuzu_memory);
 
@@ -734,14 +735,14 @@ impl TaskTable {
                         .kosuzu_memory
                         .is_in_blacklist(item.get_large_object().get_book_info())
                     {
-                        book_count += 1;
+                        item_counts += 1;
                     }
                 }
                 _ => (),
             }
         }
 
-        book_count == 0
+        item_counts == 0
     }
 
     fn check_returning_task_is_done(&self) -> bool {
