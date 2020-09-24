@@ -26,7 +26,6 @@ use crate::set_table_frame_cell_center;
 
 use super::Clickable;
 use crate::core::*;
-
 use super::tt_menu_component::*;
 use super::tt_sub_component::*;
 
@@ -92,8 +91,10 @@ pub struct DeskObjects {
     pub desk_objects: DeskObjectContainer,
     pub dragging: Option<TaskItem>,
     pub table_texture: SimpleObject,
+    money_box: MovableWrap<MoneyBox>,
     event_list: DelayEventList<Self>,
     appearance_frame: TileBatchFrame,
+    money_box_is_pulled: bool,
     draw_request: DrawRequest,
 }
 
@@ -133,8 +134,14 @@ impl DeskObjects {
                 ),
                 Vec::new(),
             ),
+	    money_box: MovableWrap::new(
+		Box::new(MoneyBox::new(ctx, numeric::Rect::new(rect.w - 300.0, -270.0, 300.0, 300.0), 0)),
+		None,
+		0,
+	    ),
             event_list: DelayEventList::new(),
             appearance_frame: appr_frame,
+	    money_box_is_pulled: false,
 	    draw_request: DrawRequest::InitDraw,
         }
     }
@@ -232,17 +239,45 @@ impl DeskObjects {
         }
     }
 
+    fn moneybox_hand_over<'a>(&mut self, ctx: &mut SuzuContext<'a>, mut item: TaskItem) {
+	let point = item.get_object().get_position();
+	let mbox_position = self.money_box.relative_point(point);
+	item.get_object_mut().set_position(mbox_position);
+	self.money_box.add_coin(item);
+    }
+
+    fn try_insert_money_box<'a>(&mut self, ctx: &mut SuzuContext<'a>, item: TaskItem) -> Option<TaskItem> {
+	let moneybox_area = self.money_box.get_drawing_area(ctx.context);
+	let item_area = item.get_object().get_drawing_area(ctx.context);
+	
+	if !moneybox_area.contains(item_area.point()) ||
+	    !moneybox_area.contains(numeric::Point2f::new(item_area.right(), item_area.bottom())) {
+	    return Some(item);
+	}
+	
+ 	match item {
+	    TaskItem::Coin(_) => {
+		self.moneybox_hand_over(ctx, item);
+		None
+	    },
+	    _ => Some(item)
+	}
+    }
+
     pub fn unselect_dragging_object<'a>(&mut self, ctx: &mut SuzuContext<'a>) {
         if self.dragging.is_some() {
-            let mut dragged = self.release_dragging().unwrap();
+            let dragged = self.release_dragging().unwrap();
 
-            let min = self.desk_objects.get_minimum_depth();
-            dragged.get_object_mut().set_drawing_depth(min);
-            dragged.get_object_mut().finish_dragging(ctx);
-            self.desk_objects.change_depth_equally(1);
-
-            self.desk_objects.add_item(dragged);
-            self.desk_objects.sort_with_depth();
+	    if let Some(mut item) = self.try_insert_money_box(ctx, dragged) {
+		let min = self.desk_objects.get_minimum_depth();
+		item.get_object_mut().set_drawing_depth(min);
+		item.get_object_mut().finish_dragging(ctx);
+		self.desk_objects.change_depth_equally(1);
+		
+		self.desk_objects.add_item(item);
+	    }
+	    
+	    self.desk_objects.sort_with_depth(); 
 	    self.draw_request = DrawRequest::Draw;
         }
     }
@@ -262,6 +297,11 @@ impl DeskObjects {
             p.as_movable_object_mut().move_with_func(t);
             p.as_effectable_object().effect(ctx.context, t);
         }
+
+	if !self.money_box.is_stop() {
+	    self.money_box.move_with_func(t);
+	    self.draw_request = DrawRequest::Draw;
+	}
     }
 
     pub fn check_clicked_desk_object_type<'a>(
@@ -373,6 +413,32 @@ impl DeskObjects {
             }
         }
 
+
+	let canvas_size = self.canvas.get_drawing_size(ctx.context);
+	if self.money_box.contains(ctx.context, rpoint) {
+	    if !self.money_box_is_pulled {
+		self.money_box.override_move_func(
+		    move_fn::devide_distance(numeric::Point2f::new(canvas_size.x - 300.0, 0.0), 0.3),
+		    t
+		);
+	    } else {
+		self.money_box.override_move_func(
+		    move_fn::devide_distance(numeric::Point2f::new(canvas_size.x - 300.0, -270.0), 0.3),
+		    t
+		);
+	    }
+
+	    self.money_box_is_pulled = !self.money_box_is_pulled;
+	} else {
+	    if self.money_box_is_pulled {
+		self.money_box.override_move_func(
+		    move_fn::devide_distance(numeric::Point2f::new(canvas_size.x - 300.0, -270.0), 0.3),
+		    t
+		);
+		self.money_box_is_pulled = false;
+	    }
+	}
+
         return false;
     }
 
@@ -420,6 +486,8 @@ impl DrawableComponent for DeskObjects {
 		for obj in self.desk_objects.get_raw_container_mut() {
                     obj.get_object_mut().draw(ctx)?;
 		}
+
+		self.money_box.draw(ctx)?;
 		
 		if let Some(d) = self.dragging.as_mut() {
                     d.get_object_mut().draw(ctx)?;

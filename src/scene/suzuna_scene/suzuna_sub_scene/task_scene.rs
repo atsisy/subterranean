@@ -237,15 +237,7 @@ impl TaskScene {
 	    }
 	}
     }
-
-    fn check_moneybox_hand_over<'a>(
-	&mut self,
-	ctx: &mut SuzuContext<'a>,
-        point: numeric::Point2f,
-    ) {
-	self.task_table.try_moneybox_hand_over(ctx, point);
-    }
-
+    
     fn non_paused_mouse_button_up_event<'a>(
 	&mut self,
 	ctx: &mut SuzuContext<'a>,
@@ -253,8 +245,6 @@ impl TaskScene {
         point: numeric::Point2f,
     ) {
 	self.mouse_info.update_dragging(button, false);
-
-	self.check_moneybox_hand_over(ctx, point);
 	
         //self.paper.button_up(ctx, button, point);
         self.unselect_dragging_object(ctx, self.get_current_clock());
