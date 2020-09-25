@@ -1614,3 +1614,116 @@ impl DrawableComponent for PauseScreenSet {
         self.drwob_essential.drawing_depth
     }
 }
+
+pub struct SeekBar {
+    rect: numeric::Rect,
+    seek_offset: numeric::Vector2f,
+    handle: UniTexture,
+    seek_edge: ggraphics::Mesh,
+    dragging: bool,
+    drwob_essential: DrawableObjectEssential,
+}
+
+impl SeekBar {
+    pub fn new<'a>(ctx: &mut SuzuContext<'a>, pos_rect: numeric::Rect, depth: i8) -> Self {
+	let seek = shape::Rectangle::new(
+	    numeric::Rect::new(pos_rect.x, pos_rect.y + (pos_rect.h / 2.0), pos_rect.w, pos_rect.h / 2.0),
+	    ggraphics::DrawMode::fill(),
+	    ggraphics::Color::from_rgba_u32(0x11111188),
+	);
+	
+	let mut builder = ggraphics::MeshBuilder::new();
+
+	seek.add_to_builder(&mut builder);
+	
+	SeekBar {
+	    rect: pos_rect,
+	    seek_offset: numeric::Vector2f::new(0.0, 0.0),
+	    handle: UniTexture::new(
+		ctx.ref_texture(TextureID::ChoicePanel1),
+		numeric::Point2f::new(pos_rect.x + (pos_rect.w / 2.0), pos_rect.y),
+		numeric::Vector2f::new(0.25, 0.25),
+		0.0,
+		0
+	    ),
+	    seek_edge: builder.build(ctx.context).unwrap(),
+	    drwob_essential: DrawableObjectEssential::new(true, depth),
+	    dragging: false,
+	}
+    }
+
+    pub fn start_dragging_check<'a>(&mut self, ctx: &mut SuzuContext<'a>, point: numeric::Point2f) {
+	if !self.handle.contains(ctx.context, point) {
+	    return;
+	}
+	
+	self.dragging = true;
+	let handle_pos = self.handle.get_position();
+	self.seek_offset = numeric::Vector2f::new(point.x - handle_pos.x, point.y - handle_pos.y);
+    }
+
+    pub fn dragging_handler<'a>(&mut self, ctx: &mut SuzuContext<'a>, point: numeric::Point2f) {
+	if !self.dragging {
+	    return;
+	}
+
+	let original = self.handle.get_drawing_area(ctx.context);
+	let mut seek_position = numeric::Point2f::new(point.x - self.seek_offset.x, original.y);
+
+	if seek_position.x <= self.rect.x {
+	    seek_position.x = self.rect.x;
+	} else if seek_position.x >= self.rect.right() - original.w {
+	    seek_position.x = self.rect.right() - original.w;
+	}
+
+	ctx.process_utility.redraw();
+	self.handle.set_position(seek_position);
+    }
+
+    pub fn release_handler(&mut self) {
+	if !self.dragging {
+	    return;
+	}
+
+	self.dragging = false;
+    }
+}
+
+impl DrawableComponent for SeekBar {
+    fn draw(&mut self, ctx: &mut ggez::Context) -> ggez::GameResult<()> {
+	if self.is_visible() {
+	    ggraphics::draw(ctx, &self.seek_edge, ggraphics::DrawParam {
+		color: ggraphics::Color::from_rgba_u32(0xff),
+		..Default::default()
+	    });
+	    self.handle.draw(ctx)?;
+	}
+
+	Ok(())
+    }
+    
+    #[inline(always)]
+    fn hide(&mut self) {
+        self.drwob_essential.visible = false;
+    }
+
+    #[inline(always)]
+    fn appear(&mut self) {
+        self.drwob_essential.visible = true;
+    }
+
+    #[inline(always)]
+    fn is_visible(&self) -> bool {
+        self.drwob_essential.visible
+    }
+
+    #[inline(always)]
+    fn set_drawing_depth(&mut self, depth: i8) {
+        self.drwob_essential.drawing_depth = depth;
+    }
+
+    #[inline(always)]
+    fn get_drawing_depth(&self) -> i8 {
+        self.drwob_essential.drawing_depth
+    }
+}

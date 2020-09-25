@@ -708,7 +708,7 @@ impl TaskTable {
     }
 
     pub fn add_fee_coins<'a>(&mut self, ctx: &mut SuzuContext<'a>, price: u32, t: Clock) {
-	let coins = factory::create_coins(ctx, price, numeric::Point2f::new(0.0, 0.0), t);
+	let coins = factory::create_coins(ctx, price, t);
 
 	for mut coin in coins {
 	    coin.get_object_mut().set_position(util::random_point_in_rect(

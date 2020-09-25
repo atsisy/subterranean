@@ -81,7 +81,6 @@ pub fn create_coin<'a>(
 pub fn create_coins<'a>(
     ctx: &mut SuzuContext<'a>,
     mut price: u32,
-    pos: numeric::Point2f,
     t: Clock,
 ) -> Vec<TaskItem> {
     let mut coins = Vec::new();

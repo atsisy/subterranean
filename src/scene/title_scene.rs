@@ -108,6 +108,7 @@ impl TitleScene {
         &mut self,
         ctx: &mut SuzuContext<'a>,
         point: numeric::Point2f,
+	offset: numeric::Vector2f,
     ) {
         if self.current_title_contents.is_none() {
             return;
@@ -115,7 +116,7 @@ impl TitleScene {
 
         match &mut self.current_title_contents.as_mut().unwrap() {
             TitleContents::InitialMenu(contents) => contents.update_highlight(ctx, point),
-            TitleContents::TitleSoundPlayer(_) => (),
+            TitleContents::TitleSoundPlayer(contents) => contents.dragging_handler(ctx, point, offset),
         }
     }
 
@@ -165,7 +166,9 @@ impl TitleScene {
                     }
                 }
             }
-            TitleContents::TitleSoundPlayer(_) => (),
+            TitleContents::TitleSoundPlayer(contents) => {
+		contents.mouse_button_up_handler();
+	    },
         }
     }
 }
@@ -231,6 +234,20 @@ impl SceneManager for TitleScene {
         self.scene_transition_type
     }
 
+    fn mouse_button_down_event<'a>(
+        &mut self,
+        ctx: &mut SuzuContext<'a>,
+        _button: ginput::mouse::MouseButton,
+        point: numeric::Point2f,
+    ) {
+        let t = self.get_current_clock();
+
+	match self.current_title_contents.as_mut().unwrap() {
+	    TitleContents::TitleSoundPlayer(contents) => contents.mouse_button_down_handler(ctx, point),
+	    _ => (),
+	}
+    }
+    
     fn mouse_button_up_event<'a>(
         &mut self,
         ctx: &mut SuzuContext<'a>,
@@ -245,9 +262,9 @@ impl SceneManager for TitleScene {
         &mut self,
         ctx: &mut SuzuContext<'a>,
         point: numeric::Point2f,
-        _offset: numeric::Vector2f,
+        offset: numeric::Vector2f,
     ) {
-        self.contents_mouse_motion_handler(ctx, point);
+        self.contents_mouse_motion_handler(ctx, point, offset);
     }
 
     fn transition(&self) -> SceneID {

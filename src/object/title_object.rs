@@ -5,6 +5,7 @@ use std::str::FromStr;
 
 use ggez::graphics as ggraphics;
 
+use numeric::Vector2f;
 use torifune::impl_drawable_object_for_wrapped;
 use torifune::impl_texture_object_for_wrapped;
 
@@ -14,6 +15,7 @@ use torifune::numeric;
 
 use crate::core::{font_information_from_toml_value, SuzuContext};
 use crate::scene::SceneID;
+use crate::object::util_object::SeekBar;
 
 #[derive(Clone, Copy)]
 pub enum TitleBuiltinCommand {
@@ -153,7 +155,7 @@ impl VTextList {
             let vtext = VerticalText::new(
                 text,
                 position,
-                numeric::Vector2f::new(1.0, 1.0),
+                Vector2f::new(1.0, 1.0),
                 0.0,
                 0,
                 normal_font_info.clone(),
@@ -270,15 +272,16 @@ impl TitleSoundPlayerData {
 pub struct TitleSoundPlayer {
     main_text: VerticalText,
     name: String,
+    seek_bar: SeekBar,
     drwob_essential: DrawableObjectEssential,
 }
 
 impl TitleSoundPlayer {
-    pub fn new<'a>(name: String, data: TitleSoundPlayerData) -> Self {
+    pub fn new<'a>(ctx: &mut SuzuContext<'a>, name: String, data: TitleSoundPlayerData) -> Self {
         let main_text = VerticalText::new(
             data.text.to_string(),
             data.position,
-            numeric::Vector2f::new(1.0, 1.0),
+            Vector2f::new(1.0, 1.0),
             0.0,
             0,
             data.font_info,
@@ -287,6 +290,7 @@ impl TitleSoundPlayer {
         TitleSoundPlayer {
             main_text: main_text,
             name: name,
+	    seek_bar: SeekBar::new(ctx, numeric::Rect::new(200.0, 200.0, 300.0, 40.0), 0),
             drwob_essential: DrawableObjectEssential::new(true, 0),
         }
     }
@@ -294,12 +298,25 @@ impl TitleSoundPlayer {
     pub fn get_name(&self) -> String {
         self.name.to_string()
     }
+
+    pub fn dragging_handler<'a>(&mut self, ctx: &mut SuzuContext<'a>, point: numeric::Point2f, _offset: Vector2f) {
+	self.seek_bar.dragging_handler(ctx, point)
+    }
+
+    pub fn mouse_button_down_handler<'a>(&mut self, ctx: &mut SuzuContext<'a>, point: numeric::Point2f) {
+	self.seek_bar.start_dragging_check(ctx, point);
+    }
+    
+    pub fn mouse_button_up_handler(&mut self) {
+	self.seek_bar.release_handler();
+    }
 }
 
 impl DrawableComponent for TitleSoundPlayer {
     fn draw(&mut self, ctx: &mut ggez::Context) -> ggez::GameResult<()> {
         if self.is_visible() {
             self.main_text.draw(ctx)?;
+	    self.seek_bar.draw(ctx)?;
         }
 
         Ok(())
@@ -372,7 +389,7 @@ impl TitleContents {
             "TitleSoundPlayer" => {
                 let data = TitleSoundPlayerData::from_toml(ctx, details_source_file);
                 let sound_player = MovableWrap::new(
-                    Box::new(TitleSoundPlayer::new(name.to_string(), data)),
+                    Box::new(TitleSoundPlayer::new(ctx, name.to_string(), data)),
                     None,
                     0,
                 );
