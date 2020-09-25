@@ -267,7 +267,7 @@ where
     // 従う関数を変更する
     fn override_move_func(
         &mut self,
-        move_fn: Option<Box<dyn Fn(&dyn MovableObject, Clock) -> numeric::Point2f>>,
+        move_fn: Option<GenericMoveFn>,
         now: Clock,
     ) {
         self.canvas.override_move_func(move_fn, now);
