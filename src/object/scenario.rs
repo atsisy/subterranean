@@ -151,11 +151,13 @@ impl ScenarioTachie {
         let left_texture = if tid_array.len() > 0 {
             Some(SimpleObject::new(
                 MovableUniTexture::new(
-                    ctx.ref_texture(tid_array[0]),
-                    numeric::Point2f::new(50.0, 100.0),
-                    numeric::Vector2f::new(0.12, 0.12),
-                    0.0,
-                    0,
+		    Box::new(UniTexture::new(
+			ctx.ref_texture(tid_array[0]),
+			numeric::Point2f::new(50.0, 100.0),
+			numeric::Vector2f::new(0.12, 0.12),
+			0.0,
+			0,
+		    )),
                     None,
                     t,
                 ),
@@ -168,11 +170,13 @@ impl ScenarioTachie {
         let right_texture = if tid_array.len() > 1 {
             Some(SimpleObject::new(
                 MovableUniTexture::new(
-                    ctx.ref_texture(tid_array[1]),
-                    numeric::Point2f::new(800.0, 100.0),
-                    numeric::Vector2f::new(0.12, 0.12),
-                    0.0,
-                    0,
+		    Box::new(UniTexture::new(
+			ctx.ref_texture(tid_array[1]),
+			numeric::Point2f::new(800.0, 100.0),
+			numeric::Vector2f::new(0.12, 0.12),
+			0.0,
+			0
+		    )),
                     None,
                     t,
                 ),
@@ -1082,11 +1086,13 @@ impl ScenarioBox {
     pub fn new<'a>(ctx: &mut SuzuContext, rect: numeric::Rect, t: Clock) -> Self {
         let background = tobj::SimpleObject::new(
             tobj::MovableUniTexture::new(
-                ctx.ref_texture(TextureID::TextBackground),
-                numeric::Point2f::new(20.0, 20.0),
-                numeric::Vector2f::new(1.0, 1.0),
-                0.0,
-                0,
+		Box::new(UniTexture::new(
+                    ctx.ref_texture(TextureID::TextBackground),
+                    numeric::Point2f::new(20.0, 20.0),
+                    numeric::Vector2f::new(1.0, 1.0),
+                    0.0,
+                    0,
+		)),
                 None,
                 0,
             ),
@@ -1115,11 +1121,13 @@ impl ScenarioBox {
     ) -> Self {
         let background = tobj::SimpleObject::new(
             tobj::MovableUniTexture::new(
-                ctx.ref_texture(TextureID::TextBackground),
-                numeric::Point2f::new(20.0, 20.0),
-                numeric::Vector2f::new(0.8, 0.8),
-                0.0,
-                0,
+		Box::new(UniTexture::new(
+                    ctx.ref_texture(TextureID::TextBackground),
+                    numeric::Point2f::new(20.0, 20.0),
+                    numeric::Vector2f::new(0.8, 0.8),
+                    0.0,
+                    0,
+		)),
                 None,
                 0,
             ),

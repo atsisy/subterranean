@@ -13,11 +13,13 @@ fn create_playable_doremy1<'a>(
     MapObject::new(
         tobj::SimpleObject::new(
             tobj::MovableUniTexture::new(
-                ctx.ref_texture(TextureID::KosuzuDotFront1),
-                mp::map_to_display(&map_position, camera),
-                numeric::Vector2f::new(1.5, 1.5),
-                0.0,
-                0,
+		Box::new(UniTexture::new(
+                    ctx.ref_texture(TextureID::KosuzuDotFront1),
+                    mp::map_to_display(&map_position, camera),
+                    numeric::Vector2f::new(1.5, 1.5),
+                    0.0,
+                    0
+		)),
                 None,
                 0,
             ),
@@ -71,11 +73,13 @@ fn create_customer_sample<'a>(
     MapObject::new(
         tobj::SimpleObject::new(
             tobj::MovableUniTexture::new(
-                ctx.ref_texture(TextureID::KosuzuDotFront1),
-                mp::map_to_display(&map_position, camera),
-                numeric::Vector2f::new(1.5, 1.5),
-                0.0,
-                0,
+		Box::new(UniTexture::new(
+                    ctx.ref_texture(TextureID::KosuzuDotFront1),
+                    mp::map_to_display(&map_position, camera),
+                    numeric::Vector2f::new(1.5, 1.5),
+                    0.0,
+                    0
+		)),
                 None,
                 0,
             ),

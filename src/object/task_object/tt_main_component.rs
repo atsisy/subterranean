@@ -124,11 +124,13 @@ impl DeskObjects {
             dragging: None,
             table_texture: SimpleObject::new(
                 MovableUniTexture::new(
-                    ctx.ref_texture(TextureID::Wood1),
-                    numeric::Point2f::new(0.0, 0.0),
-                    numeric::Vector2f::new(1.0, 1.0),
-                    0.0,
-                    0,
+		    Box::new(UniTexture::new(
+			ctx.ref_texture(TextureID::Wood1),
+			numeric::Point2f::new(0.0, 0.0),
+			numeric::Vector2f::new(1.0, 1.0),
+			0.0,
+			0,
+		    )),
                     move_fn::stop(),
                     0,
                 ),
@@ -1184,11 +1186,13 @@ impl SuzuMiniSight {
         );
 
 	let silhouette_paper_texture = MovableUniTexture::new(
-            ctx.ref_texture(TextureID::Paper1),
-            numeric::Point2f::new(0.0, 0.0),
-            numeric::Vector2f::new(1.2, 1.2),
-            0.0,
-            0,
+	    Box::new(UniTexture::new(
+		ctx.ref_texture(TextureID::Paper1),
+		numeric::Point2f::new(0.0, 0.0),
+		numeric::Vector2f::new(1.2, 1.2),
+		0.0,
+		0,
+	    )),
             move_fn::stop(),
             0,
         );
@@ -1578,11 +1582,13 @@ impl ShelvingBookBox {
             dragging: None,
             table_texture: SimpleObject::new(
                 MovableUniTexture::new(
-                    ctx.ref_texture(TextureID::Wood1),
-                    numeric::Point2f::new(0.0, 0.0),
-                    numeric::Vector2f::new(1.0, 1.0),
-                    0.0,
-                    0,
+		    Box::new(UniTexture::new(
+			ctx.ref_texture(TextureID::Wood1),
+			numeric::Point2f::new(0.0, 0.0),
+			numeric::Vector2f::new(1.0, 1.0),
+			0.0,
+			0
+		    )),
                     move_fn::stop(),
                     0,
                 ),

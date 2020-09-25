@@ -292,12 +292,14 @@ impl Choice {
                 .map(|tid| {
                     SimpleObject::new(
                         MovableUniTexture::new(
-                            ctx.ref_texture(*tid),
-                            numeric::Point2f::new(0.0, 0.0),
-                            numeric::Vector2f::new(1.0, 1.0),
-                            0.0,
-                            0,
-                            move_fn::halt(numeric::Point2f::new(0.0, 0.0)),
+			    Box::new(UniTexture::new(
+				ctx.ref_texture(*tid),
+				numeric::Point2f::new(0.0, 0.0),
+				numeric::Vector2f::new(1.0, 1.0),
+				0.0,
+				0,
+			    )),
+			    None,
                             0,
                         ),
                         Vec::new(),
@@ -306,12 +308,14 @@ impl Choice {
                 .collect(),
             selecting: SimpleObject::new(
                 MovableUniTexture::new(
-                    ctx.ref_texture(select_tid),
-                    numeric::Point2f::new(0.0, 0.0),
-                    numeric::Vector2f::new(1.0, 1.0),
-                    0.0,
-                    0,
-                    move_fn::halt(numeric::Point2f::new(0.0, 0.0)),
+		    Box::new(UniTexture::new(
+			ctx.ref_texture(select_tid),
+			numeric::Point2f::new(0.0, 0.0),
+			numeric::Vector2f::new(1.0, 1.0),
+			0.0,
+			0,
+		    )),
+                    None,
                     0,
                 ),
                 Vec::new(),
@@ -399,11 +403,13 @@ impl SimulationStatus {
                 ggraphics::Color::from_rgba_u32(0xe6cde3ff),
             ),
             background: MovableUniTexture::new(
-                ctx.ref_texture(TextureID::WafuTexture2),
-                numeric::Point2f::new(0.0, 0.0),
-                numeric::Vector2f::new(1.0, 1.0),
-                0.0,
-                0,
+		Box::new(UniTexture::new(
+                    ctx.ref_texture(TextureID::WafuTexture2),
+                    numeric::Point2f::new(0.0, 0.0),
+                    numeric::Vector2f::new(1.0, 1.0),
+                    0.0,
+                    0,
+		)),
                 move_fn::stop(),
                 0,
             ),

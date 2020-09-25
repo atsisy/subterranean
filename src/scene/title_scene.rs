@@ -59,7 +59,7 @@ impl TitleScene {
         let mut title_contents_set =
             TitleContentsSet::from_file(ctx, "./resources/title_contents/title_contents_list.toml");
 
-	ctx.play_sound(SoundID::Title, Some(SoundPlayFlags::new(0, 1.0, true, 1.0)));
+	ctx.play_sound(SoundID::Title, Some(SoundPlayFlags::new(0, 1.0, true, 0.1)));
 
         TitleScene {
             background: background,

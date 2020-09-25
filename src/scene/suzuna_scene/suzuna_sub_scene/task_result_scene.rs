@@ -37,11 +37,13 @@ impl TaskResultScene {
         date: GensoDate,
     ) -> Self {
         let mut background_object = MovableUniTexture::new(
-            ctx.ref_texture(TextureID::Paper1),
-            numeric::Point2f::new(0.0, 0.0),
-            numeric::Vector2f::new(1.0, 1.0),
-            0.0,
-            0,
+	    Box::new(UniTexture::new(
+		ctx.ref_texture(TextureID::Paper1),
+		numeric::Point2f::new(0.0, 0.0),
+		numeric::Vector2f::new(1.0, 1.0),
+		0.0,
+		0
+	    )),
             None,
             0,
         );

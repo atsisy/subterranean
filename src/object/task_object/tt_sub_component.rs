@@ -1198,11 +1198,13 @@ impl BorrowingRecordBookPage {
 
         let paper_texture = SimpleObject::new(
             MovableUniTexture::new(
-                ctx.ref_texture(paper_tid),
-                numeric::Point2f::new(0.0, 0.0),
-                numeric::Vector2f::new(1.0, 1.0),
-                0.0,
-                0,
+		Box::new(UniTexture::new(
+                    ctx.ref_texture(paper_tid),
+                    numeric::Point2f::new(0.0, 0.0),
+                    numeric::Vector2f::new(1.0, 1.0),
+                    0.0,
+                    0
+		)),
                 move_fn::halt(numeric::Point2f::new(0.0, 0.0)),
                 t,
             ),
