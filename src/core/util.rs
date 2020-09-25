@@ -152,3 +152,13 @@ pub fn get_unique_id() -> u64 {
 	id.borrow().clone()
     })
 }
+
+pub fn random_point_in_rect(rect: numeric::Rect) -> numeric::Point2f {
+    let begin_x = rect.left() as usize;
+    let begin_y = rect.top() as usize;
+
+    numeric::Point2f::new(
+	(begin_x + rand::random::<usize>() % rect.w as usize) as f32,
+	(begin_y + rand::random::<usize>() % rect.h as usize) as f32,
+    )
+}

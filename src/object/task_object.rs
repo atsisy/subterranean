@@ -25,6 +25,7 @@ use crate::flush_delay_event_and_redraw_check;
 use crate::object::util_object::*;
 use crate::object::{effect, move_fn};
 use crate::scene::*;
+use crate::core::util;
 use tt_main_component::*;
 use tt_menu_component::*;
 use tt_sub_component::*;
@@ -707,8 +708,14 @@ impl TaskTable {
     }
 
     pub fn add_fee_coins<'a>(&mut self, ctx: &mut SuzuContext<'a>, price: u32, t: Clock) {
-	let coins = factory::create_coin(ctx, price, numeric::Point2f::new(0.0, 0.0), t);
-	self.desk.add_object(coins);
+	let coins = factory::create_coins(ctx, price, numeric::Point2f::new(0.0, 0.0), t);
+
+	for mut coin in coins {
+	    coin.get_object_mut().set_position(util::random_point_in_rect(
+		numeric::Rect::new(10.0, 10.0, 100.0, 100.0)
+	    ));
+	    self.desk.add_object(coin);
+	}
     }
     
     fn check_borrowing_task_is_done(&self) -> bool {

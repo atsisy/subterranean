@@ -43,7 +43,9 @@ pub fn create_coin<'a>(
     t: Clock,
 ) -> TaskItem {
     let texture_id = match value {
-	100 => TextureID::ChoicePanel1,
+	500 => TextureID::ChoicePanel1,
+	100 => TextureID::ChoicePanel2,
+	50 => TextureID::ChoicePanel3,
 	_ => TextureID::ChoicePanel1,
     };
 
@@ -74,4 +76,30 @@ pub fn create_coin<'a>(
 	    t
 	)
     )
+}
+
+pub fn create_coins<'a>(
+    ctx: &mut SuzuContext<'a>,
+    mut price: u32,
+    pos: numeric::Point2f,
+    t: Clock,
+) -> Vec<TaskItem> {
+    let mut coins = Vec::new();
+    
+    while price >= 500 {
+	coins.push(create_coin(ctx, 500, numeric::Point2f::new(0.0, 0.0), t));
+	price -= 500;
+    }
+
+    while price >= 100 {
+	coins.push(create_coin(ctx, 100, numeric::Point2f::new(0.0, 0.0), t));
+	price -= 100;
+    }
+
+    while price >= 50 {
+	coins.push(create_coin(ctx, 50, numeric::Point2f::new(0.0, 0.0), t));
+	price -= 50;
+    }
+
+    coins
 }

@@ -223,8 +223,6 @@ impl SceneManager for TitleScene {
         if let Some(transition_effect) = self.scene_transition_effect.as_mut() {
             transition_effect.draw(ctx).unwrap();
         }
-
-	println!("draw");
     }
 
     fn post_process<'a>(&mut self, _ctx: &mut SuzuContext<'a>) -> SceneTransition {

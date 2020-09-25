@@ -178,6 +178,7 @@ impl DeskObjects {
                 }
             }
 
+	    println!("issuedd drawing request");
 	    self.draw_request = DrawRequest::Draw;
         }
     }
@@ -241,7 +242,7 @@ impl DeskObjects {
         }
     }
 
-    fn moneybox_hand_over<'a>(&mut self, ctx: &mut SuzuContext<'a>, mut item: TaskItem) {
+    fn moneybox_hand_over<'a>(&mut self, mut item: TaskItem) {
 	let point = item.get_object().get_position();
 	let mbox_position = self.money_box.relative_point(point);
 	item.get_object_mut().set_position(mbox_position);
@@ -259,7 +260,7 @@ impl DeskObjects {
 	
  	match item {
 	    TaskItem::Coin(_) => {
-		self.moneybox_hand_over(ctx, item);
+		self.moneybox_hand_over(item);
 		None
 	    },
 	    _ => Some(item)
@@ -496,9 +497,12 @@ impl DrawableComponent for DeskObjects {
 		}
 		
 		self.appearance_frame.draw(ctx)?;
+
+		println!("desk objects main redraw");
 		
 		sub_screen::pop_screen(ctx);
 	    }
+	    println!("desk objects canvas redraw");
             self.canvas.draw(ctx).unwrap();
         }
         Ok(())
