@@ -155,7 +155,11 @@ pub struct NotificationArea {
 }
 
 impl NotificationArea {
-    pub fn new<'a>(ctx: &mut SuzuContext<'a>, right_top_position: numeric::Point2f, depth: i8) -> Self {
+    pub fn new<'a>(
+        ctx: &mut SuzuContext<'a>,
+        right_top_position: numeric::Point2f,
+        depth: i8,
+    ) -> Self {
         let texture = UniTexture::new(
             ctx.ref_texture(TextureID::Paper1),
             numeric::Point2f::new(0.0, 0.0),
@@ -229,7 +233,10 @@ impl NotificationArea {
     fn set_hide_animation(&mut self, t: Clock) {
         if let Some(area) = self.area.as_mut() {
             area.clear_effect();
-            area.override_move_func(move_fn::devide_distance(numeric::Point2f::new(1366.0, 10.0), 0.2), t);
+            area.override_move_func(
+                move_fn::devide_distance(numeric::Point2f::new(1366.0, 10.0), 0.2),
+                t,
+            );
 
             let scheduled = t + self.default_animation_time;
             self.event_list.add_event(
@@ -288,13 +295,13 @@ impl NotificationArea {
     ///
     pub fn update<'a>(&mut self, ctx: &mut SuzuContext<'a>, t: Clock) {
         if flush_delay_event!(self, self.event_list, ctx, t) > 0 {
-	    ctx.process_utility.redraw();
-	}
+            ctx.process_utility.redraw();
+        }
 
         if let Some(area) = self.area.as_mut() {
             area.move_with_func(t);
             area.effect(ctx.context, t);
-	    ctx.process_utility.redraw();
+            ctx.process_utility.redraw();
         }
     }
 }

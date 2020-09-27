@@ -4,7 +4,7 @@ use torifune::graphics::drawable::*;
 use torifune::graphics::object::*;
 use torifune::sound::*;
 
-use crate::core::{SuzuContext, TextureID, TileBatchTextureID, SoundID};
+use crate::core::{SoundID, SuzuContext, TextureID, TileBatchTextureID};
 use crate::object::effect_object;
 use crate::object::title_object::*;
 use crate::scene::*;
@@ -59,7 +59,7 @@ impl TitleScene {
         let mut title_contents_set =
             TitleContentsSet::from_file(ctx, "./resources/title_contents/title_contents_list.toml");
 
-	ctx.play_sound(SoundID::Title, Some(SoundPlayFlags::new(0, 1.0, true, 0.1)));
+        ctx.play_sound(SoundID::Title, Some(SoundPlayFlags::new(0, 1.0, true, 0.1)));
 
         TitleScene {
             background: background,
@@ -108,7 +108,7 @@ impl TitleScene {
         &mut self,
         ctx: &mut SuzuContext<'a>,
         point: numeric::Point2f,
-	offset: numeric::Vector2f,
+        offset: numeric::Vector2f,
     ) {
         if self.current_title_contents.is_none() {
             return;
@@ -116,7 +116,9 @@ impl TitleScene {
 
         match &mut self.current_title_contents.as_mut().unwrap() {
             TitleContents::InitialMenu(contents) => contents.update_highlight(ctx, point),
-            TitleContents::TitleSoundPlayer(contents) => contents.dragging_handler(ctx, point, offset),
+            TitleContents::TitleSoundPlayer(contents) => {
+                contents.dragging_handler(ctx, point, offset)
+            }
         }
     }
 
@@ -167,8 +169,8 @@ impl TitleScene {
                 }
             }
             TitleContents::TitleSoundPlayer(contents) => {
-		contents.mouse_button_up_handler();
-	    },
+                contents.mouse_button_up_handler();
+            }
         }
     }
 }
@@ -198,22 +200,22 @@ impl SceneManager for TitleScene {
 
         if let Some(transition_effect) = self.scene_transition_effect.as_mut() {
             transition_effect.effect(ctx.context, t);
-	    ctx.process_utility.redraw();
+            ctx.process_utility.redraw();
         }
 
         if let Some(content) = self.current_title_contents.as_mut() {
             match content {
                 TitleContents::TitleSoundPlayer(player) => {
                     player.move_with_func(t);
-		    ctx.process_utility.redraw();
+                    ctx.process_utility.redraw();
                 }
                 _ => (),
             }
         }
 
         if flush_delay_event!(self, self.event_list, ctx, self.get_current_clock()) > 0 {
-	    ctx.process_utility.redraw();
-	}
+            ctx.process_utility.redraw();
+        }
     }
 
     fn drawing_process(&mut self, ctx: &mut ggez::Context) {
@@ -242,12 +244,14 @@ impl SceneManager for TitleScene {
     ) {
         let t = self.get_current_clock();
 
-	match self.current_title_contents.as_mut().unwrap() {
-	    TitleContents::TitleSoundPlayer(contents) => contents.mouse_button_down_handler(ctx, point),
-	    _ => (),
-	}
+        match self.current_title_contents.as_mut().unwrap() {
+            TitleContents::TitleSoundPlayer(contents) => {
+                contents.mouse_button_down_handler(ctx, point)
+            }
+            _ => (),
+        }
     }
-    
+
     fn mouse_button_up_event<'a>(
         &mut self,
         ctx: &mut SuzuContext<'a>,

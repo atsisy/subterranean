@@ -20,12 +20,12 @@ use torifune::impl_drawable_object_for_wrapped;
 use torifune::impl_texture_object_for_wrapped;
 use torifune::numeric;
 
+use crate::core::util;
 use crate::flush_delay_event;
 use crate::flush_delay_event_and_redraw_check;
 use crate::object::util_object::*;
 use crate::object::{effect, move_fn};
 use crate::scene::*;
-use crate::core::util;
 use tt_main_component::*;
 use tt_menu_component::*;
 use tt_sub_component::*;
@@ -79,7 +79,7 @@ impl TaskTable {
 
         let mut desk = DeskObjects::new(ctx, desk_rect);
 
-	let texture = UniTexture::new(
+        let texture = UniTexture::new(
             ctx.ref_texture(TextureID::Chobo1),
             numeric::Point2f::new(0.0, 0.0),
             numeric::Vector2f::new(0.2, 0.2),
@@ -87,7 +87,7 @@ impl TaskTable {
             -1,
         );
 
-	let chobo_texture = UniTexture::new(
+        let chobo_texture = UniTexture::new(
             ctx.ref_texture(TextureID::Chobo1),
             numeric::Point2f::new(0.0, 0.0),
             numeric::Vector2f::new(0.5, 0.5),
@@ -95,16 +95,8 @@ impl TaskTable {
             -1,
         );
         let mut record_book = TaskTexture::new(
-            OnDeskTexture::new(
-                ctx.context,
-                texture,
-                OnDeskType::BorrowingRecordBook,
-            ),
-            OnDeskTexture::new(
-                ctx.context,
-                chobo_texture,
-                OnDeskType::BorrowingRecordBook,
-            ),
+            OnDeskTexture::new(ctx.context, texture, OnDeskType::BorrowingRecordBook),
+            OnDeskTexture::new(ctx.context, chobo_texture, OnDeskType::BorrowingRecordBook),
             0,
             true,
             true,
@@ -114,8 +106,7 @@ impl TaskTable {
         record_book.enable_large();
         desk.add_object(TaskItem::Texture(record_book));
 
-
-	let texture = UniTexture::new(
+        let texture = UniTexture::new(
             ctx.ref_texture(TextureID::Chobo1),
             numeric::Point2f::new(0.0, 0.0),
             numeric::Vector2f::new(0.2, 0.2),
@@ -123,24 +114,16 @@ impl TaskTable {
             -1,
         );
 
-	let chobo_texture = UniTexture::new(
+        let chobo_texture = UniTexture::new(
             ctx.ref_texture(TextureID::Chobo1),
             numeric::Point2f::new(0.0, 0.0),
             numeric::Vector2f::new(0.5, 0.5),
             0.0,
             -1,
         );
-	let mut manual_book = TaskTexture::new(
-            OnDeskTexture::new(
-                ctx.context,
-                texture,
-                OnDeskType::ManualBook,
-            ),
-            OnDeskTexture::new(
-                ctx.context,
-                chobo_texture,
-                OnDeskType::ManualBook,
-            ),
+        let mut manual_book = TaskTexture::new(
+            OnDeskTexture::new(ctx.context, texture, OnDeskType::ManualBook),
+            OnDeskTexture::new(ctx.context, chobo_texture, OnDeskType::ManualBook),
             0,
             true,
             true,
@@ -150,7 +133,6 @@ impl TaskTable {
         manual_book.enable_large();
         desk.add_object(TaskItem::Texture(manual_book));
 
-	
         let appr_frame = TileBatchFrame::new(
             ctx.resource,
             TileBatchTextureID::BlackFrame,
@@ -184,7 +166,7 @@ impl TaskTable {
             sight: sight,
             desk: desk,
             staging_object: None,
-	        kosuzu_memory: KosuzuMemory::new(),
+            kosuzu_memory: KosuzuMemory::new(),
             dark_effect_panel: DarkEffectPanel::new(
                 ctx.context,
                 numeric::Rect::new(0.0, 0.0, 1366.0, 768.0),
@@ -194,24 +176,28 @@ impl TaskTable {
             event_list: DelayEventList::new(),
             borrowing_record_book: record_book,
             manual_book: EffectableWrap::new(
-		MovableWrap::new(
-		    Box::new(TaskManualBook::new(ctx, numeric::Rect::new(320.0, -550.0, 1000.0, 550.0), 0)),
-		    None,
-		    0
-		),
-		Vec::new(),
-	    ),
+                MovableWrap::new(
+                    Box::new(TaskManualBook::new(
+                        ctx,
+                        numeric::Rect::new(320.0, -550.0, 1000.0, 550.0),
+                        0,
+                    )),
+                    None,
+                    0,
+                ),
+                Vec::new(),
+            ),
             record_book_is_staged: false,
             manual_book_is_staged: false,
             customer_silhouette_menu: CustomerMenuGroup::new(0),
-	    on_desk_menu: OnDeskMenuGroup::new(0),
+            on_desk_menu: OnDeskMenuGroup::new(0),
             record_book_menu: RecordBookMenuGroup::new(0),
             current_customer_request: None,
             kosuzu_phrase: KosuzuPhrase::new(ctx, 0),
             today: ctx.savable_data.date,
             task_is_done: false,
             appearance_frame: appr_frame,
-	    current_page_book_condition_report: None,
+            current_page_book_condition_report: None,
         }
     }
 
@@ -270,8 +256,7 @@ impl TaskTable {
             t,
         );
 
-	self.dark_effect_panel
-            .new_effect(8, t, 0, 200);
+        self.dark_effect_panel.new_effect(8, t, 0, 200);
     }
 
     fn slide_appear_manual_book(&mut self, t: Clock) {
@@ -282,8 +267,7 @@ impl TaskTable {
             t,
         );
 
-	self.dark_effect_panel
-            .new_effect(8, t, 0, 200);
+        self.dark_effect_panel.new_effect(8, t, 0, 200);
     }
 
     fn slide_hide_record_book(&mut self, t: Clock) {
@@ -295,8 +279,7 @@ impl TaskTable {
 
         self.record_book_menu.close_all(t);
 
-	    self.dark_effect_panel
-            .new_effect(8, t, 200, 0);
+        self.dark_effect_panel.new_effect(8, t, 200, 0);
     }
 
     fn slide_hide_manual_book(&mut self, t: Clock) {
@@ -306,8 +289,7 @@ impl TaskTable {
         );
         self.manual_book_is_staged = false;
 
-	self.dark_effect_panel
-            .new_effect(8, t, 200, 0);
+        self.dark_effect_panel.new_effect(8, t, 200, 0);
     }
 
     fn try_open_borrowing_record_book<'a>(
@@ -323,24 +305,24 @@ impl TaskTable {
         if clicked_object_type.is_some() {
             match clicked_object_type.unwrap() {
                 OnDeskType::BorrowingRecordBook => {
-		    if !self.some_full_screen_object_is_appeared() {
-			self.slide_appear_record_book(t);
-			self.record_book_is_staged = true;
-			return true;
-		    }
-                },
-		OnDeskType::ManualBook => {
-		    if !self.some_full_screen_object_is_appeared(){
-			self.slide_appear_manual_book(t);
-			self.manual_book_is_staged = true;
-			return true;
-		    }
-                },
+                    if !self.some_full_screen_object_is_appeared() {
+                        self.slide_appear_record_book(t);
+                        self.record_book_is_staged = true;
+                        return true;
+                    }
+                }
+                OnDeskType::ManualBook => {
+                    if !self.some_full_screen_object_is_appeared() {
+                        self.slide_appear_manual_book(t);
+                        self.manual_book_is_staged = true;
+                        return true;
+                    }
+                }
                 _ => (),
             }
         }
 
-	false
+        false
     }
 
     pub fn dragging_handler<'a>(
@@ -523,10 +505,10 @@ impl TaskTable {
             return ();
         }
 
-	// convertedの要素が複数あるため、再描画要求を行う
-	// convertedの要素はDeskへの移動でエフェクトがかかる
-	ctx.process_utility.redraw();
-	
+        // convertedの要素が複数あるため、再描画要求を行う
+        // convertedの要素はDeskへの移動でエフェクトがかかる
+        ctx.process_utility.redraw();
+
         let min = self.desk.desk_objects.get_minimum_depth();
         let converted = converted
             .into_iter()
@@ -573,17 +555,17 @@ impl TaskTable {
         self.info_panel.update(ctx, t);
         self.check_task_is_done(ctx);
 
-	self.dark_effect_panel.run_effect(ctx, t);
+        self.dark_effect_panel.run_effect(ctx, t);
 
-	if !self.manual_book.is_stop() {
-	    self.manual_book.move_with_func(t);
-	    ctx.process_utility.redraw();
-	}
+        if !self.manual_book.is_stop() {
+            self.manual_book.move_with_func(t);
+            ctx.process_utility.redraw();
+        }
 
-	if !self.manual_book.is_empty_effect() {
-	    self.manual_book.effect(ctx.context, t);
-	    ctx.process_utility.redraw();
-	}
+        if !self.manual_book.is_empty_effect() {
+            self.manual_book.effect(ctx.context, t);
+            ctx.process_utility.redraw();
+        }
     }
 
     pub fn finish_customer_event(&mut self, now: Clock) {
@@ -600,31 +582,31 @@ impl TaskTable {
         info: BorrowingInformation,
         t: Clock,
     ) {
-	let mut position = numeric::Point2f::new(0.0, 0.0);
-	
+        let mut position = numeric::Point2f::new(0.0, 0.0);
+
         for book_info in &info.borrowing {
             let mut obj = factory::create_dobj_book(
                 ctx,
                 DeskObjectType::CustomerObject,
-		position,
+                position,
                 book_info.clone(),
                 t,
             );
             obj.enable_large();
             self.desk.add_customer_object(obj);
-	    
-	    position.x += 20.0;
+
+            position.x += 20.0;
         }
 
         let mut new_silhouette = SimpleObject::new(
             MovableUniTexture::new(
-		Box::new(UniTexture::new(
+                Box::new(UniTexture::new(
                     ctx.ref_texture(TextureID::JunkoTachieDefault),
                     numeric::Point2f::new(100.0, 20.0),
                     numeric::Vector2f::new(0.1, 0.1),
                     0.0,
                     0,
-		)),
+                )),
                 None,
                 t,
             ),
@@ -652,31 +634,31 @@ impl TaskTable {
         info: ReturnBookInformation,
         t: Clock,
     ) {
-	let mut position = numeric::Point2f::new(0.0, 0.0);
-	
+        let mut position = numeric::Point2f::new(0.0, 0.0);
+
         for book_info in &info.returning {
             let mut obj = factory::create_dobj_book(
                 ctx,
                 DeskObjectType::CustomerObject,
-		position,
+                position,
                 book_info.clone(),
                 t,
             );
             obj.enable_large();
             self.desk.add_customer_object(obj);
 
-	    position.x += 20.0;
+            position.x += 20.0;
         }
 
         let mut new_silhouette = SimpleObject::new(
             MovableUniTexture::new(
-		Box::new(UniTexture::new(
+                Box::new(UniTexture::new(
                     ctx.ref_texture(TextureID::JunkoTachieDefault),
                     numeric::Point2f::new(100.0, 20.0),
                     numeric::Vector2f::new(0.1, 0.1),
                     0.0,
                     0,
-		)),
+                )),
                 None,
                 t,
             ),
@@ -708,16 +690,17 @@ impl TaskTable {
     }
 
     pub fn add_fee_coins<'a>(&mut self, ctx: &mut SuzuContext<'a>, price: u32, t: Clock) {
-	let coins = factory::create_coins(ctx, price, t);
+        let coins = factory::create_coins(ctx, price, t);
 
-	for mut coin in coins {
-	    coin.get_object_mut().set_position(util::random_point_in_rect(
-		numeric::Rect::new(10.0, 10.0, 100.0, 100.0)
-	    ));
-	    self.desk.add_object(coin);
-	}
+        for mut coin in coins {
+            coin.get_object_mut()
+                .set_position(util::random_point_in_rect(numeric::Rect::new(
+                    10.0, 10.0, 100.0, 100.0,
+                )));
+            self.desk.add_object(coin);
+        }
     }
-    
+
     fn check_borrowing_task_is_done(&self) -> bool {
         let mut item_counts = 0;
         for obj in self.desk.desk_objects.get_raw_container().iter() {
@@ -729,8 +712,8 @@ impl TaskTable {
                     {
                         item_counts += 1;
                     }
-                },
-		TaskItem::Coin(_) => item_counts += 1,
+                }
+                TaskItem::Coin(_) => item_counts += 1,
                 _ => (),
             }
         }
@@ -796,15 +779,15 @@ impl TaskTable {
             self.task_is_done = false;
             return;
         }
-	
+
         self.task_is_done = match self.current_customer_request.as_ref().unwrap() {
             CustomerRequest::Borrowing(_) => self.check_borrowing_task_is_done(),
             CustomerRequest::Returning(_) => self.check_returning_task_is_done(),
         };
 
-	if self.task_is_done {
-	    ctx.process_utility.redraw();
-	}
+        if self.task_is_done {
+            ctx.process_utility.redraw();
+        }
     }
 
     pub fn get_shelving_box(&self) -> &ShelvingBookBox {
@@ -833,7 +816,7 @@ impl TaskTable {
                 }
 
                 self.slide_hide_record_book(t);
-		self.slide_hide_manual_book(t);
+                self.slide_hide_manual_book(t);
             }
             _ => (),
         }
@@ -852,7 +835,7 @@ impl TaskTable {
             t + 30,
         );
         self.show_kosuzu_payment_message(ctx, price, t);
-	self.add_fee_coins(ctx, price, t);
+        self.add_fee_coins(ctx, price, t);
 
         // 本の情報が帳簿に記載されていた場合
         // 対応する本のハンドオーバーロックを解除する
@@ -881,7 +864,11 @@ impl TaskTable {
         );
     }
 
-    pub fn signing_returning_handler<'a>(&mut self, ctx: &mut SuzuContext<'a>, t: Clock) -> Option<BookConditionEvalReport> {
+    pub fn signing_returning_handler<'a>(
+        &mut self,
+        ctx: &mut SuzuContext<'a>,
+        t: Clock,
+    ) -> Option<BookConditionEvalReport> {
         self.event_list.add_event(
             Box::new(move |slf: &mut Self, _, t| {
                 slf.slide_hide_record_book(t);
@@ -910,7 +897,8 @@ impl TaskTable {
             }
         }
 
-	self.borrowing_record_book.get_current_page_condition_eval_report()
+        self.borrowing_record_book
+            .get_current_page_condition_eval_report()
     }
 
     ///
@@ -946,20 +934,18 @@ impl TaskTable {
                 .record_book_menu
                 .get_book_status_menu_position()
                 .unwrap();
-	    if index <= 2 {
-		// 良, 可, 悪
-		self.borrowing_record_book.insert_book_status_via_choice(
+            if index <= 2 {
+                // 良, 可, 悪
+                self.borrowing_record_book.insert_book_status_via_choice(
                     ctx.context,
                     index,
                     menu_position,
-		);
-	    } else {
-		// 削除
-		self.borrowing_record_book.remove_book_status_at(
-                    ctx.context,
-                    menu_position,
-		);
-	    }
+                );
+            } else {
+                // 削除
+                self.borrowing_record_book
+                    .remove_book_status_at(ctx.context, menu_position);
+            }
 
             return true;
         }
@@ -1115,13 +1101,13 @@ impl TaskTable {
         {
             match index {
                 0 => {
-		    if let Some(customer_request) = self.current_customer_request.as_ref() {
-			let name = customer_request.get_customer_name();
-			self.kosuzu_memory.add_customer_name(name.clone());
-			self.info_panel.set_customer_name(ctx, name);
-			self.insert_custmer_name_phrase(t);
-		    }
-		},
+                    if let Some(customer_request) = self.current_customer_request.as_ref() {
+                        let name = customer_request.get_customer_name();
+                        self.kosuzu_memory.add_customer_name(name.clone());
+                        self.info_panel.set_customer_name(ctx, name);
+                        self.insert_custmer_name_phrase(t);
+                    }
+                }
                 1 => self.insert_rental_limit_phrase(t),
                 _ => panic!("Exception"),
             }
@@ -1206,18 +1192,17 @@ impl TaskTable {
             .borrowing_record_book
             .get_book_info_frame_grid_position(ctx.context, click_point);
 
-	let books_table_rows = self.borrowing_record_book.get_books_table_rows();
-	let books_table_rows = match books_table_rows {
-	    Some(it) => it,
-	    None => return false,
-	};
-	
+        let books_table_rows = self.borrowing_record_book.get_books_table_rows();
+        let books_table_rows = match books_table_rows {
+            Some(it) => it,
+            None => return false,
+        };
+
         if grid_pos.is_some() {
-	    
-	    if grid_pos.unwrap().x == books_table_rows as u32 - 1 {
-		return false;
-	    }
-	    
+            if grid_pos.unwrap().x == books_table_rows as u32 - 1 {
+                return false;
+            }
+
             match grid_pos.unwrap().y {
                 0 => self.record_book_menu.show_book_title_menu(
                     ctx,
@@ -1390,9 +1375,9 @@ impl TaskTable {
     }
 
     pub fn get_target_page_book_condition_eval_report(&self) -> Option<&BookConditionEvalReport> {
-	self.current_page_book_condition_report.as_ref()
+        self.current_page_book_condition_report.as_ref()
     }
-    
+
     fn try_show_menus<'a>(
         &mut self,
         ctx: &mut SuzuContext<'a>,
@@ -1434,23 +1419,23 @@ impl TaskTable {
         {
             return;
         } else {
-	    if self.record_book_is_staged {
-		    self.slide_hide_record_book(t);
-		return;
-	    }
-	}
+            if self.record_book_is_staged {
+                self.slide_hide_record_book(t);
+                return;
+            }
+        }
 
-	if self.manual_book.contains(ctx.context, click_point) {
-	    return;
-	} else {
-	    if self.manual_book_is_staged {
-		self.slide_hide_manual_book(t);
-		return;
-	    }
-	}
+        if self.manual_book.contains(ctx.context, click_point) {
+            return;
+        } else {
+            if self.manual_book_is_staged {
+                self.slide_hide_manual_book(t);
+                return;
+            }
+        }
 
-	// BorrowingRecordBookが表示されていない場合、
-	// OnDeskBookに関するメニューの表示をチェックする
+        // BorrowingRecordBookが表示されていない場合、
+        // OnDeskBookに関するメニューの表示をチェックする
         if !self.try_show_menus_regarding_customer_silhoutte(ctx, click_point, t) {
             self.try_show_menus_regarding_ondesk_book_info(ctx, click_point, t);
         }
@@ -1464,20 +1449,20 @@ impl DrawableComponent for TaskTable {
 
             self.info_panel.draw(ctx).unwrap();
             self.sight.draw(ctx).unwrap();
-	    self.desk.draw(ctx).unwrap();
-	    
+            self.desk.draw(ctx).unwrap();
+
             self.shelving_box.draw(ctx).unwrap();
 
             if let Some(staging_object) = self.staging_object.as_mut() {
                 staging_object.draw(ctx)?;
             }
 
-	    self.dark_effect_panel.draw(ctx).unwrap();
-	    
+            self.dark_effect_panel.draw(ctx).unwrap();
+
             self.borrowing_record_book.draw(ctx)?;
-	    self.manual_book.draw(ctx)?;
+            self.manual_book.draw(ctx)?;
             self.kosuzu_phrase.draw(ctx)?;
-	    
+
             self.customer_silhouette_menu.draw(ctx)?;
             self.record_book_menu.draw(ctx)?;
             self.on_desk_menu.draw(ctx)?;
@@ -1581,9 +1566,9 @@ impl Clickable for TaskTable {
             return;
         }
 
-	if self.manual_book.click_handler(ctx, point) {
-	    return;
-	}
+        if self.manual_book.click_handler(ctx, point) {
+            return;
+        }
 
         if let Some(sign_entry) = self
             .borrowing_record_book
@@ -1592,8 +1577,9 @@ impl Clickable for TaskTable {
             match sign_entry {
                 SignFrameEntry::BorrowingSign => self.signing_borrowing_handler(ctx, t),
                 SignFrameEntry::ReturningSign => {
-		    self.current_page_book_condition_report = self.signing_returning_handler(ctx, t);
-		},
+                    self.current_page_book_condition_report =
+                        self.signing_returning_handler(ctx, t);
+                }
             }
             return;
         }
@@ -1611,9 +1597,9 @@ impl Clickable for TaskTable {
         // メニューをクリックしていない場合に、新しいメニュー表示処理を走らせる
         self.try_show_menus(ctx, rpoint, t);
 
-	if self.try_open_borrowing_record_book(ctx, rpoint, t) {
-	    return;
-	}
+        if self.try_open_borrowing_record_book(ctx, rpoint, t) {
+            return;
+        }
 
         if self.desk.click_handler(ctx, t, button, rpoint) {
             // クリックハンドラが呼び出されたので終了

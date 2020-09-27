@@ -1,16 +1,14 @@
 use torifune::core::Clock;
 use torifune::distance;
 use torifune::graphics as tg;
-use torifune::numeric;
 use torifune::graphics::object::GenericMoveFn;
+use torifune::numeric;
 
 pub fn stop() -> Option<GenericMoveFn> {
     None
 }
 
-pub fn halt(
-    pos: numeric::Point2f,
-) -> Option<GenericMoveFn> {
+pub fn halt(pos: numeric::Point2f) -> Option<GenericMoveFn> {
     Some(Box::new(
         move |_: &dyn tg::object::MovableObject, _: Clock| Some(pos),
     ))
@@ -43,10 +41,7 @@ pub fn gravity_move(
     ))
 }
 
-pub fn devide_distance(
-    dest: numeric::Point2f,
-    divide_c: f32,
-) -> Option<GenericMoveFn> {
+pub fn devide_distance(dest: numeric::Point2f, divide_c: f32) -> Option<GenericMoveFn> {
     Some(Box::new(
         move |p: &dyn tg::object::MovableObject, _t: Clock| {
             let current_pos = p.get_position();
@@ -55,9 +50,9 @@ pub fn devide_distance(
                 return Some(dest);
             }
 
-	    if dest == current_pos {
-		return None;
-	    }
+            if dest == current_pos {
+                return None;
+            }
 
             let offset = numeric::Vector2f::new(dest.x - current_pos.x, dest.y - current_pos.y);
             Some(numeric::Point2f::new(

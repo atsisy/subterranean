@@ -1424,7 +1424,9 @@ impl GraphDrawer {
             .iter()
             .map(|p| mint::Point2::from_slice(&[p.x, p.y]))
             .collect();
-        builder.line(mint_p_vec.as_slice(), line_width, line_color).unwrap();
+        builder
+            .line(mint_p_vec.as_slice(), line_width, line_color)
+            .unwrap();
 
         GraphDrawer {
             canvas: SubScreen::new(
@@ -1495,98 +1497,103 @@ pub struct PauseScreenSet {
 
 impl PauseScreenSet {
     pub fn new<'a>(ctx: &mut SuzuContext<'a>, depth: i8) -> Self {
-	let font_info = FontInformation::new(
-	    ctx.resource.get_font(FontID::Cinema),
-	    numeric::Vector2f::new(28.0, 28.0),
-	    ggraphics::BLACK
-	);
-	
-	let mut entries_vtext = Vec::new();
-	let mut text_pos = numeric::Point2f::new(750.0, 200.0);
-	
-	for text in vec!["開始画面へ", "再開"] {
-	    entries_vtext.push(
-		VerticalText::new(
-		    text.to_string(),
-		    text_pos,
-		    numeric::Vector2f::new(1.0, 1.0),
-		    0.0,
-		    0,
-		    font_info.clone()
-		)
-	    );
+        let font_info = FontInformation::new(
+            ctx.resource.get_font(FontID::Cinema),
+            numeric::Vector2f::new(28.0, 28.0),
+            ggraphics::BLACK,
+        );
 
-	    text_pos.x -= 50.0;
-	}
-	
-	PauseScreenSet {
-	    entries: entries_vtext,
-	    drwob_essential: DrawableObjectEssential::new(true, depth),
-	    cursored_index: None,
-	}
+        let mut entries_vtext = Vec::new();
+        let mut text_pos = numeric::Point2f::new(750.0, 200.0);
+
+        for text in vec!["開始画面へ", "再開"] {
+            entries_vtext.push(VerticalText::new(
+                text.to_string(),
+                text_pos,
+                numeric::Vector2f::new(1.0, 1.0),
+                0.0,
+                0,
+                font_info.clone(),
+            ));
+
+            text_pos.x -= 50.0;
+        }
+
+        PauseScreenSet {
+            entries: entries_vtext,
+            drwob_essential: DrawableObjectEssential::new(true, depth),
+            cursored_index: None,
+        }
     }
 
     ///
     /// 再描画要求有り
     ///
     fn select_entries_handler<'a>(&mut self, ctx: &mut SuzuContext<'a>, index: usize) {
-	if let Some(cursored_index) = self.cursored_index {
-	    if cursored_index == index {
-		return;
-	    }
-	}
-	
-	self.entries.get_mut(index).unwrap().set_color(ggraphics::Color::from_rgba_u32(0x222222ff));
+        if let Some(cursored_index) = self.cursored_index {
+            if cursored_index == index {
+                return;
+            }
+        }
 
-	self.cursored_index = Some(index);
-	ctx.process_utility.redraw();
+        self.entries
+            .get_mut(index)
+            .unwrap()
+            .set_color(ggraphics::Color::from_rgba_u32(0x222222ff));
+
+        self.cursored_index = Some(index);
+        ctx.process_utility.redraw();
     }
 
     fn unselect_entries_handler(&mut self) {
-	for vtext in self.entries.iter_mut() {
-	    vtext.set_color(ggraphics::BLACK);
-	}
+        for vtext in self.entries.iter_mut() {
+            vtext.set_color(ggraphics::BLACK);
+        }
     }
 
     pub fn mouse_motion_handler<'a>(&mut self, ctx: &mut SuzuContext<'a>, point: numeric::Point2f) {
-	for (index, vtext) in self.entries.iter().enumerate() {
-	    if vtext.contains(ctx.context, point) {
-		self.select_entries_handler(ctx, index);
-		return;
-	    }
-	}
+        for (index, vtext) in self.entries.iter().enumerate() {
+            if vtext.contains(ctx.context, point) {
+                self.select_entries_handler(ctx, index);
+                return;
+            }
+        }
 
-	// ここまで到達するのは、すべてのテキストにカーソルが重なっていなかった場合
-	if self.cursored_index.is_some() {
-	    self.unselect_entries_handler();
-	    self.cursored_index = None;
-	}
+        // ここまで到達するのは、すべてのテキストにカーソルが重なっていなかった場合
+        if self.cursored_index.is_some() {
+            self.unselect_entries_handler();
+            self.cursored_index = None;
+        }
     }
 
-    pub fn mouse_click_handler<'a>(&self, ctx: &mut SuzuContext<'a>, point: numeric::Point2f) -> Option<PauseResult> {
-	for (index, vtext) in self.entries.iter().enumerate() {
-	    if vtext.contains(ctx.context, point) {
-		return match index {
-		    0 => Some(PauseResult::GoToTitle),
-		    1 => Some(PauseResult::ReleasePause),
-		    _ => panic!("index is out of bounds"),
-		};
-	    }
-	}
+    pub fn mouse_click_handler<'a>(
+        &self,
+        ctx: &mut SuzuContext<'a>,
+        point: numeric::Point2f,
+    ) -> Option<PauseResult> {
+        for (index, vtext) in self.entries.iter().enumerate() {
+            if vtext.contains(ctx.context, point) {
+                return match index {
+                    0 => Some(PauseResult::GoToTitle),
+                    1 => Some(PauseResult::ReleasePause),
+                    _ => panic!("index is out of bounds"),
+                };
+            }
+        }
 
-	None
+        None
     }
 }
 
 impl DrawableComponent for PauseScreenSet {
     fn draw(&mut self, ctx: &mut ggez::Context) -> ggez::GameResult<()> {
-	if self.is_visible() {
-	    for vtext in self.entries.iter_mut() {
-		vtext.draw(ctx)?;
-	    }
-	}
-	
-	Ok(())
+        if self.is_visible() {
+            for vtext in self.entries.iter_mut() {
+                vtext.draw(ctx)?;
+            }
+        }
+
+        Ok(())
     }
 
     #[inline(always)]
@@ -1626,82 +1633,91 @@ pub struct SeekBar {
 
 impl SeekBar {
     pub fn new<'a>(ctx: &mut SuzuContext<'a>, pos_rect: numeric::Rect, depth: i8) -> Self {
-	let seek = shape::Rectangle::new(
-	    numeric::Rect::new(pos_rect.x, pos_rect.y + (pos_rect.h / 2.0), pos_rect.w, pos_rect.h / 2.0),
-	    ggraphics::DrawMode::fill(),
-	    ggraphics::Color::from_rgba_u32(0x11111188),
-	);
-	
-	let mut builder = ggraphics::MeshBuilder::new();
+        let seek = shape::Rectangle::new(
+            numeric::Rect::new(
+                pos_rect.x,
+                pos_rect.y + (pos_rect.h / 2.0),
+                pos_rect.w,
+                pos_rect.h / 2.0,
+            ),
+            ggraphics::DrawMode::fill(),
+            ggraphics::Color::from_rgba_u32(0x11111188),
+        );
 
-	seek.add_to_builder(&mut builder);
-	
-	SeekBar {
-	    rect: pos_rect,
-	    seek_offset: numeric::Vector2f::new(0.0, 0.0),
-	    handle: UniTexture::new(
-		ctx.ref_texture(TextureID::ChoicePanel1),
-		numeric::Point2f::new(pos_rect.x + (pos_rect.w / 2.0), pos_rect.y),
-		numeric::Vector2f::new(0.25, 0.25),
-		0.0,
-		0
-	    ),
-	    seek_edge: builder.build(ctx.context).unwrap(),
-	    drwob_essential: DrawableObjectEssential::new(true, depth),
-	    dragging: false,
-	}
+        let mut builder = ggraphics::MeshBuilder::new();
+
+        seek.add_to_builder(&mut builder);
+
+        SeekBar {
+            rect: pos_rect,
+            seek_offset: numeric::Vector2f::new(0.0, 0.0),
+            handle: UniTexture::new(
+                ctx.ref_texture(TextureID::ChoicePanel1),
+                numeric::Point2f::new(pos_rect.x + (pos_rect.w / 2.0), pos_rect.y),
+                numeric::Vector2f::new(0.25, 0.25),
+                0.0,
+                0,
+            ),
+            seek_edge: builder.build(ctx.context).unwrap(),
+            drwob_essential: DrawableObjectEssential::new(true, depth),
+            dragging: false,
+        }
     }
 
     pub fn start_dragging_check<'a>(&mut self, ctx: &mut SuzuContext<'a>, point: numeric::Point2f) {
-	if !self.handle.contains(ctx.context, point) {
-	    return;
-	}
-	
-	self.dragging = true;
-	let handle_pos = self.handle.get_position();
-	self.seek_offset = numeric::Vector2f::new(point.x - handle_pos.x, point.y - handle_pos.y);
+        if !self.handle.contains(ctx.context, point) {
+            return;
+        }
+
+        self.dragging = true;
+        let handle_pos = self.handle.get_position();
+        self.seek_offset = numeric::Vector2f::new(point.x - handle_pos.x, point.y - handle_pos.y);
     }
 
     pub fn dragging_handler<'a>(&mut self, ctx: &mut SuzuContext<'a>, point: numeric::Point2f) {
-	if !self.dragging {
-	    return;
-	}
+        if !self.dragging {
+            return;
+        }
 
-	let original = self.handle.get_drawing_area(ctx.context);
-	let mut seek_position = numeric::Point2f::new(point.x - self.seek_offset.x, original.y);
+        let original = self.handle.get_drawing_area(ctx.context);
+        let mut seek_position = numeric::Point2f::new(point.x - self.seek_offset.x, original.y);
 
-	if seek_position.x <= self.rect.x {
-	    seek_position.x = self.rect.x;
-	} else if seek_position.x >= self.rect.right() - original.w {
-	    seek_position.x = self.rect.right() - original.w;
-	}
+        if seek_position.x <= self.rect.x {
+            seek_position.x = self.rect.x;
+        } else if seek_position.x >= self.rect.right() - original.w {
+            seek_position.x = self.rect.right() - original.w;
+        }
 
-	ctx.process_utility.redraw();
-	self.handle.set_position(seek_position);
+        ctx.process_utility.redraw();
+        self.handle.set_position(seek_position);
     }
 
     pub fn release_handler(&mut self) {
-	if !self.dragging {
-	    return;
-	}
+        if !self.dragging {
+            return;
+        }
 
-	self.dragging = false;
+        self.dragging = false;
     }
 }
 
 impl DrawableComponent for SeekBar {
     fn draw(&mut self, ctx: &mut ggez::Context) -> ggez::GameResult<()> {
-	if self.is_visible() {
-	    ggraphics::draw(ctx, &self.seek_edge, ggraphics::DrawParam {
-		color: ggraphics::Color::from_rgba_u32(0xff),
-		..Default::default()
-	    });
-	    self.handle.draw(ctx)?;
-	}
+        if self.is_visible() {
+            ggraphics::draw(
+                ctx,
+                &self.seek_edge,
+                ggraphics::DrawParam {
+                    color: ggraphics::Color::from_rgba_u32(0xff),
+                    ..Default::default()
+                },
+            );
+            self.handle.draw(ctx)?;
+        }
 
-	Ok(())
+        Ok(())
     }
-    
+
     #[inline(always)]
     fn hide(&mut self) {
         self.drwob_essential.visible = false;

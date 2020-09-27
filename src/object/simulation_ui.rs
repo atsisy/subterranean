@@ -174,16 +174,16 @@ impl Meter {
     pub fn add(&mut self, value: f32) {
         self.counter.add(value);
 
-	let mut counter_rect = self.count_fill.get_bounds();
-	counter_rect.w = self.empty_fill.get_bounds().w * (self.counter.get_value() / self.max);
-	
-	let new_fill = tshape::Rectangle::new(
-	    counter_rect,
-	    self.count_fill.get_mode(),
-	    self.count_fill.get_color()
-	);
+        let mut counter_rect = self.count_fill.get_bounds();
+        counter_rect.w = self.empty_fill.get_bounds().w * (self.counter.get_value() / self.max);
 
-	self.count_fill = new_fill;
+        let new_fill = tshape::Rectangle::new(
+            counter_rect,
+            self.count_fill.get_mode(),
+            self.count_fill.get_color(),
+        );
+
+        self.count_fill = new_fill;
     }
 
     pub fn get_value(&self) -> f32 {
@@ -257,7 +257,7 @@ struct Choice {
 
 impl Choice {
     pub fn new<'a>(
-	ctx: &mut SuzuContext<'a>,
+        ctx: &mut SuzuContext<'a>,
         choice_text: Vec<&str>,
         textures: Vec<TextureID>,
         select_tid: TextureID,
@@ -292,14 +292,14 @@ impl Choice {
                 .map(|tid| {
                     SimpleObject::new(
                         MovableUniTexture::new(
-			    Box::new(UniTexture::new(
-				ctx.ref_texture(*tid),
-				numeric::Point2f::new(0.0, 0.0),
-				numeric::Vector2f::new(1.0, 1.0),
-				0.0,
-				0,
-			    )),
-			    None,
+                            Box::new(UniTexture::new(
+                                ctx.ref_texture(*tid),
+                                numeric::Point2f::new(0.0, 0.0),
+                                numeric::Vector2f::new(1.0, 1.0),
+                                0.0,
+                                0,
+                            )),
+                            None,
                             0,
                         ),
                         Vec::new(),
@@ -308,13 +308,13 @@ impl Choice {
                 .collect(),
             selecting: SimpleObject::new(
                 MovableUniTexture::new(
-		    Box::new(UniTexture::new(
-			ctx.ref_texture(select_tid),
-			numeric::Point2f::new(0.0, 0.0),
-			numeric::Vector2f::new(1.0, 1.0),
-			0.0,
-			0,
-		    )),
+                    Box::new(UniTexture::new(
+                        ctx.ref_texture(select_tid),
+                        numeric::Point2f::new(0.0, 0.0),
+                        numeric::Vector2f::new(1.0, 1.0),
+                        0.0,
+                        0,
+                    )),
                     None,
                     0,
                 ),
@@ -391,7 +391,7 @@ impl SimulationStatus {
                 1000.0,
             ),
             choice: Choice::new(
-		ctx,
+                ctx,
                 vec!["test1", "test2"],
                 vec![TextureID::LotusBlue, TextureID::LotusPink],
                 TextureID::LotusYellow,
@@ -403,13 +403,13 @@ impl SimulationStatus {
                 ggraphics::Color::from_rgba_u32(0xe6cde3ff),
             ),
             background: MovableUniTexture::new(
-		Box::new(UniTexture::new(
+                Box::new(UniTexture::new(
                     ctx.ref_texture(TextureID::WafuTexture2),
                     numeric::Point2f::new(0.0, 0.0),
                     numeric::Vector2f::new(1.0, 1.0),
                     0.0,
                     0,
-		)),
+                )),
                 move_fn::stop(),
                 0,
             ),

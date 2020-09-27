@@ -9,14 +9,16 @@ use torifune::graphics::object::*;
 
 use super::super::*;
 
-use crate::core::{MouseInformation, SavableData, TextureID, TileBatchTextureID, FontID, ResultReport};
+use crate::core::{
+    FontID, MouseInformation, ResultReport, SavableData, TextureID, TileBatchTextureID,
+};
 use crate::flush_delay_event;
 use crate::object::effect_object;
 use crate::object::task_result_object::*;
 use crate::object::util_object::SelectButton;
+use crate::object::util_object::TextButtonTexture;
 use crate::scene::{SceneID, SceneTransition};
 use effect_object::TilingEffectType;
-use crate::object::util_object::TextButtonTexture;
 
 pub struct TaskResultScene {
     clock: Clock,
@@ -33,17 +35,17 @@ impl TaskResultScene {
     pub fn new<'a>(
         ctx: &mut SuzuContext<'a>,
         initial_save_data: SavableData,
-	result_report: ResultReport,
+        result_report: ResultReport,
         date: GensoDate,
     ) -> Self {
         let mut background_object = MovableUniTexture::new(
-	    Box::new(UniTexture::new(
-		ctx.ref_texture(TextureID::Paper1),
-		numeric::Point2f::new(0.0, 0.0),
-		numeric::Vector2f::new(1.0, 1.0),
-		0.0,
-		0
-	    )),
+            Box::new(UniTexture::new(
+                ctx.ref_texture(TextureID::Paper1),
+                numeric::Point2f::new(0.0, 0.0),
+                numeric::Vector2f::new(1.0, 1.0),
+                0.0,
+                0,
+            )),
             None,
             0,
         );
@@ -56,21 +58,19 @@ impl TaskResultScene {
             ),
         );
 
-	let panel_texture = Box::new(
-	    TextButtonTexture::new(
-		ctx,
-		numeric::Point2f::new(0.0, 0.0),
-		"戸締まり".to_string(),
-		FontInformation::new(
-		    ctx.resource.get_font(FontID::Cinema),
-		    numeric::Vector2f::new(28.0, 28.0),
-		    ggraphics::Color::from_rgba_u32(0xff),
-		),
-		10.0,
-		ggraphics::Color::from_rgba_u32(0xe8b5a2ff),
-		0
-	    )
-        );
+        let panel_texture = Box::new(TextButtonTexture::new(
+            ctx,
+            numeric::Point2f::new(0.0, 0.0),
+            "戸締まり".to_string(),
+            FontInformation::new(
+                ctx.resource.get_font(FontID::Cinema),
+                numeric::Vector2f::new(28.0, 28.0),
+                ggraphics::Color::from_rgba_u32(0xff),
+            ),
+            10.0,
+            ggraphics::Color::from_rgba_u32(0xe8b5a2ff),
+            0,
+        ));
         let ok_button = SelectButton::new(
             ctx,
             numeric::Rect::new(100.0, 608.0, 140.0, 80.0),
@@ -100,7 +100,7 @@ impl TaskResultScene {
             }),
             31,
         );
-	
+
         TaskResultScene {
             clock: 0,
             mouse_info: MouseInformation::new(),
@@ -110,7 +110,7 @@ impl TaskResultScene {
                 numeric::Rect::new(0.0, 0.0, 1366.0, 768.0),
                 SimpleObject::new(background_object, Vec::new()),
                 initial_save_data,
-		result_report,
+                result_report,
                 date,
                 0,
             ),
@@ -206,7 +206,7 @@ impl SceneManager for TaskResultScene {
             effect.effect(ctx.context, t);
         }
 
-	ctx.process_utility.redraw();
+        ctx.process_utility.redraw();
     }
 
     fn drawing_process(&mut self, ctx: &mut ggez::Context) {

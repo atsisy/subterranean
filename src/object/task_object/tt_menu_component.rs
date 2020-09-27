@@ -265,11 +265,7 @@ where
     }
 
     // 従う関数を変更する
-    fn override_move_func(
-        &mut self,
-        move_fn: Option<GenericMoveFn>,
-        now: Clock,
-    ) {
+    fn override_move_func(&mut self, move_fn: Option<GenericMoveFn>, now: Clock) {
         self.canvas.override_move_func(move_fn, now);
     }
 
@@ -308,7 +304,7 @@ where
     }
 
     fn is_empty_effect(&self) -> bool {
-	self.canvas.is_empty_effect()
+        self.canvas.is_empty_effect()
     }
 }
 
@@ -377,47 +373,51 @@ impl BookStatusButtonGroup {
 
         for text_str in vec!["良", "可", "悪"] {
             button_rect.x += padding;
-	    
-	    let font_info = FontInformation::new(
-		ctx.resource.get_font(FontID::Cinema),
-		numeric::Vector2f::new(42.0, 42.0),
-		ggraphics::Color::from_rgba_u32(0xff)
-	    );
-	    
-	    let text_texture = TextButtonTexture::new(
-		ctx,
-		numeric::Point2f::new(0.0, 0.0),
-		text_str.to_string(),
-		font_info,
-		10.0,
-		ggraphics::Color::from_rgba_u32(0xe8b5a2ff),
-		0
-	    );
-	    
+
+            let font_info = FontInformation::new(
+                ctx.resource.get_font(FontID::Cinema),
+                numeric::Vector2f::new(42.0, 42.0),
+                ggraphics::Color::from_rgba_u32(0xff),
+            );
+
+            let text_texture = TextButtonTexture::new(
+                ctx,
+                numeric::Point2f::new(0.0, 0.0),
+                text_str.to_string(),
+                font_info,
+                10.0,
+                ggraphics::Color::from_rgba_u32(0xe8b5a2ff),
+                0,
+            );
+
             let button = SelectButton::new(ctx, button_rect, Box::new(text_texture));
 
             buttons.push(button);
             button_rect.x += button_rect.w;
         }
 
-	let font_info = FontInformation::new(
-		ctx.resource.get_font(FontID::Cinema),
-		numeric::Vector2f::new(36.0, 36.0),
-		ggraphics::Color::from_rgba_u32(0xff)
-	    );
-	    
-	let remove_texture = TextButtonTexture::new(
-	    ctx,
-	    numeric::Point2f::new(0.0, 0.0),
-	    "削除".to_string(),
-	    font_info,
-	    10.0,
-	    ggraphics::Color::from_rgba_u32(0xe8b5a2ff),
-	    0
-	);
-	    
-        let remove_button = SelectButton::new(ctx, numeric::Rect::new(95.0, 110.0, 100.0, 50.0), Box::new(remove_texture));
-	buttons.push(remove_button);
+        let font_info = FontInformation::new(
+            ctx.resource.get_font(FontID::Cinema),
+            numeric::Vector2f::new(36.0, 36.0),
+            ggraphics::Color::from_rgba_u32(0xff),
+        );
+
+        let remove_texture = TextButtonTexture::new(
+            ctx,
+            numeric::Point2f::new(0.0, 0.0),
+            "削除".to_string(),
+            font_info,
+            10.0,
+            ggraphics::Color::from_rgba_u32(0xe8b5a2ff),
+            0,
+        );
+
+        let remove_button = SelectButton::new(
+            ctx,
+            numeric::Rect::new(95.0, 110.0, 100.0, 50.0),
+            Box::new(remove_texture),
+        );
+        buttons.push(remove_button);
 
         BookStatusButtonGroup {
             buttons: buttons,
@@ -640,67 +640,73 @@ pub struct SimpleMessageMenu {
 impl SimpleMessageMenu {
     pub fn new<'a>(
         ctx: &mut SuzuContext<'a>,
-	title: String,
-	message: String,
-	title_font_scale: f32,
-	msg_font_scale: f32,
+        title: String,
+        message: String,
+        title_font_scale: f32,
+        msg_font_scale: f32,
         drawing_depth: i8,
     ) -> Self {
-	let menu_size = numeric::Vector2f::new(
-	    msg_font_scale + title_font_scale + 120.0,
-	    util::max(title.len() as f32 * title_font_scale, message.len() as f32 * msg_font_scale) / 2.0
-	);
+        let menu_size = numeric::Vector2f::new(
+            msg_font_scale + title_font_scale + 120.0,
+            util::max(
+                title.len() as f32 * title_font_scale,
+                message.len() as f32 * msg_font_scale,
+            ) / 2.0,
+        );
 
-	let title_font_info = FontInformation::new(
+        let title_font_info = FontInformation::new(
             ctx.resource.get_font(FontID::Cinema),
             numeric::Vector2f::new(title_font_scale, title_font_scale),
             ggraphics::Color::from_rgba_u32(0xff),
-	);
-	
+        );
+
         let msg_font_info = FontInformation::new(
             ctx.resource.get_font(FontID::Cinema),
             numeric::Vector2f::new(msg_font_scale, msg_font_scale),
             ggraphics::Color::from_rgba_u32(0xff),
         );
 
-	let title_text = VerticalText::new(
-	    title,
-	    numeric::Point2f::new(menu_size.x - title_font_scale - 40.0, 35.0),
-	    numeric::Vector2f::new(1.0, 1.0),
-	    0.0,
-	    0,
-	    title_font_info
-	);
+        let title_text = VerticalText::new(
+            title,
+            numeric::Point2f::new(menu_size.x - title_font_scale - 40.0, 35.0),
+            numeric::Vector2f::new(1.0, 1.0),
+            0.0,
+            0,
+            title_font_info,
+        );
 
-	let mut msg_text = VerticalText::new(
-	    message,
-	    numeric::Point2f::new(0.0, 0.0),
-	    numeric::Vector2f::new(1.0, 1.0),
-	    0.0,
-	    0,
-	    msg_font_info
-	);
+        let mut msg_text = VerticalText::new(
+            message,
+            numeric::Point2f::new(0.0, 0.0),
+            numeric::Vector2f::new(1.0, 1.0),
+            0.0,
+            0,
+            msg_font_info,
+        );
 
-	msg_text.make_center(ctx.context, numeric::Point2f::new(menu_size.x / 2.0, menu_size.y / 2.0));
+        msg_text.make_center(
+            ctx.context,
+            numeric::Point2f::new(menu_size.x / 2.0, menu_size.y / 2.0),
+        );
 
-	SimpleMessageMenu {
-	    title: title_text,
-	    message: msg_text,
-	    menu_size: menu_size,
-	    drwob_essential: DrawableObjectEssential::new(true, drawing_depth),
-	}
+        SimpleMessageMenu {
+            title: title_text,
+            message: msg_text,
+            menu_size: menu_size,
+            drwob_essential: DrawableObjectEssential::new(true, drawing_depth),
+        }
     }
 
     pub fn get_size(&self) -> numeric::Vector2f {
-	self.menu_size
+        self.menu_size
     }
 }
 
 impl DrawableComponent for SimpleMessageMenu {
     fn draw(&mut self, ctx: &mut ggez::Context) -> ggez::GameResult<()> {
         if self.is_visible() {
-	    self.message.draw(ctx)?;
-	    self.title.draw(ctx)?;
+            self.message.draw(ctx)?;
+            self.title.draw(ctx)?;
         }
         Ok(())
     }
@@ -810,22 +816,23 @@ impl CustomerNameMenu {
             header_text: header_text,
         }
     }
-    
-    pub fn set_to_center<'a>(&mut self, ctx: &mut SuzuContext<'a>, center: numeric::Point2f) {
-	self.name_table_frame.make_center(numeric::Point2f::new(center.x, center.y + 15.0));
-	self.header_text.make_center(ctx.context, numeric::Point2f::new(center.x, 35.0));
 
-	for (index, text) in self.name_vtext.iter_mut().enumerate() {
-	    set_table_frame_cell_center!(
+    pub fn set_to_center<'a>(&mut self, ctx: &mut SuzuContext<'a>, center: numeric::Point2f) {
+        self.name_table_frame
+            .make_center(numeric::Point2f::new(center.x, center.y + 15.0));
+        self.header_text
+            .make_center(ctx.context, numeric::Point2f::new(center.x, 35.0));
+
+        for (index, text) in self.name_vtext.iter_mut().enumerate() {
+            set_table_frame_cell_center!(
                 ctx.context,
                 self.name_table_frame,
                 text,
                 numeric::Vector2u::new((self.raw_data.len() - index - 1) as u32, 0)
             );
-	}
+        }
     }
 
-    
     pub fn click_handler(&mut self, ctx: &mut ggez::Context, point: numeric::Point2f) {
         let maybe_grid_position = self.name_table_frame.get_grid_position(ctx, point);
         if let Some(grid_position) = maybe_grid_position {
@@ -983,8 +990,11 @@ impl DateMenu {
             font_info,
         );
 
-	header_text.make_center(ctx.context, numeric::Point2f::new((date_table_frame.size().x / 2.0) + 40.0, 35.0));
-	
+        header_text.make_center(
+            ctx.context,
+            numeric::Point2f::new((date_table_frame.size().x / 2.0) + 40.0, 35.0),
+        );
+
         DateMenu {
             date_data: date_data,
             date_table_frame: date_table_frame,
@@ -997,26 +1007,28 @@ impl DateMenu {
     }
 
     pub fn set_to_center<'a>(&mut self, ctx: &mut SuzuContext<'a>, center: numeric::Point2f) {
-	self.date_table_frame.make_center(numeric::Point2f::new(center.x, center.y + 15.0));
-	self.header_text.make_center(ctx.context, numeric::Point2f::new(center.x, 35.0));
+        self.date_table_frame
+            .make_center(numeric::Point2f::new(center.x, center.y + 15.0));
+        self.header_text
+            .make_center(ctx.context, numeric::Point2f::new(center.x, 35.0));
 
-	for (index, text) in self.date_vtext.iter_mut().enumerate() {
-	    set_table_frame_cell_center!(
+        for (index, text) in self.date_vtext.iter_mut().enumerate() {
+            set_table_frame_cell_center!(
                 ctx.context,
                 self.date_table_frame,
                 text,
                 numeric::Vector2u::new(index as u32, 1)
             );
-	}
+        }
 
-	for (index, text) in self.desc_vtext.iter_mut().enumerate() {
-	    set_table_frame_cell_center!(
+        for (index, text) in self.desc_vtext.iter_mut().enumerate() {
+            set_table_frame_cell_center!(
                 ctx.context,
                 self.date_table_frame,
                 text,
                 numeric::Vector2u::new(index as u32, 0)
             );
-	}
+        }
     }
 
     pub fn click_handler(&mut self, ctx: &mut ggez::Context, point: numeric::Point2f) {
@@ -1285,16 +1297,18 @@ impl CustomerQuestionMenu {
     }
 
     pub fn set_to_center<'a>(&mut self, ctx: &mut SuzuContext<'a>, center: numeric::Point2f) {
-	self.header_text.make_center(ctx.context, numeric::Point2f::new(center.x, 40.0));
-	self.question_table_frame.make_center(numeric::Point2f::new(center.x, center.y + 20.0));
-	for (index, text) in self.question_vtext.iter_mut().enumerate() {
-	    set_table_frame_cell_center!(
+        self.header_text
+            .make_center(ctx.context, numeric::Point2f::new(center.x, 40.0));
+        self.question_table_frame
+            .make_center(numeric::Point2f::new(center.x, center.y + 20.0));
+        for (index, text) in self.question_vtext.iter_mut().enumerate() {
+            set_table_frame_cell_center!(
                 ctx.context,
                 self.question_table_frame,
                 text,
                 numeric::Vector2u::new(index as u32, 0)
             );
-	}
+        }
     }
 
     pub fn click_handler(&mut self, ctx: &mut ggez::Context, point: numeric::Point2f) {
@@ -1620,8 +1634,7 @@ impl CustomerMenuGroup {
     }
 
     pub fn is_some_menu_opened(&self) -> bool {
-        self.customer_question_menu.is_some()
-            || self.text_balloon_ok_menu.is_some()
+        self.customer_question_menu.is_some() || self.text_balloon_ok_menu.is_some()
     }
 
     pub fn close_customer_question_menu(&mut self, t: Clock) {
@@ -1770,34 +1783,27 @@ impl CustomerMenuGroup {
 
         let frame_size = question_menu.get_date_frame_size();
 
-	let canvas_size = numeric::Vector2f::new(
-	    frame_size.x + 64.0,
-            frame_size.y + 100.0
-	);
+        let canvas_size = numeric::Vector2f::new(frame_size.x + 64.0, frame_size.y + 100.0);
 
-	question_menu.set_to_center(ctx, numeric::Point2f::new(canvas_size.x / 2.0, canvas_size.y / 2.0));
-
-
-	let pos = util::find_proper_window_position(
-	    numeric::Rect::new(position.x, position.y, canvas_size.x, canvas_size.y),
-	    numeric::Rect::new(0.0, 0.0, core::WINDOW_SIZE_X as f32, core::WINDOW_SIZE_Y as f32),
-	);
-	
-        let menu_rect = numeric::Rect::new(
-	    pos.x,
-	    pos.y,
-            canvas_size.x,
-            canvas_size.y,
-        );
-	
-        let mut customer_question_menu_area = DropDownArea::new(
+        question_menu.set_to_center(
             ctx,
-            position,
-            menu_rect,
-            0,
-            question_menu,
-            t,
+            numeric::Point2f::new(canvas_size.x / 2.0, canvas_size.y / 2.0),
         );
+
+        let pos = util::find_proper_window_position(
+            numeric::Rect::new(position.x, position.y, canvas_size.x, canvas_size.y),
+            numeric::Rect::new(
+                0.0,
+                0.0,
+                core::WINDOW_SIZE_X as f32,
+                core::WINDOW_SIZE_Y as f32,
+            ),
+        );
+
+        let menu_rect = numeric::Rect::new(pos.x, pos.y, canvas_size.x, canvas_size.y);
+
+        let mut customer_question_menu_area =
+            DropDownArea::new(ctx, position, menu_rect, 0, question_menu, t);
 
         customer_question_menu_area.add_effect(vec![effect::fade_in(10, t)]);
 
@@ -1840,20 +1846,19 @@ impl CustomerMenuGroup {
         flush_delay_event_and_redraw_check!(self, self.event_list, ctx, t);
 
         if let Some(customer_question_menu) = self.customer_question_menu.as_mut() {
-	    if !customer_question_menu.is_stop() || !customer_question_menu.is_empty_effect() {
-		ctx.process_utility.redraw();
-	    }
+            if !customer_question_menu.is_stop() || !customer_question_menu.is_empty_effect() {
+                ctx.process_utility.redraw();
+            }
 
-	    customer_question_menu.move_with_func(t);
+            customer_question_menu.move_with_func(t);
             customer_question_menu.effect(ctx.context, t);
-
         }
 
         if let Some(ok_menu) = self.text_balloon_ok_menu.as_mut() {
-	    if !ok_menu.is_stop() || !ok_menu.is_empty_effect() {
-		ctx.process_utility.redraw();
-	    }
-	    
+            if !ok_menu.is_stop() || !ok_menu.is_empty_effect() {
+                ctx.process_utility.redraw();
+            }
+
             ok_menu.move_with_func(t);
             ok_menu.effect(ctx.context, t);
         }
@@ -1913,7 +1918,7 @@ impl RecordBookMenuGroup {
             book_status_menu: None,
             book_title_menu: None,
             customer_name_menu: None,
-	    simple_message_menu: None,
+            simple_message_menu: None,
             date_menu: None,
             payment_menu: None,
             drwob_essential: DrawableObjectEssential::new(true, drawing_depth),
@@ -1926,7 +1931,7 @@ impl RecordBookMenuGroup {
             || self.customer_name_menu.is_some()
             || self.date_menu.is_some()
             || self.payment_menu.is_some()
-	    || self.simple_message_menu.is_some()
+            || self.simple_message_menu.is_some()
     }
 
     pub fn close_book_status_menu(&mut self, t: Clock) {
@@ -2040,10 +2045,18 @@ impl RecordBookMenuGroup {
         self.payment_menu.is_some() && self.payment_menu.as_ref().unwrap().contains(ctx, point)
     }
 
-    pub fn contains_simple_message_menu(&self, ctx: &mut ggez::Context, point: numeric::Point2f) -> bool {
-        self.simple_message_menu.is_some() && self.simple_message_menu.as_ref().unwrap().contains(ctx, point)
+    pub fn contains_simple_message_menu(
+        &self,
+        ctx: &mut ggez::Context,
+        point: numeric::Point2f,
+    ) -> bool {
+        self.simple_message_menu.is_some()
+            && self
+                .simple_message_menu
+                .as_ref()
+                .unwrap()
+                .contains(ctx, point)
     }
-
 
     pub fn is_contains_any_menus(&self, ctx: &mut ggez::Context, point: numeric::Point2f) -> bool {
         self.contains_book_title_menu(ctx, point)
@@ -2051,7 +2064,7 @@ impl RecordBookMenuGroup {
             || self.contains_customer_name_menu(ctx, point)
             || self.contains_date_menu(ctx, point)
             || self.contains_payment_menu(ctx, point)
-	    || self.contains_simple_message_menu(ctx, point)
+            || self.contains_simple_message_menu(ctx, point)
     }
 
     pub fn get_book_status_menu_position(&self) -> Option<numeric::Point2f> {
@@ -2278,7 +2291,7 @@ impl RecordBookMenuGroup {
         self.close_customer_name_menu(t);
         self.close_date_menu(t);
         self.close_payment_menu(t);
-	self.close_simple_message_menu(t);
+        self.close_simple_message_menu(t);
     }
 
     pub fn show_book_status_menu<'a>(
@@ -2287,12 +2300,8 @@ impl RecordBookMenuGroup {
         position: numeric::Point2f,
         t: Clock,
     ) {
-        let button_group = BookStatusButtonGroup::new(
-            ctx,
-            numeric::Rect::new(0.0, 0.0, 70.0, 70.0),
-            20.0,
-            0,
-        );
+        let button_group =
+            BookStatusButtonGroup::new(ctx, numeric::Rect::new(0.0, 0.0, 70.0, 70.0), 20.0, 0);
 
         let mut button_group_area = DropDownArea::new(
             ctx,
@@ -2315,11 +2324,17 @@ impl RecordBookMenuGroup {
         kosuzu_memory: &KosuzuMemory,
         t: Clock,
     ) {
-	if kosuzu_memory.remembered_book_info.is_empty() {
-	    self.show_simple_message_menu(ctx, position, "".to_string(), "なんていう本だっけ".to_string(), t);
-	    return;
-	}
-	
+        if kosuzu_memory.remembered_book_info.is_empty() {
+            self.show_simple_message_menu(
+                ctx,
+                position,
+                "".to_string(),
+                "なんていう本だっけ".to_string(),
+                t,
+            );
+            return;
+        }
+
         let book_title_menu =
             BookTitleMenu::new(ctx, kosuzu_memory.remembered_book_info.clone(), 0);
 
@@ -2327,17 +2342,17 @@ impl RecordBookMenuGroup {
 
         let menu_size = numeric::Point2f::new(frame_size.x + 128.0, frame_size.y + 64.0);
 
-	let pos = util::find_proper_window_position(
-	    numeric::Rect::new(position.x, position.y, menu_size.x, menu_size.y),
-	    numeric::Rect::new(0.0, 0.0, core::WINDOW_SIZE_X as f32, core::WINDOW_SIZE_Y as f32),
-	);
-	
-        let menu_rect = numeric::Rect::new(
-	    pos.x,
-	    pos.y,
-            menu_size.x,
-            menu_size.y,
+        let pos = util::find_proper_window_position(
+            numeric::Rect::new(position.x, position.y, menu_size.x, menu_size.y),
+            numeric::Rect::new(
+                0.0,
+                0.0,
+                core::WINDOW_SIZE_X as f32,
+                core::WINDOW_SIZE_Y as f32,
+            ),
         );
+
+        let menu_rect = numeric::Rect::new(pos.x, pos.y, menu_size.x, menu_size.y);
 
         let mut book_title_menu_area =
             DropDownArea::new(ctx, position, menu_rect, 0, book_title_menu, t);
@@ -2347,57 +2362,49 @@ impl RecordBookMenuGroup {
     }
 
     fn show_simple_message_menu<'a>(
-	&mut self,
-	ctx: &mut SuzuContext<'a>,
-	position: numeric::Point2f,
-	title: String,
-	message: String,
-	t: Clock
+        &mut self,
+        ctx: &mut SuzuContext<'a>,
+        position: numeric::Point2f,
+        title: String,
+        message: String,
+        t: Clock,
     ) {
-	let menu = SimpleMessageMenu::new(
-	    ctx,
-	    title,
-	    message,
-	    28.0,
-	    28.0,
-	    0
-	);
+        let menu = SimpleMessageMenu::new(ctx, title, message, 28.0, 28.0, 0);
 
-	let menu_size = menu.get_size();
+        let menu_size = menu.get_size();
 
-	
-	let rect = if (position.y + menu_size.y) as i16 <= core::WINDOW_SIZE_Y && (position.x + menu_size.x) as i16 <= core::WINDOW_SIZE_X {
-	    numeric::Rect::new(position.x, position.y, menu_size.x, menu_size.y)
+        let rect = if (position.y + menu_size.y) as i16 <= core::WINDOW_SIZE_Y
+            && (position.x + menu_size.x) as i16 <= core::WINDOW_SIZE_X
+        {
+            numeric::Rect::new(position.x, position.y, menu_size.x, menu_size.y)
         } else if (position.y + menu_size.y) as i16 <= core::WINDOW_SIZE_Y {
-	    numeric::Rect::new(position.x - menu_size.x, position.y, menu_size.x, menu_size.y)
-	} else if (position.x + menu_size.x) as i16 <= core::WINDOW_SIZE_X {
-	    numeric::Rect::new(
+            numeric::Rect::new(
+                position.x - menu_size.x,
+                position.y,
+                menu_size.x,
+                menu_size.y,
+            )
+        } else if (position.x + menu_size.x) as i16 <= core::WINDOW_SIZE_X {
+            numeric::Rect::new(
                 position.x,
                 position.y - menu_size.y,
                 menu_size.x,
                 menu_size.y,
             )
-	} else {
-	    numeric::Rect::new(
+        } else {
+            numeric::Rect::new(
                 position.x - menu_size.x,
                 position.y - menu_size.y,
                 menu_size.x,
                 menu_size.y,
             )
-	};
-	
-	let mut drop_menu = SimpleMessageDropMenu::new(
-	    ctx,
-	    position,
-	    rect,
-	    0,
-	    menu,
-	    t
-	);
+        };
 
-	drop_menu.add_effect(vec![effect::fade_in(10, t)]);
+        let mut drop_menu = SimpleMessageDropMenu::new(ctx, position, rect, 0, menu, t);
 
-	self.simple_message_menu = Some(drop_menu);
+        drop_menu.add_effect(vec![effect::fade_in(10, t)]);
+
+        self.simple_message_menu = Some(drop_menu);
     }
 
     pub fn show_customer_name_menu<'a>(
@@ -2407,11 +2414,17 @@ impl RecordBookMenuGroup {
         kosuzu_memory: &KosuzuMemory,
         t: Clock,
     ) {
-	if kosuzu_memory.customers_name.is_empty() {
-	    self.show_simple_message_menu(ctx, position, "".to_string(), "お名前聞かないと".to_string(), t);
-	    return;
-	}
-	
+        if kosuzu_memory.customers_name.is_empty() {
+            self.show_simple_message_menu(
+                ctx,
+                position,
+                "".to_string(),
+                "お名前聞かないと".to_string(),
+                t,
+            );
+            return;
+        }
+
         let mut customer_name_menu =
             CustomerNameMenu::new(ctx, kosuzu_memory.customers_name.clone(), 0);
 
@@ -2419,20 +2432,23 @@ impl RecordBookMenuGroup {
 
         let menu_size = numeric::Point2f::new(frame_size.x + 96.0, frame_size.y + 96.0);
 
-	customer_name_menu.set_to_center(ctx, numeric::Point2f::new(menu_size.x / 2.0, menu_size.y / 2.0));
-
-	let pos = util::find_proper_window_position(
-	    numeric::Rect::new(position.x, position.y, menu_size.x, menu_size.y),
-	    numeric::Rect::new(0.0, 0.0, core::WINDOW_SIZE_X as f32, core::WINDOW_SIZE_Y as f32),
-	);
-	
-        let menu_rect = numeric::Rect::new(
-	    pos.x,
-	    pos.y,
-            menu_size.x,
-            menu_size.y,
+        customer_name_menu.set_to_center(
+            ctx,
+            numeric::Point2f::new(menu_size.x / 2.0, menu_size.y / 2.0),
         );
-	
+
+        let pos = util::find_proper_window_position(
+            numeric::Rect::new(position.x, position.y, menu_size.x, menu_size.y),
+            numeric::Rect::new(
+                0.0,
+                0.0,
+                core::WINDOW_SIZE_X as f32,
+                core::WINDOW_SIZE_Y as f32,
+            ),
+        );
+
+        let menu_rect = numeric::Rect::new(pos.x, pos.y, menu_size.x, menu_size.y);
+
         let mut customer_name_menu_area =
             DropDownArea::new(ctx, position, menu_rect, 0, customer_name_menu, t);
         customer_name_menu_area.add_effect(vec![effect::fade_in(10, t)]);
@@ -2453,14 +2469,22 @@ impl RecordBookMenuGroup {
 
         let menu_size = numeric::Point2f::new(frame_size.x + 80.0, frame_size.y + 80.0);
 
-	let pos = util::find_proper_window_position(
-	    numeric::Rect::new(position.x, position.y, menu_size.x, menu_size.y),
-	    numeric::Rect::new(0.0, 0.0, core::WINDOW_SIZE_X as f32, core::WINDOW_SIZE_Y as f32),
-	);
+        let pos = util::find_proper_window_position(
+            numeric::Rect::new(position.x, position.y, menu_size.x, menu_size.y),
+            numeric::Rect::new(
+                0.0,
+                0.0,
+                core::WINDOW_SIZE_X as f32,
+                core::WINDOW_SIZE_Y as f32,
+            ),
+        );
 
-	let menu_rect = numeric::Rect::new(pos.x, pos.y, menu_size.x, menu_size.y);
+        let menu_rect = numeric::Rect::new(pos.x, pos.y, menu_size.x, menu_size.y);
 
-	date_menu.set_to_center(ctx, numeric::Point2f::new(menu_size.x / 2.0, menu_size.y / 2.0));
+        date_menu.set_to_center(
+            ctx,
+            numeric::Point2f::new(menu_size.x / 2.0, menu_size.y / 2.0),
+        );
 
         let mut date_menu_area = DropDownArea::new(ctx, position, menu_rect, 0, date_menu, t);
         date_menu_area.add_effect(vec![effect::fade_in(10, t)]);
@@ -2481,17 +2505,17 @@ impl RecordBookMenuGroup {
 
         let menu_size = numeric::Point2f::new(frame_size.x + 96.0, frame_size.y + 40.0);
 
-	let pos = util::find_proper_window_position(
-	    numeric::Rect::new(position.x, position.y, menu_size.x, menu_size.y),
-	    numeric::Rect::new(0.0, 0.0, core::WINDOW_SIZE_X as f32, core::WINDOW_SIZE_Y as f32),
-	);
-	
-        let menu_rect = numeric::Rect::new(
-	    pos.x,
-	    pos.y,
-            menu_size.x,
-            menu_size.y,
+        let pos = util::find_proper_window_position(
+            numeric::Rect::new(position.x, position.y, menu_size.x, menu_size.y),
+            numeric::Rect::new(
+                0.0,
+                0.0,
+                core::WINDOW_SIZE_X as f32,
+                core::WINDOW_SIZE_Y as f32,
+            ),
         );
+
+        let menu_rect = numeric::Rect::new(pos.x, pos.y, menu_size.x, menu_size.y);
 
         let mut payment_menu_area = DropDownArea::new(ctx, position, menu_rect, 0, payment_menu, t);
         payment_menu_area.add_effect(vec![effect::fade_in(10, t)]);
@@ -2516,38 +2540,38 @@ impl RecordBookMenuGroup {
         if let Some(book_status_menu) = self.book_status_menu.as_mut() {
             book_status_menu.move_with_func(t);
             book_status_menu.effect(ctx.context, t);
-	    ctx.process_utility.redraw();
+            ctx.process_utility.redraw();
         }
 
         if let Some(book_title_menu) = self.book_title_menu.as_mut() {
             book_title_menu.move_with_func(t);
             book_title_menu.effect(ctx.context, t);
-	    ctx.process_utility.redraw();
+            ctx.process_utility.redraw();
         }
 
         if let Some(customer_name_menu) = self.customer_name_menu.as_mut() {
             customer_name_menu.move_with_func(t);
             customer_name_menu.effect(ctx.context, t);
-	    ctx.process_utility.redraw();
+            ctx.process_utility.redraw();
         }
 
         if let Some(date_menu) = self.date_menu.as_mut() {
             date_menu.move_with_func(t);
             date_menu.effect(ctx.context, t);
-	    ctx.process_utility.redraw();
+            ctx.process_utility.redraw();
         }
 
         if let Some(payment_menu) = self.payment_menu.as_mut() {
             payment_menu.move_with_func(t);
             payment_menu.effect(ctx.context, t);
-	    ctx.process_utility.redraw();
+            ctx.process_utility.redraw();
         }
 
-	if let Some(msg_menu) = self.simple_message_menu.as_mut() {
-	    msg_menu.move_with_func(t);
-	    msg_menu.effect(ctx.context, t);
-	    ctx.process_utility.redraw();
-	}
+        if let Some(msg_menu) = self.simple_message_menu.as_mut() {
+            msg_menu.move_with_func(t);
+            msg_menu.effect(ctx.context, t);
+            ctx.process_utility.redraw();
+        }
     }
 }
 
@@ -2574,9 +2598,9 @@ impl DrawableComponent for RecordBookMenuGroup {
                 payment_menu.draw(ctx)?;
             }
 
-	    if let Some(msg_menu) = self.simple_message_menu.as_mut() {
-		msg_menu.draw(ctx)?;
-	    }
+            if let Some(msg_menu) = self.simple_message_menu.as_mut() {
+                msg_menu.draw(ctx)?;
+            }
         }
         Ok(())
     }
@@ -2602,7 +2626,6 @@ impl DrawableComponent for RecordBookMenuGroup {
     }
 }
 
-
 pub struct BookInfoDrawer {
     book_info_frame: TableFrame,
     header_text: Vec<VerticalText>,
@@ -2617,7 +2640,7 @@ impl BookInfoDrawer {
         drawing_depth: i8,
     ) -> Self {
         let mut info_field_vtext = Vec::new();
-	let mut header_text = Vec::new();
+        let mut header_text = Vec::new();
 
         let font_info = FontInformation::new(
             ctx.resource.get_font(FontID::Cinema),
@@ -2654,9 +2677,13 @@ impl BookInfoDrawer {
             header_text.push(vtext);
         }
 
-        for (index, s) in vec![book_info.get_condition_string(), book_info.size.clone(), "100".to_string()]
-            .iter()
-            .enumerate()
+        for (index, s) in vec![
+            book_info.get_condition_string(),
+            book_info.size.clone(),
+            "100".to_string(),
+        ]
+        .iter()
+        .enumerate()
         {
             let mut vtext = VerticalText::new(
                 s.to_string(),
@@ -2680,33 +2707,33 @@ impl BookInfoDrawer {
         BookInfoDrawer {
             book_info_frame: book_info_frame,
             info_field_text: info_field_vtext,
-	    header_text: header_text,
+            header_text: header_text,
             drwob_essential: DrawableObjectEssential::new(true, drawing_depth),
         }
     }
 
     pub fn make_center<'a>(&mut self, ctx: &mut SuzuContext<'a>, center_pos: numeric::Point2f) {
-	self.book_info_frame.make_center(center_pos);
-	
-	for (index, vtext) in self.header_text.iter_mut().enumerate() {
+        self.book_info_frame.make_center(center_pos);
+
+        for (index, vtext) in self.header_text.iter_mut().enumerate() {
             set_table_frame_cell_center!(
                 ctx.context,
                 self.book_info_frame,
                 vtext,
                 numeric::Vector2u::new(index as u32, 0)
             );
-	}
+        }
 
-	for (index, vtext) in self.info_field_text.iter_mut().enumerate() {
+        for (index, vtext) in self.info_field_text.iter_mut().enumerate() {
             set_table_frame_cell_center!(
                 ctx.context,
                 self.book_info_frame,
                 vtext,
                 numeric::Vector2u::new(index as u32, 1)
             );
-	}
+        }
     }
-    
+
     pub fn get_book_info_frame_size(&self) -> numeric::Vector2f {
         self.book_info_frame.size()
     }
@@ -2721,7 +2748,7 @@ impl DrawableComponent for BookInfoDrawer {
                 vtext.draw(ctx)?;
             }
 
-	    for vtext in &mut self.header_text {
+            for vtext in &mut self.header_text {
                 vtext.draw(ctx)?;
             }
         }
@@ -2765,37 +2792,36 @@ impl DeskBookMenu {
         book_info: BookInformation,
         drawing_depth: i8,
     ) -> Self {
-
         let font_info = FontInformation::new(
             ctx.resource.get_font(FontID::Cinema),
             numeric::Vector2f::new(30.0, 30.0),
             ggraphics::Color::from_rgba_u32(0xff),
         );
 
-	let header_text = UniText::new(
-	    "本の容態".to_string(),
-	    numeric::Point2f::new(0.0, 0.0),
-	    numeric::Vector2f::new(1.0, 1.0),
-	    0.0,
-	    0,
-	    font_info
-	);
+        let header_text = UniText::new(
+            "本の容態".to_string(),
+            numeric::Point2f::new(0.0, 0.0),
+            numeric::Vector2f::new(1.0, 1.0),
+            0.0,
+            0,
+            font_info,
+        );
 
-	let book_info_drawer = BookInfoDrawer::new(ctx, book_info.clone(), 0);
+        let book_info_drawer = BookInfoDrawer::new(ctx, book_info.clone(), 0);
 
-	let mut button_rect = numeric::Rect::new(30.0, 410.0, 140.0, 50.0);
-	let mut buttons = Vec::new();
+        let mut button_rect = numeric::Rect::new(30.0, 410.0, 140.0, 50.0);
+        let mut buttons = Vec::new();
         for s in vec!["メモ", "貸出拒否"].iter() {
-	    let text_texture = TextButtonTexture::new(
-		ctx,
-		numeric::Point2f::new(0.0, 0.0),
-		s.to_string(),
-		font_info,
-		10.0,
-		ggraphics::Color::from_rgba_u32(0xe8b5a2ff),
-		0
-	    );
-	    
+            let text_texture = TextButtonTexture::new(
+                ctx,
+                numeric::Point2f::new(0.0, 0.0),
+                s.to_string(),
+                font_info,
+                10.0,
+                ggraphics::Color::from_rgba_u32(0xe8b5a2ff),
+                0,
+            );
+
             let button = SelectButton::new(ctx, button_rect, Box::new(text_texture));
 
             buttons.push(button);
@@ -2803,31 +2829,35 @@ impl DeskBookMenu {
         }
 
         let mut menu = DeskBookMenu {
-	    header_text: header_text,
-	    book_info_drawer: book_info_drawer,
+            header_text: header_text,
+            book_info_drawer: book_info_drawer,
             book_info: book_info,
-	    deny_button: buttons.pop().unwrap(),
-	    memo_button: buttons.pop().unwrap(),
+            deny_button: buttons.pop().unwrap(),
+            memo_button: buttons.pop().unwrap(),
             drwob_essential: DrawableObjectEssential::new(true, drawing_depth),
             last_clicked: None,
         };
-	
-	let size = menu.get_date_frame_size();
 
-	menu.header_text.make_center(ctx.context, numeric::Point2f::new(size.x / 2.0, 44.0));
-	menu.book_info_drawer.make_center(ctx, numeric::Point2f::new(size.x / 2.0, (size.y / 2.0) - 12.0));
-	
-	menu
+        let size = menu.get_date_frame_size();
+
+        menu.header_text
+            .make_center(ctx.context, numeric::Point2f::new(size.x / 2.0, 44.0));
+        menu.book_info_drawer.make_center(
+            ctx,
+            numeric::Point2f::new(size.x / 2.0, (size.y / 2.0) - 12.0),
+        );
+
+        menu
     }
 
     pub fn click_handler(&mut self, ctx: &mut ggez::Context, point: numeric::Point2f) {
-	if self.memo_button.contains(ctx, point) {
-	    self.last_clicked = Some(0 as usize);
-	}
+        if self.memo_button.contains(ctx, point) {
+            self.last_clicked = Some(0 as usize);
+        }
 
-	if self.deny_button.contains(ctx, point) {
-	    self.last_clicked = Some(1 as usize);
-	}
+        if self.deny_button.contains(ctx, point) {
+            self.last_clicked = Some(1 as usize);
+        }
     }
 
     pub fn get_last_clicked(&self) -> Option<usize> {
@@ -2839,24 +2869,21 @@ impl DeskBookMenu {
     }
 
     pub fn get_date_frame_size(&self) -> numeric::Vector2f {
-	let header_text_size = self.header_text.get_font_scale();
-	let book_info_size = self.book_info_drawer.get_book_info_frame_size();
+        let header_text_size = self.header_text.get_font_scale();
+        let book_info_size = self.book_info_drawer.get_book_info_frame_size();
 
-	numeric::Vector2f::new(
-	    314.0,
-	    header_text_size.y + book_info_size.y + 150.0,
-	)
+        numeric::Vector2f::new(314.0, header_text_size.y + book_info_size.y + 150.0)
     }
 }
 
 impl DrawableComponent for DeskBookMenu {
     fn draw(&mut self, ctx: &mut ggez::Context) -> ggez::GameResult<()> {
         if self.is_visible() {
-	    self.header_text.draw(ctx)?;
-	    self.book_info_drawer.draw(ctx)?;
+            self.header_text.draw(ctx)?;
+            self.book_info_drawer.draw(ctx)?;
 
-	    self.memo_button.draw(ctx)?;
-	    self.deny_button.draw(ctx)?;
+            self.memo_button.draw(ctx)?;
+            self.deny_button.draw(ctx)?;
         }
         Ok(())
     }
@@ -2993,18 +3020,18 @@ impl OnDeskMenuGroup {
 
         let menu_size = numeric::Point2f::new(frame_size.x, frame_size.y);
 
-	let pos = util::find_proper_window_position(
-	    numeric::Rect::new(position.x, position.y, menu_size.x, menu_size.y),
-	    numeric::Rect::new(0.0, 0.0, core::WINDOW_SIZE_X as f32, core::WINDOW_SIZE_Y as f32),
-	);
-	
-        let menu_rect = numeric::Rect::new(
-	    pos.x,
-	    pos.y,
-            menu_size.x,
-            menu_size.y,
+        let pos = util::find_proper_window_position(
+            numeric::Rect::new(position.x, position.y, menu_size.x, menu_size.y),
+            numeric::Rect::new(
+                0.0,
+                0.0,
+                core::WINDOW_SIZE_X as f32,
+                core::WINDOW_SIZE_Y as f32,
+            ),
         );
-	
+
+        let menu_rect = numeric::Rect::new(pos.x, pos.y, menu_size.x, menu_size.y);
+
         let mut dd_area = DropDownArea::new(ctx, position, menu_rect, 0, menu, t);
 
         dd_area.add_effect(vec![effect::fade_in(10, t)]);
@@ -3019,9 +3046,9 @@ impl OnDeskMenuGroup {
         flush_delay_event_and_redraw_check!(self, self.event_list, ctx, t);
 
         if let Some(desk_book_menu) = self.desk_book_menu.as_mut() {
-	    if !desk_book_menu.is_stop() || !desk_book_menu.is_empty_effect() {
-		ctx.process_utility.redraw();
-	    }
+            if !desk_book_menu.is_stop() || !desk_book_menu.is_empty_effect() {
+                ctx.process_utility.redraw();
+            }
             desk_book_menu.move_with_func(t);
             desk_book_menu.effect(ctx.context, t);
         }

@@ -2,10 +2,10 @@ use std::rc::Rc;
 
 use ggez::graphics as ggraphics;
 
-use torifune::numeric;
-use torifune::graphics::object::*;
 use torifune::graphics::drawable::*;
 use torifune::graphics::object::sub_screen;
+use torifune::graphics::object::*;
+use torifune::numeric;
 use torifune::roundup2f;
 
 use torifune::graphics::object::sub_screen::SubScreen;
@@ -31,7 +31,7 @@ pub struct SuzunaStatusMainPage {
 
 impl SuzunaStatusMainPage {
     pub fn new<'a>(ctx: &mut SuzuContext<'a>) -> Self {
-	let normal_scale_font = FontInformation::new(
+        let normal_scale_font = FontInformation::new(
             ctx.resource.get_font(FontID::Cinema),
             numeric::Vector2f::new(24.0, 24.0),
             ggraphics::Color::from_rgba_u32(0x000000ff),
@@ -133,7 +133,7 @@ impl SuzunaStatusMainPage {
                 format!(
                     "{}月{}日",
                     number_to_jk::number_to_jk(ctx.savable_data.date.month as u64),
-		    number_to_jk::number_to_jk(ctx.savable_data.date.day as u64),
+                    number_to_jk::number_to_jk(ctx.savable_data.date.day as u64),
                 ),
                 numeric::Point2f::new(600.0, 50.0),
                 numeric::Vector2f::new(1.0, 1.0),
@@ -144,7 +144,7 @@ impl SuzunaStatusMainPage {
             money_text: money_text,
             kosuzu_level_text: kosuzu_level_text,
             drwob_essential: DrawableObjectEssential::new(true, 0),
-	}
+        }
     }
 }
 
@@ -193,7 +193,6 @@ impl DrawableComponent for SuzunaStatusMainPage {
     }
 }
 
-
 pub struct SuzunaStatusScreen {
     canvas: SubScreen,
     background: UniTexture,
@@ -203,46 +202,54 @@ pub struct SuzunaStatusScreen {
 }
 
 impl SuzunaStatusScreen {
-    pub fn new<'a>(ctx: &mut SuzuContext<'a>, rect: numeric::Rect, depth: i8) -> SuzunaStatusScreen {
-	let background_texture = UniTexture::new(
-	    ctx.ref_texture(TextureID::TextBackground),
-	    numeric::Point2f::new(0.0, 0.0),
-	    numeric::Vector2f::new(1.0, 1.0),
-	    0.0,
-	    0
-	);
+    pub fn new<'a>(
+        ctx: &mut SuzuContext<'a>,
+        rect: numeric::Rect,
+        depth: i8,
+    ) -> SuzunaStatusScreen {
+        let background_texture = UniTexture::new(
+            ctx.ref_texture(TextureID::TextBackground),
+            numeric::Point2f::new(0.0, 0.0),
+            numeric::Vector2f::new(1.0, 1.0),
+            0.0,
+            0,
+        );
 
-	let mut left = UniTexture::new(
-	    ctx.ref_texture(TextureID::GoNextPageLeft),
-	    numeric::Point2f::new(0.0, rect.h - 32.0),
-	    numeric::Vector2f::new(0.5, 0.5),
-	    0.0,
-	    0
-	);
-	left.hide();
+        let mut left = UniTexture::new(
+            ctx.ref_texture(TextureID::GoNextPageLeft),
+            numeric::Point2f::new(0.0, rect.h - 32.0),
+            numeric::Vector2f::new(0.5, 0.5),
+            0.0,
+            0,
+        );
+        left.hide();
 
-	let right = UniTexture::new(
-	    ctx.ref_texture(TextureID::GoNextPageRight),
-	    numeric::Point2f::new(rect.w - 32.0, rect.h - 32.0),
-	    numeric::Vector2f::new(0.5, 0.5),
-	    0.0,
-	    0
-	);
-	
-	SuzunaStatusScreen {
-	    canvas: SubScreen::new(ctx.context, rect, depth, ggraphics::Color::from_rgba_u32(0xffffffff)),
-	    background: background_texture,
-	    main_page: SuzunaStatusMainPage::new(ctx),
-	    go_left_texture: left,
-	    go_right_texture: right,
-	}
+        let right = UniTexture::new(
+            ctx.ref_texture(TextureID::GoNextPageRight),
+            numeric::Point2f::new(rect.w - 32.0, rect.h - 32.0),
+            numeric::Vector2f::new(0.5, 0.5),
+            0.0,
+            0,
+        );
+
+        SuzunaStatusScreen {
+            canvas: SubScreen::new(
+                ctx.context,
+                rect,
+                depth,
+                ggraphics::Color::from_rgba_u32(0xffffffff),
+            ),
+            background: background_texture,
+            main_page: SuzunaStatusMainPage::new(ctx),
+            go_left_texture: left,
+            go_right_texture: right,
+        }
     }
 
     pub fn click_handler<'a>(&mut self, _ctx: &mut SuzuContext<'a>, click_point: numeric::Point2f) {
-	if !self.canvas.contains(click_point) {
-	    return;
-	}
-	
+        if !self.canvas.contains(click_point) {
+            return;
+        }
     }
 }
 
@@ -251,13 +258,13 @@ impl DrawableComponent for SuzunaStatusScreen {
         if self.is_visible() {
             sub_screen::stack_screen(ctx, &self.canvas);
 
-	    self.background.draw(ctx)?;
-	    self.main_page.draw(ctx)?;
+            self.background.draw(ctx)?;
+            self.main_page.draw(ctx)?;
 
-	    self.go_right_texture.draw(ctx)?;
-	    self.go_left_texture.draw(ctx)?;
+            self.go_right_texture.draw(ctx)?;
+            self.go_left_texture.draw(ctx)?;
 
-	    sub_screen::pop_screen(ctx);
+            sub_screen::pop_screen(ctx);
             self.canvas.draw(ctx).unwrap();
         }
 

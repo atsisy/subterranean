@@ -1,6 +1,6 @@
+pub mod book_management;
 pub mod map_parser;
 pub mod util;
-pub mod book_management;
 
 use ggez::graphics as ggraphics;
 use ggez::*;
@@ -27,8 +27,8 @@ use std::collections::VecDeque;
 use std::rc::Rc;
 use std::str::FromStr;
 
-use crate::scene;
 use crate::parse_toml_file;
+use crate::scene;
 
 use std::fs;
 use std::fs::File;
@@ -223,29 +223,29 @@ impl FromStr for TextureID {
             "JpHouseTexture" => Ok(Self::JpHouseTexture),
             "BookBoxFront" => Ok(Self::BookBoxFront),
             "BookBoxBack" => Ok(Self::BookBoxBack),
-	    "Paper3" => Ok(Self::Paper3),
-	    "Paper4" => Ok(Self::Paper4),
-	    "Paper5" => Ok(Self::Paper5),
-	    "Paper6" => Ok(Self::Paper6),
-	    "Paper7" => Ok(Self::Paper7),
-	    "Clock1" => Ok(Self::Clock1),
-	    "ClockNeedle1" => Ok(Self::ClockNeedle1),
-	    "ShortClockNeedle1" => Ok(Self::ShortClockNeedle1),
-	    "Hanko" => Ok(Self::Hanko),
-	    "NextLineIcon" => Ok(Self::NextLineIcon),
-	    "LargeBookScratchFair1" => Ok(Self::LargeBookScratchFair1),
-	    "LargeBookScratchFair2" => Ok(Self::LargeBookScratchFair2),
-	    "LargeBookScratchFair3" => Ok(Self::LargeBookScratchFair3),
-	    "LargeBookScratchFair4" => Ok(Self::LargeBookScratchFair4),
-	    "LargeBookScratchBad1" => Ok(Self::LargeBookScratchBad1),
-	    "LargeBookScratchBad2" => Ok(Self::LargeBookScratchBad2),
-	    "LargeBookScratchBad3" => Ok(Self::LargeBookScratchBad3),
-	    "LargeBookScratchBad4" => Ok(Self::LargeBookScratchBad4),
-	    "ManualPageBookTitles" => Ok(Self::ManualPageBookTitles),
-	    "ManualPageBorrowingFlow" => Ok(Self::ManualPageBorrowingFlow),
-	    "ManualPageReturnFlow" => Ok(Self::ManualPageReturnFlow),
-	    "GoNextPageLeft" => Ok(Self::GoNextPageLeft),
-	    "GoNextPageRight" => Ok(Self::GoNextPageRight),
+            "Paper3" => Ok(Self::Paper3),
+            "Paper4" => Ok(Self::Paper4),
+            "Paper5" => Ok(Self::Paper5),
+            "Paper6" => Ok(Self::Paper6),
+            "Paper7" => Ok(Self::Paper7),
+            "Clock1" => Ok(Self::Clock1),
+            "ClockNeedle1" => Ok(Self::ClockNeedle1),
+            "ShortClockNeedle1" => Ok(Self::ShortClockNeedle1),
+            "Hanko" => Ok(Self::Hanko),
+            "NextLineIcon" => Ok(Self::NextLineIcon),
+            "LargeBookScratchFair1" => Ok(Self::LargeBookScratchFair1),
+            "LargeBookScratchFair2" => Ok(Self::LargeBookScratchFair2),
+            "LargeBookScratchFair3" => Ok(Self::LargeBookScratchFair3),
+            "LargeBookScratchFair4" => Ok(Self::LargeBookScratchFair4),
+            "LargeBookScratchBad1" => Ok(Self::LargeBookScratchBad1),
+            "LargeBookScratchBad2" => Ok(Self::LargeBookScratchBad2),
+            "LargeBookScratchBad3" => Ok(Self::LargeBookScratchBad3),
+            "LargeBookScratchBad4" => Ok(Self::LargeBookScratchBad4),
+            "ManualPageBookTitles" => Ok(Self::ManualPageBookTitles),
+            "ManualPageBorrowingFlow" => Ok(Self::ManualPageBorrowingFlow),
+            "ManualPageReturnFlow" => Ok(Self::ManualPageReturnFlow),
+            "GoNextPageLeft" => Ok(Self::GoNextPageLeft),
+            "GoNextPageRight" => Ok(Self::GoNextPageRight),
             _ => Err(()),
         }
     }
@@ -299,29 +299,29 @@ impl TextureID {
             42 => Some(Self::JpHouseTexture),
             43 => Some(Self::BookBoxFront),
             44 => Some(Self::BookBoxBack),
-	    45 => Some(Self::Paper3),
-	    46 => Some(Self::Paper4),
-	    47 => Some(Self::Paper5),
-	    48 => Some(Self::Paper6),
-	    49 => Some(Self::Paper7),
-	    50 => Some(Self::Clock1),
-	    51 => Some(Self::ClockNeedle1),
-	    52 => Some(Self::ShortClockNeedle1),
-	    53 => Some(Self::Hanko),
-	    54 => Some(Self::NextLineIcon),
-	    55 => Some(Self::LargeBookScratchFair1),
-	    56 => Some(Self::LargeBookScratchFair2),
-	    57 => Some(Self::LargeBookScratchFair3),
-	    58 => Some(Self::LargeBookScratchFair4),
-	    59 => Some(Self::LargeBookScratchBad1),
-	    60 => Some(Self::LargeBookScratchBad2),
-	    61 => Some(Self::LargeBookScratchBad3),
-	    62 => Some(Self::LargeBookScratchBad4),
-	    63 => Some(Self::ManualPageBookTitles),
-	    64 => Some(Self::ManualPageBorrowingFlow),
-	    65 => Some(Self::ManualPageReturnFlow),
-	    66 => Some(Self::GoNextPageLeft),
-	    67 => Some(Self::GoNextPageRight),
+            45 => Some(Self::Paper3),
+            46 => Some(Self::Paper4),
+            47 => Some(Self::Paper5),
+            48 => Some(Self::Paper6),
+            49 => Some(Self::Paper7),
+            50 => Some(Self::Clock1),
+            51 => Some(Self::ClockNeedle1),
+            52 => Some(Self::ShortClockNeedle1),
+            53 => Some(Self::Hanko),
+            54 => Some(Self::NextLineIcon),
+            55 => Some(Self::LargeBookScratchFair1),
+            56 => Some(Self::LargeBookScratchFair2),
+            57 => Some(Self::LargeBookScratchFair3),
+            58 => Some(Self::LargeBookScratchFair4),
+            59 => Some(Self::LargeBookScratchBad1),
+            60 => Some(Self::LargeBookScratchBad2),
+            61 => Some(Self::LargeBookScratchBad3),
+            62 => Some(Self::LargeBookScratchBad4),
+            63 => Some(Self::ManualPageBookTitles),
+            64 => Some(Self::ManualPageBorrowingFlow),
+            65 => Some(Self::ManualPageReturnFlow),
+            66 => Some(Self::GoNextPageLeft),
+            67 => Some(Self::GoNextPageRight),
             _ => None,
         }
     }
@@ -333,25 +333,25 @@ impl TextureID {
     }
 
     pub fn random_large_book_scratch_fair() -> TextureID {
-	let candidate = [
-	    TextureID::LargeBookScratchFair1,
-	    TextureID::LargeBookScratchFair2,
-	    TextureID::LargeBookScratchFair3,
-	    TextureID::LargeBookScratchFair4,
-	];
+        let candidate = [
+            TextureID::LargeBookScratchFair1,
+            TextureID::LargeBookScratchFair2,
+            TextureID::LargeBookScratchFair3,
+            TextureID::LargeBookScratchFair4,
+        ];
 
-	util::random_select(candidate.iter()).unwrap().clone()
+        util::random_select(candidate.iter()).unwrap().clone()
     }
 
     pub fn random_large_book_scratch_bad() -> TextureID {
-	let candidate = [
-	    TextureID::LargeBookScratchBad1,
-	    TextureID::LargeBookScratchBad2,
-	    TextureID::LargeBookScratchBad3,
-	    TextureID::LargeBookScratchBad4,
-	];
+        let candidate = [
+            TextureID::LargeBookScratchBad1,
+            TextureID::LargeBookScratchBad2,
+            TextureID::LargeBookScratchBad3,
+            TextureID::LargeBookScratchBad4,
+        ];
 
-	util::random_select(candidate.iter()).unwrap().clone()
+        util::random_select(candidate.iter()).unwrap().clone()
     }
 }
 
@@ -398,34 +398,35 @@ impl From<i32> for BookCondition {
 
 impl BookCondition {
     fn from_u32(value: u32) -> Self {
-	match value {
-	    0 => Self::Good,
-	    1 => Self::Fair,
-	    2 => Self::Bad,
-	    _ => panic!(""),
-	}
+        match value {
+            0 => Self::Good,
+            1 => Self::Fair,
+            2 => Self::Bad,
+            _ => panic!(""),
+        }
     }
-			
+
     pub fn probability_random(pb: &[u8]) -> Self {
-	let mut random = rand::random::<usize>() % 100;
+        let mut random = rand::random::<usize>() % 100;
 
-	for (index, p) in pb.iter().enumerate() {
-	    if random < *p as usize {
-		return Self::from_u32(index as u32);
-	    }
+        for (index, p) in pb.iter().enumerate() {
+            if random < *p as usize {
+                return Self::from_u32(index as u32);
+            }
 
-	    random -= *p as usize;
-	}
+            random -= *p as usize;
+        }
 
-	panic!("The summation of pb is over 100");
+        panic!("The summation of pb is over 100");
     }
 
     pub fn to_string(&self) -> String {
-	match self {
-	    Self::Good => "良",
-	    Self::Fair => "可",
-	    Self::Bad => "悪",
-	}.to_string()
+        match self {
+            Self::Good => "良",
+            Self::Fair => "可",
+            Self::Bad => "悪",
+        }
+        .to_string()
     }
 }
 
@@ -442,40 +443,40 @@ pub struct BookInformation {
 
 impl BookInformation {
     pub fn new(
-	name: String,
-	pages: usize,
-	size: String,
-	billing_number: u16,
-	base_price: u32
+        name: String,
+        pages: usize,
+        size: String,
+        billing_number: u16,
+        base_price: u32,
     ) -> Self {
-	BookInformation {
-	    name: name,
-	    pages: pages,
-	    size: size,
-	    billing_number: billing_number,
-	    base_price: base_price,
-	    condition: BookCondition::probability_random(&[70, 20, 10]),
-	    unique_id: util::get_unique_id(),
-	}
+        BookInformation {
+            name: name,
+            pages: pages,
+            size: size,
+            billing_number: billing_number,
+            base_price: base_price,
+            condition: BookCondition::probability_random(&[70, 20, 10]),
+            unique_id: util::get_unique_id(),
+        }
     }
 
     pub fn clone_with_new_id_condition(&self) -> Self {
-	let mut cloned = self.clone();
+        let mut cloned = self.clone();
 
-	cloned.condition = BookCondition::probability_random(&[70, 20, 10]);
-	cloned.unique_id = util::get_unique_id();
+        cloned.condition = BookCondition::probability_random(&[70, 20, 10]);
+        cloned.unique_id = util::get_unique_id();
 
-	return cloned;
+        return cloned;
     }
 
     pub fn get_condition_string(&self) -> String {
-	self.condition.to_string()
+        self.condition.to_string()
     }
 
     pub fn get_condition(&self) -> BookCondition {
-	self.condition.clone()
+        self.condition.clone()
     }
-    
+
     pub fn get_name(&self) -> &str {
         &self.name
     }
@@ -484,9 +485,8 @@ impl BookInformation {
         self.pages
     }
 
-    
     pub fn get_unique_id(&self) -> u64 {
-	self.unique_id
+        self.unique_id
     }
 }
 
@@ -731,13 +731,16 @@ impl GameResource {
         let mut fonts = Vec::new();
         let mut sprite_batchs = Vec::new();
         let mut sounds = Vec::new();
-	let mut texture_paths_map = HashMap::new();
+        let mut texture_paths_map = HashMap::new();
 
-	print!("Setup textures delay loading ... ");
+        print!("Setup textures delay loading ... ");
         for (index, texture_path) in src_file.texture_paths.iter().enumerate() {
-	    texture_paths_map.insert(TextureID::from_u32(index as u32).unwrap(), texture_path.clone());
+            texture_paths_map.insert(
+                TextureID::from_u32(index as u32).unwrap(),
+                texture_path.clone(),
+            );
         }
-	println!("done");
+        println!("done");
 
         for font_path in &src_file.font_paths {
             print!("Loading font {}...", font_path);
@@ -758,14 +761,18 @@ impl GameResource {
 
         for sound_path in &src_file.sound_file_path {
             let sound_data = sound::SoundData::new(ctx, sound_path).unwrap();
-	    println!("sound path -> {}, canplay? => {:?}", sound_path, sound_data.can_play());
+            println!(
+                "sound path -> {}, canplay? => {:?}",
+                sound_path,
+                sound_data.can_play()
+            );
             sounds.push(sound_data);
         }
 
         let scenario_table = ScenarioTable::new(&src_file.scenario_table_path);
 
         GameResource {
-	    texture_resource_paths: texture_paths_map,
+            texture_resource_paths: texture_paths_map,
             textures: textures,
             fonts: fonts,
             tile_batchs: sprite_batchs,
@@ -778,30 +785,31 @@ impl GameResource {
         }
     }
 
-    fn load_texture_delay(&mut self, ctx: &mut ggez::Context, id: TextureID) -> Rc<ggraphics::Image> {
-	let path = self.texture_resource_paths.get(&id).expect("Delay texture load: Invalid TextureID");	
-	print!("delay texture loading -> {} ... ", path);
-	let texture = Rc::new(
-	    ggraphics::Image::new(
-		ctx, path
-	    ).expect("Delay texture load: Invalid Path")
-	);
-	self.textures.insert(
-	    id,
-	    texture.clone()
-	);
-	println!("done!");
+    fn load_texture_delay(
+        &mut self,
+        ctx: &mut ggez::Context,
+        id: TextureID,
+    ) -> Rc<ggraphics::Image> {
+        let path = self
+            .texture_resource_paths
+            .get(&id)
+            .expect("Delay texture load: Invalid TextureID");
+        print!("delay texture loading -> {} ... ", path);
+        let texture =
+            Rc::new(ggraphics::Image::new(ctx, path).expect("Delay texture load: Invalid Path"));
+        self.textures.insert(id, texture.clone());
+        println!("done!");
 
-	texture
+        texture
     }
-    
+
     pub fn ref_texture(&mut self, ctx: &mut ggez::Context, id: TextureID) -> Rc<ggraphics::Image> {
         let maybe_texture = self.textures.get(&id);
 
         if let Some(texture) = maybe_texture {
             texture.clone()
         } else {
-	    self.load_texture_delay(ctx, id)
+            self.load_texture_delay(ctx, id)
         }
     }
 
@@ -1090,9 +1098,9 @@ impl SuzunaAnStatus {
     }
 
     pub fn eval_reputation(&mut self, event_type: ReputationEvent) {
-	match event_type {
-	    ReputationEvent::DoneDeskTask => self.reputation += 2.0,
-	}
+        match event_type {
+            ReputationEvent::DoneDeskTask => self.reputation += 2.0,
+        }
     }
 }
 
@@ -1163,7 +1171,7 @@ impl ReturnBookInformation {
     }
 
     pub fn new_random(
-	game_data: &GameResource,
+        game_data: &GameResource,
         borrow_date: GensoDate,
         return_date: GensoDate,
     ) -> Self {
@@ -1190,18 +1198,16 @@ pub struct SuzunaBookPool {
 
 impl SuzunaBookPool {
     pub fn new(game_data: &GameResource) -> Self {
-	let mut books = Vec::new();
+        let mut books = Vec::new();
 
-	for book_info in game_data.iter_available_books() {
-	    for _ in 0..5 {
-		let cloned = book_info.clone_with_new_id_condition();
-		books.push(cloned);
-	    }
-	}
-	
-        SuzunaBookPool {
-            books: books,
+        for book_info in game_data.iter_available_books() {
+            for _ in 0..5 {
+                let cloned = book_info.clone_with_new_id_condition();
+                books.push(cloned);
+            }
         }
+
+        SuzunaBookPool { books: books }
     }
 
     pub fn push_book(&mut self, book_info: BookInformation) {
@@ -1246,30 +1252,30 @@ impl SuzunaBookPool {
         rental_limit: RentalLimit,
     ) -> ReturnBookInformation {
         let mut returning_books = Vec::new();
-	
+
         for _ in 0..((rand::random::<u32>() % 5) + 1) {
             if self.books.is_empty() {
                 break;
             }
-	    
+
             let book_info = self
                 .books
                 .swap_remove(rand::random::<usize>() % self.books.len());
             returning_books.push(book_info);
         }
 
-	let mut return_date = borrow_date.clone();
-	match rental_limit {
-	    RentalLimit::ShortTerm => return_date.add_day(7),
-	    RentalLimit::LongTerm => return_date.add_day(14),
-	    _ => (),
-	};
+        let mut return_date = borrow_date.clone();
+        match rental_limit {
+            RentalLimit::ShortTerm => return_date.add_day(7),
+            RentalLimit::LongTerm => return_date.add_day(14),
+            _ => (),
+        };
 
-	ReturnBookInformation {
-	    returning: returning_books,
-	    borrower: customer_name.to_string(),
-	    borrow_date: borrow_date,
-	    return_date: return_date,
+        ReturnBookInformation {
+            returning: returning_books,
+            borrower: customer_name.to_string(),
+            borrow_date: borrow_date,
+            return_date: return_date,
         }
     }
 }
@@ -1284,20 +1290,17 @@ impl ReturningRequestPool {
         let mut returning_request = Vec::new();
 
         for _ in 1..=5 {
-
             let rental_limit = match rand::random::<u32>() % 2 {
                 0 => RentalLimit::ShortTerm,
                 1 => RentalLimit::LongTerm,
                 _ => panic!(""),
             };
 
-            returning_request.push(
-		book_pool.generate_returning_request(
-		    game_data.customer_random_select(),
-		    today,
-		    rental_limit
-		)
-	    );
+            returning_request.push(book_pool.generate_returning_request(
+                game_data.customer_random_select(),
+                today,
+                rental_limit,
+            ));
         }
 
         ReturningRequestPool {
@@ -1346,9 +1349,10 @@ impl SavableData {
     pub fn new(game_data: &GameResource) -> Self {
         let date = GensoDate::new(112, 7, 23);
 
-	let mut suzuna_book_pool = SuzunaBookPool::new(game_data);
-	let returning_request_pool = ReturningRequestPool::new(&mut suzuna_book_pool, game_data, date);
-	
+        let mut suzuna_book_pool = SuzunaBookPool::new(game_data);
+        let returning_request_pool =
+            ReturningRequestPool::new(&mut suzuna_book_pool, game_data, date);
+
         SavableData {
             date: date.clone(),
             task_result: TaskResult::new(),
@@ -1409,54 +1413,63 @@ pub struct ResultReport {
 
 impl ResultReport {
     pub fn new() -> Self {
-	ResultReport {
-	    new_books_id: Vec::new(),
-	    yet_shelved_books_id: Vec::new(),
-	    total_customers_waiting_time: 0,
-	    condition_eval_mistakes: 0,
-	}
+        ResultReport {
+            new_books_id: Vec::new(),
+            yet_shelved_books_id: Vec::new(),
+            total_customers_waiting_time: 0,
+            condition_eval_mistakes: 0,
+        }
     }
 
     pub fn add_new_book_id(&mut self, id: u64) {
-	self.new_books_id.push(id);
+        self.new_books_id.push(id);
     }
 
     pub fn add_condition_eval_mistakes(&mut self, mistakes: usize) {
-	self.condition_eval_mistakes += mistakes;
+        self.condition_eval_mistakes += mistakes;
     }
 
     pub fn add_yet_shelved_book_id(&mut self, id: u64) {
-	self.yet_shelved_books_id.push(id);
+        self.yet_shelved_books_id.push(id);
     }
 
     pub fn add_customers_waiting_time(&mut self, additional: Clock) {
-	self.total_customers_waiting_time += additional;
+        self.total_customers_waiting_time += additional;
     }
-    
+
     pub fn create_table(&self) -> ResultReportStringTable {
-	ResultReportStringTable::new(self)
+        ResultReportStringTable::new(self)
     }
 
     pub fn new_books_shelving_is_done(&self) -> bool {
-	for new_books_id in self.new_books_id.iter() {
-	    for yet_id in self.yet_shelved_books_id.iter() {
-		if new_books_id == yet_id {
-		    return false;
-		}
-	    }
-	}
+        for new_books_id in self.new_books_id.iter() {
+            for yet_id in self.yet_shelved_books_id.iter() {
+                if new_books_id == yet_id {
+                    return false;
+                }
+            }
+        }
 
-	return true;
+        return true;
     }
 }
 
 impl ResultReportStringTable {
     pub fn new(result_report: &ResultReport) -> Self {
-	ResultReportStringTable {
-	    total_customers_waiting_time: number_to_jk::number_to_jk(result_report.total_customers_waiting_time / 60),
-	    shelving_is_done: if result_report.new_books_shelving_is_done() { "達成" } else { "未達成" }.to_string(),
-	    condition_eval_mistakes: number_to_jk::number_to_jk(result_report.condition_eval_mistakes as u64),
-	}
+        ResultReportStringTable {
+            total_customers_waiting_time: number_to_jk::number_to_jk(
+                result_report.total_customers_waiting_time / 60,
+            ),
+            shelving_is_done: if result_report.new_books_shelving_is_done() {
+                "達成"
+            } else {
+                "未達成"
+            }
+            .to_string(),
+            condition_eval_mistakes: number_to_jk::number_to_jk(
+                result_report.condition_eval_mistakes as u64,
+            ),
+        }
     }
 }
 
@@ -1488,11 +1501,11 @@ pub struct ProcessUtility<'ctx> {
 
 impl<'ctx> ProcessUtility<'ctx> {
     pub fn redraw(&mut self) {
-	*self.redraw_request = scene::DrawRequest::Draw;
+        *self.redraw_request = scene::DrawRequest::Draw;
     }
 
     pub fn redraw_or(&mut self, request: scene::DrawRequest) {
-	*self.redraw_request |= request;
+        *self.redraw_request |= request;
     }
 }
 
@@ -1506,11 +1519,15 @@ pub struct SuzuContext<'ctx> {
 
 impl<'ctx> SuzuContext<'ctx> {
     pub fn ref_texture(&mut self, id: TextureID) -> Rc<ggraphics::Image> {
-	self.resource.ref_texture(self.context, id)
+        self.resource.ref_texture(self.context, id)
     }
 
-    pub fn play_sound(&mut self, sound_id: SoundID, flags: Option<sound::SoundPlayFlags>) -> sound::SoundHandler {
-	self.resource.play_sound(self.context, sound_id, flags)
+    pub fn play_sound(
+        &mut self,
+        sound_id: SoundID,
+        flags: Option<sound::SoundPlayFlags>,
+    ) -> sound::SoundHandler {
+        self.resource.play_sound(self.context, sound_id, flags)
     }
 }
 
@@ -1592,8 +1609,8 @@ impl SceneController {
         let mut game_status = SavableData::new(game_data);
         let mut game_config = GameConfig::new_from_toml("./resources/default_game_config.toml");
 
-	let mut _redraw_request = scene::DrawRequest::Draw;
-	
+        let mut _redraw_request = scene::DrawRequest::Draw;
+
         // let current_scene = scene::scenario_scene::ScenarioScene::new(&mut SuzuContext {
         //     context: ctx,
         //     resource: game_data,
@@ -1604,7 +1621,9 @@ impl SceneController {
             resource: game_data,
             savable_data: &mut game_status,
             config: &mut game_config,
-	    process_utility: ProcessUtility { redraw_request: &mut _redraw_request },
+            process_utility: ProcessUtility {
+                redraw_request: &mut _redraw_request,
+            },
         });
 
         SceneController {
@@ -1616,7 +1635,7 @@ impl SceneController {
             root_screen: root_screen,
             game_status: game_status,
             game_config: game_config,
-	    redraw_request: scene::DrawRequest::Draw,
+            redraw_request: scene::DrawRequest::Draw,
         }
     }
 
@@ -1631,7 +1650,9 @@ impl SceneController {
             resource: game_data,
             savable_data: &mut self.game_status,
             config: &mut self.game_config,
-	    process_utility: ProcessUtility { redraw_request: &mut self.redraw_request },
+            process_utility: ProcessUtility {
+                redraw_request: &mut self.redraw_request,
+            },
         };
 
         match next_scene_id {
@@ -1663,7 +1684,10 @@ impl SceneController {
                 }
                 _ => (),
             },
-	    scene::SceneID::Title => self.current_scene = TopScene::TitleScene(scene::title_scene::TitleScene::new(&mut ctx)),
+            scene::SceneID::Title => {
+                self.current_scene =
+                    TopScene::TitleScene(scene::title_scene::TitleScene::new(&mut ctx))
+            }
             scene::SceneID::Null => self.current_scene = TopScene::Null(scene::NullScene::new()),
             _ => (),
         }
@@ -1680,7 +1704,9 @@ impl SceneController {
             resource: game_data,
             savable_data: &mut self.game_status,
             config: &mut self.game_config,
-	    process_utility: ProcessUtility { redraw_request: &mut self.redraw_request },
+            process_utility: ProcessUtility {
+                redraw_request: &mut self.redraw_request,
+            },
         };
 
         let next_scene = match next_scene_id {
@@ -1708,7 +1734,9 @@ impl SceneController {
                 resource: game_data,
                 savable_data: &mut self.game_status,
                 config: &mut self.game_config,
-		process_utility: ProcessUtility { redraw_request: &mut self.redraw_request },
+                process_utility: ProcessUtility {
+                    redraw_request: &mut self.redraw_request,
+                },
             });
         }
         //));
@@ -1735,7 +1763,9 @@ impl SceneController {
             resource: game_data,
             savable_data: &mut self.game_status,
             config: &mut self.game_config,
-	    process_utility: ProcessUtility { redraw_request: &mut self.redraw_request },
+            process_utility: ProcessUtility {
+                redraw_request: &mut self.redraw_request,
+            },
         };
 
         match self.current_scene.abs_mut().post_process(&mut suzu_ctx) {
@@ -1767,7 +1797,7 @@ impl SceneController {
             println!("fps: {}", ggez::timer::fps(ctx));
         }
         self.global_clock += 1;
-	self.redraw_request = scene::DrawRequest::Skip;
+        self.redraw_request = scene::DrawRequest::Skip;
     }
 
     fn key_down_event(
@@ -1792,12 +1822,14 @@ impl SceneController {
                 resource: game_data,
                 savable_data: &mut self.game_status,
                 config: &mut self.game_config,
-		process_utility: ProcessUtility { redraw_request: &mut self.redraw_request },
+                process_utility: ProcessUtility {
+                    redraw_request: &mut self.redraw_request,
+                },
             },
             self.key_map.real_to_virtual(keycode),
         );
 
-	self.redraw_request = scene::DrawRequest::Draw;
+        self.redraw_request = scene::DrawRequest::Draw;
     }
 
     fn key_up_event(
@@ -1813,12 +1845,14 @@ impl SceneController {
                 resource: game_data,
                 savable_data: &mut self.game_status,
                 config: &mut self.game_config,
-		process_utility: ProcessUtility { redraw_request: &mut self.redraw_request },
+                process_utility: ProcessUtility {
+                    redraw_request: &mut self.redraw_request,
+                },
             },
             self.key_map.real_to_virtual(keycode),
         );
 
-	self.redraw_request = scene::DrawRequest::Draw;
+        self.redraw_request = scene::DrawRequest::Draw;
     }
 
     fn mouse_motion_event<'a>(
@@ -1834,13 +1868,15 @@ impl SceneController {
                 resource: game_data,
                 savable_data: &mut self.game_status,
                 config: &mut self.game_config,
-		process_utility: ProcessUtility { redraw_request: &mut self.redraw_request },
+                process_utility: ProcessUtility {
+                    redraw_request: &mut self.redraw_request,
+                },
             },
             point,
             offset,
         );
 
-	self.redraw_request = scene::DrawRequest::Draw;
+        self.redraw_request = scene::DrawRequest::Draw;
     }
 
     fn mouse_button_down_event(
@@ -1856,7 +1892,9 @@ impl SceneController {
                 resource: game_data,
                 savable_data: &mut self.game_status,
                 config: &mut self.game_config,
-		process_utility: ProcessUtility { redraw_request: &mut self.redraw_request },
+                process_utility: ProcessUtility {
+                    redraw_request: &mut self.redraw_request,
+                },
             },
             button,
             point,
@@ -1876,7 +1914,9 @@ impl SceneController {
                 resource: game_data,
                 savable_data: &mut self.game_status,
                 config: &mut self.game_config,
-		process_utility: ProcessUtility { redraw_request: &mut self.redraw_request },
+                process_utility: ProcessUtility {
+                    redraw_request: &mut self.redraw_request,
+                },
             },
             button,
             point,
@@ -1897,7 +1937,9 @@ impl SceneController {
                 resource: game_data,
                 savable_data: &mut self.game_status,
                 config: &mut self.game_config,
-		process_utility: ProcessUtility { redraw_request: &mut self.redraw_request },
+                process_utility: ProcessUtility {
+                    redraw_request: &mut self.redraw_request,
+                },
             },
             numeric::Point2f::new(point.x, point.y),
             x,
@@ -1906,7 +1948,7 @@ impl SceneController {
     }
 
     fn redraw_request_status(&self) -> scene::DrawRequest {
-	self.redraw_request
+        self.redraw_request
     }
 }
 
@@ -1930,16 +1972,16 @@ impl<'data> ggez::event::EventHandler for State<'data> {
     }
 
     fn draw(&mut self, ctx: &mut Context) -> GameResult<()> {
-	match self.scene_controller.redraw_request_status() {
-	    scene::DrawRequest::Draw | scene::DrawRequest::InitDraw => {
-		graphics::clear(ctx, [0.0, 0.0, 0.0, 0.0].into());
-		self.scene_controller.run_drawing_process(ctx);
-	    },
-	    _ => (),
-	}
+        match self.scene_controller.redraw_request_status() {
+            scene::DrawRequest::Draw | scene::DrawRequest::InitDraw => {
+                graphics::clear(ctx, [0.0, 0.0, 0.0, 0.0].into());
+                self.scene_controller.run_drawing_process(ctx);
+            }
+            _ => (),
+        }
 
-	graphics::present(ctx)?;
-	
+        graphics::present(ctx)?;
+
         self.scene_controller.run_post_process(ctx, self.game_data);
 
         Ok(())
@@ -2011,7 +2053,7 @@ impl<'data> State<'data> {
         let s = State {
             clock: 0,
             fps: 0.0,
-	    scene_controller: SceneController::new(ctx, game_data),
+            scene_controller: SceneController::new(ctx, game_data),
             game_data: game_data,
         };
 

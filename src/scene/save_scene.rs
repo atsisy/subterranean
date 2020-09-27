@@ -4,7 +4,7 @@ use torifune::core::Clock;
 use torifune::graphics::drawable::*;
 use torifune::graphics::object::*;
 
-use crate::core::{SavableData, SuzuContext, TextureID, TileBatchTextureID, FontID};
+use crate::core::{FontID, SavableData, SuzuContext, TextureID, TileBatchTextureID};
 use crate::object::effect_object;
 use crate::object::save_scene_object::*;
 use crate::object::util_object::*;
@@ -63,21 +63,20 @@ impl SaveScene {
             0,
         ));
 
-	let texture = Box::new(TextButtonTexture::new(
-	    ctx,
-	    numeric::Point2f::new(0.0, 0.0),
-	    "戻る".to_string(),
-	    FontInformation::new(
-		ctx.resource.get_font(FontID::Cinema),
-		numeric::Vector2f::new(24.0, 24.0),
-		ggraphics::Color::from_rgba_u32(0xf6e1d5ff)
-	    ),
-	    10.0,
-	    ggraphics::Color::from_rgba_u32(0x5a4f3fff),
-	    0)
-	);
+        let texture = Box::new(TextButtonTexture::new(
+            ctx,
+            numeric::Point2f::new(0.0, 0.0),
+            "戻る".to_string(),
+            FontInformation::new(
+                ctx.resource.get_font(FontID::Cinema),
+                numeric::Vector2f::new(24.0, 24.0),
+                ggraphics::Color::from_rgba_u32(0xf6e1d5ff),
+            ),
+            10.0,
+            ggraphics::Color::from_rgba_u32(0x5a4f3fff),
+            0,
+        ));
 
-	
         let exit_button = SelectButton::new(
             ctx,
             numeric::Rect::new(
@@ -191,12 +190,12 @@ impl SceneManager for SaveScene {
 
         if let Some(transition_effect) = self.scene_transition_effect.as_mut() {
             transition_effect.effect(ctx.context, t);
-	    ctx.process_utility.redraw();
+            ctx.process_utility.redraw();
         }
 
         if flush_delay_event!(self, self.event_list, ctx, self.get_current_clock()) > 0 {
-	    ctx.process_utility.redraw();
-	}
+            ctx.process_utility.redraw();
+        }
     }
 
     fn drawing_process(&mut self, ctx: &mut ggez::Context) {

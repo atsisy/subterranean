@@ -13,8 +13,8 @@ use torifune::impl_texture_object_for_wrapped;
 use super::*;
 use crate::core::{FontID, GameResource, SuzuContext, TextureID, TileBatchTextureID};
 use crate::object::util_object::*;
-use crate::scene::{SceneID, SceneTransition};
 use crate::parse_toml_file;
+use crate::scene::{SceneID, SceneTransition};
 use std::str::FromStr;
 
 pub type ScenarioElementID = i32;
@@ -151,13 +151,13 @@ impl ScenarioTachie {
         let left_texture = if tid_array.len() > 0 {
             Some(SimpleObject::new(
                 MovableUniTexture::new(
-		    Box::new(UniTexture::new(
-			ctx.ref_texture(tid_array[0]),
-			numeric::Point2f::new(50.0, 100.0),
-			numeric::Vector2f::new(0.12, 0.12),
-			0.0,
-			0,
-		    )),
+                    Box::new(UniTexture::new(
+                        ctx.ref_texture(tid_array[0]),
+                        numeric::Point2f::new(50.0, 100.0),
+                        numeric::Vector2f::new(0.12, 0.12),
+                        0.0,
+                        0,
+                    )),
                     None,
                     t,
                 ),
@@ -170,13 +170,13 @@ impl ScenarioTachie {
         let right_texture = if tid_array.len() > 1 {
             Some(SimpleObject::new(
                 MovableUniTexture::new(
-		    Box::new(UniTexture::new(
-			ctx.ref_texture(tid_array[1]),
-			numeric::Point2f::new(800.0, 100.0),
-			numeric::Vector2f::new(0.12, 0.12),
-			0.0,
-			0
-		    )),
+                    Box::new(UniTexture::new(
+                        ctx.ref_texture(tid_array[1]),
+                        numeric::Point2f::new(800.0, 100.0),
+                        numeric::Vector2f::new(0.12, 0.12),
+                        0.0,
+                        0,
+                    )),
                     None,
                     t,
                 ),
@@ -663,7 +663,7 @@ impl Scenario {
     pub fn new(file_path: &str, game_data: &GameResource) -> Self {
         let mut scenario = Vec::new();
 
-	let root = parse_toml_file!(file_path);
+        let root = parse_toml_file!(file_path);
 
         let first_scenario_id = root["first-scenario-id"].as_integer().unwrap();
 
@@ -1086,13 +1086,13 @@ impl ScenarioBox {
     pub fn new<'a>(ctx: &mut SuzuContext, rect: numeric::Rect, t: Clock) -> Self {
         let background = tobj::SimpleObject::new(
             tobj::MovableUniTexture::new(
-		Box::new(UniTexture::new(
+                Box::new(UniTexture::new(
                     ctx.ref_texture(TextureID::TextBackground),
                     numeric::Point2f::new(20.0, 20.0),
                     numeric::Vector2f::new(1.0, 1.0),
                     0.0,
                     0,
-		)),
+                )),
                 None,
                 0,
             ),
@@ -1121,13 +1121,13 @@ impl ScenarioBox {
     ) -> Self {
         let background = tobj::SimpleObject::new(
             tobj::MovableUniTexture::new(
-		Box::new(UniTexture::new(
+                Box::new(UniTexture::new(
                     ctx.ref_texture(TextureID::TextBackground),
                     numeric::Point2f::new(20.0, 20.0),
                     numeric::Vector2f::new(0.8, 0.8),
                     0.0,
                     0,
-		)),
+                )),
                 None,
                 0,
             ),
@@ -1275,8 +1275,7 @@ impl ScenarioEvent {
             None
         };
 
-        let event_tachie =
-            Self::update_event_tachie_sub(ctx, scenario.ref_current_element(), t);
+        let event_tachie = Self::update_event_tachie_sub(ctx, scenario.ref_current_element(), t);
 
         let appr_frame = TileBatchFrame::new(
             ctx.resource,
@@ -1380,8 +1379,8 @@ impl ScenarioEvent {
                     // どこまで表示したかを更新
                     scenario_text.set_current_segment(current_segment);
 
-		    // 再描画要求
-		    ctx.process_utility.redraw();
+                    // 再描画要求
+                    ctx.process_utility.redraw();
                 }
             }
             ScenarioElement::ChoiceSwitch(choice_pattern) => {
@@ -1403,8 +1402,8 @@ impl ScenarioEvent {
                     // 状態を選択中に変更
                     self.status = ScenarioEventStatus::Choice;
 
-		    // 再描画要求
-		    ctx.process_utility.redraw();
+                    // 再描画要求
+                    ctx.process_utility.redraw();
                 }
             }
             ScenarioElement::SceneTransition(transition_data) => {
@@ -1413,8 +1412,8 @@ impl ScenarioEvent {
                 self.transition_scene = Some(transition_data.0);
                 self.transition_type = Some(transition_data.1);
 
-		// 再描画要求
-		ctx.process_utility.redraw();
+                // 再描画要求
+                ctx.process_utility.redraw();
             }
         }
     }
@@ -1442,11 +1441,7 @@ impl ScenarioEvent {
     ///
     /// Action1キーが押されたときの、ScenarioEventの挙動
     ///
-    pub fn key_down_action1<'a>(
-        &mut self,
-        ctx: &mut SuzuContext<'a>,
-        _: Clock,
-    ) {
+    pub fn key_down_action1<'a>(&mut self, ctx: &mut SuzuContext<'a>, _: Clock) {
         match self.scenario.ref_current_element_mut() {
             // 現在のScenarioElementがテキスト
             ScenarioElement::Text(scenario_text) => {

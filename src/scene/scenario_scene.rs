@@ -3,20 +3,20 @@ use ggez::input::mouse::MouseButton;
 
 use torifune::core::Clock;
 use torifune::device as tdev;
-use torifune::numeric;
 use torifune::graphics::object::Effectable;
+use torifune::numeric;
 
 use crate::core::{SuzuContext, TileBatchTextureID};
 
-use crate::object::scenario::*;
-use torifune::graphics::drawable::*;
-use crate::object::util_object::*;
-use crate::object::scenario_object::*;
-use crate::object::effect_object;
 use crate::flush_delay_event;
 use crate::flush_delay_event_and_redraw_check;
-use effect_object::{SceneTransitionEffectType, TilingEffectType};
+use crate::object::effect_object;
+use crate::object::scenario::*;
+use crate::object::scenario_object::*;
+use crate::object::util_object::*;
 use crate::object::DarkEffectPanel;
+use effect_object::{SceneTransitionEffectType, TilingEffectType};
+use torifune::graphics::drawable::*;
 
 use super::*;
 
@@ -58,37 +58,45 @@ impl ScenarioScene {
             0,
         );
 
-	let graph_drawer = GraphDrawer::new(
-	    ctx,
-	    numeric::Rect::new(300.0, 100.0, 700.0, 600.0),
-	    numeric::Rect::new(20.0, 20.0, 660.0, 560.0),
-	    vec![numeric::Vector2f::new(0.0, 0.0), numeric::Vector2f::new(10.0, 10.0), numeric::Vector2f::new(20.0, 20.0),
-		 numeric::Vector2f::new(50.0, 50.0)],
-	    6.0,
-	    ggraphics::Color::from_rgba_u32(0x00ff00ff),
-	    2.0,
-	    ggraphics::Color::from_rgba_u32(0xff),
-	    0
-	);
+        let graph_drawer = GraphDrawer::new(
+            ctx,
+            numeric::Rect::new(300.0, 100.0, 700.0, 600.0),
+            numeric::Rect::new(20.0, 20.0, 660.0, 560.0),
+            vec![
+                numeric::Vector2f::new(0.0, 0.0),
+                numeric::Vector2f::new(10.0, 10.0),
+                numeric::Vector2f::new(20.0, 20.0),
+                numeric::Vector2f::new(50.0, 50.0),
+            ],
+            6.0,
+            ggraphics::Color::from_rgba_u32(0x00ff00ff),
+            2.0,
+            ggraphics::Color::from_rgba_u32(0xff),
+            0,
+        );
 
         ScenarioScene {
             scenario_event: scenario,
-	    pause_screen_set: None,
-	    dark_effect_panel: DarkEffectPanel::new(
+            pause_screen_set: None,
+            dark_effect_panel: DarkEffectPanel::new(
                 ctx.context,
                 numeric::Rect::new(0.0, 0.0, 1366.0, 768.0),
                 0,
             ),
-	    scene_transition_effect: None,
-	    event_list: DelayEventList::new(),
-	    graph_sample: graph_drawer,
+            scene_transition_effect: None,
+            event_list: DelayEventList::new(),
+            graph_sample: graph_drawer,
             scene_transition: SceneID::Scenario,
-	    status_screen: SuzunaStatusScreen::new(ctx, numeric::Rect::new(616.0, 25.0, 700.0, 400.0), 0),
+            status_screen: SuzunaStatusScreen::new(
+                ctx,
+                numeric::Rect::new(616.0, 25.0, 700.0, 400.0),
+                0,
+            ),
             scene_transition_type: SceneTransition::Keep,
             clock: 0,
         }
     }
-    
+
     fn scene_transition_close_effect<'a>(&mut self, ctx: &mut SuzuContext<'a>, t: Clock) {
         self.scene_transition_effect = Some(effect_object::ScreenTileEffect::new(
             ctx,
@@ -106,61 +114,62 @@ impl ScenarioScene {
             t,
         ));
     }
-    
+
     fn transition_to_title_scene<'a>(&mut self, ctx: &mut SuzuContext<'a>, t: Clock) {
-	self.event_list.add_event(
+        self.event_list.add_event(
             Box::new(|slf: &mut Self, _, _| {
-		slf.scene_transition_type = SceneTransition::SwapTransition;
-		slf.scene_transition = SceneID::Title;
-	    }),
-	    t + 60
-	);
-	self.scene_transition_close_effect(ctx, t);
+                slf.scene_transition_type = SceneTransition::SwapTransition;
+                slf.scene_transition = SceneID::Title;
+            }),
+            t + 60,
+        );
+        self.scene_transition_close_effect(ctx, t);
     }
-    
+
     fn exit_pause_screen(&mut self, t: Clock) {
-	self.dark_effect_panel
-            .new_effect(8, t, 220, 0);
-	self.pause_screen_set = None;
+        self.dark_effect_panel.new_effect(8, t, 220, 0);
+        self.pause_screen_set = None;
     }
-    
+
     fn enter_pause_screen<'a>(&mut self, ctx: &mut SuzuContext<'a>, t: Clock) {
-	self.dark_effect_panel
-            .new_effect(8, t, 0, 220);
-	self.pause_screen_set = Some(PauseScreenSet::new(ctx, 0));
+        self.dark_effect_panel.new_effect(8, t, 0, 220);
+        self.pause_screen_set = Some(PauseScreenSet::new(ctx, 0));
     }
 
     fn now_paused(&self) -> bool {
-	self.pause_screen_set.is_some()
+        self.pause_screen_set.is_some()
     }
 
-    fn pause_screen_click_handler<'a>(&mut self, ctx: &mut SuzuContext<'a>, point: numeric::Point2f, t: Clock) {
-	let pause_screen_set = match self.pause_screen_set.as_ref() {
-	    Some(it) => it,
-	    _ => return,
-	};
-	
-	if let Some(pause_result) = pause_screen_set.mouse_click_handler(ctx, point) {
-	    match pause_result {
-		PauseResult::GoToTitle => self.transition_to_title_scene(ctx, t),
-		PauseResult::ReleasePause => self.exit_pause_screen(t),
-	    }
-	}
+    fn pause_screen_click_handler<'a>(
+        &mut self,
+        ctx: &mut SuzuContext<'a>,
+        point: numeric::Point2f,
+        t: Clock,
+    ) {
+        let pause_screen_set = match self.pause_screen_set.as_ref() {
+            Some(it) => it,
+            _ => return,
+        };
+
+        if let Some(pause_result) = pause_screen_set.mouse_click_handler(ctx, point) {
+            match pause_result {
+                PauseResult::GoToTitle => self.transition_to_title_scene(ctx, t),
+                PauseResult::ReleasePause => self.exit_pause_screen(t),
+            }
+        }
     }
 
     fn non_paused_key_down_event(&mut self, ctx: &mut SuzuContext, vkey: tdev::VirtualKey) {
-	match vkey {
+        match vkey {
             tdev::VirtualKey::Action1 => {
                 println!("Action1 down!");
-                self.scenario_event.key_down_action1(
-                    ctx,
-                    self.get_current_clock(),
-                );
+                self.scenario_event
+                    .key_down_action1(ctx, self.get_current_clock());
             }
-	    tdev::VirtualKey::Action4 => {
-		let t = self.get_current_clock();
-		self.enter_pause_screen(ctx, t);
-	    }
+            tdev::VirtualKey::Action4 => {
+                let t = self.get_current_clock();
+                self.enter_pause_screen(ctx, t);
+            }
             tdev::VirtualKey::Right => {
                 self.scenario_event.key_down_right(ctx);
             }
@@ -174,17 +183,17 @@ impl ScenarioScene {
 
 impl SceneManager for ScenarioScene {
     fn key_down_event<'a>(&mut self, ctx: &mut SuzuContext, vkey: tdev::VirtualKey) {
-	if self.now_paused() {
-	    match vkey {
-	    	tdev::VirtualKey::Action4 => {
-		    let t = self.get_current_clock();
-		    self.exit_pause_screen(t);
-		},
-		_ => (),
-	    }
-	} else {
-	    self.non_paused_key_down_event(ctx, vkey);
-	}
+        if self.now_paused() {
+            match vkey {
+                tdev::VirtualKey::Action4 => {
+                    let t = self.get_current_clock();
+                    self.exit_pause_screen(t);
+                }
+                _ => (),
+            }
+        } else {
+            self.non_paused_key_down_event(ctx, vkey);
+        }
     }
 
     fn mouse_motion_event<'a>(
@@ -193,13 +202,13 @@ impl SceneManager for ScenarioScene {
         point: numeric::Point2f,
         _offset: numeric::Vector2f,
     ) {
-	if self.now_paused() {
-	    if let Some(pause_screen_set) = self.pause_screen_set.as_mut() {
-		pause_screen_set.mouse_motion_handler(ctx, point);
-	    }
-	}
+        if self.now_paused() {
+            if let Some(pause_screen_set) = self.pause_screen_set.as_mut() {
+                pause_screen_set.mouse_motion_handler(ctx, point);
+            }
+        }
     }
-    
+
     fn scene_popping_return_handler<'a>(&mut self, _: &mut SuzuContext<'a>) {
         println!("recover!!!!");
         self.scene_transition = SceneID::Scenario;
@@ -215,50 +224,50 @@ impl SceneManager for ScenarioScene {
         button: MouseButton,
         point: numeric::Point2f,
     ) {
-	if self.now_paused() {
-	    match button {
-		MouseButton::Left => {
-		    let t = self.get_current_clock();
-		    self.pause_screen_click_handler(ctx, point, t);
-		}
-		_ => (),
+        if self.now_paused() {
+            match button {
+                MouseButton::Left => {
+                    let t = self.get_current_clock();
+                    self.pause_screen_click_handler(ctx, point, t);
+                }
+                _ => (),
             }
-	    
-	    return;
-	}
+
+            return;
+        }
     }
-    
+
     fn pre_process<'a>(&mut self, ctx: &mut SuzuContext<'a>) {
-	let t = self.get_current_clock();
+        let t = self.get_current_clock();
 
-	flush_delay_event_and_redraw_check!(self, self.event_list, ctx, t);
+        flush_delay_event_and_redraw_check!(self, self.event_list, ctx, t);
 
-	if self.now_paused() {   
-	} else {
-	    // 再描画要求はupdate_textメソッドの中で行われている
+        if self.now_paused() {
+        } else {
+            // 再描画要求はupdate_textメソッドの中で行われている
             self.scenario_event.update_text(ctx);
-	}
-	
-	self.dark_effect_panel.run_effect(ctx, t);
+        }
 
-	if let Some(transition_effect) = self.scene_transition_effect.as_mut() {
+        self.dark_effect_panel.run_effect(ctx, t);
+
+        if let Some(transition_effect) = self.scene_transition_effect.as_mut() {
             transition_effect.effect(ctx.context, t);
-	    ctx.process_utility.redraw();
+            ctx.process_utility.redraw();
         }
     }
 
     fn drawing_process(&mut self, ctx: &mut ggez::Context) {
         self.scenario_event.draw(ctx).unwrap();
         //self.scenario_menu.draw(ctx).unwrap();
-	//self.graph_sample.draw(ctx).unwrap();
-	self.status_screen.draw(ctx).unwrap();
-	self.dark_effect_panel.draw(ctx).unwrap();
+        //self.graph_sample.draw(ctx).unwrap();
+        self.status_screen.draw(ctx).unwrap();
+        self.dark_effect_panel.draw(ctx).unwrap();
 
-	if let Some(pause_screen_set) = self.pause_screen_set.as_mut() {
-	    pause_screen_set.draw(ctx).unwrap();
-	}
+        if let Some(pause_screen_set) = self.pause_screen_set.as_mut() {
+            pause_screen_set.draw(ctx).unwrap();
+        }
 
-	if let Some(transition_effect) = self.scene_transition_effect.as_mut() {
+        if let Some(transition_effect) = self.scene_transition_effect.as_mut() {
             transition_effect.draw(ctx).unwrap();
         }
     }

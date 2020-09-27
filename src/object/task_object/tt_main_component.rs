@@ -1,5 +1,5 @@
-use std::rc::Rc;
 use std::collections::HashMap;
+use std::rc::Rc;
 
 use ggez::graphics as ggraphics;
 use ggez::input as ginput;
@@ -24,10 +24,10 @@ use crate::object::{effect, move_fn};
 use crate::scene::*;
 use crate::set_table_frame_cell_center;
 
-use super::Clickable;
-use crate::core::*;
 use super::tt_menu_component::*;
 use super::tt_sub_component::*;
+use super::Clickable;
+use crate::core::*;
 
 pub enum TaskTableStagingObject {
     BorrowingRecordBook(BorrowingRecordBook),
@@ -124,27 +124,31 @@ impl DeskObjects {
             dragging: None,
             table_texture: SimpleObject::new(
                 MovableUniTexture::new(
-		    Box::new(UniTexture::new(
-			ctx.ref_texture(TextureID::Wood1),
-			numeric::Point2f::new(0.0, 0.0),
-			numeric::Vector2f::new(1.0, 1.0),
-			0.0,
-			0,
-		    )),
+                    Box::new(UniTexture::new(
+                        ctx.ref_texture(TextureID::Wood1),
+                        numeric::Point2f::new(0.0, 0.0),
+                        numeric::Vector2f::new(1.0, 1.0),
+                        0.0,
+                        0,
+                    )),
                     move_fn::stop(),
                     0,
                 ),
                 Vec::new(),
             ),
-	    money_box: MovableWrap::new(
-		Box::new(MoneyBox::new(ctx, numeric::Rect::new(rect.w - 300.0, -270.0, 300.0, 300.0), 0)),
-		None,
-		0,
-	    ),
+            money_box: MovableWrap::new(
+                Box::new(MoneyBox::new(
+                    ctx,
+                    numeric::Rect::new(rect.w - 300.0, -270.0, 300.0, 300.0),
+                    0,
+                )),
+                None,
+                0,
+            ),
             event_list: DelayEventList::new(),
             appearance_frame: appr_frame,
-	    money_box_is_pulled: false,
-	    draw_request: DrawRequest::InitDraw,
+            money_box_is_pulled: false,
+            draw_request: DrawRequest::InitDraw,
         }
     }
 
@@ -153,7 +157,7 @@ impl DeskObjects {
             let area = match obj {
                 TaskItem::Book(item) => item.get_large_object().get_drawing_area(ctx.context),
                 TaskItem::Texture(item) => item.get_large_object().get_drawing_area(ctx.context),
-		TaskItem::Coin(item) => item.get_large_object().get_drawing_area(ctx.context),
+                TaskItem::Coin(item) => item.get_large_object().get_drawing_area(ctx.context),
             };
 
             let canvas_size = self.canvas.get_drawing_size(ctx.context);
@@ -178,8 +182,8 @@ impl DeskObjects {
                 }
             }
 
-	    println!("issuedd drawing request");
-	    self.draw_request = DrawRequest::Draw;
+            println!("issuedd drawing request");
+            self.draw_request = DrawRequest::Draw;
         }
     }
 
@@ -227,7 +231,7 @@ impl DeskObjects {
             let object_area = match &dragging {
                 TaskItem::Book(item) => item.get_large_object().get_drawing_area(ctx.context),
                 TaskItem::Texture(item) => item.get_large_object().get_drawing_area(ctx.context),
-		TaskItem::Coin(item) => item.get_large_object().get_drawing_area(ctx.context),
+                TaskItem::Coin(item) => item.get_large_object().get_drawing_area(ctx.context),
             };
 
             dragging.set_drag_point(numeric::Vector2f::new(
@@ -238,50 +242,55 @@ impl DeskObjects {
             self.dragging = Some(dragging);
 
             self.desk_objects.sort_with_depth();
-	    self.draw_request = DrawRequest::Draw;
+            self.draw_request = DrawRequest::Draw;
         }
     }
 
     fn moneybox_hand_over<'a>(&mut self, mut item: TaskItem) {
-	let point = item.get_object().get_position();
-	let mbox_position = self.money_box.relative_point(point);
-	item.get_object_mut().set_position(mbox_position);
-	self.money_box.add_coin(item);
+        let point = item.get_object().get_position();
+        let mbox_position = self.money_box.relative_point(point);
+        item.get_object_mut().set_position(mbox_position);
+        self.money_box.add_coin(item);
     }
 
-    fn try_insert_money_box<'a>(&mut self, ctx: &mut SuzuContext<'a>, item: TaskItem) -> Option<TaskItem> {
-	let moneybox_area = self.money_box.get_drawing_area(ctx.context);
-	let item_area = item.get_object().get_drawing_area(ctx.context);
-	
-	if !moneybox_area.contains(item_area.point()) ||
-	    !moneybox_area.contains(numeric::Point2f::new(item_area.right(), item_area.bottom())) {
-	    return Some(item);
-	}
-	
- 	match item {
-	    TaskItem::Coin(_) => {
-		self.moneybox_hand_over(item);
-		None
-	    },
-	    _ => Some(item)
-	}
+    fn try_insert_money_box<'a>(
+        &mut self,
+        ctx: &mut SuzuContext<'a>,
+        item: TaskItem,
+    ) -> Option<TaskItem> {
+        let moneybox_area = self.money_box.get_drawing_area(ctx.context);
+        let item_area = item.get_object().get_drawing_area(ctx.context);
+
+        if !moneybox_area.contains(item_area.point())
+            || !moneybox_area.contains(numeric::Point2f::new(item_area.right(), item_area.bottom()))
+        {
+            return Some(item);
+        }
+
+        match item {
+            TaskItem::Coin(_) => {
+                self.moneybox_hand_over(item);
+                None
+            }
+            _ => Some(item),
+        }
     }
 
     pub fn unselect_dragging_object<'a>(&mut self, ctx: &mut SuzuContext<'a>) {
         if self.dragging.is_some() {
             let dragged = self.release_dragging().unwrap();
 
-	    if let Some(mut item) = self.try_insert_money_box(ctx, dragged) {
-		let min = self.desk_objects.get_minimum_depth();
-		item.get_object_mut().set_drawing_depth(min);
-		item.get_object_mut().finish_dragging(ctx);
-		self.desk_objects.change_depth_equally(1);
-		
-		self.desk_objects.add_item(item);
-	    }
-	    
-	    self.desk_objects.sort_with_depth(); 
-	    self.draw_request = DrawRequest::Draw;
+            if let Some(mut item) = self.try_insert_money_box(ctx, dragged) {
+                let min = self.desk_objects.get_minimum_depth();
+                item.get_object_mut().set_drawing_depth(min);
+                item.get_object_mut().finish_dragging(ctx);
+                self.desk_objects.change_depth_equally(1);
+
+                self.desk_objects.add_item(item);
+            }
+
+            self.desk_objects.sort_with_depth();
+            self.draw_request = DrawRequest::Draw;
         }
     }
 
@@ -292,19 +301,19 @@ impl DeskObjects {
         flush_delay_event_and_redraw_check!(self, self.event_list, ctx, t);
 
         for p in self.desk_objects.get_raw_container_mut() {
-	    if !p.as_movable_object().is_stop() || !p.as_effectable_object().is_empty_effect() {
-		self.draw_request = DrawRequest::Draw;
-		ctx.process_utility.redraw();
-	    }
-	    
+            if !p.as_movable_object().is_stop() || !p.as_effectable_object().is_empty_effect() {
+                self.draw_request = DrawRequest::Draw;
+                ctx.process_utility.redraw();
+            }
+
             p.as_movable_object_mut().move_with_func(t);
             p.as_effectable_object().effect(ctx.context, t);
         }
 
-	if !self.money_box.is_stop() {
-	    self.money_box.move_with_func(t);
-	    self.draw_request = DrawRequest::Draw;
-	}
+        if !self.money_box.is_stop() {
+            self.money_box.move_with_func(t);
+            self.draw_request = DrawRequest::Draw;
+        }
     }
 
     pub fn check_clicked_desk_object_type<'a>(
@@ -336,14 +345,14 @@ impl DeskObjects {
 
         if click_flag {
             self.desk_objects.sort_with_depth();
-	    self.draw_request = DrawRequest::Draw;
+            self.draw_request = DrawRequest::Draw;
         }
 
         object_type
     }
 
     pub fn add_object(&mut self, obj: TaskItem) {
-	self.draw_request = DrawRequest::Draw;
+        self.draw_request = DrawRequest::Draw;
         self.desk_objects.add_item(obj);
         self.desk_objects.sort_with_depth();
     }
@@ -366,12 +375,12 @@ impl DeskObjects {
         let d = std::mem::replace(&mut self.dragging, Some(obj));
         if d.is_some() {
             self.desk_objects.add_item(d.unwrap());
-	    self.draw_request = DrawRequest::Draw;
+            self.draw_request = DrawRequest::Draw;
         }
     }
 
     pub fn release_dragging(&mut self) -> Option<TaskItem> {
-	self.draw_request = DrawRequest::Draw;
+        self.draw_request = DrawRequest::Draw;
         std::mem::replace(&mut self.dragging, None)
     }
 
@@ -409,38 +418,46 @@ impl DeskObjects {
 
         for dobj in self.desk_objects.get_raw_container_mut().iter_mut().rev() {
             if dobj.get_object_mut().contains(ctx.context, rpoint) {
-		self.draw_request = DrawRequest::Draw;
+                self.draw_request = DrawRequest::Draw;
                 dobj.get_object_mut().button_up(ctx, t, button, rpoint);
 
                 return true;
             }
         }
 
+        let canvas_size = self.canvas.get_drawing_size(ctx.context);
+        if self.money_box.contains(ctx.context, rpoint) {
+            if !self.money_box_is_pulled {
+                self.money_box.override_move_func(
+                    move_fn::devide_distance(
+                        numeric::Point2f::new(canvas_size.x - 300.0, 0.0),
+                        0.3,
+                    ),
+                    t,
+                );
+            } else {
+                self.money_box.override_move_func(
+                    move_fn::devide_distance(
+                        numeric::Point2f::new(canvas_size.x - 300.0, -270.0),
+                        0.3,
+                    ),
+                    t,
+                );
+            }
 
-	let canvas_size = self.canvas.get_drawing_size(ctx.context);
-	if self.money_box.contains(ctx.context, rpoint) {
-	    if !self.money_box_is_pulled {
-		self.money_box.override_move_func(
-		    move_fn::devide_distance(numeric::Point2f::new(canvas_size.x - 300.0, 0.0), 0.3),
-		    t
-		);
-	    } else {
-		self.money_box.override_move_func(
-		    move_fn::devide_distance(numeric::Point2f::new(canvas_size.x - 300.0, -270.0), 0.3),
-		    t
-		);
-	    }
-
-	    self.money_box_is_pulled = !self.money_box_is_pulled;
-	} else {
-	    if self.money_box_is_pulled {
-		self.money_box.override_move_func(
-		    move_fn::devide_distance(numeric::Point2f::new(canvas_size.x - 300.0, -270.0), 0.3),
-		    t
-		);
-		self.money_box_is_pulled = false;
-	    }
-	}
+            self.money_box_is_pulled = !self.money_box_is_pulled;
+        } else {
+            if self.money_box_is_pulled {
+                self.money_box.override_move_func(
+                    move_fn::devide_distance(
+                        numeric::Point2f::new(canvas_size.x - 300.0, -270.0),
+                        0.3,
+                    ),
+                    t,
+                );
+                self.money_box_is_pulled = false;
+            }
+        }
 
         return false;
     }
@@ -462,11 +479,11 @@ impl DeskObjects {
                 }
             }
 
-	    if let Some(dragging) = self.dragging.as_ref() {
-		if dragging.get_object().contains(ctx, rpoint) {
-		    return MouseCursor::Grabbing;
-		}
-	    }
+            if let Some(dragging) = self.dragging.as_ref() {
+                if dragging.get_object().contains(ctx, rpoint) {
+                    return MouseCursor::Grabbing;
+                }
+            }
         }
 
         MouseCursor::Default
@@ -480,29 +497,29 @@ impl DeskObjects {
 impl DrawableComponent for DeskObjects {
     fn draw(&mut self, ctx: &mut ggez::Context) -> ggez::GameResult<()> {
         if self.is_visible() {
-	    if self.draw_request != DrawRequest::Skip {
-		self.draw_request = DrawRequest::Skip;
-		sub_screen::stack_screen(ctx, &self.canvas);
-		
-		self.table_texture.draw(ctx)?;
-		
-		for obj in self.desk_objects.get_raw_container_mut() {
+            if self.draw_request != DrawRequest::Skip {
+                self.draw_request = DrawRequest::Skip;
+                sub_screen::stack_screen(ctx, &self.canvas);
+
+                self.table_texture.draw(ctx)?;
+
+                for obj in self.desk_objects.get_raw_container_mut() {
                     obj.get_object_mut().draw(ctx)?;
-		}
+                }
 
-		self.money_box.draw(ctx)?;
-		
-		if let Some(d) = self.dragging.as_mut() {
+                self.money_box.draw(ctx)?;
+
+                if let Some(d) = self.dragging.as_mut() {
                     d.get_object_mut().draw(ctx)?;
-		}
-		
-		self.appearance_frame.draw(ctx)?;
+                }
 
-		println!("desk objects main redraw");
-		
-		sub_screen::pop_screen(ctx);
-	    }
-	    println!("desk objects canvas redraw");
+                self.appearance_frame.draw(ctx)?;
+
+                println!("desk objects main redraw");
+
+                sub_screen::pop_screen(ctx);
+            }
+            println!("desk objects canvas redraw");
             self.canvas.draw(ctx).unwrap();
         }
         Ok(())
@@ -757,7 +774,12 @@ impl TextBalloon {
         ellipse.add_to_builder(ellipse_outer.add_to_builder(&mut mesh_builder));
 
         TextBalloon {
-	    back_canvas: SubScreen::new(ctx, balloon_rect, 0, ggraphics::Color::from_rgba_u32(0x00)),
+            back_canvas: SubScreen::new(
+                ctx,
+                balloon_rect,
+                0,
+                ggraphics::Color::from_rgba_u32(0x00),
+            ),
             canvas: SubScreen::new(ctx, balloon_rect, 0, ggraphics::Color::from_rgba_u32(0x00)),
             text: vtext,
             phrase_type: phrase_type,
@@ -894,7 +916,7 @@ impl DrawableComponent for TextBalloon {
             sub_screen::pop_screen(ctx);
             self.back_canvas.draw(ctx).unwrap();
 
-	    sub_screen::stack_screen(ctx, &self.canvas);
+            sub_screen::stack_screen(ctx, &self.canvas);
 
             self.text.draw(ctx)?;
 
@@ -1022,27 +1044,27 @@ impl SuzuMiniSightSilhouette {
     }
 
     fn run_effect<'a>(&mut self, ctx: &mut SuzuContext<'a>, t: Clock) -> DrawRequest {
-	let mut draw_request = DrawRequest::Skip;
-	
-        if flush_delay_event!(self, self.event_list, ctx, t) > 0 {
-	    draw_request = DrawRequest::Draw;
-	}
+        let mut draw_request = DrawRequest::Skip;
 
-        if let Some(obj) = self.silhouette.get_object_mut() {
-	    if !obj.is_stop() || !obj.is_empty_effect() {
-		draw_request = DrawRequest::Draw;
-	    }
-	    obj.move_with_func(t);
-	    obj.effect(ctx.context, t);
+        if flush_delay_event!(self, self.event_list, ctx, t) > 0 {
+            draw_request = DrawRequest::Draw;
         }
 
-	if !self.text_balloon.is_empty_effect() {
-	    self.text_balloon.update_mesh(ctx.context);
-            self.text_balloon.effect(ctx.context, t);
-	    draw_request = DrawRequest::Draw;
-	}
+        if let Some(obj) = self.silhouette.get_object_mut() {
+            if !obj.is_stop() || !obj.is_empty_effect() {
+                draw_request = DrawRequest::Draw;
+            }
+            obj.move_with_func(t);
+            obj.effect(ctx.context, t);
+        }
 
-	draw_request
+        if !self.text_balloon.is_empty_effect() {
+            self.text_balloon.update_mesh(ctx.context);
+            self.text_balloon.effect(ctx.context, t);
+            draw_request = DrawRequest::Draw;
+        }
+
+        draw_request
     }
 
     pub fn replace_text(
@@ -1189,23 +1211,18 @@ impl SuzuMiniSight {
             0,
         );
 
-	let silhouette_paper_texture = MovableUniTexture::new(
-	    Box::new(UniTexture::new(
-		ctx.ref_texture(TextureID::Paper1),
-		numeric::Point2f::new(0.0, 0.0),
-		numeric::Vector2f::new(1.2, 1.2),
-		0.0,
-		0,
-	    )),
+        let silhouette_paper_texture = MovableUniTexture::new(
+            Box::new(UniTexture::new(
+                ctx.ref_texture(TextureID::Paper1),
+                numeric::Point2f::new(0.0, 0.0),
+                numeric::Vector2f::new(1.2, 1.2),
+                0.0,
+                0,
+            )),
             move_fn::stop(),
             0,
         );
-	let silhouette = SuzuMiniSightSilhouette::new(
-            ctx,
-            rect,
-            silhouette_paper_texture,
-            t,
-        );
+        let silhouette = SuzuMiniSightSilhouette::new(ctx, rect, silhouette_paper_texture, t);
 
         SuzuMiniSight {
             canvas: SubScreen::new(ctx.context, rect, 0, ggraphics::Color::from_rgba_u32(0)),
@@ -1214,7 +1231,7 @@ impl SuzuMiniSight {
             dropping_to_desk: Vec::new(),
             silhouette: silhouette,
             appearance_frame: appr_frame,
-	    draw_request: DrawRequest::InitDraw,
+            draw_request: DrawRequest::InitDraw,
         }
     }
 
@@ -1228,7 +1245,7 @@ impl SuzuMiniSight {
     ) {
         self.silhouette
             .new_customer_update(ctx, chara, name, dialogue, t);
-	self.draw_request = DrawRequest::Draw;
+        self.draw_request = DrawRequest::Draw;
     }
 
     pub fn count_not_forbidden_book_items(&self, kosuzu_memory: &KosuzuMemory) -> usize {
@@ -1263,7 +1280,7 @@ impl SuzuMiniSight {
         if let Some(obj) = &mut self.dragging {
             obj.get_object_mut()
                 .move_diff(numeric::Vector2f::new(point.x - last.x, point.y - last.y));
-	    self.draw_request = DrawRequest::Draw;
+            self.draw_request = DrawRequest::Draw;
         }
     }
 
@@ -1279,7 +1296,7 @@ impl SuzuMiniSight {
 
     pub fn finish_customer_event(&mut self, now: Clock) {
         self.silhouette.run_hide_effect(now);
-	self.draw_request = DrawRequest::Draw;
+        self.draw_request = DrawRequest::Draw;
     }
 
     ///
@@ -1289,27 +1306,27 @@ impl SuzuMiniSight {
         self.dropping.retain(|d| !d.as_movable_object().is_stop());
 
         for d in &mut self.dropping {
-	    if !d.as_movable_object().is_stop() || !d.as_effectable_object().is_empty_effect() {
-		self.draw_request = DrawRequest::Draw;
-		ctx.process_utility.redraw();
-	    }
-	    d.as_movable_object_mut().move_with_func(t);
+            if !d.as_movable_object().is_stop() || !d.as_effectable_object().is_empty_effect() {
+                self.draw_request = DrawRequest::Draw;
+                ctx.process_utility.redraw();
+            }
+            d.as_movable_object_mut().move_with_func(t);
             d.as_effectable_object().effect(ctx.context, t);
         }
 
         for d in &mut self.dropping_to_desk {
-	    if !d.as_movable_object().is_stop() || !d.as_effectable_object().is_empty_effect() {
-		self.draw_request = DrawRequest::Draw;
-		ctx.process_utility.redraw();
-	    }
+            if !d.as_movable_object().is_stop() || !d.as_effectable_object().is_empty_effect() {
+                self.draw_request = DrawRequest::Draw;
+                ctx.process_utility.redraw();
+            }
             d.as_movable_object_mut().move_with_func(t);
             d.as_effectable_object().effect(ctx.context, t);
         }
 
         if self.silhouette.run_effect(ctx, t) == DrawRequest::Draw {
-	    self.draw_request = DrawRequest::Draw;
-	    ctx.process_utility.redraw();
-	}
+            self.draw_request = DrawRequest::Draw;
+            ctx.process_utility.redraw();
+        }
     }
 
     pub fn check_drop_desk(&mut self) -> Vec<TaskItem> {
@@ -1324,8 +1341,8 @@ impl SuzuMiniSight {
                 .as_movable_object()
                 .is_stop();
             if stop {
-		self.draw_request = DrawRequest::Draw;
-		drop_to_desk.push(self.dropping_to_desk.swap_remove(index));
+                self.draw_request = DrawRequest::Draw;
+                drop_to_desk.push(self.dropping_to_desk.swap_remove(index));
             }
             index += 1;
         }
@@ -1334,7 +1351,7 @@ impl SuzuMiniSight {
     }
 
     pub fn add_object(&mut self, obj: TaskItem) {
-	self.draw_request = DrawRequest::Draw;
+        self.draw_request = DrawRequest::Draw;
         self.dropping.push(obj);
     }
 
@@ -1349,7 +1366,7 @@ impl SuzuMiniSight {
     pub fn insert_dragging(&mut self, obj: TaskItem) {
         let d = std::mem::replace(&mut self.dragging, Some(obj));
         if d.is_some() {
-	    self.draw_request = DrawRequest::Draw;
+            self.draw_request = DrawRequest::Draw;
             self.dropping.push(d.unwrap());
         }
     }
@@ -1398,13 +1415,13 @@ impl SuzuMiniSight {
         point: numeric::Point2f,
     ) -> HoldData {
         let rpoint = self.canvas.relative_point(point);
-	self.draw_request = DrawRequest::Draw;
-	
-        self.silhouette.click_hold_data(ctx, rpoint)	    
+        self.draw_request = DrawRequest::Draw;
+
+        self.silhouette.click_hold_data(ctx, rpoint)
     }
 
     pub fn release_dragging(&mut self) -> Option<TaskItem> {
-	self.draw_request = DrawRequest::Draw;
+        self.draw_request = DrawRequest::Draw;
         std::mem::replace(&mut self.dragging, None)
     }
 
@@ -1429,28 +1446,28 @@ impl SuzuMiniSight {
 impl DrawableComponent for SuzuMiniSight {
     fn draw(&mut self, ctx: &mut ggez::Context) -> ggez::GameResult<()> {
         if self.is_visible() {
-	    if self.draw_request != DrawRequest::Skip {
-		self.draw_request = DrawRequest::Skip;
-		sub_screen::stack_screen(ctx, &self.canvas);
-		
-		self.silhouette.draw(ctx)?;
-		
-		for d in &mut self.dropping {
+            if self.draw_request != DrawRequest::Skip {
+                self.draw_request = DrawRequest::Skip;
+                sub_screen::stack_screen(ctx, &self.canvas);
+
+                self.silhouette.draw(ctx)?;
+
+                for d in &mut self.dropping {
                     d.get_object_mut().draw(ctx)?;
-		}
-		
-		for d in &mut self.dropping_to_desk {
+                }
+
+                for d in &mut self.dropping_to_desk {
                     d.get_object_mut().draw(ctx)?;
-		}
-		
-		if let Some(ref mut d) = self.dragging {
+                }
+
+                if let Some(ref mut d) = self.dragging {
                     d.get_object_mut().draw(ctx)?;
-		}
-		
-		self.appearance_frame.draw(ctx)?;
-		
-		sub_screen::pop_screen(ctx);
-	    }
+                }
+
+                self.appearance_frame.draw(ctx)?;
+
+                sub_screen::pop_screen(ctx);
+            }
             self.canvas.draw(ctx).unwrap();
         }
         Ok(())
@@ -1586,13 +1603,13 @@ impl ShelvingBookBox {
             dragging: None,
             table_texture: SimpleObject::new(
                 MovableUniTexture::new(
-		    Box::new(UniTexture::new(
-			ctx.ref_texture(TextureID::Wood1),
-			numeric::Point2f::new(0.0, 0.0),
-			numeric::Vector2f::new(1.0, 1.0),
-			0.0,
-			0
-		    )),
+                    Box::new(UniTexture::new(
+                        ctx.ref_texture(TextureID::Wood1),
+                        numeric::Point2f::new(0.0, 0.0),
+                        numeric::Vector2f::new(1.0, 1.0),
+                        0.0,
+                        0,
+                    )),
                     move_fn::stop(),
                     0,
                 ),
@@ -1601,7 +1618,7 @@ impl ShelvingBookBox {
             box_front: box_front,
             box_back: box_back,
             appearance_frame: appr_frame,
-	    draw_request: DrawRequest::InitDraw,
+            draw_request: DrawRequest::InitDraw,
         }
     }
 
@@ -1620,7 +1637,7 @@ impl ShelvingBookBox {
             let contains = obj.get_object().get_drawing_area(ctx).contains(rpoint);
             if contains {
                 clicked_data = obj.get_object_mut().click_hold_data(ctx, rpoint);
-		self.draw_request = DrawRequest::Draw;
+                self.draw_request = DrawRequest::Draw;
                 break;
             }
         }
@@ -1632,7 +1649,7 @@ impl ShelvingBookBox {
         if let Some(obj) = &mut self.dragging {
             obj.get_object_mut()
                 .move_diff(numeric::Vector2f::new(point.x - last.x, point.y - last.y));
-	    self.draw_request = DrawRequest::Draw;
+            self.draw_request = DrawRequest::Draw;
         }
     }
 
@@ -1643,7 +1660,7 @@ impl ShelvingBookBox {
                 .override_move_func(move_fn::gravity_move(1.0, 10.0, 310.0, 0.5), t);
             dragged.as_effectable_object().add_effect(vec![Box::new(
                 |obj: &mut dyn MovableObject, _: &ggez::Context, t: Clock| {
-		    println!("{}", obj.get_position().y);
+                    println!("{}", obj.get_position().y);
                     if obj.get_position().y >= 310.0 {
                         obj.override_move_func(None, t);
                         EffectFnStatus::EffectFinish
@@ -1654,7 +1671,7 @@ impl ShelvingBookBox {
             )]);
             let dragged_object = std::mem::replace(&mut self.dragging, None);
             self.shelved.push(dragged_object.unwrap());
-	    self.draw_request = DrawRequest::Draw;
+            self.draw_request = DrawRequest::Draw;
         }
     }
 
@@ -1663,26 +1680,26 @@ impl ShelvingBookBox {
     ///
     pub fn update<'a>(&mut self, ctx: &mut SuzuContext<'a>, t: Clock) {
         for p in &mut self.shelved {
-	    if !p.as_movable_object().is_stop() || !p.as_effectable_object().is_empty_effect() {
-		self.draw_request = DrawRequest::Draw;
-		ctx.process_utility.redraw();
-	    }
-	    
-	    p.as_movable_object_mut().move_with_func(t);
+            if !p.as_movable_object().is_stop() || !p.as_effectable_object().is_empty_effect() {
+                self.draw_request = DrawRequest::Draw;
+                ctx.process_utility.redraw();
+            }
+
+            p.as_movable_object_mut().move_with_func(t);
             p.as_effectable_object().effect(ctx.context, t);
         }
     }
 
     pub fn add_object(&mut self, obj: TaskItem) {
         self.shelved.push(obj);
-	self.draw_request = DrawRequest::Draw;
+        self.draw_request = DrawRequest::Draw;
     }
 
     pub fn add_customer_object_vec(&mut self, mut obj_vec: Vec<TaskItem>) {
         while obj_vec.len() != 0 {
             self.add_object(obj_vec.pop().unwrap());
         }
-	self.draw_request = DrawRequest::Draw;
+        self.draw_request = DrawRequest::Draw;
     }
 
     pub fn has_dragging(&self) -> bool {
@@ -1693,12 +1710,12 @@ impl ShelvingBookBox {
         let d = std::mem::replace(&mut self.dragging, Some(obj));
         if d.is_some() {
             self.add_object(d.unwrap());
-	    self.draw_request = DrawRequest::Draw;
+            self.draw_request = DrawRequest::Draw;
         }
     }
 
     pub fn release_dragging(&mut self) -> Option<TaskItem> {
-	self.draw_request = DrawRequest::Draw;
+        self.draw_request = DrawRequest::Draw;
         std::mem::replace(&mut self.dragging, None)
     }
 
@@ -1723,7 +1740,7 @@ impl ShelvingBookBox {
         for dobj in &mut self.shelved {
             if dobj.get_object_mut().contains(ctx.context, rpoint) {
                 dobj.get_object_mut().button_up(ctx, t, button, rpoint);
-		self.draw_request = DrawRequest::Draw;
+                self.draw_request = DrawRequest::Draw;
             }
         }
     }
@@ -1753,29 +1770,29 @@ impl ShelvingBookBox {
 impl DrawableComponent for ShelvingBookBox {
     fn draw(&mut self, ctx: &mut ggez::Context) -> ggez::GameResult<()> {
         if self.is_visible() {
-	    if self.draw_request != DrawRequest::Skip {
-		self.draw_request = DrawRequest::Skip;
-		
-		sub_screen::stack_screen(ctx, &self.canvas);
-		
-		self.table_texture.draw(ctx)?;
-		
-		self.box_back.draw(ctx)?;
-		
-		for obj in &mut self.shelved {
+            if self.draw_request != DrawRequest::Skip {
+                self.draw_request = DrawRequest::Skip;
+
+                sub_screen::stack_screen(ctx, &self.canvas);
+
+                self.table_texture.draw(ctx)?;
+
+                self.box_back.draw(ctx)?;
+
+                for obj in &mut self.shelved {
                     obj.get_object_mut().draw(ctx)?;
-		}
-		
-		if let Some(ref mut d) = self.dragging {
+                }
+
+                if let Some(ref mut d) = self.dragging {
                     d.get_object_mut().draw(ctx)?;
-		}
-		
-		self.box_front.draw(ctx)?;
-		
-		self.appearance_frame.draw(ctx)?;
-		
-		sub_screen::pop_screen(ctx);
-	    }
+                }
+
+                self.box_front.draw(ctx)?;
+
+                self.appearance_frame.draw(ctx)?;
+
+                sub_screen::pop_screen(ctx);
+            }
             self.canvas.draw(ctx).unwrap();
         }
         Ok(())
@@ -1867,10 +1884,10 @@ impl KosuzuPhrase {
         flush_delay_event_and_redraw_check!(self, self.event_list, ctx, t);
 
         if let Some(balloon) = self.text_balloon.as_mut() {
-	    if !balloon.is_stop() || !balloon.is_empty_effect() {
-		ctx.process_utility.redraw();
-	    }
-	    
+            if !balloon.is_stop() || !balloon.is_empty_effect() {
+                ctx.process_utility.redraw();
+            }
+
             balloon.effect(ctx.context, t);
             balloon.move_with_func(t);
         }
@@ -2061,16 +2078,16 @@ impl FloatingMemoryObject {
     }
 
     pub fn update(&mut self, t: Clock) -> DrawRequest {
-	let mut request = DrawRequest::Skip;
-	
+        let mut request = DrawRequest::Skip;
+
         for text in self.text.iter_mut() {
-	    if !text.is_stop() {
-		request = DrawRequest::Draw;
-	    }
-	    text.move_with_func(t);
+            if !text.is_stop() {
+                request = DrawRequest::Draw;
+            }
+            text.move_with_func(t);
         }
 
-	request
+        request
     }
 }
 
@@ -2160,7 +2177,7 @@ impl TaskInfoContents {
         header_text.make_center(ctx.context, numeric::Point2f::new(150.0, 30.0));
 
         let mut desc_text = Vec::new();
-	let mut request_text = HashMap::new();
+        let mut request_text = HashMap::new();
 
         for (index, s) in vec!["妖怪疑念度", "要件", "氏名", "本日"]
             .iter()
@@ -2220,7 +2237,7 @@ impl TaskInfoContents {
             general_table_frame: general_frame,
             header_text: header_text,
             desc_text: desc_text,
-	    request_info_text: request_text,
+            request_info_text: request_text,
             drwob_essential: DrawableObjectEssential::new(true, 0),
         }
     }
@@ -2237,20 +2254,20 @@ impl TaskInfoContents {
     }
 
     pub fn set_customer_name<'a>(&mut self, ctx: &mut SuzuContext<'a>, name: String) {
-	let normal_scale_font = FontInformation::new(
+        let normal_scale_font = FontInformation::new(
             ctx.resource.get_font(FontID::Cinema),
             numeric::Vector2f::new(24.0, 24.0),
             ggraphics::Color::from_rgba_u32(0x000000ff),
         );
 
-	let key = "name";
+        let key = "name";
 
-	println!("set name !! => {}", name);
+        println!("set name !! => {}", name);
 
-	if self.request_info_text.contains_key(key) {
-	    self.request_info_text.remove(key);
-	}
-	
+        if self.request_info_text.contains_key(key) {
+            self.request_info_text.remove(key);
+        }
+
         let mut vtext = VerticalText::new(
             name.to_string(),
             numeric::Point2f::new(0.0, 0.0),
@@ -2287,7 +2304,7 @@ impl DrawableComponent for TaskInfoContents {
                 vtext.draw(ctx).unwrap();
             }
 
-	    for (_, vtext) in self.request_info_text.iter_mut() {
+            for (_, vtext) in self.request_info_text.iter_mut() {
                 vtext.draw(ctx).unwrap();
             }
         }
@@ -2341,7 +2358,7 @@ impl TaskInfoPanel {
                 0,
                 ggraphics::Color::from_rgba_u32(0xffffffff),
             ),
-	    draw_request: DrawRequest::InitDraw,
+            draw_request: DrawRequest::InitDraw,
             background: UniTexture::new(
                 ctx.ref_texture(TextureID::TextBackground),
                 numeric::Point2f::new(0.0, 0.0),
@@ -2364,13 +2381,9 @@ impl TaskInfoPanel {
             .add_book_info(ctx, book_info, init_text_pos, now);
     }
 
-    pub fn set_customer_name<'a>(
-	&mut self,
-	ctx: &mut SuzuContext<'a>,
-	name: String,
-    ) {
-	self.contents.set_customer_name(ctx, name);
-	self.draw_request = DrawRequest::Draw;
+    pub fn set_customer_name<'a>(&mut self, ctx: &mut SuzuContext<'a>, name: String) {
+        self.contents.set_customer_name(ctx, name);
+        self.draw_request = DrawRequest::Draw;
     }
 
     ///
@@ -2378,30 +2391,30 @@ impl TaskInfoPanel {
     ///
     pub fn update<'a>(&mut self, ctx: &mut SuzuContext<'a>, t: Clock) {
         let go_draw = self.contents.update(t);
-	if self.draw_request != DrawRequest::InitDraw {
-	    self.draw_request |= go_draw;
-	}
+        if self.draw_request != DrawRequest::InitDraw {
+            self.draw_request |= go_draw;
+        }
 
-	match self.draw_request {
-	    DrawRequest::Draw | DrawRequest::InitDraw => {
-		ctx.process_utility.redraw();
-	    },
-	    _ => (),
-	}
+        match self.draw_request {
+            DrawRequest::Draw | DrawRequest::InitDraw => {
+                ctx.process_utility.redraw();
+            }
+            _ => (),
+        }
     }
 }
 
 impl DrawableComponent for TaskInfoPanel {
     fn draw(&mut self, ctx: &mut ggez::Context) -> ggez::GameResult<()> {
-	if self.draw_request != DrawRequest::Skip {
-	    self.draw_request = DrawRequest::Skip;
+        if self.draw_request != DrawRequest::Skip {
+            self.draw_request = DrawRequest::Skip;
             sub_screen::stack_screen(ctx, &self.canvas);
-	    
+
             self.background.draw(ctx)?;
             self.contents.draw(ctx)?;
-	    
+
             sub_screen::pop_screen(ctx);
-	}
+        }
         self.canvas.draw(ctx)
     }
 
@@ -2435,64 +2448,69 @@ pub struct MoneyBox {
 
 impl MoneyBox {
     pub fn new<'a>(ctx: &mut SuzuContext<'a>, pos_rect: numeric::Rect, depth: i8) -> Self {
-	MoneyBox {
-	    draw_request: DrawRequest::InitDraw,
-	    canvas: SubScreen::new(ctx.context, pos_rect, depth, ggraphics::Color::from_rgba_u32(0)),
-	    box_texture: UniTexture::new(
-		ctx.ref_texture(TextureID::Paper1),
-		numeric::Point2f::new(0.0, 0.0),
-		numeric::Vector2f::new(1.0, 1.0),
-		0.0,
-		1
-	    ),
-	    coin_set: DeskObjectContainer::new(),
-	}
+        MoneyBox {
+            draw_request: DrawRequest::InitDraw,
+            canvas: SubScreen::new(
+                ctx.context,
+                pos_rect,
+                depth,
+                ggraphics::Color::from_rgba_u32(0),
+            ),
+            box_texture: UniTexture::new(
+                ctx.ref_texture(TextureID::Paper1),
+                numeric::Point2f::new(0.0, 0.0),
+                numeric::Vector2f::new(1.0, 1.0),
+                0.0,
+                1,
+            ),
+            coin_set: DeskObjectContainer::new(),
+        }
     }
 
     pub fn is_acceptable_for_moneybox(item: &TaskItem) -> bool {
-	match item {
-	    TaskItem::Coin(_) => true,
-	    _ => false,
-	}
+        match item {
+            TaskItem::Coin(_) => true,
+            _ => false,
+        }
     }
 
     pub fn add_coin(&mut self, mut coin_item: TaskItem) {
-	match coin_item {
-	    TaskItem::Coin(ref mut texture) => {
-		texture.get_small_object_mut().disable_shadow();
-		texture.get_large_object_mut().disable_shadow();
-		
-		self.draw_request = DrawRequest::Draw;
-		self.coin_set.add_item(coin_item);
-	    },
-	    _ => (),
-	}
+        match coin_item {
+            TaskItem::Coin(ref mut texture) => {
+                texture.get_small_object_mut().disable_shadow();
+                texture.get_large_object_mut().disable_shadow();
+
+                self.draw_request = DrawRequest::Draw;
+                self.coin_set.add_item(coin_item);
+            }
+            _ => (),
+        }
     }
 
     pub fn relative_point(&self, point: numeric::Point2f) -> numeric::Point2f {
-	self.canvas.relative_point(point)
+        self.canvas.relative_point(point)
     }
 }
 
 impl DrawableComponent for MoneyBox {
     fn draw(&mut self, ctx: &mut ggez::Context) -> ggez::GameResult<()> {
-	if self.is_visible() {
-	    if self.draw_request != DrawRequest::Skip {
-		self.draw_request = DrawRequest::Skip;
-		sub_screen::stack_screen(ctx, &self.canvas);
-		
-		self.box_texture.draw(ctx)?;
+        if self.is_visible() {
+            if self.draw_request != DrawRequest::Skip {
+                self.draw_request = DrawRequest::Skip;
+                sub_screen::stack_screen(ctx, &self.canvas);
 
-		for obj in self.coin_set.get_raw_container_mut() {
+                self.box_texture.draw(ctx)?;
+
+                for obj in self.coin_set.get_raw_container_mut() {
                     obj.get_object_mut().draw(ctx)?;
-		}
-		
-		sub_screen::pop_screen(ctx);
-	    }
+                }
+
+                sub_screen::pop_screen(ctx);
+            }
             self.canvas.draw(ctx)?;
-	}
-	
-	Ok(())
+        }
+
+        Ok(())
     }
 
     fn hide(&mut self) {
@@ -2523,4 +2541,3 @@ impl DrawableObject for MoneyBox {
 impl TextureObject for MoneyBox {
     impl_texture_object_for_wrapped! {canvas}
 }
-

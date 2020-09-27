@@ -6,9 +6,9 @@ use torifune::core::*;
 use torifune::device::VirtualKey;
 use torifune::numeric;
 
+use crate::core::book_management::*;
 use crate::core::*;
 use crate::scene::*;
-use crate::core::book_management::*;
 
 use crate::scene::shop_scene::ShopScene;
 
@@ -52,19 +52,24 @@ impl SuzunaSubScene {
                 .collect(),
         };
 
-	let date = ctx.savable_data.date.clone();
+        let date = ctx.savable_data.date.clone();
 
-	let new_book_schedule = NewBookSchedule::from_toml("./resources/other_config/new_book_schedule.toml");
-	
-	let todays_new_books = new_book_schedule.get_schedule_at(&date).unwrap().clone();
+        let new_book_schedule =
+            NewBookSchedule::from_toml("./resources/other_config/new_book_schedule.toml");
+
+        let todays_new_books = new_book_schedule.get_schedule_at(&date).unwrap().clone();
 
         SuzunaSubScene {
-            shop_scene: Some(Box::new(ShopScene::new(ctx, map_id, todays_new_books.get_new_books()))),
+            shop_scene: Some(Box::new(ShopScene::new(
+                ctx,
+                map_id,
+                todays_new_books.get_new_books(),
+            ))),
             desk_work_scene: None,
             day_result_scene: None,
             scene_status: SuzunaSceneStatus::Shop,
             borrowing_record_book_data: Some(borrowing_record_book_data),
-	    new_book_schedule: new_book_schedule,
+            new_book_schedule: new_book_schedule,
             date: date,
         }
     }
@@ -149,13 +154,13 @@ impl SuzunaSubScene {
         if transition == SceneTransition::SwapTransition {
             if let Some(shop_scene) = self.shop_scene.as_ref() {
                 let init_data = shop_scene.clone_begning_save_data();
-		let result_report = shop_scene.clone_result_report();
-		
+                let result_report = shop_scene.clone_result_report();
+
                 self.scene_status = SuzunaSceneStatus::DayResult;
                 self.day_result_scene = Some(Box::new(TaskResultScene::new(
                     ctx,
                     init_data,
-		    result_report,
+                    result_report,
                     self.date.clone(),
                 )));
             }
@@ -177,11 +182,14 @@ impl SuzunaSubScene {
             );
             self.scene_status = SuzunaSceneStatus::Shop;
             self.shop_scene.as_mut().unwrap().switched_and_restart(
-		ctx,
-		self.desk_work_scene.as_ref().unwrap().get_elapsed_clock(),
-		self.desk_work_scene.as_ref().unwrap().get_target_page_book_condition_eval_report()
-	    );
-	    self.desk_work_scene = None;
+                ctx,
+                self.desk_work_scene.as_ref().unwrap().get_elapsed_clock(),
+                self.desk_work_scene
+                    .as_ref()
+                    .unwrap()
+                    .get_target_page_book_condition_eval_report(),
+            );
+            self.desk_work_scene = None;
         }
     }
 }

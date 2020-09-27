@@ -52,60 +52,60 @@ impl DrawableSaveEntry {
             0,
         );
 
-	let button_texture = Box::new(TextButtonTexture::new(
-	    ctx,
-	    numeric::Point2f::new(0.0, 0.0),
-	    "記録".to_string(),
-	    FontInformation::new(
-		ctx.resource.get_font(FontID::Cinema),
-		numeric::Vector2f::new(18.0, 18.0),
-		ggraphics::Color::from_rgba_u32(0xf6e1d5ff)
-	    ),
-	    5.0,
-	    ggraphics::Color::from_rgba_u32(0x5a4f3fff),
-	    0)
-	);
-	
+        let button_texture = Box::new(TextButtonTexture::new(
+            ctx,
+            numeric::Point2f::new(0.0, 0.0),
+            "記録".to_string(),
+            FontInformation::new(
+                ctx.resource.get_font(FontID::Cinema),
+                numeric::Vector2f::new(18.0, 18.0),
+                ggraphics::Color::from_rgba_u32(0xf6e1d5ff),
+            ),
+            5.0,
+            ggraphics::Color::from_rgba_u32(0x5a4f3fff),
+            0,
+        ));
+
         let save_button = SelectButton::new(
             ctx,
             numeric::Rect::new(30.0, pos_rect.h - 80.0, 60.0, 60.0),
-	    button_texture,
+            button_texture,
         );
 
-	let button_texture = Box::new(TextButtonTexture::new(
-	    ctx,
-	    numeric::Point2f::new(0.0, 0.0),
-	    "削除".to_string(),
-	    FontInformation::new(
-		ctx.resource.get_font(FontID::Cinema),
-		numeric::Vector2f::new(18.0, 18.0),
-		ggraphics::Color::from_rgba_u32(0xf6e1d5ff)
-	    ),
-	    5.0,
-	    ggraphics::Color::from_rgba_u32(0x5a4f3fff),
-	    0)
-	);
-	
+        let button_texture = Box::new(TextButtonTexture::new(
+            ctx,
+            numeric::Point2f::new(0.0, 0.0),
+            "削除".to_string(),
+            FontInformation::new(
+                ctx.resource.get_font(FontID::Cinema),
+                numeric::Vector2f::new(18.0, 18.0),
+                ggraphics::Color::from_rgba_u32(0xf6e1d5ff),
+            ),
+            5.0,
+            ggraphics::Color::from_rgba_u32(0x5a4f3fff),
+            0,
+        ));
+
         let delete_button = SelectButton::new(
             ctx,
             numeric::Rect::new(110.0, pos_rect.h - 80.0, 60.0, 60.0),
-	    button_texture
+            button_texture,
         );
 
-	let button_texture = Box::new(TextButtonTexture::new(
-	    ctx,
-	    numeric::Point2f::new(0.0, 0.0),
-	    "再開".to_string(),
-	    FontInformation::new(
-		ctx.resource.get_font(FontID::Cinema),
-		numeric::Vector2f::new(18.0, 18.0),
-		ggraphics::Color::from_rgba_u32(0xf6e1d5ff)
-	    ),
-	    5.0,
-	    ggraphics::Color::from_rgba_u32(0x5a4f3fff),
-	    0)
-	);
-	
+        let button_texture = Box::new(TextButtonTexture::new(
+            ctx,
+            numeric::Point2f::new(0.0, 0.0),
+            "再開".to_string(),
+            FontInformation::new(
+                ctx.resource.get_font(FontID::Cinema),
+                numeric::Vector2f::new(18.0, 18.0),
+                ggraphics::Color::from_rgba_u32(0xf6e1d5ff),
+            ),
+            5.0,
+            ggraphics::Color::from_rgba_u32(0x5a4f3fff),
+            0,
+        ));
+
         let load_button = SelectButton::new(
             ctx,
             numeric::Rect::new(190.0, pos_rect.h - 80.0, 60.0, 60.0),

@@ -91,7 +91,7 @@ pub struct BlackOutTexture {
 
 impl BlackOutTexture {
     pub fn new<'a>(
-	ctx: &mut SuzuContext<'a>,
+        ctx: &mut SuzuContext<'a>,
         texture_id: TextureID,
         pos: numeric::Point2f,
         drawing_depth: i8,
@@ -205,10 +205,10 @@ impl DarkEffectPanel {
     /// # 再描画要求有り
     ///
     pub fn run_effect<'a>(&mut self, ctx: &mut SuzuContext<'a>, t: Clock) {
-	if !self.canvas.is_empty_effect() {
-	    ctx.process_utility.redraw();
-	    self.canvas.effect(ctx.context, t);
-	}
+        if !self.canvas.is_empty_effect() {
+            ctx.process_utility.redraw();
+            self.canvas.effect(ctx.context, t);
+        }
     }
 }
 

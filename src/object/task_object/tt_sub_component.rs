@@ -320,47 +320,39 @@ pub struct OnDeskBook {
 impl OnDeskBook {
     pub fn new<'a>(
         ctx: &mut SuzuContext<'a>,
-	position: numeric::Point2f,
+        position: numeric::Point2f,
         texture_id: TextureID,
         info: BookInformation,
     ) -> Self {
         let texture = ctx.ref_texture(texture_id);
         let book_texture = UniTexture::new(
             texture,
-	    numeric::Point2f::new(6.0, 6.0),
+            numeric::Point2f::new(6.0, 6.0),
             numeric::Vector2f::new(0.16, 0.16),
             0.0,
             0,
         );
         let book_size = book_texture.get_drawing_size(ctx.context);
         let book_title = info.get_name().to_string();
-	
+
         let scratch_texture = match info.get_condition() {
-	    BookCondition::Good => None,
-	    BookCondition::Fair => {
-		Some(
-		    UniTexture::new(
-			ctx.ref_texture(TextureID::random_large_book_scratch_fair()),
-			numeric::Point2f::new(6.0, 6.0),
-			numeric::Vector2f::new(0.16, 0.16),
-			0.0,
-			0,
-		    )
-		)
-	    },
-	    BookCondition::Bad => {
-		Some(
-		    UniTexture::new(
-			ctx.ref_texture(TextureID::random_large_book_scratch_bad()),
-			numeric::Point2f::new(6.0, 6.0),
-			numeric::Vector2f::new(0.16, 0.16),
-			0.0,
-			0,
-		    )
-		)
-	    },
-	};
-	    
+            BookCondition::Good => None,
+            BookCondition::Fair => Some(UniTexture::new(
+                ctx.ref_texture(TextureID::random_large_book_scratch_fair()),
+                numeric::Point2f::new(6.0, 6.0),
+                numeric::Vector2f::new(0.16, 0.16),
+                0.0,
+                0,
+            )),
+            BookCondition::Bad => Some(UniTexture::new(
+                ctx.ref_texture(TextureID::random_large_book_scratch_bad()),
+                numeric::Point2f::new(6.0, 6.0),
+                numeric::Vector2f::new(0.16, 0.16),
+                0.0,
+                0,
+            )),
+        };
+
         let shadow_bounds = numeric::Rect::new(0.0, 0.0, book_size.x + 12.0, book_size.y + 12.0);
 
         let mut shadow = ShadowShape::new(
@@ -382,7 +374,7 @@ impl OnDeskBook {
         OnDeskBook {
             info: info,
             book_texture: book_texture,
-	    scratch_texture: scratch_texture,
+            scratch_texture: scratch_texture,
             shadow: shadow,
             title: VerticalText::new(
                 book_title,
@@ -423,9 +415,9 @@ impl DrawableComponent for OnDeskBook {
             self.book_texture.draw(ctx)?;
             self.title.draw(ctx)?;
 
-	    if let Some(scratch_texture) = self.scratch_texture.as_mut() {
-		scratch_texture.draw(ctx)?;
-	    }
+            if let Some(scratch_texture) = self.scratch_texture.as_mut() {
+                scratch_texture.draw(ctx)?;
+            }
 
             sub_screen::pop_screen(ctx);
             self.canvas.draw(ctx).unwrap();
@@ -508,25 +500,25 @@ pub struct BookConditionEvalReport {
 
 impl BookConditionEvalReport {
     pub fn new(originals: Vec<BookInformation>, each_evaluation: Vec<BookCondition>) -> Self {
-	BookConditionEvalReport {
-	    originals: originals,
-	    each_evaluation: each_evaluation,
-	}
+        BookConditionEvalReport {
+            originals: originals,
+            each_evaluation: each_evaluation,
+        }
     }
 
     pub fn count_mistake(&self) -> usize {
-	let mut count: usize = 0;
-	
-	for index in 0..self.originals.len() {
-	    let original = self.originals.get(index).as_ref().unwrap().get_condition();
-	    let eval = self.each_evaluation.get(index).as_ref().unwrap().clone();
+        let mut count: usize = 0;
 
-	    if original != *eval {
-		count += 1;
-	    }
-	}
+        for index in 0..self.originals.len() {
+            let original = self.originals.get(index).as_ref().unwrap().get_condition();
+            let eval = self.each_evaluation.get(index).as_ref().unwrap().clone();
 
-	count
+            if original != *eval {
+                count += 1;
+            }
+        }
+
+        count
     }
 }
 
@@ -1198,13 +1190,13 @@ impl BorrowingRecordBookPage {
 
         let paper_texture = SimpleObject::new(
             MovableUniTexture::new(
-		Box::new(UniTexture::new(
+                Box::new(UniTexture::new(
                     ctx.ref_texture(paper_tid),
                     numeric::Point2f::new(0.0, 0.0),
                     numeric::Vector2f::new(1.0, 1.0),
                     0.0,
-                    0
-		)),
+                    0,
+                )),
                 move_fn::halt(numeric::Point2f::new(0.0, 0.0)),
                 t,
             ),
@@ -1390,7 +1382,7 @@ impl BorrowingRecordBookPage {
     }
 
     pub fn get_books_table_rows(&self) -> usize {
-	self.books_table.get_rows()
+        self.books_table.get_rows()
     }
 
     pub fn get_calculated_price(&self) -> Option<u32> {
@@ -1409,32 +1401,32 @@ impl BorrowingRecordBookPage {
 
         book_info
     }
-    
+
     pub fn create_current_book_condition_report(&self) -> BookConditionEvalReport {
-	let mut originals = Vec::new();
-	let mut evals = Vec::new();
+        let mut originals = Vec::new();
+        let mut evals = Vec::new();
 
-	let size = self.books_table.get_rows();
-	for index in 0..size {
-	    let key = numeric::Vector2u::new(index as u32, 0);
-	    let book_info = match self.borrow_book.get(&key).as_ref().unwrap().ref_hold_data() {
-		HoldData::BookName(info) => info,
-		HoldData::None => continue,
-		_ => panic!("BUG"),
-	    };
+        let size = self.books_table.get_rows();
+        for index in 0..size {
+            let key = numeric::Vector2u::new(index as u32, 0);
+            let book_info = match self.borrow_book.get(&key).as_ref().unwrap().ref_hold_data() {
+                HoldData::BookName(info) => info,
+                HoldData::None => continue,
+                _ => panic!("BUG"),
+            };
 
-	    let key = numeric::Vector2u::new(index as u32, 1);
-	    let eval = match self.borrow_book.get(&key).unwrap().ref_hold_data() {
-		HoldData::BookCondition(status) => status,
-		HoldData::None => continue,
-		_ => panic!("BUG"),
-	    };
+            let key = numeric::Vector2u::new(index as u32, 1);
+            let eval = match self.borrow_book.get(&key).unwrap().ref_hold_data() {
+                HoldData::BookCondition(status) => status,
+                HoldData::None => continue,
+                _ => panic!("BUG"),
+            };
 
-	    originals.push(book_info.clone());
-	    evals.push(eval.clone());
-	}
+            originals.push(book_info.clone());
+            evals.push(eval.clone());
+        }
 
-	BookConditionEvalReport::new(originals, evals)
+        BookConditionEvalReport::new(originals, evals)
     }
 
     pub fn try_insert_data_in_info_frame(
@@ -1568,7 +1560,7 @@ impl BorrowingRecordBookPage {
             self.base_price_of_written_book(),
         );
 
-	DrawRequest::Draw
+        DrawRequest::Draw
     }
 
     ///
@@ -1607,7 +1599,7 @@ impl BorrowingRecordBookPage {
             );
         }
 
-	DrawRequest::Draw
+        DrawRequest::Draw
     }
 
     ///
@@ -1637,7 +1629,7 @@ impl BorrowingRecordBookPage {
                 .get_center_of(grid_pos, self.customer_info_table.get_position()),
         );
 
-	DrawRequest::Draw
+        DrawRequest::Draw
     }
 
     pub fn replace_borrower_name(&mut self, game_data: &GameResource, name: &str) -> &mut Self {
@@ -1877,25 +1869,25 @@ impl BorrowingRecordBook {
             Vec::new()
         };
 
-	let next = UniTexture::new(
-	    ctx.ref_texture(TextureID::GoNextPageLeft),
-	    numeric::Point2f::new(0.0, rect.h - 32.0),
-	    numeric::Vector2f::new(0.5, 0.5),
-	    0.0,
-	    0
-	);
+        let next = UniTexture::new(
+            ctx.ref_texture(TextureID::GoNextPageLeft),
+            numeric::Point2f::new(0.0, rect.h - 32.0),
+            numeric::Vector2f::new(0.5, 0.5),
+            0.0,
+            0,
+        );
 
-	let mut prev = UniTexture::new(
-	    ctx.ref_texture(TextureID::GoNextPageRight),
-	    numeric::Point2f::new(rect.w - 32.0, rect.h - 32.0),
-	    numeric::Vector2f::new(0.5, 0.5),
-	    0.0,
-	    0
-	);
-	prev.hide();
+        let mut prev = UniTexture::new(
+            ctx.ref_texture(TextureID::GoNextPageRight),
+            numeric::Point2f::new(rect.w - 32.0, rect.h - 32.0),
+            numeric::Vector2f::new(0.5, 0.5),
+            0.0,
+            0,
+        );
+        prev.hide();
 
         BorrowingRecordBook {
-	    redraw_request: DrawRequest::InitDraw,
+            redraw_request: DrawRequest::InitDraw,
             pages: pages,
             rect: rect,
             current_page: 0,
@@ -1915,8 +1907,8 @@ impl BorrowingRecordBook {
     }
 
     pub fn add_empty_page<'a>(&mut self, ctx: &mut SuzuContext<'a>, t: Clock) -> &Self {
-	self.redraw_request = DrawRequest::Draw;
-	
+        self.redraw_request = DrawRequest::Draw;
+
         self.pages.push(BorrowingRecordBookPage::new_empty(
             ctx,
             self.rect,
@@ -1946,24 +1938,24 @@ impl BorrowingRecordBook {
     /// 存在しない場合は、falseを返す
     ///
     fn next_page<'a>(&mut self, ctx: &mut SuzuContext<'a>, t: Clock) {
-	self.redraw_request = DrawRequest::Draw;
+        self.redraw_request = DrawRequest::Draw;
         self.current_page += 1;
         if self.current_page >= self.pages.len() {
             self.add_empty_page(ctx, t);
         }
-	self.prev_page_ope_mesh.appear();
+        self.prev_page_ope_mesh.appear();
     }
 
     fn prev_page(&mut self) {
-	self.redraw_request = DrawRequest::Draw;
-	self.prev_page_ope_mesh.appear();
-	
+        self.redraw_request = DrawRequest::Draw;
+        self.prev_page_ope_mesh.appear();
+
         if self.current_page > 0 {
             self.current_page -= 1;
 
-	    if self.current_page == 0 {
-		self.prev_page_ope_mesh.hide();
-	    }
+            if self.current_page == 0 {
+                self.prev_page_ope_mesh.hide();
+            }
         }
     }
 
@@ -1975,7 +1967,8 @@ impl BorrowingRecordBook {
     ) {
         let rpoint = self.relative_point(menu_position);
         if let Some(page) = self.get_current_page_mut() {
-            self.redraw_request = page.try_insert_data_in_borrowing_books_frame(ctx, rpoint, book_info);
+            self.redraw_request =
+                page.try_insert_data_in_borrowing_books_frame(ctx, rpoint, book_info);
         }
     }
 
@@ -1996,7 +1989,8 @@ impl BorrowingRecordBook {
     ) {
         let rpoint = self.relative_point(menu_position);
         if let Some(page) = self.get_current_page_mut() {
-            self.redraw_request = page.try_insert_date_data_in_cutomer_info_frame(ctx, rpoint, date, rental_limit);
+            self.redraw_request =
+                page.try_insert_date_data_in_cutomer_info_frame(ctx, rpoint, date, rental_limit);
         }
     }
 
@@ -2013,10 +2007,11 @@ impl BorrowingRecordBook {
         ctx: &mut ggez::Context,
         menu_position: numeric::Point2f,
         customer_name: String,
-    ) {	
+    ) {
         let rpoint = self.relative_point(menu_position);
         if let Some(page) = self.get_current_page_mut() {
-            self.redraw_request = page.try_insert_customer_name_in_cutomer_info_frame(ctx, rpoint, customer_name);
+            self.redraw_request =
+                page.try_insert_customer_name_in_cutomer_info_frame(ctx, rpoint, customer_name);
         }
     }
 
@@ -2031,10 +2026,10 @@ impl BorrowingRecordBook {
     }
 
     pub fn get_current_page_condition_eval_report(&self) -> Option<BookConditionEvalReport> {
-	match self.get_current_page() {
-	    Some(page) => Some(page.create_current_book_condition_report()),
-	    None => None,
-	}
+        match self.get_current_page() {
+            Some(page) => Some(page.create_current_book_condition_report()),
+            None => None,
+        }
     }
 
     pub fn click_handler<'a>(
@@ -2061,15 +2056,14 @@ impl BorrowingRecordBook {
         ctx: &mut SuzuContext<'a>,
         point: numeric::Point2f,
     ) -> Option<SignFrameEntry> {
-	
         let rpoint = self.relative_point(point);
 
         if let Some(page) = self.get_current_page_mut() {
             let ret = page.sign_with_mouse_click(ctx, rpoint);
-	    if ret.is_some() {
-		self.redraw_request = DrawRequest::Draw;
-	    }
-	    ret
+            if ret.is_some() {
+                self.redraw_request = DrawRequest::Draw;
+            }
+            ret
         } else {
             None
         }
@@ -2080,10 +2074,10 @@ impl BorrowingRecordBook {
     }
 
     pub fn update<'a>(&mut self, ctx: &mut SuzuContext<'a>, t: Clock) {
-	if !self.is_stop() {
-	    ctx.process_utility.redraw();
-	    self.move_with_func(t);
-	}
+        if !self.is_stop() {
+            ctx.process_utility.redraw();
+            self.move_with_func(t);
+        }
     }
 
     pub fn get_book_info_frame_grid_position(
@@ -2132,11 +2126,11 @@ impl BorrowingRecordBook {
         ctx: &mut ggez::Context,
         status_index: usize,
         menu_position: numeric::Point2f,
-    ) {	
+    ) {
         let rpoint = self.relative_point(menu_position);
         if let Some(page) = self.get_current_page_mut() {
             page.insert_book_status_data(ctx, status_index as i32, rpoint);
-	    self.redraw_request = DrawRequest::Draw;
+            self.redraw_request = DrawRequest::Draw;
         }
     }
 
@@ -2144,11 +2138,11 @@ impl BorrowingRecordBook {
         &mut self,
         ctx: &mut ggez::Context,
         menu_position: numeric::Point2f,
-    ) {	
+    ) {
         let rpoint = self.relative_point(menu_position);
         if let Some(page) = self.get_current_page_mut() {
             page.remove_book_status_data(ctx, rpoint);
-	    self.redraw_request = DrawRequest::Draw;
+            self.redraw_request = DrawRequest::Draw;
         }
     }
 
@@ -2160,8 +2154,8 @@ impl BorrowingRecordBook {
         if let Some(page) = self.get_current_page() {
             Some(page.get_books_table_rows())
         } else {
-	    None
-	}
+            None
+        }
     }
 }
 
@@ -2169,19 +2163,19 @@ impl DrawableComponent for BorrowingRecordBook {
     #[inline(always)]
     fn draw(&mut self, ctx: &mut ggez::Context) -> ggez::GameResult<()> {
         if self.is_visible() {
-	    if self.redraw_request != DrawRequest::Skip {
-		self.redraw_request = DrawRequest::Skip;
-		sub_screen::stack_screen(ctx, &self.canvas);
-		
-		if self.pages.len() > 0 {
+            if self.redraw_request != DrawRequest::Skip {
+                self.redraw_request = DrawRequest::Skip;
+                sub_screen::stack_screen(ctx, &self.canvas);
+
+                if self.pages.len() > 0 {
                     self.pages.get_mut(self.current_page).unwrap().draw(ctx)?;
-		}
-		
-		self.prev_page_ope_mesh.draw(ctx)?;
-		self.next_page_ope_mesh.draw(ctx)?;
-		
-		sub_screen::pop_screen(ctx);
-	    }
+                }
+
+                self.prev_page_ope_mesh.draw(ctx)?;
+                self.next_page_ope_mesh.draw(ctx)?;
+
+                sub_screen::pop_screen(ctx);
+            }
             self.canvas.draw(ctx).unwrap();
         }
         Ok(())
@@ -2246,11 +2240,7 @@ impl MovableObject for BorrowingRecordBook {
         self.canvas.move_with_func(t);
     }
 
-    fn override_move_func(
-        &mut self,
-        move_fn: Option<GenericMoveFn>,
-        now: Clock,
-    ) {
+    fn override_move_func(&mut self, move_fn: Option<GenericMoveFn>, now: Clock) {
         self.canvas.override_move_func(move_fn, now);
     }
 
@@ -2464,7 +2454,7 @@ impl TaskItem {
         match self {
             TaskItem::Book(item) => item.enable_small(),
             TaskItem::Texture(item) => item.enable_small(),
-	    TaskItem::Coin(item) => item.enable_small(),
+            TaskItem::Coin(item) => item.enable_small(),
         }
     }
 
@@ -2472,7 +2462,7 @@ impl TaskItem {
         match self {
             TaskItem::Book(item) => item.enable_large(),
             TaskItem::Texture(item) => item.enable_large(),
-	    TaskItem::Coin(item) => item.enable_large(),
+            TaskItem::Coin(item) => item.enable_large(),
         }
     }
 
@@ -2480,7 +2470,7 @@ impl TaskItem {
         match self {
             TaskItem::Book(item) => item.get_object_type(),
             TaskItem::Texture(item) => item.get_object_type(),
-	    TaskItem::Coin(item) => item.get_object_type(),
+            TaskItem::Coin(item) => item.get_object_type(),
         }
     }
 
@@ -2488,7 +2478,7 @@ impl TaskItem {
         match self {
             TaskItem::Book(item) => item.get_object(),
             TaskItem::Texture(item) => item.get_object(),
-	    TaskItem::Coin(item) => item.get_object(),
+            TaskItem::Coin(item) => item.get_object(),
         }
     }
 
@@ -2496,7 +2486,7 @@ impl TaskItem {
         match self {
             TaskItem::Book(item) => item.get_object_mut(),
             TaskItem::Texture(item) => item.get_object_mut(),
-	    TaskItem::Coin(item) => item.get_object_mut(),
+            TaskItem::Coin(item) => item.get_object_mut(),
         }
     }
 
@@ -2504,7 +2494,7 @@ impl TaskItem {
         match self {
             TaskItem::Book(item) => item.get_movable_object(),
             TaskItem::Texture(item) => item.get_movable_object(),
-	    TaskItem::Coin(item) => item.get_movable_object(),
+            TaskItem::Coin(item) => item.get_movable_object(),
         }
     }
 
@@ -2512,7 +2502,7 @@ impl TaskItem {
         match self {
             TaskItem::Book(item) => item.get_movable_object_mut(),
             TaskItem::Texture(item) => item.get_movable_object_mut(),
-	    TaskItem::Coin(item) => item.get_movable_object_mut(),
+            TaskItem::Coin(item) => item.get_movable_object_mut(),
         }
     }
 
@@ -2520,7 +2510,7 @@ impl TaskItem {
         match self {
             TaskItem::Book(item) => item.get_effectable_object(),
             TaskItem::Texture(item) => item.get_effectable_object(),
-	    TaskItem::Coin(item) => item.get_effectable_object(),
+            TaskItem::Coin(item) => item.get_effectable_object(),
         }
     }
 
@@ -2528,7 +2518,7 @@ impl TaskItem {
         match self {
             TaskItem::Book(item) => item.is_handover_locked(),
             TaskItem::Texture(item) => item.is_handover_locked(),
-	    TaskItem::Coin(item) => item.is_handover_locked(),
+            TaskItem::Coin(item) => item.is_handover_locked(),
         }
     }
 
@@ -2536,7 +2526,7 @@ impl TaskItem {
         match self {
             TaskItem::Book(item) => item.lock_handover(),
             TaskItem::Texture(item) => item.lock_handover(),
-	    TaskItem::Coin(item) => item.lock_handover(),
+            TaskItem::Coin(item) => item.lock_handover(),
         }
     }
 
@@ -2544,7 +2534,7 @@ impl TaskItem {
         match self {
             TaskItem::Book(item) => item.unlock_handover(),
             TaskItem::Texture(item) => item.unlock_handover(),
-	    TaskItem::Coin(item) => item.unlock_handover(),
+            TaskItem::Coin(item) => item.unlock_handover(),
         }
     }
 
@@ -2552,7 +2542,7 @@ impl TaskItem {
         match self {
             TaskItem::Book(item) => item.is_shelving_box_handover_locked(),
             TaskItem::Texture(item) => item.is_shelving_box_handover_locked(),
-	    TaskItem::Coin(item) => item.is_shelving_box_handover_locked(),
+            TaskItem::Coin(item) => item.is_shelving_box_handover_locked(),
         }
     }
 
@@ -2560,7 +2550,7 @@ impl TaskItem {
         match self {
             TaskItem::Book(item) => item.lock_shelving_box_handover(),
             TaskItem::Texture(item) => item.lock_shelving_box_handover(),
-	    TaskItem::Coin(item) => item.lock_shelving_box_handover(),
+            TaskItem::Coin(item) => item.lock_shelving_box_handover(),
         }
     }
 
@@ -2568,7 +2558,7 @@ impl TaskItem {
         match self {
             TaskItem::Book(item) => item.unlock_shelving_box_handover(),
             TaskItem::Texture(item) => item.unlock_shelving_box_handover(),
-	    TaskItem::Coin(item) => item.unlock_shelving_box_handover(),
+            TaskItem::Coin(item) => item.unlock_shelving_box_handover(),
         }
     }
 
@@ -2576,7 +2566,7 @@ impl TaskItem {
         match self {
             TaskItem::Book(item) => item.get_drag_point(),
             TaskItem::Texture(item) => item.get_drag_point(),
-	    TaskItem::Coin(item) => item.get_drag_point(),
+            TaskItem::Coin(item) => item.get_drag_point(),
         }
     }
 
@@ -2584,7 +2574,7 @@ impl TaskItem {
         match self {
             TaskItem::Book(item) => item.set_drag_point(drag_point),
             TaskItem::Texture(item) => item.set_drag_point(drag_point),
-	    TaskItem::Coin(item) => item.set_drag_point(drag_point),
+            TaskItem::Coin(item) => item.set_drag_point(drag_point),
         }
     }
 }
@@ -2594,7 +2584,7 @@ impl DrawableComponent for TaskItem {
         match self {
             TaskItem::Book(item) => item.get_object_mut().draw(ctx),
             TaskItem::Texture(item) => item.get_object_mut().draw(ctx),
-	    TaskItem::Coin(item) => item.get_object_mut().draw(ctx),
+            TaskItem::Coin(item) => item.get_object_mut().draw(ctx),
         }
     }
 
@@ -2602,7 +2592,7 @@ impl DrawableComponent for TaskItem {
         match self {
             TaskItem::Book(item) => item.get_object_mut().hide(),
             TaskItem::Texture(item) => item.get_object_mut().hide(),
-	    TaskItem::Coin(item) => item.get_object_mut().hide(),
+            TaskItem::Coin(item) => item.get_object_mut().hide(),
         }
     }
 
@@ -2610,7 +2600,7 @@ impl DrawableComponent for TaskItem {
         match self {
             TaskItem::Book(item) => item.get_object_mut().appear(),
             TaskItem::Texture(item) => item.get_object_mut().appear(),
-	    TaskItem::Coin(item) => item.get_object_mut().appear(),
+            TaskItem::Coin(item) => item.get_object_mut().appear(),
         }
     }
 
@@ -2618,7 +2608,7 @@ impl DrawableComponent for TaskItem {
         match self {
             TaskItem::Book(item) => item.get_object().is_visible(),
             TaskItem::Texture(item) => item.get_object().is_visible(),
-	    TaskItem::Coin(item) => item.get_object().is_visible(),
+            TaskItem::Coin(item) => item.get_object().is_visible(),
         }
     }
 
@@ -2626,7 +2616,7 @@ impl DrawableComponent for TaskItem {
         match self {
             TaskItem::Book(item) => item.get_object_mut().set_drawing_depth(depth),
             TaskItem::Texture(item) => item.get_object_mut().set_drawing_depth(depth),
-	    TaskItem::Coin(item) => item.get_object_mut().set_drawing_depth(depth),
+            TaskItem::Coin(item) => item.get_object_mut().set_drawing_depth(depth),
         }
     }
 
@@ -2634,7 +2624,7 @@ impl DrawableComponent for TaskItem {
         match self {
             TaskItem::Book(item) => item.get_object().get_drawing_depth(),
             TaskItem::Texture(item) => item.get_object().get_drawing_depth(),
-	    TaskItem::Coin(item) => item.get_object().get_drawing_depth(),
+            TaskItem::Coin(item) => item.get_object().get_drawing_depth(),
         }
     }
 }
@@ -2722,145 +2712,157 @@ pub struct TaskManualBook {
 
 impl TaskManualBook {
     pub fn new<'a>(ctx: &mut SuzuContext<'a>, rect: numeric::Rect, depth: i8) -> Self {
-	let mut borrowing_flow = Box::new(UniTexture::new(
-	    ctx.ref_texture(TextureID::ManualPageBorrowingFlow), numeric::Point2f::new(0.0, 0.0),
-	    numeric::Vector2f::new(1.0, 1.0),
-	    0.0,
-	    0
-	));
-	borrowing_flow.fit_scale(ctx.context, numeric::Vector2f::new(rect.w, rect.h));
+        let mut borrowing_flow = Box::new(UniTexture::new(
+            ctx.ref_texture(TextureID::ManualPageBorrowingFlow),
+            numeric::Point2f::new(0.0, 0.0),
+            numeric::Vector2f::new(1.0, 1.0),
+            0.0,
+            0,
+        ));
+        borrowing_flow.fit_scale(ctx.context, numeric::Vector2f::new(rect.w, rect.h));
 
-	let mut return_flow = Box::new(UniTexture::new(
-	    ctx.ref_texture(TextureID::ManualPageReturnFlow), numeric::Point2f::new(0.0, 0.0),
-	    numeric::Vector2f::new(1.0, 1.0),
-	    0.0,
-	    0
-	));
-	return_flow.fit_scale(ctx.context, numeric::Vector2f::new(rect.w, rect.h));
-	
-	let mut title_details = Box::new(UniTexture::new(
-	    ctx.ref_texture(TextureID::ManualPageBookTitles), numeric::Point2f::new(0.0, 0.0),
-	    numeric::Vector2f::new(1.0, 1.0),
-	    0.0,
-	    0
-	));
-	title_details.fit_scale(ctx.context, numeric::Vector2f::new(rect.w, rect.h));
-	
-	let pages = vec![
-	    borrowing_flow as Box<dyn DrawableComponent>,
-	    return_flow as Box<dyn DrawableComponent>,
-	    title_details as Box<dyn DrawableComponent>,
-	];
+        let mut return_flow = Box::new(UniTexture::new(
+            ctx.ref_texture(TextureID::ManualPageReturnFlow),
+            numeric::Point2f::new(0.0, 0.0),
+            numeric::Vector2f::new(1.0, 1.0),
+            0.0,
+            0,
+        ));
+        return_flow.fit_scale(ctx.context, numeric::Vector2f::new(rect.w, rect.h));
 
-	let mut left = UniTexture::new(
-	    ctx.ref_texture(TextureID::GoNextPageLeft),
-	    numeric::Point2f::new(0.0, rect.h - 48.0),
-	    numeric::Vector2f::new(0.75, 0.75),
-	    0.0,
-	    0
-	);
-	left.hide();
+        let mut title_details = Box::new(UniTexture::new(
+            ctx.ref_texture(TextureID::ManualPageBookTitles),
+            numeric::Point2f::new(0.0, 0.0),
+            numeric::Vector2f::new(1.0, 1.0),
+            0.0,
+            0,
+        ));
+        title_details.fit_scale(ctx.context, numeric::Vector2f::new(rect.w, rect.h));
 
-	let right = UniTexture::new(
-	    ctx.ref_texture(TextureID::GoNextPageRight),
-	    numeric::Point2f::new(rect.w - 48.0, rect.h - 48.0),
-	    numeric::Vector2f::new(0.75, 0.75),
-	    0.0,
-	    0
-	);
-	
-	TaskManualBook {
-	    redraw_request: DrawRequest::InitDraw,
-	    pages: pages,
-	    go_left_texture: left,
-	    go_right_texture: right,
-	    current_page_index: 0,
-	    background: UniTexture::new(
-		ctx.ref_texture(TextureID::TextBackground),
-		numeric::Point2f::new(0.0, 0.0),
-		numeric::Vector2f::new(1.0, 1.0),
-		0.0,
-		0
-	    ),
-	    canvas: SubScreen::new(ctx.context, rect, depth, ggraphics::Color::from_rgba_u32(0xff)),
-	}
+        let pages = vec![
+            borrowing_flow as Box<dyn DrawableComponent>,
+            return_flow as Box<dyn DrawableComponent>,
+            title_details as Box<dyn DrawableComponent>,
+        ];
+
+        let mut left = UniTexture::new(
+            ctx.ref_texture(TextureID::GoNextPageLeft),
+            numeric::Point2f::new(0.0, rect.h - 48.0),
+            numeric::Vector2f::new(0.75, 0.75),
+            0.0,
+            0,
+        );
+        left.hide();
+
+        let right = UniTexture::new(
+            ctx.ref_texture(TextureID::GoNextPageRight),
+            numeric::Point2f::new(rect.w - 48.0, rect.h - 48.0),
+            numeric::Vector2f::new(0.75, 0.75),
+            0.0,
+            0,
+        );
+
+        TaskManualBook {
+            redraw_request: DrawRequest::InitDraw,
+            pages: pages,
+            go_left_texture: left,
+            go_right_texture: right,
+            current_page_index: 0,
+            background: UniTexture::new(
+                ctx.ref_texture(TextureID::TextBackground),
+                numeric::Point2f::new(0.0, 0.0),
+                numeric::Vector2f::new(1.0, 1.0),
+                0.0,
+                0,
+            ),
+            canvas: SubScreen::new(
+                ctx.context,
+                rect,
+                depth,
+                ggraphics::Color::from_rgba_u32(0xff),
+            ),
+        }
     }
 
     fn check_move_page_icon_visibility(&mut self) {
-	self.go_right_texture.appear();
-	self.go_left_texture.appear();
-	
-	if self.current_page_index == 0 {
-	    self.go_left_texture.hide();
-	} else if self.current_page_index == self.pages.len() - 1 {
-	    self.go_right_texture.hide();
-	}
+        self.go_right_texture.appear();
+        self.go_left_texture.appear();
+
+        if self.current_page_index == 0 {
+            self.go_left_texture.hide();
+        } else if self.current_page_index == self.pages.len() - 1 {
+            self.go_right_texture.hide();
+        }
     }
 
     fn go_right<'a>(&mut self, ctx: &mut SuzuContext<'a>) {
-	if self.current_page_index != self.pages.len() - 1 {
-	    ctx.process_utility.redraw();
-	    self.redraw_request = DrawRequest::Draw;
-	    self.current_page_index += 1;
-	    self.check_move_page_icon_visibility();
-	}
+        if self.current_page_index != self.pages.len() - 1 {
+            ctx.process_utility.redraw();
+            self.redraw_request = DrawRequest::Draw;
+            self.current_page_index += 1;
+            self.check_move_page_icon_visibility();
+        }
     }
 
     fn go_left<'a>(&mut self, ctx: &mut SuzuContext<'a>) {
-	if self.current_page_index != 0 {
-	    self.redraw_request = DrawRequest::Draw;
-	    ctx.process_utility.redraw();
-	    self.current_page_index -= 1;
-	    self.check_move_page_icon_visibility();
-	}
+        if self.current_page_index != 0 {
+            self.redraw_request = DrawRequest::Draw;
+            ctx.process_utility.redraw();
+            self.current_page_index -= 1;
+            self.check_move_page_icon_visibility();
+        }
     }
 
     fn draw_current_page(&mut self, ctx: &mut ggez::Context) -> ggez::GameResult<()> {
-	if let Some(page) = self.pages.get_mut(self.current_page_index) {
-	    page.draw(ctx)?;
-	}
+        if let Some(page) = self.pages.get_mut(self.current_page_index) {
+            page.draw(ctx)?;
+        }
 
-	Ok(())
+        Ok(())
     }
 
-    pub fn click_handler<'a>(&mut self, ctx: &mut SuzuContext<'a>, point: numeric::Point2f) -> bool {
-	if !self.canvas.contains(point) {
-	    return false;
-	}
-	
-	let rpoint = self.canvas.relative_point(point);
-	if self.go_left_texture.contains(ctx.context, rpoint) {
-	    self.go_left(ctx);
-	} else if self.go_right_texture.contains(ctx.context, rpoint) {
-	    self.go_right(ctx);
-	}
+    pub fn click_handler<'a>(
+        &mut self,
+        ctx: &mut SuzuContext<'a>,
+        point: numeric::Point2f,
+    ) -> bool {
+        if !self.canvas.contains(point) {
+            return false;
+        }
 
-	true
+        let rpoint = self.canvas.relative_point(point);
+        if self.go_left_texture.contains(ctx.context, rpoint) {
+            self.go_left(ctx);
+        } else if self.go_right_texture.contains(ctx.context, rpoint) {
+            self.go_right(ctx);
+        }
+
+        true
     }
 }
 
 impl DrawableComponent for TaskManualBook {
     fn draw(&mut self, ctx: &mut ggez::Context) -> ggez::GameResult<()> {
-	if self.is_visible() {
-	    if self.redraw_request != DrawRequest::Skip {
-		self.redraw_request = DrawRequest::Skip;
-		println!("draw");
-		
-		sub_screen::stack_screen(ctx, &self.canvas);
-		
-		self.background.draw(ctx)?;
+        if self.is_visible() {
+            if self.redraw_request != DrawRequest::Skip {
+                self.redraw_request = DrawRequest::Skip;
+                println!("draw");
 
-		self.draw_current_page(ctx)?;
-		
-		self.go_left_texture.draw(ctx)?;
-		self.go_right_texture.draw(ctx)?;
-		
-		sub_screen::pop_screen(ctx);
-	    }
+                sub_screen::stack_screen(ctx, &self.canvas);
+
+                self.background.draw(ctx)?;
+
+                self.draw_current_page(ctx)?;
+
+                self.go_left_texture.draw(ctx)?;
+                self.go_right_texture.draw(ctx)?;
+
+                sub_screen::pop_screen(ctx);
+            }
             self.canvas.draw(ctx).unwrap();
-	}
+        }
 
-	Ok(())
+        Ok(())
     }
 
     fn hide(&mut self) {

@@ -64,20 +64,24 @@ impl ToString for DayOfWeek {
 }
 
 pub fn max<T>(a: T, b: T) -> T
-where T: PartialOrd {
+where
+    T: PartialOrd,
+{
     if a > b {
-	a
+        a
     } else {
-	b
+        b
     }
 }
 
 pub fn min<T>(a: T, b: T) -> T
-where T: PartialOrd {
+where
+    T: PartialOrd,
+{
     if a < b {
-	a
+        a
     } else {
-	b
+        b
     }
 }
 
@@ -94,12 +98,14 @@ macro_rules! perf_measure {
 #[macro_export]
 macro_rules! parse_toml_file {
     ( $path:expr) => {{
-	let content = match std::fs::read_to_string($path) {
+        let content = match std::fs::read_to_string($path) {
             Ok(c) => c,
             Err(_) => panic!("Failed to read: {}", $path),
         };
 
-	content.parse::<toml::Value>().expect("Failed to parse toml file")
+        content
+            .parse::<toml::Value>()
+            .expect("Failed to parse toml file")
     }};
 }
 
@@ -108,8 +114,11 @@ pub fn clock_needle_angle(hour: u8, minute: u8) -> (f32, f32) {
 
     let angle_per_hour = 2.0 * std::f32::consts::PI / (12.0 * 60.0);
     let angle_per_minute = 2.0 * std::f32::consts::PI / 60.0;
-    
-    (((hour as f32 * 60.0) + minute as f32) * angle_per_hour, minute as f32 * angle_per_minute)
+
+    (
+        ((hour as f32 * 60.0) + minute as f32) * angle_per_hour,
+        minute as f32 * angle_per_minute,
+    )
 }
 
 pub fn clock_needle_angle_inverse(hour: u8, minute: u8) -> (f32, f32) {
@@ -121,21 +130,29 @@ pub fn clock_needle_angle_inverse(hour: u8, minute: u8) -> (f32, f32) {
     t
 }
 
-pub fn find_proper_window_position(window_rect: numeric::Rect, outer_rect: numeric::Rect) -> numeric::Point2f {
+pub fn find_proper_window_position(
+    window_rect: numeric::Rect,
+    outer_rect: numeric::Rect,
+) -> numeric::Point2f {
     let rect_pos = window_rect.point();
     let mut found_pos = numeric::Point2f::new(rect_pos.x, rect_pos.y - window_rect.h);
-    let window_rect = numeric::Rect::new(window_rect.x, rect_pos.y - window_rect.h, window_rect.w, window_rect.h);
-    
+    let window_rect = numeric::Rect::new(
+        window_rect.x,
+        rect_pos.y - window_rect.h,
+        window_rect.w,
+        window_rect.h,
+    );
+
     if window_rect.right() > outer_rect.right() {
-	found_pos.x -= window_rect.right() - outer_rect.right();
+        found_pos.x -= window_rect.right() - outer_rect.right();
     } else if window_rect.left() < outer_rect.left() {
-	found_pos.x += outer_rect.left() - window_rect.right();
+        found_pos.x += outer_rect.left() - window_rect.right();
     }
 
     if window_rect.bottom() > outer_rect.bottom() {
-	found_pos.y -= window_rect.bottom() - outer_rect.bottom();
+        found_pos.y -= window_rect.bottom() - outer_rect.bottom();
     } else if window_rect.top() < outer_rect.top() {
-	found_pos.y += outer_rect.top() - window_rect.top();
+        found_pos.y += outer_rect.top() - window_rect.top();
     }
 
     found_pos.into()
@@ -149,7 +166,7 @@ pub fn get_unique_id() -> u64 {
     unique_id.with(|id| {
         // インクリメント
         *id.borrow_mut() += 1;
-	id.borrow().clone()
+        id.borrow().clone()
     })
 }
 
@@ -158,7 +175,7 @@ pub fn random_point_in_rect(rect: numeric::Rect) -> numeric::Point2f {
     let begin_y = rect.top() as usize;
 
     numeric::Point2f::new(
-	(begin_x + rand::random::<usize>() % rect.w as usize) as f32,
-	(begin_y + rand::random::<usize>() % rect.h as usize) as f32,
+        (begin_x + rand::random::<usize>() % rect.w as usize) as f32,
+        (begin_y + rand::random::<usize>() % rect.h as usize) as f32,
     )
 }

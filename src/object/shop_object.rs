@@ -46,7 +46,7 @@ impl SelectBookWindowContents {
         game_data: &GameResource,
         font_info: FontInformation,
         window_rect: numeric::Rect,
-	select_limit: usize,
+        select_limit: usize,
     ) -> SelectBookWindowContents {
         let mut table_frame = TableFrame::new(
             game_data,
@@ -71,7 +71,7 @@ impl SelectBookWindowContents {
             book_font: font_info,
             drwob_essential: DrawableObjectEssential::new(true, 0),
             position: numeric::Point2f::new(0.0, 0.0),
-	    select_limit: select_limit,
+            select_limit: select_limit,
         }
     }
 
@@ -147,7 +147,7 @@ impl SelectBookWindowContents {
     }
 
     pub fn remaining_books_capacity(&self) -> usize {
-	self.select_limit - self.book_title_text.len()
+        self.select_limit - self.book_title_text.len()
     }
 }
 
@@ -200,8 +200,8 @@ impl Scrollable for SelectBookWindowContents {
         _: numeric::Point2f,
         offset: numeric::Vector2f,
     ) {
-	let offset = numeric::Vector2f::new(offset.x, 0.0);
-	let start_position = self.table_frame.get_position();
+        let offset = numeric::Vector2f::new(offset.x, 0.0);
+        let start_position = self.table_frame.get_position();
         self.table_frame.move_diff(offset);
 
         if self.table_frame.get_position().x < self.table_frame_init_position.x {
@@ -216,13 +216,13 @@ impl Scrollable for SelectBookWindowContents {
             ));
         }
 
-	let end_position = self.table_frame.get_position();
-	
-	let offset = numeric::Vector2f::new(
-	    end_position.x - start_position.x,
-	    end_position.y - start_position.y,
-	);
-	
+        let end_position = self.table_frame.get_position();
+
+        let offset = numeric::Vector2f::new(
+            end_position.x - start_position.x,
+            end_position.y - start_position.y,
+        );
+
         for vtext in &mut self.book_title_text {
             vtext.move_diff(offset);
         }
@@ -251,7 +251,7 @@ impl SelectBookWindow {
         window_rect: numeric::Rect,
         title: &str,
         book_info: Vec<BookInformation>,
-	select_limit: usize,
+        select_limit: usize,
     ) -> Self {
         let appr_frame = TileBatchFrame::new(
             ctx.resource,
@@ -312,7 +312,8 @@ impl SelectBookWindow {
             numeric::Vector2u::new(0, 1)
         );
 
-        let contents = SelectBookWindowContents::new(ctx.resource, font_info, window_rect, select_limit);
+        let contents =
+            SelectBookWindowContents::new(ctx.resource, font_info, window_rect, select_limit);
 
         let background = UniTexture::new(
             ctx.ref_texture(TextureID::TextBackground),
@@ -391,7 +392,7 @@ impl SelectBookWindow {
     }
 
     pub fn remaining_books_capacity(&self) -> usize {
-	self.contents.ref_object().remaining_books_capacity()
+        self.contents.ref_object().remaining_books_capacity()
     }
 }
 
@@ -494,20 +495,17 @@ impl SelectShelvingBookUI {
         box_book_info.sort_by(|a, b| a.billing_number.cmp(&b.billing_number));
         shelving_book.sort_by(|a, b| a.billing_number.cmp(&b.billing_number));
 
-	let texture = Box::new(UniTexture::new(
+        let texture = Box::new(UniTexture::new(
             ctx.ref_texture(TextureID::ArrowRight),
             numeric::Point2f::new(0.0, 0.0),
             numeric::Vector2f::new(0.5, 0.5),
             0.0,
             0,
         ));
-	let move_box_to_shelving_button = SelectButton::new(
-            ctx,
-            numeric::Rect::new(650.0, 200.0, 100.0, 50.0),
-	    texture
-        );
+        let move_box_to_shelving_button =
+            SelectButton::new(ctx, numeric::Rect::new(650.0, 200.0, 100.0, 50.0), texture);
 
-	let texture = Box::new(UniTexture::new(
+        let texture = Box::new(UniTexture::new(
             ctx.ref_texture(TextureID::ArrowLeft),
             numeric::Point2f::new(0.0, 0.0),
             numeric::Vector2f::new(0.5, 0.5),
@@ -515,12 +513,9 @@ impl SelectShelvingBookUI {
             0,
         ));
 
-	let move_shelving_to_box_button = SelectButton::new(
-            ctx,
-            numeric::Rect::new(650.0, 500.0, 100.0, 50.0),
-            texture,
-        );
-	
+        let move_shelving_to_box_button =
+            SelectButton::new(ctx, numeric::Rect::new(650.0, 500.0, 100.0, 50.0), texture);
+
         SelectShelvingBookUI {
             canvas: SubScreen::new(ctx.context, ui_rect, 0, ggraphics::Color::from_rgba_u32(0)),
             box_info_window: SelectBookWindow::new(
@@ -528,14 +523,14 @@ impl SelectShelvingBookUI {
                 numeric::Rect::new(70.0, 50.0, 550.0, 650.0),
                 "返却済み",
                 box_book_info.clone(),
-		65535,
+                65535,
             ),
             shelving_window: SelectBookWindow::new(
                 ctx,
                 numeric::Rect::new(770.0, 50.0, 550.0, 650.0),
                 "配架中",
                 shelving_book.clone(),
-		5,
+                5,
             ),
             boxed_books: box_book_info,
             shelving_books: shelving_book,
@@ -574,16 +569,21 @@ impl SelectShelvingBookUI {
         // 選択された本のインデックスを降順にソート
         self.box_info_window.sort_selecting_index_less();
 
-	let remaining_capacity = self.shelving_window.remaining_books_capacity();
+        let remaining_capacity = self.shelving_window.remaining_books_capacity();
 
         // インデックスは降順でソートされているため、本のデータを後ろから取り出していくことになる
         // したがって、インデックスをそのまま使える。
         // 結果的に、選択された本をすべてshelving_booksに追加することができる
-        for (enum_index, selecting_index) in self.box_info_window.get_selecting_index().iter().enumerate() {
-	    // 許容限界に達したので、追加は中止する
-	    if remaining_capacity == enum_index {
-		break;
-	    }
+        for (enum_index, selecting_index) in self
+            .box_info_window
+            .get_selecting_index()
+            .iter()
+            .enumerate()
+        {
+            // 許容限界に達したので、追加は中止する
+            if remaining_capacity == enum_index {
+                break;
+            }
             debug::debug_screen_push_text(&format!("remove book: {}", selecting_index));
             let select_book = self.boxed_books.swap_remove(*selecting_index);
             self.shelving_books.push(select_book);
@@ -834,13 +834,13 @@ impl SelectStoringBookWindow {
             numeric::Vector2u::new(table_pos_x, 2)
         );
 
-	let background_texture = UniTexture::new(
-	    ctx.ref_texture(TextureID::TextBackground),
-	    numeric::Point2f::new(0.0, 0.0),
-	    numeric::Vector2f::new(1.0, 1.0),
-	    0.0,
-	    0
-	); 
+        let background_texture = UniTexture::new(
+            ctx.ref_texture(TextureID::TextBackground),
+            numeric::Point2f::new(0.0, 0.0),
+            numeric::Vector2f::new(1.0, 1.0),
+            0.0,
+            0,
+        );
 
         let mut window = SelectStoringBookWindow {
             canvas: SubScreen::new(
@@ -865,7 +865,7 @@ impl SelectStoringBookWindow {
             book_title_text: Vec::new(),
             selecting_book_index: Vec::new(),
             book_storable: Vec::new(),
-	    background: background_texture,
+            background: background_texture,
             book_font: normal_font_info,
         };
 
@@ -980,7 +980,7 @@ impl DrawableComponent for SelectStoringBookWindow {
         if self.is_visible() {
             sub_screen::stack_screen(ctx, &self.canvas);
 
-	    self.background.draw(ctx)?;
+            self.background.draw(ctx)?;
             self.appearance_frame.draw(ctx)?;
             self.table_frame.draw(ctx)?;
 
@@ -1102,35 +1102,29 @@ impl SelectStoreBookUI {
     ) -> Self {
         shelving_book.sort_by(|a, b| a.billing_number.cmp(&b.billing_number));
 
-	let texture = Box::new(UniTexture::new(
+        let texture = Box::new(UniTexture::new(
             ctx.ref_texture(TextureID::StoreButton),
             numeric::Point2f::new(0.0, 0.0),
             numeric::Vector2f::new(0.5, 0.5),
             0.0,
             0,
         ));
-	let store_button = SelectButton::new(
-            ctx,
-            numeric::Rect::new(1000.0, 200.0, 100.0, 50.0),
-            texture,
-        );
+        let store_button =
+            SelectButton::new(ctx, numeric::Rect::new(1000.0, 200.0, 100.0, 50.0), texture);
 
-	let texture = Box::new(UniTexture::new(
+        let texture = Box::new(UniTexture::new(
             ctx.ref_texture(TextureID::ResetButton),
             numeric::Point2f::new(0.0, 0.0),
             numeric::Vector2f::new(0.5, 0.5),
             0.0,
             0,
         ));
-	let reset_select_button = SelectButton::new(
-            ctx,
-            numeric::Rect::new(1000.0, 500.0, 100.0, 50.0),
-            texture,
-        );
-	
+        let reset_select_button =
+            SelectButton::new(ctx, numeric::Rect::new(1000.0, 500.0, 100.0, 50.0), texture);
+
         SelectStoreBookUI {
             canvas: SubScreen::new(ctx.context, ui_rect, 0, ggraphics::Color::from_rgba_u32(0)),
-	    select_book_window: SelectStoringBookWindow::new(
+            select_book_window: SelectStoringBookWindow::new(
                 ctx,
                 numeric::Rect::new(70.0, 50.0, 850.0, 690.0),
                 "配架中",
@@ -1180,7 +1174,7 @@ impl DrawableComponent for SelectStoreBookUI {
     fn draw(&mut self, ctx: &mut ggez::Context) -> ggez::GameResult<()> {
         if self.is_visible() {
             sub_screen::stack_screen(ctx, &self.canvas);
-	    
+
             self.select_book_window.draw(ctx)?;
 
             self.reset_select_button.draw(ctx)?;
@@ -1361,7 +1355,7 @@ impl ShelvingDetailContents {
             ggraphics::Color::from_rgba_u32(0xff),
         );
 
-	for (index, book_info) in player_shelving.iter().enumerate() {
+        for (index, book_info) in player_shelving.iter().enumerate() {
             let mut billing_number_text = VerticalText::new(
                 format!("{}", number_to_jk(book_info.billing_number as u64)),
                 numeric::Point2f::new(0.0, 0.0),
@@ -1370,7 +1364,7 @@ impl ShelvingDetailContents {
                 0,
                 book_font_information.clone(),
             );
-	    
+
             let mut book_title_text = VerticalText::new(
                 book_info.name.clone(),
                 numeric::Point2f::new(0.0, 0.0),
@@ -1379,9 +1373,9 @@ impl ShelvingDetailContents {
                 0,
                 book_font_information.clone(),
             );
-	    
+
             let table_pos_x = (self.book_info_frame.get_rows() - 2 - index) as u32;
-	    
+
             set_table_frame_cell_center!(
                 ctx.context,
                 self.book_info_frame,
@@ -1394,7 +1388,7 @@ impl ShelvingDetailContents {
                 book_title_text,
                 numeric::Vector2u::new(table_pos_x, 1)
             );
-	    
+
             self.book_billing_number_text.push(billing_number_text);
             self.book_title_text.push(book_title_text);
         }
@@ -1422,10 +1416,10 @@ impl ShelvingDetailContents {
     /// # 再描画要求有り
     ///
     pub fn move_and_effect<'a>(&mut self, ctx: &mut SuzuContext<'a>, t: Clock) {
-	if !self.canvas.is_stop() {
-	    self.canvas.move_with_func(t);
-	    ctx.process_utility.redraw();
-	}
+        if !self.canvas.is_stop() {
+            self.canvas.move_with_func(t);
+            ctx.process_utility.redraw();
+        }
     }
 }
 
@@ -1760,10 +1754,10 @@ impl ShopMenu {
     /// # 再描画要求有り
     ///
     fn move_and_effect<'a>(&mut self, ctx: &mut SuzuContext<'a>, t: Clock) {
-	if !self.canvas.is_stop() {
-	    self.canvas.move_with_func(t);
-	    ctx.process_utility.redraw();
-	}
+        if !self.canvas.is_stop() {
+            self.canvas.move_with_func(t);
+            ctx.process_utility.redraw();
+        }
     }
 }
 
@@ -1921,7 +1915,6 @@ impl DrawableComponent for ShopDetailMenuContents {
     }
 }
 
-
 pub struct SimpleBookListViewer {
     canvas: SubScreen,
     books_data: Vec<BookInformation>,
@@ -1937,42 +1930,48 @@ impl SimpleBookListViewer {
     ) -> Self {
         books_data.sort_by(|a, b| a.billing_number.cmp(&b.billing_number));
 
-	let font_info = FontInformation::new(
-	    ctx.resource.get_font(FontID::Cinema),
-	    numeric::Vector2f::new(28.0, 28.0),
-	    ggraphics::Color::from_rgba_u32(0xff)
-	);
+        let font_info = FontInformation::new(
+            ctx.resource.get_font(FontID::Cinema),
+            numeric::Vector2f::new(28.0, 28.0),
+            ggraphics::Color::from_rgba_u32(0xff),
+        );
 
-	let text_texture = Box::new(
-	    TextButtonTexture::new(
-		ctx,
-		numeric::Point2f::new(0.0, 0.0),
-		"確認".to_string(),
-		font_info,
-		8.0,
-		ggraphics::Color::from_rgba_u32(0xe8b5a2ff),
-		0
-	    )
-	);
-	
-	let mut ok_button = SelectButton::new(
+        let text_texture = Box::new(TextButtonTexture::new(
+            ctx,
+            numeric::Point2f::new(0.0, 0.0),
+            "確認".to_string(),
+            font_info,
+            8.0,
+            ggraphics::Color::from_rgba_u32(0xe8b5a2ff),
+            0,
+        ));
+
+        let mut ok_button = SelectButton::new(
             ctx,
             numeric::Rect::new(650.0, 200.0, 100.0, 50.0),
-	    text_texture,
+            text_texture,
         );
-	ok_button.make_center(ctx.context, numeric::Point2f::new(window_rect.w - 100.0, window_rect.h - 40.0));
-	
+        ok_button.make_center(
+            ctx.context,
+            numeric::Point2f::new(window_rect.w - 100.0, window_rect.h - 40.0),
+        );
+
         SimpleBookListViewer {
-            canvas: SubScreen::new(ctx.context, window_rect, 0, ggraphics::Color::from_rgba_u32(0)),
+            canvas: SubScreen::new(
+                ctx.context,
+                window_rect,
+                0,
+                ggraphics::Color::from_rgba_u32(0),
+            ),
             books_window: SelectBookWindow::new(
                 ctx,
                 numeric::Rect::new(0.0, 0.0, window_rect.w, window_rect.h - 40.0),
                 "新規納品済",
                 books_data.clone(),
-		65535,
+                65535,
             ),
             books_data: books_data,
-	    ok_button: ok_button,
+            ok_button: ok_button,
         }
     }
 
@@ -2014,10 +2013,8 @@ impl SimpleBookListViewer {
         point: numeric::Point2f,
     ) -> bool {
         // それぞれのオブジェクトに処理を渡すだけ
-	let rpoint = self.canvas.relative_point(point);
-        self
-            .ok_button
-            .contains(ctx.context, rpoint)
+        let rpoint = self.canvas.relative_point(point);
+        self.ok_button.contains(ctx.context, rpoint)
     }
 }
 
@@ -2027,7 +2024,7 @@ impl DrawableComponent for SimpleBookListViewer {
             sub_screen::stack_screen(ctx, &self.canvas);
 
             self.books_window.draw(ctx)?;
-	    self.ok_button.draw(ctx)?;
+            self.ok_button.draw(ctx)?;
 
             sub_screen::pop_screen(ctx);
             self.canvas.draw(ctx).unwrap();
@@ -2206,7 +2203,7 @@ impl ShopSpecialObject {
             event_list: DelayEventList::new(),
             shelving_select_ui: None,
             storing_select_ui: None,
-	    new_books_viewer: None,
+            new_books_viewer: None,
             drwob_essential: DrawableObjectEssential::new(true, 0),
         }
     }
@@ -2259,13 +2256,11 @@ impl ShopSpecialObject {
     ) {
         if self.new_books_viewer.is_none() {
             self.new_books_viewer = Some(MovableWrap::new(
-                Box::new(
-		    SimpleBookListViewer::new(
-			ctx,
-			numeric::Rect::new(283.0, -768.0, 800.0, 730.0),
-			new_books
-		    )
-		),
+                Box::new(SimpleBookListViewer::new(
+                    ctx,
+                    numeric::Rect::new(283.0, -768.0, 800.0, 730.0),
+                    new_books,
+                )),
                 move_fn::devide_distance(numeric::Point2f::new(283.0, 28.0), 0.4),
                 t,
             ));
@@ -2332,9 +2327,9 @@ impl ShopSpecialObject {
     }
 
     pub fn is_enable_now(&self) -> bool {
-        self.shelving_select_ui.is_some() ||
-	    self.storing_select_ui.is_some() ||
-	    self.new_books_viewer.is_some()
+        self.shelving_select_ui.is_some()
+            || self.storing_select_ui.is_some()
+            || self.new_books_viewer.is_some()
     }
 
     pub fn mouse_down_action<'a>(
@@ -2352,10 +2347,10 @@ impl ShopSpecialObject {
             ui.on_click(ctx, t, button, point);
         }
 
-	if let Some(ui) = self.new_books_viewer.as_mut() {
+        if let Some(ui) = self.new_books_viewer.as_mut() {
             if ui.click_and_maybe_hide(ctx, t, button, point) {
-		self.hide_new_books_viewer(t);
-	    }
+                self.hide_new_books_viewer(t);
+            }
         }
     }
 
@@ -2370,7 +2365,7 @@ impl ShopSpecialObject {
             ui.scroll_handler(ctx, point, x, y);
         }
 
-	if let Some(ui) = self.new_books_viewer.as_mut() {
+        if let Some(ui) = self.new_books_viewer.as_mut() {
             ui.scroll_handler(ctx, point, x, y);
         }
     }
@@ -2383,17 +2378,17 @@ impl ShopSpecialObject {
 
         if let Some(ui) = self.shelving_select_ui.as_mut() {
             ui.move_with_func(t);
-	    ctx.process_utility.redraw();
+            ctx.process_utility.redraw();
         }
 
         if let Some(storing_ui) = self.storing_select_ui.as_mut() {
             storing_ui.move_with_func(t);
-	    ctx.process_utility.redraw();
+            ctx.process_utility.redraw();
         }
 
-	if let Some(ui) = self.new_books_viewer.as_mut() {
+        if let Some(ui) = self.new_books_viewer.as_mut() {
             ui.move_with_func(t);
-	    ctx.process_utility.redraw();
+            ctx.process_utility.redraw();
         }
     }
 }
@@ -2409,7 +2404,7 @@ impl DrawableComponent for ShopSpecialObject {
                 store_ui.draw(ctx)?;
             }
 
-	    if let Some(ui) = self.new_books_viewer.as_mut() {
+            if let Some(ui) = self.new_books_viewer.as_mut() {
                 ui.draw(ctx)?;
             }
         }
@@ -2503,135 +2498,133 @@ pub struct DrawableShopClock {
 
 impl DrawableShopClock {
     pub fn from_toml<'a>(ctx: &mut SuzuContext<'a>, path: &str, time: ShopClock) -> Self {
-	let root = parse_toml_file!(path);
+        let root = parse_toml_file!(path);
 
-	let background_texture_id = root["background-texture"].as_str().unwrap();
-	let short_needle_texture_id = root["short-needle-texture"].as_str().unwrap();
-	let long_needle_texture_id = root["long-needle-texture"].as_str().unwrap();
+        let background_texture_id = root["background-texture"].as_str().unwrap();
+        let short_needle_texture_id = root["short-needle-texture"].as_str().unwrap();
+        let long_needle_texture_id = root["long-needle-texture"].as_str().unwrap();
 
-	let background_pos = {
-	    let clock_texture_position = root["clock-texture-position"].as_table().unwrap();
-	    numeric::Point2f::new(
-		clock_texture_position["x"].as_float().unwrap() as f32,
-		clock_texture_position["y"].as_float().unwrap() as f32,
-	    )
-	};
+        let background_pos = {
+            let clock_texture_position = root["clock-texture-position"].as_table().unwrap();
+            numeric::Point2f::new(
+                clock_texture_position["x"].as_float().unwrap() as f32,
+                clock_texture_position["y"].as_float().unwrap() as f32,
+            )
+        };
 
-	let background_origin = {
-	    let clock_texture_position = root["clock-origin"].as_table().unwrap();
-	    numeric::Vector2f::new(
-		clock_texture_position["x"].as_float().unwrap() as f32,
-		clock_texture_position["y"].as_float().unwrap() as f32,
-	    )
-	};
+        let background_origin = {
+            let clock_texture_position = root["clock-origin"].as_table().unwrap();
+            numeric::Vector2f::new(
+                clock_texture_position["x"].as_float().unwrap() as f32,
+                clock_texture_position["y"].as_float().unwrap() as f32,
+            )
+        };
 
-	let background_scale = {
-	    let clock_texture_position = root["clock-texture-scale"].as_table().unwrap();
-	    numeric::Vector2f::new(
-		clock_texture_position["x"].as_float().unwrap() as f32,
-		clock_texture_position["y"].as_float().unwrap() as f32,
-	    )
-	};
+        let background_scale = {
+            let clock_texture_position = root["clock-texture-scale"].as_table().unwrap();
+            numeric::Vector2f::new(
+                clock_texture_position["x"].as_float().unwrap() as f32,
+                clock_texture_position["y"].as_float().unwrap() as f32,
+            )
+        };
 
-	let short_needle_scale = {
-	    let clock_texture_position = root["short-needle-texture-scale"].as_table().unwrap();
-	    numeric::Vector2f::new(
-		clock_texture_position["x"].as_float().unwrap() as f32,
-		clock_texture_position["y"].as_float().unwrap() as f32,
-	    )
-	};
+        let short_needle_scale = {
+            let clock_texture_position = root["short-needle-texture-scale"].as_table().unwrap();
+            numeric::Vector2f::new(
+                clock_texture_position["x"].as_float().unwrap() as f32,
+                clock_texture_position["y"].as_float().unwrap() as f32,
+            )
+        };
 
-	let long_needle_scale = {
-	    let clock_texture_position = root["long-needle-texture-scale"].as_table().unwrap();
-	    numeric::Vector2f::new(
-		clock_texture_position["x"].as_float().unwrap() as f32,
-		clock_texture_position["y"].as_float().unwrap() as f32,
-	    )
-	};
+        let long_needle_scale = {
+            let clock_texture_position = root["long-needle-texture-scale"].as_table().unwrap();
+            numeric::Vector2f::new(
+                clock_texture_position["x"].as_float().unwrap() as f32,
+                clock_texture_position["y"].as_float().unwrap() as f32,
+            )
+        };
 
-	let short_needle_offset = {
-	    let clock_texture_position = root["short-needle-offset"].as_table().unwrap();
-	    numeric::Vector2f::new(
-		clock_texture_position["x"].as_float().unwrap() as f32,
-		clock_texture_position["y"].as_float().unwrap() as f32,
-	    )
-	};
+        let short_needle_offset = {
+            let clock_texture_position = root["short-needle-offset"].as_table().unwrap();
+            numeric::Vector2f::new(
+                clock_texture_position["x"].as_float().unwrap() as f32,
+                clock_texture_position["y"].as_float().unwrap() as f32,
+            )
+        };
 
-	let long_needle_offset = {
-	    let clock_texture_position = root["long-needle-offset"].as_table().unwrap();
-	    numeric::Vector2f::new(
-		clock_texture_position["x"].as_float().unwrap() as f32,
-		clock_texture_position["y"].as_float().unwrap() as f32,
-	    )
-	};
-	
-	let background_texture = UniTexture::new(
-	    ctx.ref_texture(TextureID::from_str(background_texture_id).expect("Invalid TextureID")),
-	    background_pos,
-	    background_scale,
-	    0.0,
-	    0
-	);
+        let long_needle_offset = {
+            let clock_texture_position = root["long-needle-offset"].as_table().unwrap();
+            numeric::Vector2f::new(
+                clock_texture_position["x"].as_float().unwrap() as f32,
+                clock_texture_position["y"].as_float().unwrap() as f32,
+            )
+        };
 
-	let (short_needle_angle, long_needle_angle) =
-	    util::clock_needle_angle_inverse(
-		time.hour,
-		time.minute
-	    );
+        let background_texture = UniTexture::new(
+            ctx.ref_texture(TextureID::from_str(background_texture_id).expect("Invalid TextureID")),
+            background_pos,
+            background_scale,
+            0.0,
+            0,
+        );
 
-	let mut long_needle_texture = UniTexture::new(
-	    ctx.ref_texture(TextureID::from_str(long_needle_texture_id).expect("Invalid TextureID")),
-	    background_pos + background_origin + long_needle_offset,
-	    long_needle_scale,
-	    long_needle_angle,
-	    0
-	);
+        let (short_needle_angle, long_needle_angle) =
+            util::clock_needle_angle_inverse(time.hour, time.minute);
 
-	let mut short_needle_texture = UniTexture::new(
-	    ctx.ref_texture(TextureID::from_str(short_needle_texture_id).expect("Invalid TextureID")),
-	    background_pos + background_origin + short_needle_offset,
-	    short_needle_scale,
-	    short_needle_angle,
-	    0
-	);
+        let mut long_needle_texture = UniTexture::new(
+            ctx.ref_texture(
+                TextureID::from_str(long_needle_texture_id).expect("Invalid TextureID"),
+            ),
+            background_pos + background_origin + long_needle_offset,
+            long_needle_scale,
+            long_needle_angle,
+            0,
+        );
 
-	long_needle_texture.set_transform_offset(numeric::Point2f::new(0.5, 0.0));
-	short_needle_texture.set_transform_offset(numeric::Point2f::new(0.5, 0.0));
-	
-	DrawableShopClock {
-	    background: background_texture,
-	    long_needle: long_needle_texture,
-	    short_needle: short_needle_texture,
-	    time: time,
-	    center_position: background_origin,
-	    drwob_essential: DrawableObjectEssential::new(true, 0),
-	}
+        let mut short_needle_texture = UniTexture::new(
+            ctx.ref_texture(
+                TextureID::from_str(short_needle_texture_id).expect("Invalid TextureID"),
+            ),
+            background_pos + background_origin + short_needle_offset,
+            short_needle_scale,
+            short_needle_angle,
+            0,
+        );
+
+        long_needle_texture.set_transform_offset(numeric::Point2f::new(0.5, 0.0));
+        short_needle_texture.set_transform_offset(numeric::Point2f::new(0.5, 0.0));
+
+        DrawableShopClock {
+            background: background_texture,
+            long_needle: long_needle_texture,
+            short_needle: short_needle_texture,
+            time: time,
+            center_position: background_origin,
+            drwob_essential: DrawableObjectEssential::new(true, 0),
+        }
     }
 
     pub fn update_needle_angle(&mut self) {
-	let (short_needle_angle, long_needle_angle) =
-	    util::clock_needle_angle_inverse(
-		self.time.hour,
-		self.time.minute
-	    );
+        let (short_needle_angle, long_needle_angle) =
+            util::clock_needle_angle_inverse(self.time.hour, self.time.minute);
 
-	self.long_needle.set_rotation(long_needle_angle);
-	self.short_needle.set_rotation(short_needle_angle);
+        self.long_needle.set_rotation(long_needle_angle);
+        self.short_needle.set_rotation(short_needle_angle);
     }
 
     pub fn update_time(&mut self, time: &ShopClock) {
-	self.time = time.clone();
-	self.update_needle_angle();
+        self.time = time.clone();
+        self.update_needle_angle();
     }
 }
 
 impl DrawableComponent for DrawableShopClock {
     fn draw(&mut self, ctx: &mut ggez::Context) -> ggez::GameResult<()> {
-	self.background.draw(ctx)?;
-	self.short_needle.draw(ctx)?;
-	self.long_needle.draw(ctx)?;
+        self.background.draw(ctx)?;
+        self.short_needle.draw(ctx)?;
+        self.long_needle.draw(ctx)?;
 
-	Ok(())
+        Ok(())
     }
 
     #[inline(always)]
@@ -2667,29 +2660,28 @@ pub struct ShopMapViewer {
 
 impl ShopMapViewer {
     pub fn new<'a>(ctx: &mut SuzuContext<'a>, rect: numeric::Rect, depth: i8) -> Self {
-	let canvas = SubScreen::new(ctx.context, rect, depth, ggraphics::Color::from_rgba_u32(0));
-	
-	ShopMapViewer {
-	    canvas: canvas,
-	    map_texture: UniTexture::new(
-		ctx.ref_texture(TextureID::Paper1),
-		numeric::Point2f::new(0.0, 0.0),
-		numeric::Vector2f::new(1.0, 1.0),
-		0.0,
-		0
-	    ),
-	}
+        let canvas = SubScreen::new(ctx.context, rect, depth, ggraphics::Color::from_rgba_u32(0));
+
+        ShopMapViewer {
+            canvas: canvas,
+            map_texture: UniTexture::new(
+                ctx.ref_texture(TextureID::Paper1),
+                numeric::Point2f::new(0.0, 0.0),
+                numeric::Vector2f::new(1.0, 1.0),
+                0.0,
+                0,
+            ),
+        }
     }
 }
-
 
 impl DrawableComponent for ShopMapViewer {
     fn draw(&mut self, ctx: &mut ggez::Context) -> ggez::GameResult<()> {
         if self.is_visible() {
             sub_screen::stack_screen(ctx, &self.canvas);
 
-	    self.map_texture.draw(ctx)?;
-	    
+            self.map_texture.draw(ctx)?;
+
             sub_screen::pop_screen(ctx);
             self.canvas.draw(ctx)?;
         }

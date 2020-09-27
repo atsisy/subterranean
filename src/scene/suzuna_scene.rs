@@ -37,7 +37,7 @@ impl SuzunaScene {
                     .switch_shop_to_deskwork(ctx, transition_status);
             }
 
-	    return SceneTransition::Keep;
+            return SceneTransition::Keep;
         }
 
         if self.sub_scene.get_shop_scene_mut().unwrap().transition() == SceneID::DayResult {
@@ -45,15 +45,15 @@ impl SuzunaScene {
             self.sub_scene
                 .switch_shop_to_day_result(ctx, transition_status);
 
-	    return SceneTransition::Keep;
+            return SceneTransition::Keep;
         }
 
         if self.sub_scene.get_shop_scene_mut().unwrap().transition() == SceneID::Title {
             debug::debug_screen_push_text("switch shop -> title");
-	    return SceneTransition::SwapTransition;
+            return SceneTransition::SwapTransition;
         }
 
-	return SceneTransition::Keep;
+        return SceneTransition::Keep;
     }
 }
 
@@ -119,22 +119,22 @@ impl SceneManager for SuzunaScene {
                 return self.transition_shop_scene_to_others(ctx, transition_status);
             }
             SuzunaSceneStatus::DeskWork => {
-		let transition = self
-                        .sub_scene
-                        .get_deskwork_scene_mut()
-                        .unwrap()
+                let transition = self
+                    .sub_scene
+                    .get_deskwork_scene_mut()
+                    .unwrap()
                     .transition();
-		
+
                 if transition_status == SceneTransition::PoppingTransition {
                     if transition == SceneID::SuzunaShop {
                         self.sub_scene
                             .switch_deskwork_to_shop(ctx, transition_status);
                     }
                 } else if transition_status == SceneTransition::SwapTransition {
-		    if transition == SceneID::Title {
-			return SceneTransition::SwapTransition;
+                    if transition == SceneID::Title {
+                        return SceneTransition::SwapTransition;
                     }
-		}
+                }
             }
             SuzunaSceneStatus::DayResult => {
                 return transition_status;

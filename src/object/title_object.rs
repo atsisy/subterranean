@@ -14,8 +14,8 @@ use torifune::graphics::object::*;
 use torifune::numeric;
 
 use crate::core::{font_information_from_toml_value, SuzuContext};
-use crate::scene::SceneID;
 use crate::object::util_object::SeekBar;
+use crate::scene::SceneID;
 
 #[derive(Clone, Copy)]
 pub enum TitleBuiltinCommand {
@@ -290,7 +290,7 @@ impl TitleSoundPlayer {
         TitleSoundPlayer {
             main_text: main_text,
             name: name,
-	    seek_bar: SeekBar::new(ctx, numeric::Rect::new(200.0, 200.0, 300.0, 40.0), 0),
+            seek_bar: SeekBar::new(ctx, numeric::Rect::new(200.0, 200.0, 300.0, 40.0), 0),
             drwob_essential: DrawableObjectEssential::new(true, 0),
         }
     }
@@ -299,16 +299,25 @@ impl TitleSoundPlayer {
         self.name.to_string()
     }
 
-    pub fn dragging_handler<'a>(&mut self, ctx: &mut SuzuContext<'a>, point: numeric::Point2f, _offset: Vector2f) {
-	self.seek_bar.dragging_handler(ctx, point)
+    pub fn dragging_handler<'a>(
+        &mut self,
+        ctx: &mut SuzuContext<'a>,
+        point: numeric::Point2f,
+        _offset: Vector2f,
+    ) {
+        self.seek_bar.dragging_handler(ctx, point)
     }
 
-    pub fn mouse_button_down_handler<'a>(&mut self, ctx: &mut SuzuContext<'a>, point: numeric::Point2f) {
-	self.seek_bar.start_dragging_check(ctx, point);
+    pub fn mouse_button_down_handler<'a>(
+        &mut self,
+        ctx: &mut SuzuContext<'a>,
+        point: numeric::Point2f,
+    ) {
+        self.seek_bar.start_dragging_check(ctx, point);
     }
-    
+
     pub fn mouse_button_up_handler(&mut self) {
-	self.seek_bar.release_handler();
+        self.seek_bar.release_handler();
     }
 }
 
@@ -316,7 +325,7 @@ impl DrawableComponent for TitleSoundPlayer {
     fn draw(&mut self, ctx: &mut ggez::Context) -> ggez::GameResult<()> {
         if self.is_visible() {
             self.main_text.draw(ctx)?;
-	    self.seek_bar.draw(ctx)?;
+            self.seek_bar.draw(ctx)?;
         }
 
         Ok(())

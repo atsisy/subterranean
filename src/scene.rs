@@ -60,23 +60,17 @@ impl std::ops::BitOr for DrawRequest {
     type Output = Self;
 
     fn bitor(self, rhs: Self) -> Self::Output {
-	match self {
-	    Self::InitDraw => {
-		DrawRequest::InitDraw
-	    },
-	    Self::Draw => {
-		DrawRequest::InitDraw
-	    },
-	    Self::Skip => {
-		rhs
-	    },
-	}
+        match self {
+            Self::InitDraw => DrawRequest::InitDraw,
+            Self::Draw => DrawRequest::InitDraw,
+            Self::Skip => rhs,
+        }
     }
 }
 
 impl std::ops::BitOrAssign for DrawRequest {
     fn bitor_assign(&mut self, rhs: Self) {
-	*self = *self | rhs;
+        *self = *self | rhs;
     }
 }
 
@@ -227,7 +221,7 @@ impl<T> DelayEventList<T> {
 macro_rules! flush_delay_event {
     ($slf: expr, $event_list: expr, $ctx: expr, $t: expr) => {{
 	let mut macro_loop_count: usize = 0;
-	
+
 	while let Some(event) = $event_list.move_top() {
             // 時間が来ていない場合は、取り出した要素をリストに戻して処理ループを抜ける
             if event.run_time > $t {
@@ -247,8 +241,8 @@ macro_rules! flush_delay_event {
 #[macro_export]
 macro_rules! flush_delay_event_and_redraw_check {
     ($slf: expr, $event_list: expr, $ctx: expr, $t: expr) => {{
-	if flush_delay_event!($slf, $event_list, $ctx, $t) > 0 {
-	    $ctx.process_utility.redraw();
-	}
+        if flush_delay_event!($slf, $event_list, $ctx, $t) > 0 {
+            $ctx.process_utility.redraw();
+        }
     }};
 }

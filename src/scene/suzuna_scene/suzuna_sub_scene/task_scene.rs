@@ -8,11 +8,11 @@ use torifune::numeric;
 use super::super::*;
 use crate::object::{Clickable, DarkEffectPanel};
 
-use crate::core::{MouseActionRecord, MouseInformation, TileBatchTextureID, ReputationEvent};
+use crate::core::{MouseActionRecord, MouseInformation, ReputationEvent, TileBatchTextureID};
 use crate::object::effect_object;
 use crate::object::task_object::*;
-use crate::scene::{SceneID, SceneTransition};
 use crate::object::util_object::*;
+use crate::scene::{SceneID, SceneTransition};
 
 use crate::perf_measure;
 
@@ -87,8 +87,8 @@ impl TaskScene {
                 0,
             ),
             clock: 0,
-	    pause_screen_set: None,
-	    dark_effect_panel: DarkEffectPanel::new(
+            pause_screen_set: None,
+            dark_effect_panel: DarkEffectPanel::new(
                 ctx.context,
                 numeric::Rect::new(0.0, 0.0, 1366.0, 768.0),
                 0,
@@ -165,9 +165,11 @@ impl TaskScene {
             t + 31,
         );
 
-	self.scene_transition_close_effect(ctx, t);
+        self.scene_transition_close_effect(ctx, t);
 
-	ctx.savable_data.suzunaan_status.eval_reputation(ReputationEvent::DoneDeskTask);
+        ctx.savable_data
+            .suzunaan_status
+            .eval_reputation(ReputationEvent::DoneDeskTask);
     }
 
     pub fn export_borrowing_record_book_data(&self) -> BorrowingRecordBookData {
@@ -195,57 +197,59 @@ impl TaskScene {
     fn transition_to_title_scene<'a>(&mut self, ctx: &mut SuzuContext<'a>, t: Clock) {
         self.event_list.add_event(
             Box::new(|slf: &mut Self, _, _| {
-		slf.transition_status = SceneTransition::SwapTransition;
-		slf.transition_scene = SceneID::Title;
-	    }),
-	    t + 60
-	);
-	self.scene_transition_close_effect(ctx, t);
+                slf.transition_status = SceneTransition::SwapTransition;
+                slf.transition_scene = SceneID::Title;
+            }),
+            t + 60,
+        );
+        self.scene_transition_close_effect(ctx, t);
     }
 
-    
     fn exit_pause_screen(&mut self, t: Clock) {
-	self.dark_effect_panel
-            .new_effect(8, t, 220, 0);
-	self.pause_screen_set = None;
+        self.dark_effect_panel.new_effect(8, t, 220, 0);
+        self.pause_screen_set = None;
     }
-    
+
     fn enter_pause_screen<'a>(&mut self, ctx: &mut SuzuContext<'a>, t: Clock) {
-	self.dark_effect_panel
-            .new_effect(8, t, 0, 220);
-	self.pause_screen_set = Some(PauseScreenSet::new(ctx, 0));
+        self.dark_effect_panel.new_effect(8, t, 0, 220);
+        self.pause_screen_set = Some(PauseScreenSet::new(ctx, 0));
     }
 
     fn now_paused(&self) -> bool {
-	self.pause_screen_set.is_some()
+        self.pause_screen_set.is_some()
     }
 
     pub fn get_elapsed_clock(&self) -> Clock {
-	self.get_current_clock()
+        self.get_current_clock()
     }
 
-    fn pause_screen_click_handler<'a>(&mut self, ctx: &mut SuzuContext<'a>, point: numeric::Point2f, t: Clock) {
-	let pause_screen_set = match self.pause_screen_set.as_ref() {
-	    Some(it) => it,
-	    _ => return,
-	};
-	
-	if let Some(pause_result) = pause_screen_set.mouse_click_handler(ctx, point) {
-	    match pause_result {
-		PauseResult::GoToTitle => self.transition_to_title_scene(ctx, t),
-		PauseResult::ReleasePause => self.exit_pause_screen(t),
-	    }
-	}
+    fn pause_screen_click_handler<'a>(
+        &mut self,
+        ctx: &mut SuzuContext<'a>,
+        point: numeric::Point2f,
+        t: Clock,
+    ) {
+        let pause_screen_set = match self.pause_screen_set.as_ref() {
+            Some(it) => it,
+            _ => return,
+        };
+
+        if let Some(pause_result) = pause_screen_set.mouse_click_handler(ctx, point) {
+            match pause_result {
+                PauseResult::GoToTitle => self.transition_to_title_scene(ctx, t),
+                PauseResult::ReleasePause => self.exit_pause_screen(t),
+            }
+        }
     }
-    
+
     fn non_paused_mouse_button_up_event<'a>(
-	&mut self,
-	ctx: &mut SuzuContext<'a>,
+        &mut self,
+        ctx: &mut SuzuContext<'a>,
         button: MouseButton,
         point: numeric::Point2f,
     ) {
-	self.mouse_info.update_dragging(button, false);
-	
+        self.mouse_info.update_dragging(button, false);
+
         //self.paper.button_up(ctx, button, point);
         self.unselect_dragging_object(ctx, self.get_current_clock());
 
@@ -263,8 +267,8 @@ impl TaskScene {
     }
 
     fn non_paused_mouse_button_down_event<'a>(
-	&mut self,
-	ctx: &mut SuzuContext<'a>,
+        &mut self,
+        ctx: &mut SuzuContext<'a>,
         button: MouseButton,
         point: numeric::Point2f,
     ) {
@@ -281,62 +285,62 @@ impl TaskScene {
     }
 
     pub fn get_target_page_book_condition_eval_report(&self) -> Option<BookConditionEvalReport> {
-	if let Some(report) = self.task_table.get_target_page_book_condition_eval_report() {
-	    Some(report.clone())
-	} else {
-	    None
-	}
+        if let Some(report) = self.task_table.get_target_page_book_condition_eval_report() {
+            Some(report.clone())
+        } else {
+            None
+        }
     }
 
     fn after_task_done_process<'a>(&mut self, ctx: &mut SuzuContext<'a>, t: Clock) {
-	debug::debug_screen_push_text(&format!("register delay process!!"));
-	self.event_list.add_event(
+        debug::debug_screen_push_text(&format!("register delay process!!"));
+        self.event_list.add_event(
             Box::new(|scene: &mut TaskScene, _, _| {
-		scene
+                scene
                     .task_table
                     .finish_customer_event(scene.get_current_clock());
-		debug::debug_screen_push_text(&format!("run delay process!! finish!!"));
-		scene.status = TaskSceneStatus::CustomerFree;
+                debug::debug_screen_push_text(&format!("run delay process!! finish!!"));
+                scene.status = TaskSceneStatus::CustomerFree;
             }),
             self.get_current_clock() + 30,
-	);
-	
-	self.status = TaskSceneStatus::CustomerWait;
-	
-	if self.customer_request.is_none() {
+        );
+
+        self.status = TaskSceneStatus::CustomerWait;
+
+        if self.customer_request.is_none() {
             self.event_list.add_event(
-		Box::new(move |scene: &mut TaskScene, ctx, _| {
+                Box::new(move |scene: &mut TaskScene, ctx, _| {
                     scene.ready_to_finish_scene(ctx, scene.get_current_clock());
-		}),
-		t + 150,
+                }),
+                t + 150,
             );
-	}
-	
-	ctx.process_utility.redraw();
+        }
+
+        ctx.process_utility.redraw();
     }
 }
 
 impl SceneManager for TaskScene {
     fn key_down_event<'a>(&mut self, ctx: &mut SuzuContext<'a>, vkey: tdev::VirtualKey) {
-	if self.now_paused() {
-	    match vkey {
-	    	tdev::VirtualKey::Action4 => {
-		    let t = self.get_current_clock();
-		    self.exit_pause_screen(t);
-		},
-		_ => (),
-	    }
-	} else {
-	    match vkey {
-	    	tdev::VirtualKey::Action4 => {
-		    let t = self.get_current_clock();
-		    self.enter_pause_screen(ctx, t);
-		},
-		_ => (),
-	    }
+        if self.now_paused() {
+            match vkey {
+                tdev::VirtualKey::Action4 => {
+                    let t = self.get_current_clock();
+                    self.exit_pause_screen(t);
+                }
+                _ => (),
+            }
+        } else {
+            match vkey {
+                tdev::VirtualKey::Action4 => {
+                    let t = self.get_current_clock();
+                    self.enter_pause_screen(ctx, t);
+                }
+                _ => (),
+            }
             self.task_table
-		.key_event_handler(ctx, vkey, self.get_current_clock());
-	}
+                .key_event_handler(ctx, vkey, self.get_current_clock());
+        }
     }
 
     fn mouse_motion_event<'a>(
@@ -345,35 +349,38 @@ impl SceneManager for TaskScene {
         point: numeric::Point2f,
         offset: numeric::Vector2f,
     ) {
-	if self.now_paused() {
-	    if let Some(pause_screen_set) = self.pause_screen_set.as_mut() {
-		pause_screen_set.mouse_motion_handler(ctx, point);
-	    }
-	} else {
-	    if self.mouse_info.is_dragging(MouseButton::Left) {
-		let d = numeric::Vector2f::new(offset.x / 2.0, offset.y / 2.0);
-		self.dragging_handler(ctx, point, d);
-		self.mouse_info
-                    .set_last_dragged(MouseButton::Left, point, self.get_current_clock());
+        if self.now_paused() {
+            if let Some(pause_screen_set) = self.pause_screen_set.as_mut() {
+                pause_screen_set.mouse_motion_handler(ctx, point);
             }
-	    
+        } else {
+            if self.mouse_info.is_dragging(MouseButton::Left) {
+                let d = numeric::Vector2f::new(offset.x / 2.0, offset.y / 2.0);
+                self.dragging_handler(ctx, point, d);
+                self.mouse_info.set_last_dragged(
+                    MouseButton::Left,
+                    point,
+                    self.get_current_clock(),
+                );
+            }
+
             self.task_table.mouse_motion_handler(ctx, point, offset);
-	    
+
             let mouse_cursor_status = self.task_table.clickable_status(ctx.context, point);
             ggez::input::mouse::set_cursor_type(ctx.context, mouse_cursor_status);
-	}
+        }
     }
-    
+
     fn mouse_button_down_event<'a>(
         &mut self,
         ctx: &mut SuzuContext<'a>,
         button: MouseButton,
         point: numeric::Point2f,
     ) {
-	if self.now_paused() {
-	} else {
-	    self.non_paused_mouse_button_down_event(ctx, button, point);
-	}
+        if self.now_paused() {
+        } else {
+            self.non_paused_mouse_button_down_event(ctx, button, point);
+        }
     }
 
     fn mouse_button_up_event<'a>(
@@ -382,69 +389,68 @@ impl SceneManager for TaskScene {
         button: MouseButton,
         point: numeric::Point2f,
     ) {
-	if self.now_paused() {
-	    match button {
-		MouseButton::Left => {
-		    let t = self.get_current_clock();
-		    self.pause_screen_click_handler(ctx, point, t);
-		}
-		_ => (),
+        if self.now_paused() {
+            match button {
+                MouseButton::Left => {
+                    let t = self.get_current_clock();
+                    self.pause_screen_click_handler(ctx, point, t);
+                }
+                _ => (),
             }
-	} else {
-	    self.non_paused_mouse_button_up_event(ctx, button, point);
-	}
+        } else {
+            self.non_paused_mouse_button_up_event(ctx, button, point);
+        }
     }
 
     fn pre_process<'a>(&mut self, ctx: &mut SuzuContext<'a>) {
-	//println!("{}", perf_measure!({
+        //println!("{}", perf_measure!({
         let t = self.get_current_clock();
 
-	if !self.now_paused() {
+        if !self.now_paused() {
             self.task_table.update(ctx, self.get_current_clock());
-	    
+
             if self.status == TaskSceneStatus::CustomerEvent && self.task_table.task_is_done() {
-		self.after_task_done_process(ctx, t);
+                self.after_task_done_process(ctx, t);
             }
-	    
+
             if self.status == TaskSceneStatus::CustomerFree {
-		if let Some(request) = &self.customer_request {
+                if let Some(request) = &self.customer_request {
                     let cloned_request = request.clone();
                     self.insert_customer_event(cloned_request, 100);
-		}
-		self.customer_request = None;
-		self.status = TaskSceneStatus::CustomerWait;
-		
-		ctx.process_utility.redraw();
-            }
-	}
+                }
+                self.customer_request = None;
+                self.status = TaskSceneStatus::CustomerWait;
 
-	self.dark_effect_panel.run_effect(ctx, t);
-	
-        if let Some(transition_effect) = self.scene_transition_effect.as_mut() {
-            transition_effect.effect(ctx.context, t);
-	    ctx.process_utility.redraw();
+                ctx.process_utility.redraw();
+            }
         }
 
-	flush_delay_event_and_redraw_check!(self, self.event_list, ctx, self.get_current_clock());
-    //}));
+        self.dark_effect_panel.run_effect(ctx, t);
+
+        if let Some(transition_effect) = self.scene_transition_effect.as_mut() {
+            transition_effect.effect(ctx.context, t);
+            ctx.process_utility.redraw();
+        }
+
+        flush_delay_event_and_redraw_check!(self, self.event_list, ctx, self.get_current_clock());
+        //}));
     }
 
     fn drawing_process(&mut self, ctx: &mut ggez::Context) {
-	//println!("{}", perf_measure!(
-	    {
-        self.task_table.draw(ctx).unwrap();
-		self.dark_effect_panel.draw(ctx).unwrap();
+        //println!("{}", perf_measure!(
+        {
+            self.task_table.draw(ctx).unwrap();
+            self.dark_effect_panel.draw(ctx).unwrap();
 
-	if let Some(pause_screen_set) = self.pause_screen_set.as_mut() {
-	    pause_screen_set.draw(ctx).unwrap();
-	}
-	self.dark_effect_panel.draw(ctx).unwrap();
-		
-        if let Some(transition_effect) = self.scene_transition_effect.as_mut() {
-            transition_effect.draw(ctx).unwrap();
-        }
-		
-	    }//));
+            if let Some(pause_screen_set) = self.pause_screen_set.as_mut() {
+                pause_screen_set.draw(ctx).unwrap();
+            }
+            self.dark_effect_panel.draw(ctx).unwrap();
+
+            if let Some(transition_effect) = self.scene_transition_effect.as_mut() {
+                transition_effect.draw(ctx).unwrap();
+            }
+        } //));
     }
 
     fn post_process<'a>(&mut self, _ctx: &mut SuzuContext<'a>) -> SceneTransition {
