@@ -1638,25 +1638,11 @@ impl SeekBar {
     pub fn new<'a>(
 	ctx: &mut SuzuContext<'a>,
 	pos_rect: numeric::Rect,
+	bar_height: f32,
 	max_value: f32,
 	min_value: f32,
 	depth: i8,
     ) -> Self {
-        let seek = shape::Rectangle::new(
-            numeric::Rect::new(
-                pos_rect.x,
-                pos_rect.y + (pos_rect.h / 2.0),
-                pos_rect.w,
-                pos_rect.h / 2.0,
-            ),
-            ggraphics::DrawMode::fill(),
-            ggraphics::Color::from_rgba_u32(0x11111188),
-        );
-
-        let mut builder = ggraphics::MeshBuilder::new();
-
-        seek.add_to_builder(&mut builder);
-
 	let mut handle = UniTexture::new(
             ctx.ref_texture(TextureID::ChoicePanel1),
 	    numeric::Point2f::new(0.0, 0.0),
@@ -1671,6 +1657,23 @@ impl SeekBar {
 		pos_rect.y
 	    )
 	);
+
+	let handle_area = handle.get_drawing_area(ctx.context);
+	
+        let seek = shape::Rectangle::new(
+            numeric::Rect::new(
+                pos_rect.x,
+                pos_rect.y + (handle_area.h / 2.0) - (bar_height / 2.0),
+                pos_rect.w,
+                bar_height,
+            ),
+            ggraphics::DrawMode::fill(),
+            ggraphics::Color::from_rgba_u32(0xffffffff),
+        );
+
+        let mut builder = ggraphics::MeshBuilder::new();
+
+        seek.add_to_builder(&mut builder);
 	
         SeekBar {
             rect: pos_rect,
@@ -1740,10 +1743,7 @@ impl DrawableComponent for SeekBar {
             ggraphics::draw(
                 ctx,
                 &self.seek_edge,
-                ggraphics::DrawParam {
-                    color: ggraphics::Color::from_rgba_u32(0xff),
-                    ..Default::default()
-                },
+                ggraphics::DrawParam::default(),
             );
             self.handle.draw(ctx)?;
         }

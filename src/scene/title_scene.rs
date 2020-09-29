@@ -242,8 +242,6 @@ impl SceneManager for TitleScene {
         _button: ginput::mouse::MouseButton,
         point: numeric::Point2f,
     ) {
-        let t = self.get_current_clock();
-
         match self.current_title_contents.as_mut().unwrap() {
             TitleContents::TitleSoundPlayer(contents) => {
                 contents.mouse_button_down_handler(ctx, point)
