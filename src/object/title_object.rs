@@ -16,7 +16,7 @@ use torifune::numeric;
 use torifune::core::Clock;
 
 use crate::core::{font_information_from_toml_value, SuzuContext, FontID};
-use crate::object::util_object::SeekBar;
+use crate::object::util_object::{SeekBar, SelectButton, TextButtonTexture};
 use crate::scene::SceneID;
 
 #[derive(Clone, Copy)]
@@ -364,12 +364,20 @@ impl TextureObject for TitleSoundPlayer {
 
 type DynamicTitleSoundPlayer = MovableWrap<TitleSoundPlayer>;
 
+#[derive(Clone, Eq, PartialEq, Hash)]
+pub enum GameConfigElement {
+    BGMVolume,
+    SEVolume,
+}
+
 pub struct ConfigPanel {
     canvas: sub_screen::SubScreen,
     hrzn_text_list: Vec<UniText>,
+    sb_dynamic_text: HashMap<GameConfigElement, UniText>,
     header_text: VerticalText,
     bgm_volume_bar: SeekBar,
     se_volume_bar: SeekBar,
+    apply_button: SelectButton,
 }
 
 impl ConfigPanel {
@@ -409,9 +417,52 @@ impl ConfigPanel {
 
 	    hrzn_text_list.push(text);
 	}
+
+	let mut sb_dynamic_text = HashMap::new();
+
+	sb_dynamic_text.insert(
+	    GameConfigElement::BGMVolume,
+	    UniText::new(
+		format!("{}%", 50.0),
+		numeric::Point2f::new(400.0, 70.0),
+		numeric::Vector2f::new(1.0, 1.0),
+		0.0,
+		0,
+		hrzn_text_font_info.clone()
+	    )
+	);
+
+	sb_dynamic_text.insert(
+	    GameConfigElement::SEVolume,
+	    UniText::new(
+		format!("{}%", 50.0),
+		numeric::Point2f::new(400.0, 170.0),
+		numeric::Vector2f::new(1.0, 1.0),
+		0.0,
+		0,
+		hrzn_text_font_info.clone()
+	    )
+	);
+
+	let text_texture = Box::new(TextButtonTexture::new(
+            ctx,
+            numeric::Point2f::new(0.0, 0.0),
+            "適用".to_string(),
+            hrzn_text_font_info.clone(),
+            8.0,
+            ggraphics::Color::from_rgba_u32(0xe8b5a2ff),
+            0,
+        ));
+
+        let apply_button = SelectButton::new(
+            ctx,
+            numeric::Rect::new(650.0, 600.0, 100.0, 50.0),
+            text_texture,
+        );
 	
 	ConfigPanel {
 	    header_text: header_text,
+	    sb_dynamic_text: sb_dynamic_text,
 	    canvas: sub_screen::SubScreen::new(
 		ctx.context,
 		pos_rect,
@@ -421,7 +472,7 @@ impl ConfigPanel {
 	    hrzn_text_list: hrzn_text_list,
 	    bgm_volume_bar: SeekBar::new(
 		ctx,
-		numeric::Rect::new(200.0, 100.0, 350.0, 40.0),
+		numeric::Rect::new(200.0, 100.0, 450.0, 40.0),
 		10.0,
 		100.0,
 		0.0,
@@ -429,13 +480,26 @@ impl ConfigPanel {
 	    ),
 	    se_volume_bar: SeekBar::new(
 		ctx,
-		numeric::Rect::new(200.0, 200.0, 350.0, 40.0),
+		numeric::Rect::new(200.0, 200.0, 450.0, 40.0),
 		10.0,
 		100.0,
 		0.0,
 		0
 	    ),
+	    apply_button: apply_button,
 	}
+    }
+
+    fn update_seek_bar_value(&mut self) {
+	let bgm_volume = self.bgm_volume_bar.get_current_value() as i32;
+	let se_volume = self.se_volume_bar.get_current_value() as i32;
+	
+	self.sb_dynamic_text.get_mut(&GameConfigElement::BGMVolume)
+	    .unwrap()
+	    .replace_text(&format!("{}%", bgm_volume));
+	self.sb_dynamic_text.get_mut(&GameConfigElement::SEVolume)
+	    .unwrap()
+	    .replace_text(&format!("{}%", se_volume));
     }
 
     pub fn get_name(&self) -> String {
@@ -460,12 +524,20 @@ impl ConfigPanel {
 
     pub fn mouse_button_up<'a>(
 	&mut self,
-	_ctx: &mut SuzuContext<'a>,
-	_point: numeric::Point2f,
+	ctx: &mut SuzuContext<'a>,
+	point: numeric::Point2f,
         _t: Clock,
     ) {
 	self.bgm_volume_bar.release_handler();
 	self.se_volume_bar.release_handler();
+
+	let rpoint = self.canvas.relative_point(point);
+	
+	if self.apply_button.contains(ctx.context, rpoint) {
+	    println!("change!!");
+	    ctx.change_bgm_volume(self.bgm_volume_bar.get_current_value());
+	    ctx.change_se_volume(self.se_volume_bar.get_current_value());
+	}
     }
 
     pub fn mouse_dragging_handler<'a>(
@@ -477,6 +549,8 @@ impl ConfigPanel {
     ) {
 	self.bgm_volume_bar.dragging_handler(ctx, point);
 	self.se_volume_bar.dragging_handler(ctx, point);
+
+	self.update_seek_bar_value();
     }
 }
 
@@ -492,6 +566,12 @@ impl DrawableComponent for ConfigPanel {
 	    for text in self.hrzn_text_list.iter_mut() {
 		text.draw(ctx)?;
 	    }
+
+	    for (_, text) in self.sb_dynamic_text.iter_mut() {
+		text.draw(ctx)?;
+	    }
+
+	    self.apply_button.draw(ctx)?;
 	    
             sub_screen::pop_screen(ctx);
             self.canvas.draw(ctx).unwrap();

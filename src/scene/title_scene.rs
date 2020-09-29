@@ -62,7 +62,7 @@ impl TitleScene {
         let mut title_contents_set =
             TitleContentsSet::from_file(ctx, "./resources/title_contents/title_contents_list.toml");
 
-        ctx.play_sound(SoundID::Title, Some(SoundPlayFlags::new(0, 1.0, true, 0.1)));
+        ctx.play_sound_as_bgm(SoundID::Title, Some(SoundPlayFlags::new(0, 1.0, true, 0.1)));
 
         TitleScene {
 	    mouse_info: MouseInformation::new(),

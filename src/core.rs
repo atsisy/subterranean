@@ -717,7 +717,8 @@ pub struct GameResource {
     map_data: Vec<MapConstractData>,
     scenario_table: ScenarioTable,
     sounds: Vec<sound::SoundData>,
-    sound_manager: sound::SoundManager,
+    bgm_manager: sound::SoundManager,
+    se_manager: sound::SoundManager,
 }
 
 impl GameResource {
@@ -781,7 +782,8 @@ impl GameResource {
             map_data: src_file.map_information,
             scenario_table: scenario_table,
             sounds: sounds,
-            sound_manager: sound::SoundManager::new(),
+            bgm_manager: sound::SoundManager::new(),
+	    se_manager: sound::SoundManager::new(),
         }
     }
 
@@ -861,22 +863,48 @@ impl GameResource {
         self.scenario_table.get_day_scenario_path(date)
     }
 
-    pub fn play_sound(
+    pub fn play_sound_as_bgm(
         &mut self,
         ctx: &mut ggez::Context,
         sound_id: SoundID,
         flags: Option<sound::SoundPlayFlags>,
     ) -> sound::SoundHandler {
         let sound_data = self.sounds.get(sound_id as usize).unwrap();
-        self.sound_manager.play(ctx, sound_data.clone(), flags)
+        self.bgm_manager.play(ctx, sound_data.clone(), flags)
     }
 
-    pub fn ref_sound(&self, handler: sound::SoundHandler) -> &sound::PlayableSound {
-        self.sound_manager.ref_sound(handler)
+    pub fn play_sound_as_se(
+        &mut self,
+        ctx: &mut ggez::Context,
+        sound_id: SoundID,
+        flags: Option<sound::SoundPlayFlags>,
+    ) -> sound::SoundHandler {
+        let sound_data = self.sounds.get(sound_id as usize).unwrap();
+        self.se_manager.play(ctx, sound_data.clone(), flags)
     }
 
-    pub fn ref_sound_mut(&mut self, handler: sound::SoundHandler) -> &mut sound::PlayableSound {
-        self.sound_manager.ref_sound_mut(handler)
+    pub fn ref_bgm(&self, handler: sound::SoundHandler) -> &sound::PlayableSound {
+        self.bgm_manager.ref_sound(handler)
+    }
+
+    pub fn ref_bgm_mut(&mut self, handler: sound::SoundHandler) -> &mut sound::PlayableSound {
+        self.bgm_manager.ref_sound_mut(handler)
+    }
+
+    pub fn ref_se(&self, handler: sound::SoundHandler) -> &sound::PlayableSound {
+        self.se_manager.ref_sound(handler)
+    }
+
+    pub fn ref_se_mut(&mut self, handler: sound::SoundHandler) -> &mut sound::PlayableSound {
+        self.se_manager.ref_sound_mut(handler)
+    }
+
+    pub fn change_bgm_volume(&mut self, volume: f32) {
+	self.bgm_manager.change_global_volume(volume);
+    }
+
+    pub fn change_se_volume(&mut self, volume: f32) {
+	self.se_manager.change_global_volume(volume);
     }
 }
 
@@ -1493,6 +1521,22 @@ impl GameConfig {
             Err(e) => panic!("Failed to parse toml: {}", e),
         }
     }
+
+    pub fn set_bgm_volume_100(&mut self, volume: f32) {
+	self.bgm_volume = volume / 100.0;
+    }
+
+    pub fn set_se_volume_100(&mut self, volume: f32) {
+	self.se_volume = volume / 100.0;
+    }
+
+    pub fn get_bgm_volume(&self) -> f32 {
+	self.bgm_volume
+    }
+
+    pub fn get_se_volume(&self) -> f32 {
+	self.se_volume
+    }
 }
 
 pub struct ProcessUtility<'ctx> {
@@ -1522,12 +1566,30 @@ impl<'ctx> SuzuContext<'ctx> {
         self.resource.ref_texture(self.context, id)
     }
 
-    pub fn play_sound(
+    pub fn play_sound_as_bgm(
         &mut self,
         sound_id: SoundID,
         flags: Option<sound::SoundPlayFlags>,
     ) -> sound::SoundHandler {
-        self.resource.play_sound(self.context, sound_id, flags)
+        self.resource.play_sound_as_bgm(self.context, sound_id, flags)
+    }
+
+    pub fn play_sound_as_se(
+        &mut self,
+        sound_id: SoundID,
+        flags: Option<sound::SoundPlayFlags>,
+    ) -> sound::SoundHandler {
+        self.resource.play_sound_as_se(self.context, sound_id, flags)
+    }
+
+    pub fn change_bgm_volume(&mut self, volume: f32) {
+	self.resource.change_bgm_volume(volume / 100.0);
+	self.config.set_bgm_volume_100(volume);
+    }
+
+    pub fn change_se_volume(&mut self, volume: f32) {
+	self.resource.change_se_volume(volume / 100.0);
+	self.config.set_se_volume_100(volume);
     }
 }
 
