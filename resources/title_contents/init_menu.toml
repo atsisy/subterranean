@@ -35,8 +35,8 @@ next-contents-name = "sound-player"
 
 [[each_entry_data]]
 text = "設定"
-event-type = "SceneTransition"
-next-scene = "Scenario"
+event-type = "NextContents"
+next-contents-name = "config-panel"
 
 [[each_entry_data]]
 text = "退場"

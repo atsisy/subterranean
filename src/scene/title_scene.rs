@@ -1,10 +1,12 @@
-use torifune::core::Clock;
+use ggez::input::mouse::MouseButton;
+
+use torifune::core::*;
 use torifune::device::*;
 use torifune::graphics::drawable::*;
 use torifune::graphics::object::*;
 use torifune::sound::*;
 
-use crate::core::{SoundID, SuzuContext, TextureID, TileBatchTextureID};
+use crate::core::{SoundID, SuzuContext, TextureID, TileBatchTextureID, MouseInformation};
 use crate::object::effect_object;
 use crate::object::title_object::*;
 use crate::scene::*;
@@ -12,6 +14,7 @@ use crate::scene::*;
 use crate::flush_delay_event;
 
 pub struct TitleScene {
+    mouse_info: MouseInformation,
     background: UniTexture,
     event_list: DelayEventList<Self>,
     scene_transition_effect: Option<effect_object::ScreenTileEffect>,
@@ -62,6 +65,7 @@ impl TitleScene {
         ctx.play_sound(SoundID::Title, Some(SoundPlayFlags::new(0, 1.0, true, 0.1)));
 
         TitleScene {
+	    mouse_info: MouseInformation::new(),
             background: background,
             event_list: event_list,
             scene_transition_effect: scene_transition_effect,
@@ -118,7 +122,28 @@ impl TitleScene {
             TitleContents::InitialMenu(contents) => contents.update_highlight(ctx, point),
             TitleContents::TitleSoundPlayer(contents) => {
                 contents.dragging_handler(ctx, point, offset)
-            }
+            },
+	    TitleContents::ConfigPanel(_) => (),
+        }
+    }
+
+    pub fn contents_mouse_dragging_handler<'a>(
+        &mut self,
+        ctx: &mut SuzuContext<'a>,
+        point: numeric::Point2f,
+        offset: numeric::Vector2f,
+    ) {
+        if self.current_title_contents.is_none() {
+            return;
+        }
+
+	let t = self.get_current_clock();
+	
+        match &mut self.current_title_contents.as_mut().unwrap() {
+	    TitleContents::ConfigPanel(panel) => {
+		panel.mouse_dragging_handler(ctx, MouseButton::Left, point, t);
+	    },
+	    _ => (),
         }
     }
 
@@ -167,10 +192,13 @@ impl TitleScene {
                         }
                     }
                 }
-            }
+            },
             TitleContents::TitleSoundPlayer(contents) => {
                 contents.mouse_button_up_handler();
-            }
+            },
+	    TitleContents::ConfigPanel(panel) => {
+		panel.mouse_button_up(ctx, point, t);
+	    },
         }
     }
 }
@@ -239,13 +267,24 @@ impl SceneManager for TitleScene {
     fn mouse_button_down_event<'a>(
         &mut self,
         ctx: &mut SuzuContext<'a>,
-        _button: ginput::mouse::MouseButton,
+        button: ginput::mouse::MouseButton,
         point: numeric::Point2f,
     ) {
+	let t = self.get_current_clock();
+	
+	self.mouse_info
+            .set_last_clicked(button, point, t);
+        self.mouse_info
+            .set_last_down(button, point, t);
+        self.mouse_info
+            .set_last_dragged(button, point, t);
+        self.mouse_info.update_dragging(button, true);
+	
         match self.current_title_contents.as_mut().unwrap() {
             TitleContents::TitleSoundPlayer(contents) => {
                 contents.mouse_button_down_handler(ctx, point)
-            }
+            },
+	    TitleContents::ConfigPanel(panel) => panel.mouse_button_down(ctx, button, point, t),
             _ => (),
         }
     }
@@ -266,7 +305,11 @@ impl SceneManager for TitleScene {
         point: numeric::Point2f,
         offset: numeric::Vector2f,
     ) {
-        self.contents_mouse_motion_handler(ctx, point, offset);
+	if self.mouse_info.is_dragging(ggez::event::MouseButton::Left) {
+	    self.contents_mouse_dragging_handler(ctx, point, offset);
+	} else {
+	    self.contents_mouse_motion_handler(ctx, point, offset);
+	}
     }
 
     fn transition(&self) -> SceneID {

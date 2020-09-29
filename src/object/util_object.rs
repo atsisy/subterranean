@@ -1744,7 +1744,7 @@ impl DrawableComponent for SeekBar {
                 ctx,
                 &self.seek_edge,
                 ggraphics::DrawParam::default(),
-            );
+            )?;
             self.handle.draw(ctx)?;
         }
 

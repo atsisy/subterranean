@@ -4,6 +4,7 @@ use std::rc::Rc;
 use std::str::FromStr;
 
 use ggez::graphics as ggraphics;
+use ggez::input::mouse::MouseButton;
 
 use numeric::Vector2f;
 use torifune::impl_drawable_object_for_wrapped;
@@ -12,8 +13,9 @@ use torifune::impl_texture_object_for_wrapped;
 use torifune::graphics::drawable::*;
 use torifune::graphics::object::*;
 use torifune::numeric;
+use torifune::core::Clock;
 
-use crate::core::{font_information_from_toml_value, SuzuContext};
+use crate::core::{font_information_from_toml_value, SuzuContext, FontID};
 use crate::object::util_object::SeekBar;
 use crate::scene::SceneID;
 
@@ -362,9 +364,167 @@ impl TextureObject for TitleSoundPlayer {
 
 type DynamicTitleSoundPlayer = MovableWrap<TitleSoundPlayer>;
 
+pub struct ConfigPanel {
+    canvas: sub_screen::SubScreen,
+    hrzn_text_list: Vec<UniText>,
+    header_text: VerticalText,
+    bgm_volume_bar: SeekBar,
+    se_volume_bar: SeekBar,
+}
+
+impl ConfigPanel {
+    pub fn new<'a>(ctx: &mut SuzuContext<'a>, pos_rect: numeric::Rect, depth: i8) -> Self {
+	let font_info = FontInformation::new(
+	    ctx.resource.get_font(FontID::Cinema),
+	    numeric::Vector2f::new(56.0, 56.0),
+	    ggraphics::Color::from_rgba_u32(0xbbbbbbff)
+	);
+
+	let header_text = VerticalText::new(
+	    "設定".to_string(),
+	    numeric::Point2f::new(1150.0, 80.0),
+	    numeric::Vector2f::new(1.0, 1.0),
+	    0.0,
+	    0,
+	    font_info
+	);
+
+	let mut hrzn_text_list = Vec::new();
+	
+	let hrzn_text_font_info = FontInformation::new(
+	    ctx.resource.get_font(FontID::Cinema),
+	    numeric::Vector2f::new(29.0, 29.0),
+	    ggraphics::Color::from_rgba_u32(0xbbbbbbff)
+	);
+	
+	for (s, p) in vec![("BGM音量", 70.0), ("SE音量", 170.0)] {
+	    let text = UniText::new(
+		s.to_string(),
+		numeric::Point2f::new(200.0, p),
+		numeric::Vector2f::new(1.0, 1.0),
+		0.0,
+		0,
+		hrzn_text_font_info.clone(),
+	    );
+
+	    hrzn_text_list.push(text);
+	}
+	
+	ConfigPanel {
+	    header_text: header_text,
+	    canvas: sub_screen::SubScreen::new(
+		ctx.context,
+		pos_rect,
+		depth,
+		ggraphics::Color::from_rgba_u32(0),
+	    ),
+	    hrzn_text_list: hrzn_text_list,
+	    bgm_volume_bar: SeekBar::new(
+		ctx,
+		numeric::Rect::new(200.0, 100.0, 350.0, 40.0),
+		10.0,
+		100.0,
+		0.0,
+		0
+	    ),
+	    se_volume_bar: SeekBar::new(
+		ctx,
+		numeric::Rect::new(200.0, 200.0, 350.0, 40.0),
+		10.0,
+		100.0,
+		0.0,
+		0
+	    ),
+	}
+    }
+
+    pub fn get_name(&self) -> String {
+	"config-panel".to_string()
+    }
+
+    pub fn mouse_button_down<'a>(
+	&mut self,
+	ctx: &mut SuzuContext<'a>,
+	button: MouseButton,
+	point: numeric::Point2f,
+        _t: Clock,
+    ) {
+	match button {
+	    MouseButton::Left => {
+		self.bgm_volume_bar.start_dragging_check(ctx, point);
+		self.se_volume_bar.start_dragging_check(ctx, point);
+	    },
+	    _ => (),
+	}
+    }
+
+    pub fn mouse_button_up<'a>(
+	&mut self,
+	_ctx: &mut SuzuContext<'a>,
+	_point: numeric::Point2f,
+        _t: Clock,
+    ) {
+	self.bgm_volume_bar.release_handler();
+	self.se_volume_bar.release_handler();
+    }
+
+    pub fn mouse_dragging_handler<'a>(
+	&mut self,
+	ctx: &mut SuzuContext<'a>,
+	_button: MouseButton,
+	point: numeric::Point2f,
+        _t: Clock,
+    ) {
+	self.bgm_volume_bar.dragging_handler(ctx, point);
+	self.se_volume_bar.dragging_handler(ctx, point);
+    }
+}
+
+impl DrawableComponent for ConfigPanel {
+    fn draw(&mut self, ctx: &mut ggez::Context) -> ggez::GameResult<()> {
+        if self.is_visible() {
+            sub_screen::stack_screen(ctx, &self.canvas);
+
+	    self.header_text.draw(ctx)?;
+	    self.bgm_volume_bar.draw(ctx)?;
+	    self.se_volume_bar.draw(ctx)?;
+
+	    for text in self.hrzn_text_list.iter_mut() {
+		text.draw(ctx)?;
+	    }
+	    
+            sub_screen::pop_screen(ctx);
+            self.canvas.draw(ctx).unwrap();
+        }
+	
+        Ok(())
+    }
+
+    fn hide(&mut self) {
+        self.canvas.hide();
+    }
+
+    fn appear(&mut self) {
+        self.canvas.appear();
+    }
+
+    fn is_visible(&self) -> bool {
+        self.canvas.is_visible()
+    }
+
+    fn set_drawing_depth(&mut self, depth: i8) {
+        self.canvas.set_drawing_depth(depth);
+    }
+
+    fn get_drawing_depth(&self) -> i8 {
+        self.canvas.get_drawing_depth()
+    }
+}
+
 pub enum TitleContents {
     InitialMenu(VTextList),
     TitleSoundPlayer(DynamicTitleSoundPlayer),
+    ConfigPanel(ConfigPanel),
 }
 
 impl TitleContents {
@@ -394,7 +554,7 @@ impl TitleContents {
             "VTextList" => {
                 let menu_data = TextMenuData::from_file(ctx, name.to_string(), details_source_file);
                 Some(TitleContents::InitialMenu(VTextList::new(menu_data, 0)))
-            }
+            },
             "TitleSoundPlayer" => {
                 let data = TitleSoundPlayerData::from_toml(ctx, details_source_file);
                 let sound_player = MovableWrap::new(
@@ -403,7 +563,10 @@ impl TitleContents {
                     0,
                 );
                 Some(TitleContents::TitleSoundPlayer(sound_player))
-            }
+            },
+	    "ConfigPanel" => {
+		Some(TitleContents::ConfigPanel(ConfigPanel::new(ctx, numeric::Rect::new(0.0, 0.0, 1366.0, 768.0), 0)))
+	    },
             _ => None,
         }
     }
@@ -412,6 +575,7 @@ impl TitleContents {
         match self {
             TitleContents::InitialMenu(menu) => menu.contents_name.to_string(),
             TitleContents::TitleSoundPlayer(player) => player.get_name(),
+	    TitleContents::ConfigPanel(panel) => panel.get_name(),
         }
     }
 }
@@ -421,6 +585,7 @@ impl DrawableComponent for TitleContents {
         match self {
             TitleContents::InitialMenu(contents) => contents.draw(ctx),
             TitleContents::TitleSoundPlayer(contents) => contents.draw(ctx),
+	    TitleContents::ConfigPanel(panel) => panel.draw(ctx),
         }
     }
 
@@ -428,6 +593,7 @@ impl DrawableComponent for TitleContents {
         match self {
             TitleContents::InitialMenu(contents) => contents.hide(),
             TitleContents::TitleSoundPlayer(contents) => contents.hide(),
+	    TitleContents::ConfigPanel(panel) => panel.hide(),
         }
     }
 
@@ -435,6 +601,7 @@ impl DrawableComponent for TitleContents {
         match self {
             TitleContents::InitialMenu(contents) => contents.appear(),
             TitleContents::TitleSoundPlayer(contents) => contents.appear(),
+	    TitleContents::ConfigPanel(panel) => panel.appear(),
         }
     }
 
@@ -442,6 +609,7 @@ impl DrawableComponent for TitleContents {
         match self {
             TitleContents::InitialMenu(contents) => contents.is_visible(),
             TitleContents::TitleSoundPlayer(contents) => contents.is_visible(),
+	    TitleContents::ConfigPanel(panel) => panel.is_visible(),
         }
     }
 
@@ -449,6 +617,7 @@ impl DrawableComponent for TitleContents {
         match self {
             TitleContents::InitialMenu(contents) => contents.set_drawing_depth(depth),
             TitleContents::TitleSoundPlayer(contents) => contents.set_drawing_depth(depth),
+	    TitleContents::ConfigPanel(panel) => panel.set_drawing_depth(depth),
         }
     }
 
@@ -456,6 +625,7 @@ impl DrawableComponent for TitleContents {
         match self {
             TitleContents::InitialMenu(contents) => contents.get_drawing_depth(),
             TitleContents::TitleSoundPlayer(contents) => contents.get_drawing_depth(),
+	    TitleContents::ConfigPanel(panel) => panel.get_drawing_depth(),
         }
     }
 }

@@ -7,3 +7,8 @@ src = "./resources/title_contents/init_menu.toml"
 name = "sound-player"
 type = "TitleSoundPlayer"
 src = "./resources/title_contents/sound_player.toml"
+
+[[contents-list]]
+name = "config-panel"
+type = "ConfigPanel"
+src = "./resources/title_contents/config_panel.toml"

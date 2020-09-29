@@ -1,0 +1,12 @@
+text = "テスト"
+
+[font_info]
+FontID = "Cinema"
+color = 0xff0000ff
+[font_info.scale]
+x = 40.0
+y = 40.0
+
+[position]
+x = 100.0
+y = 100.0
