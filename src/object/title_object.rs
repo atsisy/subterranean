@@ -290,7 +290,7 @@ impl TitleSoundPlayer {
         TitleSoundPlayer {
             main_text: main_text,
             name: name,
-            seek_bar: SeekBar::new(ctx, numeric::Rect::new(200.0, 200.0, 300.0, 40.0), 0),
+            seek_bar: SeekBar::new(ctx, numeric::Rect::new(200.0, 200.0, 300.0, 40.0), 100.0, 0.0, 0),
             drwob_essential: DrawableObjectEssential::new(true, 0),
         }
     }

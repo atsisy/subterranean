@@ -1629,10 +1629,19 @@ pub struct SeekBar {
     seek_edge: ggraphics::Mesh,
     dragging: bool,
     drwob_essential: DrawableObjectEssential,
+    min_value: f32,
+    max_value: f32,
+    current_value: f32,
 }
 
 impl SeekBar {
-    pub fn new<'a>(ctx: &mut SuzuContext<'a>, pos_rect: numeric::Rect, depth: i8) -> Self {
+    pub fn new<'a>(
+	ctx: &mut SuzuContext<'a>,
+	pos_rect: numeric::Rect,
+	max_value: f32,
+	min_value: f32,
+	depth: i8,
+    ) -> Self {
         let seek = shape::Rectangle::new(
             numeric::Rect::new(
                 pos_rect.x,
@@ -1648,20 +1657,39 @@ impl SeekBar {
 
         seek.add_to_builder(&mut builder);
 
+	let mut handle = UniTexture::new(
+            ctx.ref_texture(TextureID::ChoicePanel1),
+	    numeric::Point2f::new(0.0, 0.0),
+            numeric::Vector2f::new(0.25, 0.25),
+            0.0,
+            0,
+        );
+
+	handle.set_position(
+	    numeric::Point2f::new(
+		pos_rect.x + ((pos_rect.w - handle.get_drawing_size(ctx.context).x) / 2.0),
+		pos_rect.y
+	    )
+	);
+	
         SeekBar {
             rect: pos_rect,
             seek_offset: numeric::Vector2f::new(0.0, 0.0),
-            handle: UniTexture::new(
-                ctx.ref_texture(TextureID::ChoicePanel1),
-                numeric::Point2f::new(pos_rect.x + (pos_rect.w / 2.0), pos_rect.y),
-                numeric::Vector2f::new(0.25, 0.25),
-                0.0,
-                0,
-            ),
+            handle: handle,
             seek_edge: builder.build(ctx.context).unwrap(),
             drwob_essential: DrawableObjectEssential::new(true, depth),
             dragging: false,
+	    current_value: (min_value + max_value) / 2.0,
+	    min_value: min_value,
+	    max_value: max_value,
         }
+    }
+
+    fn update_current_value<'a>(&mut self, ctx: &mut SuzuContext<'a>) {
+	let handle_position = self.handle.get_drawing_area(ctx.context);
+
+	let ratio = (handle_position.left() - self.rect.left()) / (self.rect.w - handle_position.w);
+	self.current_value = (ratio * (self.max_value - self.min_value)) + self.min_value;
     }
 
     pub fn start_dragging_check<'a>(&mut self, ctx: &mut SuzuContext<'a>, point: numeric::Point2f) {
@@ -1690,6 +1718,7 @@ impl SeekBar {
 
         ctx.process_utility.redraw();
         self.handle.set_position(seek_position);
+	self.update_current_value(ctx);
     }
 
     pub fn release_handler(&mut self) {
@@ -1698,6 +1727,10 @@ impl SeekBar {
         }
 
         self.dragging = false;
+    }
+
+    pub fn get_current_value(&self) -> f32 {
+	self.current_value
     }
 }
 
