@@ -2112,10 +2112,15 @@ impl<'data> ggez::event::EventHandler for State<'data> {
 
 impl<'data> State<'data> {
     pub fn new(ctx: &mut Context, game_data: &'data mut GameResource) -> GameResult<State<'data>> {
+	let scene_controller = SceneController::new(ctx, game_data);
+
+	game_data.bgm_manager.change_global_volume(scene_controller.game_config.bgm_volume);
+	game_data.se_manager.change_global_volume(scene_controller.game_config.se_volume);
+	
         let s = State {
             clock: 0,
             fps: 0.0,
-            scene_controller: SceneController::new(ctx, game_data),
+            scene_controller: scene_controller,
             game_data: game_data,
         };
 

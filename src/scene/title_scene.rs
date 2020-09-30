@@ -131,7 +131,7 @@ impl TitleScene {
         &mut self,
         ctx: &mut SuzuContext<'a>,
         point: numeric::Point2f,
-        offset: numeric::Vector2f,
+        _offset: numeric::Vector2f,
     ) {
         if self.current_title_contents.is_none() {
             return;
@@ -197,7 +197,15 @@ impl TitleScene {
                 contents.mouse_button_up_handler();
             },
 	    TitleContents::ConfigPanel(panel) => {
-		panel.mouse_button_up(ctx, point, t);
+		let maybe_event = panel.mouse_button_up(ctx, point, t);
+		if let Some(event) = maybe_event {
+		    match event {
+			TitleContentsEvent::NextContents(content_name) => {
+			    self.switch_current_content(content_name);
+			},
+			_ => (),
+		    }
+		}
 	    },
         }
     }

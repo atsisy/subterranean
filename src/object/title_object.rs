@@ -274,12 +274,11 @@ impl TitleSoundPlayerData {
 pub struct TitleSoundPlayer {
     main_text: VerticalText,
     name: String,
-    seek_bar: SeekBar,
     drwob_essential: DrawableObjectEssential,
 }
 
 impl TitleSoundPlayer {
-    pub fn new<'a>(ctx: &mut SuzuContext<'a>, name: String, data: TitleSoundPlayerData) -> Self {
+    pub fn new<'a>(_ctx: &mut SuzuContext<'a>, name: String, data: TitleSoundPlayerData) -> Self {
         let main_text = VerticalText::new(
             data.text.to_string(),
             data.position,
@@ -292,7 +291,6 @@ impl TitleSoundPlayer {
         TitleSoundPlayer {
             main_text: main_text,
             name: name,
-            seek_bar: SeekBar::new(ctx, numeric::Rect::new(200.0, 200.0, 300.0, 40.0), 12.0, 100.0, 0.0, 0),
             drwob_essential: DrawableObjectEssential::new(true, 0),
         }
     }
@@ -303,23 +301,20 @@ impl TitleSoundPlayer {
 
     pub fn dragging_handler<'a>(
         &mut self,
-        ctx: &mut SuzuContext<'a>,
-        point: numeric::Point2f,
+        _ctx: &mut SuzuContext<'a>,
+        _point: numeric::Point2f,
         _offset: Vector2f,
     ) {
-        self.seek_bar.dragging_handler(ctx, point)
     }
 
     pub fn mouse_button_down_handler<'a>(
         &mut self,
-        ctx: &mut SuzuContext<'a>,
-        point: numeric::Point2f,
+        _ctx: &mut SuzuContext<'a>,
+        _point: numeric::Point2f,
     ) {
-        self.seek_bar.start_dragging_check(ctx, point);
     }
 
     pub fn mouse_button_up_handler(&mut self) {
-        self.seek_bar.release_handler();
     }
 }
 
@@ -327,7 +322,6 @@ impl DrawableComponent for TitleSoundPlayer {
     fn draw(&mut self, ctx: &mut ggez::Context) -> ggez::GameResult<()> {
         if self.is_visible() {
             self.main_text.draw(ctx)?;
-            self.seek_bar.draw(ctx)?;
         }
 
         Ok(())
@@ -370,6 +364,20 @@ pub enum GameConfigElement {
     SEVolume,
 }
 
+struct TemporaryConfigData {
+    bgm_volume: f32,
+    se_volume: f32,
+}
+
+impl TemporaryConfigData {
+    pub fn new<'a>(ctx: &mut SuzuContext<'a>) -> Self {
+	TemporaryConfigData {
+	    bgm_volume: ctx.config.get_bgm_volume(),
+	    se_volume: ctx.config.get_se_volume(),
+	}
+    }
+}
+
 pub struct ConfigPanel {
     canvas: sub_screen::SubScreen,
     hrzn_text_list: Vec<UniText>,
@@ -378,6 +386,8 @@ pub struct ConfigPanel {
     bgm_volume_bar: SeekBar,
     se_volume_bar: SeekBar,
     apply_button: SelectButton,
+    cancel_button: SelectButton,
+    original_config_data: TemporaryConfigData,
 }
 
 impl ConfigPanel {
@@ -423,7 +433,7 @@ impl ConfigPanel {
 	sb_dynamic_text.insert(
 	    GameConfigElement::BGMVolume,
 	    UniText::new(
-		format!("{}%", 50.0),
+		format!("{}%", ctx.config.get_bgm_volume() * 100.0),
 		numeric::Point2f::new(400.0, 70.0),
 		numeric::Vector2f::new(1.0, 1.0),
 		0.0,
@@ -435,7 +445,7 @@ impl ConfigPanel {
 	sb_dynamic_text.insert(
 	    GameConfigElement::SEVolume,
 	    UniText::new(
-		format!("{}%", 50.0),
+		format!("{}%", ctx.config.get_se_volume() * 100.0),
 		numeric::Point2f::new(400.0, 170.0),
 		numeric::Vector2f::new(1.0, 1.0),
 		0.0,
@@ -459,6 +469,22 @@ impl ConfigPanel {
             numeric::Rect::new(650.0, 600.0, 100.0, 50.0),
             text_texture,
         );
+
+	let text_texture = Box::new(TextButtonTexture::new(
+            ctx,
+            numeric::Point2f::new(0.0, 0.0),
+            "中止".to_string(),
+            hrzn_text_font_info.clone(),
+            8.0,
+            ggraphics::Color::from_rgba_u32(0xe8b5a2ff),
+            0,
+        ));
+
+        let cancel_button = SelectButton::new(
+            ctx,
+            numeric::Rect::new(850.0, 600.0, 100.0, 50.0),
+            text_texture,
+        );
 	
 	ConfigPanel {
 	    header_text: header_text,
@@ -476,6 +502,7 @@ impl ConfigPanel {
 		10.0,
 		100.0,
 		0.0,
+		ctx.config.get_bgm_volume() * 100.0,
 		0
 	    ),
 	    se_volume_bar: SeekBar::new(
@@ -484,9 +511,12 @@ impl ConfigPanel {
 		10.0,
 		100.0,
 		0.0,
+		ctx.config.get_se_volume() * 100.0,
 		0
 	    ),
 	    apply_button: apply_button,
+	    cancel_button: cancel_button,
+	    original_config_data: TemporaryConfigData::new(ctx),
 	}
     }
 
@@ -500,6 +530,11 @@ impl ConfigPanel {
 	self.sb_dynamic_text.get_mut(&GameConfigElement::SEVolume)
 	    .unwrap()
 	    .replace_text(&format!("{}%", se_volume));
+    }
+
+    fn recover_original_config<'a>(&mut self, ctx: &mut SuzuContext<'a>) {
+	ctx.change_bgm_volume(self.original_config_data.bgm_volume * 100.0);
+	ctx.change_se_volume(self.original_config_data.se_volume * 100.0);
     }
 
     pub fn get_name(&self) -> String {
@@ -527,17 +562,24 @@ impl ConfigPanel {
 	ctx: &mut SuzuContext<'a>,
 	point: numeric::Point2f,
         _t: Clock,
-    ) {
+    ) -> Option<TitleContentsEvent> {
 	self.bgm_volume_bar.release_handler();
 	self.se_volume_bar.release_handler();
 
 	let rpoint = self.canvas.relative_point(point);
 	
 	if self.apply_button.contains(ctx.context, rpoint) {
-	    println!("change!!");
 	    ctx.change_bgm_volume(self.bgm_volume_bar.get_current_value());
 	    ctx.change_se_volume(self.se_volume_bar.get_current_value());
+	    return Some(TitleContentsEvent::NextContents("init-menu".to_string()));
 	}
+
+	if self.cancel_button.contains(ctx.context, rpoint) {
+	    self.recover_original_config(ctx);
+	    return Some(TitleContentsEvent::NextContents("init-menu".to_string()));
+	}
+
+	None
     }
 
     pub fn mouse_dragging_handler<'a>(
@@ -551,6 +593,9 @@ impl ConfigPanel {
 	self.se_volume_bar.dragging_handler(ctx, point);
 
 	self.update_seek_bar_value();
+	
+	ctx.change_bgm_volume(self.bgm_volume_bar.get_current_value());
+	ctx.change_se_volume(self.se_volume_bar.get_current_value());
     }
 }
 
@@ -572,6 +617,7 @@ impl DrawableComponent for ConfigPanel {
 	    }
 
 	    self.apply_button.draw(ctx)?;
+	    self.cancel_button.draw(ctx)?;
 	    
             sub_screen::pop_screen(ctx);
             self.canvas.draw(ctx).unwrap();

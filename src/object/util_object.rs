@@ -1641,6 +1641,7 @@ impl SeekBar {
 	bar_height: f32,
 	max_value: f32,
 	min_value: f32,
+	init_value: f32,
 	depth: i8,
     ) -> Self {
 	let mut handle = UniTexture::new(
@@ -1653,7 +1654,7 @@ impl SeekBar {
 
 	handle.set_position(
 	    numeric::Point2f::new(
-		pos_rect.x + ((pos_rect.w - handle.get_drawing_size(ctx.context).x) / 2.0),
+		pos_rect.x + ((pos_rect.w - handle.get_drawing_size(ctx.context).x) * (init_value / max_value)),
 		pos_rect.y
 	    )
 	);
@@ -1682,7 +1683,7 @@ impl SeekBar {
             seek_edge: builder.build(ctx.context).unwrap(),
             drwob_essential: DrawableObjectEssential::new(true, depth),
             dragging: false,
-	    current_value: (min_value + max_value) / 2.0,
+	    current_value: init_value,
 	    min_value: min_value,
 	    max_value: max_value,
         }
