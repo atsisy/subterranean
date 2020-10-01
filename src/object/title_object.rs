@@ -15,8 +15,8 @@ use torifune::graphics::object::*;
 use torifune::numeric;
 use torifune::core::Clock;
 
-use crate::core::{font_information_from_toml_value, SuzuContext, FontID};
-use crate::object::util_object::{SeekBar, SelectButton, TextButtonTexture};
+use crate::core::{font_information_from_toml_value, SuzuContext, FontID, TextureID};
+use crate::object::util_object::{SeekBar, CheckBox, SelectButton, TextButtonTexture};
 use crate::scene::SceneID;
 
 #[derive(Clone, Copy)]
@@ -385,6 +385,7 @@ pub struct ConfigPanel {
     header_text: VerticalText,
     bgm_volume_bar: SeekBar,
     se_volume_bar: SeekBar,
+    checkbox: CheckBox,
     apply_button: SelectButton,
     cancel_button: SelectButton,
     original_config_data: TemporaryConfigData,
@@ -485,6 +486,21 @@ impl ConfigPanel {
             numeric::Rect::new(850.0, 600.0, 100.0, 50.0),
             text_texture,
         );
+
+	let choice_box_texture = Box::new(UniTexture::new(
+	    ctx.ref_texture(TextureID::ChoicePanel1),
+	    numeric::Point2f::new(200.0, 400.0),
+	    numeric::Vector2f::new(1.0, 1.0),
+	    0.0,
+	    0
+	));
+	let check_box = CheckBox::new(
+	    ctx,
+	    numeric::Rect::new(200.0, 400.0, 50.0, 50.0),
+	    choice_box_texture,
+	    false,
+	    0
+	);
 	
 	ConfigPanel {
 	    header_text: header_text,
@@ -517,6 +533,7 @@ impl ConfigPanel {
 	    apply_button: apply_button,
 	    cancel_button: cancel_button,
 	    original_config_data: TemporaryConfigData::new(ctx),
+	    checkbox: check_box,
 	}
     }
 
@@ -585,6 +602,8 @@ impl ConfigPanel {
 	    return Some(TitleContentsEvent::NextContents("init-menu".to_string()));
 	}
 
+	self.checkbox.click_handler(rpoint);
+	
 	None
     }
 
@@ -624,6 +643,8 @@ impl DrawableComponent for ConfigPanel {
 
 	    self.apply_button.draw(ctx)?;
 	    self.cancel_button.draw(ctx)?;
+
+	    self.checkbox.draw(ctx)?;
 	    
             sub_screen::pop_screen(ctx);
             self.canvas.draw(ctx).unwrap();

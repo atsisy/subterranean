@@ -177,6 +177,18 @@ impl TableFrame {
         numeric::Vector2f::new(self.real_width(), self.real_height())
     }
 
+    pub fn get_area(&self) -> numeric::Rect {
+	let pos = self.get_position();
+	let size = self.size();
+	
+	numeric::Rect::new(
+	    pos.x,
+	    pos.y,
+	    size.x,
+	    size.y
+	)
+    }
+    
     ///
     /// あるPointが含まれているグリッドの位置を返す
     ///
@@ -1761,6 +1773,104 @@ impl DrawableComponent for SeekBar {
         }
 
         Ok(())
+    }
+
+    #[inline(always)]
+    fn hide(&mut self) {
+        self.drwob_essential.visible = false;
+    }
+
+    #[inline(always)]
+    fn appear(&mut self) {
+        self.drwob_essential.visible = true;
+    }
+
+    #[inline(always)]
+    fn is_visible(&self) -> bool {
+        self.drwob_essential.visible
+    }
+
+    #[inline(always)]
+    fn set_drawing_depth(&mut self, depth: i8) {
+        self.drwob_essential.drawing_depth = depth;
+    }
+
+    #[inline(always)]
+    fn get_drawing_depth(&self) -> i8 {
+        self.drwob_essential.drawing_depth
+    }
+}
+
+pub struct CheckBox {
+    frame: TableFrame,
+    check_texture: Box<dyn TextureObject>,
+    drwob_essential: DrawableObjectEssential,
+    is_checked: bool,
+}
+
+impl CheckBox {
+    pub fn new<'a>(
+	ctx: &mut SuzuContext<'a>,
+	pos_rect: numeric::Rect,
+	mut check_texture: Box<dyn TextureObject>,
+	is_checked: bool,
+	depth: i8,
+    ) -> Self {
+	let frame = TableFrame::new(
+	    ctx.resource,
+	    pos_rect.point().into(),
+	    TileBatchTextureID::OldStyleFrame,
+	    FrameData::new(vec![pos_rect.h], vec![pos_rect.w]),
+	    numeric::Vector2f::new(0.25, 0.25),
+	    0
+	);
+
+	let tile_edge_size = frame.get_scaled_tile_size();
+	check_texture.fit_scale(ctx.context, numeric::Vector2f::new(
+	    pos_rect.w - (2.0 * tile_edge_size.x),
+	    pos_rect.h - (2.0 * tile_edge_size.y)));
+	check_texture.make_center(
+	    ctx.context,
+	    numeric::Point2f::new(
+		pos_rect.x + (pos_rect.w * 0.5),
+		pos_rect.y + (pos_rect.h * 0.5)
+	    ));
+
+	if is_checked {
+	    check_texture.appear();
+	} else {
+	    check_texture.hide();
+	}
+	
+	CheckBox {
+	    frame: frame,
+	    check_texture: check_texture,
+	    drwob_essential: DrawableObjectEssential::new(true, depth),
+	    is_checked: is_checked,
+	}
+    }
+
+    pub fn click_handler(&mut self, point: numeric::Point2f) {
+	if self.frame.get_area().contains(point) {
+	    self.is_checked = !self.is_checked;
+
+	    if self.is_checked {
+		self.check_texture.appear();
+	    } else {
+		self.check_texture.hide();
+	    }
+	}
+    }
+}
+
+impl DrawableComponent for CheckBox {
+    fn draw(&mut self, ctx: &mut ggez::Context) -> ggez::GameResult<()> {
+	if self.is_visible() {
+	    self.frame.draw(ctx)?;
+	    self.check_texture.draw(ctx)?;
+	}
+
+	Ok(())
     }
 
     #[inline(always)]
