@@ -460,7 +460,7 @@ impl ConfigPanel {
             "適用".to_string(),
             hrzn_text_font_info.clone(),
             8.0,
-            ggraphics::Color::from_rgba_u32(0xe8b5a2ff),
+            ggraphics::Color::from_rgba_u32(0x362d33ff),
             0,
         ));
 
@@ -476,7 +476,7 @@ impl ConfigPanel {
             "中止".to_string(),
             hrzn_text_font_info.clone(),
             8.0,
-            ggraphics::Color::from_rgba_u32(0xe8b5a2ff),
+            ggraphics::Color::from_rgba_u32(0x362d33ff),
             0,
         ));
 
@@ -533,8 +533,14 @@ impl ConfigPanel {
     }
 
     fn recover_original_config<'a>(&mut self, ctx: &mut SuzuContext<'a>) {
-	ctx.change_bgm_volume(self.original_config_data.bgm_volume * 100.0);
-	ctx.change_se_volume(self.original_config_data.se_volume * 100.0);
+	let original_bgm = self.original_config_data.bgm_volume * 100.0;
+	let original_se = self.original_config_data.se_volume * 100.0;
+	
+	ctx.change_bgm_volume(original_bgm);
+	ctx.change_se_volume(original_se);
+
+	self.bgm_volume_bar.set_value(ctx, original_bgm);
+	self.se_volume_bar.set_value(ctx, original_se);
     }
 
     pub fn get_name(&self) -> String {

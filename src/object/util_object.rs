@@ -1736,6 +1736,17 @@ impl SeekBar {
     pub fn get_current_value(&self) -> f32 {
 	self.current_value
     }
+
+    pub fn set_value<'a>(&mut self, ctx: &mut SuzuContext<'a>, value: f32) {
+	self.handle.set_position(
+	    numeric::Point2f::new(
+		self.rect.x + ((self.rect.w - self.handle.get_drawing_size(ctx.context).x) * (value / self.max_value)),
+		self.rect.y
+	    )
+	);
+
+	self.current_value = value;
+    }
 }
 
 impl DrawableComponent for SeekBar {

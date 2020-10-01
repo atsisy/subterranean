@@ -119,11 +119,15 @@ impl TitleScene {
         }
 
         match &mut self.current_title_contents.as_mut().unwrap() {
-            TitleContents::InitialMenu(contents) => contents.update_highlight(ctx, point),
+            TitleContents::InitialMenu(contents) => {
+		println!("init-menu");
+		contents.update_highlight(ctx, point);
+	    },
             TitleContents::TitleSoundPlayer(contents) => {
-                contents.dragging_handler(ctx, point, offset)
+		println!("sound-player");
+                contents.dragging_handler(ctx, point, offset);
             },
-	    TitleContents::ConfigPanel(_) => (),
+	    TitleContents::ConfigPanel(_) => println!("config!!"),
         }
     }
 
@@ -300,10 +304,13 @@ impl SceneManager for TitleScene {
     fn mouse_button_up_event<'a>(
         &mut self,
         ctx: &mut SuzuContext<'a>,
-        _button: ginput::mouse::MouseButton,
+        button: ginput::mouse::MouseButton,
         point: numeric::Point2f,
     ) {
         let t = self.get_current_clock();
+
+	self.mouse_info.update_dragging(button, false);
+	
         self.contents_mouse_click_handler(ctx, point, t);
     }
 
