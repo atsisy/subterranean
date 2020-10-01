@@ -1,4 +1,5 @@
 use std::rc::Rc;
+use std::collections::HashMap;
 
 use ggez::graphics as ggraphics;
 
@@ -165,6 +166,166 @@ impl DrawableComponent for SuzunaStatusMainPage {
         }
 
         Ok(())
+    }
+
+    #[inline(always)]
+    fn hide(&mut self) {
+        self.drwob_essential.visible = false;
+    }
+
+    #[inline(always)]
+    fn appear(&mut self) {
+        self.drwob_essential.visible = true;
+    }
+
+    #[inline(always)]
+    fn is_visible(&self) -> bool {
+        self.drwob_essential.visible
+    }
+
+    #[inline(always)]
+    fn set_drawing_depth(&mut self, depth: i8) {
+        self.drwob_essential.drawing_depth = depth;
+    }
+
+    #[inline(always)]
+    fn get_drawing_depth(&self) -> i8 {
+        self.drwob_essential.drawing_depth
+    }
+}
+
+#[derive(Copy, Clone, Hash, Eq, PartialEq)]
+pub enum SuzunaAdType {
+    ShopNobori,
+    TownNobori,
+    Chindon,
+    NewsPaper,
+    BunBunMaruPaper,
+    AdPaper,
+}
+
+pub struct AdEntry {
+    check_box: CheckBox,
+    desc_text: UniText,
+    drwob_essential: DrawableObjectEssential,
+}
+
+impl AdEntry {
+    pub fn new<'a>(
+	ctx: &mut SuzuContext<'a>,
+	pos: numeric::Point2f,
+	check_box_size: numeric::Vector2f,
+	default_check: bool,
+	desc_text: String,
+	depth: i8,
+    ) -> Self {
+	let font_info = FontInformation::new(
+	    ctx.resource.get_font(FontID::Cinema),
+	    numeric::Vector2f::new(18.0, 18.0),
+	    ggraphics::Color::from_rgba_u32(0xff)
+	);
+
+	let choice_box_texture = Box::new(UniTexture::new(
+	    ctx.ref_texture(TextureID::ChoicePanel1),
+	    numeric::Point2f::new(0.0, 0.0),
+	    numeric::Vector2f::new(1.0, 1.0),
+	    0.0,
+	    depth
+	));
+	
+	AdEntry {
+	    check_box: CheckBox::new(
+		ctx,
+		numeric::Rect::new(pos.x, pos.y, check_box_size.x, check_box_size.y),
+		choice_box_texture,
+		default_check,
+		0
+	    ),
+	    desc_text: UniText::new(
+		desc_text,
+		numeric::Point2f::new(pos.x + check_box_size.x, pos.y + check_box_size.y),
+		numeric::Vector2f::new(1.0, 1.0),
+		0.0,
+		0,
+		font_info
+	    ),
+	    drwob_essential: DrawableObjectEssential::new(true, depth),
+	}
+    }
+}
+
+impl DrawableComponent for AdEntry {
+    fn draw(&mut self, ctx: &mut ggez::Context) -> ggez::GameResult<()> {
+	if self.is_visible() {
+	    self.check_box.draw(ctx)?;
+	    self.desc_text.draw(ctx)?;
+	}
+
+	Ok(())
+    }
+
+    #[inline(always)]
+    fn hide(&mut self) {
+        self.drwob_essential.visible = false;
+    }
+
+    #[inline(always)]
+    fn appear(&mut self) {
+        self.drwob_essential.visible = true;
+    }
+
+    #[inline(always)]
+    fn is_visible(&self) -> bool {
+        self.drwob_essential.visible
+    }
+
+    #[inline(always)]
+    fn set_drawing_depth(&mut self, depth: i8) {
+        self.drwob_essential.drawing_depth = depth;
+    }
+
+    #[inline(always)]
+    fn get_drawing_depth(&self) -> i8 {
+        self.drwob_essential.drawing_depth
+    }
+}
+
+pub struct ScenarioAdPage {
+    ad_table: HashMap<SuzunaAdType, AdEntry>,
+    drwob_essential: DrawableObjectEssential,
+}
+
+impl ScenarioAdPage {
+    pub fn new<'a>(ctx: &mut SuzuContext<'a>, pos: numeric::Point2f, depth: i8) -> Self {
+	let mut ad_table = HashMap::new();
+
+	ad_table.insert(
+	    SuzunaAdType::AdPaper,
+	    AdEntry::new(
+		ctx,
+		pos,
+		numeric::Vector2f::new(64.0, 64.0),
+		false,
+		"チラシ".to_string(),
+		depth
+	    ));
+
+	ScenarioAdPage {
+	    ad_table: ad_table,
+	    drwob_essential: DrawableObjectEssential::new(true, depth),
+	}
+    }
+}
+
+impl DrawableComponent for ScenarioAdPage {
+    fn draw(&mut self, ctx: &mut ggez::Context) -> ggez::GameResult<()> {
+	if self.is_visible() {
+	    for (_, entry) in self.ad_table.iter_mut() {
+		entry.draw(ctx)?;
+	    }
+	}
+
+	Ok(())
     }
 
     #[inline(always)]
