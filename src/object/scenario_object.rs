@@ -354,10 +354,58 @@ impl DrawableComponent for ScenarioAdPage {
     }
 }
 
+pub struct SuzunaStatusPages {
+    main_page: SuzunaStatusMainPage,
+    ad_page: ScenarioAdPage,
+    current_page: usize,
+}
+
+impl SuzunaStatusPages {
+    pub fn new(main_page: SuzunaStatusMainPage, ad_page: ScenarioAdPage) -> Self {
+	SuzunaStatusPages {
+	    main_page: main_page,
+	    ad_page: ad_page,
+	    current_page: 0,
+	}
+    }
+
+    pub fn draw_page(&mut self, ctx: &mut ggez::Context) {
+	match self.current_page {
+	    0 => self.main_page.draw(ctx).unwrap(),
+	    1 => self.ad_page.draw(ctx).unwrap(),
+	    _ => (),
+	}
+    }
+
+    fn next_page(&mut self) {
+	if self.current_page >= 1 {
+	    return;
+	}
+
+	self.current_page += 1;
+    }
+
+    fn prev_page(&mut self) {
+	if self.current_page <= 0 {
+	    return;
+	}
+
+	self.current_page -= 1;
+    }
+
+    pub fn get_current_page_num(&self) -> usize {
+	self.current_page
+    }
+
+    pub fn page_len(&self) -> usize {
+	2
+    }
+}
+
 pub struct SuzunaStatusScreen {
     canvas: SubScreen,
     background: UniTexture,
-    main_page: SuzunaStatusMainPage,
+    pages: SuzunaStatusPages,
     go_left_texture: UniTexture,
     go_right_texture: UniTexture,
 }
@@ -401,16 +449,41 @@ impl SuzunaStatusScreen {
                 ggraphics::Color::from_rgba_u32(0xffffffff),
             ),
             background: background_texture,
-            main_page: SuzunaStatusMainPage::new(ctx),
+	    pages: SuzunaStatusPages::new(
+		SuzunaStatusMainPage::new(ctx),
+		ScenarioAdPage::new(ctx, numeric::Point2f::new(0.0, 0.0), 0)
+	    ),
             go_left_texture: left,
             go_right_texture: right,
         }
     }
 
-    pub fn click_handler<'a>(&mut self, _ctx: &mut SuzuContext<'a>, click_point: numeric::Point2f) {
+    fn check_move_page_icon_visibility(&mut self) {
+        self.go_right_texture.appear();
+        self.go_left_texture.appear();
+
+        if self.pages.get_current_page_num() == 0 {
+            self.go_left_texture.hide();
+        } else if self.pages.get_current_page_num() == self.pages.page_len() - 1 {
+            self.go_right_texture.hide();
+        }
+    }
+
+    pub fn click_handler<'a>(&mut self, ctx: &mut SuzuContext<'a>, click_point: numeric::Point2f) {
         if !self.canvas.contains(click_point) {
             return;
         }
+
+	let rpoint = self.canvas.relative_point(click_point);
+
+	if self.go_right_texture.contains(ctx.context, rpoint) {
+	    self.pages.next_page();
+	} else if self.go_left_texture.contains(ctx.context, rpoint) {
+	    self.pages.prev_page();
+	}
+
+	self.check_move_page_icon_visibility();
+	ctx.process_utility.redraw();
     }
 }
 
@@ -420,7 +493,7 @@ impl DrawableComponent for SuzunaStatusScreen {
             sub_screen::stack_screen(ctx, &self.canvas);
 
             self.background.draw(ctx)?;
-            self.main_page.draw(ctx)?;
+	    self.pages.draw_page(ctx);
 
             self.go_right_texture.draw(ctx)?;
             self.go_left_texture.draw(ctx)?;

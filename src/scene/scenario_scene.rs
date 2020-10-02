@@ -232,9 +232,15 @@ impl SceneManager for ScenarioScene {
                 }
                 _ => (),
             }
-
-            return;
-        }
+        } else {
+	    match button {
+                MouseButton::Left => {
+                    let t = self.get_current_clock();
+		    self.status_screen.click_handler(ctx, point);
+                }
+                _ => (),
+            }
+	}
     }
 
     fn pre_process<'a>(&mut self, ctx: &mut SuzuContext<'a>) {
