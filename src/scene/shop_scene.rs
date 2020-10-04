@@ -96,6 +96,46 @@ impl CharacterGroup {
         self.group.iter_mut().for_each(|customer| {
             ShopScene::customer_move_and_collision_check(ctx, customer, camera, tile_map, t)
         });
+
+	// for target_index in 0..self.group.len() {
+	//     for checked_index in 0..self.group.len() {
+	// 	if target_index == checked_index {
+	// 	    continue;
+	// 	}
+
+	// 	let checked = self.group.get_mut(checked_index).unwrap().get_mut_character_object();
+	// 	checked.update_display_position(camera);
+
+	// 	let target = self.group.get_mut(target_index).unwrap().get_mut_character_object();
+	// 	target.update_display_position(camera);
+		
+	// 	let checked = self.group.get(checked_index).unwrap().get_character_object();
+	// 	let target = self.group.get(target_index).unwrap().get_character_object();
+
+	// 	// 衝突情報を取得
+	// 	let collision_info = target
+	// 	    .check_collision_with_character(ctx, checked);
+
+	// 	let target = self.group.get_mut(target_index).unwrap().get_mut_character_object();
+
+	// 	// collisionフィールドがtrueなら、衝突している
+	// 	if collision_info.collision {
+	// 	    // プレイヤーと他キャラクターの衝突状況から、プレイヤーがどれだけ、突き放されればいいのか計算
+	// 	    let diff =
+	// 		target
+	// 		.fix_collision_horizon(ctx, &collision_info, t);
+		    
+	// 	    // プレイヤーの突き放し距離分動かす
+	// 	    target
+	// 		.move_map(numeric::Vector2f::new(-diff, 0.0));
+		    
+	// 	    // プレイヤーのマップ座標を更新
+	// 	    target
+	// 		.update_display_position(camera);
+	// 	}
+	//     }
+	// }
+	
     }
 
     pub fn iter(&self) -> std::slice::Iter<CustomerCharacter> {
@@ -574,37 +614,32 @@ impl ShopScene {
 
     fn check_character_collision_x_sub(
         ctx: &mut ggez::Context,
-        player: &mut PlayableCharacter,
-        character: &mut CustomerCharacter,
+        player: &mut MapObject,
+        character: &mut MapObject,
         camera: &numeric::Rect,
         t: Clock,
     ) {
         // 他キャラクターのマップ座標を更新
         character
-            .get_mut_character_object()
             .update_display_position(camera);
 
         // 衝突情報を取得
         let collision_info = player
-            .get_character_object()
-            .check_collision_with_character(ctx, character.get_character_object());
+            .check_collision_with_character(ctx, character);
 
         // collisionフィールドがtrueなら、衝突している
         if collision_info.collision {
             // プレイヤーと他キャラクターの衝突状況から、プレイヤーがどれだけ、突き放されればいいのか計算
             let diff =
                 player
-                    .get_mut_character_object()
                     .fix_collision_horizon(ctx, &collision_info, t);
 
             // プレイヤーの突き放し距離分動かす
             player
-                .get_mut_character_object()
                 .move_map(numeric::Vector2f::new(-diff, 0.0));
 
             // プレイヤーのマップ座標を更新
             player
-                .get_mut_character_object()
                 .update_display_position(camera);
         }
     }
@@ -659,8 +694,8 @@ impl ShopScene {
         for e in self.character_group.iter_mut() {
             Self::check_character_collision_x_sub(
                 ctx,
-                &mut self.player,
-                e,
+                self.player.get_mut_character_object(),
+                e.get_mut_character_object(),
                 &self.camera.borrow(),
                 t,
             );
@@ -669,8 +704,8 @@ impl ShopScene {
         for (e, _) in self.customer_queue.iter_mut() {
             Self::check_character_collision_x_sub(
                 ctx,
-                &mut self.player,
-                e,
+                self.player.get_mut_character_object(),
+                e.get_mut_character_object(),
                 &self.camera.borrow(),
                 t,
             );
