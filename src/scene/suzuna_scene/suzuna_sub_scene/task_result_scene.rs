@@ -13,6 +13,7 @@ use crate::core::{
     FontID, MouseInformation, ResultReport, SavableData, TextureID, TileBatchTextureID,
 };
 use crate::flush_delay_event;
+use crate::flush_delay_event_and_redraw_check;
 use crate::object::effect_object;
 use crate::object::task_result_object::*;
 use crate::object::util_object::SelectButton;
@@ -197,16 +198,15 @@ impl SceneManager for TaskResultScene {
     fn pre_process<'a>(&mut self, ctx: &mut SuzuContext<'a>) {
         let t = self.get_current_clock();
 
-        flush_delay_event!(self, self.event_list, ctx, t);
+	flush_delay_event_and_redraw_check!(self, self.event_list, ctx, t);
 
         self.drawable_task_result
             .run_effect(ctx, self.get_current_clock());
 
         if let Some(effect) = self.scene_transition_effect.as_mut() {
             effect.effect(ctx.context, t);
+	    ctx.process_utility.redraw();
         }
-
-        ctx.process_utility.redraw();
     }
 
     fn drawing_process(&mut self, ctx: &mut ggez::Context) {
