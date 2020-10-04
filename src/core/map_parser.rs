@@ -432,17 +432,38 @@ impl StageObjectMap {
         ctx: &mut ggez::Context,
         chara: &MapObject,
     ) -> CollisionInformation {
-        // 全てのレイヤーで描画を実行
+        // 全てのレイヤーで衝突検査
         for layer in self.tile_map.layers.iter() {
             if !layer.visible {
-                // レイヤーが非表示設定になっていれば、描画は行わない
+                // レイヤーが非表示設定になっていれば、無視
                 continue;
             }
 
-            // 二次元のマップデータを全てbatch処理に掛ける
-            for (y, row) in layer.tiles.iter().enumerate() {
-                for (x, &tile) in row.iter().enumerate() {
-                    let gid = tile.gid;
+	    let overlap_tiles_nums = self.overlappable_tiles_nums(chara.get_collision_size(ctx));
+	    let map_position = chara.get_map_position_with_collision_top_offset(ctx);
+	    let global_tile_size = self.get_tile_drawing_size();
+	    let map_tile_pos = numeric::Vector2i::new(
+		(map_position.x as f32 / global_tile_size.x).round() as i32,
+		(map_position.y as f32 / global_tile_size.y).round() as i32,
+	    );
+
+	    for x_offset in -1..(overlap_tiles_nums.x - 1) as i32 {
+		for y_offset in -1..(overlap_tiles_nums.y - 1) as i32 {
+		    let (x, y) = (map_tile_pos.x + x_offset, map_tile_pos.y + y_offset);
+
+		    if x < 0 || y < 0 {
+			continue;
+		    }
+		    
+		    let tile = match layer.tiles.get(y as usize) {
+			Some(row) => match row.get(x as usize) {
+			    Some(tile) => tile,
+			    None => continue,
+			},
+			None => continue,
+		    };
+
+		    let gid = tile.gid;
                     // gidが0のときは、何も配置されていない状態を表すので、描画は行わない
                     if gid == 0 {
                         continue;
@@ -450,7 +471,7 @@ impl StageObjectMap {
 
                     let tileset = self.get_tileset_by_gid(gid).unwrap(); // 目的のタイルセットを取り出す
                     let tile_size = tileset.tile_size; // 利用するタイルセットのタイルサイズを取得
-
+		    
                     let dest_pos =
                         Self::calc_tile_dest_point(x as u32, y as u32, tile_size, self.scale);
 
@@ -474,8 +495,8 @@ impl StageObjectMap {
                             }
                         }
                     }
-                }
-            }
+		}
+	    }
         }
 
         CollisionInformation::new_not_collision()
@@ -494,6 +515,14 @@ impl StageObjectMap {
             (self.tile_map.tile_width as f32) * self.scale.x,
             (self.tile_map.tile_height as f32) * self.scale.y,
         )
+    }
+
+    fn overlappable_tiles_nums(&self, obj_size: numeric::Vector2f) -> numeric::Vector2u {
+	let tile_size = self.get_tile_drawing_size();
+	numeric::Vector2u::new(
+	    (obj_size.x / tile_size.x as f32).ceil() as u32 + 2,
+	    (obj_size.y / tile_size.y as f32).ceil() as u32 + 2,
+	)
     }
 
     /// 全てのsprite batch処理をクリアするメソッド

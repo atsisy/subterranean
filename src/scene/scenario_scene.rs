@@ -235,7 +235,7 @@ impl SceneManager for ScenarioScene {
         } else {
 	    match button {
                 MouseButton::Left => {
-                    let t = self.get_current_clock();
+                    let _t = self.get_current_clock();
 		    self.status_screen.click_handler(ctx, point);
                 }
                 _ => (),

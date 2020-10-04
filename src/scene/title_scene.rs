@@ -120,7 +120,6 @@ impl TitleScene {
 
         match &mut self.current_title_contents.as_mut().unwrap() {
             TitleContents::InitialMenu(contents) => {
-		println!("init-menu");
 		contents.update_highlight(ctx, point);
 	    },
             TitleContents::TitleSoundPlayer(contents) => {

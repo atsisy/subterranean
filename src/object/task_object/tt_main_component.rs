@@ -263,6 +263,7 @@ impl DeskObjects {
 
         if !moneybox_area.contains(item_area.point())
             || !moneybox_area.contains(numeric::Point2f::new(item_area.right(), item_area.bottom()))
+	    || !self.money_box_is_pulled
         {
             return Some(item);
         }

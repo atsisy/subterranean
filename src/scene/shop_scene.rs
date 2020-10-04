@@ -32,6 +32,7 @@ use crate::object::util_object::*;
 use crate::object::*;
 use effect_object::{SceneTransitionEffectType, TilingEffectType};
 use notify::*;
+use crate::perf_measure;
 
 struct CharacterGroup {
     group: Vec<CustomerCharacter>,
@@ -1341,8 +1342,10 @@ impl SceneManager for ShopScene {
 
     fn pre_process<'a>(&mut self, ctx: &mut SuzuContext<'a>) {
         let t = self.get_current_clock();
+	
+        //println!("{}", perf_measure!({
 
-        flush_delay_event_and_redraw_check!(self, self.event_list, ctx, t);
+	flush_delay_event_and_redraw_check!(self, self.event_list, ctx, t);
 
         if !self.shop_menu.first_menu_is_open()
             && !self.shop_special_object.is_enable_now()
@@ -1442,6 +1445,8 @@ impl SceneManager for ShopScene {
 
         // メニューの更新
         self.shop_menu.update(ctx, t);
+
+	//}));
     }
 
     fn drawing_process(&mut self, ctx: &mut ggez::Context) {

@@ -243,7 +243,7 @@ impl AdEntry {
 	    ),
 	    desc_text: UniText::new(
 		desc_text,
-		numeric::Point2f::new(pos.x + check_box_size.x, pos.y + check_box_size.y),
+		numeric::Point2f::new(pos.x + check_box_size.x + 20.0, pos.y),
 		numeric::Vector2f::new(1.0, 1.0),
 		0.0,
 		0,
@@ -291,28 +291,70 @@ impl DrawableComponent for AdEntry {
 }
 
 pub struct ScenarioAdPage {
+    header_text: UniText,
     ad_table: HashMap<SuzunaAdType, AdEntry>,
     drwob_essential: DrawableObjectEssential,
 }
 
 impl ScenarioAdPage {
-    pub fn new<'a>(ctx: &mut SuzuContext<'a>, pos: numeric::Point2f, depth: i8) -> Self {
+    pub fn new<'a>(ctx: &mut SuzuContext<'a>, pos: numeric::Point2f, area_size: numeric::Vector2f, depth: i8) -> Self {
 	let mut ad_table = HashMap::new();
 
-	ad_table.insert(
-	    SuzunaAdType::AdPaper,
-	    AdEntry::new(
-		ctx,
-		pos,
-		numeric::Vector2f::new(64.0, 64.0),
-		false,
-		"チラシ".to_string(),
-		depth
-	    ));
+	let mut entry_pos = numeric::Point2f::new(pos.x + 70.0, pos.y + 80.0);
 
+	for (index, (s, ad_type)) in vec![
+	    ("チラシ　　　　　100円/週", SuzunaAdType::AdPaper),
+	    ("ちんどん屋　　　100円/週", SuzunaAdType::Chindon),
+	    ("のぼり（店前）　100円/週", SuzunaAdType::ShopNobori),
+	    ("のぼり（里）　　100円/週", SuzunaAdType::TownNobori),
+	    ("新聞　　　　　　100円/週", SuzunaAdType::NewsPaper),
+	    ("文々。新聞　　　100円/週", SuzunaAdType::BunBunMaruPaper),
+	].iter().enumerate() {
+	    ad_table.insert(
+		*ad_type,
+		AdEntry::new(
+		    ctx,
+		    entry_pos,
+		    numeric::Vector2f::new(32.0, 32.0),
+		    false,
+		    s.to_string(),
+		    depth
+		));
+
+	    if index % 2 == 0 {
+		entry_pos.x = 400.0;
+	    } else {
+		entry_pos.x = pos.x + 70.0;
+		entry_pos.y += 56.0;
+	    }
+	}
+
+	let font_info = FontInformation::new(
+	    ctx.resource.get_font(FontID::Cinema),
+	    numeric::Vector2f::new(30.0, 30.0),
+	    ggraphics::BLACK
+	);
+	let mut header_text = UniText::new(
+	    "鈴奈庵の宣伝広告".to_string(),
+	    numeric::Point2f::new(0.0, 0.0),
+	    numeric::Vector2f::new(1.0, 1.0),
+	    0.0,
+	    0,
+	    font_info
+	);
+
+	header_text.make_center(ctx.context, numeric::Point2f::new(area_size.x / 2.0, 50.0));
+	
 	ScenarioAdPage {
+	    header_text: header_text,
 	    ad_table: ad_table,
 	    drwob_essential: DrawableObjectEssential::new(true, depth),
+	}
+    }
+
+    pub fn click_handler<'a>(&mut self, ctx: &mut SuzuContext<'a>, click_point: numeric::Point2f) {
+	for (_, entry) in self.ad_table.iter_mut() {
+	    entry.check_box.click_handler(click_point);
 	}
     }
 }
@@ -320,6 +362,7 @@ impl ScenarioAdPage {
 impl DrawableComponent for ScenarioAdPage {
     fn draw(&mut self, ctx: &mut ggez::Context) -> ggez::GameResult<()> {
 	if self.is_visible() {
+	    self.header_text.draw(ctx)?;
 	    for (_, entry) in self.ad_table.iter_mut() {
 		entry.draw(ctx)?;
 	    }
@@ -400,6 +443,14 @@ impl SuzunaStatusPages {
     pub fn page_len(&self) -> usize {
 	2
     }
+
+    pub fn click_handler<'a>(&mut self, ctx: &mut SuzuContext<'a>, click_point: numeric::Point2f) {
+	match self.current_page {
+	    0 => (),
+	    1 => self.ad_page.click_handler(ctx, click_point),
+	    _ => (),
+	}
+    }
 }
 
 pub struct SuzunaStatusScreen {
@@ -451,7 +502,7 @@ impl SuzunaStatusScreen {
             background: background_texture,
 	    pages: SuzunaStatusPages::new(
 		SuzunaStatusMainPage::new(ctx),
-		ScenarioAdPage::new(ctx, numeric::Point2f::new(0.0, 0.0), 0)
+		ScenarioAdPage::new(ctx, numeric::Point2f::new(0.0, 0.0), numeric::Vector2f::new(rect.w, rect.h), 0)
 	    ),
             go_left_texture: left,
             go_right_texture: right,
@@ -478,12 +529,16 @@ impl SuzunaStatusScreen {
 
 	if self.go_right_texture.contains(ctx.context, rpoint) {
 	    self.pages.next_page();
+	    self.check_move_page_icon_visibility();
+	    ctx.process_utility.redraw();
 	} else if self.go_left_texture.contains(ctx.context, rpoint) {
 	    self.pages.prev_page();
+	    self.check_move_page_icon_visibility();
+	    ctx.process_utility.redraw();
 	}
 
-	self.check_move_page_icon_visibility();
-	ctx.process_utility.redraw();
+	self.pages.click_handler(ctx, rpoint);
+
     }
 }
 
