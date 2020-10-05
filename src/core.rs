@@ -883,6 +883,14 @@ impl GameResource {
         self.se_manager.play(ctx, sound_data.clone(), flags)
     }
 
+    pub fn stop_bgm(&mut self, handler: sound::SoundHandler) {
+	self.bgm_manager.stop(handler);
+    }
+
+    pub fn stop_se(&mut self, handler: sound::SoundHandler) {
+	self.bgm_manager.stop(handler);
+    }
+
     pub fn ref_bgm(&self, handler: sound::SoundHandler) -> &sound::PlayableSound {
         self.bgm_manager.ref_sound(handler)
     }
@@ -2012,6 +2020,34 @@ impl SceneController {
     fn redraw_request_status(&self) -> scene::DrawRequest {
         self.redraw_request
     }
+
+    pub fn focus_event(&mut self, ctx: &mut ggez::Context, game_data: &mut GameResource) {
+        self.current_scene.abs_mut().focus_event(
+            &mut SuzuContext {
+                context: ctx,
+                resource: game_data,
+                savable_data: &mut self.game_status,
+                config: &mut self.game_config,
+                process_utility: ProcessUtility {
+                    redraw_request: &mut self.redraw_request,
+                },
+            },
+        );
+    }
+
+    pub fn unfocus_event(&mut self, ctx: &mut ggez::Context, game_data: &mut GameResource) {
+	self.current_scene.abs_mut().unfocus_event(
+            &mut SuzuContext {
+                context: ctx,
+                resource: game_data,
+                savable_data: &mut self.game_status,
+                config: &mut self.game_config,
+                process_utility: ProcessUtility {
+                    redraw_request: &mut self.redraw_request,
+                },
+            },
+        );
+    }
 }
 
 pub struct State<'data> {
@@ -2107,6 +2143,14 @@ impl<'data> ggez::event::EventHandler for State<'data> {
     fn mouse_wheel_event(&mut self, ctx: &mut Context, x: f32, y: f32) {
         self.scene_controller
             .mouse_wheel_scroll_event(ctx, self.game_data, x, y);
+    }
+
+    fn focus_event(&mut self, ctx: &mut Context, gained: bool) {
+	if gained {
+	    self.scene_controller.focus_event(ctx, self.game_data);
+	} else {
+	    self.scene_controller.unfocus_event(ctx, self.game_data);
+	}
     }
 }
 

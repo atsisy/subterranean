@@ -123,6 +123,9 @@ pub trait SceneManager {
     fn get_current_clock(&self) -> Clock;
 
     fn update_current_clock(&mut self);
+
+    fn focus_event<'a>(&mut self, _ctx: &mut SuzuContext<'a>) {}
+    fn unfocus_event<'a>(&mut self, _ctx: &mut SuzuContext<'a>) {}
 }
 
 pub struct NullScene {}

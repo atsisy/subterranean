@@ -352,7 +352,7 @@ impl ScenarioAdPage {
 	}
     }
 
-    pub fn click_handler<'a>(&mut self, ctx: &mut SuzuContext<'a>, click_point: numeric::Point2f) {
+    pub fn click_handler<'a>(&mut self, _ctx: &mut SuzuContext<'a>, click_point: numeric::Point2f) {
 	for (_, entry) in self.ad_table.iter_mut() {
 	    entry.check_box.click_handler(click_point);
 	}

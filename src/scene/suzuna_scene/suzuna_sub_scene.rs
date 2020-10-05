@@ -421,4 +421,12 @@ impl SceneManager for SuzunaSubScene {
                 .update_current_clock(),
         }
     }
+
+    fn unfocus_event<'a>(&mut self, ctx: &mut SuzuContext<'a>) {
+	match self.scene_status {
+            SuzunaSceneStatus::Shop => self.shop_scene.as_mut().unwrap().unfocus_event(ctx),
+            SuzunaSceneStatus::DeskWork => self.desk_work_scene.as_mut().unwrap().unfocus_event(ctx),
+            SuzunaSceneStatus::DayResult => self.day_result_scene.as_mut().unwrap().unfocus_event(ctx),
+        }
+    }
 }

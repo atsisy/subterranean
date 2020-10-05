@@ -155,4 +155,8 @@ impl SceneManager for SuzunaScene {
     fn update_current_clock(&mut self) {
         self.clock += 1;
     }
+
+    fn unfocus_event<'a>(&mut self, ctx: &mut SuzuContext<'a>) {
+	self.sub_scene.unfocus_event(ctx);
+    }
 }
