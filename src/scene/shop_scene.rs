@@ -275,6 +275,92 @@ impl<'a> MapObjectDrawer<'a> {
     }
 }
 
+pub struct CustomerQueue {
+    customer_queue: VecDeque<(CustomerCharacter, Clock)>,
+    drwob_essential: DrawableObjectEssential,
+}
+
+impl CustomerQueue {
+    pub fn new(depth: i8) -> Self {
+	CustomerQueue {
+	    customer_queue: VecDeque::new(),
+	    drwob_essential: DrawableObjectEssential::new(true, depth),
+	}
+    }
+
+    pub fn push_back(&mut self, customer: CustomerCharacter, t: Clock) {
+	self.customer_queue.push_back((customer, t));
+    }
+
+    pub fn pop_head_customer(&mut self) -> Option<(CustomerCharacter, Clock)> {
+	self.customer_queue.pop_front()
+    }
+
+    pub fn iter_mut(&mut self) -> std::collections::vec_deque::IterMut<(CustomerCharacter, Clock)> {
+	self.customer_queue.iter_mut()
+    }
+
+    pub fn is_empty(&self) -> bool {
+	self.customer_queue.is_empty()
+    }
+
+    pub fn len(&self) -> usize {
+	self.customer_queue.len()
+    }
+
+    pub fn drain_giveup_customers(&mut self, now: Clock) -> Vec<CustomerCharacter> {
+	let mut giveup_customers = Vec::new();
+
+        for index in (0..self.customer_queue.len()).rev() {
+            let (_, t) = self.customer_queue.get(index).unwrap();
+
+            if (now - t) > 1200 {
+                let (giveup, _) = self.customer_queue.remove(index).unwrap();
+                giveup_customers.push(giveup);
+            }
+        }
+
+	giveup_customers
+    }
+}
+
+impl DrawableComponent for CustomerQueue {
+    fn draw(&mut self, ctx: &mut ggez::Context) -> ggez::GameResult<()> {
+	if self.is_visible() {
+	    for (c, _) in self.customer_queue.iter_mut() {
+		c.draw(ctx)?;
+	    }
+	}
+
+	Ok(())
+    }
+
+    #[inline(always)]
+    fn hide(&mut self) {
+        self.drwob_essential.visible = false;
+    }
+
+    #[inline(always)]
+    fn appear(&mut self) {
+        self.drwob_essential.visible = true;
+    }
+
+    #[inline(always)]
+    fn is_visible(&self) -> bool {
+        self.drwob_essential.visible
+    }
+
+    #[inline(always)]
+    fn set_drawing_depth(&mut self, depth: i8) {
+        self.drwob_essential.drawing_depth = depth;
+    }
+
+    #[inline(always)]
+    fn get_drawing_depth(&self) -> i8 {
+        self.drwob_essential.drawing_depth
+    }
+}
+
 ///
 /// # 夢の中のステージ
 ///
@@ -311,7 +397,7 @@ pub struct ShopScene {
     shop_map: MovableWrap<ShopMapViewer>,
     shop_map_is_staged: bool,
     customer_request_queue: VecDeque<CustomerRequest>,
-    customer_queue: VecDeque<(CustomerCharacter, Clock)>,
+    customer_queue: CustomerQueue,
     camera: Rc<RefCell<numeric::Rect>>,
     dark_effect_panel: DarkEffectPanel,
     pause_screen_set: Option<PauseScreenSet>,
@@ -410,7 +496,7 @@ impl ShopScene {
             ),
             shop_map_is_staged: false,
             customer_request_queue: VecDeque::new(),
-            customer_queue: VecDeque::new(),
+            customer_queue: CustomerQueue::new(0),
             dark_effect_panel: DarkEffectPanel::new(
                 ctx.context,
                 numeric::Rect::new(0.0, 0.0, 1366.0, 768.0),
@@ -873,7 +959,7 @@ impl ShopScene {
                                     slf.drawable_shop_clock.update_time(&slf.shop_clock);
                                 }
 
-                                let (mut customer, _) = slf.customer_queue.pop_front().unwrap();
+                                let (mut customer, _) = slf.customer_queue.pop_head_customer().unwrap();
 
                                 customer.set_destination_forced(
                                     ctx.context,
@@ -1199,16 +1285,7 @@ impl ShopScene {
     }
 
     fn check_waiting_customer_giveup<'a>(&mut self, ctx: &mut SuzuContext<'a>, now: Clock) {
-        let mut giveup_customers = Vec::new();
-
-        for index in (0..self.customer_queue.len()).rev() {
-            let (_, t) = self.customer_queue.get(index).unwrap();
-
-            if (now - t) > 1200 {
-                let (giveup, _) = self.customer_queue.remove(index).unwrap();
-                giveup_customers.push(giveup);
-            }
-        }
+        let mut giveup_customers = self.customer_queue.drain_giveup_customers(now);
 
         for mut customer in giveup_customers {
             customer.set_destination_forced(
@@ -1413,7 +1490,7 @@ impl SceneManager for ShopScene {
             }
 
             for customer in rising_customers {
-                self.customer_queue.push_back((customer, t));
+                self.customer_queue.push_back(customer, t);
             }
 
             self.check_waiting_customer_giveup(ctx, t);
@@ -1431,7 +1508,7 @@ impl SceneManager for ShopScene {
 
             self.result_report
                 .add_customers_waiting_time(self.customer_queue.len() as Clock);
-            for (customer, _) in &mut self.customer_queue {
+            for (customer, _) in self.customer_queue.iter_mut() {
                 Self::customer_move_and_collision_check(
                     ctx.context,
                     customer,
@@ -1504,7 +1581,7 @@ impl SceneManager for ShopScene {
             }
         }
 
-        for (customer, _) in &mut self.customer_queue {
+        for (customer, _) in self.customer_queue.iter_mut() {
             if customer
                 .get_character_object()
                 .obj()
