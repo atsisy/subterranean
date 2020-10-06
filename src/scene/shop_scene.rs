@@ -5,6 +5,7 @@ use std::rc::Rc;
 
 use torifune::device as tdev;
 use torifune::graphics::object::*;
+use torifune::manhattan_distance;
 
 use ggez::graphics as ggraphics;
 use torifune::core::Clock;
@@ -16,6 +17,7 @@ use torifune::numeric;
 
 use super::*;
 use crate::core::map_parser as mp;
+use crate::core::util;
 use crate::core::{
     BookInformation, FontID, ResultReport, SavableData, SuzuContext, TileBatchTextureID,
 };
@@ -144,6 +146,18 @@ impl CharacterGroup {
 
     pub fn iter_mut(&mut self) -> std::slice::IterMut<CustomerCharacter> {
         self.group.iter_mut()
+    }
+
+    pub fn pickup_goto_check_customer(&mut self) -> Option<CustomerCharacter> {
+	let len = self.group.len();
+
+	for index in 0..len {
+	    if self.group.get(index).unwrap().ready_to_check() {
+		return Some(self.group.remove(index));
+	    }
+	}
+
+	None
     }
 }
 
@@ -314,7 +328,7 @@ impl CustomerQueue {
         for index in (0..self.customer_queue.len()).rev() {
             let (_, t) = self.customer_queue.get(index).unwrap();
 
-            if (now - t) > 1200 {
+            if (now - t) > 12000 {
                 let (giveup, _) = self.customer_queue.remove(index).unwrap();
                 giveup_customers.push(giveup);
             }
@@ -322,12 +336,169 @@ impl CustomerQueue {
 
 	giveup_customers
     }
+
+    pub fn tail_map_position(&self) -> numeric::Vector2u {
+	numeric::Vector2u::new(5 + self.len() as u32, 14)
+    }
 }
 
 impl DrawableComponent for CustomerQueue {
     fn draw(&mut self, ctx: &mut ggez::Context) -> ggez::GameResult<()> {
 	if self.is_visible() {
 	    for (c, _) in self.customer_queue.iter_mut() {
+		c.draw(ctx)?;
+	    }
+	}
+
+	Ok(())
+    }
+
+    #[inline(always)]
+    fn hide(&mut self) {
+        self.drwob_essential.visible = false;
+    }
+
+    #[inline(always)]
+    fn appear(&mut self) {
+        self.drwob_essential.visible = true;
+    }
+
+    #[inline(always)]
+    fn is_visible(&self) -> bool {
+        self.drwob_essential.visible
+    }
+
+    #[inline(always)]
+    fn set_drawing_depth(&mut self, depth: i8) {
+        self.drwob_essential.drawing_depth = depth;
+    }
+
+    #[inline(always)]
+    fn get_drawing_depth(&self) -> i8 {
+        self.drwob_essential.drawing_depth
+    }
+}
+
+pub struct GoToCheckCustomers {
+    customers: Vec<CustomerCharacter>,
+    drwob_essential: DrawableObjectEssential,
+    current_check_queue_tail: numeric::Vector2u,
+}
+
+impl GoToCheckCustomers {
+    pub fn new(check_position: numeric::Vector2u, depth: i8) -> Self {
+	GoToCheckCustomers {
+	    customers: Vec::new(),
+	    drwob_essential: DrawableObjectEssential::new(true, depth),
+	    current_check_queue_tail: check_position,
+	}
+    }
+
+    fn sort_customers(&mut self, map_data: &mp::StageObjectMap) {
+	let mut sorted = Vec::new();
+	let tile_size = map_data.get_tile_drawing_size();
+	let mut tail = numeric::Vector2f::new(
+	    self.current_check_queue_tail.x as f32 * tile_size.x,
+	    self.current_check_queue_tail.y as f32 * tile_size.y,
+	);
+
+	for _ in 0..self.customers.len() {
+	    self.customers.sort_unstable_by(|a, b| {
+		let a_pos = a.get_map_position();
+		let b_pos = b.get_map_position();
+		let a_man = manhattan_distance!(a_pos, tail);
+		let b_man = manhattan_distance!(b_pos, tail);
+		
+		a_man.partial_cmp(&b_man).unwrap()
+	    });
+	    sorted.push(self.customers.pop().unwrap());
+	    tail.x += tile_size.x;
+	}
+
+	self.customers = sorted;
+    }
+
+    pub fn insert_new_customer<'a>(
+	&mut self,
+	ctx: &mut SuzuContext<'a>,
+	customer: CustomerCharacter,
+	map_data: &mp::StageObjectMap,
+	current_tail: numeric::Vector2u,
+    ) {
+	self.customers.push(customer);
+	self.reset_each_customers_goal(ctx, map_data, current_tail);
+    }
+
+    pub fn reset_each_customers_goal<'a>(
+	&mut self,
+	ctx: &mut SuzuContext<'a>,
+	map_data: &mp::StageObjectMap,
+	mut current_tail: numeric::Vector2u
+    ) {
+	self.sort_customers(map_data);
+
+	for customer in self.customers.iter_mut() {
+	    customer.goto_check(ctx.context, map_data, current_tail);
+	    current_tail.x += 1;
+	}
+    }
+
+    pub fn move_and_collision_check(
+        &mut self,
+        ctx: &mut ggez::Context,
+        camera: &numeric::Rect,
+        tile_map: &mp::StageObjectMap,
+        t: Clock,
+    ) {
+        self.customers.iter_mut().for_each(|customer| {
+            ShopScene::customer_move_and_collision_check(ctx, customer, camera, tile_map, t)
+        });
+    }
+
+    pub fn go_moving<'a>(&mut self, ctx: &mut SuzuContext<'a>, camera: &numeric::Rect, map_data: &mp::StageObjectMap, t: Clock) {
+	self.move_and_collision_check(ctx.context, camera, map_data, t);
+	
+	for customer in self.customers.iter_mut() {
+	    customer.try_update_move_effect(
+                ctx,
+                map_data,
+                numeric::Vector2u::new(5, 14),
+                numeric::Vector2u::new(15, 14),
+                t,
+            );
+            customer.get_mut_character_object().update_texture(t);
+	}
+    }
+
+    pub fn drain_remove_if<F>(&mut self, f: F) -> Vec<CustomerCharacter>
+    where
+        F: Fn(&CustomerCharacter) -> bool,
+    {
+        let mut removed = Vec::new();
+
+        for index in (0..self.customers.len()).rev() {
+            if f(self.customers.get(index).as_ref().unwrap()) {
+                let removed_character = self.customers.swap_remove(index);
+                removed.push(removed_character);
+            }
+        }
+
+        removed
+    }
+
+    pub fn debug_print(&self, map_data: &mp::StageObjectMap) {
+	let tile_size = map_data.get_tile_drawing_size();
+	for customer in self.customers.iter() {
+	    let map_pos = customer.get_map_position();
+	    println!("goto customer => {}, {}", map_pos.x / tile_size.x, map_pos.y / tile_size.y);
+	}
+    }
+}
+
+impl DrawableComponent for GoToCheckCustomers {
+    fn draw(&mut self, ctx: &mut ggez::Context) -> ggez::GameResult<()> {
+	if self.is_visible() {
+	    for c in self.customers.iter_mut() {
 		c.draw(ctx)?;
 	    }
 	}
@@ -398,6 +569,7 @@ pub struct ShopScene {
     shop_map_is_staged: bool,
     customer_request_queue: VecDeque<CustomerRequest>,
     customer_queue: CustomerQueue,
+    goto_check_customers: GoToCheckCustomers,
     camera: Rc<RefCell<numeric::Rect>>,
     dark_effect_panel: DarkEffectPanel,
     pause_screen_set: Option<PauseScreenSet>,
@@ -442,7 +614,7 @@ impl ShopScene {
             CustomerDestPoint::new(vec![
                 numeric::Vector2u::new(10, 4),
                 numeric::Vector2u::new(6, 4),
-                numeric::Vector2u::new(5, 14),
+                //numeric::Vector2u::new(5, 14),
             ]),
         ));
 
@@ -497,6 +669,7 @@ impl ShopScene {
             shop_map_is_staged: false,
             customer_request_queue: VecDeque::new(),
             customer_queue: CustomerQueue::new(0),
+	    goto_check_customers: GoToCheckCustomers::new(numeric::Vector2u::new(15, 4), 0),
             dark_effect_panel: DarkEffectPanel::new(
                 ctx.context,
                 numeric::Rect::new(0.0, 0.0, 1366.0, 768.0),
@@ -961,11 +1134,12 @@ impl ShopScene {
 
                                 let (mut customer, _) = slf.customer_queue.pop_head_customer().unwrap();
 
-                                customer.set_destination_forced(
-                                    ctx.context,
-                                    &slf.map.tile_map,
-                                    numeric::Vector2u::new(15, 14),
-                                );
+				customer.get_out_shop(
+				    ctx.context,
+				    &slf.map.tile_map,
+				    numeric::Vector2u::new(15, 14)
+				);
+				
                                 slf.character_group.add(customer);
                             }),
                             t + 31,
@@ -1211,7 +1385,7 @@ impl ShopScene {
                 character_factory::CharacterFactoryOrder::CustomerSample,
                 ctx,
                 &self.camera.borrow(),
-                numeric::Point2f::new(1824.0, 1344.0),
+                numeric::Point2f::new(1536.0, 1248.0),
             );
             self.character_group.add(CustomerCharacter::new(
                 ctx.resource,
@@ -1219,7 +1393,7 @@ impl ShopScene {
                 CustomerDestPoint::new(vec![
                     numeric::Vector2u::new(10, 4),
                     numeric::Vector2u::new(6, 4),
-                    numeric::Vector2u::new(5, 14),
+                    //numeric::Vector2u::new(5, 14),
                 ]),
             ));
         }
@@ -1285,10 +1459,14 @@ impl ShopScene {
     }
 
     fn check_waiting_customer_giveup<'a>(&mut self, ctx: &mut SuzuContext<'a>, now: Clock) {
-        let mut giveup_customers = self.customer_queue.drain_giveup_customers(now);
+        let giveup_customers = self.customer_queue.drain_giveup_customers(now);
 
+	if giveup_customers.len() > 0 {
+	    self.goto_check_customers.reset_each_customers_goal(ctx, &self.map.tile_map, self.customer_queue.tail_map_position());
+	}
+	
         for mut customer in giveup_customers {
-            customer.set_destination_forced(
+            customer.get_out_shop(
                 ctx.context,
                 &self.map.tile_map,
                 numeric::Vector2u::new(15, 14),
@@ -1327,14 +1505,38 @@ impl ShopScene {
                 self.enter_pause_screen(ctx, t);
             }
             tdev::VirtualKey::Action5 => {
-                self.transition_status = SceneTransition::StackingTransition;
-                self.transition_scene = SceneID::MainDesk;
+                // self.transition_status = SceneTransition::StackingTransition;
+                // self.transition_scene = SceneID::MainDesk;
+		if self.goto_check_customers.is_visible() {
+		    self.goto_check_customers.hide();
+		} else {
+		    self.goto_check_customers.appear();
+		}
+
+		self.goto_check_customers.debug_print(&self.map.tile_map);
             }
             _ => (),
         }
 
         self.shop_menu
             .menu_key_action(vkey, self.get_current_clock());
+    }
+
+    fn try_add_goto_check_customers<'a>(&mut self, ctx: &mut SuzuContext<'a>, t: Clock) {
+	if t % 900 != 0 {
+	    return;
+	}
+	
+	if let Some(customer) = self.character_group.pickup_goto_check_customer() {
+	    println!("picked up!!");
+	    self.goto_check_customers.insert_new_customer(
+		ctx,
+		customer,
+		&self.map.tile_map,
+		self.customer_queue.tail_map_position()
+	    );
+	}
+	
     }
 }
 
@@ -1475,8 +1677,15 @@ impl SceneManager for ShopScene {
             );
 
             let mut rising_customers = self
-                .character_group
+                .goto_check_customers
                 .drain_remove_if(|customer: &CustomerCharacter| customer.is_wait_on_clerk());
+	    if rising_customers.len() > 0 {
+		self.goto_check_customers.reset_each_customers_goal(
+		    ctx,
+		    &self.map.tile_map,
+		    self.customer_queue.tail_map_position()
+		);
+	    }
 
             // 新しく客が列に並んだら、通知をする
             if !rising_customers.is_empty() {
@@ -1506,6 +1715,8 @@ impl SceneManager for ShopScene {
                 customer.get_mut_character_object().update_texture(t);
             }
 
+	    self.goto_check_customers.go_moving(ctx, &self.camera.borrow(), &self.map.tile_map, t);
+
             self.result_report
                 .add_customers_waiting_time(self.customer_queue.len() as Clock);
             for (customer, _) in self.customer_queue.iter_mut() {
@@ -1529,6 +1740,9 @@ impl SceneManager for ShopScene {
             self.character_group.remove_if(|c| c.is_got_out());
 
             self.character_group.sort_by_y_position();
+
+	    self.try_add_goto_check_customers(ctx, t);
+	    
 
             // マップ描画の準備
             self.map.tile_map.update(ctx.context, t);
@@ -1568,8 +1782,6 @@ impl SceneManager for ShopScene {
 
         map_obj_drawer.add(&mut self.player);
 
-        self.character_group.draw(ctx).unwrap();
-
         for customer in self.character_group.iter_mut() {
             if customer
                 .get_character_object()
@@ -1591,6 +1803,8 @@ impl SceneManager for ShopScene {
                 map_obj_drawer.add(customer);
             }
         }
+
+	self.goto_check_customers.draw(ctx).unwrap();
 
         map_obj_drawer.sort(ctx);
         map_obj_drawer.draw(ctx);
@@ -1626,7 +1840,7 @@ impl SceneManager for ShopScene {
 
     fn unfocus_event<'a>(&mut self, ctx: &mut SuzuContext<'a>) {
 	let t = self.get_current_clock();
-	self.enter_pause_screen(ctx, t);
+	//self.enter_pause_screen(ctx, t);
     }
 
     fn transition(&self) -> SceneID {

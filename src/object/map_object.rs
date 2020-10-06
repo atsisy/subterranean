@@ -606,9 +606,11 @@ impl CustomerMoveQueue {
 pub enum CustomerCharacterStatus {
     Ready = 0,
     Moving,
+    GoToCheck,
     WaitOnClerk,
     WaitOnBookShelf,
     GotOut,
+    GettingOut,
 }
 
 pub struct CustomerInformation {
@@ -760,6 +762,43 @@ impl CustomerCharacter {
         self.character.speed_info_mut().set_speed(speed);
     }
 
+    fn goto_other_book_shelf_now(
+	&mut self,
+	ctx: &mut ggez::Context,
+	map_data: &mp::StageObjectMap,
+	t: Clock
+    ) {
+	let goal = self.move_data.random_select();
+	self.determine_next_goal(ctx, map_data, goal, t)
+    }
+
+    fn determine_next_goal(
+	&mut self,
+	ctx: &mut ggez::Context,
+	map_data: &mp::StageObjectMap,
+	goal: numeric::Vector2u,
+	t: Clock
+    ) {
+	// ルート検索
+        let maybe_next_route = self.find_route(ctx, map_data, goal);
+	
+        debug::debug_screen_push_text(&format!("{:?}", maybe_next_route));
+	
+        // 一定時間後にルートを設定し、状態をReadyに変更する。
+        // 移動開始するまでは、ストップ
+        self.event_list.add_event(
+            Box::new(move |customer, _, _| {
+                if let Some(next_route) = maybe_next_route {
+                    customer.move_queue.enqueue(next_route);
+                    customer.customer_status = CustomerCharacterStatus::Ready;
+                }
+            }),
+            t + 100,
+        );
+	
+        self.customer_status = CustomerCharacterStatus::WaitOnBookShelf;
+    }
+
     ///
     /// 移動速度を更新する
     ///
@@ -771,24 +810,7 @@ impl CustomerCharacter {
     ) {
         // 移動情報キューが空（目的地に到達してる or 初めて目的地を設定する）
         if self.move_queue.empty() {
-            // ルート検索
-            let maybe_next_route = self.find_route(ctx, map_data, self.move_data.random_select());
-
-            debug::debug_screen_push_text(&format!("{:?}", maybe_next_route));
-
-            // 一定時間後にルートを設定し、状態をReadyに変更する。
-            // 移動開始するまでは、ストップ
-            self.event_list.add_event(
-                Box::new(move |customer, _, _| {
-                    if let Some(next_route) = maybe_next_route {
-                        customer.move_queue.enqueue(next_route);
-                        customer.customer_status = CustomerCharacterStatus::Ready;
-                    }
-                }),
-                t + 100,
-            );
-
-            self.customer_status = CustomerCharacterStatus::WaitOnBookShelf;
+	    self.goto_other_book_shelf_now(ctx, map_data, t);
             return ();
         }
 
@@ -811,7 +833,7 @@ impl CustomerCharacter {
         ctx: &mut ggez::Context,
         map_data: &mp::StageObjectMap,
         dest: numeric::Vector2u,
-    ) {
+    ) -> Result<(), ()> {
         // 現在の移動キューをクリア
         self.move_queue.clear();
         // 新しくルートを検索
@@ -823,7 +845,44 @@ impl CustomerCharacter {
         if let Some(next_route) = maybe_next_route {
             self.move_queue.enqueue(next_route);
             self.customer_status = CustomerCharacterStatus::Ready;
-        }
+	    Ok(())
+        } else {
+	    println!("failed, start -> {:?}, point -> {:?}, dest -> {:?}",
+		     map_data.map_position_to_tile_position(
+			 self.character
+			     .get_map_position_with_collision_top_offset(ctx),
+		     ),
+		     self.character
+		     .get_map_position_with_collision_top_offset(ctx),
+		     dest);
+	    Err(())
+	}
+    }
+
+    pub fn get_out_shop(
+        &mut self,
+        ctx: &mut ggez::Context,
+        map_data: &mp::StageObjectMap,
+        dest: numeric::Vector2u,
+    ) {
+	match self.set_destination_forced(ctx, map_data, dest) {
+	    Ok(_) => self.customer_status = CustomerCharacterStatus::GettingOut,
+	    Err(_) => panic!("Failed to find route"),
+	}
+    }
+
+    pub fn goto_check(
+        &mut self,
+        ctx: &mut ggez::Context,
+        map_data: &mp::StageObjectMap,
+        dest: numeric::Vector2u,
+    ) {
+	match self.set_destination_forced(ctx, map_data, dest) {
+	    Ok(_) => {
+		self.customer_status = CustomerCharacterStatus::GoToCheck;
+	    },
+	    Err(_) => panic!("Failed to find route"),
+	}
     }
 
     pub fn reset_speed(&mut self) {
@@ -936,7 +995,59 @@ impl CustomerCharacter {
                 }
             }
             CustomerCharacterStatus::WaitOnClerk => {}
-            _ => (),
+	    CustomerCharacterStatus::GettingOut => {
+		if !self.is_goal_now(ctx.context) {
+		    return;
+		}
+		
+                let goal = self.current_goal;
+		
+		// 目的地でマップ位置を上書き
+                self.get_mut_character_object()
+		    .set_map_position_with_collision_top_offset(ctx.context, goal);
+		
+		// 店の出入口に到達したかチェック
+                self.check_get_out(map_data, goal, exit);
+
+		// GotOutなら、終了し、あとで削除されるのを待つ
+		if self.customer_status == CustomerCharacterStatus::GotOut {
+		    return;
+		}
+		
+		self.reset_speed();
+		self.update_move_effect(ctx.context, map_data, t);
+	    },
+	    CustomerCharacterStatus::GoToCheck => {
+		// まだゴールしていない
+		if !self.is_goal_now(ctx.context) {
+		    return;
+		}
+
+		//
+		// 以下ゴール後
+		//
+
+		let goal = self.current_goal;
+		
+		// 目的地でマップ位置を上書き
+                self.get_mut_character_object()
+		    .set_map_position_with_collision_top_offset(ctx.context, goal);
+
+		// キューが空ではない場合
+		// 情報をキューから取り出し、速度を計算し直す
+		if let Some(next_position) = self.move_queue.dequeue() {
+		    self.override_move_effect(ctx.context, next_position);
+		    self.current_goal = next_position;
+		} else {
+		    self.check_been_counter(map_data, goal, counter);
+		    // 速度もリセット
+                    self.reset_speed();
+		    self.character.change_animation_mode(ObjectDirection::Left);
+		}
+	    },
+            
+            CustomerCharacterStatus::WaitOnBookShelf => {}
+            CustomerCharacterStatus::GotOut => {}
         }
     }
 
@@ -998,6 +1109,13 @@ impl CustomerCharacter {
             0.0,
             self.get_character_object().speed_info().get_speed().y,
         ))
+    }
+
+    pub fn ready_to_check(&self) -> bool {
+	match self.customer_status {
+	    CustomerCharacterStatus::Moving | CustomerCharacterStatus::Ready => true,
+	    _ => false,
+	}
     }
 }
 

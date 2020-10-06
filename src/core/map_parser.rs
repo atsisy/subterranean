@@ -454,8 +454,9 @@ impl StageObjectMap {
 		    if x < 0 || y < 0 {
 			continue;
 		    }
-		    
-		    let tile = match layer.tiles.get(y as usize) {
+
+		    let tiles = match &layer.tiles { tiled::LayerData::Finite(tiles) => tiles, _ => panic!(""), };
+		    let tile = match tiles.get(y as usize) {
 			Some(row) => match row.get(x as usize) {
 			    Some(tile) => tile,
 			    None => continue,
@@ -546,7 +547,8 @@ impl StageObjectMap {
     /// gidが指すタイルが衝突判定ありか？
     fn is_collisionable_tile(&self, gid: u32) -> bool {
         for tileset in &self.tilesets {
-            if tileset.is_collisionable_tile(gid) {
+	    let r_gid = gid - tileset.first_gid;
+            if tileset.is_collisionable_tile(r_gid) {
                 return true;
             }
         }
@@ -571,9 +573,10 @@ impl StageObjectMap {
                 // レイヤーが非表示設定になっていれば、描画は行わない
                 continue;
             }
-
+	    
+	    let tiles = match &layer.tiles { tiled::LayerData::Finite(tiles) => tiles, _ => panic!(""), };
             // 二次元のマップデータを全てbatch処理に掛ける
-            for (y, row) in layer.tiles.iter().enumerate() {
+            for (y, row) in tiles.iter().enumerate() {
                 for (x, &tile) in row.iter().enumerate() {
                     let gid = tile.gid;
                     // gidが0のときは、何も配置されていない状態を表すので、描画は行わない
@@ -613,15 +616,18 @@ impl StageObjectMap {
         let mut collision_locations = Vec::new();
 
         for layer in self.tile_map.layers.iter() {
+	    println!("name -> {}", layer.name);
             if !layer.visible {
                 // レイヤーが非表示設定になっていれば、衝突オブジェクトの検索を行わない
                 continue;
             }
 
+	    let tiles = match &layer.tiles { tiled::LayerData::Finite(tiles) => tiles, _ => panic!(""), };
             // 二次元のマップデータを全てbatch処理に掛ける
-            for (y, row) in layer.tiles.iter().enumerate() {
+            for (y, row) in tiles.iter().enumerate() {
                 for (x, &tile) in row.iter().enumerate() {
                     let gid = tile.gid;
+
                     // gidが0のときは、何も配置されていない状態を表すので、描画は行わない
                     if gid == 0 {
                         continue;
