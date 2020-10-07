@@ -328,7 +328,7 @@ impl CustomerQueue {
         for index in (0..self.customer_queue.len()).rev() {
             let (_, t) = self.customer_queue.get(index).unwrap();
 
-            if (now - t) > 12000 {
+            if (now - t) > 1200 {
                 let (giveup, _) = self.customer_queue.remove(index).unwrap();
                 giveup_customers.push(giveup);
             }
@@ -492,6 +492,10 @@ impl GoToCheckCustomers {
 	    let map_pos = customer.get_map_position();
 	    println!("goto customer => {}, {}", map_pos.x / tile_size.x, map_pos.y / tile_size.y);
 	}
+    }
+
+    pub fn iter_mut(&mut self) -> std::slice::IterMut<CustomerCharacter> {
+        self.customers.iter_mut()
     }
 }
 
@@ -1138,6 +1142,12 @@ impl ShopScene {
 				    ctx.context,
 				    &slf.map.tile_map,
 				    numeric::Vector2u::new(15, 14)
+				);
+
+				slf.goto_check_customers.reset_each_customers_goal(
+				    ctx,
+				    &slf.map.tile_map,
+				    slf.customer_queue.tail_map_position()
 				);
 				
                                 slf.character_group.add(customer);
@@ -1804,7 +1814,16 @@ impl SceneManager for ShopScene {
             }
         }
 
-	self.goto_check_customers.draw(ctx).unwrap();
+	for customer in self.goto_check_customers.iter_mut() {
+            if customer
+                .get_character_object()
+                .obj()
+                .get_drawing_area(ctx)
+                .overlaps(&numeric::Rect::new(0.0, 0.0, 1366.0, 768.0))
+            {
+                map_obj_drawer.add(customer);
+            }
+        }
 
         map_obj_drawer.sort(ctx);
         map_obj_drawer.draw(ctx);

@@ -725,9 +725,7 @@ pub struct TextBalloon {
     back_canvas: SubScreen,
     text: VerticalText,
     phrase_type: TextBalloonPhraseType,
-    balloon_inner: shape::Ellipse,
-    balloon_outer: shape::Ellipse,
-    mesh: ggraphics::Mesh,
+    text_balloon: shape::FramedTextBalloon,
 }
 
 impl TextBalloon {
@@ -754,26 +752,21 @@ impl TextBalloon {
             numeric::Point2f::new((vtext_size.x + 80.0) / 2.0, (vtext_size.y + 60.0) / 2.0),
         );
 
-        let ellipse = shape::Ellipse::new(
-            numeric::Point2f::new((vtext_size.x + 100.0) / 2.0, (vtext_size.y + 60.0) / 2.0),
-            (vtext_size.x + 60.0) / 2.0,
-            (vtext_size.y + 50.0) / 2.0,
-            0.001,
-            ggraphics::DrawMode::fill(),
-            ggraphics::Color::from_rgba_u32(0xffffffff),
-        );
-        let ellipse_outer = shape::Ellipse::new(
-            numeric::Point2f::new((vtext_size.x + 100.0) / 2.0, (vtext_size.y + 60.0) / 2.0),
-            ((vtext_size.x + 60.0) / 2.0) + 3.0,
-            ((vtext_size.y + 50.0) / 2.0) + 3.0,
-            0.001,
-            ggraphics::DrawMode::fill(),
-            ggraphics::Color::from_rgba_u32(0x371905ff),
-        );
-
-        let mut mesh_builder = ggraphics::MeshBuilder::new();
-        ellipse.add_to_builder(ellipse_outer.add_to_builder(&mut mesh_builder));
-
+	let balloon = shape::FramedTextBalloon::new(
+	    ctx,
+	    numeric::Rect::new(0.0, 0.0, vtext_size.x + 100.0, vtext_size.y + 50.0),
+	    [
+		numeric::Vector2f::new(50.0, 50.0),
+		numeric::Vector2f::new(10.0, 10.0),
+		numeric::Vector2f::new(50.0, 50.0),
+		numeric::Vector2f::new(10.0, 10.0)
+	    ],
+	    2.0,
+	    ggraphics::WHITE,
+	    ggraphics::Color::from_rgb_u32(0x111111),
+	    0
+	);
+	
         TextBalloon {
             back_canvas: SubScreen::new(
                 ctx,
@@ -784,9 +777,7 @@ impl TextBalloon {
             canvas: SubScreen::new(ctx, balloon_rect, 0, ggraphics::Color::from_rgba_u32(0x00)),
             text: vtext,
             phrase_type: phrase_type,
-            balloon_inner: ellipse,
-            balloon_outer: ellipse_outer,
-            mesh: mesh_builder.build(ctx).unwrap(),
+	    text_balloon: balloon,
         }
     }
 
@@ -799,37 +790,27 @@ impl TextBalloon {
         self.text.replace_text(text.to_string());
         let vtext_size = self.text.get_drawing_size(ctx);
 
-        self.balloon_inner = shape::Ellipse::new(
-            numeric::Point2f::new((vtext_size.x + 100.0) / 2.0, (vtext_size.y + 60.0) / 2.0),
-            (vtext_size.x + 60.0) / 2.0,
-            (vtext_size.y + 50.0) / 2.0,
-            0.001,
-            ggraphics::DrawMode::fill(),
-            ggraphics::Color::from_rgba_u32(0xffffffff),
-        );
-        self.balloon_outer = shape::Ellipse::new(
-            numeric::Point2f::new((vtext_size.x + 100.0) / 2.0, (vtext_size.y + 60.0) / 2.0),
-            ((vtext_size.x + 60.0) / 2.0) + 3.0,
-            ((vtext_size.y + 50.0) / 2.0) + 3.0,
-            0.001,
-            ggraphics::DrawMode::fill(),
-            ggraphics::Color::from_rgba_u32(0x371905ff),
-        );
-
+	self.text_balloon = shape::FramedTextBalloon::new(
+	    ctx,
+	    numeric::Rect::new(0.0, 0.0, vtext_size.x + 100.0, vtext_size.y + 50.0),
+	    [
+		numeric::Vector2f::new(50.0, 50.0),
+		numeric::Vector2f::new(10.0, 10.0),
+		numeric::Vector2f::new(50.0, 50.0),
+		numeric::Vector2f::new(10.0, 10.0)
+	    ],
+	    2.0,
+	    ggraphics::WHITE,
+	    ggraphics::Color::from_rgb_u32(0x111111),
+	    0
+	);
+	
         self.text.make_center(
             ctx,
             numeric::Point2f::new((vtext_size.x + 100.0) / 2.0, (vtext_size.y + 60.0) / 2.0),
         );
 
-        self.update_mesh(ctx);
         self.phrase_type = phrase_type;
-    }
-
-    pub fn update_mesh(&mut self, ctx: &mut ggez::Context) {
-        let mut mesh_builder = ggraphics::MeshBuilder::new();
-        self.balloon_inner
-            .add_to_builder(self.balloon_outer.add_to_builder(&mut mesh_builder));
-        self.mesh = mesh_builder.build(ctx).unwrap();
     }
 
     pub fn get_phrase_type(&self) -> &TextBalloonPhraseType {
@@ -876,8 +857,6 @@ impl TextureObject for TextBalloon {
 
     fn set_alpha(&mut self, alpha: f32) {
         self.text.set_alpha(alpha);
-        self.balloon_inner.set_alpha(alpha);
-        self.balloon_outer.set_alpha(alpha);
     }
 
     fn get_alpha(&self) -> f32 {
@@ -912,7 +891,7 @@ impl DrawableComponent for TextBalloon {
         if self.is_visible() {
             sub_screen::stack_screen(ctx, &self.back_canvas);
 
-            ggraphics::draw(ctx, &self.mesh, ggraphics::DrawParam::default())?;
+	    self.text_balloon.draw(ctx)?;
 
             sub_screen::pop_screen(ctx);
             self.back_canvas.draw(ctx).unwrap();
@@ -1060,7 +1039,6 @@ impl SuzuMiniSightSilhouette {
         }
 
         if !self.text_balloon.is_empty_effect() {
-            self.text_balloon.update_mesh(ctx.context);
             self.text_balloon.effect(ctx.context, t);
             draw_request = DrawRequest::Draw;
         }
