@@ -973,6 +973,16 @@ impl ShopScene {
             );
         }
 
+	for e in self.goto_check_customers.iter_mut() {
+            Self::check_character_collision_x_sub(
+                ctx,
+                self.player.get_mut_character_object(),
+                e.get_mut_character_object(),
+                &self.camera.borrow(),
+                t,
+            );
+        }
+
         // カメラをプレイヤーに合わせる
         self.camera_focus_character_x();
     }
@@ -999,6 +1009,16 @@ impl ShopScene {
 
         // 他キャラクターすべてとの衝突判定を行う
         for (e, _) in self.customer_queue.iter_mut() {
+            Self::check_character_collision_y_sub(
+                ctx,
+                &mut self.player,
+                e,
+                &self.camera.borrow(),
+                t,
+            );
+        }
+
+	for e in self.goto_check_customers.iter_mut() {
             Self::check_character_collision_y_sub(
                 ctx,
                 &mut self.player,
