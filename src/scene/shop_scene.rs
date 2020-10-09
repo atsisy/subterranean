@@ -17,7 +17,6 @@ use torifune::numeric;
 
 use super::*;
 use crate::core::map_parser as mp;
-use crate::core::util;
 use crate::core::{
     BookInformation, FontID, ResultReport, SavableData, SuzuContext, TileBatchTextureID,
 };
@@ -609,7 +608,7 @@ impl ShopScene {
             character_factory::CharacterFactoryOrder::CustomerSample,
             ctx,
             &camera.borrow(),
-            numeric::Point2f::new(1824.0, 1344.0),
+            numeric::Point2f::new(1430.0, 1246.0),
         );
         let mut character_group = CharacterGroup::new();
         character_group.add(CustomerCharacter::new(
@@ -625,7 +624,7 @@ impl ShopScene {
         let mut map = MapData::new(ctx, map_id, camera.clone());
         map.tile_map.build_collision_map();
 
-        let shop_time = ShopClock::new(8, 0);
+        let shop_time = ShopClock::new(9, 0);
         let drawble_shop_clock = DrawableShopClock::from_toml(
             ctx,
             "resources/other_config/shop_clock.toml",
@@ -1369,7 +1368,7 @@ impl ShopScene {
     /// # 再描画要求有り
     ///
     pub fn check_shop_clock_regular<'a>(&mut self, ctx: &mut SuzuContext<'a>, t: Clock) {
-        if self.shop_clock.equals(18, 0) {
+        if self.shop_clock.equals(17, 0) {
             self.event_list.add_event(
                 Box::new(move |slf: &mut Self, ctx, _| {
                     // reportに未配架の本のIDをメモする
@@ -1395,7 +1394,7 @@ impl ShopScene {
                 character_factory::CharacterFactoryOrder::CustomerSample,
                 ctx,
                 &self.camera.borrow(),
-                numeric::Point2f::new(1536.0, 1248.0),
+                numeric::Point2f::new(1430.0, 1246.0),
             );
             self.character_group.add(CustomerCharacter::new(
                 ctx.resource,

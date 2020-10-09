@@ -1,6 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<tileset version="1.2" tiledversion="1.3.4" name="wafu2" tilewidth="32" tileheight="32" tilecount="400" columns="8">
+<tileset version="1.4" tiledversion="1.4.2" name="wafu2" tilewidth="32" tileheight="32" tilecount="400" columns="8">
  <image source="ST-Libry-I01.png" width="256" height="1600"/>
+ <tile id="116">
+  <objectgroup draworder="index" id="2">
+   <object id="1" x="0" y="0" width="32" height="32"/>
+  </objectgroup>
+ </tile>
  <tile id="163">
   <objectgroup draworder="index" id="2">
    <object id="1" x="2" y="0" width="26"/>
@@ -50,6 +55,31 @@
  <tile id="183">
   <objectgroup draworder="index" id="2">
    <object id="1" x="0" y="0" width="32" height="21"/>
+  </objectgroup>
+ </tile>
+ <tile id="207">
+  <objectgroup draworder="index" id="2">
+   <object id="1" x="0" y="14" width="32" height="18"/>
+  </objectgroup>
+ </tile>
+ <tile id="215">
+  <objectgroup draworder="index" id="2">
+   <object id="1" x="0" y="0" width="32" height="32"/>
+  </objectgroup>
+ </tile>
+ <tile id="223">
+  <objectgroup draworder="index" id="2">
+   <object id="1" x="7" y="0" width="18" height="19"/>
+  </objectgroup>
+ </tile>
+ <tile id="231">
+  <objectgroup draworder="index" id="2">
+   <object id="1" x="1" y="0" width="30" height="32"/>
+  </objectgroup>
+ </tile>
+ <tile id="239">
+  <objectgroup draworder="index" id="2">
+   <object id="1" x="7" y="0" width="18" height="19"/>
   </objectgroup>
  </tile>
  <tile id="304">
