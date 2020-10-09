@@ -8,7 +8,6 @@ use ginput::mouse::MouseCursor;
 use torifune::core::Clock;
 use torifune::graphics::drawable::*;
 use torifune::graphics::object::shape;
-use torifune::graphics::object::shape::MeshShape;
 use torifune::graphics::object::sub_screen;
 use torifune::graphics::object::sub_screen::SubScreen;
 use torifune::graphics::object::*;
@@ -314,6 +313,7 @@ impl DeskObjects {
         if !self.money_box.is_stop() {
             self.money_box.move_with_func(t);
             self.draw_request = DrawRequest::Draw;
+	    ctx.process_utility.redraw();
         }
     }
 
@@ -415,6 +415,10 @@ impl DeskObjects {
         button: ggez::input::mouse::MouseButton,
         point: numeric::Point2f,
     ) -> bool {
+	if !self.canvas.contains(point) {
+	    return false;
+	}
+	
         let rpoint = self.canvas.relative_point(point);
 
         for dobj in self.desk_objects.get_raw_container_mut().iter_mut().rev() {
@@ -516,11 +520,9 @@ impl DrawableComponent for DeskObjects {
 
                 self.appearance_frame.draw(ctx)?;
 
-                println!("desk objects main redraw");
-
                 sub_screen::pop_screen(ctx);
             }
-            println!("desk objects canvas redraw");
+
             self.canvas.draw(ctx).unwrap();
         }
         Ok(())
