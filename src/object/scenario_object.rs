@@ -268,6 +268,10 @@ impl AdEntry {
 	    drwob_essential: DrawableObjectEssential::new(true, depth),
 	}
     }
+
+    pub fn is_checked(&self) -> bool {
+	self.check_box.checked_now()
+    }
 }
 
 impl DrawableComponent for AdEntry {
@@ -318,24 +322,27 @@ impl ScenarioAdPage {
 
 	let mut entry_pos = numeric::Point2f::new(pos.x + 70.0, pos.y + 100.0);
 
-	for (index, (s, ad_type)) in vec![
-	    ("チラシ　　　　　100円/週", SuzunaAdType::AdPaper),
-	    ("ちんどん屋　　　100円/週", SuzunaAdType::Chindon),
-	    ("のぼり（店前）　100円/週", SuzunaAdType::ShopNobori),
-	    ("のぼり（里）　　100円/週", SuzunaAdType::TownNobori),
-	    ("新聞　　　　　　100円/週", SuzunaAdType::NewsPaper),
-	    ("文々。新聞　　　100円/週", SuzunaAdType::BunBunMaruPaper),
+	for (index, (ty_str, ad_type)) in vec![
+	    ("チラシ", SuzunaAdType::AdPaper),
+	    ("ちんどん屋", SuzunaAdType::Chindon),
+	    ("のぼり（店前）", SuzunaAdType::ShopNobori),
+	    ("のぼり（里）", SuzunaAdType::TownNobori),
+	    ("新聞", SuzunaAdType::NewsPaper),
+	    ("文々。新聞", SuzunaAdType::BunBunMaruPaper),
 	].iter().enumerate() {
+	    let mut entry = AdEntry::new(
+		ctx,
+		entry_pos,
+		numeric::Vector2f::new(32.0, 32.0),
+		ctx.savable_data.get_ad_status(*ad_type),
+		format!("{:　<7}{:　>4}円/日", ty_str, ctx.resource.get_default_ad_cost(*ad_type)),
+		depth
+	    );
+	    
 	    ad_table.insert(
 		*ad_type,
-		AdEntry::new(
-		    ctx,
-		    entry_pos,
-		    numeric::Vector2f::new(32.0, 32.0),
-		    false,
-		    s.to_string(),
-		    depth
-		));
+		entry
+	    );
 
 	    if index % 2 == 0 {
 		entry_pos.x = 400.0;
@@ -368,9 +375,10 @@ impl ScenarioAdPage {
 	}
     }
 
-    pub fn click_handler<'a>(&mut self, _ctx: &mut SuzuContext<'a>, click_point: numeric::Point2f) {
-	for (_, entry) in self.ad_table.iter_mut() {
+    pub fn click_handler<'a>(&mut self, ctx: &mut SuzuContext<'a>, click_point: numeric::Point2f) {
+	for (ad_type, entry) in self.ad_table.iter_mut() {
 	    entry.check_box.click_handler(click_point);
+	    ctx.savable_data.change_ad_status(*ad_type, entry.is_checked());
 	}
     }
 }

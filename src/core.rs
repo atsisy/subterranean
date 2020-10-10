@@ -38,6 +38,7 @@ use serde::{Deserialize, Serialize};
 extern crate serde_json;
 
 use number_to_jk::number_to_jk;
+use crate::object::scenario_object::SuzunaAdType;
 
 extern crate num;
 
@@ -940,6 +941,10 @@ impl GameResource {
     pub fn change_se_volume(&mut self, volume: f32) {
 	self.se_manager.change_global_volume(volume);
     }
+
+    pub fn get_default_ad_cost(&self, ty: crate::object::scenario_object::SuzunaAdType) -> u32 {
+	self.ad_cost_list.get_cost(ty)
+    }
 }
 
 #[derive(PartialEq, Debug, Clone, Copy)]
@@ -1411,6 +1416,7 @@ pub struct SavableData {
     pub date: GensoDate,
     pub task_result: TaskResult,
     pub suzunaan_status: SuzunaAnStatus,
+    pub ad_status: HashMap<SuzunaAdType, bool>,
 }
 
 impl SavableData {
@@ -1421,12 +1427,22 @@ impl SavableData {
         let returning_request_pool =
             ReturningRequestPool::new(&mut suzuna_book_pool, game_data, date);
 
+	let ad_status = hash![
+	    (SuzunaAdType::ShopNobori, false),
+	    (SuzunaAdType::TownNobori, false),
+	    (SuzunaAdType::Chindon, false),
+	    (SuzunaAdType::NewsPaper, false),
+	    (SuzunaAdType::BunBunMaruPaper, false),
+	    (SuzunaAdType::AdPaper, false)
+        ];
+	
         SavableData {
             date: date.clone(),
             task_result: TaskResult::new(),
             suzunaan_status: SuzunaAnStatus::new(),
             suzuna_book_pool: suzuna_book_pool,
             returning_request_pool: returning_request_pool,
+	    ad_status: ad_status,
         }
     }
 
@@ -1462,6 +1478,14 @@ impl SavableData {
     pub fn replace(&mut self, data: SavableData) {
         self.date = data.date;
         self.task_result = data.task_result;
+    }
+
+    pub fn change_ad_status(&mut self, ad_type: SuzunaAdType, status: bool) {
+	self.ad_status.insert(ad_type, status);
+    }
+
+    pub fn get_ad_status(&self, ad_type: SuzunaAdType) -> bool {
+	*self.ad_status.get(&ad_type).unwrap()
     }
 }
 
