@@ -680,7 +680,30 @@ pub struct SpriteBatchData {
     pub path: String,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Deserialize, Serialize)]
+pub struct AdCostTable {
+    ad_cost_table: HashMap<crate::object::scenario_object::SuzunaAdType, u32>,
+}
+
+impl AdCostTable {
+    pub fn from_data(data: HashMap<String, u32>) -> Self {
+	let mut table = HashMap::new();
+
+	for (s, c) in data.iter() {
+	    table.insert(crate::object::scenario_object::SuzunaAdType::from_str(s), *c);
+	}
+
+	AdCostTable {
+	    ad_cost_table: table,
+	}
+    }
+    
+    pub fn get_cost(&self, ty: crate::object::scenario_object::SuzunaAdType) -> u32 {
+	*self.ad_cost_table.get(&ty).unwrap()
+    }
+}
+
+#[derive(Deserialize)]
 pub struct RawConfigFile {
     texture_paths: Vec<String>,
     font_paths: Vec<String>,
@@ -690,6 +713,7 @@ pub struct RawConfigFile {
     sprite_batch_information: Vec<SpriteBatchData>,
     scenario_table_path: String,
     sound_file_path: Vec<String>,
+    ad_cost_table: HashMap<String, u32>,
 }
 
 impl RawConfigFile {
@@ -719,6 +743,7 @@ pub struct GameResource {
     sounds: Vec<sound::SoundData>,
     bgm_manager: sound::SoundManager,
     se_manager: sound::SoundManager,
+    ad_cost_list: AdCostTable,
 }
 
 impl GameResource {
@@ -784,6 +809,7 @@ impl GameResource {
             sounds: sounds,
             bgm_manager: sound::SoundManager::new(),
 	    se_manager: sound::SoundManager::new(),
+	    ad_cost_list: AdCostTable::from_data(src_file.ad_cost_table),
         }
     }
 
@@ -1269,6 +1295,12 @@ impl SuzunaBookPool {
             let book_info = self
                 .books
                 .swap_remove(rand::random::<usize>() % self.books.len());
+
+	    if borrowing_books.contains(&book_info) {
+		self.books.push(book_info);
+		continue;
+	    }
+	    
             borrowing_books.push(book_info);
         }
 

@@ -20,6 +20,8 @@ use crate::set_table_frame_cell_center;
 
 use number_to_jk::number_to_jk;
 
+use serde::{Deserialize, Serialize};
+
 pub struct SuzunaStatusMainPage {
     table_frame: TableFrame,
     desc_text: Vec<VerticalText>,
@@ -194,7 +196,7 @@ impl DrawableComponent for SuzunaStatusMainPage {
     }
 }
 
-#[derive(Copy, Clone, Hash, Eq, PartialEq)]
+#[derive(Copy, Clone, Hash, Eq, PartialEq, Deserialize, Serialize)]
 pub enum SuzunaAdType {
     ShopNobori,
     TownNobori,
@@ -202,6 +204,20 @@ pub enum SuzunaAdType {
     NewsPaper,
     BunBunMaruPaper,
     AdPaper,
+}
+
+impl SuzunaAdType {
+    pub fn from_str(s: &str) -> Self {
+	match s {
+	    "ShopNobori" => Self::ShopNobori,
+	    "TownNobori" => Self::TownNobori,
+	    "Chindon" => Self::Chindon,
+	    "NewsPaper" => Self::NewsPaper,
+	    "BunBunMaruPaper" => Self::BunBunMaruPaper,
+	    "AdPaper" => Self::AdPaper,
+	    _ => panic!("Unknown SuzunaAdType => {:?}", s),
+	}
+    }
 }
 
 pub struct AdEntry {
@@ -300,7 +316,7 @@ impl ScenarioAdPage {
     pub fn new<'a>(ctx: &mut SuzuContext<'a>, pos: numeric::Point2f, area_size: numeric::Vector2f, depth: i8) -> Self {
 	let mut ad_table = HashMap::new();
 
-	let mut entry_pos = numeric::Point2f::new(pos.x + 70.0, pos.y + 80.0);
+	let mut entry_pos = numeric::Point2f::new(pos.x + 70.0, pos.y + 100.0);
 
 	for (index, (s, ad_type)) in vec![
 	    ("チラシ　　　　　100円/週", SuzunaAdType::AdPaper),
@@ -325,7 +341,7 @@ impl ScenarioAdPage {
 		entry_pos.x = 400.0;
 	    } else {
 		entry_pos.x = pos.x + 70.0;
-		entry_pos.y += 56.0;
+		entry_pos.y += 64.0;
 	    }
 	}
 

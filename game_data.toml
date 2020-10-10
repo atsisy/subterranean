@@ -343,3 +343,11 @@ path = "/tile_textures/black_frame.png"
 sprite_x_size = 64
 sprite_y_size = 64
 path = "/tile_textures/black_frame2.png"
+
+[ad_cost_table]
+ShopNobori = 100
+TownNobori = 100
+Chindon = 100
+NewsPaper = 100
+BunBunMaruPaper = 100
+AdPaper = 100
