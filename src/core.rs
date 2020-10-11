@@ -1491,12 +1491,27 @@ impl SavableData {
     pub fn get_ad_status(&self, ad_type: SuzunaAdType) -> bool {
 	*self.ad_status.get(&ad_type).unwrap()
     }
+
+    pub fn pay_ad_cost(&mut self, resource: &GameResource) -> i32 {
+	let mut total_cost = 0;
+	
+	for (ad_type, used) in self.ad_status.iter() {
+	    if *used {
+		let cost = resource.get_default_ad_cost(*ad_type) as i32;
+		self.task_result.total_money -= cost;
+		total_cost += cost;
+	    }
+	}
+
+	total_cost
+    }
 }
 
 pub struct ResultReportStringTable {
     pub total_customers_waiting_time: String,
     pub shelving_is_done: String,
     pub condition_eval_mistakes: String,
+    pub total_ad_cost: String,
 }
 
 #[derive(Clone)]
@@ -1505,6 +1520,7 @@ pub struct ResultReport {
     yet_shelved_books_id: Vec<u64>,
     total_customers_waiting_time: Clock,
     condition_eval_mistakes: usize,
+    total_ad_cost: i32,
 }
 
 impl ResultReport {
@@ -1514,6 +1530,7 @@ impl ResultReport {
             yet_shelved_books_id: Vec::new(),
             total_customers_waiting_time: 0,
             condition_eval_mistakes: 0,
+	    total_ad_cost: 0,
         }
     }
 
@@ -1531,6 +1548,10 @@ impl ResultReport {
 
     pub fn add_customers_waiting_time(&mut self, additional: Clock) {
         self.total_customers_waiting_time += additional;
+    }
+
+    pub fn add_ad_cost(&mut self, cost: i32) {
+	self.total_ad_cost += cost;
     }
 
     pub fn create_table(&self) -> ResultReportStringTable {
@@ -1565,6 +1586,9 @@ impl ResultReportStringTable {
             condition_eval_mistakes: number_to_jk::number_to_jk(
                 result_report.condition_eval_mistakes as u64,
             ),
+	    total_ad_cost: number_to_jk::number_to_jk(
+		result_report.total_ad_cost as u64
+	    )
         }
     }
 }
@@ -1658,6 +1682,10 @@ impl<'ctx> SuzuContext<'ctx> {
     pub fn change_se_volume(&mut self, volume: f32) {
 	self.resource.change_se_volume(volume / 100.0);
 	self.config.set_se_volume_100(volume);
+    }
+
+    pub fn pay_ad_cost(&mut self) -> i32 {
+	self.savable_data.pay_ad_cost(self.resource)
     }
 }
 

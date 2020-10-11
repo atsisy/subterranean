@@ -590,6 +590,8 @@ impl ShopScene {
         map_id: u32,
         new_books: Vec<BookInformation>,
     ) -> ShopScene {
+	let begining_save_data = ctx.savable_data.clone();
+	
         let key_listener =
             tdev::KeyboardListener::new_masked(vec![tdev::KeyInputDevice::GenericKeyboard], vec![]);
 
@@ -649,6 +651,8 @@ impl ShopScene {
             31,
         );
 
+	ctx.pay_ad_cost();
+
         ShopScene {
             player: player,
             character_group: character_group,
@@ -688,7 +692,7 @@ impl ShopScene {
                 numeric::Point2f::new((crate::core::WINDOW_SIZE_X - 20) as f32, 20.0),
                 0,
             ),
-            begining_save_data: ctx.savable_data.clone(),
+            begining_save_data: begining_save_data,
             drawable_shop_clock: drawble_shop_clock,
         }
     }
