@@ -1861,6 +1861,10 @@ impl CheckBox {
 	    }
 	}
     }
+
+    pub fn checked_now(&self) -> bool {
+	self.is_checked
+    }
 }
 
 impl DrawableComponent for CheckBox {

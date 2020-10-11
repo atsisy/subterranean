@@ -1476,8 +1476,12 @@ impl SavableData {
     }
 
     pub fn replace(&mut self, data: SavableData) {
+	self.suzuna_book_pool = data.suzuna_book_pool;
+	self.returning_request_pool = data.returning_request_pool;
         self.date = data.date;
         self.task_result = data.task_result;
+	self.suzunaan_status = data.suzunaan_status;
+	self.ad_status = data.ad_status;
     }
 
     pub fn change_ad_status(&mut self, ad_type: SuzunaAdType, status: bool) {
@@ -1813,7 +1817,13 @@ impl SceneController {
             scene::SceneID::Title => {
                 self.current_scene =
                     TopScene::TitleScene(scene::title_scene::TitleScene::new(&mut ctx))
-            }
+            },
+	    scene::SceneID::Save => {
+		self.current_scene =
+		    TopScene::SaveScene(scene::save_scene::SaveScene::new(
+			&mut ctx,
+		    ));
+	    },
             scene::SceneID::Null => self.current_scene = TopScene::Null(scene::NullScene::new()),
             _ => (),
         }

@@ -26,7 +26,7 @@ next-scene = "Scenario"
 [[each_entry_data]]
 text = "再入場"
 event-type = "SceneTransition"
-next-scene = "Scenario"
+next-scene = "Save"
 
 [[each_entry_data]]
 text = "蓄音機"
