@@ -539,6 +539,13 @@ impl SelectShelvingBookUI {
         }
     }
 
+    pub fn contains_window<'a>(&self, ctx: &mut SuzuContext<'a>, point: numeric::Point2f) -> bool {
+	let rpoint = self.canvas.relative_point(point);
+
+	self.box_info_window.contains(ctx.context, rpoint) ||
+	    self.shelving_window.contains(ctx.context, rpoint)
+    }
+
     ///
     /// 請求番号を昇順に並べ替えるメソッド
     ///
@@ -1137,6 +1144,12 @@ impl SelectStoreBookUI {
             reset_select_button: reset_select_button,
             book_shelf_info: book_shelf_info,
         }
+    }
+
+    pub fn contains_window<'a>(&self, ctx: &mut SuzuContext<'a>, point: numeric::Point2f) -> bool {
+	let rpoint = self.canvas.relative_point(point);
+
+	self.select_book_window.contains(ctx.context, rpoint)
     }
 
     fn sort_book_info_greater(&mut self) {
@@ -2206,6 +2219,22 @@ impl ShopSpecialObject {
             new_books_viewer: None,
             drwob_essential: DrawableObjectEssential::new(true, 0),
         }
+    }
+
+    pub fn contains_shelving_select_ui_windows<'a>(&self, ctx: &mut SuzuContext<'a>, point: numeric::Point2f) -> bool {
+	if let Some(ui) = self.shelving_select_ui.as_ref() {
+	    ui.contains_window(ctx, point)
+	} else {
+	    false
+	}
+    }
+
+    pub fn contains_storing_select_ui_windows<'a>(&self, ctx: &mut SuzuContext<'a>, point: numeric::Point2f) -> bool {
+	if let Some(ui) = self.storing_select_ui.as_ref() {
+	    ui.contains_window(ctx, point)
+	} else {
+	    false
+	}
     }
 
     pub fn show_shelving_select_ui<'a>(

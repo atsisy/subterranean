@@ -1615,7 +1615,7 @@ impl SceneManager for ShopScene {
         } else {
             match button {
                 MouseButton::Left => {
-                    self.start_mouse_move(ctx.context, point);
+		    self.start_mouse_move(ctx.context, point);
                 }
                 MouseButton::Right => {
                     self.player.reset_speed();
@@ -1651,7 +1651,17 @@ impl SceneManager for ShopScene {
         } else {
             match button {
                 MouseButton::Left => {
-                    self.player.reset_speed();
+		    if self.shop_special_object.is_enable_now() {
+			if !self.shop_special_object.contains_shelving_select_ui_windows(ctx, point) {
+			    self.try_hide_shelving_select_ui(ctx);
+			}
+
+			if !self.shop_special_object.contains_storing_select_ui_windows(ctx, point) {
+			    self.try_hide_storing_select_ui(ctx);
+			}
+		    }
+		    
+		    self.player.reset_speed();
                 }
                 MouseButton::Right => {
                     if self.shop_map_is_staged {
