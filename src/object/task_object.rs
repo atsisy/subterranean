@@ -1286,21 +1286,6 @@ impl TaskTable {
         }
     }
 
-    fn try_show_text_balloon_menus<'a>(
-        &mut self,
-        ctx: &mut SuzuContext<'a>,
-        click_point: numeric::Point2f,
-        t: Clock,
-    ) {
-        let phrase_type = self.sight.silhouette.get_text_balloon_phrase_type();
-
-        match phrase_type {
-            _ => self
-                .customer_silhouette_menu
-                .show_text_balloon_ok_menu(ctx, click_point, t),
-        }
-    }
-
     ///
     /// シルエットに関するメニューを表示する
     ///
@@ -1313,14 +1298,8 @@ impl TaskTable {
         t: Clock,
     ) -> bool {
         let rpoint = self.sight.canvas.relative_point(click_point);
-        if self
-            .sight
-            .silhouette
-            .contains_text_balloon(ctx.context, rpoint)
-        {
-            self.try_show_text_balloon_menus(ctx, click_point, t);
-            true
-        } else if self
+
+	if self
             .sight
             .silhouette
             .contains_character_silhouette(ctx.context, rpoint)
