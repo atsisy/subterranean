@@ -19,7 +19,542 @@ type = "book-shelf"
 trigger = "action"
 [event-panel.shelf-info]
 begin-number = 1
+end-number = 1
+[event-panel.position]
+x = 14
+y = 10
+
+[[event-panel]]
+type = "book-shelf"
+trigger = "action"
+[event-panel.shelf-info]
+begin-number = 1
+end-number = 1
+[event-panel.position]
+x = 14
+y = 9
+
+[[event-panel]]
+type = "book-shelf"
+trigger = "action"
+[event-panel.shelf-info]
+begin-number = 1
+end-number = 1
+[event-panel.position]
+x = 14
+y = 8
+
+[[event-panel]]
+type = "book-shelf"
+trigger = "action"
+[event-panel.shelf-info]
+begin-number = 1
+end-number = 1
+[event-panel.position]
+x = 14
+y = 7
+
+[[event-panel]]
+type = "book-shelf"
+trigger = "action"
+[event-panel.shelf-info]
+begin-number = 1
+end-number = 1
+[event-panel.position]
+x = 14
+y = 6
+
+[[event-panel]]
+type = "book-shelf"
+trigger = "action"
+[event-panel.shelf-info]
+begin-number = 1
+end-number = 1
+[event-panel.position]
+x = 14
+y = 5
+
+
+[[event-panel]]
+type = "book-shelf"
+trigger = "action"
+[event-panel.shelf-info]
+begin-number = 2
 end-number = 2
+[event-panel.position]
+x = 13
+y = 10
+
+[[event-panel]]
+type = "book-shelf"
+trigger = "action"
+[event-panel.shelf-info]
+begin-number = 2
+end-number = 2
+[event-panel.position]
+x = 13
+y = 9
+
+[[event-panel]]
+type = "book-shelf"
+trigger = "action"
+[event-panel.shelf-info]
+begin-number = 2
+end-number = 2
+[event-panel.position]
+x = 13
+y = 8
+
+[[event-panel]]
+type = "book-shelf"
+trigger = "action"
+[event-panel.shelf-info]
+begin-number = 2
+end-number = 2
+[event-panel.position]
+x = 13
+y = 7
+
+[[event-panel]]
+type = "book-shelf"
+trigger = "action"
+[event-panel.shelf-info]
+begin-number = 2
+end-number = 2
+[event-panel.position]
+x = 13
+y = 6
+
+[[event-panel]]
+type = "book-shelf"
+trigger = "action"
+[event-panel.shelf-info]
+begin-number = 2
+end-number = 2
+[event-panel.position]
+x = 13
+y = 5
+
+
+[[event-panel]]
+type = "book-shelf"
+trigger = "action"
+[event-panel.shelf-info]
+begin-number = 3
+end-number = 3
+[event-panel.position]
+x = 10
+y = 7
+
+[[event-panel]]
+type = "book-shelf"
+trigger = "action"
+[event-panel.shelf-info]
+begin-number = 3
+end-number = 3
+[event-panel.position]
+x = 10
+y = 6
+
+[[event-panel]]
+type = "book-shelf"
+trigger = "action"
+[event-panel.shelf-info]
+begin-number = 3
+end-number = 3
+[event-panel.position]
+x = 10
+y = 5
+
+[[event-panel]]
+type = "book-shelf"
+trigger = "action"
+[event-panel.shelf-info]
+begin-number = 3
+end-number = 3
+[event-panel.position]
+x = 10
+y = 8
+
+[[event-panel]]
+type = "book-shelf"
+trigger = "action"
+[event-panel.shelf-info]
+begin-number = 3
+end-number = 3
+[event-panel.position]
+x = 10
+y = 9
+
+[[event-panel]]
+type = "book-shelf"
+trigger = "action"
+[event-panel.shelf-info]
+begin-number = 3
+end-number = 3
+[event-panel.position]
+x = 10
+y = 10
+
+[[event-panel]]
+type = "book-shelf"
+trigger = "action"
+[event-panel.shelf-info]
+begin-number = 4
+end-number = 4
+[event-panel.position]
+x = 9
+y = 8
+
+[[event-panel]]
+type = "book-shelf"
+trigger = "action"
+[event-panel.shelf-info]
+begin-number = 4
+end-number = 4
+[event-panel.position]
+x = 9
+y = 9
+
+[[event-panel]]
+type = "book-shelf"
+trigger = "action"
+[event-panel.shelf-info]
+begin-number = 4
+end-number = 4
+[event-panel.position]
+x = 9
+y = 10
+
+[[event-panel]]
+type = "book-shelf"
+trigger = "action"
+[event-panel.shelf-info]
+begin-number = 4
+end-number = 4
+[event-panel.position]
+x = 9
+y = 5
+
+[[event-panel]]
+type = "book-shelf"
+trigger = "action"
+[event-panel.shelf-info]
+begin-number = 4
+end-number = 4
+[event-panel.position]
+x = 9
+y = 6
+
+[[event-panel]]
+type = "book-shelf"
+trigger = "action"
+[event-panel.shelf-info]
+begin-number = 4
+end-number = 4
+[event-panel.position]
+x = 9
+y = 7
+
+
+[[event-panel]]
+type = "book-shelf"
+trigger = "action"
+[event-panel.shelf-info]
+begin-number = 5
+end-number = 5
+[event-panel.position]
+x = 6
+y = 10
+
+[[event-panel]]
+type = "book-shelf"
+trigger = "action"
+[event-panel.shelf-info]
+begin-number = 5
+end-number = 5
+[event-panel.position]
+x = 6
+y = 9
+
+[[event-panel]]
+type = "book-shelf"
+trigger = "action"
+[event-panel.shelf-info]
+begin-number = 5
+end-number = 5
+[event-panel.position]
+x = 6
+y = 8
+
+[[event-panel]]
+type = "book-shelf"
+trigger = "action"
+[event-panel.shelf-info]
+begin-number = 5
+end-number = 5
+[event-panel.position]
+x = 6
+y = 7
+
+[[event-panel]]
+type = "book-shelf"
+trigger = "action"
+[event-panel.shelf-info]
+begin-number = 5
+end-number = 5
+[event-panel.position]
+x = 6
+y = 6
+
+[[event-panel]]
+type = "book-shelf"
+trigger = "action"
+[event-panel.shelf-info]
+begin-number = 5
+end-number = 5
+[event-panel.position]
+x = 6
+y = 5
+
+[[event-panel]]
+type = "book-shelf"
+trigger = "action"
+[event-panel.shelf-info]
+begin-number = 6
+end-number = 6
+[event-panel.position]
+x = 5
+y = 10
+
+[[event-panel]]
+type = "book-shelf"
+trigger = "action"
+[event-panel.shelf-info]
+begin-number = 6
+end-number = 6
+[event-panel.position]
+x = 5
+y = 9
+
+[[event-panel]]
+type = "book-shelf"
+trigger = "action"
+[event-panel.shelf-info]
+begin-number = 6
+end-number = 6
+[event-panel.position]
+x = 5
+y = 8
+
+[[event-panel]]
+type = "book-shelf"
+trigger = "action"
+[event-panel.shelf-info]
+begin-number = 6
+end-number = 6
+[event-panel.position]
+x = 5
+y = 7
+
+[[event-panel]]
+type = "book-shelf"
+trigger = "action"
+[event-panel.shelf-info]
+begin-number = 6
+end-number = 6
+[event-panel.position]
+x = 5
+y = 6
+
+[[event-panel]]
+type = "book-shelf"
+trigger = "action"
+[event-panel.shelf-info]
+begin-number = 6
+end-number = 6
+[event-panel.position]
+x = 5
+y = 5
+
+[[event-panel]]
+type = "book-shelf"
+trigger = "action"
+[event-panel.shelf-info]
+begin-number = 7
+end-number = 7
+[event-panel.position]
+x = 2
+y = 10
+
+[[event-panel]]
+type = "book-shelf"
+trigger = "action"
+[event-panel.shelf-info]
+begin-number = 7
+end-number = 7
+[event-panel.position]
+x = 2
+y = 9
+
+[[event-panel]]
+type = "book-shelf"
+trigger = "action"
+[event-panel.shelf-info]
+begin-number = 7
+end-number = 7
+[event-panel.position]
+x = 2
+y = 8
+
+[[event-panel]]
+type = "book-shelf"
+trigger = "action"
+[event-panel.shelf-info]
+begin-number = 7
+end-number = 7
+[event-panel.position]
+x = 2
+y = 7
+
+[[event-panel]]
+type = "book-shelf"
+trigger = "action"
+[event-panel.shelf-info]
+begin-number = 7
+end-number = 7
+[event-panel.position]
+x = 2
+y = 6
+
+[[event-panel]]
+type = "book-shelf"
+trigger = "action"
+[event-panel.shelf-info]
+begin-number = 7
+end-number = 7
+[event-panel.position]
+x = 2
+y = 5
+
+
+
+[[event-panel]]
+type = "book-shelf"
+trigger = "action"
+[event-panel.shelf-info]
+begin-number = 8
+end-number = 8
+[event-panel.position]
+x = 1
+y = 10
+
+[[event-panel]]
+type = "book-shelf"
+trigger = "action"
+[event-panel.shelf-info]
+begin-number = 8
+end-number = 8
+[event-panel.position]
+x = 1
+y = 9
+
+[[event-panel]]
+type = "book-shelf"
+trigger = "action"
+[event-panel.shelf-info]
+begin-number = 8
+end-number = 8
+[event-panel.position]
+x = 1
+y = 8
+
+[[event-panel]]
+type = "book-shelf"
+trigger = "action"
+[event-panel.shelf-info]
+begin-number = 8
+end-number = 8
+[event-panel.position]
+x = 1
+y = 7
+
+[[event-panel]]
+type = "book-shelf"
+trigger = "action"
+[event-panel.shelf-info]
+begin-number = 8
+end-number = 8
+[event-panel.position]
+x = 1
+y = 6
+
+[[event-panel]]
+type = "book-shelf"
+trigger = "action"
+[event-panel.shelf-info]
+begin-number = 8
+end-number = 8
+[event-panel.position]
+x = 1
+y = 5
+
+[[event-panel]]
+type = "book-shelf"
+trigger = "action"
+[event-panel.shelf-info]
+begin-number = 10
+end-number = 10
+[event-panel.position]
+x = 1
+y = 3
+
+[[event-panel]]
+type = "book-shelf"
+trigger = "action"
+[event-panel.shelf-info]
+begin-number = 10
+end-number = 10
+[event-panel.position]
+x = 2
+y = 3
+
+[[event-panel]]
+type = "book-shelf"
+trigger = "action"
+[event-panel.shelf-info]
+begin-number = 10
+end-number = 10
+[event-panel.position]
+x = 3
+y = 3
+
+[[event-panel]]
+type = "book-shelf"
+trigger = "action"
+[event-panel.shelf-info]
+begin-number = 10
+end-number = 10
+[event-panel.position]
+x = 4
+y = 3
+
+[[event-panel]]
+type = "book-shelf"
+trigger = "action"
+[event-panel.shelf-info]
+begin-number = 10
+end-number = 10
+[event-panel.position]
+x = 5
+y = 3
+
+[[event-panel]]
+type = "book-shelf"
+trigger = "action"
+[event-panel.shelf-info]
+begin-number = 10
+end-number = 10
 [event-panel.position]
 x = 6
 y = 3
@@ -28,8 +563,8 @@ y = 3
 type = "book-shelf"
 trigger = "action"
 [event-panel.shelf-info]
-begin-number = 1
-end-number = 2
+begin-number = 10
+end-number = 10
 [event-panel.position]
 x = 7
 y = 3
@@ -38,8 +573,8 @@ y = 3
 type = "book-shelf"
 trigger = "action"
 [event-panel.shelf-info]
-begin-number = 3
-end-number = 4
+begin-number = 10
+end-number = 10
 [event-panel.position]
 x = 8
 y = 3
@@ -48,8 +583,8 @@ y = 3
 type = "book-shelf"
 trigger = "action"
 [event-panel.shelf-info]
-begin-number = 3
-end-number = 4
+begin-number = 10
+end-number = 10
 [event-panel.position]
 x = 9
 y = 3
@@ -58,8 +593,8 @@ y = 3
 type = "book-shelf"
 trigger = "action"
 [event-panel.shelf-info]
-begin-number = 5
-end-number = 6
+begin-number = 10
+end-number = 10
 [event-panel.position]
 x = 10
 y = 3
@@ -68,11 +603,42 @@ y = 3
 type = "book-shelf"
 trigger = "action"
 [event-panel.shelf-info]
-begin-number = 5
-end-number = 6
+begin-number = 10
+end-number = 10
 [event-panel.position]
 x = 11
 y = 3
+
+[[event-panel]]
+type = "book-shelf"
+trigger = "action"
+[event-panel.shelf-info]
+begin-number = 10
+end-number = 10
+[event-panel.position]
+x = 12
+y = 3
+
+[[event-panel]]
+type = "book-shelf"
+trigger = "action"
+[event-panel.shelf-info]
+begin-number = 10
+end-number = 10
+[event-panel.position]
+x = 13
+y = 3
+
+[[event-panel]]
+type = "book-shelf"
+trigger = "action"
+[event-panel.shelf-info]
+begin-number = 10
+end-number = 10
+[event-panel.position]
+x = 14
+y = 3
+
 
 [[event-panel]]
 type = "builtin-event"
