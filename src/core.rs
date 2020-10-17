@@ -376,6 +376,7 @@ pub const LARGE_BOOK_TEXTURE: [TextureID; 3] = [
 #[derive(Clone)]
 pub enum SoundID {
     Title = 0,
+    SeTurnThePage,
     Unknown,
 }
 
@@ -1291,7 +1292,7 @@ impl SuzunaBookPool {
         borrow_date: GensoDate,
         rental_limit: RentalLimit,
     ) -> BorrowingInformation {
-        let mut borrowing_books = Vec::new();
+        let mut borrowing_books: Vec<BookInformation> = Vec::new();
         for _ in 0..((rand::random::<u32>() % 5) + 1) {
             if self.books.is_empty() {
                 break;
@@ -1301,7 +1302,8 @@ impl SuzunaBookPool {
                 .books
                 .swap_remove(rand::random::<usize>() % self.books.len());
 
-	    if borrowing_books.contains(&book_info) {
+	    if borrowing_books.iter().any(|info| info.name == book_info.name) {
+		// 戻してloop再開
 		self.books.push(book_info);
 		continue;
 	    }

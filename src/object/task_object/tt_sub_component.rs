@@ -1,3 +1,4 @@
+
 use std::cmp::Ordering;
 use std::collections::HashMap;
 use std::rc::Rc;
@@ -46,7 +47,7 @@ impl HoldDataVText {
                 position,
                 scale,
                 0.0,
-                drawing_depth,
+                drawing_depth, 
                 font_info,
             ),
             data: hold_data,
@@ -1832,6 +1833,74 @@ impl DrawableComponent for BorrowingRecordBookPage {
     }
 }
 
+pub struct AlphaScope {
+    scope: ggraphics::Mesh,
+    draw_param: ggraphics::DrawParam,
+    drwob_essential: DrawableObjectEssential,
+}
+
+impl AlphaScope {
+    pub fn new<'a>(ctx: &mut SuzuContext<'a>, radius: u32, max_sub_alpha: u8, pos: numeric::Point2f, depth: i8) -> Self {
+	let mut builder = ggraphics::MeshBuilder::new();
+	let p_alpha = max_sub_alpha as f32 / radius as f32;
+	let mut alpha = max_sub_alpha as f32;
+
+	for r in 0..radius {
+	    builder.circle(
+		ggraphics::DrawMode::stroke(1.0),
+		numeric::Point2f::new(0.0, 0.0),
+		r as f32,
+		0.0001,
+		ggraphics::Color::from_rgba_u32(0x00),
+	    );
+
+	    alpha -= p_alpha;
+	}
+
+	AlphaScope {
+	    scope: builder.build(ctx.context).unwrap(),
+	    draw_param: ggraphics::DrawParam {
+	        dest: pos.into(),
+		color: ggraphics::Color::from_rgba_u32(0xffffff00),
+		..Default::default()
+	    },
+	    drwob_essential: DrawableObjectEssential::new(true, depth),
+	}
+    }
+}
+
+impl DrawableComponent for AlphaScope {
+    fn draw(&mut self, ctx: &mut ggez::Context) -> ggez::GameResult<()> {
+	if self.is_visible() {
+	    ggraphics::set_blend_mode(ctx, ggraphics::BlendMode::Subtract);
+	    ggraphics::draw(ctx, &self.scope, self.draw_param).unwrap();
+	    ggraphics::set_blend_mode(ctx, ggraphics::BlendMode::Alpha);
+	}
+
+	Ok(())
+    }
+
+    fn hide(&mut self) {
+        self.drwob_essential.visible = false;
+    }
+
+    fn appear(&mut self) {
+        self.drwob_essential.visible = true;
+    }
+
+    fn is_visible(&self) -> bool {
+        self.drwob_essential.visible
+    }
+
+    fn set_drawing_depth(&mut self, depth: i8) {
+        self.drwob_essential.drawing_depth = depth;
+    }
+
+    fn get_drawing_depth(&self) -> i8 {
+        self.drwob_essential.drawing_depth
+    }
+}
+
 pub struct BorrowingRecordBook {
     redraw_request: DrawRequest,
     pages: Vec<BorrowingRecordBookPage>,
@@ -1839,6 +1908,7 @@ pub struct BorrowingRecordBook {
     current_page: usize,
     next_page_ope_mesh: UniTexture,
     prev_page_ope_mesh: UniTexture,
+    scope: AlphaScope,
     canvas: MovableWrap<SubScreen>,
 }
 
@@ -1903,6 +1973,7 @@ impl BorrowingRecordBook {
                 None,
                 0,
             ),
+	    scope: AlphaScope::new(ctx, 50, 230, numeric::Point2f::new(100.0, 100.0), 0),
         }
     }
 
@@ -1944,9 +2015,10 @@ impl BorrowingRecordBook {
             self.add_empty_page(ctx, t);
         }
         self.prev_page_ope_mesh.appear();
+	ctx.play_sound_as_se(SoundID::SeTurnThePage, None);
     }
 
-    fn prev_page(&mut self) {
+    fn prev_page<'a>(&mut self, ctx: &mut SuzuContext<'a>) {
         self.redraw_request = DrawRequest::Draw;
         self.prev_page_ope_mesh.appear();
 
@@ -1956,6 +2028,8 @@ impl BorrowingRecordBook {
             if self.current_page == 0 {
                 self.prev_page_ope_mesh.hide();
             }
+
+	    ctx.play_sound_as_se(SoundID::SeTurnThePage, None);
         }
     }
 
@@ -2044,7 +2118,7 @@ impl BorrowingRecordBook {
             self.next_page(ctx, t);
             return true;
         } else if self.prev_page_ope_mesh.contains(ctx.context, rpoint) {
-            self.prev_page();
+            self.prev_page(ctx);
             return true;
         }
 
@@ -2173,6 +2247,8 @@ impl DrawableComponent for BorrowingRecordBook {
 
                 self.prev_page_ope_mesh.draw(ctx)?;
                 self.next_page_ope_mesh.draw(ctx)?;
+
+		self.scope.draw(ctx)?;
 
                 sub_screen::pop_screen(ctx);
             }

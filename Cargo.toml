@@ -17,8 +17,9 @@ cgmath = "0.17.0"
 rand = "0.7.2"
 num = "*"
 number_to_jk = { git = "https://github.com/atsisy/number_to_jk.git" }
-tiled = { git = "https://github.com/mattyhall/rs-tiled", rev = "43b29c6c4644d7b5632e21c29aea6d1d87fe3b87" }
-torifune = { git = "https://github.com/atsisy/torifune.git" }
+tiled = "0.9.3"
+#torifune = { git = "https://github.com/atsisy/torifune.git" }
+torifune = { path = "../torifune" }
 pathfinding = "2.0.4"
 
 [profile.dev]

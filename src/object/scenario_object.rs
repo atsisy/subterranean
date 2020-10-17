@@ -330,7 +330,7 @@ impl ScenarioAdPage {
 	    ("新聞", SuzunaAdType::NewsPaper),
 	    ("文々。新聞", SuzunaAdType::BunBunMaruPaper),
 	].iter().enumerate() {
-	    let mut entry = AdEntry::new(
+	    let entry = AdEntry::new(
 		ctx,
 		entry_pos,
 		numeric::Vector2f::new(32.0, 32.0),

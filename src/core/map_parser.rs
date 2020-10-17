@@ -669,6 +669,7 @@ impl StageObjectMap {
 
     pub fn tile_position_to_map_position(&self, point: numeric::Vector2u) -> numeric::Point2f {
         let tile_size = self.get_tile_size();
+	
         numeric::Point2f::new(
             (point.x * tile_size.x) as f32 * self.scale.x,
             (point.y * tile_size.y) as f32 * self.scale.y,

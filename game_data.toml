@@ -72,7 +72,7 @@ font_paths = ["/fonts/azuki.ttf", "/fonts/RiiT_F.ttf", "/fonts/OradanoGSRR.ttf",
 tileset_paths = ["./resources/maps/suzunaan2/main.tmx"]
 scenario_table_path = "./resources/scenario_table.toml"
 customers_name = ["霧雨魔里沙", "稗田阿求", "a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k"]
-sound_file_path = ["/sound/bgm/title.mp3"]
+sound_file_path = ["/sound/bgm/title.mp3", "/sound/se/turn_the_page.wav"]
 
 [[map_information]]
 id = 1

@@ -543,7 +543,9 @@ impl SelectShelvingBookUI {
 	let rpoint = self.canvas.relative_point(point);
 
 	self.box_info_window.contains(ctx.context, rpoint) ||
-	    self.shelving_window.contains(ctx.context, rpoint)
+	    self.shelving_window.contains(ctx.context, rpoint) ||
+	    self.move_box_to_shelving_button.contains(ctx.context, rpoint) ||
+	    self.move_shelving_to_box_button.contains(ctx.context, rpoint)
     }
 
     ///
@@ -1149,7 +1151,9 @@ impl SelectStoreBookUI {
     pub fn contains_window<'a>(&self, ctx: &mut SuzuContext<'a>, point: numeric::Point2f) -> bool {
 	let rpoint = self.canvas.relative_point(point);
 
-	self.select_book_window.contains(ctx.context, rpoint)
+	self.select_book_window.contains(ctx.context, rpoint) ||
+	    self.reset_select_button.contains(ctx.context, rpoint) ||
+	    self.store_button.contains(ctx.context, rpoint)
     }
 
     fn sort_book_info_greater(&mut self) {

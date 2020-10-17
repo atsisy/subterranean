@@ -41,9 +41,15 @@ impl KosuzuMemory {
     }
 
     pub fn add_book_info(&mut self, book_info: BookInformation) {
-        if !self.is_in_blacklist(&book_info) {
-            self.remembered_book_info.push(book_info);
+        if self.is_in_blacklist(&book_info) {
+            return;
         }
+
+	if self.remembered_book_info.iter().any(|info| info.name == book_info.name) {
+	    return;
+	}
+	
+        self.remembered_book_info.push(book_info);
     }
 
     pub fn is_in_blacklist(&self, book_info: &BookInformation) -> bool {
@@ -61,6 +67,9 @@ impl KosuzuMemory {
     }
 
     pub fn add_customer_name(&mut self, name: String) {
+	if self.customers_name.contains(&name) {
+	    return;
+	}
         self.customers_name.push(name);
     }
 
