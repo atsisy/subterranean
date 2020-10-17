@@ -847,7 +847,9 @@ impl CustomerCharacter {
             self.customer_status = CustomerCharacterStatus::Ready;
 	    Ok(())
         } else {
-	    println!("failed, start -> {:?}, point -> {:?}, dest -> {:?}",
+	    println!("failed, collision_top: {:?}, start -> {:?}, point -> {:?}, dest -> {:?}",
+		     self.character
+			     .get_map_position_with_collision_top_offset(ctx),
 		     map_data.map_position_to_tile_position(
 			 self.character
 			     .get_map_position_with_collision_top_offset(ctx),
@@ -1013,9 +1015,16 @@ impl CustomerCharacter {
 		if self.customer_status == CustomerCharacterStatus::GotOut {
 		    return;
 		}
-		
-		self.reset_speed();
-		self.update_move_effect(ctx.context, map_data, t);
+
+		// キューが空ではない場合
+		// 情報をキューから取り出し、速度を計算し直す
+		if let Some(next_position) = self.move_queue.dequeue() {
+		    self.override_move_effect(ctx.context, next_position);
+		    self.current_goal = next_position;
+		}
+
+		// 到達しないが、もし到達した場合は、GotOut状態にして削除されるのを待つ
+		self.customer_status = CustomerCharacterStatus::GotOut;
 	    },
 	    CustomerCharacterStatus::GoToCheck => {
 		// まだゴールしていない
