@@ -45,7 +45,12 @@ impl ScenarioTextSegment {
         game_data: &GameResource,
         default: &ScenarioTextAttribute,
     ) -> Self {
-        let text = obj.get("text");
+	let text =
+	    if let Some(text_path) = obj.get("text_src_path").as_ref() {
+		std::fs::read_to_string(text_path.as_str().unwrap()).unwrap()
+	    } else {
+		obj.get("text").expect("You must insert text or text_src_path field.").as_str().unwrap().to_string()
+	    };
 
         let fpc = if let Some(fpc) = obj.get("fpc") {
             fpc.as_float().unwrap() as f32
@@ -66,7 +71,7 @@ impl ScenarioTextSegment {
         };
 
         ScenarioTextSegment {
-            text: text.unwrap().as_str().unwrap().to_string(),
+            text: text,
             attribute: ScenarioTextAttribute {
                 fpc: fpc,
                 font_info: FontInformation::new(
@@ -312,6 +317,7 @@ impl ScenarioText {
 
     // 表示する文字数を更新する
     pub fn update_iterator(&mut self) {
+	println!("current update iterator: {}", self.current_segment_index);
         let current_segment = self.seq_text.get(self.current_segment_index).unwrap();
         self.iterator += current_segment.get_fpc();
 
@@ -848,6 +854,7 @@ pub struct TextBox {
     line_arrow: UniTexture,
     text_box_status: TextBoxStatus,
     appearance_frame: TileBatchFrame,
+    complete_and_wait_current_line: bool,
     background: SimpleObject,
     canvas: SubScreen,
 }
@@ -890,6 +897,7 @@ impl TextBox {
             text_box_status: TextBoxStatus::UpdatingText,
             background: background,
             appearance_frame: appr_frame,
+	    complete_and_wait_current_line: false,
             line_arrow: line_arrow,
             canvas: SubScreen::new(
                 ctx.context,
@@ -924,73 +932,73 @@ impl TextBox {
 
         text_lines
     }
-
+    
     pub fn update_scenario_text<'a>(
         &mut self,
         ctx: &mut SuzuContext<'a>,
         scenario: &ScenarioText,
     ) -> usize {
-        // 表示するテキストバッファをクリア。これで、新しくテキストを詰めていく
+	let before_lines = self.text.len() + self.buffered_text.len();
+	
+	// 表示するテキストバッファをクリア。これで、新しくテキストを詰めていく
         self.text.clear();
         self.buffered_text.clear();
 
         // 表示する文字数を取得。この値を減算していき文字数チェックを行う
         let mut remain = scenario.current_iterator() as i32;
 
-        let mut this_head_line = 0;
+	let mut segs: Vec<(i32, &ScenarioTextSegment)> = Vec::new();
 
-        // この関数の返り値は、テキスト化したセグメントの数なので、カウンタを初期化する
-        let mut seg_count: usize = 0;
+	// buffered または textにpushされるテキストを保持するTextSegmentを取得
+	for seg in scenario.seq_text_iter() {
+	    // このテキストセグメントの文字数を取得
+            let seg_str_len = seg.str_len() as i32;
+	    // セグメントの切り出す文字数を計算
+            let slice_len = if seg_str_len < remain { seg_str_len } else { remain };
 
-        for seg in scenario.seq_text_iter() {
-            // このテキストセグメントの文字数を取得
-            let seg_len = seg.str_len() as i32;
+	    segs.push((slice_len, seg));
+	    
+	    if remain < seg_str_len {
+		break;
+	    }
 
-            // セグメントの切り出す文字数を計算
-            let slice_len = if seg_len < remain { seg_len } else { remain };
+	    remain -= seg_str_len;
+	}
 
-            // 行ごとにSimleTextに変換していく
-            let mut index = 0;
-            for mut line in Self::text_from_segment(seg, slice_len as usize) {
-                line.move_diff(numeric::Vector2f::new(
-                    0.0,
-                    seg.get_attribute().font_info.scale.y * index as f32,
-                ));
-                self.text.push_back(line);
-                index += 1;
+	let mut text_lines = VecDeque::new();
+	for (slice_len, seg) in segs.iter() {
+	    for line in Self::text_from_segment(seg, *slice_len as usize) {
+		text_lines.push_back(line);
             }
+	}
 
-            // テキストボックスの行数制限
-            if self.text.len() > self.box_lines {
-                if this_head_line >= self.head_line_number {
-                    self.text.pop_back().unwrap();
-                    self.text_box_status = TextBoxStatus::WaitNextLineKey;
-                    break;
-                } else {
-                    // オーバーしたら、buffered_textに追加
-                    self.buffered_text.push_back(self.text.pop_front().unwrap());
-                }
+	if !self.complete_and_wait_current_line {
+	    if text_lines.len() > before_lines && text_lines.len() > self.box_lines {
+		self.text_box_status = TextBoxStatus::WaitNextLineKey;
+		self.complete_and_wait_current_line = true;
+		text_lines.pop_back();
+	    }
+	} else {
+	    self.complete_and_wait_current_line = false;
+	}
 
-                this_head_line += 1;
-            }
+	
+	for _ in 0..self.box_lines {
+	    if let Some(text) = text_lines.pop_back() {
+		self.text.push_front(text);
+	    }
+	}
 
-            // 残りの文字数が0になったら、break
-            remain -= slice_len;
-            if remain <= 0 {
-                break;
-            }
+	self.buffered_text = text_lines;
 
-            seg_count += 1;
-        }
-
-        // ボックスに入ったSimpleTextの位置を設定
+	// ボックスに入ったSimpleTextの位置を設定
         let mut pos = numeric::Point2f::new(50.0, 50.0);
         for line in &mut self.text {
             line.set_position(pos);
             pos.y += line.get_font_scale().y;
         }
 
-        if self.text_box_status == TextBoxStatus::WaitNextLineKey || scenario.iterator_finish() {
+	if self.text_box_status == TextBoxStatus::WaitNextLineKey || scenario.iterator_finish() {
             self.line_arrow.appear();
             let last_text_drawing_area = self.text.back().unwrap().get_drawing_area(ctx.context);
             let pos = numeric::Point2f::new(
@@ -1000,8 +1008,7 @@ impl TextBox {
             self.line_arrow.set_position(pos);
         }
 
-        // 処理したセグメントの数を返す
-        seg_count
+	segs.len() - 1
     }
 
     pub fn set_fixed_text(&mut self, text: &str, font_info: FontInformation) {

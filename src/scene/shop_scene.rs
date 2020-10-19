@@ -1308,7 +1308,7 @@ impl ShopScene {
             t,
         ));
 
-        self.shop_clock.add_minute((elapsed_clock / 1000) as u8);
+        self.shop_clock.add_minute((elapsed_clock / 360) as u8);
         if let Some(report) = condition_eval_report {
             self.result_report
                 .add_condition_eval_mistakes(report.count_mistake());
