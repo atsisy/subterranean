@@ -1505,6 +1505,7 @@ pub struct PauseScreenSet {
     entries: Vec<VerticalText>,
     cursored_index: Option<usize>,
     drwob_essential: DrawableObjectEssential,
+    config_panel: Option<crate::object::title_object::ConfigPanel>,
 }
 
 impl PauseScreenSet {
@@ -1518,7 +1519,7 @@ impl PauseScreenSet {
         let mut entries_vtext = Vec::new();
         let mut text_pos = numeric::Point2f::new(750.0, 200.0);
 
-        for text in vec!["開始画面へ", "再開"] {
+        for text in vec!["設定", "開始画面へ", "再開"] {
             entries_vtext.push(VerticalText::new(
                 text.to_string(),
                 text_pos,
@@ -1535,6 +1536,7 @@ impl PauseScreenSet {
             entries: entries_vtext,
             drwob_essential: DrawableObjectEssential::new(true, depth),
             cursored_index: None,
+	    config_panel: None,
         }
     }
 
@@ -1563,6 +1565,18 @@ impl PauseScreenSet {
         }
     }
 
+    pub fn dragging_handler<'a>(
+	&mut self,
+	ctx: &mut SuzuContext<'a>,
+	button: ggez::input::mouse::MouseButton,
+	point: numeric::Point2f,
+	t: Clock
+    ) {
+	if let Some(panel) = self.config_panel.as_mut() {
+	    panel.mouse_dragging_handler(ctx, button, point, t);
+	}
+    }
+
     pub fn mouse_motion_handler<'a>(&mut self, ctx: &mut SuzuContext<'a>, point: numeric::Point2f) {
         for (index, vtext) in self.entries.iter().enumerate() {
             if vtext.contains(ctx.context, point) {
@@ -1578,16 +1592,42 @@ impl PauseScreenSet {
         }
     }
 
+    pub fn mouse_button_down<'a>(
+	&mut self,
+	ctx: &mut SuzuContext<'a>,
+	button: ggez::input::mouse::MouseButton,
+	point: numeric::Point2f,
+	t: Clock,
+    ) {
+	if let Some(panel) = self.config_panel.as_mut() {
+	    panel.mouse_button_down(ctx, button, point, t);
+	}
+    }
+    
     pub fn mouse_click_handler<'a>(
-        &self,
+        &mut self,
         ctx: &mut SuzuContext<'a>,
         point: numeric::Point2f,
+	t: Clock,
     ) -> Option<PauseResult> {
+	if let Some(panel) = self.config_panel.as_mut() {
+	    panel.mouse_button_up(ctx, point, t);
+	    return None;
+	}
+	
         for (index, vtext) in self.entries.iter().enumerate() {
             if vtext.contains(ctx.context, point) {
                 return match index {
-                    0 => Some(PauseResult::GoToTitle),
-                    1 => Some(PauseResult::ReleasePause),
+		    0 => {
+			self.config_panel = Some(crate::object::title_object::ConfigPanel::new(
+			    ctx,
+			    numeric::Rect::new(50.0, 50.0, 1266.0, 668.0),
+			    0
+			));
+			None
+		    },
+                    1 => Some(PauseResult::GoToTitle),
+                    2 => Some(PauseResult::ReleasePause),
                     _ => panic!("index is out of bounds"),
                 };
             }
@@ -1603,6 +1643,10 @@ impl DrawableComponent for PauseScreenSet {
             for vtext in self.entries.iter_mut() {
                 vtext.draw(ctx)?;
             }
+
+	    if let Some(panel) = self.config_panel.as_mut() {
+		panel.draw(ctx)?;
+	    }
         }
 
         Ok(())

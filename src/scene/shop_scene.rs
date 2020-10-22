@@ -19,6 +19,7 @@ use super::*;
 use crate::core::map_parser as mp;
 use crate::core::{
     BookInformation, FontID, ResultReport, SavableData, SuzuContext, TileBatchTextureID,
+    MouseInformation,
 };
 use crate::flush_delay_event;
 use crate::flush_delay_event_and_redraw_check;
@@ -558,6 +559,7 @@ impl DrawableComponent for GoToCheckCustomers {
 /// マップを覗くカメラ
 ///
 pub struct ShopScene {
+    mouse_info: MouseInformation,
     player: PlayableCharacter,
     character_group: CharacterGroup,
     shop_special_object: ShopSpecialObject,
@@ -654,6 +656,7 @@ impl ShopScene {
 	ctx.pay_ad_cost();
 
         ShopScene {
+	    mouse_info: MouseInformation::new(),
             player: player,
             character_group: character_group,
             shop_special_object: ShopSpecialObject::new(),
@@ -1478,12 +1481,12 @@ impl ShopScene {
         point: numeric::Point2f,
         t: Clock,
     ) {
-        let pause_screen_set = match self.pause_screen_set.as_ref() {
+        let pause_screen_set = match self.pause_screen_set.as_mut() {
             Some(it) => it,
             _ => return,
         };
 
-        if let Some(pause_result) = pause_screen_set.mouse_click_handler(ctx, point) {
+        if let Some(pause_result) = pause_screen_set.mouse_click_handler(ctx, point, t) {
             match pause_result {
                 PauseResult::GoToTitle => self.transition_to_title_scene(ctx, t),
                 PauseResult::ReleasePause => self.exit_pause_screen(t),
@@ -1594,9 +1597,15 @@ impl SceneManager for ShopScene {
         point: numeric::Point2f,
         _offset: numeric::Vector2f,
     ) {
+	let t = self.get_current_clock();
+	
         if self.now_paused() {
             if let Some(pause_screen_set) = self.pause_screen_set.as_mut() {
-                pause_screen_set.mouse_motion_handler(ctx, point);
+		if self.mouse_info.is_dragging(ggez::event::MouseButton::Left) {
+		    pause_screen_set.dragging_handler(ctx, ggez::event::MouseButton::Left, point, t);
+		} else {
+		    pause_screen_set.mouse_motion_handler(ctx, point);
+		}
             }
         } else {
             if ggez::input::mouse::button_pressed(ctx.context, MouseButton::Left) {
@@ -1611,7 +1620,21 @@ impl SceneManager for ShopScene {
         button: MouseButton,
         point: numeric::Point2f,
     ) {
+	let t = self.get_current_clock();
+	
+	self.mouse_info
+            .set_last_clicked(button, point, t);
+        self.mouse_info
+            .set_last_down(button, point, t);
+        self.mouse_info
+            .set_last_dragged(button, point, t);
+        self.mouse_info.update_dragging(button, true);
+
+	
         if self.now_paused() {
+	    if let Some(panel) = self.pause_screen_set.as_mut() {
+		panel.mouse_button_down(ctx, button, point, t);
+	    }
         } else {
             match button {
                 MouseButton::Left => {
@@ -1638,6 +1661,8 @@ impl SceneManager for ShopScene {
         button: MouseButton,
         point: numeric::Point2f,
     ) {
+	self.mouse_info.update_dragging(button, false);
+	
         if self.now_paused() {
             match button {
                 MouseButton::Left => {

@@ -229,12 +229,12 @@ impl TaskScene {
         point: numeric::Point2f,
         t: Clock,
     ) {
-        let pause_screen_set = match self.pause_screen_set.as_ref() {
+        let pause_screen_set = match self.pause_screen_set.as_mut() {
             Some(it) => it,
             _ => return,
         };
 
-        if let Some(pause_result) = pause_screen_set.mouse_click_handler(ctx, point) {
+        if let Some(pause_result) = pause_screen_set.mouse_click_handler(ctx, point, t) {
             match pause_result {
                 PauseResult::GoToTitle => self.transition_to_title_scene(ctx, t),
                 PauseResult::ReleasePause => self.exit_pause_screen(t),
@@ -248,8 +248,6 @@ impl TaskScene {
         button: MouseButton,
         point: numeric::Point2f,
     ) {
-        self.mouse_info.update_dragging(button, false);
-
         //self.paper.button_up(ctx, button, point);
         self.unselect_dragging_object(ctx, self.get_current_clock());
 
@@ -278,7 +276,6 @@ impl TaskScene {
             .set_last_down(button, point, self.get_current_clock());
         self.mouse_info
             .set_last_dragged(button, point, self.get_current_clock());
-        self.mouse_info.update_dragging(button, true);
 
         self.task_table
             .button_down(ctx, self.get_current_clock(), button, point);
@@ -349,9 +346,15 @@ impl SceneManager for TaskScene {
         point: numeric::Point2f,
         offset: numeric::Vector2f,
     ) {
+	let t = self.get_current_clock();
+	
         if self.now_paused() {
             if let Some(pause_screen_set) = self.pause_screen_set.as_mut() {
-                pause_screen_set.mouse_motion_handler(ctx, point);
+		if self.mouse_info.is_dragging(MouseButton::Left) {
+		    pause_screen_set.dragging_handler(ctx, MouseButton::Left, point, t);
+		} else {
+		    pause_screen_set.mouse_motion_handler(ctx, point);
+		}
             }
         } else {
             if self.mouse_info.is_dragging(MouseButton::Left) {
@@ -377,7 +380,13 @@ impl SceneManager for TaskScene {
         button: MouseButton,
         point: numeric::Point2f,
     ) {
+	self.mouse_info.update_dragging(button, true);
+	
         if self.now_paused() {
+	    let t = self.get_current_clock();
+	    if let Some(panel) = self.pause_screen_set.as_mut() {
+		panel.mouse_button_down(ctx, button, point, t);
+	    }
         } else {
             self.non_paused_mouse_button_down_event(ctx, button, point);
         }
@@ -389,6 +398,8 @@ impl SceneManager for TaskScene {
         button: MouseButton,
         point: numeric::Point2f,
     ) {
+	self.mouse_info.update_dragging(button, false);
+	
         if self.now_paused() {
             match button {
                 MouseButton::Left => {

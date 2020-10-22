@@ -6,7 +6,7 @@ use torifune::device as tdev;
 use torifune::graphics::object::Effectable;
 use torifune::numeric;
 
-use crate::core::{SuzuContext, TileBatchTextureID};
+use crate::core::{SuzuContext, TileBatchTextureID, MouseInformation};
 
 use crate::flush_delay_event;
 use crate::flush_delay_event_and_redraw_check;
@@ -28,6 +28,7 @@ pub enum ScenarioSelect {
 }
 
 pub struct ScenarioScene {
+    mouse_info: MouseInformation,
     scenario_event: ScenarioEvent,
     dark_effect_panel: DarkEffectPanel,
     pause_screen_set: Option<PauseScreenSet>,
@@ -76,6 +77,7 @@ impl ScenarioScene {
         );
 
         ScenarioScene {
+	    mouse_info: MouseInformation::new(),
             scenario_event: scenario,
             pause_screen_set: None,
             dark_effect_panel: DarkEffectPanel::new(
@@ -146,12 +148,12 @@ impl ScenarioScene {
         point: numeric::Point2f,
         t: Clock,
     ) {
-        let pause_screen_set = match self.pause_screen_set.as_ref() {
+        let pause_screen_set = match self.pause_screen_set.as_mut() {
             Some(it) => it,
             _ => return,
         };
 
-        if let Some(pause_result) = pause_screen_set.mouse_click_handler(ctx, point) {
+        if let Some(pause_result) = pause_screen_set.mouse_click_handler(ctx, point, t) {
             match pause_result {
                 PauseResult::GoToTitle => self.transition_to_title_scene(ctx, t),
                 PauseResult::ReleasePause => self.exit_pause_screen(t),
@@ -202,9 +204,15 @@ impl SceneManager for ScenarioScene {
         point: numeric::Point2f,
         _offset: numeric::Vector2f,
     ) {
+	let t = self.get_current_clock();
+	
         if self.now_paused() {
             if let Some(pause_screen_set) = self.pause_screen_set.as_mut() {
-                pause_screen_set.mouse_motion_handler(ctx, point);
+		if self.mouse_info.is_dragging(ggez::event::MouseButton::Left) {
+		    pause_screen_set.dragging_handler(ctx, ggez::event::MouseButton::Left, point, t);
+		} else {
+                    pause_screen_set.mouse_motion_handler(ctx, point);
+		}
             }
         }
     }
@@ -218,12 +226,43 @@ impl SceneManager for ScenarioScene {
             .turn_back_scenario_offset(1);
     }
 
+    fn mouse_button_down_event<'a>(
+	&mut self,
+	ctx: &mut SuzuContext<'a>,
+	button: ginput::mouse::MouseButton,
+	point: numeric::Point2f
+    ) {
+	let t = self.get_current_clock();
+	
+	self.mouse_info
+            .set_last_clicked(button, point, t);
+        self.mouse_info
+            .set_last_down(button, point, t);
+        self.mouse_info
+            .set_last_dragged(button, point, t);
+        self.mouse_info.update_dragging(button, true);
+	
+	if self.now_paused() {
+            match button {
+                MouseButton::Left => {
+                    let t = self.get_current_clock();
+		    if let Some(screen) = self.pause_screen_set.as_mut() {
+			screen.mouse_button_down(ctx, button, point, t);
+		    }
+                }
+                _ => (),
+            }
+	}
+    }
+
     fn mouse_button_up_event<'a>(
         &mut self,
         ctx: &mut SuzuContext<'a>,
         button: MouseButton,
         point: numeric::Point2f,
     ) {
+	self.mouse_info.update_dragging(button, false);
+	
         if self.now_paused() {
             match button {
                 MouseButton::Left => {

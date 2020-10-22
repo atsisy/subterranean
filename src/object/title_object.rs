@@ -380,6 +380,7 @@ impl TemporaryConfigData {
 
 pub struct ConfigPanel {
     canvas: sub_screen::SubScreen,
+    background: UniTexture,
     hrzn_text_list: Vec<UniText>,
     sb_dynamic_text: HashMap<GameConfigElement, UniText>,
     header_text: VerticalText,
@@ -397,6 +398,14 @@ impl ConfigPanel {
 	    ctx.resource.get_font(FontID::Cinema),
 	    numeric::Vector2f::new(56.0, 56.0),
 	    ggraphics::Color::from_rgba_u32(0xbbbbbbff)
+	);
+
+	let background = UniTexture::new(
+	    ctx.ref_texture(TextureID::TextBackground),
+	    numeric::Point2f::new(20.0, 20.0),
+	    numeric::Vector2f::new(1.0, 1.0),
+	    0.0,
+	    0
 	);
 
 	let header_text = VerticalText::new(
@@ -511,6 +520,7 @@ impl ConfigPanel {
 		depth,
 		ggraphics::Color::from_rgba_u32(0),
 	    ),
+	    background: background,
 	    hrzn_text_list: hrzn_text_list,
 	    bgm_volume_bar: SeekBar::new(
 		ctx,
@@ -573,8 +583,10 @@ impl ConfigPanel {
     ) {
 	match button {
 	    MouseButton::Left => {
-		self.bgm_volume_bar.start_dragging_check(ctx, point);
-		self.se_volume_bar.start_dragging_check(ctx, point);
+		let rpoint = self.canvas.relative_point(point);
+		
+		self.bgm_volume_bar.start_dragging_check(ctx, rpoint);
+		self.se_volume_bar.start_dragging_check(ctx, rpoint);
 	    },
 	    _ => (),
 	}
@@ -614,8 +626,10 @@ impl ConfigPanel {
 	point: numeric::Point2f,
         _t: Clock,
     ) {
-	self.bgm_volume_bar.dragging_handler(ctx, point);
-	self.se_volume_bar.dragging_handler(ctx, point);
+	let rpoint = self.canvas.relative_point(point);
+	
+	self.bgm_volume_bar.dragging_handler(ctx, rpoint);
+	self.se_volume_bar.dragging_handler(ctx, rpoint);
 
 	self.update_seek_bar_value();
 	
@@ -628,6 +642,8 @@ impl DrawableComponent for ConfigPanel {
     fn draw(&mut self, ctx: &mut ggez::Context) -> ggez::GameResult<()> {
         if self.is_visible() {
             sub_screen::stack_screen(ctx, &self.canvas);
+
+	    self.background.draw(ctx)?;
 
 	    self.header_text.draw(ctx)?;
 	    self.bgm_volume_bar.draw(ctx)?;
