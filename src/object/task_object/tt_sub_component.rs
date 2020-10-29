@@ -1,4 +1,3 @@
-
 use std::cmp::Ordering;
 use std::collections::HashMap;
 use std::rc::Rc;
@@ -47,7 +46,7 @@ impl HoldDataVText {
                 position,
                 scale,
                 0.0,
-                drawing_depth, 
+                drawing_depth,
                 font_info,
             ),
             data: hold_data,
@@ -1840,44 +1839,50 @@ pub struct AlphaScope {
 }
 
 impl AlphaScope {
-    pub fn new<'a>(ctx: &mut SuzuContext<'a>, radius: u32, max_sub_alpha: u8, pos: numeric::Point2f, depth: i8) -> Self {
-	let mut builder = ggraphics::MeshBuilder::new();
-	let p_alpha = max_sub_alpha as f32 / radius as f32;
-	let mut alpha = max_sub_alpha as f32;
+    pub fn new<'a>(
+        ctx: &mut SuzuContext<'a>,
+        radius: u32,
+        max_sub_alpha: u8,
+        pos: numeric::Point2f,
+        depth: i8,
+    ) -> Self {
+        let mut builder = ggraphics::MeshBuilder::new();
+        let p_alpha = max_sub_alpha as f32 / radius as f32;
+        let mut alpha = max_sub_alpha as f32;
 
-	for r in 0..radius {
-	    builder.circle(
-		ggraphics::DrawMode::stroke(1.0),
-		numeric::Point2f::new(0.0, 0.0),
-		r as f32,
-		0.0001,
-		ggraphics::Color::from_rgba_u32(0x00),
-	    );
+        for r in 0..radius {
+            builder.circle(
+                ggraphics::DrawMode::stroke(1.0),
+                numeric::Point2f::new(0.0, 0.0),
+                r as f32,
+                0.0001,
+                ggraphics::Color::from_rgba_u32(0x00),
+            );
 
-	    alpha -= p_alpha;
-	}
+            alpha -= p_alpha;
+        }
 
-	AlphaScope {
-	    scope: builder.build(ctx.context).unwrap(),
-	    draw_param: ggraphics::DrawParam {
-	        dest: pos.into(),
-		color: ggraphics::Color::from_rgba_u32(0xffffff00),
-		..Default::default()
-	    },
-	    drwob_essential: DrawableObjectEssential::new(true, depth),
-	}
+        AlphaScope {
+            scope: builder.build(ctx.context).unwrap(),
+            draw_param: ggraphics::DrawParam {
+                dest: pos.into(),
+                color: ggraphics::Color::from_rgba_u32(0xffffff00),
+                ..Default::default()
+            },
+            drwob_essential: DrawableObjectEssential::new(true, depth),
+        }
     }
 }
 
 impl DrawableComponent for AlphaScope {
     fn draw(&mut self, ctx: &mut ggez::Context) -> ggez::GameResult<()> {
-	if self.is_visible() {
-	    ggraphics::set_blend_mode(ctx, ggraphics::BlendMode::Subtract);
-	    ggraphics::draw(ctx, &self.scope, self.draw_param).unwrap();
-	    ggraphics::set_blend_mode(ctx, ggraphics::BlendMode::Alpha);
-	}
+        if self.is_visible() {
+            ggraphics::set_blend_mode(ctx, ggraphics::BlendMode::Subtract);
+            ggraphics::draw(ctx, &self.scope, self.draw_param).unwrap();
+            ggraphics::set_blend_mode(ctx, ggraphics::BlendMode::Alpha);
+        }
 
-	Ok(())
+        Ok(())
     }
 
     fn hide(&mut self) {
@@ -1973,7 +1978,7 @@ impl BorrowingRecordBook {
                 None,
                 0,
             ),
-	    scope: AlphaScope::new(ctx, 50, 230, numeric::Point2f::new(100.0, 100.0), 0),
+            scope: AlphaScope::new(ctx, 50, 230, numeric::Point2f::new(100.0, 100.0), 0),
         }
     }
 
@@ -2015,7 +2020,7 @@ impl BorrowingRecordBook {
             self.add_empty_page(ctx, t);
         }
         self.prev_page_ope_mesh.appear();
-	ctx.play_sound_as_se(SoundID::SeTurnThePage, None);
+        ctx.play_sound_as_se(SoundID::SeTurnThePage, None);
     }
 
     fn prev_page<'a>(&mut self, ctx: &mut SuzuContext<'a>) {
@@ -2029,7 +2034,7 @@ impl BorrowingRecordBook {
                 self.prev_page_ope_mesh.hide();
             }
 
-	    ctx.play_sound_as_se(SoundID::SeTurnThePage, None);
+            ctx.play_sound_as_se(SoundID::SeTurnThePage, None);
         }
     }
 
@@ -2248,7 +2253,7 @@ impl DrawableComponent for BorrowingRecordBook {
                 self.prev_page_ope_mesh.draw(ctx)?;
                 self.next_page_ope_mesh.draw(ctx)?;
 
-		self.scope.draw(ctx)?;
+                self.scope.draw(ctx)?;
 
                 sub_screen::pop_screen(ctx);
             }

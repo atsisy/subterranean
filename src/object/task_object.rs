@@ -1299,7 +1299,7 @@ impl TaskTable {
     ) -> bool {
         let rpoint = self.sight.canvas.relative_point(click_point);
 
-	if self
+        if self
             .sight
             .silhouette
             .contains_character_silhouette(ctx.context, rpoint)

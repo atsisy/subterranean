@@ -6,7 +6,7 @@ use torifune::graphics::drawable::*;
 use torifune::graphics::object::*;
 use torifune::sound::*;
 
-use crate::core::{SoundID, SuzuContext, TextureID, TileBatchTextureID, MouseInformation};
+use crate::core::{MouseInformation, SoundID, SuzuContext, TextureID, TileBatchTextureID};
 use crate::object::effect_object;
 use crate::object::title_object::*;
 use crate::scene::*;
@@ -63,10 +63,13 @@ impl TitleScene {
         let mut title_contents_set =
             TitleContentsSet::from_file(ctx, "./resources/title_contents/title_contents_list.toml");
 
-        let bgm_handler = ctx.play_sound_as_bgm(SoundID::Title, Some(SoundPlayFlags::new(1000, 1.0, true, 0.1)));
+        let bgm_handler = ctx.play_sound_as_bgm(
+            SoundID::Title,
+            Some(SoundPlayFlags::new(1000, 1.0, true, 0.1)),
+        );
 
         TitleScene {
-	    mouse_info: MouseInformation::new(),
+            mouse_info: MouseInformation::new(),
             background: background,
             event_list: event_list,
             scene_transition_effect: scene_transition_effect,
@@ -74,7 +77,7 @@ impl TitleScene {
             scene_transition_type: SceneTransition::Keep,
             current_title_contents: title_contents_set.remove_pickup("init-menu"),
             title_contents_set: title_contents_set,
-	    bgm_handler: bgm_handler,
+            bgm_handler: bgm_handler,
             clock: 0,
         }
     }
@@ -105,7 +108,7 @@ impl TitleScene {
             Box::new(move |slf: &mut Self, ctx, _| {
                 slf.scene_transition = scene_id;
                 slf.scene_transition_type = SceneTransition::SwapTransition;
-		ctx.resource.stop_bgm(slf.bgm_handler);
+                ctx.resource.stop_bgm(slf.bgm_handler);
             }),
             t + 31,
         );
@@ -123,13 +126,13 @@ impl TitleScene {
 
         match &mut self.current_title_contents.as_mut().unwrap() {
             TitleContents::InitialMenu(contents) => {
-		contents.update_highlight(ctx, point);
-	    },
+                contents.update_highlight(ctx, point);
+            }
             TitleContents::TitleSoundPlayer(contents) => {
-		println!("sound-player");
+                println!("sound-player");
                 contents.dragging_handler(ctx, point, offset);
-            },
-	    TitleContents::ConfigPanel(_) => println!("config!!"),
+            }
+            TitleContents::ConfigPanel(_) => println!("config!!"),
         }
     }
 
@@ -143,13 +146,13 @@ impl TitleScene {
             return;
         }
 
-	let t = self.get_current_clock();
-	
+        let t = self.get_current_clock();
+
         match &mut self.current_title_contents.as_mut().unwrap() {
-	    TitleContents::ConfigPanel(panel) => {
-		panel.mouse_dragging_handler(ctx, MouseButton::Left, point, t);
-	    },
-	    _ => (),
+            TitleContents::ConfigPanel(panel) => {
+                panel.mouse_dragging_handler(ctx, MouseButton::Left, point, t);
+            }
+            _ => (),
         }
     }
 
@@ -198,21 +201,21 @@ impl TitleScene {
                         }
                     }
                 }
-            },
+            }
             TitleContents::TitleSoundPlayer(contents) => {
                 contents.mouse_button_up_handler();
-            },
-	    TitleContents::ConfigPanel(panel) => {
-		let maybe_event = panel.mouse_button_up(ctx, point, t);
-		if let Some(event) = maybe_event {
-		    match event {
-			TitleContentsEvent::NextContents(content_name) => {
-			    self.switch_current_content(content_name);
-			},
-			_ => (),
-		    }
-		}
-	    },
+            }
+            TitleContents::ConfigPanel(panel) => {
+                let maybe_event = panel.mouse_button_up(ctx, point, t);
+                if let Some(event) = maybe_event {
+                    match event {
+                        TitleContentsEvent::NextContents(content_name) => {
+                            self.switch_current_content(content_name);
+                        }
+                        _ => (),
+                    }
+                }
+            }
         }
     }
 }
@@ -284,21 +287,18 @@ impl SceneManager for TitleScene {
         button: ginput::mouse::MouseButton,
         point: numeric::Point2f,
     ) {
-	let t = self.get_current_clock();
-	
-	self.mouse_info
-            .set_last_clicked(button, point, t);
-        self.mouse_info
-            .set_last_down(button, point, t);
-        self.mouse_info
-            .set_last_dragged(button, point, t);
+        let t = self.get_current_clock();
+
+        self.mouse_info.set_last_clicked(button, point, t);
+        self.mouse_info.set_last_down(button, point, t);
+        self.mouse_info.set_last_dragged(button, point, t);
         self.mouse_info.update_dragging(button, true);
-	
+
         match self.current_title_contents.as_mut().unwrap() {
             TitleContents::TitleSoundPlayer(contents) => {
                 contents.mouse_button_down_handler(ctx, point)
-            },
-	    TitleContents::ConfigPanel(panel) => panel.mouse_button_down(ctx, button, point, t),
+            }
+            TitleContents::ConfigPanel(panel) => panel.mouse_button_down(ctx, button, point, t),
             _ => (),
         }
     }
@@ -311,8 +311,8 @@ impl SceneManager for TitleScene {
     ) {
         let t = self.get_current_clock();
 
-	self.mouse_info.update_dragging(button, false);
-	
+        self.mouse_info.update_dragging(button, false);
+
         self.contents_mouse_click_handler(ctx, point, t);
     }
 
@@ -322,11 +322,11 @@ impl SceneManager for TitleScene {
         point: numeric::Point2f,
         offset: numeric::Vector2f,
     ) {
-	if self.mouse_info.is_dragging(ggez::event::MouseButton::Left) {
-	    self.contents_mouse_dragging_handler(ctx, point, offset);
-	} else {
-	    self.contents_mouse_motion_handler(ctx, point, offset);
-	}
+        if self.mouse_info.is_dragging(ggez::event::MouseButton::Left) {
+            self.contents_mouse_dragging_handler(ctx, point, offset);
+        } else {
+            self.contents_mouse_motion_handler(ctx, point, offset);
+        }
     }
 
     fn transition(&self) -> SceneID {

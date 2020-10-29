@@ -540,12 +540,16 @@ impl SelectShelvingBookUI {
     }
 
     pub fn contains_window<'a>(&self, ctx: &mut SuzuContext<'a>, point: numeric::Point2f) -> bool {
-	let rpoint = self.canvas.relative_point(point);
+        let rpoint = self.canvas.relative_point(point);
 
-	self.box_info_window.contains(ctx.context, rpoint) ||
-	    self.shelving_window.contains(ctx.context, rpoint) ||
-	    self.move_box_to_shelving_button.contains(ctx.context, rpoint) ||
-	    self.move_shelving_to_box_button.contains(ctx.context, rpoint)
+        self.box_info_window.contains(ctx.context, rpoint)
+            || self.shelving_window.contains(ctx.context, rpoint)
+            || self
+                .move_box_to_shelving_button
+                .contains(ctx.context, rpoint)
+            || self
+                .move_shelving_to_box_button
+                .contains(ctx.context, rpoint)
     }
 
     ///
@@ -1149,11 +1153,11 @@ impl SelectStoreBookUI {
     }
 
     pub fn contains_window<'a>(&self, ctx: &mut SuzuContext<'a>, point: numeric::Point2f) -> bool {
-	let rpoint = self.canvas.relative_point(point);
+        let rpoint = self.canvas.relative_point(point);
 
-	self.select_book_window.contains(ctx.context, rpoint) ||
-	    self.reset_select_button.contains(ctx.context, rpoint) ||
-	    self.store_button.contains(ctx.context, rpoint)
+        self.select_book_window.contains(ctx.context, rpoint)
+            || self.reset_select_button.contains(ctx.context, rpoint)
+            || self.store_button.contains(ctx.context, rpoint)
     }
 
     fn sort_book_info_greater(&mut self) {
@@ -2225,20 +2229,28 @@ impl ShopSpecialObject {
         }
     }
 
-    pub fn contains_shelving_select_ui_windows<'a>(&self, ctx: &mut SuzuContext<'a>, point: numeric::Point2f) -> bool {
-	if let Some(ui) = self.shelving_select_ui.as_ref() {
-	    ui.contains_window(ctx, point)
-	} else {
-	    false
-	}
+    pub fn contains_shelving_select_ui_windows<'a>(
+        &self,
+        ctx: &mut SuzuContext<'a>,
+        point: numeric::Point2f,
+    ) -> bool {
+        if let Some(ui) = self.shelving_select_ui.as_ref() {
+            ui.contains_window(ctx, point)
+        } else {
+            false
+        }
     }
 
-    pub fn contains_storing_select_ui_windows<'a>(&self, ctx: &mut SuzuContext<'a>, point: numeric::Point2f) -> bool {
-	if let Some(ui) = self.storing_select_ui.as_ref() {
-	    ui.contains_window(ctx, point)
-	} else {
-	    false
-	}
+    pub fn contains_storing_select_ui_windows<'a>(
+        &self,
+        ctx: &mut SuzuContext<'a>,
+        point: numeric::Point2f,
+    ) -> bool {
+        if let Some(ui) = self.storing_select_ui.as_ref() {
+            ui.contains_window(ctx, point)
+        } else {
+            false
+        }
     }
 
     pub fn show_shelving_select_ui<'a>(

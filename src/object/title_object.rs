@@ -10,13 +10,13 @@ use numeric::Vector2f;
 use torifune::impl_drawable_object_for_wrapped;
 use torifune::impl_texture_object_for_wrapped;
 
+use torifune::core::Clock;
 use torifune::graphics::drawable::*;
 use torifune::graphics::object::*;
 use torifune::numeric;
-use torifune::core::Clock;
 
-use crate::core::{font_information_from_toml_value, SuzuContext, FontID, TextureID};
-use crate::object::util_object::{SeekBar, CheckBox, SelectButton, TextButtonTexture};
+use crate::core::{font_information_from_toml_value, FontID, SuzuContext, TextureID};
+use crate::object::util_object::{CheckBox, SeekBar, SelectButton, TextButtonTexture};
 use crate::scene::SceneID;
 
 #[derive(Clone, Copy)]
@@ -314,8 +314,7 @@ impl TitleSoundPlayer {
     ) {
     }
 
-    pub fn mouse_button_up_handler(&mut self) {
-    }
+    pub fn mouse_button_up_handler(&mut self) {}
 }
 
 impl DrawableComponent for TitleSoundPlayer {
@@ -371,10 +370,10 @@ struct TemporaryConfigData {
 
 impl TemporaryConfigData {
     pub fn new<'a>(ctx: &mut SuzuContext<'a>) -> Self {
-	TemporaryConfigData {
-	    bgm_volume: ctx.config.get_bgm_volume(),
-	    se_volume: ctx.config.get_se_volume(),
-	}
+        TemporaryConfigData {
+            bgm_volume: ctx.config.get_bgm_volume(),
+            se_volume: ctx.config.get_se_volume(),
+        }
     }
 }
 
@@ -394,77 +393,77 @@ pub struct ConfigPanel {
 
 impl ConfigPanel {
     pub fn new<'a>(ctx: &mut SuzuContext<'a>, pos_rect: numeric::Rect, depth: i8) -> Self {
-	let font_info = FontInformation::new(
-	    ctx.resource.get_font(FontID::Cinema),
-	    numeric::Vector2f::new(56.0, 56.0),
-	    ggraphics::Color::from_rgba_u32(0xbbbbbbff)
-	);
+        let font_info = FontInformation::new(
+            ctx.resource.get_font(FontID::Cinema),
+            numeric::Vector2f::new(56.0, 56.0),
+            ggraphics::Color::from_rgba_u32(0xbbbbbbff),
+        );
 
-	let background = UniTexture::new(
-	    ctx.ref_texture(TextureID::TextBackground),
-	    numeric::Point2f::new(20.0, 20.0),
-	    numeric::Vector2f::new(1.0, 1.0),
-	    0.0,
-	    0
-	);
+        let background = UniTexture::new(
+            ctx.ref_texture(TextureID::TextBackground),
+            numeric::Point2f::new(20.0, 20.0),
+            numeric::Vector2f::new(1.0, 1.0),
+            0.0,
+            0,
+        );
 
-	let header_text = VerticalText::new(
-	    "設定".to_string(),
-	    numeric::Point2f::new(1150.0, 80.0),
-	    numeric::Vector2f::new(1.0, 1.0),
-	    0.0,
-	    0,
-	    font_info
-	);
+        let header_text = VerticalText::new(
+            "設定".to_string(),
+            numeric::Point2f::new(1150.0, 80.0),
+            numeric::Vector2f::new(1.0, 1.0),
+            0.0,
+            0,
+            font_info,
+        );
 
-	let mut hrzn_text_list = Vec::new();
-	
-	let hrzn_text_font_info = FontInformation::new(
-	    ctx.resource.get_font(FontID::Cinema),
-	    numeric::Vector2f::new(29.0, 29.0),
-	    ggraphics::Color::from_rgba_u32(0xbbbbbbff)
-	);
-	
-	for (s, p) in vec![("BGM音量", 70.0), ("SE音量", 170.0)] {
-	    let text = UniText::new(
-		s.to_string(),
-		numeric::Point2f::new(200.0, p),
-		numeric::Vector2f::new(1.0, 1.0),
-		0.0,
-		0,
-		hrzn_text_font_info.clone(),
-	    );
+        let mut hrzn_text_list = Vec::new();
 
-	    hrzn_text_list.push(text);
-	}
+        let hrzn_text_font_info = FontInformation::new(
+            ctx.resource.get_font(FontID::Cinema),
+            numeric::Vector2f::new(29.0, 29.0),
+            ggraphics::Color::from_rgba_u32(0xbbbbbbff),
+        );
 
-	let mut sb_dynamic_text = HashMap::new();
+        for (s, p) in vec![("BGM音量", 70.0), ("SE音量", 170.0)] {
+            let text = UniText::new(
+                s.to_string(),
+                numeric::Point2f::new(200.0, p),
+                numeric::Vector2f::new(1.0, 1.0),
+                0.0,
+                0,
+                hrzn_text_font_info.clone(),
+            );
 
-	sb_dynamic_text.insert(
-	    GameConfigElement::BGMVolume,
-	    UniText::new(
-		format!("{}%", ctx.config.get_bgm_volume() * 100.0),
-		numeric::Point2f::new(400.0, 70.0),
-		numeric::Vector2f::new(1.0, 1.0),
-		0.0,
-		0,
-		hrzn_text_font_info.clone()
-	    )
-	);
+            hrzn_text_list.push(text);
+        }
 
-	sb_dynamic_text.insert(
-	    GameConfigElement::SEVolume,
-	    UniText::new(
-		format!("{}%", ctx.config.get_se_volume() * 100.0),
-		numeric::Point2f::new(400.0, 170.0),
-		numeric::Vector2f::new(1.0, 1.0),
-		0.0,
-		0,
-		hrzn_text_font_info.clone()
-	    )
-	);
+        let mut sb_dynamic_text = HashMap::new();
 
-	let text_texture = Box::new(TextButtonTexture::new(
+        sb_dynamic_text.insert(
+            GameConfigElement::BGMVolume,
+            UniText::new(
+                format!("{}%", ctx.config.get_bgm_volume() * 100.0),
+                numeric::Point2f::new(400.0, 70.0),
+                numeric::Vector2f::new(1.0, 1.0),
+                0.0,
+                0,
+                hrzn_text_font_info.clone(),
+            ),
+        );
+
+        sb_dynamic_text.insert(
+            GameConfigElement::SEVolume,
+            UniText::new(
+                format!("{}%", ctx.config.get_se_volume() * 100.0),
+                numeric::Point2f::new(400.0, 170.0),
+                numeric::Vector2f::new(1.0, 1.0),
+                0.0,
+                0,
+                hrzn_text_font_info.clone(),
+            ),
+        );
+
+        let text_texture = Box::new(TextButtonTexture::new(
             ctx,
             numeric::Point2f::new(0.0, 0.0),
             "適用".to_string(),
@@ -480,7 +479,7 @@ impl ConfigPanel {
             text_texture,
         );
 
-	let text_texture = Box::new(TextButtonTexture::new(
+        let text_texture = Box::new(TextButtonTexture::new(
             ctx,
             numeric::Point2f::new(0.0, 0.0),
             "中止".to_string(),
@@ -496,145 +495,147 @@ impl ConfigPanel {
             text_texture,
         );
 
-	let choice_box_texture = Box::new(UniTexture::new(
-	    ctx.ref_texture(TextureID::ChoicePanel1),
-	    numeric::Point2f::new(200.0, 400.0),
-	    numeric::Vector2f::new(1.0, 1.0),
-	    0.0,
-	    0
-	));
-	let check_box = CheckBox::new(
-	    ctx,
-	    numeric::Rect::new(200.0, 400.0, 50.0, 50.0),
-	    choice_box_texture,
-	    false,
-	    0
-	);
-	
-	ConfigPanel {
-	    header_text: header_text,
-	    sb_dynamic_text: sb_dynamic_text,
-	    canvas: sub_screen::SubScreen::new(
-		ctx.context,
-		pos_rect,
-		depth,
-		ggraphics::Color::from_rgba_u32(0),
-	    ),
-	    background: background,
-	    hrzn_text_list: hrzn_text_list,
-	    bgm_volume_bar: SeekBar::new(
-		ctx,
-		numeric::Rect::new(200.0, 100.0, 450.0, 40.0),
-		10.0,
-		100.0,
-		0.0,
-		ctx.config.get_bgm_volume() * 100.0,
-		0
-	    ),
-	    se_volume_bar: SeekBar::new(
-		ctx,
-		numeric::Rect::new(200.0, 200.0, 450.0, 40.0),
-		10.0,
-		100.0,
-		0.0,
-		ctx.config.get_se_volume() * 100.0,
-		0
-	    ),
-	    apply_button: apply_button,
-	    cancel_button: cancel_button,
-	    original_config_data: TemporaryConfigData::new(ctx),
-	    checkbox: check_box,
-	}
+        let choice_box_texture = Box::new(UniTexture::new(
+            ctx.ref_texture(TextureID::ChoicePanel1),
+            numeric::Point2f::new(200.0, 400.0),
+            numeric::Vector2f::new(1.0, 1.0),
+            0.0,
+            0,
+        ));
+        let check_box = CheckBox::new(
+            ctx,
+            numeric::Rect::new(200.0, 400.0, 50.0, 50.0),
+            choice_box_texture,
+            false,
+            0,
+        );
+
+        ConfigPanel {
+            header_text: header_text,
+            sb_dynamic_text: sb_dynamic_text,
+            canvas: sub_screen::SubScreen::new(
+                ctx.context,
+                pos_rect,
+                depth,
+                ggraphics::Color::from_rgba_u32(0),
+            ),
+            background: background,
+            hrzn_text_list: hrzn_text_list,
+            bgm_volume_bar: SeekBar::new(
+                ctx,
+                numeric::Rect::new(200.0, 100.0, 450.0, 40.0),
+                10.0,
+                100.0,
+                0.0,
+                ctx.config.get_bgm_volume() * 100.0,
+                0,
+            ),
+            se_volume_bar: SeekBar::new(
+                ctx,
+                numeric::Rect::new(200.0, 200.0, 450.0, 40.0),
+                10.0,
+                100.0,
+                0.0,
+                ctx.config.get_se_volume() * 100.0,
+                0,
+            ),
+            apply_button: apply_button,
+            cancel_button: cancel_button,
+            original_config_data: TemporaryConfigData::new(ctx),
+            checkbox: check_box,
+        }
     }
 
     fn update_seek_bar_value(&mut self) {
-	let bgm_volume = self.bgm_volume_bar.get_current_value() as i32;
-	let se_volume = self.se_volume_bar.get_current_value() as i32;
-	
-	self.sb_dynamic_text.get_mut(&GameConfigElement::BGMVolume)
-	    .unwrap()
-	    .replace_text(&format!("{}%", bgm_volume));
-	self.sb_dynamic_text.get_mut(&GameConfigElement::SEVolume)
-	    .unwrap()
-	    .replace_text(&format!("{}%", se_volume));
+        let bgm_volume = self.bgm_volume_bar.get_current_value() as i32;
+        let se_volume = self.se_volume_bar.get_current_value() as i32;
+
+        self.sb_dynamic_text
+            .get_mut(&GameConfigElement::BGMVolume)
+            .unwrap()
+            .replace_text(&format!("{}%", bgm_volume));
+        self.sb_dynamic_text
+            .get_mut(&GameConfigElement::SEVolume)
+            .unwrap()
+            .replace_text(&format!("{}%", se_volume));
     }
 
     fn recover_original_config<'a>(&mut self, ctx: &mut SuzuContext<'a>) {
-	let original_bgm = self.original_config_data.bgm_volume * 100.0;
-	let original_se = self.original_config_data.se_volume * 100.0;
-	
-	ctx.change_bgm_volume(original_bgm);
-	ctx.change_se_volume(original_se);
+        let original_bgm = self.original_config_data.bgm_volume * 100.0;
+        let original_se = self.original_config_data.se_volume * 100.0;
 
-	self.bgm_volume_bar.set_value(ctx, original_bgm);
-	self.se_volume_bar.set_value(ctx, original_se);
+        ctx.change_bgm_volume(original_bgm);
+        ctx.change_se_volume(original_se);
+
+        self.bgm_volume_bar.set_value(ctx, original_bgm);
+        self.se_volume_bar.set_value(ctx, original_se);
     }
 
     pub fn get_name(&self) -> String {
-	"config-panel".to_string()
+        "config-panel".to_string()
     }
 
     pub fn mouse_button_down<'a>(
-	&mut self,
-	ctx: &mut SuzuContext<'a>,
-	button: MouseButton,
-	point: numeric::Point2f,
+        &mut self,
+        ctx: &mut SuzuContext<'a>,
+        button: MouseButton,
+        point: numeric::Point2f,
         _t: Clock,
     ) {
-	match button {
-	    MouseButton::Left => {
-		let rpoint = self.canvas.relative_point(point);
-		
-		self.bgm_volume_bar.start_dragging_check(ctx, rpoint);
-		self.se_volume_bar.start_dragging_check(ctx, rpoint);
-	    },
-	    _ => (),
-	}
+        match button {
+            MouseButton::Left => {
+                let rpoint = self.canvas.relative_point(point);
+
+                self.bgm_volume_bar.start_dragging_check(ctx, rpoint);
+                self.se_volume_bar.start_dragging_check(ctx, rpoint);
+            }
+            _ => (),
+        }
     }
 
     pub fn mouse_button_up<'a>(
-	&mut self,
-	ctx: &mut SuzuContext<'a>,
-	point: numeric::Point2f,
+        &mut self,
+        ctx: &mut SuzuContext<'a>,
+        point: numeric::Point2f,
         _t: Clock,
     ) -> Option<TitleContentsEvent> {
-	self.bgm_volume_bar.release_handler();
-	self.se_volume_bar.release_handler();
+        self.bgm_volume_bar.release_handler();
+        self.se_volume_bar.release_handler();
 
-	let rpoint = self.canvas.relative_point(point);
-	
-	if self.apply_button.contains(ctx.context, rpoint) {
-	    ctx.change_bgm_volume(self.bgm_volume_bar.get_current_value());
-	    ctx.change_se_volume(self.se_volume_bar.get_current_value());
-	    return Some(TitleContentsEvent::NextContents("init-menu".to_string()));
-	}
+        let rpoint = self.canvas.relative_point(point);
 
-	if self.cancel_button.contains(ctx.context, rpoint) {
-	    self.recover_original_config(ctx);
-	    return Some(TitleContentsEvent::NextContents("init-menu".to_string()));
-	}
+        if self.apply_button.contains(ctx.context, rpoint) {
+            ctx.change_bgm_volume(self.bgm_volume_bar.get_current_value());
+            ctx.change_se_volume(self.se_volume_bar.get_current_value());
+            return Some(TitleContentsEvent::NextContents("init-menu".to_string()));
+        }
 
-	self.checkbox.click_handler(rpoint);
-	
-	None
+        if self.cancel_button.contains(ctx.context, rpoint) {
+            self.recover_original_config(ctx);
+            return Some(TitleContentsEvent::NextContents("init-menu".to_string()));
+        }
+
+        self.checkbox.click_handler(rpoint);
+
+        None
     }
 
     pub fn mouse_dragging_handler<'a>(
-	&mut self,
-	ctx: &mut SuzuContext<'a>,
-	_button: MouseButton,
-	point: numeric::Point2f,
+        &mut self,
+        ctx: &mut SuzuContext<'a>,
+        _button: MouseButton,
+        point: numeric::Point2f,
         _t: Clock,
     ) {
-	let rpoint = self.canvas.relative_point(point);
-	
-	self.bgm_volume_bar.dragging_handler(ctx, rpoint);
-	self.se_volume_bar.dragging_handler(ctx, rpoint);
+        let rpoint = self.canvas.relative_point(point);
 
-	self.update_seek_bar_value();
-	
-	ctx.change_bgm_volume(self.bgm_volume_bar.get_current_value());
-	ctx.change_se_volume(self.se_volume_bar.get_current_value());
+        self.bgm_volume_bar.dragging_handler(ctx, rpoint);
+        self.se_volume_bar.dragging_handler(ctx, rpoint);
+
+        self.update_seek_bar_value();
+
+        ctx.change_bgm_volume(self.bgm_volume_bar.get_current_value());
+        ctx.change_se_volume(self.se_volume_bar.get_current_value());
     }
 }
 
@@ -643,29 +644,29 @@ impl DrawableComponent for ConfigPanel {
         if self.is_visible() {
             sub_screen::stack_screen(ctx, &self.canvas);
 
-	    self.background.draw(ctx)?;
+            self.background.draw(ctx)?;
 
-	    self.header_text.draw(ctx)?;
-	    self.bgm_volume_bar.draw(ctx)?;
-	    self.se_volume_bar.draw(ctx)?;
+            self.header_text.draw(ctx)?;
+            self.bgm_volume_bar.draw(ctx)?;
+            self.se_volume_bar.draw(ctx)?;
 
-	    for text in self.hrzn_text_list.iter_mut() {
-		text.draw(ctx)?;
-	    }
+            for text in self.hrzn_text_list.iter_mut() {
+                text.draw(ctx)?;
+            }
 
-	    for (_, text) in self.sb_dynamic_text.iter_mut() {
-		text.draw(ctx)?;
-	    }
+            for (_, text) in self.sb_dynamic_text.iter_mut() {
+                text.draw(ctx)?;
+            }
 
-	    self.apply_button.draw(ctx)?;
-	    self.cancel_button.draw(ctx)?;
+            self.apply_button.draw(ctx)?;
+            self.cancel_button.draw(ctx)?;
 
-	    self.checkbox.draw(ctx)?;
-	    
+            self.checkbox.draw(ctx)?;
+
             sub_screen::pop_screen(ctx);
             self.canvas.draw(ctx).unwrap();
         }
-	
+
         Ok(())
     }
 
@@ -723,7 +724,7 @@ impl TitleContents {
             "VTextList" => {
                 let menu_data = TextMenuData::from_file(ctx, name.to_string(), details_source_file);
                 Some(TitleContents::InitialMenu(VTextList::new(menu_data, 0)))
-            },
+            }
             "TitleSoundPlayer" => {
                 let data = TitleSoundPlayerData::from_toml(ctx, details_source_file);
                 let sound_player = MovableWrap::new(
@@ -732,10 +733,12 @@ impl TitleContents {
                     0,
                 );
                 Some(TitleContents::TitleSoundPlayer(sound_player))
-            },
-	    "ConfigPanel" => {
-		Some(TitleContents::ConfigPanel(ConfigPanel::new(ctx, numeric::Rect::new(0.0, 0.0, 1366.0, 768.0), 0)))
-	    },
+            }
+            "ConfigPanel" => Some(TitleContents::ConfigPanel(ConfigPanel::new(
+                ctx,
+                numeric::Rect::new(0.0, 0.0, 1366.0, 768.0),
+                0,
+            ))),
             _ => None,
         }
     }
@@ -744,7 +747,7 @@ impl TitleContents {
         match self {
             TitleContents::InitialMenu(menu) => menu.contents_name.to_string(),
             TitleContents::TitleSoundPlayer(player) => player.get_name(),
-	    TitleContents::ConfigPanel(panel) => panel.get_name(),
+            TitleContents::ConfigPanel(panel) => panel.get_name(),
         }
     }
 }
@@ -754,7 +757,7 @@ impl DrawableComponent for TitleContents {
         match self {
             TitleContents::InitialMenu(contents) => contents.draw(ctx),
             TitleContents::TitleSoundPlayer(contents) => contents.draw(ctx),
-	    TitleContents::ConfigPanel(panel) => panel.draw(ctx),
+            TitleContents::ConfigPanel(panel) => panel.draw(ctx),
         }
     }
 
@@ -762,7 +765,7 @@ impl DrawableComponent for TitleContents {
         match self {
             TitleContents::InitialMenu(contents) => contents.hide(),
             TitleContents::TitleSoundPlayer(contents) => contents.hide(),
-	    TitleContents::ConfigPanel(panel) => panel.hide(),
+            TitleContents::ConfigPanel(panel) => panel.hide(),
         }
     }
 
@@ -770,7 +773,7 @@ impl DrawableComponent for TitleContents {
         match self {
             TitleContents::InitialMenu(contents) => contents.appear(),
             TitleContents::TitleSoundPlayer(contents) => contents.appear(),
-	    TitleContents::ConfigPanel(panel) => panel.appear(),
+            TitleContents::ConfigPanel(panel) => panel.appear(),
         }
     }
 
@@ -778,7 +781,7 @@ impl DrawableComponent for TitleContents {
         match self {
             TitleContents::InitialMenu(contents) => contents.is_visible(),
             TitleContents::TitleSoundPlayer(contents) => contents.is_visible(),
-	    TitleContents::ConfigPanel(panel) => panel.is_visible(),
+            TitleContents::ConfigPanel(panel) => panel.is_visible(),
         }
     }
 
@@ -786,7 +789,7 @@ impl DrawableComponent for TitleContents {
         match self {
             TitleContents::InitialMenu(contents) => contents.set_drawing_depth(depth),
             TitleContents::TitleSoundPlayer(contents) => contents.set_drawing_depth(depth),
-	    TitleContents::ConfigPanel(panel) => panel.set_drawing_depth(depth),
+            TitleContents::ConfigPanel(panel) => panel.set_drawing_depth(depth),
         }
     }
 
@@ -794,7 +797,7 @@ impl DrawableComponent for TitleContents {
         match self {
             TitleContents::InitialMenu(contents) => contents.get_drawing_depth(),
             TitleContents::TitleSoundPlayer(contents) => contents.get_drawing_depth(),
-	    TitleContents::ConfigPanel(panel) => panel.get_drawing_depth(),
+            TitleContents::ConfigPanel(panel) => panel.get_drawing_depth(),
         }
     }
 }

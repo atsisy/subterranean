@@ -178,17 +178,12 @@ impl TableFrame {
     }
 
     pub fn get_area(&self) -> numeric::Rect {
-	let pos = self.get_position();
-	let size = self.size();
-	
-	numeric::Rect::new(
-	    pos.x,
-	    pos.y,
-	    size.x,
-	    size.y
-	)
+        let pos = self.get_position();
+        let size = self.size();
+
+        numeric::Rect::new(pos.x, pos.y, size.x, size.y)
     }
-    
+
     ///
     /// あるPointが含まれているグリッドの位置を返す
     ///
@@ -1536,7 +1531,7 @@ impl PauseScreenSet {
             entries: entries_vtext,
             drwob_essential: DrawableObjectEssential::new(true, depth),
             cursored_index: None,
-	    config_panel: None,
+            config_panel: None,
         }
     }
 
@@ -1566,15 +1561,15 @@ impl PauseScreenSet {
     }
 
     pub fn dragging_handler<'a>(
-	&mut self,
-	ctx: &mut SuzuContext<'a>,
-	button: ggez::input::mouse::MouseButton,
-	point: numeric::Point2f,
-	t: Clock
+        &mut self,
+        ctx: &mut SuzuContext<'a>,
+        button: ggez::input::mouse::MouseButton,
+        point: numeric::Point2f,
+        t: Clock,
     ) {
-	if let Some(panel) = self.config_panel.as_mut() {
-	    panel.mouse_dragging_handler(ctx, button, point, t);
-	}
+        if let Some(panel) = self.config_panel.as_mut() {
+            panel.mouse_dragging_handler(ctx, button, point, t);
+        }
     }
 
     pub fn mouse_motion_handler<'a>(&mut self, ctx: &mut SuzuContext<'a>, point: numeric::Point2f) {
@@ -1593,39 +1588,39 @@ impl PauseScreenSet {
     }
 
     pub fn mouse_button_down<'a>(
-	&mut self,
-	ctx: &mut SuzuContext<'a>,
-	button: ggez::input::mouse::MouseButton,
-	point: numeric::Point2f,
-	t: Clock,
+        &mut self,
+        ctx: &mut SuzuContext<'a>,
+        button: ggez::input::mouse::MouseButton,
+        point: numeric::Point2f,
+        t: Clock,
     ) {
-	if let Some(panel) = self.config_panel.as_mut() {
-	    panel.mouse_button_down(ctx, button, point, t);
-	}
+        if let Some(panel) = self.config_panel.as_mut() {
+            panel.mouse_button_down(ctx, button, point, t);
+        }
     }
-    
+
     pub fn mouse_click_handler<'a>(
         &mut self,
         ctx: &mut SuzuContext<'a>,
         point: numeric::Point2f,
-	t: Clock,
+        t: Clock,
     ) -> Option<PauseResult> {
-	if let Some(panel) = self.config_panel.as_mut() {
-	    panel.mouse_button_up(ctx, point, t);
-	    return None;
-	}
-	
+        if let Some(panel) = self.config_panel.as_mut() {
+            panel.mouse_button_up(ctx, point, t);
+            return None;
+        }
+
         for (index, vtext) in self.entries.iter().enumerate() {
             if vtext.contains(ctx.context, point) {
                 return match index {
-		    0 => {
-			self.config_panel = Some(crate::object::title_object::ConfigPanel::new(
-			    ctx,
-			    numeric::Rect::new(50.0, 50.0, 1266.0, 668.0),
-			    0
-			));
-			None
-		    },
+                    0 => {
+                        self.config_panel = Some(crate::object::title_object::ConfigPanel::new(
+                            ctx,
+                            numeric::Rect::new(50.0, 50.0, 1266.0, 668.0),
+                            0,
+                        ));
+                        None
+                    }
                     1 => Some(PauseResult::GoToTitle),
                     2 => Some(PauseResult::ReleasePause),
                     _ => panic!("index is out of bounds"),
@@ -1644,9 +1639,9 @@ impl DrawableComponent for PauseScreenSet {
                 vtext.draw(ctx)?;
             }
 
-	    if let Some(panel) = self.config_panel.as_mut() {
-		panel.draw(ctx)?;
-	    }
+            if let Some(panel) = self.config_panel.as_mut() {
+                panel.draw(ctx)?;
+            }
         }
 
         Ok(())
@@ -1692,31 +1687,31 @@ pub struct SeekBar {
 
 impl SeekBar {
     pub fn new<'a>(
-	ctx: &mut SuzuContext<'a>,
-	pos_rect: numeric::Rect,
-	bar_height: f32,
-	max_value: f32,
-	min_value: f32,
-	init_value: f32,
-	depth: i8,
+        ctx: &mut SuzuContext<'a>,
+        pos_rect: numeric::Rect,
+        bar_height: f32,
+        max_value: f32,
+        min_value: f32,
+        init_value: f32,
+        depth: i8,
     ) -> Self {
-	let mut handle = UniTexture::new(
+        let mut handle = UniTexture::new(
             ctx.ref_texture(TextureID::ChoicePanel1),
-	    numeric::Point2f::new(0.0, 0.0),
+            numeric::Point2f::new(0.0, 0.0),
             numeric::Vector2f::new(0.25, 0.25),
             0.0,
             0,
         );
 
-	handle.set_position(
-	    numeric::Point2f::new(
-		pos_rect.x + ((pos_rect.w - handle.get_drawing_size(ctx.context).x) * (init_value / max_value)),
-		pos_rect.y
-	    )
-	);
+        handle.set_position(numeric::Point2f::new(
+            pos_rect.x
+                + ((pos_rect.w - handle.get_drawing_size(ctx.context).x)
+                    * (init_value / max_value)),
+            pos_rect.y,
+        ));
 
-	let handle_area = handle.get_drawing_area(ctx.context);
-	
+        let handle_area = handle.get_drawing_area(ctx.context);
+
         let seek = shape::Rectangle::new(
             numeric::Rect::new(
                 pos_rect.x,
@@ -1731,7 +1726,7 @@ impl SeekBar {
         let mut builder = ggraphics::MeshBuilder::new();
 
         seek.add_to_builder(&mut builder);
-	
+
         SeekBar {
             rect: pos_rect,
             seek_offset: numeric::Vector2f::new(0.0, 0.0),
@@ -1739,17 +1734,17 @@ impl SeekBar {
             seek_edge: builder.build(ctx.context).unwrap(),
             drwob_essential: DrawableObjectEssential::new(true, depth),
             dragging: false,
-	    current_value: init_value,
-	    min_value: min_value,
-	    max_value: max_value,
+            current_value: init_value,
+            min_value: min_value,
+            max_value: max_value,
         }
     }
 
     fn update_current_value<'a>(&mut self, ctx: &mut SuzuContext<'a>) {
-	let handle_position = self.handle.get_drawing_area(ctx.context);
+        let handle_position = self.handle.get_drawing_area(ctx.context);
 
-	let ratio = (handle_position.left() - self.rect.left()) / (self.rect.w - handle_position.w);
-	self.current_value = (ratio * (self.max_value - self.min_value)) + self.min_value;
+        let ratio = (handle_position.left() - self.rect.left()) / (self.rect.w - handle_position.w);
+        self.current_value = (ratio * (self.max_value - self.min_value)) + self.min_value;
     }
 
     pub fn start_dragging_check<'a>(&mut self, ctx: &mut SuzuContext<'a>, point: numeric::Point2f) {
@@ -1778,7 +1773,7 @@ impl SeekBar {
 
         ctx.process_utility.redraw();
         self.handle.set_position(seek_position);
-	self.update_current_value(ctx);
+        self.update_current_value(ctx);
     }
 
     pub fn release_handler(&mut self) {
@@ -1790,29 +1785,25 @@ impl SeekBar {
     }
 
     pub fn get_current_value(&self) -> f32 {
-	self.current_value
+        self.current_value
     }
 
     pub fn set_value<'a>(&mut self, ctx: &mut SuzuContext<'a>, value: f32) {
-	self.handle.set_position(
-	    numeric::Point2f::new(
-		self.rect.x + ((self.rect.w - self.handle.get_drawing_size(ctx.context).x) * (value / self.max_value)),
-		self.rect.y
-	    )
-	);
+        self.handle.set_position(numeric::Point2f::new(
+            self.rect.x
+                + ((self.rect.w - self.handle.get_drawing_size(ctx.context).x)
+                    * (value / self.max_value)),
+            self.rect.y,
+        ));
 
-	self.current_value = value;
+        self.current_value = value;
     }
 }
 
 impl DrawableComponent for SeekBar {
     fn draw(&mut self, ctx: &mut ggez::Context) -> ggez::GameResult<()> {
         if self.is_visible() {
-            ggraphics::draw(
-                ctx,
-                &self.seek_edge,
-                ggraphics::DrawParam::default(),
-            )?;
+            ggraphics::draw(ctx, &self.seek_edge, ggraphics::DrawParam::default())?;
             self.handle.draw(ctx)?;
         }
 
@@ -1854,71 +1845,76 @@ pub struct CheckBox {
 
 impl CheckBox {
     pub fn new<'a>(
-	ctx: &mut SuzuContext<'a>,
-	pos_rect: numeric::Rect,
-	mut check_texture: Box<dyn TextureObject>,
-	is_checked: bool,
-	depth: i8,
+        ctx: &mut SuzuContext<'a>,
+        pos_rect: numeric::Rect,
+        mut check_texture: Box<dyn TextureObject>,
+        is_checked: bool,
+        depth: i8,
     ) -> Self {
-	let frame = TableFrame::new(
-	    ctx.resource,
-	    pos_rect.point().into(),
-	    TileBatchTextureID::OldStyleFrame,
-	    FrameData::new(vec![pos_rect.h], vec![pos_rect.w]),
-	    numeric::Vector2f::new(0.25, 0.25),
-	    0
-	);
+        let frame = TableFrame::new(
+            ctx.resource,
+            pos_rect.point().into(),
+            TileBatchTextureID::OldStyleFrame,
+            FrameData::new(vec![pos_rect.h], vec![pos_rect.w]),
+            numeric::Vector2f::new(0.25, 0.25),
+            0,
+        );
 
-	let tile_edge_size = frame.get_scaled_tile_size();
-	check_texture.fit_scale(ctx.context, numeric::Vector2f::new(
-	    pos_rect.w - (2.0 * tile_edge_size.x),
-	    pos_rect.h - (2.0 * tile_edge_size.y)));
-	check_texture.make_center(
-	    ctx.context,
-	    numeric::Point2f::new(
-		pos_rect.x + (pos_rect.w * 0.5),
-		pos_rect.y + (pos_rect.h * 0.5)
-	    ));
+        let tile_edge_size = frame.get_scaled_tile_size();
+        check_texture.fit_scale(
+            ctx.context,
+            numeric::Vector2f::new(
+                pos_rect.w - (2.0 * tile_edge_size.x),
+                pos_rect.h - (2.0 * tile_edge_size.y),
+            ),
+        );
+        check_texture.make_center(
+            ctx.context,
+            numeric::Point2f::new(
+                pos_rect.x + (pos_rect.w * 0.5),
+                pos_rect.y + (pos_rect.h * 0.5),
+            ),
+        );
 
-	if is_checked {
-	    check_texture.appear();
-	} else {
-	    check_texture.hide();
-	}
-	
-	CheckBox {
-	    frame: frame,
-	    check_texture: check_texture,
-	    drwob_essential: DrawableObjectEssential::new(true, depth),
-	    is_checked: is_checked,
-	}
+        if is_checked {
+            check_texture.appear();
+        } else {
+            check_texture.hide();
+        }
+
+        CheckBox {
+            frame: frame,
+            check_texture: check_texture,
+            drwob_essential: DrawableObjectEssential::new(true, depth),
+            is_checked: is_checked,
+        }
     }
 
     pub fn click_handler(&mut self, point: numeric::Point2f) {
-	if self.frame.get_area().contains(point) {
-	    self.is_checked = !self.is_checked;
+        if self.frame.get_area().contains(point) {
+            self.is_checked = !self.is_checked;
 
-	    if self.is_checked {
-		self.check_texture.appear();
-	    } else {
-		self.check_texture.hide();
-	    }
-	}
+            if self.is_checked {
+                self.check_texture.appear();
+            } else {
+                self.check_texture.hide();
+            }
+        }
     }
 
     pub fn checked_now(&self) -> bool {
-	self.is_checked
+        self.is_checked
     }
 }
 
 impl DrawableComponent for CheckBox {
     fn draw(&mut self, ctx: &mut ggez::Context) -> ggez::GameResult<()> {
-	if self.is_visible() {
-	    self.frame.draw(ctx)?;
-	    self.check_texture.draw(ctx)?;
-	}
+        if self.is_visible() {
+            self.frame.draw(ctx)?;
+            self.check_texture.draw(ctx)?;
+        }
 
-	Ok(())
+        Ok(())
     }
 
     #[inline(always)]

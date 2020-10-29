@@ -37,8 +37,8 @@ use std::io::{BufReader, Read, Write};
 use serde::{Deserialize, Serialize};
 extern crate serde_json;
 
-use number_to_jk::number_to_jk;
 use crate::object::scenario_object::SuzunaAdType;
+use number_to_jk::number_to_jk;
 
 extern crate num;
 
@@ -689,19 +689,22 @@ pub struct AdCostTable {
 
 impl AdCostTable {
     pub fn from_data(data: HashMap<String, u32>) -> Self {
-	let mut table = HashMap::new();
+        let mut table = HashMap::new();
 
-	for (s, c) in data.iter() {
-	    table.insert(crate::object::scenario_object::SuzunaAdType::from_str(s), *c);
-	}
+        for (s, c) in data.iter() {
+            table.insert(
+                crate::object::scenario_object::SuzunaAdType::from_str(s),
+                *c,
+            );
+        }
 
-	AdCostTable {
-	    ad_cost_table: table,
-	}
+        AdCostTable {
+            ad_cost_table: table,
+        }
     }
-    
+
     pub fn get_cost(&self, ty: crate::object::scenario_object::SuzunaAdType) -> u32 {
-	*self.ad_cost_table.get(&ty).unwrap()
+        *self.ad_cost_table.get(&ty).unwrap()
     }
 }
 
@@ -810,8 +813,8 @@ impl GameResource {
             scenario_table: scenario_table,
             sounds: sounds,
             bgm_manager: sound::SoundManager::new(),
-	    se_manager: sound::SoundManager::new(),
-	    ad_cost_list: AdCostTable::from_data(src_file.ad_cost_table),
+            se_manager: sound::SoundManager::new(),
+            ad_cost_list: AdCostTable::from_data(src_file.ad_cost_table),
         }
     }
 
@@ -912,11 +915,11 @@ impl GameResource {
     }
 
     pub fn stop_bgm(&mut self, handler: sound::SoundHandler) {
-	self.bgm_manager.stop(handler);
+        self.bgm_manager.stop(handler);
     }
 
     pub fn stop_se(&mut self, handler: sound::SoundHandler) {
-	self.bgm_manager.stop(handler);
+        self.bgm_manager.stop(handler);
     }
 
     pub fn ref_bgm(&self, handler: sound::SoundHandler) -> &sound::PlayableSound {
@@ -936,15 +939,15 @@ impl GameResource {
     }
 
     pub fn change_bgm_volume(&mut self, volume: f32) {
-	self.bgm_manager.change_global_volume(volume);
+        self.bgm_manager.change_global_volume(volume);
     }
 
     pub fn change_se_volume(&mut self, volume: f32) {
-	self.se_manager.change_global_volume(volume);
+        self.se_manager.change_global_volume(volume);
     }
 
     pub fn get_default_ad_cost(&self, ty: crate::object::scenario_object::SuzunaAdType) -> u32 {
-	self.ad_cost_list.get_cost(ty)
+        self.ad_cost_list.get_cost(ty)
     }
 }
 
@@ -1302,12 +1305,15 @@ impl SuzunaBookPool {
                 .books
                 .swap_remove(rand::random::<usize>() % self.books.len());
 
-	    if borrowing_books.iter().any(|info| info.name == book_info.name) {
-		// 戻してloop再開
-		self.books.push(book_info);
-		continue;
-	    }
-	    
+            if borrowing_books
+                .iter()
+                .any(|info| info.name == book_info.name)
+            {
+                // 戻してloop再開
+                self.books.push(book_info);
+                continue;
+            }
+
             borrowing_books.push(book_info);
         }
 
@@ -1429,22 +1435,22 @@ impl SavableData {
         let returning_request_pool =
             ReturningRequestPool::new(&mut suzuna_book_pool, game_data, date);
 
-	let ad_status = hash![
-	    (SuzunaAdType::ShopNobori, false),
-	    (SuzunaAdType::TownNobori, false),
-	    (SuzunaAdType::Chindon, false),
-	    (SuzunaAdType::NewsPaper, false),
-	    (SuzunaAdType::BunBunMaruPaper, false),
-	    (SuzunaAdType::AdPaper, false)
+        let ad_status = hash![
+            (SuzunaAdType::ShopNobori, false),
+            (SuzunaAdType::TownNobori, false),
+            (SuzunaAdType::Chindon, false),
+            (SuzunaAdType::NewsPaper, false),
+            (SuzunaAdType::BunBunMaruPaper, false),
+            (SuzunaAdType::AdPaper, false)
         ];
-	
+
         SavableData {
             date: date.clone(),
             task_result: TaskResult::new(),
             suzunaan_status: SuzunaAnStatus::new(),
             suzuna_book_pool: suzuna_book_pool,
             returning_request_pool: returning_request_pool,
-	    ad_status: ad_status,
+            ad_status: ad_status,
         }
     }
 
@@ -1478,34 +1484,34 @@ impl SavableData {
     }
 
     pub fn replace(&mut self, data: SavableData) {
-	self.suzuna_book_pool = data.suzuna_book_pool;
-	self.returning_request_pool = data.returning_request_pool;
+        self.suzuna_book_pool = data.suzuna_book_pool;
+        self.returning_request_pool = data.returning_request_pool;
         self.date = data.date;
         self.task_result = data.task_result;
-	self.suzunaan_status = data.suzunaan_status;
-	self.ad_status = data.ad_status;
+        self.suzunaan_status = data.suzunaan_status;
+        self.ad_status = data.ad_status;
     }
 
     pub fn change_ad_status(&mut self, ad_type: SuzunaAdType, status: bool) {
-	self.ad_status.insert(ad_type, status);
+        self.ad_status.insert(ad_type, status);
     }
 
     pub fn get_ad_status(&self, ad_type: SuzunaAdType) -> bool {
-	*self.ad_status.get(&ad_type).unwrap()
+        *self.ad_status.get(&ad_type).unwrap()
     }
 
     pub fn pay_ad_cost(&mut self, resource: &GameResource) -> i32 {
-	let mut total_cost = 0;
-	
-	for (ad_type, used) in self.ad_status.iter() {
-	    if *used {
-		let cost = resource.get_default_ad_cost(*ad_type) as i32;
-		self.task_result.total_money -= cost;
-		total_cost += cost;
-	    }
-	}
+        let mut total_cost = 0;
 
-	total_cost
+        for (ad_type, used) in self.ad_status.iter() {
+            if *used {
+                let cost = resource.get_default_ad_cost(*ad_type) as i32;
+                self.task_result.total_money -= cost;
+                total_cost += cost;
+            }
+        }
+
+        total_cost
     }
 }
 
@@ -1532,7 +1538,7 @@ impl ResultReport {
             yet_shelved_books_id: Vec::new(),
             total_customers_waiting_time: 0,
             condition_eval_mistakes: 0,
-	    total_ad_cost: 0,
+            total_ad_cost: 0,
         }
     }
 
@@ -1553,7 +1559,7 @@ impl ResultReport {
     }
 
     pub fn add_ad_cost(&mut self, cost: i32) {
-	self.total_ad_cost += cost;
+        self.total_ad_cost += cost;
     }
 
     pub fn create_table(&self) -> ResultReportStringTable {
@@ -1588,9 +1594,7 @@ impl ResultReportStringTable {
             condition_eval_mistakes: number_to_jk::number_to_jk(
                 result_report.condition_eval_mistakes as u64,
             ),
-	    total_ad_cost: number_to_jk::number_to_jk(
-		result_report.total_ad_cost as u64
-	    )
+            total_ad_cost: number_to_jk::number_to_jk(result_report.total_ad_cost as u64),
         }
     }
 }
@@ -1617,19 +1621,19 @@ impl GameConfig {
     }
 
     pub fn set_bgm_volume_100(&mut self, volume: f32) {
-	self.bgm_volume = volume / 100.0;
+        self.bgm_volume = volume / 100.0;
     }
 
     pub fn set_se_volume_100(&mut self, volume: f32) {
-	self.se_volume = volume / 100.0;
+        self.se_volume = volume / 100.0;
     }
 
     pub fn get_bgm_volume(&self) -> f32 {
-	self.bgm_volume
+        self.bgm_volume
     }
 
     pub fn get_se_volume(&self) -> f32 {
-	self.se_volume
+        self.se_volume
     }
 }
 
@@ -1665,7 +1669,8 @@ impl<'ctx> SuzuContext<'ctx> {
         sound_id: SoundID,
         flags: Option<sound::SoundPlayFlags>,
     ) -> sound::SoundHandler {
-        self.resource.play_sound_as_bgm(self.context, sound_id, flags)
+        self.resource
+            .play_sound_as_bgm(self.context, sound_id, flags)
     }
 
     pub fn play_sound_as_se(
@@ -1673,21 +1678,22 @@ impl<'ctx> SuzuContext<'ctx> {
         sound_id: SoundID,
         flags: Option<sound::SoundPlayFlags>,
     ) -> sound::SoundHandler {
-        self.resource.play_sound_as_se(self.context, sound_id, flags)
+        self.resource
+            .play_sound_as_se(self.context, sound_id, flags)
     }
 
     pub fn change_bgm_volume(&mut self, volume: f32) {
-	self.resource.change_bgm_volume(volume / 100.0);
-	self.config.set_bgm_volume_100(volume);
+        self.resource.change_bgm_volume(volume / 100.0);
+        self.config.set_bgm_volume_100(volume);
     }
 
     pub fn change_se_volume(&mut self, volume: f32) {
-	self.resource.change_se_volume(volume / 100.0);
-	self.config.set_se_volume_100(volume);
+        self.resource.change_se_volume(volume / 100.0);
+        self.config.set_se_volume_100(volume);
     }
 
     pub fn pay_ad_cost(&mut self) -> i32 {
-	self.savable_data.pay_ad_cost(self.resource)
+        self.savable_data.pay_ad_cost(self.resource)
     }
 }
 
@@ -1847,13 +1853,11 @@ impl SceneController {
             scene::SceneID::Title => {
                 self.current_scene =
                     TopScene::TitleScene(scene::title_scene::TitleScene::new(&mut ctx))
-            },
-	    scene::SceneID::Save => {
-		self.current_scene =
-		    TopScene::SaveScene(scene::save_scene::SaveScene::new(
-			&mut ctx,
-		    ));
-	    },
+            }
+            scene::SceneID::Save => {
+                self.current_scene =
+                    TopScene::SaveScene(scene::save_scene::SaveScene::new(&mut ctx));
+            }
             scene::SceneID::Null => self.current_scene = TopScene::Null(scene::NullScene::new()),
             _ => (),
         }
@@ -2118,22 +2122,21 @@ impl SceneController {
     }
 
     pub fn focus_event(&mut self, ctx: &mut ggez::Context, game_data: &mut GameResource) {
-        self.current_scene.abs_mut().focus_event(
-            &mut SuzuContext {
-                context: ctx,
-                resource: game_data,
-                savable_data: &mut self.game_status,
-                config: &mut self.game_config,
-                process_utility: ProcessUtility {
-                    redraw_request: &mut self.redraw_request,
-                },
+        self.current_scene.abs_mut().focus_event(&mut SuzuContext {
+            context: ctx,
+            resource: game_data,
+            savable_data: &mut self.game_status,
+            config: &mut self.game_config,
+            process_utility: ProcessUtility {
+                redraw_request: &mut self.redraw_request,
             },
-        );
+        });
     }
 
     pub fn unfocus_event(&mut self, ctx: &mut ggez::Context, game_data: &mut GameResource) {
-	self.current_scene.abs_mut().unfocus_event(
-            &mut SuzuContext {
+        self.current_scene
+            .abs_mut()
+            .unfocus_event(&mut SuzuContext {
                 context: ctx,
                 resource: game_data,
                 savable_data: &mut self.game_status,
@@ -2141,8 +2144,7 @@ impl SceneController {
                 process_utility: ProcessUtility {
                     redraw_request: &mut self.redraw_request,
                 },
-            },
-        );
+            });
     }
 }
 
@@ -2242,21 +2244,25 @@ impl<'data> ggez::event::EventHandler for State<'data> {
     }
 
     fn focus_event(&mut self, ctx: &mut Context, gained: bool) {
-	if gained {
-	    self.scene_controller.focus_event(ctx, self.game_data);
-	} else {
-	    self.scene_controller.unfocus_event(ctx, self.game_data);
-	}
+        if gained {
+            self.scene_controller.focus_event(ctx, self.game_data);
+        } else {
+            self.scene_controller.unfocus_event(ctx, self.game_data);
+        }
     }
 }
 
 impl<'data> State<'data> {
     pub fn new(ctx: &mut Context, game_data: &'data mut GameResource) -> GameResult<State<'data>> {
-	let scene_controller = SceneController::new(ctx, game_data);
+        let scene_controller = SceneController::new(ctx, game_data);
 
-	game_data.bgm_manager.change_global_volume(scene_controller.game_config.bgm_volume);
-	game_data.se_manager.change_global_volume(scene_controller.game_config.se_volume);
-	
+        game_data
+            .bgm_manager
+            .change_global_volume(scene_controller.game_config.bgm_volume);
+        game_data
+            .se_manager
+            .change_global_volume(scene_controller.game_config.se_volume);
+
         let s = State {
             clock: 0,
             fps: 0.0,

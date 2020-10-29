@@ -1,5 +1,5 @@
-use std::rc::Rc;
 use std::collections::HashMap;
+use std::rc::Rc;
 
 use ggez::graphics as ggraphics;
 
@@ -208,15 +208,15 @@ pub enum SuzunaAdType {
 
 impl SuzunaAdType {
     pub fn from_str(s: &str) -> Self {
-	match s {
-	    "ShopNobori" => Self::ShopNobori,
-	    "TownNobori" => Self::TownNobori,
-	    "Chindon" => Self::Chindon,
-	    "NewsPaper" => Self::NewsPaper,
-	    "BunBunMaruPaper" => Self::BunBunMaruPaper,
-	    "AdPaper" => Self::AdPaper,
-	    _ => panic!("Unknown SuzunaAdType => {:?}", s),
-	}
+        match s {
+            "ShopNobori" => Self::ShopNobori,
+            "TownNobori" => Self::TownNobori,
+            "Chindon" => Self::Chindon,
+            "NewsPaper" => Self::NewsPaper,
+            "BunBunMaruPaper" => Self::BunBunMaruPaper,
+            "AdPaper" => Self::AdPaper,
+            _ => panic!("Unknown SuzunaAdType => {:?}", s),
+        }
     }
 }
 
@@ -228,60 +228,60 @@ pub struct AdEntry {
 
 impl AdEntry {
     pub fn new<'a>(
-	ctx: &mut SuzuContext<'a>,
-	pos: numeric::Point2f,
-	check_box_size: numeric::Vector2f,
-	default_check: bool,
-	desc_text: String,
-	depth: i8,
+        ctx: &mut SuzuContext<'a>,
+        pos: numeric::Point2f,
+        check_box_size: numeric::Vector2f,
+        default_check: bool,
+        desc_text: String,
+        depth: i8,
     ) -> Self {
-	let font_info = FontInformation::new(
-	    ctx.resource.get_font(FontID::Cinema),
-	    numeric::Vector2f::new(18.0, 18.0),
-	    ggraphics::Color::from_rgba_u32(0xff)
-	);
+        let font_info = FontInformation::new(
+            ctx.resource.get_font(FontID::Cinema),
+            numeric::Vector2f::new(18.0, 18.0),
+            ggraphics::Color::from_rgba_u32(0xff),
+        );
 
-	let choice_box_texture = Box::new(UniTexture::new(
-	    ctx.ref_texture(TextureID::ChoicePanel1),
-	    numeric::Point2f::new(0.0, 0.0),
-	    numeric::Vector2f::new(1.0, 1.0),
-	    0.0,
-	    depth
-	));
-	
-	AdEntry {
-	    check_box: CheckBox::new(
-		ctx,
-		numeric::Rect::new(pos.x, pos.y, check_box_size.x, check_box_size.y),
-		choice_box_texture,
-		default_check,
-		0
-	    ),
-	    desc_text: UniText::new(
-		desc_text,
-		numeric::Point2f::new(pos.x + check_box_size.x + 20.0, pos.y),
-		numeric::Vector2f::new(1.0, 1.0),
-		0.0,
-		0,
-		font_info
-	    ),
-	    drwob_essential: DrawableObjectEssential::new(true, depth),
-	}
+        let choice_box_texture = Box::new(UniTexture::new(
+            ctx.ref_texture(TextureID::ChoicePanel1),
+            numeric::Point2f::new(0.0, 0.0),
+            numeric::Vector2f::new(1.0, 1.0),
+            0.0,
+            depth,
+        ));
+
+        AdEntry {
+            check_box: CheckBox::new(
+                ctx,
+                numeric::Rect::new(pos.x, pos.y, check_box_size.x, check_box_size.y),
+                choice_box_texture,
+                default_check,
+                0,
+            ),
+            desc_text: UniText::new(
+                desc_text,
+                numeric::Point2f::new(pos.x + check_box_size.x + 20.0, pos.y),
+                numeric::Vector2f::new(1.0, 1.0),
+                0.0,
+                0,
+                font_info,
+            ),
+            drwob_essential: DrawableObjectEssential::new(true, depth),
+        }
     }
 
     pub fn is_checked(&self) -> bool {
-	self.check_box.checked_now()
+        self.check_box.checked_now()
     }
 }
 
 impl DrawableComponent for AdEntry {
     fn draw(&mut self, ctx: &mut ggez::Context) -> ggez::GameResult<()> {
-	if self.is_visible() {
-	    self.check_box.draw(ctx)?;
-	    self.desc_text.draw(ctx)?;
-	}
+        if self.is_visible() {
+            self.check_box.draw(ctx)?;
+            self.desc_text.draw(ctx)?;
+        }
 
-	Ok(())
+        Ok(())
     }
 
     #[inline(always)]
@@ -317,82 +317,92 @@ pub struct ScenarioAdPage {
 }
 
 impl ScenarioAdPage {
-    pub fn new<'a>(ctx: &mut SuzuContext<'a>, pos: numeric::Point2f, area_size: numeric::Vector2f, depth: i8) -> Self {
-	let mut ad_table = HashMap::new();
+    pub fn new<'a>(
+        ctx: &mut SuzuContext<'a>,
+        pos: numeric::Point2f,
+        area_size: numeric::Vector2f,
+        depth: i8,
+    ) -> Self {
+        let mut ad_table = HashMap::new();
 
-	let mut entry_pos = numeric::Point2f::new(pos.x + 70.0, pos.y + 100.0);
+        let mut entry_pos = numeric::Point2f::new(pos.x + 70.0, pos.y + 100.0);
 
-	for (index, (ty_str, ad_type)) in vec![
-	    ("チラシ", SuzunaAdType::AdPaper),
-	    ("ちんどん屋", SuzunaAdType::Chindon),
-	    ("のぼり（店前）", SuzunaAdType::ShopNobori),
-	    ("のぼり（里）", SuzunaAdType::TownNobori),
-	    ("新聞", SuzunaAdType::NewsPaper),
-	    ("文々。新聞", SuzunaAdType::BunBunMaruPaper),
-	].iter().enumerate() {
-	    let entry = AdEntry::new(
-		ctx,
-		entry_pos,
-		numeric::Vector2f::new(32.0, 32.0),
-		ctx.savable_data.get_ad_status(*ad_type),
-		format!("{:　<7}{:　>4}円/日", ty_str, ctx.resource.get_default_ad_cost(*ad_type)),
-		depth
-	    );
-	    
-	    ad_table.insert(
-		*ad_type,
-		entry
-	    );
+        for (index, (ty_str, ad_type)) in vec![
+            ("チラシ", SuzunaAdType::AdPaper),
+            ("ちんどん屋", SuzunaAdType::Chindon),
+            ("のぼり（店前）", SuzunaAdType::ShopNobori),
+            ("のぼり（里）", SuzunaAdType::TownNobori),
+            ("新聞", SuzunaAdType::NewsPaper),
+            ("文々。新聞", SuzunaAdType::BunBunMaruPaper),
+        ]
+        .iter()
+        .enumerate()
+        {
+            let entry = AdEntry::new(
+                ctx,
+                entry_pos,
+                numeric::Vector2f::new(32.0, 32.0),
+                ctx.savable_data.get_ad_status(*ad_type),
+                format!(
+                    "{:　<7}{:　>4}円/日",
+                    ty_str,
+                    ctx.resource.get_default_ad_cost(*ad_type)
+                ),
+                depth,
+            );
 
-	    if index % 2 == 0 {
-		entry_pos.x = 400.0;
-	    } else {
-		entry_pos.x = pos.x + 70.0;
-		entry_pos.y += 64.0;
-	    }
-	}
+            ad_table.insert(*ad_type, entry);
 
-	let font_info = FontInformation::new(
-	    ctx.resource.get_font(FontID::Cinema),
-	    numeric::Vector2f::new(30.0, 30.0),
-	    ggraphics::BLACK
-	);
-	let mut header_text = UniText::new(
-	    "鈴奈庵の宣伝広告".to_string(),
-	    numeric::Point2f::new(0.0, 0.0),
-	    numeric::Vector2f::new(1.0, 1.0),
-	    0.0,
-	    0,
-	    font_info
-	);
+            if index % 2 == 0 {
+                entry_pos.x = 400.0;
+            } else {
+                entry_pos.x = pos.x + 70.0;
+                entry_pos.y += 64.0;
+            }
+        }
 
-	header_text.make_center(ctx.context, numeric::Point2f::new(area_size.x / 2.0, 50.0));
-	
-	ScenarioAdPage {
-	    header_text: header_text,
-	    ad_table: ad_table,
-	    drwob_essential: DrawableObjectEssential::new(true, depth),
-	}
+        let font_info = FontInformation::new(
+            ctx.resource.get_font(FontID::Cinema),
+            numeric::Vector2f::new(30.0, 30.0),
+            ggraphics::BLACK,
+        );
+        let mut header_text = UniText::new(
+            "鈴奈庵の宣伝広告".to_string(),
+            numeric::Point2f::new(0.0, 0.0),
+            numeric::Vector2f::new(1.0, 1.0),
+            0.0,
+            0,
+            font_info,
+        );
+
+        header_text.make_center(ctx.context, numeric::Point2f::new(area_size.x / 2.0, 50.0));
+
+        ScenarioAdPage {
+            header_text: header_text,
+            ad_table: ad_table,
+            drwob_essential: DrawableObjectEssential::new(true, depth),
+        }
     }
 
     pub fn click_handler<'a>(&mut self, ctx: &mut SuzuContext<'a>, click_point: numeric::Point2f) {
-	for (ad_type, entry) in self.ad_table.iter_mut() {
-	    entry.check_box.click_handler(click_point);
-	    ctx.savable_data.change_ad_status(*ad_type, entry.is_checked());
-	}
+        for (ad_type, entry) in self.ad_table.iter_mut() {
+            entry.check_box.click_handler(click_point);
+            ctx.savable_data
+                .change_ad_status(*ad_type, entry.is_checked());
+        }
     }
 }
 
 impl DrawableComponent for ScenarioAdPage {
     fn draw(&mut self, ctx: &mut ggez::Context) -> ggez::GameResult<()> {
-	if self.is_visible() {
-	    self.header_text.draw(ctx)?;
-	    for (_, entry) in self.ad_table.iter_mut() {
-		entry.draw(ctx)?;
-	    }
-	}
+        if self.is_visible() {
+            self.header_text.draw(ctx)?;
+            for (_, entry) in self.ad_table.iter_mut() {
+                entry.draw(ctx)?;
+            }
+        }
 
-	Ok(())
+        Ok(())
     }
 
     #[inline(always)]
@@ -429,51 +439,51 @@ pub struct SuzunaStatusPages {
 
 impl SuzunaStatusPages {
     pub fn new(main_page: SuzunaStatusMainPage, ad_page: ScenarioAdPage) -> Self {
-	SuzunaStatusPages {
-	    main_page: main_page,
-	    ad_page: ad_page,
-	    current_page: 0,
-	}
+        SuzunaStatusPages {
+            main_page: main_page,
+            ad_page: ad_page,
+            current_page: 0,
+        }
     }
 
     pub fn draw_page(&mut self, ctx: &mut ggez::Context) {
-	match self.current_page {
-	    0 => self.main_page.draw(ctx).unwrap(),
-	    1 => self.ad_page.draw(ctx).unwrap(),
-	    _ => (),
-	}
+        match self.current_page {
+            0 => self.main_page.draw(ctx).unwrap(),
+            1 => self.ad_page.draw(ctx).unwrap(),
+            _ => (),
+        }
     }
 
     fn next_page(&mut self) {
-	if self.current_page >= 1 {
-	    return;
-	}
+        if self.current_page >= 1 {
+            return;
+        }
 
-	self.current_page += 1;
+        self.current_page += 1;
     }
 
     fn prev_page(&mut self) {
-	if self.current_page <= 0 {
-	    return;
-	}
+        if self.current_page <= 0 {
+            return;
+        }
 
-	self.current_page -= 1;
+        self.current_page -= 1;
     }
 
     pub fn get_current_page_num(&self) -> usize {
-	self.current_page
+        self.current_page
     }
 
     pub fn page_len(&self) -> usize {
-	2
+        2
     }
 
     pub fn click_handler<'a>(&mut self, ctx: &mut SuzuContext<'a>, click_point: numeric::Point2f) {
-	match self.current_page {
-	    0 => (),
-	    1 => self.ad_page.click_handler(ctx, click_point),
-	    _ => (),
-	}
+        match self.current_page {
+            0 => (),
+            1 => self.ad_page.click_handler(ctx, click_point),
+            _ => (),
+        }
     }
 }
 
@@ -524,10 +534,15 @@ impl SuzunaStatusScreen {
                 ggraphics::Color::from_rgba_u32(0xffffffff),
             ),
             background: background_texture,
-	    pages: SuzunaStatusPages::new(
-		SuzunaStatusMainPage::new(ctx),
-		ScenarioAdPage::new(ctx, numeric::Point2f::new(0.0, 0.0), numeric::Vector2f::new(rect.w, rect.h), 0)
-	    ),
+            pages: SuzunaStatusPages::new(
+                SuzunaStatusMainPage::new(ctx),
+                ScenarioAdPage::new(
+                    ctx,
+                    numeric::Point2f::new(0.0, 0.0),
+                    numeric::Vector2f::new(rect.w, rect.h),
+                    0,
+                ),
+            ),
             go_left_texture: left,
             go_right_texture: right,
         }
@@ -549,20 +564,19 @@ impl SuzunaStatusScreen {
             return;
         }
 
-	let rpoint = self.canvas.relative_point(click_point);
+        let rpoint = self.canvas.relative_point(click_point);
 
-	if self.go_right_texture.contains(ctx.context, rpoint) {
-	    self.pages.next_page();
-	    self.check_move_page_icon_visibility();
-	    ctx.process_utility.redraw();
-	} else if self.go_left_texture.contains(ctx.context, rpoint) {
-	    self.pages.prev_page();
-	    self.check_move_page_icon_visibility();
-	    ctx.process_utility.redraw();
-	}
+        if self.go_right_texture.contains(ctx.context, rpoint) {
+            self.pages.next_page();
+            self.check_move_page_icon_visibility();
+            ctx.process_utility.redraw();
+        } else if self.go_left_texture.contains(ctx.context, rpoint) {
+            self.pages.prev_page();
+            self.check_move_page_icon_visibility();
+            ctx.process_utility.redraw();
+        }
 
-	self.pages.click_handler(ctx, rpoint);
-
+        self.pages.click_handler(ctx, rpoint);
     }
 }
 
@@ -572,7 +586,7 @@ impl DrawableComponent for SuzunaStatusScreen {
             sub_screen::stack_screen(ctx, &self.canvas);
 
             self.background.draw(ctx)?;
-	    self.pages.draw_page(ctx);
+            self.pages.draw_page(ctx);
 
             self.go_right_texture.draw(ctx)?;
             self.go_left_texture.draw(ctx)?;

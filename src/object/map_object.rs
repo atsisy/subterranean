@@ -763,27 +763,27 @@ impl CustomerCharacter {
     }
 
     fn goto_other_book_shelf_now(
-	&mut self,
-	ctx: &mut ggez::Context,
-	map_data: &mp::StageObjectMap,
-	t: Clock
+        &mut self,
+        ctx: &mut ggez::Context,
+        map_data: &mp::StageObjectMap,
+        t: Clock,
     ) {
-	let goal = self.move_data.random_select();
-	self.determine_next_goal(ctx, map_data, goal, t)
+        let goal = self.move_data.random_select();
+        self.determine_next_goal(ctx, map_data, goal, t)
     }
 
     fn determine_next_goal(
-	&mut self,
-	ctx: &mut ggez::Context,
-	map_data: &mp::StageObjectMap,
-	goal: numeric::Vector2u,
-	t: Clock
+        &mut self,
+        ctx: &mut ggez::Context,
+        map_data: &mp::StageObjectMap,
+        goal: numeric::Vector2u,
+        t: Clock,
     ) {
-	// ルート検索
+        // ルート検索
         let maybe_next_route = self.find_route(ctx, map_data, goal);
-	
+
         debug::debug_screen_push_text(&format!("{:?}", maybe_next_route));
-	
+
         // 一定時間後にルートを設定し、状態をReadyに変更する。
         // 移動開始するまでは、ストップ
         self.event_list.add_event(
@@ -795,7 +795,7 @@ impl CustomerCharacter {
             }),
             t + 100,
         );
-	
+
         self.customer_status = CustomerCharacterStatus::WaitOnBookShelf;
     }
 
@@ -810,7 +810,7 @@ impl CustomerCharacter {
     ) {
         // 移動情報キューが空（目的地に到達してる or 初めて目的地を設定する）
         if self.move_queue.empty() {
-	    self.goto_other_book_shelf_now(ctx, map_data, t);
+            self.goto_other_book_shelf_now(ctx, map_data, t);
             return ();
         }
 
@@ -845,20 +845,22 @@ impl CustomerCharacter {
         if let Some(next_route) = maybe_next_route {
             self.move_queue.enqueue(next_route);
             self.customer_status = CustomerCharacterStatus::Ready;
-	    Ok(())
+            Ok(())
         } else {
-	    println!("failed, collision_top: {:?}, start -> {:?}, point -> {:?}, dest -> {:?}",
-		     self.character
-			     .get_map_position_with_collision_top_offset(ctx),
-		     map_data.map_position_to_tile_position(
-			 self.character
-			     .get_map_position_with_collision_top_offset(ctx),
-		     ),
-		     self.character
-		     .get_map_position_with_collision_top_offset(ctx),
-		     dest);
-	    Err(())
-	}
+            println!(
+                "failed, collision_top: {:?}, start -> {:?}, point -> {:?}, dest -> {:?}",
+                self.character
+                    .get_map_position_with_collision_top_offset(ctx),
+                map_data.map_position_to_tile_position(
+                    self.character
+                        .get_map_position_with_collision_top_offset(ctx),
+                ),
+                self.character
+                    .get_map_position_with_collision_top_offset(ctx),
+                dest
+            );
+            Err(())
+        }
     }
 
     pub fn get_out_shop(
@@ -867,10 +869,10 @@ impl CustomerCharacter {
         map_data: &mp::StageObjectMap,
         dest: numeric::Vector2u,
     ) {
-	match self.set_destination_forced(ctx, map_data, dest) {
-	    Ok(_) => self.customer_status = CustomerCharacterStatus::GettingOut,
-	    Err(_) => panic!("Failed to find route"),
-	}
+        match self.set_destination_forced(ctx, map_data, dest) {
+            Ok(_) => self.customer_status = CustomerCharacterStatus::GettingOut,
+            Err(_) => panic!("Failed to find route"),
+        }
     }
 
     pub fn goto_check(
@@ -879,12 +881,12 @@ impl CustomerCharacter {
         map_data: &mp::StageObjectMap,
         dest: numeric::Vector2u,
     ) {
-	match self.set_destination_forced(ctx, map_data, dest) {
-	    Ok(_) => {
-		self.customer_status = CustomerCharacterStatus::GoToCheck;
-	    },
-	    Err(_) => panic!("Failed to find route"),
-	}
+        match self.set_destination_forced(ctx, map_data, dest) {
+            Ok(_) => {
+                self.customer_status = CustomerCharacterStatus::GoToCheck;
+            }
+            Err(_) => panic!("Failed to find route"),
+        }
     }
 
     pub fn reset_speed(&mut self) {
@@ -997,64 +999,64 @@ impl CustomerCharacter {
                 }
             }
             CustomerCharacterStatus::WaitOnClerk => {}
-	    CustomerCharacterStatus::GettingOut => {
-		if !self.is_goal_now(ctx.context) {
-		    return;
-		}
-		
+            CustomerCharacterStatus::GettingOut => {
+                if !self.is_goal_now(ctx.context) {
+                    return;
+                }
+
                 let goal = self.current_goal;
-		
-		// 目的地でマップ位置を上書き
+
+                // 目的地でマップ位置を上書き
                 self.get_mut_character_object()
-		    .set_map_position_with_collision_top_offset(ctx.context, goal);
-		
-		// 店の出入口に到達したかチェック
+                    .set_map_position_with_collision_top_offset(ctx.context, goal);
+
+                // 店の出入口に到達したかチェック
                 self.check_get_out(map_data, goal, exit);
 
-		// GotOutなら、終了し、あとで削除されるのを待つ
-		if self.customer_status == CustomerCharacterStatus::GotOut {
-		    return;
-		}
+                // GotOutなら、終了し、あとで削除されるのを待つ
+                if self.customer_status == CustomerCharacterStatus::GotOut {
+                    return;
+                }
 
-		// キューが空ではない場合
-		// 情報をキューから取り出し、速度を計算し直す
-		if let Some(next_position) = self.move_queue.dequeue() {
-		    self.override_move_effect(ctx.context, next_position);
-		    self.current_goal = next_position;
-		}
+                // キューが空ではない場合
+                // 情報をキューから取り出し、速度を計算し直す
+                if let Some(next_position) = self.move_queue.dequeue() {
+                    self.override_move_effect(ctx.context, next_position);
+                    self.current_goal = next_position;
+                }
 
-		// 到達しないが、もし到達した場合は、GotOut状態にして削除されるのを待つ
-		self.customer_status = CustomerCharacterStatus::GotOut;
-	    },
-	    CustomerCharacterStatus::GoToCheck => {
-		// まだゴールしていない
-		if !self.is_goal_now(ctx.context) {
-		    return;
-		}
+                // 到達しないが、もし到達した場合は、GotOut状態にして削除されるのを待つ
+                self.customer_status = CustomerCharacterStatus::GotOut;
+            }
+            CustomerCharacterStatus::GoToCheck => {
+                // まだゴールしていない
+                if !self.is_goal_now(ctx.context) {
+                    return;
+                }
 
-		//
-		// 以下ゴール後
-		//
+                //
+                // 以下ゴール後
+                //
 
-		let goal = self.current_goal;
-		
-		// 目的地でマップ位置を上書き
+                let goal = self.current_goal;
+
+                // 目的地でマップ位置を上書き
                 self.get_mut_character_object()
-		    .set_map_position_with_collision_top_offset(ctx.context, goal);
+                    .set_map_position_with_collision_top_offset(ctx.context, goal);
 
-		// キューが空ではない場合
-		// 情報をキューから取り出し、速度を計算し直す
-		if let Some(next_position) = self.move_queue.dequeue() {
-		    self.override_move_effect(ctx.context, next_position);
-		    self.current_goal = next_position;
-		} else {
-		    self.check_been_counter(map_data, goal, counter);
-		    // 速度もリセット
+                // キューが空ではない場合
+                // 情報をキューから取り出し、速度を計算し直す
+                if let Some(next_position) = self.move_queue.dequeue() {
+                    self.override_move_effect(ctx.context, next_position);
+                    self.current_goal = next_position;
+                } else {
+                    self.check_been_counter(map_data, goal, counter);
+                    // 速度もリセット
                     self.reset_speed();
-		    self.character.change_animation_mode(ObjectDirection::Left);
-		}
-	    },
-            
+                    self.character.change_animation_mode(ObjectDirection::Left);
+                }
+            }
+
             CustomerCharacterStatus::WaitOnBookShelf => {}
             CustomerCharacterStatus::GotOut => {}
         }
@@ -1121,10 +1123,10 @@ impl CustomerCharacter {
     }
 
     pub fn ready_to_check(&self) -> bool {
-	match self.customer_status {
-	    CustomerCharacterStatus::Moving | CustomerCharacterStatus::Ready => true,
-	    _ => false,
-	}
+        match self.customer_status {
+            CustomerCharacterStatus::Moving | CustomerCharacterStatus::Ready => true,
+            _ => false,
+        }
     }
 }
 

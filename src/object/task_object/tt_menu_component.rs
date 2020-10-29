@@ -45,10 +45,14 @@ impl KosuzuMemory {
             return;
         }
 
-	if self.remembered_book_info.iter().any(|info| info.name == book_info.name) {
-	    return;
-	}
-	
+        if self
+            .remembered_book_info
+            .iter()
+            .any(|info| info.name == book_info.name)
+        {
+            return;
+        }
+
         self.remembered_book_info.push(book_info);
     }
 
@@ -67,9 +71,9 @@ impl KosuzuMemory {
     }
 
     pub fn add_customer_name(&mut self, name: String) {
-	if self.customers_name.contains(&name) {
-	    return;
-	}
+        if self.customers_name.contains(&name) {
+            return;
+        }
         self.customers_name.push(name);
     }
 

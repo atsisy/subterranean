@@ -157,6 +157,6 @@ impl SceneManager for SuzunaScene {
     }
 
     fn unfocus_event<'a>(&mut self, ctx: &mut SuzuContext<'a>) {
-	self.sub_scene.unfocus_event(ctx);
+        self.sub_scene.unfocus_event(ctx);
     }
 }

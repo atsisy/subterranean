@@ -262,7 +262,7 @@ impl DeskObjects {
 
         if !moneybox_area.contains(item_area.point())
             || !moneybox_area.contains(numeric::Point2f::new(item_area.right(), item_area.bottom()))
-	    || !self.money_box_is_pulled
+            || !self.money_box_is_pulled
         {
             return Some(item);
         }
@@ -313,7 +313,7 @@ impl DeskObjects {
         if !self.money_box.is_stop() {
             self.money_box.move_with_func(t);
             self.draw_request = DrawRequest::Draw;
-	    ctx.process_utility.redraw();
+            ctx.process_utility.redraw();
         }
     }
 
@@ -415,10 +415,10 @@ impl DeskObjects {
         button: ggez::input::mouse::MouseButton,
         point: numeric::Point2f,
     ) -> bool {
-	if !self.canvas.contains(point) {
-	    return false;
-	}
-	
+        if !self.canvas.contains(point) {
+            return false;
+        }
+
         let rpoint = self.canvas.relative_point(point);
 
         for dobj in self.desk_objects.get_raw_container_mut().iter_mut().rev() {
@@ -754,21 +754,21 @@ impl TextBalloon {
             numeric::Point2f::new((vtext_size.x + 80.0) / 2.0, (vtext_size.y + 60.0) / 2.0),
         );
 
-	let balloon = shape::FramedTextBalloon::new(
-	    ctx,
-	    numeric::Rect::new(0.0, 0.0, vtext_size.x + 100.0, vtext_size.y + 50.0),
-	    [
-		numeric::Vector2f::new(50.0, 50.0),
-		numeric::Vector2f::new(10.0, 10.0),
-		numeric::Vector2f::new(50.0, 50.0),
-		numeric::Vector2f::new(10.0, 10.0)
-	    ],
-	    2.0,
-	    ggraphics::WHITE,
-	    ggraphics::Color::from_rgb_u32(0x111111),
-	    0
-	);
-	
+        let balloon = shape::FramedTextBalloon::new(
+            ctx,
+            numeric::Rect::new(0.0, 0.0, vtext_size.x + 100.0, vtext_size.y + 50.0),
+            [
+                numeric::Vector2f::new(50.0, 50.0),
+                numeric::Vector2f::new(10.0, 10.0),
+                numeric::Vector2f::new(50.0, 50.0),
+                numeric::Vector2f::new(10.0, 10.0),
+            ],
+            2.0,
+            ggraphics::WHITE,
+            ggraphics::Color::from_rgb_u32(0x111111),
+            0,
+        );
+
         TextBalloon {
             back_canvas: SubScreen::new(
                 ctx,
@@ -779,7 +779,7 @@ impl TextBalloon {
             canvas: SubScreen::new(ctx, balloon_rect, 0, ggraphics::Color::from_rgba_u32(0x00)),
             text: vtext,
             phrase_type: phrase_type,
-	    text_balloon: balloon,
+            text_balloon: balloon,
         }
     }
 
@@ -792,21 +792,21 @@ impl TextBalloon {
         self.text.replace_text(text.to_string());
         let vtext_size = self.text.get_drawing_size(ctx);
 
-	self.text_balloon = shape::FramedTextBalloon::new(
-	    ctx,
-	    numeric::Rect::new(0.0, 0.0, vtext_size.x + 100.0, vtext_size.y + 50.0),
-	    [
-		numeric::Vector2f::new(50.0, 50.0),
-		numeric::Vector2f::new(10.0, 10.0),
-		numeric::Vector2f::new(50.0, 50.0),
-		numeric::Vector2f::new(10.0, 10.0)
-	    ],
-	    2.0,
-	    ggraphics::WHITE,
-	    ggraphics::Color::from_rgb_u32(0x111111),
-	    0
-	);
-	
+        self.text_balloon = shape::FramedTextBalloon::new(
+            ctx,
+            numeric::Rect::new(0.0, 0.0, vtext_size.x + 100.0, vtext_size.y + 50.0),
+            [
+                numeric::Vector2f::new(50.0, 50.0),
+                numeric::Vector2f::new(10.0, 10.0),
+                numeric::Vector2f::new(50.0, 50.0),
+                numeric::Vector2f::new(10.0, 10.0),
+            ],
+            2.0,
+            ggraphics::WHITE,
+            ggraphics::Color::from_rgb_u32(0x111111),
+            0,
+        );
+
         self.text.make_center(
             ctx,
             numeric::Point2f::new((vtext_size.x + 100.0) / 2.0, (vtext_size.y + 60.0) / 2.0),
@@ -893,7 +893,7 @@ impl DrawableComponent for TextBalloon {
         if self.is_visible() {
             sub_screen::stack_screen(ctx, &self.back_canvas);
 
-	    self.text_balloon.draw(ctx)?;
+            self.text_balloon.draw(ctx)?;
 
             sub_screen::pop_screen(ctx);
             self.back_canvas.draw(ctx).unwrap();

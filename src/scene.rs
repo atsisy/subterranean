@@ -43,7 +43,7 @@ impl FromStr for SceneID {
             "Scenario" => Ok(Self::Scenario),
             "SuzunaShop" => Ok(Self::SuzunaShop),
             "WorkResult" => Ok(Self::DayResult),
-	    "Save" => Ok(Self::Save),
+            "Save" => Ok(Self::Save),
             "Title" => Ok(Self::Title),
             _ => panic!("Error: EventTrigger::from_str"),
         }
