@@ -1606,7 +1606,11 @@ impl PauseScreenSet {
         t: Clock,
     ) -> Option<PauseResult> {
         if let Some(panel) = self.config_panel.as_mut() {
-            panel.mouse_button_up(ctx, point, t);
+            if let Some(_) = panel.mouse_button_up(ctx, point, t) {
+		// ここに到達する場合は、"init-menu"に移動するとき
+		// ここでは、ConfigPanelのExitととしてみなす
+		self.config_panel = None;
+	    }
             return None;
         }
 
