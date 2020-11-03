@@ -1125,6 +1125,10 @@ impl ScenarioBox {
         }
     }
 
+    pub fn contains(&self, point: numeric::Point2f) -> bool {
+	self.text_box.canvas.contains(point)
+    }
+
     pub fn new_choice<'a>(
         ctx: &mut SuzuContext<'a>,
         rect: numeric::Rect,
@@ -1429,6 +1433,10 @@ impl ScenarioEvent {
                 ctx.process_utility.redraw();
             }
         }
+    }
+
+    pub fn contains_scenario_text_box(&self, point: numeric::Point2f) -> bool {
+	self.scenario_box.contains(point)
     }
 
     pub fn make_scenario_event(&mut self) {

@@ -278,6 +278,11 @@ impl SceneManager for ScenarioScene {
                 MouseButton::Left => {
                     let _t = self.get_current_clock();
                     self.status_screen.click_handler(ctx, point);
+
+		    if self.scenario_event.contains_scenario_text_box(point) {
+			self.scenario_event
+			    .key_down_action1(ctx, self.get_current_clock());
+		    }
                 }
                 _ => (),
             }
