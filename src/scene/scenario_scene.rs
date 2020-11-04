@@ -91,7 +91,7 @@ impl ScenarioScene {
             scene_transition: SceneID::Scenario,
             status_screen: SuzunaStatusScreen::new(
                 ctx,
-                numeric::Rect::new(616.0, 25.0, 700.0, 400.0),
+                numeric::Rect::new(30.0, 25.0, 700.0, 400.0),
                 0,
             ),
             scene_transition_type: SceneTransition::Keep,
@@ -219,7 +219,9 @@ impl SceneManager for ScenarioScene {
                     pause_screen_set.mouse_motion_handler(ctx, point);
                 }
             }
-        }
+        } else {
+	    self.scenario_event.mouse_motion_handler(ctx, point);
+	}
     }
 
     fn scene_popping_return_handler<'a>(&mut self, _: &mut SuzuContext<'a>) {

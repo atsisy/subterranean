@@ -162,7 +162,7 @@ impl ScenarioTachie {
                     Box::new(UniTexture::new(
                         ctx.ref_texture(tid_array[0]),
                         numeric::Point2f::new(50.0, 100.0),
-                        numeric::Vector2f::new(0.12, 0.12),
+                        numeric::Vector2f::new(0.3, 0.3),
                         0.0,
                         0,
                     )),
@@ -180,8 +180,8 @@ impl ScenarioTachie {
                 MovableUniTexture::new(
                     Box::new(UniTexture::new(
                         ctx.ref_texture(tid_array[1]),
-                        numeric::Point2f::new(800.0, 100.0),
-                        numeric::Vector2f::new(0.12, 0.12),
+                        numeric::Point2f::new(800.0, 50.0),
+                        numeric::Vector2f::new(0.3, 0.3),
                         0.0,
                         0,
                     )),
@@ -582,6 +582,19 @@ impl ChoiceBox {
                 .unwrap()
                 .set_color(ggraphics::Color::from_rgba_u32(0xffffffff));
         }
+    }
+
+    pub fn cursor_select<'a>(&mut self, ctx: &mut SuzuContext<'a>, point: numeric::Point2f) {
+	let rpoint = self.canvas.relative_point(point);
+	
+	for (index, panel) in self.panels.iter_mut().enumerate() {
+	    if panel.contains(ctx.context, rpoint) {
+		panel.set_color(ggraphics::Color::from_rgba_u32(0xffffffff));
+		self.selecting = index;
+	    } else {
+		panel.set_color(ggraphics::Color::from_rgba_u32(0xaaaaaaff));
+	    }
+	}
     }
 }
 
@@ -1499,6 +1512,27 @@ impl ScenarioEvent {
                 self.scenario_box.insert_choice_box(None);
             }
             ScenarioElement::SceneTransition(_) => (),
+        }
+    }
+
+    pub fn mouse_motion_handler<'a>(&mut self, ctx: &mut SuzuContext<'a>, point: numeric::Point2f) {
+	let rpoint = self.canvas.relative_point(point);
+
+	match self.scenario.ref_current_element_mut() {
+            ScenarioElement::ChoiceSwitch(_) => {
+		if let Some(choice) = self.scenario_box.choice_box.as_mut() {
+		    let rpoint = self.scenario_box.canvas.relative_point(rpoint);
+		    choice.cursor_select(ctx, rpoint);
+
+		    self.scenario_box
+			.display_choice_box_text(FontInformation::new(
+			    ctx.resource.get_font(FontID::Cinema),
+			    numeric::Vector2f::new(32.0, 32.0),
+			    ggraphics::Color::from_rgba_u32(0x000000ff),
+			));
+		}
+            },
+	    _ => (),
         }
     }
 
