@@ -320,7 +320,6 @@ impl ScenarioText {
 
     // 表示する文字数を更新する
     pub fn update_iterator(&mut self) {
-        println!("current update iterator: {}", self.current_segment_index);
         let current_segment = self.seq_text.get(self.current_segment_index).unwrap();
         self.iterator += current_segment.get_fpc();
 
@@ -1126,7 +1125,8 @@ impl ScenarioBox {
     }
 
     pub fn contains(&self, point: numeric::Point2f) -> bool {
-	self.text_box.canvas.contains(point)
+	let rpoint = self.canvas.relative_point(point);
+	self.text_box.canvas.contains(rpoint)
     }
 
     pub fn new_choice<'a>(
@@ -1436,7 +1436,8 @@ impl ScenarioEvent {
     }
 
     pub fn contains_scenario_text_box(&self, point: numeric::Point2f) -> bool {
-	self.scenario_box.contains(point)
+	let rpoint = self.canvas.relative_point(point);
+	self.scenario_box.contains(rpoint)
     }
 
     pub fn make_scenario_event(&mut self) {
