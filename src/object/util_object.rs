@@ -669,7 +669,8 @@ impl TextButtonTexture {
     }
 }
 
-impl DrawableComponent for TextButtonTexture {
+impl DrawableComponent for TextButtonTexture
+{
     fn draw(&mut self, ctx: &mut ggez::Context) -> ggez::GameResult<()> {
         if self.is_visible() {
             ggraphics::draw(

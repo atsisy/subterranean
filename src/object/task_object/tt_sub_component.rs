@@ -1913,7 +1913,7 @@ pub struct BorrowingRecordBook {
     current_page: usize,
     next_page_ope_mesh: UniTexture,
     prev_page_ope_mesh: UniTexture,
-    scope: AlphaScope,
+    //scope: AlphaScope,
     canvas: MovableWrap<SubScreen>,
 }
 
@@ -1978,7 +1978,7 @@ impl BorrowingRecordBook {
                 None,
                 0,
             ),
-            scope: AlphaScope::new(ctx, 50, 230, numeric::Point2f::new(100.0, 100.0), 0),
+            //scope: AlphaScope::new(ctx, 50, 230, numeric::Point2f::new(100.0, 100.0), 0),
         }
     }
 
@@ -2253,7 +2253,7 @@ impl DrawableComponent for BorrowingRecordBook {
                 self.prev_page_ope_mesh.draw(ctx)?;
                 self.next_page_ope_mesh.draw(ctx)?;
 
-                self.scope.draw(ctx)?;
+                //self.scope.draw(ctx)?;
 
                 sub_screen::pop_screen(ctx);
             }

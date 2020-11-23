@@ -602,8 +602,8 @@ impl TaskTable {
             MovableUniTexture::new(
                 Box::new(UniTexture::new(
                     ctx.ref_texture(TextureID::JunkoTachieDefault),
-                    numeric::Point2f::new(100.0, 20.0),
-                    numeric::Vector2f::new(0.1, 0.1),
+                    numeric::Point2f::new(130.0, 15.0),
+                    numeric::Vector2f::new(0.11, 0.11),
                     0.0,
                     0,
                 )),
