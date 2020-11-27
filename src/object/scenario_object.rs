@@ -434,17 +434,29 @@ impl DrawableComponent for ScenarioAdPage {
     }
 }
 
+
 pub struct SuzunaStatusPages {
     main_page: SuzunaStatusMainPage,
     ad_page: ScenarioAdPage,
+    sched_page: ScenarioSchedPage,
     current_page: usize,
 }
 
 impl SuzunaStatusPages {
-    pub fn new(main_page: SuzunaStatusMainPage, ad_page: ScenarioAdPage) -> Self {
+    pub fn new<'a>(ctx: &mut SuzuContext<'a>, rect: numeric::Rect) -> Self {
         SuzunaStatusPages {
-            main_page: main_page,
-            ad_page: ad_page,
+	    main_page: SuzunaStatusMainPage::new(ctx),
+            ad_page: ScenarioAdPage::new(
+                ctx,
+                numeric::Point2f::new(0.0, 0.0),
+                numeric::Vector2f::new(rect.w, rect.h),
+                0,
+            ),
+	    sched_page: ScenarioSchedPage::new(
+		ctx,
+		numeric::Vector2f::new(rect.w, rect.h),
+		0
+	    ),
             current_page: 0,
         }
     }
@@ -453,12 +465,13 @@ impl SuzunaStatusPages {
         match self.current_page {
             0 => self.main_page.draw(ctx).unwrap(),
             1 => self.ad_page.draw(ctx).unwrap(),
+	    2 => self.sched_page.draw(ctx).unwrap(),
             _ => (),
         }
     }
 
     fn next_page(&mut self) {
-        if self.current_page >= 1 {
+        if self.current_page >= self.page_len() - 1 {
             return;
         }
 
@@ -478,13 +491,32 @@ impl SuzunaStatusPages {
     }
 
     pub fn page_len(&self) -> usize {
-        2
+        3
     }
 
-    pub fn click_handler<'a>(&mut self, ctx: &mut SuzuContext<'a>, click_point: numeric::Point2f) {
+    pub fn click_handler<'a>(&mut self, ctx: &mut SuzuContext<'a>, click_point: numeric::Point2f, button: MouseButton) {
         match self.current_page {
             0 => (),
             1 => self.ad_page.click_handler(ctx, click_point),
+	    2 => self.sched_page.click_handler(ctx, click_point, button),
+            _ => (),
+        }
+    }
+
+    pub fn mouse_button_down<'a>(&mut self, ctx: &mut SuzuContext<'a>, click_point: numeric::Point2f, button: MouseButton) {
+        match self.current_page {
+            0 => (),
+            1 => (),
+	    2 => self.sched_page.mouse_button_down(ctx, click_point, button),
+            _ => (),
+        }
+    }
+
+    pub fn update<'a>(&mut self, ctx: &mut SuzuContext<'a>) {
+        match self.current_page {
+            0 => (),
+            1 => (),
+	    2 => self.sched_page.update(ctx),
             _ => (),
         }
     }
@@ -504,13 +536,15 @@ impl SuzunaStatusScreen {
         rect: numeric::Rect,
         depth: i8,
     ) -> SuzunaStatusScreen {
-        let background_texture = UniTexture::new(
+        let mut background_texture = UniTexture::new(
             ctx.ref_texture(TextureID::TextBackground),
             numeric::Point2f::new(0.0, 0.0),
             numeric::Vector2f::new(1.0, 1.0),
             0.0,
             0,
         );
+
+	background_texture.fit_scale(ctx.context, numeric::Vector2f::new(rect.w, rect.h));
 
         let mut left = UniTexture::new(
             ctx.ref_texture(TextureID::GoNextPageLeft),
@@ -530,21 +564,15 @@ impl SuzunaStatusScreen {
         );
 
         SuzunaStatusScreen {
-            canvas: SubScreen::new(
+	    canvas: SubScreen::new(
                 ctx.context,
-                rect,
-                depth,
-                ggraphics::Color::from_rgba_u32(0xffffffff),
-            ),
+		numeric::Rect::new(rect.x, rect.y, rect.w + 500.0, rect.h + 500.0),
+		depth,
+		ggraphics::Color::from_rgba_u32(0x0),
+	    ),
             background: background_texture,
             pages: SuzunaStatusPages::new(
-                SuzunaStatusMainPage::new(ctx),
-                ScenarioAdPage::new(
-                    ctx,
-                    numeric::Point2f::new(0.0, 0.0),
-                    numeric::Vector2f::new(rect.w, rect.h),
-                    0,
-                ),
+		ctx, rect
             ),
             go_left_texture: left,
             go_right_texture: right,
@@ -562,7 +590,7 @@ impl SuzunaStatusScreen {
         }
     }
 
-    pub fn click_handler<'a>(&mut self, ctx: &mut SuzuContext<'a>, click_point: numeric::Point2f) {
+    pub fn click_handler<'a>(&mut self, ctx: &mut SuzuContext<'a>, click_point: numeric::Point2f, button: MouseButton) {
         if !self.canvas.contains(click_point) {
             return;
         }
@@ -579,23 +607,37 @@ impl SuzunaStatusScreen {
             ctx.process_utility.redraw();
         }
 
-        self.pages.click_handler(ctx, rpoint);
+        self.pages.click_handler(ctx, rpoint, button);
+    }
+
+    pub fn mouse_down_handler<'a>(&mut self, ctx: &mut SuzuContext<'a>, click_point: numeric::Point2f, button: MouseButton) {
+	if !self.canvas.contains(click_point) {
+            return;
+        }
+
+        let rpoint = self.canvas.relative_point(click_point);
+	self.pages.mouse_button_down(ctx, rpoint, button);
+    }
+    
+    pub fn update<'a>(&mut self, ctx: &mut SuzuContext<'a>) {
+	self.pages.update(ctx);
     }
 }
 
 impl DrawableComponent for SuzunaStatusScreen {
     fn draw(&mut self, ctx: &mut ggez::Context) -> ggez::GameResult<()> {
         if self.is_visible() {
-            sub_screen::stack_screen(ctx, &self.canvas);
-
+	    sub_screen::stack_screen(ctx, &self.canvas);
+	    
             self.background.draw(ctx)?;
-            self.pages.draw_page(ctx);
 
             self.go_right_texture.draw(ctx)?;
             self.go_left_texture.draw(ctx)?;
 
-            sub_screen::pop_screen(ctx);
-            self.canvas.draw(ctx).unwrap();
+	    self.pages.draw_page(ctx);
+
+	    sub_screen::pop_screen(ctx);
+	    self.canvas.draw(ctx).unwrap();
         }
 
         Ok(())
@@ -625,14 +667,6 @@ impl DrawableComponent for SuzunaStatusScreen {
     fn get_drawing_depth(&self) -> i8 {
         self.canvas.get_drawing_depth()
     }
-}
-
-impl DrawableObject for SuzunaStatusScreen {
-    impl_drawable_object_for_wrapped! {canvas}
-}
-
-impl TextureObject for SuzunaStatusScreen {
-    impl_texture_object_for_wrapped! {canvas}
 }
 
 pub trait StackableWindow: TextureObject {
@@ -776,6 +810,7 @@ pub struct WeekScheduleWindow {
     background: UniTexture,
     desc_vtext: Vec<VerticalText>,
     sched_vtext: [Option<VerticalText>; 7],
+    week_sched: [Option<game_system::DayWorkType>; 7],
     last_clicked: u32,
 }
 
@@ -838,8 +873,37 @@ impl WeekScheduleWindow {
 	    background: background,
 	    desc_vtext: desc_text,
 	    sched_vtext: [None, None, None, None, None, None, None],
+	    week_sched: [None, None, None, None, None, None, None],
 	    last_clicked: 0,
 	}
+    }
+
+    pub fn all_day_sched_determined(&self) -> bool {
+	for ty in self.week_sched.iter() {
+	    if ty.is_none() {
+		return false;
+	    }
+	}
+
+	true
+    }
+
+    pub fn export_week_sched(&self, first_day: GensoDate) -> Option<game_system::WeekWorkSchedule> {
+	if !self.all_day_sched_determined() {
+	    return None;
+	}
+	
+	let schedule = [
+	    self.week_sched[0].as_ref().unwrap().clone(),
+	    self.week_sched[1].as_ref().unwrap().clone(),
+	    self.week_sched[2].as_ref().unwrap().clone(),
+	    self.week_sched[3].as_ref().unwrap().clone(),
+	    self.week_sched[4].as_ref().unwrap().clone(),
+	    self.week_sched[5].as_ref().unwrap().clone(),
+	    self.week_sched[6].as_ref().unwrap().clone(),
+	];
+	
+	Some(game_system::WeekWorkSchedule::new(first_day, schedule))
     }
 }
 
@@ -940,6 +1004,7 @@ impl StackMessagePassingWindow<WeekScheduleMessage> for WeekScheduleWindow {
 		);
 		
 		self.sched_vtext[self.last_clicked as usize] = Some(vtext);
+		self.week_sched[self.last_clicked as usize] = Some(work_type);
 	    }
 	}
     }
@@ -1037,14 +1102,16 @@ impl ScheduleSelectWindow {
 	    0.0,
 	    0
 	);
+
+	let canvas = SubScreen::new(
+	    ctx.context,
+	    numeric::Rect::new(pos.x, pos.y, frame_area.w + 50.0, frame_area.h + 50.0),
+	    depth,
+	    ggraphics::Color::from_rgba_u32(0),
+	);
 	
 	ScheduleSelectWindow {
-	    canvas: SubScreen::new(
-		ctx.context,
-		numeric::Rect::new(pos.x, pos.y, frame_area.w + 50.0, frame_area.h + 50.0),
-		depth,
-		ggraphics::Color::from_rgba_u32(0),
-	    ),
+	    canvas: canvas,
 	    frame: frame,
 	    background: background,
 	    candidate_vtext: candidate_vtext,
@@ -1151,5 +1218,102 @@ impl StackMessagePassingWindow<WeekScheduleMessage> for ScheduleSelectWindow {
         }
 	
 	None
+    }
+}
+
+pub struct ScenarioSchedPage {
+    header_text: UniText,
+    window_stack: WindowStack<WeekScheduleMessage>,
+    drwob_essential: DrawableObjectEssential,
+}
+
+impl ScenarioSchedPage {
+    pub fn new<'a>(
+        ctx: &mut SuzuContext<'a>,
+        area_size: numeric::Vector2f,
+        depth: i8,
+    ) -> Self {
+        let font_info = FontInformation::new(
+            ctx.resource.get_font(FontID::Cinema),
+            numeric::Vector2f::new(30.0, 30.0),
+            ggraphics::BLACK,
+        );
+        let mut header_text = UniText::new(
+            "鈴奈庵店番計画表".to_string(),
+            numeric::Point2f::new(0.0, 0.0),
+            numeric::Vector2f::new(1.0, 1.0),
+            0.0,
+            0,
+            font_info,
+        );
+
+        header_text.make_center(ctx.context, numeric::Point2f::new(area_size.x / 2.0, 50.0));
+
+	let mut window_stack = WindowStack::new(0);
+	let window = Box::new(
+	    WeekScheduleWindow::new(
+		ctx,
+		numeric::Point2f::new(100.0, 100.0),
+		0
+	    )
+	);
+	window_stack.push(
+	    ctx,
+	    window,
+	);
+	
+        ScenarioSchedPage {
+            header_text: header_text,
+	    window_stack: window_stack,
+            drwob_essential: DrawableObjectEssential::new(true, depth),
+        }
+    }
+
+    pub fn click_handler<'a>(&mut self, ctx: &mut SuzuContext<'a>, click_point: numeric::Point2f, button: MouseButton) {
+	self.window_stack.mouse_click_handler(ctx, click_point, button);
+    }
+
+    pub fn mouse_button_down<'a>(&mut self, ctx: &mut SuzuContext<'a>, click_point: numeric::Point2f, button: MouseButton) {
+	self.window_stack.mouse_down_handler(ctx, click_point, button);
+    }
+
+    pub fn update<'a>(&mut self, ctx: &mut SuzuContext<'a>) {
+	self.window_stack.message_passing(ctx);
+    }
+}
+
+impl DrawableComponent for ScenarioSchedPage {
+    fn draw(&mut self, ctx: &mut ggez::Context) -> ggez::GameResult<()> {
+        if self.is_visible() {
+            self.header_text.draw(ctx)?;
+	    self.window_stack.draw(ctx)?;
+        }
+
+        Ok(())
+    }
+
+    #[inline(always)]
+    fn hide(&mut self) {
+        self.drwob_essential.visible = false;
+    }
+
+    #[inline(always)]
+    fn appear(&mut self) {
+        self.drwob_essential.visible = true;
+    }
+
+    #[inline(always)]
+    fn is_visible(&self) -> bool {
+        self.drwob_essential.visible
+    }
+
+    #[inline(always)]
+    fn set_drawing_depth(&mut self, depth: i8) {
+        self.drwob_essential.drawing_depth = depth;
+    }
+
+    #[inline(always)]
+    fn get_drawing_depth(&self) -> i8 {
+        self.drwob_essential.drawing_depth
     }
 }

@@ -34,22 +34,24 @@ pub struct EventProgressTable {
     
 }
 
-#[derive(Clone)]
-pub struct DayWorkSchedule {
-    work_type: DayWorkType,
-}
-
 pub struct WeekWorkSchedule {
     first_day: GensoDate,
-    schedule: [DayWorkSchedule; 7],
+    schedule: [DayWorkType; 7],
 }
 
 impl WeekWorkSchedule {
+    pub fn new(first_day: GensoDate, schedule: [DayWorkType; 7]) -> Self {
+	WeekWorkSchedule {
+	    first_day: first_day,
+	    schedule: schedule,
+	}
+    }
+    
     pub fn get_first_day(&self) -> GensoDate {
 	self.first_day.clone()
     }
 
-    pub fn get_schedule_at(&self, index: usize) -> DayWorkSchedule {
+    pub fn get_schedule_at(&self, index: usize) -> DayWorkType {
 	if index >= 7 {
 	    panic!("invalid index, greater or equal to 7");
 	}

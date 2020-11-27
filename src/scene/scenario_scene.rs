@@ -38,7 +38,6 @@ pub struct ScenarioScene {
     scene_transition_type: SceneTransition,
     scene_transition_effect: Option<effect_object::ScreenTileEffect>,
     scene_transition: SceneID,
-    window_stack: WindowStack<WeekScheduleMessage>,
     clock: Clock,
 }
 
@@ -76,24 +75,6 @@ impl ScenarioScene {
             ggraphics::Color::from_rgba_u32(0xff),
             0,
         );
-
-	let mut event_list = DelayEventList::new();
-	event_list.add_event(
-            Box::new(|slf: &mut Self, ctx, _| {
-		let window = Box::new(
-		    WeekScheduleWindow::new(
-			ctx,
-			numeric::Point2f::new(100.0, 100.0),
-			0
-		    )
-		);
-		slf.window_stack.push(
-		    ctx,
-		    window,
-		);
-            }),
-	    60,
-        );
 	
         ScenarioScene {
             mouse_info: MouseInformation::new(),
@@ -105,15 +86,14 @@ impl ScenarioScene {
                 0,
             ),
             scene_transition_effect: None,
-            event_list: event_list,
+            event_list: DelayEventList::new(),
             graph_sample: graph_drawer,
             scene_transition: SceneID::Scenario,
             status_screen: SuzunaStatusScreen::new(
                 ctx,
-                numeric::Rect::new(30.0, 25.0, 700.0, 400.0),
+                numeric::Rect::new(30.0, 25.0, 700.0, 470.0),
                 0,
             ),
-	    window_stack: WindowStack::new(0),
             scene_transition_type: SceneTransition::Keep,
             clock: 0,
         }
@@ -277,7 +257,7 @@ impl SceneManager for ScenarioScene {
                 _ => (),
             }
         } else {
-	    self.window_stack.mouse_down_handler(ctx, point, button);
+	    self.status_screen.mouse_down_handler(ctx, point, button);
 	}
     }
 
@@ -298,13 +278,11 @@ impl SceneManager for ScenarioScene {
                 _ => (),
             }
         } else {
-	    self.window_stack.mouse_click_handler(ctx, point, button);
+	    self.status_screen.click_handler(ctx, point, button);
 	    
             match button {
                 MouseButton::Left => {
                     let _t = self.get_current_clock();
-		    
-                    self.status_screen.click_handler(ctx, point);
 
 		    if self.scenario_event.contains_scenario_text_box(point) {
 			self.scenario_event
@@ -325,7 +303,7 @@ impl SceneManager for ScenarioScene {
         } else {
             // 再描画要求はupdate_textメソッドの中で行われている
             self.scenario_event.update_text(ctx);
-	    self.window_stack.message_passing(ctx);
+	    self.status_screen.update(ctx);
         }
 
         self.dark_effect_panel.run_effect(ctx, t);
@@ -341,7 +319,6 @@ impl SceneManager for ScenarioScene {
         //self.scenario_menu.draw(ctx).unwrap();
         //self.graph_sample.draw(ctx).unwrap();
         self.status_screen.draw(ctx).unwrap();
-	self.window_stack.draw(ctx).unwrap();
         self.dark_effect_panel.draw(ctx).unwrap();
 
         if let Some(pause_screen_set) = self.pause_screen_set.as_mut() {

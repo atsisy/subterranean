@@ -501,7 +501,7 @@ impl ChoiceBox {
             choice_panels.push(ChoicePanel::new(UniTexture::new(
                 ctx.ref_texture(TextureID::from_u32(panel).unwrap()),
                 pos,
-                numeric::Vector2f::new(1.0, 1.0),
+                numeric::Vector2f::new(0.5, 0.5),
                 0.0,
                 0,
             )));
@@ -1319,7 +1319,7 @@ impl ScenarioEvent {
             scenario: scenario,
             scenario_box: ScenarioBox::new(
                 ctx,
-                numeric::Rect::new(20.0, rect.h - 300.0, 1326.0, 288.0),
+                numeric::Rect::new(20.0, rect.bottom() - 250.0, 1326.0, 235.0),
                 t,
             ),
             canvas: SubScreen::new(ctx.context, rect, 0, ggraphics::Color::from_rgba_u32(0x00)),
