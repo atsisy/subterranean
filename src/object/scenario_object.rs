@@ -754,6 +754,19 @@ impl<Msg> WindowStack<Msg> {
 	}
     }
 
+    pub fn check_outofclick_hide<'a>(&mut self, ctx: &mut SuzuContext<'a>, p: numeric::Point2f, protect_index: usize) {
+	let len = self.stack.len();
+	let check_nums = len - protect_index;
+
+	for i in 0..check_nums {
+	    if self.stack.front().as_ref().unwrap().contains(ctx.context, p) {
+		break;
+	    }
+
+	    self.stack.pop_front();
+	}
+    }
+
     pub fn message_passing<'a>(&mut self, ctx: &mut SuzuContext<'a>) {
 	let mut msg = None;
 	for window in self.stack.iter_mut() {
@@ -812,6 +825,7 @@ pub struct WeekScheduleWindow {
     sched_vtext: [Option<VerticalText>; 7],
     week_sched: [Option<game_system::DayWorkType>; 7],
     last_clicked: u32,
+    ok_button: SelectButton,
 }
 
 impl WeekScheduleWindow {
@@ -861,11 +875,26 @@ impl WeekScheduleWindow {
 	    0.0,
 	    0
 	);
+
+	let button_texture = Box::new(TextButtonTexture::new(
+            ctx,
+            numeric::Point2f::new(0.0, 0.0),
+            "決定".to_string(),
+            FontInformation::new(
+                ctx.resource.get_font(FontID::Cinema),
+                numeric::Vector2f::new(24.0, 24.0),
+                ggraphics::Color::from_rgba_u32(0xf6e1d5ff),
+            ),
+            5.0,
+            ggraphics::Color::from_rgba_u32(0x5a4f3fff),
+            0,
+        ));
+	let ok_button = SelectButton::new(ctx, numeric::Rect::new(350.0, 280.0, 120.0, 60.0), button_texture); 
 	
 	WeekScheduleWindow {
 	    canvas: SubScreen::new(
 		ctx.context,
-		numeric::Rect::new(pos.x, pos.y, frame_area.w + 50.0, frame_area.h + 50.0),
+		numeric::Rect::new(pos.x, pos.y, frame_area.w + 50.0, frame_area.h + 100.0),
 		depth,
 		ggraphics::Color::from_rgba_u32(0)
 	    ),
@@ -875,6 +904,7 @@ impl WeekScheduleWindow {
 	    sched_vtext: [None, None, None, None, None, None, None],
 	    week_sched: [None, None, None, None, None, None, None],
 	    last_clicked: 0,
+	    ok_button: ok_button,
 	}
     }
 
@@ -925,6 +955,8 @@ impl DrawableComponent for WeekScheduleWindow {
 		    vtext.draw(ctx)?;
 		}
 	    }
+
+	    self.ok_button.draw(ctx)?;
 
             sub_screen::pop_screen(ctx);
             self.canvas.draw(ctx).unwrap();
@@ -1042,6 +1074,14 @@ impl StackMessagePassingWindow<WeekScheduleMessage> for WeekScheduleWindow {
 		    )
 		)
 	    );
+	}
+
+	if self.ok_button.contains(ctx.context, rpoint) {
+	    let date = ctx.savable_data.date.clone();
+	    if let Some(sched) = self.export_week_sched(date) {
+		ctx.savable_data.update_week_schedule(sched);
+		self.ok_button.hide();
+	    }
 	}
 
 	None
@@ -1271,6 +1311,7 @@ impl ScenarioSchedPage {
 
     pub fn click_handler<'a>(&mut self, ctx: &mut SuzuContext<'a>, click_point: numeric::Point2f, button: MouseButton) {
 	self.window_stack.mouse_click_handler(ctx, click_point, button);
+	self.window_stack.check_outofclick_hide(ctx, click_point, 1);
     }
 
     pub fn mouse_button_down<'a>(&mut self, ctx: &mut SuzuContext<'a>, click_point: numeric::Point2f, button: MouseButton) {

@@ -1,13 +1,13 @@
 use super::*;
 
-#[derive(Clone)]
+#[derive(Clone, Copy, Serialize, Deserialize)]
 pub enum GoingOutEvent {
     AkyuTei,
     Dangoya,
     Terakoya,
 }
 
-#[derive(Clone)]
+#[derive(Clone, Copy, Serialize, Deserialize)]
 pub enum DayWorkType {
     ShopWork,
     GoingOut(GoingOutEvent),
@@ -34,6 +34,7 @@ pub struct EventProgressTable {
     
 }
 
+#[derive(Clone, Serialize, Deserialize)]
 pub struct WeekWorkSchedule {
     first_day: GensoDate,
     schedule: [DayWorkType; 7],
@@ -46,6 +47,13 @@ impl WeekWorkSchedule {
 	    schedule: schedule,
 	}
     }
+
+    pub fn new_empty(first_day: GensoDate) -> Self {
+	WeekWorkSchedule {
+	    first_day: first_day,
+	    schedule: [DayWorkType::TakingRest; 7],
+	}
+    }
     
     pub fn get_first_day(&self) -> GensoDate {
 	self.first_day.clone()
@@ -56,5 +64,10 @@ impl WeekWorkSchedule {
 	    panic!("invalid index, greater or equal to 7");
 	}
 	self.schedule[index].clone()
+    }
+
+    pub fn current_schedule(&self, date: &GensoDate) -> bool {
+	let diff = self.first_day.diff_day(date);
+	diff < 7 && diff >= 0
     }
 }

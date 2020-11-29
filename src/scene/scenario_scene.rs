@@ -27,6 +27,11 @@ pub enum ScenarioSelect {
     OpeningEpisode,
 }
 
+pub struct ScenarioContext {
+    pub schedule_redefine: bool,
+    pub scenario_is_finish_and_wait: bool,
+}
+
 pub struct ScenarioScene {
     mouse_info: MouseInformation,
     scenario_event: ScenarioEvent,
@@ -38,6 +43,7 @@ pub struct ScenarioScene {
     scene_transition_type: SceneTransition,
     scene_transition_effect: Option<effect_object::ScreenTileEffect>,
     scene_transition: SceneID,
+    scenario_ctx: ScenarioContext,
     clock: Clock,
 }
 
@@ -75,6 +81,11 @@ impl ScenarioScene {
             ggraphics::Color::from_rgba_u32(0xff),
             0,
         );
+
+	let scenario_ctx = ScenarioContext {
+	    schedule_redefine: ctx.savable_data.week_schedule.current_schedule(&ctx.savable_data.date),
+	    scenario_is_finish_and_wait: false,
+	};
 	
         ScenarioScene {
             mouse_info: MouseInformation::new(),
@@ -95,6 +106,7 @@ impl ScenarioScene {
                 0,
             ),
             scene_transition_type: SceneTransition::Keep,
+	    scenario_ctx: scenario_ctx,
             clock: 0,
         }
     }
@@ -302,7 +314,7 @@ impl SceneManager for ScenarioScene {
         if self.now_paused() {
         } else {
             // 再描画要求はupdate_textメソッドの中で行われている
-            self.scenario_event.update_text(ctx);
+            self.scenario_event.update_text(ctx, &mut self.scenario_ctx);
 	    self.status_screen.update(ctx);
         }
 

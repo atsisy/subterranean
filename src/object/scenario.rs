@@ -11,6 +11,7 @@ use torifune::impl_drawable_object_for_wrapped;
 use torifune::impl_texture_object_for_wrapped;
 
 use super::*;
+use crate::scene::scenario_scene::ScenarioContext;
 use crate::core::{FontID, GameResource, SuzuContext, TextureID, TileBatchTextureID};
 use crate::object::util_object::*;
 use crate::parse_toml_file;
@@ -635,6 +636,61 @@ impl DrawableComponent for ChoiceBox {
 }
 
 ///
+/// 選択肢のデータを保持する構造体
+///
+pub struct ScenarioFinishAndWaitData {
+    scenario_id: ScenarioElementID,
+    background_texture_id: Option<TextureID>,
+    tachie_data: Option<Vec<TextureID>>,
+}
+
+impl ScenarioFinishAndWaitData {
+    pub fn from_toml_object(toml_scripts: &toml::value::Value, _: &GameResource) -> Self {
+        let id = toml_scripts.get("id").unwrap().as_integer().unwrap() as i32;
+
+        let background_texture_id = if let Some(background_tid_str) = toml_scripts.get("background")
+        {
+            Some(TextureID::from_str(background_tid_str.as_str().unwrap()).unwrap())
+        } else {
+            None
+        };
+
+        let tachie_data = if let Some(tachie_table) = toml_scripts.get("tachie-data") {
+            let mut tid_vec = Vec::new();
+            if let Some(tid) = tachie_table.get("right") {
+                tid_vec.push(TextureID::from_str(tid.as_str().unwrap()).unwrap());
+            }
+
+            if let Some(tid) = tachie_table.get("left") {
+                tid_vec.push(TextureID::from_str(tid.as_str().unwrap()).unwrap());
+            }
+
+            Some(tid_vec)
+        } else {
+            None
+        };
+
+        ScenarioFinishAndWaitData {
+            scenario_id: id,
+            background_texture_id: background_texture_id,
+            tachie_data: tachie_data,
+        }
+    }
+
+    pub fn get_scenario_id(&self) -> ScenarioElementID {
+        self.scenario_id
+    }
+
+    pub fn get_background_texture_id(&self) -> Option<TextureID> {
+        self.background_texture_id
+    }
+
+    pub fn get_tachie_data(&self) -> Option<Vec<TextureID>> {
+        self.tachie_data.clone()
+    }
+}
+
+///
 /// SceneIDとSceneElementIDのペア
 /// ScenarioElementIDを持っていて、SceneEventの切り替えと同じインターフェースの
 /// シーンの切り替えが実現できる
@@ -646,6 +702,7 @@ pub enum ScenarioElement {
     Text(ScenarioText),
     ChoiceSwitch(ChoicePatternData),
     SceneTransition(ScenarioTransitionData),
+    FinishAndWait(ScenarioFinishAndWaitData),
 }
 
 impl ScenarioElement {
@@ -654,6 +711,7 @@ impl ScenarioElement {
             Self::Text(text) => text.get_scenario_id(),
             Self::ChoiceSwitch(choice) => choice.get_scenario_id(),
             Self::SceneTransition(transition_data) => transition_data.2,
+	    Self::FinishAndWait(data) => data.get_scenario_id(),
         }
     }
 
@@ -662,6 +720,7 @@ impl ScenarioElement {
             Self::Text(text) => Some(text.get_background_texture_id()),
             Self::ChoiceSwitch(choice) => choice.get_background_texture_id(),
             Self::SceneTransition(_) => None,
+	    Self::FinishAndWait(data) => data.get_background_texture_id(),
         }
     }
 
@@ -670,6 +729,7 @@ impl ScenarioElement {
             Self::Text(text) => text.get_tachie_data(),
             Self::ChoiceSwitch(choice) => choice.get_tachie_data(),
             Self::SceneTransition(_) => None,
+	    Self::FinishAndWait(data) => data.get_tachie_data(),
         }
     }
 }
@@ -701,6 +761,11 @@ impl Scenario {
                             ChoicePatternData::from_toml_object(elem, game_data),
                         ));
                     }
+		    "wait" => {
+			scenario.push(ScenarioElement::FinishAndWait(
+			    ScenarioFinishAndWaitData::from_toml_object(elem, game_data)
+                        ));
+		    }
                     _ => eprintln!("Error"),
                 }
             } else {
@@ -1273,6 +1338,7 @@ pub enum ScenarioEventStatus {
     Scenario = 0,
     Choice,
     SceneTransition,
+    FinishAndWait,
 }
 
 pub struct ScenarioEvent {
@@ -1395,7 +1461,7 @@ impl ScenarioEvent {
     ///
     /// 表示しているテキストや選択肢を更新するメソッド
     ///
-    pub fn update_text<'a>(&mut self, ctx: &mut SuzuContext<'a>) {
+    pub fn update_text<'a>(&mut self, ctx: &mut SuzuContext<'a>, scno_ctx: &mut ScenarioContext) {
         match self.scenario.ref_current_element_mut() {
             ScenarioElement::Text(scenario_text) => {
                 if self.scenario_box.get_text_box_status() == TextBoxStatus::UpdatingText {
@@ -1445,6 +1511,10 @@ impl ScenarioEvent {
                 // 再描画要求
                 ctx.process_utility.redraw();
             }
+	    ScenarioElement::FinishAndWait(_) => {
+		self.status = ScenarioEventStatus::FinishAndWait;
+		scno_ctx.scenario_is_finish_and_wait = true;
+	    }
         }
     }
 
@@ -1512,6 +1582,7 @@ impl ScenarioEvent {
                 self.scenario_box.insert_choice_box(None);
             }
             ScenarioElement::SceneTransition(_) => (),
+	    ScenarioElement::FinishAndWait(_) => (),
         }
     }
 

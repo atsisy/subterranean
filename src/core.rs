@@ -3,6 +3,7 @@ pub mod map_parser;
 pub mod util;
 pub mod game_system;
 
+use game_system::WeekWorkSchedule;
 use ggez::graphics as ggraphics;
 use ggez::*;
 
@@ -570,17 +571,58 @@ impl GensoDate {
         .to_string()
     }
 
-    pub fn add_day(&mut self, day: u8) {
-        self.day += day;
-        if self.day > 31 {
-            self.month += 1;
-            self.day %= 31;
-        }
+    pub fn add_day(&mut self, mut day: i32) {
+	static month: [i32; 12] = [31, 28, 31, 30, 30, 30, 31, 31, 30, 31, 30, 31];
 
-        if self.month > 12 {
-            self.season += 1;
-            self.month %= 12;
-        }
+	while self.day as i32 + day > month[self.month as usize] {
+	    day -= month[self.month as usize] - self.day as i32;
+	    self.day = 1;
+	    self.month += 1;
+
+	    if self.month > 12 {
+		self.season += 1;
+		self.month %= 12;
+            }
+	}
+
+	self.day += day as u8;
+    }
+
+    ///
+    /// self -> 7/1
+    /// date2 -> 7/8
+    /// return 7
+    ///
+    pub fn diff_day(&self, date2: &Self) -> i32 {
+	static month: [i32; 12] = [31, 28, 31, 30, 30, 30, 31, 31, 30, 31, 30, 31];
+
+	let greater_self = self.month.partial_cmp(&date2.month).unwrap();
+
+	match greater_self {
+	    std::cmp::Ordering::Less => {
+		let mut diff = month[self.month as usize] - self.day as i32;
+		for month_index in (self.month + 1)..date2.month {
+		    diff += month[month_index as usize];
+		}
+		diff + date2.day as i32
+	    },
+	    std::cmp::Ordering::Equal => {
+		let diff = if self.day > date2.day {
+		    self.day - date2.day
+		} else {
+		    date2.day - self.day
+		};
+
+		diff as i32
+	    },
+	    std::cmp::Ordering::Greater => {
+		let mut diff = month[date2.month as usize] - date2.day as i32;
+		for month_index in (date2.month + 1)..self.month {
+		    diff += month[month_index as usize];
+		}
+		-(diff + date2.day as i32)
+	    }
+	}
     }
 
     pub fn rental_limit_type(&self, limit: &GensoDate) -> Option<RentalLimit> {
@@ -1423,6 +1465,7 @@ pub struct SavableData {
     pub suzuna_book_pool: SuzunaBookPool,
     pub returning_request_pool: ReturningRequestPool,
     pub date: GensoDate,
+    pub week_schedule: WeekWorkSchedule,
     pub task_result: TaskResult,
     pub suzunaan_status: SuzunaAnStatus,
     pub ad_status: HashMap<SuzunaAdType, bool>,
@@ -1449,6 +1492,7 @@ impl SavableData {
             date: date.clone(),
             task_result: TaskResult::new(),
             suzunaan_status: SuzunaAnStatus::new(),
+	    week_schedule: WeekWorkSchedule::new_empty(date),
             suzuna_book_pool: suzuna_book_pool,
             returning_request_pool: returning_request_pool,
             ad_status: ad_status,
@@ -1513,6 +1557,10 @@ impl SavableData {
         }
 
         total_cost
+    }
+
+    pub fn update_week_schedule(&mut self, sched: WeekWorkSchedule) {
+	self.week_schedule = sched;
     }
 }
 
