@@ -758,7 +758,7 @@ impl<Msg> WindowStack<Msg> {
 	let len = self.stack.len();
 	let check_nums = len - protect_index;
 
-	for i in 0..check_nums {
+	for _ in 0..check_nums {
 	    if self.stack.front().as_ref().unwrap().contains(ctx.context, p) {
 		break;
 	    }
@@ -826,6 +826,7 @@ pub struct WeekScheduleWindow {
     week_sched: [Option<game_system::DayWorkType>; 7],
     last_clicked: u32,
     ok_button: SelectButton,
+    go_event_button: SelectButton,
 }
 
 impl WeekScheduleWindow {
@@ -889,7 +890,22 @@ impl WeekScheduleWindow {
             ggraphics::Color::from_rgba_u32(0x5a4f3fff),
             0,
         ));
-	let ok_button = SelectButton::new(ctx, numeric::Rect::new(350.0, 280.0, 120.0, 60.0), button_texture); 
+	let ok_button = SelectButton::new(ctx, numeric::Rect::new(350.0, 280.0, 120.0, 60.0), button_texture);
+
+	let go_button_texture = Box::new(TextButtonTexture::new(
+            ctx,
+            numeric::Point2f::new(0.0, 0.0),
+            "行動開始".to_string(),
+            FontInformation::new(
+                ctx.resource.get_font(FontID::Cinema),
+                numeric::Vector2f::new(24.0, 24.0),
+                ggraphics::Color::from_rgba_u32(0xf6e1d5ff),
+            ),
+            5.0,
+            ggraphics::Color::from_rgba_u32(0x5a4f3fff),
+            0,
+        ));
+	let go_button = SelectButton::new(ctx, numeric::Rect::new(250.0, 280.0, 120.0, 60.0), go_button_texture);
 	
 	WeekScheduleWindow {
 	    canvas: SubScreen::new(
@@ -905,6 +921,7 @@ impl WeekScheduleWindow {
 	    week_sched: [None, None, None, None, None, None, None],
 	    last_clicked: 0,
 	    ok_button: ok_button,
+	    go_event_button: go_button,
 	}
     }
 
@@ -957,6 +974,7 @@ impl DrawableComponent for WeekScheduleWindow {
 	    }
 
 	    self.ok_button.draw(ctx)?;
+	    self.go_event_button.draw(ctx)?;
 
             sub_screen::pop_screen(ctx);
             self.canvas.draw(ctx).unwrap();

@@ -1003,13 +1003,13 @@ impl CustomerCharacter {
                 if !self.is_goal_now(ctx.context) {
                     return;
                 }
-
+		
                 let goal = self.current_goal;
 
                 // 目的地でマップ位置を上書き
                 self.get_mut_character_object()
                     .set_map_position_with_collision_top_offset(ctx.context, goal);
-
+		
                 // 店の出入口に到達したかチェック
                 self.check_get_out(map_data, goal, exit);
 
@@ -1024,9 +1024,6 @@ impl CustomerCharacter {
                     self.override_move_effect(ctx.context, next_position);
                     self.current_goal = next_position;
                 }
-
-                // 到達しないが、もし到達した場合は、GotOut状態にして削除されるのを待つ
-                self.customer_status = CustomerCharacterStatus::GotOut;
             }
             CustomerCharacterStatus::GoToCheck => {
                 // まだゴールしていない

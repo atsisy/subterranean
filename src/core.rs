@@ -572,11 +572,11 @@ impl GensoDate {
     }
 
     pub fn add_day(&mut self, mut day: i32) {
-	static month: [i32; 12] = [31, 28, 31, 30, 30, 30, 31, 31, 30, 31, 30, 31];
+	static MONTH: [i32; 12] = [31, 28, 31, 30, 30, 30, 31, 31, 30, 31, 30, 31];
 
-	while self.day as i32 + day > month[self.month as usize] {
-	    day -= month[self.month as usize] - self.day as i32;
-	    self.day = 1;
+	while self.day as i32 + day > MONTH[self.month as usize] {
+	    day -= MONTH[self.month as usize] - self.day as i32;
+	    self.day = 0;
 	    self.month += 1;
 
 	    if self.month > 12 {
@@ -594,15 +594,15 @@ impl GensoDate {
     /// return 7
     ///
     pub fn diff_day(&self, date2: &Self) -> i32 {
-	static month: [i32; 12] = [31, 28, 31, 30, 30, 30, 31, 31, 30, 31, 30, 31];
+	static MONTH: [i32; 12] = [31, 28, 31, 30, 30, 30, 31, 31, 30, 31, 30, 31];
 
 	let greater_self = self.month.partial_cmp(&date2.month).unwrap();
 
 	match greater_self {
 	    std::cmp::Ordering::Less => {
-		let mut diff = month[self.month as usize] - self.day as i32;
+		let mut diff = MONTH[self.month as usize] - self.day as i32;
 		for month_index in (self.month + 1)..date2.month {
-		    diff += month[month_index as usize];
+		    diff += MONTH[month_index as usize];
 		}
 		diff + date2.day as i32
 	    },
@@ -616,9 +616,9 @@ impl GensoDate {
 		diff as i32
 	    },
 	    std::cmp::Ordering::Greater => {
-		let mut diff = month[date2.month as usize] - date2.day as i32;
+		let mut diff = MONTH[date2.month as usize] - date2.day as i32;
 		for month_index in (date2.month + 1)..self.month {
-		    diff += month[month_index as usize];
+		    diff += MONTH[month_index as usize];
 		}
 		-(diff + date2.day as i32)
 	    }
@@ -626,17 +626,9 @@ impl GensoDate {
     }
 
     pub fn rental_limit_type(&self, limit: &GensoDate) -> Option<RentalLimit> {
-        let month_diff = limit.month - self.month;
-        let maybe_day_diff = if month_diff == 1 {
-            Some(limit.day + (31 - self.day))
-        } else if month_diff == 0 {
-            Some(limit.day - self.day)
-        } else {
-            None
-        };
+	let day_diff = self.diff_day(&limit);
 
-        if let Some(day_diff) = maybe_day_diff {
-            println!("day_diff: {:?}", day_diff);
+        if day_diff >= 0 {
             if day_diff == 0 {
                 Some(RentalLimit::Today)
             } else if day_diff == 7 {
