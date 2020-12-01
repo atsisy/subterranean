@@ -640,13 +640,17 @@ impl DrawableComponent for ChoiceBox {
 ///
 pub struct ScenarioFinishAndWaitData {
     scenario_id: ScenarioElementID,
+    next_id: ScenarioElementID,
     background_texture_id: Option<TextureID>,
     tachie_data: Option<Vec<TextureID>>,
+    opecode: String,
 }
 
 impl ScenarioFinishAndWaitData {
     pub fn from_toml_object(toml_scripts: &toml::value::Value, _: &GameResource) -> Self {
         let id = toml_scripts.get("id").unwrap().as_integer().unwrap() as i32;
+	let next_id = toml_scripts.get("next-id").unwrap().as_integer().unwrap() as i32;
+	let opecode = toml_scripts.get("opecode").unwrap().as_str().unwrap().to_string();
 
         let background_texture_id = if let Some(background_tid_str) = toml_scripts.get("background")
         {
@@ -672,8 +676,10 @@ impl ScenarioFinishAndWaitData {
 
         ScenarioFinishAndWaitData {
             scenario_id: id,
+	    next_id: next_id,
             background_texture_id: background_texture_id,
             tachie_data: tachie_data,
+	    opecode: opecode,
         }
     }
 
@@ -687,6 +693,14 @@ impl ScenarioFinishAndWaitData {
 
     pub fn get_tachie_data(&self) -> Option<Vec<TextureID>> {
         self.tachie_data.clone()
+    }
+
+    pub fn get_next_id(&self) -> ScenarioElementID {
+	self.next_id
+    }
+
+    pub fn get_opecode(&self) -> &str {
+	self.opecode.as_str()
     }
 }
 
@@ -850,6 +864,30 @@ impl Scenario {
     /// Scenarioの状態遷移を行うメソッド
     /// このメソッドは通常のテキストから他の状態に遷移する際に呼び出す
     ///
+    pub fn go_next_scenario_from_waiting(&mut self) {
+        // 次のScenarioElementIDは、ScenarioTextがフィールドとして保持しているので取り出す
+        let next_id = match self.ref_current_element_mut() {
+            ScenarioElement::FinishAndWait(data) => data.get_next_id(),
+            _ => {
+                panic!("Error: go_next_scenario_from_waiting");
+            }
+        };
+
+        self.update_current_page_index(next_id);
+
+        // 次がシナリオなら初期化する
+        match self.ref_current_element_mut() {
+            ScenarioElement::Text(obj) => {
+                obj.reset();
+            }
+            _ => (),
+        }
+    }
+    
+    ///
+    /// Scenarioの状態遷移を行うメソッド
+    /// このメソッドは通常のテキストから他の状態に遷移する際に呼び出す
+    ///
     pub fn go_next_scenario_from_text_scenario(&mut self) {
         // 次のScenarioElementIDは、ScenarioTextがフィールドとして保持しているので取り出す
         let next_id = match self.ref_current_element_mut() {
@@ -916,6 +954,17 @@ impl Scenario {
 
     pub fn ref_current_element_mut(&mut self) -> &mut ScenarioElement {
         self.scenario.get_mut(self.current_page).unwrap()
+    }
+
+    pub fn get_waiting_opecode(&self) -> Option<&str> {
+	match self.ref_current_element() {
+	    ScenarioElement::FinishAndWait(data) => Some(data.get_opecode()),
+	    _ => None,
+	}
+    }
+
+    pub fn release_waiting(&mut self) {
+	self.go_next_scenario_from_waiting();
     }
 }
 
@@ -1541,6 +1590,27 @@ impl ScenarioEvent {
 
     pub fn get_status(&self) -> ScenarioEventStatus {
         self.status
+    }
+
+    pub fn get_scenario_waiting_opecode(&self) -> Option<&str> {
+	self.scenario.get_waiting_opecode()
+    }
+
+    pub fn release_scenario_waiting(&mut self) {
+	self.scenario.release_waiting();
+    }
+
+    pub fn set_fixed_text_to_scenario_box<'a>(&mut self, ctx: &mut SuzuContext<'a>, text: &str) {
+	self.scenario_box
+	    .text_box
+	    .set_fixed_text(
+		text,
+		FontInformation::new(
+		    ctx.resource.get_font(FontID::Cinema),
+		    numeric::Vector2f::new(32.0, 32.0),
+		    ggraphics::BLACK
+		),
+	    );
     }
 
     ///

@@ -20,6 +20,7 @@ use crate::core::*;
 use crate::core::game_system;
 use crate::object::util_object::*;
 use crate::set_table_frame_cell_center;
+use crate::scene::scenario_scene::ScenarioContext;
 
 use number_to_jk::number_to_jk;
 
@@ -520,6 +521,10 @@ impl SuzunaStatusPages {
             _ => (),
         }
     }
+
+    pub fn show_schedule_page(&mut self) {
+	self.current_page = 2;
+    }
 }
 
 pub struct SuzunaStatusScreen {
@@ -621,6 +626,10 @@ impl SuzunaStatusScreen {
     
     pub fn update<'a>(&mut self, ctx: &mut SuzuContext<'a>) {
 	self.pages.update(ctx);
+    }
+
+    pub fn show_schedule_page(&mut self) {
+	self.pages.show_schedule_page();
     }
 }
 
@@ -826,7 +835,6 @@ pub struct WeekScheduleWindow {
     week_sched: [Option<game_system::DayWorkType>; 7],
     last_clicked: u32,
     ok_button: SelectButton,
-    go_event_button: SelectButton,
 }
 
 impl WeekScheduleWindow {
@@ -892,21 +900,6 @@ impl WeekScheduleWindow {
         ));
 	let ok_button = SelectButton::new(ctx, numeric::Rect::new(350.0, 280.0, 120.0, 60.0), button_texture);
 
-	let go_button_texture = Box::new(TextButtonTexture::new(
-            ctx,
-            numeric::Point2f::new(0.0, 0.0),
-            "行動開始".to_string(),
-            FontInformation::new(
-                ctx.resource.get_font(FontID::Cinema),
-                numeric::Vector2f::new(24.0, 24.0),
-                ggraphics::Color::from_rgba_u32(0xf6e1d5ff),
-            ),
-            5.0,
-            ggraphics::Color::from_rgba_u32(0x5a4f3fff),
-            0,
-        ));
-	let go_button = SelectButton::new(ctx, numeric::Rect::new(250.0, 280.0, 120.0, 60.0), go_button_texture);
-	
 	WeekScheduleWindow {
 	    canvas: SubScreen::new(
 		ctx.context,
@@ -921,7 +914,6 @@ impl WeekScheduleWindow {
 	    week_sched: [None, None, None, None, None, None, None],
 	    last_clicked: 0,
 	    ok_button: ok_button,
-	    go_event_button: go_button,
 	}
     }
 
@@ -974,7 +966,6 @@ impl DrawableComponent for WeekScheduleWindow {
 	    }
 
 	    self.ok_button.draw(ctx)?;
-	    self.go_event_button.draw(ctx)?;
 
             sub_screen::pop_screen(ctx);
             self.canvas.draw(ctx).unwrap();

@@ -1,13 +1,13 @@
 use super::*;
 
-#[derive(Clone, Copy, Serialize, Deserialize)]
+#[derive(Clone, Copy, Serialize, Deserialize, PartialEq)]
 pub enum GoingOutEvent {
     AkyuTei,
     Dangoya,
     Terakoya,
 }
 
-#[derive(Clone, Copy, Serialize, Deserialize)]
+#[derive(Clone, Copy, Serialize, Deserialize, PartialEq)]
 pub enum DayWorkType {
     ShopWork,
     GoingOut(GoingOutEvent),
@@ -37,21 +37,29 @@ pub struct EventProgressTable {
 #[derive(Clone, Serialize, Deserialize)]
 pub struct WeekWorkSchedule {
     first_day: GensoDate,
-    schedule: [DayWorkType; 7],
+    schedule: [Option<DayWorkType>; 7],
 }
 
 impl WeekWorkSchedule {
     pub fn new(first_day: GensoDate, schedule: [DayWorkType; 7]) -> Self {
 	WeekWorkSchedule {
 	    first_day: first_day,
-	    schedule: schedule,
+	    schedule: [
+		Some(schedule[0]),
+		Some(schedule[1]),
+		Some(schedule[2]),
+		Some(schedule[3]),
+		Some(schedule[4]),
+		Some(schedule[5]),
+		Some(schedule[6])
+	    ],
 	}
     }
 
     pub fn new_empty(first_day: GensoDate) -> Self {
 	WeekWorkSchedule {
 	    first_day: first_day,
-	    schedule: [DayWorkType::TakingRest; 7],
+	    schedule: [None, None, None, None, None, None, None],
 	}
     }
     
@@ -63,11 +71,11 @@ impl WeekWorkSchedule {
 	if index >= 7 {
 	    panic!("invalid index, greater or equal to 7");
 	}
-	self.schedule[index].clone()
+	self.schedule[index].as_ref().unwrap().clone()
     }
 
-    pub fn current_schedule(&self, date: &GensoDate) -> bool {
+    pub fn update_is_not_required(&self, date: &GensoDate) -> bool {
 	let diff = self.first_day.diff_day(date);
-	diff < 7 && diff >= 0
+	diff < 7 && diff >= 0 && !self.schedule.contains(&None)
     }
 }

@@ -30,6 +30,8 @@ pub enum ScenarioSelect {
 pub struct ScenarioContext {
     pub schedule_redefine: bool,
     pub scenario_is_finish_and_wait: bool,
+    pub wait_opecode_running: bool,
+    pub schedule_define_done: bool,
 }
 
 pub struct ScenarioScene {
@@ -83,8 +85,10 @@ impl ScenarioScene {
         );
 
 	let scenario_ctx = ScenarioContext {
-	    schedule_redefine: ctx.savable_data.week_schedule.current_schedule(&ctx.savable_data.date),
+	    schedule_redefine: !ctx.savable_data.week_schedule.update_is_not_required(&ctx.savable_data.date),
 	    scenario_is_finish_and_wait: false,
+	    wait_opecode_running: false,
+	    schedule_define_done: false,
 	};
 	
         ScenarioScene {
@@ -191,7 +195,40 @@ impl ScenarioScene {
                 self.scenario_event.key_down_left(ctx);
             }
             _ => (),
-        }
+        } 
+    }
+
+    fn schedule_check<'a>(&mut self, ctx: &mut SuzuContext<'a>) {
+	if !self.scenario_ctx.wait_opecode_running {
+	    if let Some(opecode) = self.scenario_event.get_scenario_waiting_opecode() {
+		self.scenario_ctx.wait_opecode_running = true;
+		match opecode {
+		    "ScheduleCheck" => {
+			self.status_screen.show_schedule_page();
+			self.scenario_event.set_fixed_text_to_scenario_box(
+			    ctx,
+			    if self.scenario_ctx.schedule_redefine {
+				"新しく計画を建てましょう"
+			    } else {
+				"上記の計画で開始します"
+			    }
+			);
+		    },
+		    "ShowSchedule" => {
+			self.status_screen.show_schedule_page();
+			self.scenario_event.release_scenario_waiting();
+		    },
+		    _ => (),
+		}
+	    }
+	}
+	
+	if self.scenario_ctx.schedule_redefine &&
+	    ctx.savable_data.week_schedule.update_is_not_required(&ctx.savable_data.date) &&
+	    !self.scenario_ctx.schedule_define_done {
+		self.scenario_event.release_scenario_waiting();
+		self.scenario_ctx.schedule_define_done = true;
+	    }
     }
 }
 
@@ -316,6 +353,8 @@ impl SceneManager for ScenarioScene {
             // 再描画要求はupdate_textメソッドの中で行われている
             self.scenario_event.update_text(ctx, &mut self.scenario_ctx);
 	    self.status_screen.update(ctx);
+
+	    self.schedule_check(ctx);
         }
 
         self.dark_effect_panel.run_effect(ctx, t);

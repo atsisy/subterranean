@@ -8,7 +8,7 @@ save = 4
 [[scenario-group]]
 type = "scenario"
 id = 10
-next-id = 11
+next-id = 12
 background = "SightBackground1"
 
 [scenario-group.tachie-data]
@@ -16,12 +16,16 @@ right = "JunkoTachieDefault"
 left = "JunkoTachieDefault"
 
    [scenario-group.default-text-attribute]
-   fpc = 0.2
+   fpc = 2.0
    font_scale = 32.0
    color = 0x000000ff
+
+   [[scenario-group.text]]
+   text_src_path = "./resources/scenario/7_23/1.txt"
    	 
    [[scenario-group.text]]
-   text = """テスト用テキスト"""
+   text = """"""
+   
    [[scenario-group.text]]
    text = """本居小鈴
    サンプルテキスト"""
@@ -49,3 +53,14 @@ id = 11
    [[scenario-group.choice-pattern]]
    pattern = "保存"
    jump-id = 4
+
+[[scenario-group]]
+type = "wait"
+id = 12
+next-id = 11
+opecode = "ShowSchedule"
+background = "SightBackground1"
+
+[scenario-group.tachie-data]
+right = "JunkoTachieDefault"
+left = "JunkoTachieDefault"
