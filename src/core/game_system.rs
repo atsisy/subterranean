@@ -67,11 +67,11 @@ impl WeekWorkSchedule {
 	self.first_day.clone()
     }
 
-    pub fn get_schedule_at(&self, index: usize) -> DayWorkType {
+    pub fn get_schedule_at(&self, index: usize) -> Option<DayWorkType> {
 	if index >= 7 {
 	    panic!("invalid index, greater or equal to 7");
 	}
-	self.schedule[index].as_ref().unwrap().clone()
+	self.schedule[index].clone()
     }
 
     pub fn update_is_not_required(&self, date: &GensoDate) -> bool {

@@ -876,6 +876,35 @@ impl WeekScheduleWindow {
 
 	    desc_text.push(vtext);
 	}
+	
+	let mut sched_vtext = [None, None, None, None, None, None, None];
+	let mut week_sched = [None, None, None, None, None, None, None];
+	for i in 0..7 {
+	    let day_work_type = ctx.savable_data.week_schedule.get_schedule_at(i);
+	    if day_work_type.is_none() {
+		continue;
+	    }
+	    
+	    week_sched[i] = day_work_type;
+
+	    let mut vtext = VerticalText::new(
+		day_work_type.unwrap().to_string_jp(),
+		numeric::Point2f::new(0.0, 0.0),
+		numeric::Vector2f::new(1.0, 1.0),
+		0.0,
+		0,
+		font_info.clone()
+	    );
+	    
+            set_table_frame_cell_center!(
+		ctx.context,
+		frame,
+		vtext,
+		numeric::Vector2u::new(i as u32, 1)
+            );
+	    
+	    sched_vtext[i] = Some(vtext);
+	}
 
 	let background = UniTexture::new(
 	    ctx.ref_texture(TextureID::TextBackground),
@@ -910,8 +939,8 @@ impl WeekScheduleWindow {
 	    frame: frame,
 	    background: background,
 	    desc_vtext: desc_text,
-	    sched_vtext: [None, None, None, None, None, None, None],
-	    week_sched: [None, None, None, None, None, None, None],
+	    sched_vtext: sched_vtext,
+	    week_sched: week_sched,
 	    last_clicked: 0,
 	    ok_button: ok_button,
 	}
