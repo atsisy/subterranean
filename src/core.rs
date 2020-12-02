@@ -1736,6 +1736,10 @@ impl<'ctx> SuzuContext<'ctx> {
     pub fn pay_ad_cost(&mut self) -> i32 {
         self.savable_data.pay_ad_cost(self.resource)
     }
+
+    pub fn holding_week_schedule_is_available(&self) -> bool {
+	self.savable_data.week_schedule.update_is_not_required(&self.savable_data.date)
+    }
 }
 
 pub enum TopScene {

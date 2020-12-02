@@ -444,7 +444,11 @@ pub struct SuzunaStatusPages {
 }
 
 impl SuzunaStatusPages {
-    pub fn new<'a>(ctx: &mut SuzuContext<'a>, rect: numeric::Rect) -> Self {
+    pub fn new<'a>(
+	ctx: &mut SuzuContext<'a>,
+	scno_ctx: &ScenarioContext,
+	rect: numeric::Rect
+    ) -> Self {
         SuzunaStatusPages {
 	    main_page: SuzunaStatusMainPage::new(ctx),
             ad_page: ScenarioAdPage::new(
@@ -455,6 +459,7 @@ impl SuzunaStatusPages {
             ),
 	    sched_page: ScenarioSchedPage::new(
 		ctx,
+		scno_ctx,
 		numeric::Vector2f::new(rect.w, rect.h),
 		0
 	    ),
@@ -530,6 +535,7 @@ impl SuzunaStatusPages {
 pub struct SuzunaStatusScreen {
     canvas: SubScreen,
     background: UniTexture,
+    appr_frame: TileBatchFrame,
     pages: SuzunaStatusPages,
     go_left_texture: UniTexture,
     go_right_texture: UniTexture,
@@ -538,6 +544,7 @@ pub struct SuzunaStatusScreen {
 impl SuzunaStatusScreen {
     pub fn new<'a>(
         ctx: &mut SuzuContext<'a>,
+	scno_ctx: &ScenarioContext,
         rect: numeric::Rect,
         depth: i8,
     ) -> SuzunaStatusScreen {
@@ -550,6 +557,14 @@ impl SuzunaStatusScreen {
         );
 
 	background_texture.fit_scale(ctx.context, numeric::Vector2f::new(rect.w, rect.h));
+
+	let appr_frame = TileBatchFrame::new(
+            ctx.resource,
+            TileBatchTextureID::TaishoStyle1,
+            numeric::Rect::new(0.0, 0.0, rect.w, rect.h),
+            numeric::Vector2f::new(0.75, 0.75),
+            0,
+        );
 
         let mut left = UniTexture::new(
             ctx.ref_texture(TextureID::GoNextPageLeft),
@@ -576,8 +591,9 @@ impl SuzunaStatusScreen {
 		ggraphics::Color::from_rgba_u32(0x0),
 	    ),
             background: background_texture,
+	    appr_frame: appr_frame,
             pages: SuzunaStatusPages::new(
-		ctx, rect
+		ctx, scno_ctx, rect
             ),
             go_left_texture: left,
             go_right_texture: right,
@@ -639,6 +655,7 @@ impl DrawableComponent for SuzunaStatusScreen {
 	    sub_screen::stack_screen(ctx, &self.canvas);
 	    
             self.background.draw(ctx)?;
+	    self.appr_frame.draw(ctx)?;
 
             self.go_right_texture.draw(ctx)?;
             self.go_left_texture.draw(ctx)?;
@@ -838,7 +855,12 @@ pub struct WeekScheduleWindow {
 }
 
 impl WeekScheduleWindow {
-    pub fn new<'a>(ctx: &mut SuzuContext<'a>, pos: numeric::Point2f, depth: i8) -> Self {
+    pub fn new<'a>(
+	ctx: &mut SuzuContext<'a>,
+	scno_ctx: &ScenarioContext,
+	pos: numeric::Point2f,
+	depth: i8
+    ) -> Self {
 	let frame = TableFrame::new(
             ctx.resource,
             numeric::Point2f::new(25.0, 25.0),
@@ -927,8 +949,11 @@ impl WeekScheduleWindow {
             ggraphics::Color::from_rgba_u32(0x5a4f3fff),
             0,
         ));
-	let ok_button = SelectButton::new(ctx, numeric::Rect::new(350.0, 280.0, 120.0, 60.0), button_texture);
-
+	let mut ok_button = SelectButton::new(ctx, numeric::Rect::new(350.0, 280.0, 120.0, 60.0), button_texture);
+	if !scno_ctx.schedule_redefine {
+	    ok_button.hide();
+	}
+	
 	WeekScheduleWindow {
 	    canvas: SubScreen::new(
 		ctx.context,
@@ -1094,6 +1119,10 @@ impl StackMessagePassingWindow<WeekScheduleMessage> for WeekScheduleWindow {
 	point: numeric::Point2f,
 	_button: MouseButton
     ) -> Option<Box<dyn StackMessagePassingWindow<WeekScheduleMessage>>> {
+	if ctx.holding_week_schedule_is_available() {
+	    return None;
+	}
+	
 	let rpoint = self.canvas.relative_point(point);
 	let maybe_grid_position = self.frame.get_grid_position(ctx.context, rpoint);
         if let Some(grid_position) = maybe_grid_position {
@@ -1308,6 +1337,7 @@ pub struct ScenarioSchedPage {
 impl ScenarioSchedPage {
     pub fn new<'a>(
         ctx: &mut SuzuContext<'a>,
+	scno_ctx: &ScenarioContext,
         area_size: numeric::Vector2f,
         depth: i8,
     ) -> Self {
@@ -1331,6 +1361,7 @@ impl ScenarioSchedPage {
 	let window = Box::new(
 	    WeekScheduleWindow::new(
 		ctx,
+		scno_ctx,
 		numeric::Point2f::new(100.0, 100.0),
 		0
 	    )

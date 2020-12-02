@@ -85,7 +85,7 @@ impl ScenarioScene {
         );
 
 	let scenario_ctx = ScenarioContext {
-	    schedule_redefine: !ctx.savable_data.week_schedule.update_is_not_required(&ctx.savable_data.date),
+	    schedule_redefine: !ctx.holding_week_schedule_is_available(),
 	    scenario_is_finish_and_wait: false,
 	    wait_opecode_running: false,
 	    schedule_define_done: false,
@@ -106,6 +106,7 @@ impl ScenarioScene {
             scene_transition: SceneID::Scenario,
             status_screen: SuzunaStatusScreen::new(
                 ctx,
+		&scenario_ctx,
                 numeric::Rect::new(30.0, 25.0, 700.0, 470.0),
                 0,
             ),
@@ -224,7 +225,7 @@ impl ScenarioScene {
 	}
 	
 	if self.scenario_ctx.schedule_redefine &&
-	    ctx.savable_data.week_schedule.update_is_not_required(&ctx.savable_data.date) &&
+	    ctx.holding_week_schedule_is_available() &&
 	    !self.scenario_ctx.schedule_define_done {
 		self.scenario_event.release_scenario_waiting();
 		self.scenario_ctx.schedule_define_done = true;

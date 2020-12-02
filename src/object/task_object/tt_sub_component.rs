@@ -1856,7 +1856,7 @@ impl AlphaScope {
                 numeric::Point2f::new(0.0, 0.0),
                 r as f32,
                 0.0001,
-                ggraphics::Color::from_rgba_u32(0x00),
+                ggraphics::Color::from_rgba_u32(alpha as u32),
             );
 
             alpha -= p_alpha;
