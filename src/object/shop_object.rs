@@ -2762,3 +2762,88 @@ impl DrawableObject for ShopMapViewer {
 impl TextureObject for ShopMapViewer {
     impl_texture_object_for_wrapped! {canvas}
 }
+
+pub struct ShopCommandPalette {
+    go_register_button: FramedButton,
+    drwob_essential: DrawableObjectEssential,
+}
+
+impl ShopCommandPalette {
+    pub fn new<'a>(ctx: &mut SuzuContext<'a>, pos: numeric::Point2f, depth: i8) -> Self {
+	let font_info = FontInformation::new(
+	    ctx.resource.get_font(FontID::JpFude1),
+	    numeric::Vector2f::new(32.0, 32.0),
+	    ggraphics::WHITE
+	);
+	
+	let go_register_button = FramedButton::new(
+	    ctx,
+	    numeric::Rect::new(pos.x, pos.y, 120.0, 70.0),
+	    [
+                numeric::Vector2f::new(10.0, 10.0),
+                numeric::Vector2f::new(10.0, 10.0),
+                numeric::Vector2f::new(10.0, 10.0),
+                numeric::Vector2f::new(10.0, 10.0),
+            ],
+	    2.0,
+	    ggraphics::Color::from_rgba(90, 80, 63, 255),
+	    ggraphics::Color::from_rgba(219, 212, 184, 255),
+	    "会計".to_string(),
+	    font_info,
+	    0
+	);
+	ShopCommandPalette {
+	    go_register_button: go_register_button,
+	    drwob_essential: DrawableObjectEssential::new(true, depth),
+	}
+    }
+
+    pub fn mouse_motion_handler<'a>(&mut self, ctx: &mut SuzuContext<'a>, p: numeric::Point2f) {
+	self.go_register_button.mouse_motion_handler(ctx, p);
+    }
+
+    pub fn mouse_left_button_down_handler<'a>(&mut self, ctx: &mut SuzuContext<'a>, p: numeric::Point2f) {
+	self.go_register_button.mouse_left_button_down(ctx, p);
+    }
+
+    pub fn mouse_left_button_up_handler<'a>(&mut self, ctx: &mut SuzuContext<'a>, p: numeric::Point2f) {
+	self.go_register_button.mouse_left_button_up(ctx, p);
+    }
+
+    pub fn contains_buttons(&self, p: numeric::Point2f) -> bool {
+	self.go_register_button.contains(p)
+    }
+}
+
+impl DrawableComponent for ShopCommandPalette {
+    fn draw(&mut self, ctx: &mut ggez::Context) -> ggez::GameResult<()> {
+	self.go_register_button.draw(ctx)?;
+
+        Ok(())
+    }
+
+    #[inline(always)]
+    fn hide(&mut self) {
+        self.drwob_essential.visible = false;
+    }
+
+    #[inline(always)]
+    fn appear(&mut self) {
+        self.drwob_essential.visible = true;
+    }
+
+    #[inline(always)]
+    fn is_visible(&self) -> bool {
+        self.drwob_essential.visible
+    }
+
+    #[inline(always)]
+    fn set_drawing_depth(&mut self, depth: i8) {
+        self.drwob_essential.drawing_depth = depth;
+    }
+
+    #[inline(always)]
+    fn get_drawing_depth(&self) -> i8 {
+        self.drwob_essential.drawing_depth
+    }
+}

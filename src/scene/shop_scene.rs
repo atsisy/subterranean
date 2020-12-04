@@ -16,7 +16,7 @@ use ggez::input::mouse::MouseButton;
 use torifune::numeric;
 
 use super::*;
-use crate::core::map_parser as mp;
+use crate::core::{WINDOW_SIZE_X, WINDOW_SIZE_Y, map_parser as mp};
 use crate::core::{
     BookInformation, FontID, MouseInformation, ResultReport, SavableData, SuzuContext,
     TileBatchTextureID,
@@ -593,6 +593,7 @@ pub struct ShopScene {
     notification_area: NotificationArea,
     begining_save_data: SavableData,
     drawable_shop_clock: DrawableShopClock,
+    shop_command_palette: ShopCommandPalette,
 }
 
 impl ShopScene {
@@ -706,6 +707,11 @@ impl ShopScene {
             ),
             begining_save_data: begining_save_data,
             drawable_shop_clock: drawble_shop_clock,
+	    shop_command_palette: ShopCommandPalette::new(
+		ctx,
+		numeric::Point2f::new(WINDOW_SIZE_X as f32 * 3.0 / 4.0, WINDOW_SIZE_Y as f32 / 1.5),
+		0
+	    ),
         }
     }
 
@@ -1368,7 +1374,7 @@ impl ShopScene {
     ///
     pub fn update_shop_clock_regular<'a>(&mut self, ctx: &mut SuzuContext<'a>, t: Clock) {
         if self.get_current_clock() % 20 == 0 {
-            self.shop_clock.add_minute(20);
+            self.shop_clock.add_minute(1);
             self.drawable_shop_clock.update_time(&self.shop_clock);
 
             if self.shop_clock.equals(12, 0) {
@@ -1621,8 +1627,12 @@ impl SceneManager for ShopScene {
             }
         } else {
             if ggez::input::mouse::button_pressed(ctx.context, MouseButton::Left) {
-                self.start_mouse_move(ctx.context, point);
+		if !self.shop_command_palette.contains_buttons(point) {
+                    self.start_mouse_move(ctx.context, point);
+		}
             }
+
+	    self.shop_command_palette.mouse_motion_handler(ctx, point);
         }
     }
 
@@ -1646,7 +1656,11 @@ impl SceneManager for ShopScene {
         } else {
             match button {
                 MouseButton::Left => {
-                    self.start_mouse_move(ctx.context, point);
+		    if !self.shop_command_palette.contains_buttons(point) {
+			self.start_mouse_move(ctx.context, point);
+		    }
+		    
+		    self.shop_command_palette.mouse_left_button_down_handler(ctx, point);
                 }
                 MouseButton::Right => {
                     self.player.reset_speed();
@@ -1701,6 +1715,7 @@ impl SceneManager for ShopScene {
                     }
 
                     self.player.reset_speed();
+		    self.shop_command_palette.mouse_left_button_up_handler(ctx, point);
                 }
                 MouseButton::Right => {
                     if self.shop_map_is_staged {
@@ -1907,6 +1922,7 @@ impl SceneManager for ShopScene {
         self.shop_map.draw(ctx).unwrap();
 
         self.drawable_shop_clock.draw(ctx).unwrap();
+	self.shop_command_palette.draw(ctx).unwrap();
 
         self.dark_effect_panel.draw(ctx).unwrap();
 

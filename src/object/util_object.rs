@@ -1947,3 +1947,165 @@ impl DrawableComponent for CheckBox {
         self.drwob_essential.drawing_depth
     }
 }
+
+pub enum ButtonStatus {
+    Hovered,
+    Pressed,
+    None,
+}
+
+pub struct FramedButton {
+    button_status: ButtonStatus,
+    texture: shape::FramedTextBalloon,
+    text: UniText,
+    drwob_essential: DrawableObjectEssential,
+}
+
+impl FramedButton {
+    pub fn new<'a>(
+	ctx: &mut SuzuContext<'a>,
+	rect: numeric::Rect,
+	borders: [numeric::Vector2f; 4],
+	frame_width: f32,
+	inner_color: ggraphics::Color,
+	outer_color: ggraphics::Color,
+	text: String,
+	font_info: FontInformation,
+	depth: i8) -> Self {
+	let texture = shape::FramedTextBalloon::new(
+	    ctx.context,
+	    rect,
+	    borders,
+	    frame_width,
+	    inner_color,
+	    outer_color,
+	    0
+	);
+
+	let mut text = UniText::new(
+	    text,
+	    numeric::Point2f::new(0.0, 0.0),
+	    numeric::Vector2f::new(1.0, 1.0),
+	    0.0,
+	    0,
+	    font_info
+	);
+	let area = texture.get_drawing_area();
+	text.make_center(
+	    ctx.context,
+	    numeric::Point2f::new(area.x + (area.w / 2.0), area.y + (area.h / 2.0))
+	);
+
+	let mut button = FramedButton {
+	    button_status: ButtonStatus::None,
+	    texture: texture,
+	    text: text,
+	    drwob_essential: DrawableObjectEssential::new(true, depth),
+	};
+
+	button.make_this_none_status(ctx);
+	button
+    }
+
+    
+    
+    fn make_this_hovered_status<'a>(&mut self, ctx: &mut SuzuContext<'a>) {
+	self.button_status = ButtonStatus::Hovered;
+	self.text.set_color(ggraphics::Color::from_rgba_u32(0xffffffff));
+	self.texture.set_inner_color_filter(ggraphics::Color::from_rgba_u32(0xffffffff));
+	self.texture.set_outer_color_filter(ggraphics::Color::from_rgba_u32(0xffffffff));
+	ctx.process_utility.redraw();
+    }
+
+    fn make_this_pressed_status<'a>(&mut self, ctx: &mut SuzuContext<'a>) {
+	self.button_status = ButtonStatus::Pressed;
+	self.texture.set_inner_color_filter(ggraphics::Color::from_rgba_u32(0xddddddff));
+	self.texture.set_outer_color_filter(ggraphics::Color::from_rgba_u32(0xddddddff));
+	ctx.process_utility.redraw();
+    }
+
+    fn make_this_none_status<'a>(&mut self, ctx: &mut SuzuContext<'a>) {
+	self.button_status = ButtonStatus::None;
+	self.texture.set_inner_color_filter(ggraphics::Color::from_rgba_u32(0xffffffff));
+	self.texture.set_outer_color_filter(ggraphics::Color::from_rgba_u32(0xf0f0f0ff));
+	ctx.process_utility.redraw();
+    }
+    
+    pub fn contains(&self, p: numeric::Point2f) -> bool {
+	self.texture.contains(p)
+    }
+
+    pub fn mouse_motion_handler<'a>(&mut self, ctx: &mut SuzuContext<'a>, p: numeric::Point2f) {
+	if self.contains(p) {
+	    match self.button_status {
+		ButtonStatus::None => self.make_this_hovered_status(ctx),
+		_ => (),
+	    }
+	    return;
+	}
+
+	match self.button_status {
+	    ButtonStatus::Hovered | ButtonStatus::Pressed => self.make_this_none_status(ctx),
+	    _ => (),
+	}
+    }
+
+    pub fn mouse_left_button_down<'a>(&mut self, ctx: &mut SuzuContext<'a>, p: numeric::Point2f) {
+	if self.contains(p) {
+	    match self.button_status {
+		ButtonStatus::None | ButtonStatus::Hovered => self.make_this_pressed_status(ctx),
+		_ => (),
+	    }
+	    return;
+	}
+
+	match self.button_status {
+	    ButtonStatus::Hovered | ButtonStatus::Pressed => self.make_this_none_status(ctx),
+	    _ => (),
+	}
+    }
+
+    pub fn mouse_left_button_up<'a>(&mut self, ctx: &mut SuzuContext<'a>, p: numeric::Point2f) {
+	if self.contains(p) {
+	    self.make_this_hovered_status(ctx);
+	} else {
+	    self.make_this_none_status(ctx);
+	}
+    }
+}
+
+impl DrawableComponent for FramedButton {
+    fn draw(&mut self, ctx: &mut ggez::Context) -> ggez::GameResult<()> {
+        if self.is_visible() {
+	    self.texture.draw(ctx)?;
+	    self.text.draw(ctx)?;
+        }
+
+        Ok(())
+    }
+
+    #[inline(always)]
+    fn hide(&mut self) {
+        self.drwob_essential.visible = false;
+    }
+
+    #[inline(always)]
+    fn appear(&mut self) {
+        self.drwob_essential.visible = true;
+    }
+
+    #[inline(always)]
+    fn is_visible(&self) -> bool {
+        self.drwob_essential.visible
+    }
+
+    #[inline(always)]
+    fn set_drawing_depth(&mut self, depth: i8) {
+        self.drwob_essential.drawing_depth = depth;
+    }
+
+    #[inline(always)]
+    fn get_drawing_depth(&self) -> i8 {
+        self.drwob_essential.drawing_depth
+    }
+}
