@@ -2763,8 +2763,12 @@ impl TextureObject for ShopMapViewer {
     impl_texture_object_for_wrapped! {canvas}
 }
 
+pub enum CommandPaletteFunc {
+    Action,
+}
+
 pub struct ShopCommandPalette {
-    go_register_button: FramedButton,
+    action_button: FramedButton,
     drwob_essential: DrawableObjectEssential,
 }
 
@@ -2776,7 +2780,7 @@ impl ShopCommandPalette {
 	    ggraphics::WHITE
 	);
 	
-	let go_register_button = FramedButton::new(
+	let action_button = FramedButton::new(
 	    ctx,
 	    numeric::Rect::new(pos.x, pos.y, 120.0, 70.0),
 	    [
@@ -2788,36 +2792,44 @@ impl ShopCommandPalette {
 	    2.0,
 	    ggraphics::Color::from_rgba(90, 80, 63, 255),
 	    ggraphics::Color::from_rgba(219, 212, 184, 255),
-	    "会計".to_string(),
+	    "行動".to_string(),
 	    font_info,
 	    0
 	);
 	ShopCommandPalette {
-	    go_register_button: go_register_button,
+	    action_button: action_button,
 	    drwob_essential: DrawableObjectEssential::new(true, depth),
 	}
     }
 
     pub fn mouse_motion_handler<'a>(&mut self, ctx: &mut SuzuContext<'a>, p: numeric::Point2f) {
-	self.go_register_button.mouse_motion_handler(ctx, p);
+	self.action_button.mouse_motion_handler(ctx, p);
     }
 
     pub fn mouse_left_button_down_handler<'a>(&mut self, ctx: &mut SuzuContext<'a>, p: numeric::Point2f) {
-	self.go_register_button.mouse_left_button_down(ctx, p);
+	self.action_button.mouse_left_button_down(ctx, p);
     }
 
     pub fn mouse_left_button_up_handler<'a>(&mut self, ctx: &mut SuzuContext<'a>, p: numeric::Point2f) {
-	self.go_register_button.mouse_left_button_up(ctx, p);
+	self.action_button.mouse_left_button_up(ctx, p);
     }
 
     pub fn contains_buttons(&self, p: numeric::Point2f) -> bool {
-	self.go_register_button.contains(p)
+	self.action_button.contains(p)
+    }
+
+    pub fn check_button_func(&self, p: numeric::Point2f) -> Option<CommandPaletteFunc> {
+	if self.action_button.contains(p) {
+	    return Some(CommandPaletteFunc::Action);
+	}
+
+	None
     }
 }
 
 impl DrawableComponent for ShopCommandPalette {
     fn draw(&mut self, ctx: &mut ggez::Context) -> ggez::GameResult<()> {
-	self.go_register_button.draw(ctx)?;
+	self.action_button.draw(ctx)?;
 
         Ok(())
     }

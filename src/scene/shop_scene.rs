@@ -1093,6 +1093,16 @@ impl ShopScene {
         self.move_playable_character_y(ctx, t);
     }
 
+    pub fn command_palette_go_register_handler(&mut self) {
+	
+    }
+    
+    pub fn command_palette_handler(&mut self, func: CommandPaletteFunc) {
+	match func {
+	    CommandPaletteFunc::Action => self.command_palette_go_register_handler(),
+	}
+    }
+
     pub fn run_builtin_event<'a>(
         &mut self,
         ctx: &mut SuzuContext<'a>,
@@ -1661,6 +1671,19 @@ impl SceneManager for ShopScene {
 		    }
 		    
 		    self.shop_command_palette.mouse_left_button_down_handler(ctx, point);
+		    if let Some(func) = self.shop_command_palette.check_button_func(point) {
+			match func {
+			    CommandPaletteFunc::Action => {
+				if let Some(scenario_box) = self.map.scenario_box.as_mut() {
+				    if scenario_box.get_text_box_status() == TextBoxStatus::FixedText {
+					self.map.scenario_box = None;
+				    }
+				} else {
+				    self.check_event_panel_onmap(ctx, EventTrigger::Action);
+				}
+			    }
+			}
+		    }
                 }
                 MouseButton::Right => {
                     self.player.reset_speed();
@@ -1698,23 +1721,25 @@ impl SceneManager for ShopScene {
         } else {
             match button {
                 MouseButton::Left => {
-                    if self.shop_special_object.is_enable_now() {
-                        if !self
-                            .shop_special_object
-                            .contains_shelving_select_ui_windows(ctx, point)
-                        {
-                            self.try_hide_shelving_select_ui(ctx);
-                        }
+		    if !self.shop_command_palette.contains_buttons(point) {
+			if self.shop_special_object.is_enable_now() {
+                            if !self
+				.shop_special_object
+				.contains_shelving_select_ui_windows(ctx, point)
+                            {
+				self.try_hide_shelving_select_ui(ctx);
+                            }
+			    
+                            if !self
+				.shop_special_object
+				.contains_storing_select_ui_windows(ctx, point)
+                            {
+				self.try_hide_storing_select_ui(ctx);
+                            }
+			}
+		    }
 
-                        if !self
-                            .shop_special_object
-                            .contains_storing_select_ui_windows(ctx, point)
-                        {
-                            self.try_hide_storing_select_ui(ctx);
-                        }
-                    }
-
-                    self.player.reset_speed();
+		    self.player.reset_speed();
 		    self.shop_command_palette.mouse_left_button_up_handler(ctx, point);
                 }
                 MouseButton::Right => {
