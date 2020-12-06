@@ -846,6 +846,7 @@ impl<Msg> DrawableComponent for WindowStack<Msg> {
 pub struct WeekScheduleWindow {
     canvas: SubScreen,
     frame: TableFrame,
+    current_mark: TileBatchFrame,
     background: UniTexture,
     desc_vtext: Vec<VerticalText>,
     sched_vtext: [Option<VerticalText>; 7],
@@ -953,6 +954,19 @@ impl WeekScheduleWindow {
 	if !scno_ctx.schedule_redefine {
 	    ok_button.hide();
 	}
+
+	let date_diff = ctx.savable_data.week_schedule.get_first_day().diff_day(&ctx.savable_data.date);
+	let p = frame.get_grid_topleft(numeric::Vector2u::new(date_diff.abs() as u32, 0), numeric::Vector2f::new(0.0, 0.0));
+	let cell_size = frame.get_cell_size(numeric::Vector2u::new(date_diff.abs() as u32, 0));
+	let frame_height = frame.get_area().h;
+	
+	let current_mark = TileBatchFrame::new(
+	    ctx.resource,
+	    TileBatchTextureID::RedOldStyleFrame,
+	    numeric::Rect::new(p.x + 8.0, p.y + 8.0, cell_size.x + 32.0, frame_height + 32.0),
+	    numeric::Vector2f::new(0.5, 0.5),
+	    0
+	);
 	
 	WeekScheduleWindow {
 	    canvas: SubScreen::new(
@@ -962,6 +976,7 @@ impl WeekScheduleWindow {
 		ggraphics::Color::from_rgba_u32(0)
 	    ),
 	    frame: frame,
+	    current_mark: current_mark,
 	    background: background,
 	    desc_vtext: desc_text,
 	    sched_vtext: sched_vtext,
@@ -1008,6 +1023,7 @@ impl DrawableComponent for WeekScheduleWindow {
 
 	    self.background.draw(ctx)?;
 	    self.frame.draw(ctx)?;
+	    self.current_mark.draw(ctx)?;
 
 	    for vtext in self.desc_vtext.iter_mut() {
 		vtext.draw(ctx)?;

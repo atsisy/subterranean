@@ -476,6 +476,13 @@ impl TableFrame {
         let next_position = numeric::Point2f::new(point.x - half_size.x, point.y - half_size.y);
         self.set_position(next_position);
     }
+
+    pub fn get_cell_size(&self, p: numeric::Vector2u) -> numeric::Vector2f {
+	numeric::Vector2f::new(
+	    *self.frame_data.each_rows_size.get(p.x as usize).unwrap(),
+	    *self.frame_data.each_cols_size.get(p.y as usize).unwrap(),
+	)
+    }
 }
 
 impl DrawableComponent for TableFrame {

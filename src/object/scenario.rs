@@ -19,6 +19,9 @@ use crate::scene::{SceneID, SceneTransition};
 use std::str::FromStr;
 
 pub type ScenarioElementID = i32;
+const SCENAIRO_DEFAULT_SHOP_WORK_ID: ScenarioElementID = -1;
+const SCENAIRO_DEFAULT_GOINGOUT_WORK_ID: ScenarioElementID = -2;
+const SCENAIRO_DEFAULT_REST_WORK_ID: ScenarioElementID = -3;
 
 pub struct ScenarioTextAttribute {
     pub fpc: f32,
@@ -748,15 +751,56 @@ impl ScenarioElement {
     }
 }
 
+pub struct ScenarioElementPool {
+    pool: Vec<ScenarioElement>,
+}
+
+impl ScenarioElementPool {
+    pub fn new_empty() -> Self {
+	ScenarioElementPool {
+	    pool: Vec::new(),
+	}
+    }
+    
+    pub fn add(&mut self, elem: ScenarioElement) {
+	self.pool.push(elem);
+    }
+    
+    ///
+    /// 次のScenarioElementIDから、ScenarioElementのインデックスを得るメソッド
+    ///
+    pub fn find_index_of_specified_scenario_id(&self, scenario_id: ScenarioElementID) -> usize {
+        for (index, elem) in self.pool.iter().enumerate() {
+            if scenario_id == elem.get_scenario_id() {
+                return index;
+            }
+        }
+
+        0
+    }
+
+    pub fn len(&self) -> usize {
+	self.pool.len()
+    }
+
+    pub fn seq_access(&self, index: usize) -> Option<&ScenarioElement> {
+	self.pool.get(index)
+    }
+
+    pub fn seq_access_mut(&mut self, index: usize) -> Option<&mut ScenarioElement> {
+	self.pool.get_mut(index)
+    }
+}
+
 pub struct Scenario {
-    scenario: Vec<ScenarioElement>,
+    scenario: ScenarioElementPool,
     element_id_stack: LinkedList<ScenarioElementID>,
     current_page: usize,
 }
 
 impl Scenario {
     pub fn new(file_path: &str, game_data: &GameResource) -> Self {
-        let mut scenario = Vec::new();
+        let mut scenario = ScenarioElementPool::new_empty();
 
         let root = parse_toml_file!(file_path);
 
@@ -768,15 +812,15 @@ impl Scenario {
             if let Some(type_info) = elem.get("type") {
                 match type_info.as_str().unwrap() {
                     "scenario" => {
-                        scenario.push(ScenarioElement::Text(ScenarioText::new(elem, game_data)));
+                        scenario.add(ScenarioElement::Text(ScenarioText::new(elem, game_data)));
                     }
                     "choice" => {
-                        scenario.push(ScenarioElement::ChoiceSwitch(
+                        scenario.add(ScenarioElement::ChoiceSwitch(
                             ChoicePatternData::from_toml_object(elem, game_data),
                         ));
                     }
 		    "wait" => {
-			scenario.push(ScenarioElement::FinishAndWait(
+			scenario.add(ScenarioElement::FinishAndWait(
 			    ScenarioFinishAndWaitData::from_toml_object(elem, game_data)
                         ));
 		    }
@@ -789,7 +833,7 @@ impl Scenario {
 
         // シーン切り替えのScenarioElementをロード
         let scene_transition = root["scene-transition"].as_table().unwrap();
-        scenario.push(ScenarioElement::SceneTransition(ScenarioTransitionData(
+        scenario.add(ScenarioElement::SceneTransition(ScenarioTransitionData(
             SceneID::Scenario,
             SceneTransition::SwapTransition,
             scene_transition
@@ -798,12 +842,12 @@ impl Scenario {
                 .as_integer()
                 .unwrap() as i32,
         )));
-        scenario.push(ScenarioElement::SceneTransition(ScenarioTransitionData(
+        scenario.add(ScenarioElement::SceneTransition(ScenarioTransitionData(
             SceneID::SuzunaShop,
             SceneTransition::SwapTransition,
             scene_transition.get("dream").unwrap().as_integer().unwrap() as i32,
         )));
-        scenario.push(ScenarioElement::SceneTransition(ScenarioTransitionData(
+        scenario.add(ScenarioElement::SceneTransition(ScenarioTransitionData(
             SceneID::Save,
             SceneTransition::StackingTransition,
             scene_transition.get("save").unwrap().as_integer().unwrap() as i32,
@@ -818,27 +862,14 @@ impl Scenario {
         scenario.update_current_page_index(first_scenario_id as ScenarioElementID);
         scenario
     }
-
-    ///
-    /// 次のScenarioElementIDから、ScenarioElementのインデックスを得るメソッド
-    ///
-    fn find_index_of_specified_scenario_id(&self, scenario_id: ScenarioElementID) -> usize {
-        for (index, elem) in self.scenario.iter().enumerate() {
-            if scenario_id == elem.get_scenario_id() {
-                return index;
-            }
-        }
-
-        0
-    }
-
+    
     ///
     /// 次のScenarioElementIDを記録して、かつ、そのインデックスを求め、現在のシナリオとしてセットするメソッド
     ///
     pub fn update_current_page_index(&mut self, scenario_element_id: ScenarioElementID) {
         // 次のScenarioElementIDから、ScenarioElementのインデックスを得る
         self.element_id_stack.push_back(scenario_element_id);
-        let index = self.find_index_of_specified_scenario_id(scenario_element_id);
+        let index = self.scenario.find_index_of_specified_scenario_id(scenario_element_id);
         self.current_page = index;
     }
 
@@ -849,7 +880,7 @@ impl Scenario {
 
         let turn_backed_id = self.element_id_stack.back().unwrap();
 
-        self.current_page = self.find_index_of_specified_scenario_id(*turn_backed_id);
+        self.current_page = self.scenario.find_index_of_specified_scenario_id(*turn_backed_id);
 
         // シナリオを初期化する
         match self.ref_current_element_mut() {
@@ -949,11 +980,11 @@ impl Scenario {
     }
 
     pub fn ref_current_element(&self) -> &ScenarioElement {
-        self.scenario.get(self.current_page).unwrap()
+        self.scenario.seq_access(self.current_page).unwrap()
     }
 
     pub fn ref_current_element_mut(&mut self) -> &mut ScenarioElement {
-        self.scenario.get_mut(self.current_page).unwrap()
+        self.scenario.seq_access_mut(self.current_page).unwrap()
     }
 
     pub fn get_waiting_opecode(&self) -> Option<&str> {

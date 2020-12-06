@@ -78,4 +78,13 @@ impl WeekWorkSchedule {
 	let diff = self.first_day.diff_day(date);
 	diff < 7 && diff >= 0 && !self.schedule.contains(&None)
     }
+
+    pub fn get_schedule_of(&self, day: &GensoDate) -> Option<DayWorkType> {
+	let diff = self.first_day.diff_day(day);
+	if diff < 0 {
+	    return None;
+	}
+
+	self.get_schedule_at(diff as usize)
+    }
 }
