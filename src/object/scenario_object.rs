@@ -960,14 +960,18 @@ impl WeekScheduleWindow {
 	let cell_size = frame.get_cell_size(numeric::Vector2u::new(date_diff.abs() as u32, 0));
 	let frame_height = frame.get_area().h;
 	
-	let current_mark = TileBatchFrame::new(
+	let mut current_mark = TileBatchFrame::new(
 	    ctx.resource,
 	    TileBatchTextureID::RedOldStyleFrame,
 	    numeric::Rect::new(p.x + 8.0, p.y + 8.0, cell_size.x + 32.0, frame_height + 32.0),
 	    numeric::Vector2f::new(0.5, 0.5),
 	    0
 	);
-	
+    
+    if scno_ctx.schedule_redefine {
+        current_mark.hide();
+    }
+    
 	WeekScheduleWindow {
 	    canvas: SubScreen::new(
 		ctx.context,
@@ -982,7 +986,7 @@ impl WeekScheduleWindow {
 	    sched_vtext: sched_vtext,
 	    week_sched: week_sched,
 	    last_clicked: 0,
-	    ok_button: ok_button,
+        ok_button: ok_button,
 	}
     }
 
@@ -1163,7 +1167,8 @@ impl StackMessagePassingWindow<WeekScheduleMessage> for WeekScheduleWindow {
 	    let date = ctx.savable_data.date.clone();
 	    if let Some(sched) = self.export_week_sched(date) {
 		ctx.savable_data.update_week_schedule(sched);
-		self.ok_button.hide();
+        self.ok_button.hide();
+        self.current_mark.appear();
 	    }
 	}
 

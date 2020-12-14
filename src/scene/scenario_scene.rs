@@ -189,12 +189,6 @@ impl ScenarioScene {
                 let t = self.get_current_clock();
                 self.enter_pause_screen(ctx, t);
             }
-            tdev::VirtualKey::Right => {
-                self.scenario_event.key_down_right(ctx);
-            }
-            tdev::VirtualKey::Left => {
-                self.scenario_event.key_down_left(ctx);
-            }
             _ => (),
         } 
     }

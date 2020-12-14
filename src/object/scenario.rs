@@ -486,7 +486,7 @@ impl TextureObject for ChoicePanel {
 pub struct ChoiceBox {
     choice_text: Vec<String>,
     panels: Vec<ChoicePanel>,
-    selecting: usize,
+    selecting: Option<usize>,
     canvas: SubScreen,
 }
 
@@ -536,67 +536,40 @@ impl ChoiceBox {
         for panel in &mut panels {
             panel.set_color(ggraphics::Color::from_rgba_u32(0xaaaaaaff));
         }
-        panels
-            .get_mut(0)
-            .unwrap()
-            .set_color(ggraphics::Color::from_rgba_u32(0xffffffff));
 
         ChoiceBox {
             panels: panels,
             choice_text: choice_text,
-            selecting: 0,
+            selecting: None,
             canvas: SubScreen::new(ctx.context, pos_rect, 0, ggraphics::Color::from_rgba_u32(0)),
         }
     }
 
-    pub fn get_selecting_index(&self) -> usize {
-        self.selecting
+    pub fn get_selecting_index(&self) -> Option<usize> {
+        self.selecting.clone()
     }
 
-    pub fn get_selecting_str(&self) -> &str {
-        self.choice_text
-            .get(self.get_selecting_index())
-            .as_ref()
-            .unwrap()
-    }
+    pub fn get_selecting_str(&self) -> Option<&str> {
+	if let Some(index) = self.get_selecting_index() {
+	    if let Some(s) = self.choice_text.get(index) {
+		return Some(s);
+	    } 
+	}
 
-    pub fn move_right(&mut self) {
-        if self.choice_text.len() > (self.selecting + 1) {
-            self.panels
-                .get_mut(self.selecting)
-                .unwrap()
-                .set_color(ggraphics::Color::from_rgba_u32(0xaaaaaaff));
-            self.selecting += 1;
-            self.panels
-                .get_mut(self.selecting)
-                .unwrap()
-                .set_color(ggraphics::Color::from_rgba_u32(0xffffffff));
-        }
+	None
     }
-
-    pub fn move_left(&mut self) {
-        if self.selecting > 0 {
-            self.panels
-                .get_mut(self.selecting)
-                .unwrap()
-                .set_color(ggraphics::Color::from_rgba_u32(0xaaaaaaff));
-            self.selecting -= 1;
-            self.panels
-                .get_mut(self.selecting)
-                .unwrap()
-                .set_color(ggraphics::Color::from_rgba_u32(0xffffffff));
-        }
-    }
-
+    
     pub fn cursor_select<'a>(&mut self, ctx: &mut SuzuContext<'a>, point: numeric::Point2f) {
 	let rpoint = self.canvas.relative_point(point);
 	
 	for (index, panel) in self.panels.iter_mut().enumerate() {
 	    if panel.contains(ctx.context, rpoint) {
 		panel.set_color(ggraphics::Color::from_rgba_u32(0xffffffff));
-		self.selecting = index;
+		self.selecting = Some(index);
+		break;
 	    } else {
 		panel.set_color(ggraphics::Color::from_rgba_u32(0xaaaaaaff));
+		self.selecting = None;
 	    }
 	}
     }
@@ -1352,12 +1325,15 @@ impl ScenarioBox {
     pub fn display_choice_box_text(&mut self, font_info: FontInformation) {
         if self.choice_box.is_some() {
             // テキストボックスに選択肢の文字列を表示する
-            let selected_text = self
+            let selected_text = if let Some(s) = self
                 .choice_box
                 .as_ref()
                 .unwrap()
-                .get_selecting_str()
-                .to_string();
+                .get_selecting_str() {
+		    s.to_string()
+		} else {
+		    "".to_string()
+		};
             self.text_box.set_fixed_text(&selected_text, font_info);
         }
     }
@@ -1368,7 +1344,7 @@ impl ScenarioBox {
 
     pub fn get_choice_selecting_index(&self) -> Option<usize> {
         if let Some(choice) = self.choice_box.as_ref() {
-            Some(choice.get_selecting_index())
+            choice.get_selecting_index()
         } else {
             None
         }
@@ -1673,8 +1649,13 @@ impl ScenarioEvent {
                 }
             }
             ScenarioElement::ChoiceSwitch(_) => {
-                self.scenario.go_next_scenario_from_choice_scenario(
-                    self.scenario_box.get_choice_selecting_index().unwrap(),
+		let maybe_index = self.scenario_box.get_choice_selecting_index();
+		if maybe_index.is_none() {
+		    return;
+		}
+
+		self.scenario.go_next_scenario_from_choice_scenario(
+		    maybe_index.unwrap()
                 );
                 self.update_event_background(ctx);
                 self.update_event_tachie(ctx, 0);
@@ -1705,36 +1686,6 @@ impl ScenarioEvent {
 		}
             },
 	    _ => (),
-        }
-    }
-
-    ///
-    /// Rightキーが押されたときの、ScenarioEventの挙動
-    ///
-    pub fn key_down_right<'a>(&mut self, ctx: &mut SuzuContext<'a>) {
-        if let Some(choice) = self.scenario_box.choice_box.as_mut() {
-            choice.move_right();
-            self.scenario_box
-                .display_choice_box_text(FontInformation::new(
-                    ctx.resource.get_font(FontID::Cinema),
-                    numeric::Vector2f::new(32.0, 32.0),
-                    ggraphics::Color::from_rgba_u32(0x000000ff),
-                ));
-        }
-    }
-
-    ///
-    /// Leftキーが押されたときの、ScenarioEventの挙動
-    ///
-    pub fn key_down_left<'a>(&mut self, ctx: &mut SuzuContext<'a>) {
-        if let Some(choice) = self.scenario_box.choice_box.as_mut() {
-            choice.move_left();
-            self.scenario_box
-                .display_choice_box_text(FontInformation::new(
-                    ctx.resource.get_font(FontID::Cinema),
-                    numeric::Vector2f::new(32.0, 32.0),
-                    ggraphics::Color::from_rgba_u32(0x000000ff),
-                ));
         }
     }
 }
