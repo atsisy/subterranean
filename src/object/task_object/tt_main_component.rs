@@ -19,6 +19,7 @@ use torifune::{debug, numeric};
 use crate::flush_delay_event;
 use crate::flush_delay_event_and_redraw_check;
 use crate::object::util_object::*;
+use crate::core::FontID;
 use crate::object::{effect, move_fn};
 use crate::scene::*;
 use crate::set_table_frame_cell_center;
@@ -931,10 +932,11 @@ impl DrawableComponent for TextBalloon {
 
 pub struct SuzuMiniSightSilhouette {
     event_list: DelayEventList<Self>,
-    background: MovableUniTexture,
+    background: UniTexture,
     silhouette: TaskSilhouette,
     text_balloon: EffectableWrap<MovableWrap<TextBalloon>>,
     customer_dialogue: CustomerDialogue,
+    chat_box: ChatBox,
     canvas: SubScreen,
 }
 
@@ -942,12 +944,12 @@ impl SuzuMiniSightSilhouette {
     pub fn new<'a>(
         ctx: &mut SuzuContext<'a>,
         rect: numeric::Rect,
-        background: MovableUniTexture,
+        background: UniTexture,
         t: Clock,
     ) -> Self {
         let mut text_balloon = Box::new(TextBalloon::new(
             ctx.context,
-            numeric::Rect::new(430.0, 10.0, 200.0, 300.0),
+            numeric::Rect::new(400.0, 10.0, 200.0, 300.0),
             "",
             TextBalloonPhraseType::SimplePhrase,
             FontInformation::new(
@@ -957,6 +959,14 @@ impl SuzuMiniSightSilhouette {
             ),
         ));
         text_balloon.hide();
+
+	let chat_box = ChatBox::new(
+	    ctx,
+            numeric::Rect::new(766.0, 0.0, 300.0, 300.0),
+	    0,
+	    "".to_string(),
+	    "小鈴".to_string()
+	);
 
         SuzuMiniSightSilhouette {
             event_list: DelayEventList::new(),
@@ -970,6 +980,7 @@ impl SuzuMiniSightSilhouette {
                 vec![effect::fade_in(10, t)],
             ),
             customer_dialogue: CustomerDialogue::new(Vec::new(), Vec::new()),
+	    chat_box: chat_box,
             canvas: SubScreen::new(
                 ctx.context,
                 numeric::Rect::new(0.0, 0.0, rect.w, rect.h),
@@ -1008,9 +1019,12 @@ impl SuzuMiniSightSilhouette {
                         &line,
                         TextBalloonPhraseType::SimplePhrase,
                     );
-                    silhouette
+
+		    silhouette
                         .text_balloon
                         .add_effect(vec![effect::fade_in(20, called)]);
+		    silhouette.chat_box.add_message_as_partner(ctx, line);
+		    
                 }),
                 t + delay_time,
             ));
@@ -1108,6 +1122,7 @@ impl DrawableComponent for SuzuMiniSightSilhouette {
             }
 
             self.text_balloon.draw(ctx)?;
+	    self.chat_box.draw(ctx)?;
 
             sub_screen::pop_screen(ctx);
             self.canvas.draw(ctx).unwrap();
@@ -1192,15 +1207,11 @@ impl SuzuMiniSight {
             0,
         );
 
-        let silhouette_paper_texture = MovableUniTexture::new(
-            Box::new(UniTexture::new(
-                ctx.ref_texture(TextureID::Paper1),
-                numeric::Point2f::new(0.0, 0.0),
-                numeric::Vector2f::new(1.2, 1.2),
-                0.0,
-                0,
-            )),
-            move_fn::stop(),
+        let silhouette_paper_texture = UniTexture::new(
+            ctx.ref_texture(TextureID::Library),
+            numeric::Point2f::new(0.0, 0.0),
+            numeric::Vector2f::new(0.95, 0.95),
+            0.0,
             0,
         );
         let silhouette = SuzuMiniSightSilhouette::new(ctx, rect, silhouette_paper_texture, t);
@@ -2520,5 +2531,134 @@ impl DrawableObject for MoneyBox {
 }
 
 impl TextureObject for MoneyBox {
+    impl_texture_object_for_wrapped! {canvas}
+}
+
+enum ChatBoxPerson {
+    Me,
+    Partner,
+}
+
+pub struct ChatBox {
+    canvas: SubScreen,
+    messages: Vec<(ChatBoxPerson, UniText)>,
+    background: UniTexture,
+    partner_name: String,
+    my_name: String,
+    draw_request: DrawRequest,
+}
+
+impl ChatBox {
+    pub fn new<'a>(ctx: &mut SuzuContext<'a>, rect: numeric::Rect, depth: i8, partner_name: String, my_name: String) -> Self {
+	ChatBox {
+	    canvas: SubScreen::new(ctx.context, rect, depth, ggraphics::Color::from_rgba_u32(0)),
+	    messages: Vec::new(),
+	    background: UniTexture::new(
+		ctx.ref_texture(TextureID::TextBackground),
+		numeric::Point2f::new(0.0, 0.0),
+		numeric::Vector2f::new(1.0, 1.0),
+		0.0,
+		0
+	    ),
+	    partner_name: partner_name,
+	    my_name: my_name,
+	    draw_request: DrawRequest::InitDraw,
+	}
+    }
+    
+    fn put_message_in_default_place<'a>(&mut self, ctx: &mut SuzuContext<'a>) {
+	//balloonをいい感じに
+	let canvas_size = self.canvas.get_drawing_size(ctx.context);
+	let mut left_buttom_y = canvas_size.y;
+	for (person, text) in self.messages.iter_mut().rev() {
+	    let size = text.get_drawing_size(ctx.context);
+	    let x_pos = match person {
+		ChatBoxPerson::Me => canvas_size.x - size.x - 10.0,
+		ChatBoxPerson::Partner => 10.0,
+	    };
+	    left_buttom_y -= size.y + 10.0;
+	    text.set_position(numeric::Point2f::new(
+		x_pos,
+		left_buttom_y,
+	    ));
+	}
+    }
+
+    fn add_message<'a>(&mut self, ctx: &mut SuzuContext<'a>, msg: String, person: ChatBoxPerson) {
+	let text = UniText::new(
+	    msg,
+	    numeric::Point2f::new(0.0, 0.0),
+	    numeric::Vector2f::new(1.0, 1.0),
+	    0.0,
+	    0,
+	    FontInformation::new(
+		ctx.resource.get_font(FontID::Cinema),
+		numeric::Vector2f::new(22.0, 22.0),
+		ggraphics::BLACK,
+	    )
+	);
+
+	self.messages.push((person, text));
+	self.put_message_in_default_place(ctx);
+	self.draw_request = DrawRequest::Draw;
+    }
+	
+    pub fn add_message_as_partner<'a>(&mut self, ctx: &mut SuzuContext<'a>, msg: String){
+	self.add_message(ctx, msg, ChatBoxPerson::Partner)
+    }
+
+    pub fn add_message_as_mine<'a>(&mut self, ctx: &mut SuzuContext<'a>, msg: String){
+	self.add_message(ctx, msg, ChatBoxPerson::Me)
+    }
+	
+}
+
+impl DrawableComponent for ChatBox {
+    fn draw(&mut self, ctx: &mut ggez::Context) -> ggez::GameResult<()> {
+        if self.is_visible() {
+            if self.draw_request != DrawRequest::Skip {
+                self.draw_request = DrawRequest::Skip;
+                sub_screen::stack_screen(ctx, &self.canvas);
+
+                self.background.draw(ctx)?;
+
+                for (_, text) in self.messages.iter_mut() {
+		    text.draw(ctx)?;
+                }
+
+                sub_screen::pop_screen(ctx);
+            }
+            self.canvas.draw(ctx)?;
+        }
+
+        Ok(())
+    }
+
+    fn hide(&mut self) {
+        self.canvas.hide();
+    }
+
+    fn appear(&mut self) {
+        self.canvas.appear();
+    }
+
+    fn is_visible(&self) -> bool {
+        self.canvas.is_visible()
+    }
+
+    fn set_drawing_depth(&mut self, depth: i8) {
+        self.canvas.set_drawing_depth(depth);
+    }
+
+    fn get_drawing_depth(&self) -> i8 {
+        self.canvas.get_drawing_depth()
+    }
+}
+
+impl DrawableObject for ChatBox {
+    impl_drawable_object_for_wrapped! {canvas}
+}
+
+impl TextureObject for ChatBox {
     impl_texture_object_for_wrapped! {canvas}
 }

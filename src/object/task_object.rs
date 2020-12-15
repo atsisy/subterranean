@@ -1009,7 +1009,7 @@ impl TaskTable {
     ///
     /// 新しく、客の名前をsightのtext_balloonに表示させる
     ///
-    fn insert_rental_limit_phrase(&mut self, t: Clock) {
+    fn insert_rental_limit_phrase<'a>(&mut self, t: Clock) {
         if let Some(customer_request) = self.current_customer_request.as_ref() {
             match customer_request {
                 CustomerRequest::Borrowing(info) => {
@@ -1019,7 +1019,7 @@ impl TaskTable {
                         _ => "",
                     }
                     .to_string();
-
+		    
                     self.sight.silhouette.insert_new_balloon_phrase(
                         phrase_text,
                         TextBalloonPhraseType::RentalLimit(info.rental_limit.clone()),
@@ -1035,8 +1035,10 @@ impl TaskTable {
     fn refusing_book_borrowing_conversation(&mut self, t: Clock) {
         self.event_list.add_event(
             Box::new(move |slf: &mut Self, ctx, t| {
+		let s = "すみません　この本は貸し出せません";
+
                 slf.kosuzu_phrase
-                    .insert_new_phrase(ctx, "すみません　この本は貸し出せません", t);
+                    .insert_new_phrase(ctx, s, t);
             }),
             t + 1,
         );
@@ -1429,7 +1431,6 @@ impl DrawableComponent for TaskTable {
             self.info_panel.draw(ctx).unwrap();
             self.sight.draw(ctx).unwrap();
             self.desk.draw(ctx).unwrap();
-
             self.shelving_box.draw(ctx).unwrap();
 
             if let Some(staging_object) = self.staging_object.as_mut() {

@@ -485,7 +485,7 @@ impl TextureObject for ChoicePanel {
 
 pub struct ChoiceBox {
     choice_text: Vec<String>,
-    panels: Vec<ChoicePanel>,
+    panels: Vec<FramedButton>,
     selecting: Option<usize>,
     canvas: SubScreen,
 }
@@ -493,30 +493,18 @@ pub struct ChoiceBox {
 impl ChoiceBox {
     fn generate_choice_panel<'a>(
         ctx: &mut SuzuContext<'a>,
-        size: usize,
+	choice_text: &Vec<String>,
         left_top: numeric::Vector2f,
         align: f32,
-    ) -> Vec<ChoicePanel> {
+    ) -> Vec<FramedButton> {
         let mut choice_panels = Vec::new();
-        let mut panel = TextureID::ChoicePanel1 as u32;
         let mut pos: numeric::Point2f = left_top.into();
 
-        for _ in 0..size {
-            choice_panels.push(ChoicePanel::new(UniTexture::new(
-                ctx.ref_texture(TextureID::from_u32(panel).unwrap()),
-                pos,
-                numeric::Vector2f::new(0.5, 0.5),
-                0.0,
-                0,
-            )));
-            pos.x += choice_panels
-                .last()
-                .unwrap()
-                .get_drawing_size(ctx.context)
-                .x;
-            pos.x += align;
-            panel += 1;
-        }
+	for s in choice_text.iter() {
+	    let button = util_object::FramedButton::create_design1(ctx, pos, s.as_str(), numeric::Vector2f::new(28.0, 28.0));
+	    pos.x += button.get_area().w + align;
+	    choice_panels.push(button);
+	}
 
         choice_panels
     }
@@ -528,13 +516,13 @@ impl ChoiceBox {
     ) -> Self {
         let mut panels = Self::generate_choice_panel(
             ctx,
-            choice_text.len(),
-            numeric::Vector2f::new(10.0, 10.0),
+            &choice_text,
+            numeric::Vector2f::new(10.0, 0.0),
             10.0,
         );
 
         for panel in &mut panels {
-            panel.set_color(ggraphics::Color::from_rgba_u32(0xaaaaaaff));
+	    panel.make_this_none_status(ctx);
         }
 
         ChoiceBox {
@@ -563,13 +551,11 @@ impl ChoiceBox {
 	let rpoint = self.canvas.relative_point(point);
 	
 	for (index, panel) in self.panels.iter_mut().enumerate() {
-	    if panel.contains(ctx.context, rpoint) {
-		panel.set_color(ggraphics::Color::from_rgba_u32(0xffffffff));
+	    if panel.contains(rpoint) {
+		panel.make_this_hovered_status(ctx);
 		self.selecting = Some(index);
-		break;
 	    } else {
-		panel.set_color(ggraphics::Color::from_rgba_u32(0xaaaaaaff));
-		self.selecting = None;
+		panel.make_this_none_status(ctx);
 	    }
 	}
     }

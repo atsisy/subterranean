@@ -1978,7 +1978,8 @@ impl FramedButton {
 	outer_color: ggraphics::Color,
 	text: String,
 	font_info: FontInformation,
-	depth: i8) -> Self {
+	depth: i8
+    ) -> Self {
 	let texture = shape::FramedTextBalloon::new(
 	    ctx.context,
 	    rect,
@@ -2014,9 +2015,32 @@ impl FramedButton {
 	button
     }
 
+    pub fn create_design1<'a>(ctx: &mut SuzuContext<'a>, pos: numeric::Point2f, text: &str, font_size: numeric::Vector2f) -> Self {
+	let font_info = FontInformation::new(
+	    ctx.resource.get_font(FontID::JpFude1),
+	    font_size,
+	    ggraphics::WHITE,
+	);
+
+	FramedButton::new(
+	    ctx,
+	    numeric::Rect::new(pos.x, pos.y, font_size.x * (text.len() as f32 / 3.0) + 50.0, font_size.y + 50.0),
+	    [
+                numeric::Vector2f::new(5.0, 5.0),
+                numeric::Vector2f::new(5.0, 5.0),
+                numeric::Vector2f::new(5.0, 5.0),
+                numeric::Vector2f::new(5.0, 5.0),
+            ],
+	    2.0,
+	    ggraphics::Color::from_rgba(90, 80, 63, 255),
+	    ggraphics::Color::from_rgba(219, 212, 184, 255),
+	    text.to_string(),
+	    font_info,
+	    0
+	)
+    }
     
-    
-    fn make_this_hovered_status<'a>(&mut self, ctx: &mut SuzuContext<'a>) {
+    pub fn make_this_hovered_status<'a>(&mut self, ctx: &mut SuzuContext<'a>) {
 	self.button_status = ButtonStatus::Hovered;
 	self.text.set_color(ggraphics::Color::from_rgba_u32(0xffffffff));
 	self.texture.set_inner_color_filter(ggraphics::Color::from_rgba_u32(0xffffffff));
@@ -2024,14 +2048,14 @@ impl FramedButton {
 	ctx.process_utility.redraw();
     }
 
-    fn make_this_pressed_status<'a>(&mut self, ctx: &mut SuzuContext<'a>) {
+    pub fn make_this_pressed_status<'a>(&mut self, ctx: &mut SuzuContext<'a>) {
 	self.button_status = ButtonStatus::Pressed;
 	self.texture.set_inner_color_filter(ggraphics::Color::from_rgba_u32(0xddddddff));
 	self.texture.set_outer_color_filter(ggraphics::Color::from_rgba_u32(0xddddddff));
 	ctx.process_utility.redraw();
     }
 
-    fn make_this_none_status<'a>(&mut self, ctx: &mut SuzuContext<'a>) {
+    pub fn make_this_none_status<'a>(&mut self, ctx: &mut SuzuContext<'a>) {
 	self.button_status = ButtonStatus::None;
 	self.texture.set_inner_color_filter(ggraphics::Color::from_rgba_u32(0xffffffff));
 	self.texture.set_outer_color_filter(ggraphics::Color::from_rgba_u32(0xf0f0f0ff));
@@ -2078,6 +2102,10 @@ impl FramedButton {
 	} else {
 	    self.make_this_none_status(ctx);
 	}
+    }
+
+    pub fn get_area(&self) -> numeric::Rect {
+	self.texture.get_drawing_area()
     }
 }
 

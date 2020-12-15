@@ -67,6 +67,7 @@ texture_paths = [
 	      "/textures/manual_return_flow.png",
 	      "/textures/page_edge_left.png",
 	      "/textures/page_edge_right.png",
+	      "/textures/library.png",
 	      ]
 font_paths = ["/fonts/azuki.ttf", "/fonts/RiiT_F.ttf", "/fonts/OradanoGSRR.ttf", "/fonts/cinecaption226.ttf"]
 tileset_paths = ["./resources/maps/suzunaan2/main.tmx"]

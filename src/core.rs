@@ -153,6 +153,7 @@ pub enum TextureID {
     ManualPageReturnFlow,
     GoNextPageLeft,
     GoNextPageRight,
+    Library,
     Unknown,
 }
 
@@ -249,6 +250,7 @@ impl FromStr for TextureID {
             "ManualPageReturnFlow" => Ok(Self::ManualPageReturnFlow),
             "GoNextPageLeft" => Ok(Self::GoNextPageLeft),
             "GoNextPageRight" => Ok(Self::GoNextPageRight),
+	    "Library" => Ok(Self::Library),
             _ => Err(()),
         }
     }
@@ -325,6 +327,7 @@ impl TextureID {
             65 => Some(Self::ManualPageReturnFlow),
             66 => Some(Self::GoNextPageLeft),
             67 => Some(Self::GoNextPageRight),
+	    68 => Some(Self::Library),
             _ => None,
         }
     }

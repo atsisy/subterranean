@@ -10,14 +10,13 @@ use torifune::graphics::object::*;
 use super::super::*;
 
 use crate::core::{
-    FontID, MouseInformation, ResultReport, SavableData, TextureID, TileBatchTextureID,
+    MouseInformation, ResultReport, SavableData, TextureID, TileBatchTextureID,
 };
 use crate::flush_delay_event;
 use crate::flush_delay_event_and_redraw_check;
 use crate::object::effect_object;
+use crate::object::util_object;
 use crate::object::task_result_object::*;
-use crate::object::util_object::SelectButton;
-use crate::object::util_object::TextButtonTexture;
 use crate::scene::{SceneID, SceneTransition};
 use effect_object::TilingEffectType;
 
@@ -26,7 +25,7 @@ pub struct TaskResultScene {
     mouse_info: MouseInformation,
     event_list: DelayEventList<Self>,
     drawable_task_result: DrawableTaskResult,
-    ok_button: SelectButton,
+    ok_button: util_object::FramedButton,
     scene_transition_status: SceneTransition,
     transition_scene: SceneID,
     scene_transition_effect: Option<effect_object::ScreenTileEffect>,
@@ -59,24 +58,12 @@ impl TaskResultScene {
             ),
         );
 
-        let panel_texture = Box::new(TextButtonTexture::new(
-            ctx,
-            numeric::Point2f::new(0.0, 0.0),
-            "戸締まり".to_string(),
-            FontInformation::new(
-                ctx.resource.get_font(FontID::Cinema),
-                numeric::Vector2f::new(28.0, 28.0),
-                ggraphics::Color::from_rgba_u32(0xff),
-            ),
-            10.0,
-            ggraphics::Color::from_rgba_u32(0xe8b5a2ff),
-            0,
-        ));
-        let ok_button = SelectButton::new(
-            ctx,
-            numeric::Rect::new(100.0, 608.0, 140.0, 80.0),
-            panel_texture,
-        );
+	let ok_button = util_object::FramedButton::create_design1(
+	    ctx,
+	    numeric::Point2f::new(100.0, 608.0),
+	    "戸締まり",
+	    numeric::Vector2f::new(28.0, 28.0)
+	);
 
         let scene_transition = Some(effect_object::ScreenTileEffect::new(
             ctx,
@@ -148,10 +135,16 @@ impl TaskResultScene {
 impl SceneManager for TaskResultScene {
     fn mouse_motion_event<'a>(
         &mut self,
-        _: &mut SuzuContext<'a>,
+        ctx: &mut SuzuContext<'a>,
         point: numeric::Point2f,
         _: numeric::Vector2f,
     ) {
+	if self.ok_button.contains(point) {
+            self.ok_button.make_this_hovered_status(ctx);
+	} else {
+	    self.ok_button.make_this_none_status(ctx);
+	}
+	
         if self.mouse_info.is_dragging(MouseButton::Left) {
             self.mouse_info
                 .set_last_dragged(MouseButton::Left, point, self.get_current_clock());
@@ -164,8 +157,8 @@ impl SceneManager for TaskResultScene {
         button: MouseButton,
         point: numeric::Point2f,
     ) {
-        if self.ok_button.contains(ctx.context, point) {
-            self.ok_button.push();
+        if self.ok_button.contains(point) {
+            self.ok_button.make_this_pressed_status(ctx);
         }
 
         self.mouse_info
@@ -185,8 +178,8 @@ impl SceneManager for TaskResultScene {
     ) {
         let t = self.get_current_clock();
 
-        if self.ok_button.contains(ctx.context, point) {
-            self.ok_button.release();
+        if self.ok_button.contains(point) {
+            self.ok_button.make_this_hovered_status(ctx);
             self.ready_to_finish_scene(ctx, t);
         }
 
