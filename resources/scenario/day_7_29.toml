@@ -1,0 +1,50 @@
+first-scenario-id = 10
+
+[scene-transition]
+scenario = 1
+dream = 2
+save = 4
+
+[[scenario-group]]
+type = "scenario"
+id = 10
+next-id = 12
+background = "SightBackground1"
+
+[scenario-group.tachie-data]
+right = "JunkoTachieDefault"
+left = "JunkoTachieDefault"
+
+   [scenario-group.default-text-attribute]
+   fpc = 2.0
+   font_scale = 32.0
+   color = 0x000000ff
+
+   [[scenario-group.text]]
+   text_src_path = "./resources/scenario/7_24/1.txt"
+
+[[scenario-group]]
+type = "choice"
+id = 11
+[scenario-group.tachie-data]
+
+   [[scenario-group.choice-pattern]]
+   pattern = "店番を始める"
+   jump-id = 2
+   [[scenario-group.choice-pattern]]
+   pattern = "状態確認"
+   jump-id = 2
+   [[scenario-group.choice-pattern]]
+   pattern = "保存"
+   jump-id = 4
+
+[[scenario-group]]
+type = "wait"
+id = 12
+next-id = 11
+opecode = "ShowSchedule"
+background = "SightBackground1"
+
+[scenario-group.tachie-data]
+right = "JunkoTachieDefault"
+left = "JunkoTachieDefault"

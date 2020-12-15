@@ -1,0 +1,58 @@
+[[scenario-group]]
+type = "scenario"
+id = -1
+background = "SightBackground1"
+
+[scenario-group.tachie-data]
+right = "JunkoTachieDefault"
+left = "JunkoTachieDefault"
+
+   [scenario-group.default-text-attribute]
+   fpc = 2.0
+   font_scale = 32.0
+   color = 0x000000ff
+
+   [[scenario-group.text]]
+   text_src_path = "./resources/scenario/7_23/1.txt"
+   	 
+   [[scenario-group.text]]
+   text = """"""
+   
+   [[scenario-group.text]]
+   text = """本居小鈴
+   サンプルテキスト"""
+   [[scenario-group.text]]
+   fpc = 0.1
+   font_scale = 28.0
+   color = 0xff0000ff
+   text = "赤字"
+
+   [[scenario-group.text]]
+   id = 4
+   text = """古明地さとり"""
+
+[[scenario-group]]
+type = "choice"
+id = 11
+[scenario-group.tachie-data]
+
+   [[scenario-group.choice-pattern]]
+   pattern = "店番を始める"
+   jump-id = 2
+   [[scenario-group.choice-pattern]]
+   pattern = "状態確認"
+   jump-id = 2
+   [[scenario-group.choice-pattern]]
+   pattern = "保存"
+   jump-id = 4
+
+[[scenario-group]]
+type = "wait"
+id = 12
+next-id = 11
+opecode = "ScheduleCheck"
+background = "SightBackground1"
+
+[scenario-group.tachie-data]
+right = "JunkoTachieDefault"
+left = "JunkoTachieDefault"
