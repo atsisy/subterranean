@@ -250,3 +250,10 @@ macro_rules! flush_delay_event_and_redraw_check {
         }
     }};
 }
+
+#[macro_export]
+macro_rules! add_delay_event {
+    ($event_list: expr, $event: expr, $delay: expr) => {{
+        $event_list.add_event(Box::new($event), $delay);
+    }};
+}

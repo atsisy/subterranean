@@ -84,13 +84,13 @@ impl ScenarioScene {
             0,
         );
 
-	let scenario_ctx = ScenarioContext {
-	    schedule_redefine: !ctx.holding_week_schedule_is_available(),
-	    scenario_is_finish_and_wait: false,
-	    wait_opecode_running: false,
-	    schedule_define_done: false,
-	};
-	
+        let scenario_ctx = ScenarioContext {
+            schedule_redefine: !ctx.holding_week_schedule_is_available(),
+            scenario_is_finish_and_wait: false,
+            wait_opecode_running: false,
+            schedule_define_done: false,
+        };
+
         ScenarioScene {
             mouse_info: MouseInformation::new(),
             scenario_event: scenario,
@@ -106,12 +106,12 @@ impl ScenarioScene {
             scene_transition: SceneID::Scenario,
             status_screen: SuzunaStatusScreen::new(
                 ctx,
-		&scenario_ctx,
+                &scenario_ctx,
                 numeric::Rect::new(30.0, 25.0, 700.0, 470.0),
                 0,
             ),
             scene_transition_type: SceneTransition::Keep,
-	    scenario_ctx: scenario_ctx,
+            scenario_ctx: scenario_ctx,
             clock: 0,
         }
     }
@@ -190,40 +190,41 @@ impl ScenarioScene {
                 self.enter_pause_screen(ctx, t);
             }
             _ => (),
-        } 
+        }
     }
 
     fn schedule_check<'a>(&mut self, ctx: &mut SuzuContext<'a>) {
-	if !self.scenario_ctx.wait_opecode_running {
-	    if let Some(opecode) = self.scenario_event.get_scenario_waiting_opecode() {
-		self.scenario_ctx.wait_opecode_running = true;
-		match opecode {
-		    "ScheduleCheck" => {
-			self.status_screen.show_schedule_page();
-			self.scenario_event.set_fixed_text_to_scenario_box(
-			    ctx,
-			    if self.scenario_ctx.schedule_redefine {
-				"新しく計画を建てましょう"
-			    } else {
-				"上記の計画で開始します"
-			    }
-			);
-		    },
-		    "ShowSchedule" => {
-			self.status_screen.show_schedule_page();
-			self.scenario_event.release_scenario_waiting();
-		    },
-		    _ => (),
-		}
-	    }
-	}
-	
-	if self.scenario_ctx.schedule_redefine &&
-	    ctx.holding_week_schedule_is_available() &&
-	    !self.scenario_ctx.schedule_define_done {
-		self.scenario_event.release_scenario_waiting();
-		self.scenario_ctx.schedule_define_done = true;
-	    }
+        if !self.scenario_ctx.wait_opecode_running {
+            if let Some(opecode) = self.scenario_event.get_scenario_waiting_opecode() {
+                self.scenario_ctx.wait_opecode_running = true;
+                match opecode {
+                    "ScheduleCheck" => {
+                        self.status_screen.show_schedule_page();
+                        self.scenario_event.set_fixed_text_to_scenario_box(
+                            ctx,
+                            if self.scenario_ctx.schedule_redefine {
+                                "新しく計画を建てましょう"
+                            } else {
+                                "上記の計画で開始します"
+                            },
+                        );
+                    }
+                    "ShowSchedule" => {
+                        self.status_screen.show_schedule_page();
+                        self.scenario_event.release_scenario_waiting();
+                    }
+                    _ => (),
+                }
+            }
+        }
+
+        if self.scenario_ctx.schedule_redefine
+            && ctx.holding_week_schedule_is_available()
+            && !self.scenario_ctx.schedule_define_done
+        {
+            self.scenario_event.release_scenario_waiting();
+            self.scenario_ctx.schedule_define_done = true;
+        }
     }
 }
 
@@ -264,8 +265,8 @@ impl SceneManager for ScenarioScene {
                 }
             }
         } else {
-	    self.scenario_event.mouse_motion_handler(ctx, point);
-	}
+            self.scenario_event.mouse_motion_handler(ctx, point);
+        }
     }
 
     fn scene_popping_return_handler<'a>(&mut self, _: &mut SuzuContext<'a>) {
@@ -301,8 +302,8 @@ impl SceneManager for ScenarioScene {
                 _ => (),
             }
         } else {
-	    self.status_screen.mouse_down_handler(ctx, point, button);
-	}
+            self.status_screen.mouse_down_handler(ctx, point, button);
+        }
     }
 
     fn mouse_button_up_event<'a>(
@@ -322,16 +323,16 @@ impl SceneManager for ScenarioScene {
                 _ => (),
             }
         } else {
-	    self.status_screen.click_handler(ctx, point, button);
-	    
+            self.status_screen.click_handler(ctx, point, button);
+
             match button {
                 MouseButton::Left => {
                     let _t = self.get_current_clock();
 
-		    if self.scenario_event.contains_scenario_text_box(point) {
-			self.scenario_event
-			    .key_down_action1(ctx, self.get_current_clock());
-		    }
+                    if self.scenario_event.contains_scenario_text_box(point) {
+                        self.scenario_event
+                            .key_down_action1(ctx, self.get_current_clock());
+                    }
                 }
                 _ => (),
             }
@@ -347,9 +348,9 @@ impl SceneManager for ScenarioScene {
         } else {
             // 再描画要求はupdate_textメソッドの中で行われている
             self.scenario_event.update_text(ctx, &mut self.scenario_ctx);
-	    self.status_screen.update(ctx);
+            self.status_screen.update(ctx);
 
-	    self.schedule_check(ctx);
+            self.schedule_check(ctx);
         }
 
         self.dark_effect_panel.run_effect(ctx, t);
@@ -375,7 +376,7 @@ impl SceneManager for ScenarioScene {
             transition_effect.draw(ctx).unwrap();
         }
 
-	//println!("status -> {}", if self.scenario_ctx.scenario_is_finish_and_wait { "finish" } else { "not finish" });
+        //println!("status -> {}", if self.scenario_ctx.scenario_is_finish_and_wait { "finish" } else { "not finish" });
     }
 
     fn post_process<'a>(&mut self, _ctx: &mut SuzuContext<'a>) -> SceneTransition {

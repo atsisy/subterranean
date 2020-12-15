@@ -1,7 +1,7 @@
 pub mod book_management;
+pub mod game_system;
 pub mod map_parser;
 pub mod util;
-pub mod game_system;
 
 use game_system::WeekWorkSchedule;
 use ggez::graphics as ggraphics;
@@ -250,7 +250,7 @@ impl FromStr for TextureID {
             "ManualPageReturnFlow" => Ok(Self::ManualPageReturnFlow),
             "GoNextPageLeft" => Ok(Self::GoNextPageLeft),
             "GoNextPageRight" => Ok(Self::GoNextPageRight),
-	    "Library" => Ok(Self::Library),
+            "Library" => Ok(Self::Library),
             _ => Err(()),
         }
     }
@@ -327,7 +327,7 @@ impl TextureID {
             65 => Some(Self::ManualPageReturnFlow),
             66 => Some(Self::GoNextPageLeft),
             67 => Some(Self::GoNextPageRight),
-	    68 => Some(Self::Library),
+            68 => Some(Self::Library),
             _ => None,
         }
     }
@@ -575,20 +575,20 @@ impl GensoDate {
     }
 
     pub fn add_day(&mut self, mut day: i32) {
-	static MONTH: [i32; 12] = [31, 28, 31, 30, 30, 30, 31, 31, 30, 31, 30, 31];
+        static MONTH: [i32; 12] = [31, 28, 31, 30, 30, 30, 31, 31, 30, 31, 30, 31];
 
-	while self.day as i32 + day > MONTH[self.month as usize] {
-	    day -= MONTH[self.month as usize] - self.day as i32;
-	    self.day = 0;
-	    self.month += 1;
+        while self.day as i32 + day > MONTH[self.month as usize] {
+            day -= MONTH[self.month as usize] - self.day as i32;
+            self.day = 0;
+            self.month += 1;
 
-	    if self.month > 12 {
-		self.season += 1;
-		self.month %= 12;
+            if self.month > 12 {
+                self.season += 1;
+                self.month %= 12;
             }
-	}
+        }
 
-	self.day += day as u8;
+        self.day += day as u8;
     }
 
     ///
@@ -597,39 +597,39 @@ impl GensoDate {
     /// return 7
     ///
     pub fn diff_day(&self, date2: &Self) -> i32 {
-	static MONTH: [i32; 12] = [31, 28, 31, 30, 30, 30, 31, 31, 30, 31, 30, 31];
+        static MONTH: [i32; 12] = [31, 28, 31, 30, 30, 30, 31, 31, 30, 31, 30, 31];
 
-	let greater_self = self.month.partial_cmp(&date2.month).unwrap();
+        let greater_self = self.month.partial_cmp(&date2.month).unwrap();
 
-	match greater_self {
-	    std::cmp::Ordering::Less => {
-		let mut diff = MONTH[self.month as usize] - self.day as i32;
-		for month_index in (self.month + 1)..date2.month {
-		    diff += MONTH[month_index as usize];
-		}
-		diff + date2.day as i32
-	    },
-	    std::cmp::Ordering::Equal => {
-		let diff = if self.day > date2.day {
-		    self.day - date2.day
-		} else {
-		    date2.day - self.day
-		};
+        match greater_self {
+            std::cmp::Ordering::Less => {
+                let mut diff = MONTH[self.month as usize] - self.day as i32;
+                for month_index in (self.month + 1)..date2.month {
+                    diff += MONTH[month_index as usize];
+                }
+                diff + date2.day as i32
+            }
+            std::cmp::Ordering::Equal => {
+                let diff = if self.day > date2.day {
+                    self.day - date2.day
+                } else {
+                    date2.day - self.day
+                };
 
-		diff as i32
-	    },
-	    std::cmp::Ordering::Greater => {
-		let mut diff = MONTH[date2.month as usize] - date2.day as i32;
-		for month_index in (date2.month + 1)..self.month {
-		    diff += MONTH[month_index as usize];
-		}
-		-(diff + date2.day as i32)
-	    }
-	}
+                diff as i32
+            }
+            std::cmp::Ordering::Greater => {
+                let mut diff = MONTH[date2.month as usize] - date2.day as i32;
+                for month_index in (date2.month + 1)..self.month {
+                    diff += MONTH[month_index as usize];
+                }
+                -(diff + date2.day as i32)
+            }
+        }
     }
 
     pub fn rental_limit_type(&self, limit: &GensoDate) -> Option<RentalLimit> {
-	let day_diff = self.diff_day(&limit);
+        let day_diff = self.diff_day(&limit);
 
         if day_diff >= 0 {
             if day_diff == 0 {
@@ -1487,7 +1487,7 @@ impl SavableData {
             date: date.clone(),
             task_result: TaskResult::new(),
             suzunaan_status: SuzunaAnStatus::new(),
-	    week_schedule: WeekWorkSchedule::new_empty(date),
+            week_schedule: WeekWorkSchedule::new_empty(date),
             suzuna_book_pool: suzuna_book_pool,
             returning_request_pool: returning_request_pool,
             ad_status: ad_status,
@@ -1555,7 +1555,7 @@ impl SavableData {
     }
 
     pub fn update_week_schedule(&mut self, sched: WeekWorkSchedule) {
-	self.week_schedule = sched;
+        self.week_schedule = sched;
     }
 }
 
@@ -1741,7 +1741,9 @@ impl<'ctx> SuzuContext<'ctx> {
     }
 
     pub fn holding_week_schedule_is_available(&self) -> bool {
-	self.savable_data.week_schedule.update_is_not_required(&self.savable_data.date)
+        self.savable_data
+            .week_schedule
+            .update_is_not_required(&self.savable_data.date)
     }
 }
 

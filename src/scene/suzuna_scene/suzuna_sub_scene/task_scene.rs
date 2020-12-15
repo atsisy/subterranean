@@ -81,7 +81,7 @@ impl TaskScene {
                 numeric::Rect::new(0.0, 0.0, 300.0, 768.0),
                 numeric::Rect::new(300.0, 0.0, 1066.0, 300.0),
                 numeric::Rect::new(300.0, 300.0, 766.0, 468.0),
-		numeric::Rect::new(1066.0, 300.0, 300.0, 468.0),
+                numeric::Rect::new(1066.0, 300.0, 300.0, 468.0),
                 record_book_data,
                 customer_request.clone(),
                 0,

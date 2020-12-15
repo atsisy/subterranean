@@ -87,3 +87,342 @@
 	billing_number = 3
 	base_price = 100
 	num = 2
+
+[[new-book-schedule]]
+	[new-book-schedule.date]
+	season = 112
+	month = 7
+	day = 26
+
+	[[new-book-schedule.books_information]]
+	name = "スプートニクの愛人"
+	pages = 128	
+	size = "中判本"
+	billing_number = 3
+	base_price = 100
+	num = 5
+
+	[[new-book-schedule.books_information]]
+	name = "ランランラン"
+	pages = 128	
+	size = "中判本"
+	billing_number = 3
+	base_price = 100
+	num = 5
+
+	[[new-book-schedule.books_information]]
+	name = "アンの手記"
+	pages = 128	
+	size = "中判本"
+	billing_number = 3
+	base_price = 100
+	num = 2
+
+
+[[new-book-schedule]]
+	[new-book-schedule.date]
+	season = 112
+	month = 7
+	day = 27
+
+	[[new-book-schedule.books_information]]
+	name = "スプートニクの愛人"
+	pages = 128	
+	size = "中判本"
+	billing_number = 3
+	base_price = 100
+	num = 5
+
+	[[new-book-schedule.books_information]]
+	name = "ランランラン"
+	pages = 128	
+	size = "中判本"
+	billing_number = 3
+	base_price = 100
+	num = 5
+
+	[[new-book-schedule.books_information]]
+	name = "アンの手記"
+	pages = 128	
+	size = "中判本"
+	billing_number = 3
+	base_price = 100
+	num = 2
+
+
+
+[[new-book-schedule]]
+	[new-book-schedule.date]
+	season = 112
+	month = 7
+	day = 28
+
+	[[new-book-schedule.books_information]]
+	name = "スプートニクの愛人"
+	pages = 128	
+	size = "中判本"
+	billing_number = 3
+	base_price = 100
+	num = 5
+
+	[[new-book-schedule.books_information]]
+	name = "ランランラン"
+	pages = 128	
+	size = "中判本"
+	billing_number = 3
+	base_price = 100
+	num = 5
+
+	[[new-book-schedule.books_information]]
+	name = "アンの手記"
+	pages = 128	
+	size = "中判本"
+	billing_number = 3
+	base_price = 100
+	num = 2
+
+
+[[new-book-schedule]]
+	[new-book-schedule.date]
+	season = 112
+	month = 7
+	day = 29
+
+	[[new-book-schedule.books_information]]
+	name = "スプートニクの愛人"
+	pages = 128	
+	size = "中判本"
+	billing_number = 3
+	base_price = 100
+	num = 5
+
+	[[new-book-schedule.books_information]]
+	name = "ランランラン"
+	pages = 128	
+	size = "中判本"
+	billing_number = 3
+	base_price = 100
+	num = 5
+
+	[[new-book-schedule.books_information]]
+	name = "アンの手記"
+	pages = 128	
+	size = "中判本"
+	billing_number = 3
+	base_price = 100
+	num = 2
+
+[[new-book-schedule]]
+	[new-book-schedule.date]
+	season = 112
+	month = 7
+	day = 30
+
+	[[new-book-schedule.books_information]]
+	name = "スプートニクの愛人"
+	pages = 128	
+	size = "中判本"
+	billing_number = 3
+	base_price = 100
+	num = 5
+
+	[[new-book-schedule.books_information]]
+	name = "ランランラン"
+	pages = 128	
+	size = "中判本"
+	billing_number = 3
+	base_price = 100
+	num = 5
+
+	[[new-book-schedule.books_information]]
+	name = "アンの手記"
+	pages = 128	
+	size = "中判本"
+	billing_number = 3
+	base_price = 100
+	num = 2
+
+[[new-book-schedule]]
+	[new-book-schedule.date]
+	season = 112
+	month = 7
+	day = 31
+
+	[[new-book-schedule.books_information]]
+	name = "スプートニクの愛人"
+	pages = 128	
+	size = "中判本"
+	billing_number = 3
+	base_price = 100
+	num = 5
+
+	[[new-book-schedule.books_information]]
+	name = "ランランラン"
+	pages = 128	
+	size = "中判本"
+	billing_number = 3
+	base_price = 100
+	num = 5
+
+	[[new-book-schedule.books_information]]
+	name = "アンの手記"
+	pages = 128	
+	size = "中判本"
+	billing_number = 3
+	base_price = 100
+	num = 2
+
+[[new-book-schedule]]
+	[new-book-schedule.date]
+	season = 112
+	month = 8
+	day = 1
+
+	[[new-book-schedule.books_information]]
+	name = "スプートニクの愛人"
+	pages = 128	
+	size = "中判本"
+	billing_number = 3
+	base_price = 100
+	num = 5
+
+	[[new-book-schedule.books_information]]
+	name = "ランランラン"
+	pages = 128	
+	size = "中判本"
+	billing_number = 3
+	base_price = 100
+	num = 5
+
+	[[new-book-schedule.books_information]]
+	name = "アンの手記"
+	pages = 128	
+	size = "中判本"
+	billing_number = 3
+	base_price = 100
+	num = 2
+
+
+[[new-book-schedule]]
+	[new-book-schedule.date]
+	season = 112
+	month = 8
+	day = 2
+
+	[[new-book-schedule.books_information]]
+	name = "スプートニクの愛人"
+	pages = 128	
+	size = "中判本"
+	billing_number = 3
+	base_price = 100
+	num = 5
+
+	[[new-book-schedule.books_information]]
+	name = "ランランラン"
+	pages = 128	
+	size = "中判本"
+	billing_number = 3
+	base_price = 100
+	num = 5
+
+	[[new-book-schedule.books_information]]
+	name = "アンの手記"
+	pages = 128	
+	size = "中判本"
+	billing_number = 3
+	base_price = 100
+	num = 2
+
+
+[[new-book-schedule]]
+	[new-book-schedule.date]
+	season = 112
+	month = 8
+	day = 3
+
+	[[new-book-schedule.books_information]]
+	name = "スプートニクの愛人"
+	pages = 128	
+	size = "中判本"
+	billing_number = 3
+	base_price = 100
+	num = 5
+
+	[[new-book-schedule.books_information]]
+	name = "ランランラン"
+	pages = 128	
+	size = "中判本"
+	billing_number = 3
+	base_price = 100
+	num = 5
+
+	[[new-book-schedule.books_information]]
+	name = "アンの手記"
+	pages = 128	
+	size = "中判本"
+	billing_number = 3
+	base_price = 100
+	num = 2
+
+
+[[new-book-schedule]]
+	[new-book-schedule.date]
+	season = 112
+	month = 8
+	day = 4
+
+	[[new-book-schedule.books_information]]
+	name = "スプートニクの愛人"
+	pages = 128	
+	size = "中判本"
+	billing_number = 3
+	base_price = 100
+	num = 5
+
+	[[new-book-schedule.books_information]]
+	name = "ランランラン"
+	pages = 128	
+	size = "中判本"
+	billing_number = 3
+	base_price = 100
+	num = 5
+
+	[[new-book-schedule.books_information]]
+	name = "アンの手記"
+	pages = 128	
+	size = "中判本"
+	billing_number = 3
+	base_price = 100
+	num = 2
+
+
+
+[[new-book-schedule]]
+	[new-book-schedule.date]
+	season = 112
+	month = 8
+	day = 6
+
+	[[new-book-schedule.books_information]]
+	name = "スプートニクの愛人"
+	pages = 128	
+	size = "中判本"
+	billing_number = 3
+	base_price = 100
+	num = 5
+
+	[[new-book-schedule.books_information]]
+	name = "ランランラン"
+	pages = 128	
+	size = "中判本"
+	billing_number = 3
+	base_price = 100
+	num = 5
+
+	[[new-book-schedule.books_information]]
+	name = "アンの手記"
+	pages = 128	
+	size = "中判本"
+	billing_number = 3
+	base_price = 100
+	num = 2

@@ -20,6 +20,7 @@ use torifune::impl_drawable_object_for_wrapped;
 use torifune::impl_texture_object_for_wrapped;
 use torifune::numeric;
 
+use crate::add_delay_event;
 use crate::core::util;
 use crate::flush_delay_event;
 use crate::flush_delay_event_and_redraw_check;
@@ -994,14 +995,32 @@ impl TaskTable {
     ///
     /// 新しく、客の名前をsightのtext_balloonに表示させる
     ///
-    fn insert_custmer_name_phrase(&mut self, t: Clock) {
+    fn insert_custmer_name_phrase<'a>(&mut self, ctx: &mut SuzuContext<'a>, t: Clock) {
         if let Some(customer_request) = self.current_customer_request.as_ref() {
-            let phrase_text = format!("{}です", customer_request.get_customer_name());
+            let customer_name = customer_request.get_customer_name();
+            let phrase_text = format!("{}です", customer_name.to_string());
+            self.sight
+                .silhouette
+                .insert_kosuzu_message_in_chatbox(ctx, "お名前は？".to_string());
+
             self.sight.silhouette.insert_new_balloon_phrase(
-                phrase_text,
+                phrase_text.clone(),
                 TextBalloonPhraseType::CustomerName(customer_request.get_customer_name().clone()),
                 20,
                 t,
+            );
+
+            add_delay_event!(
+                self.event_list,
+                move |slf, ctx, _t| {
+                    slf.sight
+                        .silhouette
+                        .set_partner_name_to_chatbox(customer_name);
+                    slf.sight
+                        .silhouette
+                        .insert_customer_message_in_chatbox(ctx, phrase_text);
+                },
+                30
             );
         }
     }
@@ -1009,7 +1028,7 @@ impl TaskTable {
     ///
     /// 新しく、客の名前をsightのtext_balloonに表示させる
     ///
-    fn insert_rental_limit_phrase<'a>(&mut self, t: Clock) {
+    fn insert_rental_limit_phrase<'a>(&mut self, ctx: &mut SuzuContext<'a>, t: Clock) {
         if let Some(customer_request) = self.current_customer_request.as_ref() {
             match customer_request {
                 CustomerRequest::Borrowing(info) => {
@@ -1019,13 +1038,17 @@ impl TaskTable {
                         _ => "",
                     }
                     .to_string();
-		    
+
                     self.sight.silhouette.insert_new_balloon_phrase(
-                        phrase_text,
+                        phrase_text.clone(),
                         TextBalloonPhraseType::RentalLimit(info.rental_limit.clone()),
                         20,
                         t,
                     );
+
+		    self.sight
+			.silhouette
+			.insert_customer_message_in_chatbox(ctx, phrase_text);
                 }
                 _ => (),
             }
@@ -1035,10 +1058,9 @@ impl TaskTable {
     fn refusing_book_borrowing_conversation(&mut self, t: Clock) {
         self.event_list.add_event(
             Box::new(move |slf: &mut Self, ctx, t| {
-		let s = "すみません　この本は貸し出せません";
+                let s = "すみません　この本は貸し出せません";
 
-                slf.kosuzu_phrase
-                    .insert_new_phrase(ctx, s, t);
+                slf.kosuzu_phrase.insert_new_phrase(ctx, s, t);
             }),
             t + 1,
         );
@@ -1065,16 +1087,26 @@ impl TaskTable {
     }
 
     fn show_kosuzu_payment_message<'a>(&mut self, ctx: &mut SuzuContext<'a>, price: u32, t: Clock) {
+	let msg = format!("合計{}円になります", number_to_jk(price as u64));
         self.kosuzu_phrase.insert_new_phrase(
             ctx,
-            &format!("合計{}円になります", number_to_jk(price as u64)),
+            &msg,
             t,
         );
+
+	self.sight
+	    .silhouette
+	    .insert_customer_message_in_chatbox(ctx, msg);
     }
 
     fn show_kosuzu_returning_is_done_message<'a>(&mut self, ctx: &mut SuzuContext<'a>, t: Clock) {
+	let msg = "確認しました またお越しください";
         self.kosuzu_phrase
-            .insert_new_phrase(ctx, "確認しました またお越しください", t);
+            .insert_new_phrase(ctx, msg, t);
+
+	self.sight
+	    .silhouette
+	    .insert_customer_message_in_chatbox(ctx, msg.to_string());
     }
 
     ///
@@ -1107,10 +1139,10 @@ impl TaskTable {
                         let name = customer_request.get_customer_name();
                         self.kosuzu_memory.add_customer_name(name.clone());
                         self.info_panel.set_customer_name(ctx, name);
-                        self.insert_custmer_name_phrase(t);
+                        self.insert_custmer_name_phrase(ctx, t);
                     }
                 }
-                1 => self.insert_rental_limit_phrase(t),
+                1 => self.insert_rental_limit_phrase(ctx, t),
                 _ => panic!("Exception"),
             }
 

@@ -11,10 +11,10 @@ use torifune::impl_drawable_object_for_wrapped;
 use torifune::impl_texture_object_for_wrapped;
 
 use super::*;
-use crate::scene::scenario_scene::ScenarioContext;
 use crate::core::{FontID, GameResource, SuzuContext, TextureID, TileBatchTextureID};
 use crate::object::util_object::*;
 use crate::parse_toml_file;
+use crate::scene::scenario_scene::ScenarioContext;
 use crate::scene::{SceneID, SceneTransition};
 use std::str::FromStr;
 
@@ -493,18 +493,23 @@ pub struct ChoiceBox {
 impl ChoiceBox {
     fn generate_choice_panel<'a>(
         ctx: &mut SuzuContext<'a>,
-	choice_text: &Vec<String>,
+        choice_text: &Vec<String>,
         left_top: numeric::Vector2f,
         align: f32,
     ) -> Vec<FramedButton> {
         let mut choice_panels = Vec::new();
         let mut pos: numeric::Point2f = left_top.into();
 
-	for s in choice_text.iter() {
-	    let button = util_object::FramedButton::create_design1(ctx, pos, s.as_str(), numeric::Vector2f::new(28.0, 28.0));
-	    pos.x += button.get_area().w + align;
-	    choice_panels.push(button);
-	}
+        for s in choice_text.iter() {
+            let button = util_object::FramedButton::create_design1(
+                ctx,
+                pos,
+                s.as_str(),
+                numeric::Vector2f::new(28.0, 28.0),
+            );
+            pos.x += button.get_area().w + align;
+            choice_panels.push(button);
+        }
 
         choice_panels
     }
@@ -514,15 +519,11 @@ impl ChoiceBox {
         pos_rect: numeric::Rect,
         choice_text: Vec<String>,
     ) -> Self {
-        let mut panels = Self::generate_choice_panel(
-            ctx,
-            &choice_text,
-            numeric::Vector2f::new(10.0, 0.0),
-            10.0,
-        );
+        let mut panels =
+            Self::generate_choice_panel(ctx, &choice_text, numeric::Vector2f::new(10.0, 0.0), 10.0);
 
         for panel in &mut panels {
-	    panel.make_this_none_status(ctx);
+            panel.make_this_none_status(ctx);
         }
 
         ChoiceBox {
@@ -538,26 +539,26 @@ impl ChoiceBox {
     }
 
     pub fn get_selecting_str(&self) -> Option<&str> {
-	if let Some(index) = self.get_selecting_index() {
-	    if let Some(s) = self.choice_text.get(index) {
-		return Some(s);
-	    } 
-	}
+        if let Some(index) = self.get_selecting_index() {
+            if let Some(s) = self.choice_text.get(index) {
+                return Some(s);
+            }
+        }
 
-	None
+        None
     }
-    
+
     pub fn cursor_select<'a>(&mut self, ctx: &mut SuzuContext<'a>, point: numeric::Point2f) {
-	let rpoint = self.canvas.relative_point(point);
-	
-	for (index, panel) in self.panels.iter_mut().enumerate() {
-	    if panel.contains(rpoint) {
-		panel.make_this_hovered_status(ctx);
-		self.selecting = Some(index);
-	    } else {
-		panel.make_this_none_status(ctx);
-	    }
-	}
+        let rpoint = self.canvas.relative_point(point);
+
+        for (index, panel) in self.panels.iter_mut().enumerate() {
+            if panel.contains(rpoint) {
+                panel.make_this_hovered_status(ctx);
+                self.selecting = Some(index);
+            } else {
+                panel.make_this_none_status(ctx);
+            }
+        }
     }
 }
 
@@ -611,8 +612,13 @@ pub struct ScenarioFinishAndWaitData {
 impl ScenarioFinishAndWaitData {
     pub fn from_toml_object(toml_scripts: &toml::value::Value, _: &GameResource) -> Self {
         let id = toml_scripts.get("id").unwrap().as_integer().unwrap() as i32;
-	let next_id = toml_scripts.get("next-id").unwrap().as_integer().unwrap() as i32;
-	let opecode = toml_scripts.get("opecode").unwrap().as_str().unwrap().to_string();
+        let next_id = toml_scripts.get("next-id").unwrap().as_integer().unwrap() as i32;
+        let opecode = toml_scripts
+            .get("opecode")
+            .unwrap()
+            .as_str()
+            .unwrap()
+            .to_string();
 
         let background_texture_id = if let Some(background_tid_str) = toml_scripts.get("background")
         {
@@ -638,10 +644,10 @@ impl ScenarioFinishAndWaitData {
 
         ScenarioFinishAndWaitData {
             scenario_id: id,
-	    next_id: next_id,
+            next_id: next_id,
             background_texture_id: background_texture_id,
             tachie_data: tachie_data,
-	    opecode: opecode,
+            opecode: opecode,
         }
     }
 
@@ -658,11 +664,11 @@ impl ScenarioFinishAndWaitData {
     }
 
     pub fn get_next_id(&self) -> ScenarioElementID {
-	self.next_id
+        self.next_id
     }
 
     pub fn get_opecode(&self) -> &str {
-	self.opecode.as_str()
+        self.opecode.as_str()
     }
 }
 
@@ -687,7 +693,7 @@ impl ScenarioElement {
             Self::Text(text) => text.get_scenario_id(),
             Self::ChoiceSwitch(choice) => choice.get_scenario_id(),
             Self::SceneTransition(transition_data) => transition_data.2,
-	    Self::FinishAndWait(data) => data.get_scenario_id(),
+            Self::FinishAndWait(data) => data.get_scenario_id(),
         }
     }
 
@@ -696,7 +702,7 @@ impl ScenarioElement {
             Self::Text(text) => Some(text.get_background_texture_id()),
             Self::ChoiceSwitch(choice) => choice.get_background_texture_id(),
             Self::SceneTransition(_) => None,
-	    Self::FinishAndWait(data) => data.get_background_texture_id(),
+            Self::FinishAndWait(data) => data.get_background_texture_id(),
         }
     }
 
@@ -705,7 +711,7 @@ impl ScenarioElement {
             Self::Text(text) => text.get_tachie_data(),
             Self::ChoiceSwitch(choice) => choice.get_tachie_data(),
             Self::SceneTransition(_) => None,
-	    Self::FinishAndWait(data) => data.get_tachie_data(),
+            Self::FinishAndWait(data) => data.get_tachie_data(),
         }
     }
 }
@@ -716,15 +722,13 @@ pub struct ScenarioElementPool {
 
 impl ScenarioElementPool {
     pub fn new_empty() -> Self {
-	ScenarioElementPool {
-	    pool: Vec::new(),
-	}
+        ScenarioElementPool { pool: Vec::new() }
     }
-    
+
     pub fn add(&mut self, elem: ScenarioElement) {
-	self.pool.push(elem);
+        self.pool.push(elem);
     }
-    
+
     ///
     /// 次のScenarioElementIDから、ScenarioElementのインデックスを得るメソッド
     ///
@@ -739,15 +743,15 @@ impl ScenarioElementPool {
     }
 
     pub fn len(&self) -> usize {
-	self.pool.len()
+        self.pool.len()
     }
 
     pub fn seq_access(&self, index: usize) -> Option<&ScenarioElement> {
-	self.pool.get(index)
+        self.pool.get(index)
     }
 
     pub fn seq_access_mut(&mut self, index: usize) -> Option<&mut ScenarioElement> {
-	self.pool.get_mut(index)
+        self.pool.get_mut(index)
     }
 }
 
@@ -778,11 +782,11 @@ impl Scenario {
                             ChoicePatternData::from_toml_object(elem, game_data),
                         ));
                     }
-		    "wait" => {
-			scenario.add(ScenarioElement::FinishAndWait(
-			    ScenarioFinishAndWaitData::from_toml_object(elem, game_data)
+                    "wait" => {
+                        scenario.add(ScenarioElement::FinishAndWait(
+                            ScenarioFinishAndWaitData::from_toml_object(elem, game_data),
                         ));
-		    }
+                    }
                     _ => eprintln!("Error"),
                 }
             } else {
@@ -821,14 +825,16 @@ impl Scenario {
         scenario.update_current_page_index(first_scenario_id as ScenarioElementID);
         scenario
     }
-    
+
     ///
     /// 次のScenarioElementIDを記録して、かつ、そのインデックスを求め、現在のシナリオとしてセットするメソッド
     ///
     pub fn update_current_page_index(&mut self, scenario_element_id: ScenarioElementID) {
         // 次のScenarioElementIDから、ScenarioElementのインデックスを得る
         self.element_id_stack.push_back(scenario_element_id);
-        let index = self.scenario.find_index_of_specified_scenario_id(scenario_element_id);
+        let index = self
+            .scenario
+            .find_index_of_specified_scenario_id(scenario_element_id);
         self.current_page = index;
     }
 
@@ -839,7 +845,9 @@ impl Scenario {
 
         let turn_backed_id = self.element_id_stack.back().unwrap();
 
-        self.current_page = self.scenario.find_index_of_specified_scenario_id(*turn_backed_id);
+        self.current_page = self
+            .scenario
+            .find_index_of_specified_scenario_id(*turn_backed_id);
 
         // シナリオを初期化する
         match self.ref_current_element_mut() {
@@ -873,7 +881,7 @@ impl Scenario {
             _ => (),
         }
     }
-    
+
     ///
     /// Scenarioの状態遷移を行うメソッド
     /// このメソッドは通常のテキストから他の状態に遷移する際に呼び出す
@@ -947,14 +955,14 @@ impl Scenario {
     }
 
     pub fn get_waiting_opecode(&self) -> Option<&str> {
-	match self.ref_current_element() {
-	    ScenarioElement::FinishAndWait(data) => Some(data.get_opecode()),
-	    _ => None,
-	}
+        match self.ref_current_element() {
+            ScenarioElement::FinishAndWait(data) => Some(data.get_opecode()),
+            _ => None,
+        }
     }
 
     pub fn release_waiting(&mut self) {
-	self.go_next_scenario_from_waiting();
+        self.go_next_scenario_from_waiting();
     }
 }
 
@@ -1242,8 +1250,8 @@ impl ScenarioBox {
     }
 
     pub fn contains(&self, point: numeric::Point2f) -> bool {
-	let rpoint = self.canvas.relative_point(point);
-	self.text_box.canvas.contains(rpoint)
+        let rpoint = self.canvas.relative_point(point);
+        self.text_box.canvas.contains(rpoint)
     }
 
     pub fn new_choice<'a>(
@@ -1311,15 +1319,12 @@ impl ScenarioBox {
     pub fn display_choice_box_text(&mut self, font_info: FontInformation) {
         if self.choice_box.is_some() {
             // テキストボックスに選択肢の文字列を表示する
-            let selected_text = if let Some(s) = self
-                .choice_box
-                .as_ref()
-                .unwrap()
-                .get_selecting_str() {
-		    s.to_string()
-		} else {
-		    "".to_string()
-		};
+            let selected_text =
+                if let Some(s) = self.choice_box.as_ref().unwrap().get_selecting_str() {
+                    s.to_string()
+                } else {
+                    "".to_string()
+                };
             self.text_box.set_fixed_text(&selected_text, font_info);
         }
     }
@@ -1553,16 +1558,16 @@ impl ScenarioEvent {
                 // 再描画要求
                 ctx.process_utility.redraw();
             }
-	    ScenarioElement::FinishAndWait(_) => {
-		self.status = ScenarioEventStatus::FinishAndWait;
-		scno_ctx.scenario_is_finish_and_wait = true;
-	    }
+            ScenarioElement::FinishAndWait(_) => {
+                self.status = ScenarioEventStatus::FinishAndWait;
+                scno_ctx.scenario_is_finish_and_wait = true;
+            }
         }
     }
 
     pub fn contains_scenario_text_box(&self, point: numeric::Point2f) -> bool {
-	let rpoint = self.canvas.relative_point(point);
-	self.scenario_box.contains(rpoint)
+        let rpoint = self.canvas.relative_point(point);
+        self.scenario_box.contains(rpoint)
     }
 
     pub fn make_scenario_event(&mut self) {
@@ -1586,24 +1591,22 @@ impl ScenarioEvent {
     }
 
     pub fn get_scenario_waiting_opecode(&self) -> Option<&str> {
-	self.scenario.get_waiting_opecode()
+        self.scenario.get_waiting_opecode()
     }
 
     pub fn release_scenario_waiting(&mut self) {
-	self.scenario.release_waiting();
+        self.scenario.release_waiting();
     }
 
     pub fn set_fixed_text_to_scenario_box<'a>(&mut self, ctx: &mut SuzuContext<'a>, text: &str) {
-	self.scenario_box
-	    .text_box
-	    .set_fixed_text(
-		text,
-		FontInformation::new(
-		    ctx.resource.get_font(FontID::Cinema),
-		    numeric::Vector2f::new(32.0, 32.0),
-		    ggraphics::BLACK
-		),
-	    );
+        self.scenario_box.text_box.set_fixed_text(
+            text,
+            FontInformation::new(
+                ctx.resource.get_font(FontID::Cinema),
+                numeric::Vector2f::new(32.0, 32.0),
+                ggraphics::BLACK,
+            ),
+        );
     }
 
     ///
@@ -1635,14 +1638,13 @@ impl ScenarioEvent {
                 }
             }
             ScenarioElement::ChoiceSwitch(_) => {
-		let maybe_index = self.scenario_box.get_choice_selecting_index();
-		if maybe_index.is_none() {
-		    return;
-		}
+                let maybe_index = self.scenario_box.get_choice_selecting_index();
+                if maybe_index.is_none() {
+                    return;
+                }
 
-		self.scenario.go_next_scenario_from_choice_scenario(
-		    maybe_index.unwrap()
-                );
+                self.scenario
+                    .go_next_scenario_from_choice_scenario(maybe_index.unwrap());
                 self.update_event_background(ctx);
                 self.update_event_tachie(ctx, 0);
 
@@ -1650,28 +1652,28 @@ impl ScenarioEvent {
                 self.scenario_box.insert_choice_box(None);
             }
             ScenarioElement::SceneTransition(_) => (),
-	    ScenarioElement::FinishAndWait(_) => (),
+            ScenarioElement::FinishAndWait(_) => (),
         }
     }
 
     pub fn mouse_motion_handler<'a>(&mut self, ctx: &mut SuzuContext<'a>, point: numeric::Point2f) {
-	let rpoint = self.canvas.relative_point(point);
+        let rpoint = self.canvas.relative_point(point);
 
-	match self.scenario.ref_current_element_mut() {
+        match self.scenario.ref_current_element_mut() {
             ScenarioElement::ChoiceSwitch(_) => {
-		if let Some(choice) = self.scenario_box.choice_box.as_mut() {
-		    let rpoint = self.scenario_box.canvas.relative_point(rpoint);
-		    choice.cursor_select(ctx, rpoint);
+                if let Some(choice) = self.scenario_box.choice_box.as_mut() {
+                    let rpoint = self.scenario_box.canvas.relative_point(rpoint);
+                    choice.cursor_select(ctx, rpoint);
 
-		    self.scenario_box
-			.display_choice_box_text(FontInformation::new(
-			    ctx.resource.get_font(FontID::Cinema),
-			    numeric::Vector2f::new(32.0, 32.0),
-			    ggraphics::Color::from_rgba_u32(0x000000ff),
-			));
-		}
-            },
-	    _ => (),
+                    self.scenario_box
+                        .display_choice_box_text(FontInformation::new(
+                            ctx.resource.get_font(FontID::Cinema),
+                            numeric::Vector2f::new(32.0, 32.0),
+                            ggraphics::Color::from_rgba_u32(0x000000ff),
+                        ));
+                }
+            }
+            _ => (),
         }
     }
 }

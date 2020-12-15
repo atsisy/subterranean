@@ -16,10 +16,10 @@ use torifune::impl_texture_object_for_wrapped;
 use torifune::roundup2f;
 use torifune::{debug, numeric};
 
+use crate::core::FontID;
 use crate::flush_delay_event;
 use crate::flush_delay_event_and_redraw_check;
 use crate::object::util_object::*;
-use crate::core::FontID;
 use crate::object::{effect, move_fn};
 use crate::scene::*;
 use crate::set_table_frame_cell_center;
@@ -960,13 +960,14 @@ impl SuzuMiniSightSilhouette {
         ));
         text_balloon.hide();
 
-	let chat_box = ChatBox::new(
-	    ctx,
+        let mut chat_box = ChatBox::new(
+            ctx,
             numeric::Rect::new(766.0, 0.0, 300.0, 300.0),
-	    0,
-	    "".to_string(),
-	    "小鈴".to_string()
-	);
+            0,
+            None,
+            Some("小鈴".to_string()),
+        );
+	chat_box.add_message_as_mine(ctx, "いらっしゃいませ".to_string());
 
         SuzuMiniSightSilhouette {
             event_list: DelayEventList::new(),
@@ -980,7 +981,7 @@ impl SuzuMiniSightSilhouette {
                 vec![effect::fade_in(10, t)],
             ),
             customer_dialogue: CustomerDialogue::new(Vec::new(), Vec::new()),
-	    chat_box: chat_box,
+            chat_box: chat_box,
             canvas: SubScreen::new(
                 ctx.context,
                 numeric::Rect::new(0.0, 0.0, rect.w, rect.h),
@@ -1020,11 +1021,10 @@ impl SuzuMiniSightSilhouette {
                         TextBalloonPhraseType::SimplePhrase,
                     );
 
-		    silhouette
+                    silhouette
                         .text_balloon
                         .add_effect(vec![effect::fade_in(20, called)]);
-		    silhouette.chat_box.add_message_as_partner(ctx, line);
-		    
+                    silhouette.chat_box.add_message_as_partner(ctx, line);
                 }),
                 t + delay_time,
             ));
@@ -1090,6 +1090,18 @@ impl SuzuMiniSightSilhouette {
         ));
     }
 
+    pub fn insert_kosuzu_message_in_chatbox<'a>(&mut self, ctx: &mut SuzuContext<'a>, s: String) {
+        self.chat_box.add_message_as_mine(ctx, s);
+    }
+
+    pub fn insert_customer_message_in_chatbox<'a>(&mut self, ctx: &mut SuzuContext<'a>, s: String) {
+        self.chat_box.add_message_as_partner(ctx, s);
+    }
+
+    pub fn set_partner_name_to_chatbox(&mut self, name: String) {
+        self.chat_box.set_partner_name(name);
+    }
+
     pub fn run_hide_effect(&mut self, now: Clock) {
         //self.silhouette.get_object_mut().unwrap().add_effect(vec![effect::fade_out(20, now)]);
         self.text_balloon
@@ -1122,7 +1134,7 @@ impl DrawableComponent for SuzuMiniSightSilhouette {
             }
 
             self.text_balloon.draw(ctx)?;
-	    self.chat_box.draw(ctx)?;
+            self.chat_box.draw(ctx)?;
 
             sub_screen::pop_screen(ctx);
             self.canvas.draw(ctx).unwrap();
@@ -2534,83 +2546,164 @@ impl TextureObject for MoneyBox {
     impl_texture_object_for_wrapped! {canvas}
 }
 
+#[derive(Clone, Copy, PartialEq)]
+enum LineJustified {
+    Left,
+    Right,
+}
+
+#[derive(Clone, Copy, PartialEq)]
 enum ChatBoxPerson {
     Me,
     Partner,
+    SystemName(LineJustified),
 }
 
 pub struct ChatBox {
     canvas: SubScreen,
     messages: Vec<(ChatBoxPerson, UniText)>,
     background: UniTexture,
-    partner_name: String,
-    my_name: String,
+    partner_name: Option<String>,
+    my_name: Option<String>,
     draw_request: DrawRequest,
 }
 
 impl ChatBox {
-    pub fn new<'a>(ctx: &mut SuzuContext<'a>, rect: numeric::Rect, depth: i8, partner_name: String, my_name: String) -> Self {
-	ChatBox {
-	    canvas: SubScreen::new(ctx.context, rect, depth, ggraphics::Color::from_rgba_u32(0)),
-	    messages: Vec::new(),
-	    background: UniTexture::new(
-		ctx.ref_texture(TextureID::TextBackground),
-		numeric::Point2f::new(0.0, 0.0),
-		numeric::Vector2f::new(1.0, 1.0),
-		0.0,
-		0
-	    ),
-	    partner_name: partner_name,
-	    my_name: my_name,
-	    draw_request: DrawRequest::InitDraw,
-	}
+    pub fn new<'a>(
+        ctx: &mut SuzuContext<'a>,
+        rect: numeric::Rect,
+        depth: i8,
+        partner_name: Option<String>,
+        my_name: Option<String>,
+    ) -> Self {
+        ChatBox {
+            canvas: SubScreen::new(ctx.context, rect, depth, ggraphics::Color::from_rgba_u32(0)),
+            messages: Vec::new(),
+            background: UniTexture::new(
+                ctx.ref_texture(TextureID::TextBackground),
+                numeric::Point2f::new(0.0, 0.0),
+                numeric::Vector2f::new(1.0, 1.0),
+                0.0,
+                0,
+            ),
+            partner_name: partner_name,
+            my_name: my_name,
+            draw_request: DrawRequest::InitDraw,
+        }
     }
-    
+
+    pub fn set_partner_name(&mut self, name: String) {
+        self.partner_name = Some(name);
+    }
+
+    pub fn set_my_name(&mut self, name: String) {
+        self.my_name = Some(name);
+    }
+
     fn put_message_in_default_place<'a>(&mut self, ctx: &mut SuzuContext<'a>) {
-	//balloonをいい感じに
-	let canvas_size = self.canvas.get_drawing_size(ctx.context);
-	let mut left_buttom_y = canvas_size.y;
-	for (person, text) in self.messages.iter_mut().rev() {
-	    let size = text.get_drawing_size(ctx.context);
-	    let x_pos = match person {
-		ChatBoxPerson::Me => canvas_size.x - size.x - 10.0,
-		ChatBoxPerson::Partner => 10.0,
-	    };
-	    left_buttom_y -= size.y + 10.0;
-	    text.set_position(numeric::Point2f::new(
-		x_pos,
-		left_buttom_y,
-	    ));
-	}
+        //balloonをいい感じに
+        let canvas_size = self.canvas.get_drawing_size(ctx.context);
+        let mut left_buttom_y = canvas_size.y;
+        for (person, text) in self.messages.iter_mut().rev() {
+            let size = text.get_drawing_size(ctx.context);
+            let x_pos = match person {
+                ChatBoxPerson::Me => canvas_size.x - size.x - 10.0,
+                ChatBoxPerson::Partner => 10.0,
+                ChatBoxPerson::SystemName(j) => {
+                    left_buttom_y -= 5.0;
+                    match j {
+                        LineJustified::Left => 10.0,
+                        LineJustified::Right => canvas_size.x - size.x - 10.0,
+                    }
+                }
+            };
+            left_buttom_y -= size.y + 10.0;
+            text.set_position(numeric::Point2f::new(x_pos, left_buttom_y));
+        }
+    }
+
+    fn last_person(&self) -> Option<ChatBoxPerson> {
+        if let Some((person, _)) = self.messages.last() {
+            Some(person.clone())
+        } else {
+            None
+        }
+    }
+
+    fn add_name_message<'a>(&mut self, ctx: &mut SuzuContext<'a>, person: ChatBoxPerson) {
+        let name = match person {
+            ChatBoxPerson::Me => {
+                if let Some(name) = self.my_name.as_ref() {
+                    name.clone()
+                } else {
+                    "？".to_string()
+                }
+            }
+            ChatBoxPerson::Partner => {
+                if let Some(name) = self.partner_name.as_ref() {
+                    name.clone()
+                } else {
+                    "？".to_string()
+                }
+            }
+            ChatBoxPerson::SystemName(_) => "？".to_string(),
+        };
+
+        let system_text = UniText::new(
+            name,
+            numeric::Point2f::new(0.0, 0.0),
+            numeric::Vector2f::new(1.0, 1.0),
+            0.0,
+            0,
+            FontInformation::new(
+                ctx.resource.get_font(FontID::Cinema),
+                numeric::Vector2f::new(22.0, 22.0),
+                ggraphics::BLACK,
+            ),
+        );
+
+        let justified = match person {
+            ChatBoxPerson::Me => LineJustified::Right,
+            ChatBoxPerson::Partner | ChatBoxPerson::SystemName(_) => LineJustified::Left,
+        };
+        self.messages
+            .push((ChatBoxPerson::SystemName(justified), system_text));
     }
 
     fn add_message<'a>(&mut self, ctx: &mut SuzuContext<'a>, msg: String, person: ChatBoxPerson) {
-	let text = UniText::new(
-	    msg,
-	    numeric::Point2f::new(0.0, 0.0),
-	    numeric::Vector2f::new(1.0, 1.0),
-	    0.0,
-	    0,
-	    FontInformation::new(
-		ctx.resource.get_font(FontID::Cinema),
-		numeric::Vector2f::new(22.0, 22.0),
-		ggraphics::BLACK,
-	    )
-	);
+        let text = UniText::new(
+            msg,
+            numeric::Point2f::new(0.0, 0.0),
+            numeric::Vector2f::new(1.0, 1.0),
+            0.0,
+            0,
+            FontInformation::new(
+                ctx.resource.get_font(FontID::Cinema),
+                numeric::Vector2f::new(22.0, 22.0),
+                ggraphics::BLACK,
+            ),
+        );
 
-	self.messages.push((person, text));
-	self.put_message_in_default_place(ctx);
-	self.draw_request = DrawRequest::Draw;
-    }
-	
-    pub fn add_message_as_partner<'a>(&mut self, ctx: &mut SuzuContext<'a>, msg: String){
-	self.add_message(ctx, msg, ChatBoxPerson::Partner)
+        if let Some(last_person) = self.last_person() {
+            if last_person != person {
+                self.add_name_message(ctx, person);
+            }
+        } else {
+            self.add_name_message(ctx, person);
+        }
+
+        self.messages.push((person, text));
+        self.put_message_in_default_place(ctx);
+        self.draw_request = DrawRequest::Draw;
     }
 
-    pub fn add_message_as_mine<'a>(&mut self, ctx: &mut SuzuContext<'a>, msg: String){
-	self.add_message(ctx, msg, ChatBoxPerson::Me)
+    pub fn add_message_as_partner<'a>(&mut self, ctx: &mut SuzuContext<'a>, msg: String) {
+        self.add_message(ctx, msg, ChatBoxPerson::Partner)
     }
-	
+
+    pub fn add_message_as_mine<'a>(&mut self, ctx: &mut SuzuContext<'a>, msg: String) {
+        self.add_message(ctx, msg, ChatBoxPerson::Me)
+    }
 }
 
 impl DrawableComponent for ChatBox {
@@ -2623,7 +2716,7 @@ impl DrawableComponent for ChatBox {
                 self.background.draw(ctx)?;
 
                 for (_, text) in self.messages.iter_mut() {
-		    text.draw(ctx)?;
+                    text.draw(ctx)?;
                 }
 
                 sub_screen::pop_screen(ctx);

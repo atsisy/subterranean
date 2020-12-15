@@ -2131,6 +2131,11 @@ impl ShopMenuMaster {
         }
     }
 
+    pub fn contains_some_menu<'a>(&self, ctx: &mut SuzuContext<'a>, point: numeric::Point2f) -> bool {
+	self.first_menu.canvas.contains(ctx.context, point) ||
+	    self.detail_menu.shelving_info.canvas.contains(ctx.context, point)
+    }
+
     pub fn update_contents(
         &mut self,
         ctx: &mut SuzuContext,
@@ -2151,17 +2156,24 @@ impl ShopMenuMaster {
         self.first_menu.appearing_now()
     }
 
+    pub fn detail_menu_is_open(&self) -> bool {
+        self.detail_menu.detail_menu_is_open()
+    }
+
     pub fn menu_key_action(&mut self, vkey: VirtualKey, t: Clock) {
         match vkey {
             VirtualKey::Action3 => {
-                if self.first_menu_is_open() {
-                    debug::debug_screen_push_text("slide detail menu");
-                    self.detail_menu
-                        .set_slide_contents(ShopDetailMenuSymbol::ShelvingBooks);
-                    self.detail_menu.slide_toggle(t);
-                }
+		self.toggle_detail_menu(t);
             }
             _ => (),
+        }
+    }
+
+    pub fn toggle_detail_menu(&mut self, t: Clock) {
+	if self.first_menu_is_open() {
+            self.detail_menu
+                .set_slide_contents(ShopDetailMenuSymbol::ShelvingBooks);
+            self.detail_menu.slide_toggle(t);
         }
     }
 
@@ -2774,62 +2786,70 @@ pub struct ShopCommandPalette {
 
 impl ShopCommandPalette {
     pub fn new<'a>(ctx: &mut SuzuContext<'a>, pos: numeric::Point2f, depth: i8) -> Self {
-	let font_info = FontInformation::new(
-	    ctx.resource.get_font(FontID::JpFude1),
-	    numeric::Vector2f::new(32.0, 32.0),
-	    ggraphics::WHITE
-	);
-	
-	let action_button = FramedButton::new(
-	    ctx,
-	    numeric::Rect::new(pos.x, pos.y, 120.0, 70.0),
-	    [
+        let font_info = FontInformation::new(
+            ctx.resource.get_font(FontID::JpFude1),
+            numeric::Vector2f::new(32.0, 32.0),
+            ggraphics::WHITE,
+        );
+
+        let action_button = FramedButton::new(
+            ctx,
+            numeric::Rect::new(pos.x, pos.y, 120.0, 70.0),
+            [
                 numeric::Vector2f::new(10.0, 10.0),
                 numeric::Vector2f::new(10.0, 10.0),
                 numeric::Vector2f::new(10.0, 10.0),
                 numeric::Vector2f::new(10.0, 10.0),
             ],
-	    2.0,
-	    ggraphics::Color::from_rgba(90, 80, 63, 255),
-	    ggraphics::Color::from_rgba(219, 212, 184, 255),
-	    "行動".to_string(),
-	    font_info,
-	    0
-	);
-	ShopCommandPalette {
-	    action_button: action_button,
-	    drwob_essential: DrawableObjectEssential::new(true, depth),
-	}
+            2.0,
+            ggraphics::Color::from_rgba(90, 80, 63, 255),
+            ggraphics::Color::from_rgba(219, 212, 184, 255),
+            "行動".to_string(),
+            font_info,
+            0,
+        );
+        ShopCommandPalette {
+            action_button: action_button,
+            drwob_essential: DrawableObjectEssential::new(true, depth),
+        }
     }
 
     pub fn mouse_motion_handler<'a>(&mut self, ctx: &mut SuzuContext<'a>, p: numeric::Point2f) {
-	self.action_button.mouse_motion_handler(ctx, p);
+        self.action_button.mouse_motion_handler(ctx, p);
     }
 
-    pub fn mouse_left_button_down_handler<'a>(&mut self, ctx: &mut SuzuContext<'a>, p: numeric::Point2f) {
-	self.action_button.mouse_left_button_down(ctx, p);
+    pub fn mouse_left_button_down_handler<'a>(
+        &mut self,
+        ctx: &mut SuzuContext<'a>,
+        p: numeric::Point2f,
+    ) {
+        self.action_button.mouse_left_button_down(ctx, p);
     }
 
-    pub fn mouse_left_button_up_handler<'a>(&mut self, ctx: &mut SuzuContext<'a>, p: numeric::Point2f) {
-	self.action_button.mouse_left_button_up(ctx, p);
+    pub fn mouse_left_button_up_handler<'a>(
+        &mut self,
+        ctx: &mut SuzuContext<'a>,
+        p: numeric::Point2f,
+    ) {
+        self.action_button.mouse_left_button_up(ctx, p);
     }
 
     pub fn contains_buttons(&self, p: numeric::Point2f) -> bool {
-	self.action_button.contains(p)
+        self.action_button.contains(p)
     }
 
     pub fn check_button_func(&self, p: numeric::Point2f) -> Option<CommandPaletteFunc> {
-	if self.action_button.contains(p) {
-	    return Some(CommandPaletteFunc::Action);
-	}
+        if self.action_button.contains(p) {
+            return Some(CommandPaletteFunc::Action);
+        }
 
-	None
+        None
     }
 }
 
 impl DrawableComponent for ShopCommandPalette {
     fn draw(&mut self, ctx: &mut ggez::Context) -> ggez::GameResult<()> {
-	self.action_button.draw(ctx)?;
+        self.action_button.draw(ctx)?;
 
         Ok(())
     }

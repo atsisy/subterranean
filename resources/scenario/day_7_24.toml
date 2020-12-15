@@ -21,23 +21,7 @@ left = "JunkoTachieDefault"
    color = 0x000000ff
 
    [[scenario-group.text]]
-   text_src_path = "./resources/scenario/7_23/1.txt"
-   	 
-   [[scenario-group.text]]
-   text = """"""
-   
-   [[scenario-group.text]]
-   text = """本居小鈴
-   サンプルテキスト"""
-   [[scenario-group.text]]
-   fpc = 0.1
-   font_scale = 28.0
-   color = 0xff0000ff
-   text = "赤字"
-
-   [[scenario-group.text]]
-   id = 4
-   text = """古明地さとり"""
+   text_src_path = "./resources/scenario/7_24/1.txt"
 
 [[scenario-group]]
 type = "choice"

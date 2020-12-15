@@ -9,14 +9,12 @@ use torifune::graphics::object::*;
 
 use super::super::*;
 
-use crate::core::{
-    MouseInformation, ResultReport, SavableData, TextureID, TileBatchTextureID,
-};
+use crate::core::{MouseInformation, ResultReport, SavableData, TextureID, TileBatchTextureID};
 use crate::flush_delay_event;
 use crate::flush_delay_event_and_redraw_check;
 use crate::object::effect_object;
-use crate::object::util_object;
 use crate::object::task_result_object::*;
+use crate::object::util_object;
 use crate::scene::{SceneID, SceneTransition};
 use effect_object::TilingEffectType;
 
@@ -58,12 +56,12 @@ impl TaskResultScene {
             ),
         );
 
-	let ok_button = util_object::FramedButton::create_design1(
-	    ctx,
-	    numeric::Point2f::new(100.0, 608.0),
-	    "戸締まり",
-	    numeric::Vector2f::new(28.0, 28.0)
-	);
+        let ok_button = util_object::FramedButton::create_design1(
+            ctx,
+            numeric::Point2f::new(100.0, 608.0),
+            "戸締まり",
+            numeric::Vector2f::new(28.0, 28.0),
+        );
 
         let scene_transition = Some(effect_object::ScreenTileEffect::new(
             ctx,
@@ -139,12 +137,12 @@ impl SceneManager for TaskResultScene {
         point: numeric::Point2f,
         _: numeric::Vector2f,
     ) {
-	if self.ok_button.contains(point) {
+        if self.ok_button.contains(point) {
             self.ok_button.make_this_hovered_status(ctx);
-	} else {
-	    self.ok_button.make_this_none_status(ctx);
-	}
-	
+        } else {
+            self.ok_button.make_this_none_status(ctx);
+        }
+
         if self.mouse_info.is_dragging(MouseButton::Left) {
             self.mouse_info
                 .set_last_dragged(MouseButton::Left, point, self.get_current_clock());

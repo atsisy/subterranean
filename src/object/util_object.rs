@@ -478,10 +478,10 @@ impl TableFrame {
     }
 
     pub fn get_cell_size(&self, p: numeric::Vector2u) -> numeric::Vector2f {
-	numeric::Vector2f::new(
-	    *self.frame_data.each_rows_size.get(p.x as usize).unwrap(),
-	    *self.frame_data.each_cols_size.get(p.y as usize).unwrap(),
-	)
+        numeric::Vector2f::new(
+            *self.frame_data.each_rows_size.get(p.x as usize).unwrap(),
+            *self.frame_data.each_cols_size.get(p.y as usize).unwrap(),
+        )
     }
 }
 
@@ -676,8 +676,7 @@ impl TextButtonTexture {
     }
 }
 
-impl DrawableComponent for TextButtonTexture
-{
+impl DrawableComponent for TextButtonTexture {
     fn draw(&mut self, ctx: &mut ggez::Context) -> ggez::GameResult<()> {
         if self.is_visible() {
             ggraphics::draw(
@@ -1615,10 +1614,10 @@ impl PauseScreenSet {
     ) -> Option<PauseResult> {
         if let Some(panel) = self.config_panel.as_mut() {
             if let Some(_) = panel.mouse_button_up(ctx, point, t) {
-		// ここに到達する場合は、"init-menu"に移動するとき
-		// ここでは、ConfigPanelのExitととしてみなす
-		self.config_panel = None;
-	    }
+                // ここに到達する場合は、"init-menu"に移動するとき
+                // ここでは、ConfigPanelのExitととしてみなす
+                self.config_panel = None;
+            }
             return None;
         }
 
@@ -1970,150 +1969,167 @@ pub struct FramedButton {
 
 impl FramedButton {
     pub fn new<'a>(
-	ctx: &mut SuzuContext<'a>,
-	rect: numeric::Rect,
-	borders: [numeric::Vector2f; 4],
-	frame_width: f32,
-	inner_color: ggraphics::Color,
-	outer_color: ggraphics::Color,
-	text: String,
-	font_info: FontInformation,
-	depth: i8
+        ctx: &mut SuzuContext<'a>,
+        rect: numeric::Rect,
+        borders: [numeric::Vector2f; 4],
+        frame_width: f32,
+        inner_color: ggraphics::Color,
+        outer_color: ggraphics::Color,
+        text: String,
+        font_info: FontInformation,
+        depth: i8,
     ) -> Self {
-	let texture = shape::FramedTextBalloon::new(
-	    ctx.context,
-	    rect,
-	    borders,
-	    frame_width,
-	    inner_color,
-	    outer_color,
-	    0
-	);
+        let texture = shape::FramedTextBalloon::new(
+            ctx.context,
+            rect,
+            borders,
+            frame_width,
+            inner_color,
+            outer_color,
+            0,
+        );
 
-	let mut text = UniText::new(
-	    text,
-	    numeric::Point2f::new(0.0, 0.0),
-	    numeric::Vector2f::new(1.0, 1.0),
-	    0.0,
-	    0,
-	    font_info
-	);
-	let area = texture.get_drawing_area();
-	text.make_center(
-	    ctx.context,
-	    numeric::Point2f::new(area.x + (area.w / 2.0), area.y + (area.h / 2.0))
-	);
+        let mut text = UniText::new(
+            text,
+            numeric::Point2f::new(0.0, 0.0),
+            numeric::Vector2f::new(1.0, 1.0),
+            0.0,
+            0,
+            font_info,
+        );
+        let area = texture.get_drawing_area();
+        text.make_center(
+            ctx.context,
+            numeric::Point2f::new(area.x + (area.w / 2.0), area.y + (area.h / 2.0)),
+        );
 
-	let mut button = FramedButton {
-	    button_status: ButtonStatus::None,
-	    texture: texture,
-	    text: text,
-	    drwob_essential: DrawableObjectEssential::new(true, depth),
-	};
+        let mut button = FramedButton {
+            button_status: ButtonStatus::None,
+            texture: texture,
+            text: text,
+            drwob_essential: DrawableObjectEssential::new(true, depth),
+        };
 
-	button.make_this_none_status(ctx);
-	button
+        button.make_this_none_status(ctx);
+        button
     }
 
-    pub fn create_design1<'a>(ctx: &mut SuzuContext<'a>, pos: numeric::Point2f, text: &str, font_size: numeric::Vector2f) -> Self {
-	let font_info = FontInformation::new(
-	    ctx.resource.get_font(FontID::JpFude1),
-	    font_size,
-	    ggraphics::WHITE,
-	);
+    pub fn create_design1<'a>(
+        ctx: &mut SuzuContext<'a>,
+        pos: numeric::Point2f,
+        text: &str,
+        font_size: numeric::Vector2f,
+    ) -> Self {
+        let font_info = FontInformation::new(
+            ctx.resource.get_font(FontID::JpFude1),
+            font_size,
+            ggraphics::WHITE,
+        );
 
-	FramedButton::new(
-	    ctx,
-	    numeric::Rect::new(pos.x, pos.y, font_size.x * (text.len() as f32 / 3.0) + 50.0, font_size.y + 50.0),
-	    [
+        FramedButton::new(
+            ctx,
+            numeric::Rect::new(
+                pos.x,
+                pos.y,
+                font_size.x * (text.len() as f32 / 3.0) + 50.0,
+                font_size.y + 50.0,
+            ),
+            [
                 numeric::Vector2f::new(5.0, 5.0),
                 numeric::Vector2f::new(5.0, 5.0),
                 numeric::Vector2f::new(5.0, 5.0),
                 numeric::Vector2f::new(5.0, 5.0),
             ],
-	    2.0,
-	    ggraphics::Color::from_rgba(90, 80, 63, 255),
-	    ggraphics::Color::from_rgba(219, 212, 184, 255),
-	    text.to_string(),
-	    font_info,
-	    0
-	)
+            2.0,
+            ggraphics::Color::from_rgba(90, 80, 63, 255),
+            ggraphics::Color::from_rgba(219, 212, 184, 255),
+            text.to_string(),
+            font_info,
+            0,
+        )
     }
-    
+
     pub fn make_this_hovered_status<'a>(&mut self, ctx: &mut SuzuContext<'a>) {
-	self.button_status = ButtonStatus::Hovered;
-	self.text.set_color(ggraphics::Color::from_rgba_u32(0xffffffff));
-	self.texture.set_inner_color_filter(ggraphics::Color::from_rgba_u32(0xffffffff));
-	self.texture.set_outer_color_filter(ggraphics::Color::from_rgba_u32(0xffffffff));
-	ctx.process_utility.redraw();
+        self.button_status = ButtonStatus::Hovered;
+        self.text
+            .set_color(ggraphics::Color::from_rgba_u32(0xffffffff));
+        self.texture
+            .set_inner_color_filter(ggraphics::Color::from_rgba_u32(0xffffffff));
+        self.texture
+            .set_outer_color_filter(ggraphics::Color::from_rgba_u32(0xffffffff));
+        ctx.process_utility.redraw();
     }
 
     pub fn make_this_pressed_status<'a>(&mut self, ctx: &mut SuzuContext<'a>) {
-	self.button_status = ButtonStatus::Pressed;
-	self.texture.set_inner_color_filter(ggraphics::Color::from_rgba_u32(0xddddddff));
-	self.texture.set_outer_color_filter(ggraphics::Color::from_rgba_u32(0xddddddff));
-	ctx.process_utility.redraw();
+        self.button_status = ButtonStatus::Pressed;
+        self.texture
+            .set_inner_color_filter(ggraphics::Color::from_rgba_u32(0xddddddff));
+        self.texture
+            .set_outer_color_filter(ggraphics::Color::from_rgba_u32(0xddddddff));
+        ctx.process_utility.redraw();
     }
 
     pub fn make_this_none_status<'a>(&mut self, ctx: &mut SuzuContext<'a>) {
-	self.button_status = ButtonStatus::None;
-	self.texture.set_inner_color_filter(ggraphics::Color::from_rgba_u32(0xffffffff));
-	self.texture.set_outer_color_filter(ggraphics::Color::from_rgba_u32(0xf0f0f0ff));
-	ctx.process_utility.redraw();
+        self.button_status = ButtonStatus::None;
+        self.texture
+            .set_inner_color_filter(ggraphics::Color::from_rgba_u32(0xffffffff));
+        self.texture
+            .set_outer_color_filter(ggraphics::Color::from_rgba_u32(0xf0f0f0ff));
+        ctx.process_utility.redraw();
     }
-    
+
     pub fn contains(&self, p: numeric::Point2f) -> bool {
-	self.texture.contains(p)
+        self.texture.contains(p)
     }
 
     pub fn mouse_motion_handler<'a>(&mut self, ctx: &mut SuzuContext<'a>, p: numeric::Point2f) {
-	if self.contains(p) {
-	    match self.button_status {
-		ButtonStatus::None => self.make_this_hovered_status(ctx),
-		_ => (),
-	    }
-	    return;
-	}
+        if self.contains(p) {
+            match self.button_status {
+                ButtonStatus::None => self.make_this_hovered_status(ctx),
+                _ => (),
+            }
+            return;
+        }
 
-	match self.button_status {
-	    ButtonStatus::Hovered | ButtonStatus::Pressed => self.make_this_none_status(ctx),
-	    _ => (),
-	}
+        match self.button_status {
+            ButtonStatus::Hovered | ButtonStatus::Pressed => self.make_this_none_status(ctx),
+            _ => (),
+        }
     }
 
     pub fn mouse_left_button_down<'a>(&mut self, ctx: &mut SuzuContext<'a>, p: numeric::Point2f) {
-	if self.contains(p) {
-	    match self.button_status {
-		ButtonStatus::None | ButtonStatus::Hovered => self.make_this_pressed_status(ctx),
-		_ => (),
-	    }
-	    return;
-	}
+        if self.contains(p) {
+            match self.button_status {
+                ButtonStatus::None | ButtonStatus::Hovered => self.make_this_pressed_status(ctx),
+                _ => (),
+            }
+            return;
+        }
 
-	match self.button_status {
-	    ButtonStatus::Hovered | ButtonStatus::Pressed => self.make_this_none_status(ctx),
-	    _ => (),
-	}
+        match self.button_status {
+            ButtonStatus::Hovered | ButtonStatus::Pressed => self.make_this_none_status(ctx),
+            _ => (),
+        }
     }
 
     pub fn mouse_left_button_up<'a>(&mut self, ctx: &mut SuzuContext<'a>, p: numeric::Point2f) {
-	if self.contains(p) {
-	    self.make_this_hovered_status(ctx);
-	} else {
-	    self.make_this_none_status(ctx);
-	}
+        if self.contains(p) {
+            self.make_this_hovered_status(ctx);
+        } else {
+            self.make_this_none_status(ctx);
+        }
     }
 
     pub fn get_area(&self) -> numeric::Rect {
-	self.texture.get_drawing_area()
+        self.texture.get_drawing_area()
     }
 }
 
 impl DrawableComponent for FramedButton {
     fn draw(&mut self, ctx: &mut ggez::Context) -> ggez::GameResult<()> {
         if self.is_visible() {
-	    self.texture.draw(ctx)?;
-	    self.text.draw(ctx)?;
+            self.texture.draw(ctx)?;
+            self.text.draw(ctx)?;
         }
 
         Ok(())

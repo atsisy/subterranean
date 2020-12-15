@@ -16,13 +16,14 @@ use ggez::input::mouse::MouseButton;
 use torifune::numeric;
 
 use super::*;
-use crate::core::{WINDOW_SIZE_X, WINDOW_SIZE_Y, map_parser as mp};
+use crate::core::{map_parser as mp, WINDOW_SIZE_X, WINDOW_SIZE_Y};
 use crate::core::{
     BookInformation, FontID, MouseInformation, ResultReport, SavableData, SuzuContext,
     TileBatchTextureID,
 };
 use crate::flush_delay_event;
 use crate::flush_delay_event_and_redraw_check;
+use crate::add_delay_event;
 use crate::object::effect_object;
 use crate::object::map_object::*;
 use crate::object::notify;
@@ -572,6 +573,7 @@ pub struct ShopScene {
     player: PlayableCharacter,
     character_group: CharacterGroup,
     shop_special_object: ShopSpecialObject,
+    special_button: FramedButton,
     key_listener: tdev::KeyboardListener,
     clock: Clock,
     shop_clock: ShopClock,
@@ -665,11 +667,19 @@ impl ShopScene {
 
         ctx.pay_ad_cost();
 
+	let special_button = FramedButton::create_design1(
+	    ctx,
+	    numeric::Point2f::new(-10.0, 200.0),
+	    "様態",
+	    numeric::Vector2f::new(24.0, 24.0),
+	);
+
         ShopScene {
             mouse_info: MouseInformation::new(),
             player: player,
             character_group: character_group,
             shop_special_object: ShopSpecialObject::new(),
+	    special_button: special_button,
             key_listener: key_listener,
             clock: 0,
             shop_clock: shop_time,
@@ -707,11 +717,11 @@ impl ShopScene {
             ),
             begining_save_data: begining_save_data,
             drawable_shop_clock: drawble_shop_clock,
-	    shop_command_palette: ShopCommandPalette::new(
-		ctx,
-		numeric::Point2f::new(WINDOW_SIZE_X as f32 * 3.0 / 4.0, WINDOW_SIZE_Y as f32 / 1.5),
-		0
-	    ),
+            shop_command_palette: ShopCommandPalette::new(
+                ctx,
+                numeric::Point2f::new(WINDOW_SIZE_X as f32 * 3.0 / 4.0, WINDOW_SIZE_Y as f32 / 1.5),
+                0,
+            ),
         }
     }
 
@@ -1093,14 +1103,12 @@ impl ShopScene {
         self.move_playable_character_y(ctx, t);
     }
 
-    pub fn command_palette_go_register_handler(&mut self) {
-	
-    }
-    
+    pub fn command_palette_go_register_handler(&mut self) {}
+
     pub fn command_palette_handler(&mut self, func: CommandPaletteFunc) {
-	match func {
-	    CommandPaletteFunc::Action => self.command_palette_go_register_handler(),
-	}
+        match func {
+            CommandPaletteFunc::Action => self.command_palette_go_register_handler(),
+        }
     }
 
     pub fn run_builtin_event<'a>(
@@ -1597,6 +1605,19 @@ impl ShopScene {
             );
         }
     }
+
+    fn special_button_handler<'a>(&mut self, ctx: &mut SuzuContext<'a>) {
+        if !self.shop_menu.first_menu_is_open() {
+            self.dark_effect_panel
+                .new_effect(8, self.get_current_clock(), 0, 200);
+
+	    self.shop_menu.toggle_first_menu(self.get_current_clock());
+
+	    add_delay_event!(self.event_list, |slf, ctx, t| {
+		slf.shop_menu.toggle_detail_menu(t);
+	    }, 10);
+        }
+    }
 }
 
 impl SceneManager for ShopScene {
@@ -1637,12 +1658,12 @@ impl SceneManager for ShopScene {
             }
         } else {
             if ggez::input::mouse::button_pressed(ctx.context, MouseButton::Left) {
-		if !self.shop_command_palette.contains_buttons(point) {
+                if !self.shop_command_palette.contains_buttons(point) {
                     self.start_mouse_move(ctx.context, point);
-		}
+                }
             }
 
-	    self.shop_command_palette.mouse_motion_handler(ctx, point);
+            self.shop_command_palette.mouse_motion_handler(ctx, point);
         }
     }
 
@@ -1666,24 +1687,47 @@ impl SceneManager for ShopScene {
         } else {
             match button {
                 MouseButton::Left => {
-		    if !self.shop_command_palette.contains_buttons(point) {
-			self.start_mouse_move(ctx.context, point);
-		    }
-		    
-		    self.shop_command_palette.mouse_left_button_down_handler(ctx, point);
-		    if let Some(func) = self.shop_command_palette.check_button_func(point) {
-			match func {
-			    CommandPaletteFunc::Action => {
-				if let Some(scenario_box) = self.map.scenario_box.as_mut() {
-				    if scenario_box.get_text_box_status() == TextBoxStatus::FixedText {
-					self.map.scenario_box = None;
-				    }
-				} else {
-				    self.check_event_panel_onmap(ctx, EventTrigger::Action);
-				}
-			    }
+                    if !self.shop_command_palette.contains_buttons(point) &&
+			!self.shop_menu.first_menu_is_open() &&
+			!self.shop_menu.detail_menu_is_open() {
+                        self.start_mouse_move(ctx.context, point);
+                    }
+
+		    if !self.shop_menu.contains_some_menu(ctx, point) {
+			if self.shop_menu.first_menu_is_open() || self.shop_menu.detail_menu_is_open() {
+			    self.dark_effect_panel
+				.new_effect(8, self.get_current_clock(), 200, 0);
+			}
+			
+			if self.shop_menu.first_menu_is_open() {
+			    self.shop_menu.toggle_first_menu(t);
+			}
+
+			if self.shop_menu.detail_menu_is_open() {
+			    self.shop_menu.toggle_detail_menu(t);
 			}
 		    }
+		    if self.special_button.contains(point) {
+			self.special_button_handler(ctx);
+		    }
+
+                    self.shop_command_palette
+                        .mouse_left_button_down_handler(ctx, point);
+                    if let Some(func) = self.shop_command_palette.check_button_func(point) {
+                        match func {
+                            CommandPaletteFunc::Action => {
+                                if let Some(scenario_box) = self.map.scenario_box.as_mut() {
+                                    if scenario_box.get_text_box_status()
+                                        == TextBoxStatus::FixedText
+                                    {
+                                        self.map.scenario_box = None;
+                                    }
+                                } else {
+                                    self.check_event_panel_onmap(ctx, EventTrigger::Action);
+                                }
+                            }
+                        }
+                    }
                 }
                 MouseButton::Right => {
                     self.player.reset_speed();
@@ -1721,26 +1765,27 @@ impl SceneManager for ShopScene {
         } else {
             match button {
                 MouseButton::Left => {
-		    if !self.shop_command_palette.contains_buttons(point) {
-			if self.shop_special_object.is_enable_now() {
+                    if !self.shop_command_palette.contains_buttons(point) {
+                        if self.shop_special_object.is_enable_now() {
                             if !self
-				.shop_special_object
-				.contains_shelving_select_ui_windows(ctx, point)
+                                .shop_special_object
+                                .contains_shelving_select_ui_windows(ctx, point)
                             {
-				self.try_hide_shelving_select_ui(ctx);
+                                self.try_hide_shelving_select_ui(ctx);
                             }
-			    
-                            if !self
-				.shop_special_object
-				.contains_storing_select_ui_windows(ctx, point)
-                            {
-				self.try_hide_storing_select_ui(ctx);
-                            }
-			}
-		    }
 
-		    self.player.reset_speed();
-		    self.shop_command_palette.mouse_left_button_up_handler(ctx, point);
+                            if !self
+                                .shop_special_object
+                                .contains_storing_select_ui_windows(ctx, point)
+                            {
+                                self.try_hide_storing_select_ui(ctx);
+                            }
+                        }
+                    }
+
+                    self.player.reset_speed();
+                    self.shop_command_palette
+                        .mouse_left_button_up_handler(ctx, point);
                 }
                 MouseButton::Right => {
                     if self.shop_map_is_staged {
@@ -1947,7 +1992,8 @@ impl SceneManager for ShopScene {
         self.shop_map.draw(ctx).unwrap();
 
         self.drawable_shop_clock.draw(ctx).unwrap();
-	self.shop_command_palette.draw(ctx).unwrap();
+        self.shop_command_palette.draw(ctx).unwrap();
+	self.special_button.draw(ctx).unwrap();
 
         self.dark_effect_panel.draw(ctx).unwrap();
 

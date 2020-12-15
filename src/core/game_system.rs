@@ -16,23 +16,20 @@ pub enum DayWorkType {
 
 impl DayWorkType {
     pub fn to_string_jp(&self) -> String {
-	match self {
-	    DayWorkType::ShopWork => "店番",
-	    DayWorkType::GoingOut(dest) => {
-		match dest {
-		    GoingOutEvent::AkyuTei => "外出（阿求亭）",
-		    GoingOutEvent::Dangoya => "外出（団子屋）",
-		    GoingOutEvent::Terakoya => "外出（寺子屋）",
-		}
-	    },
-	    DayWorkType::TakingRest => "休憩"
-	}.to_string()
+        match self {
+            DayWorkType::ShopWork => "店番",
+            DayWorkType::GoingOut(dest) => match dest {
+                GoingOutEvent::AkyuTei => "外出（阿求亭）",
+                GoingOutEvent::Dangoya => "外出（団子屋）",
+                GoingOutEvent::Terakoya => "外出（寺子屋）",
+            },
+            DayWorkType::TakingRest => "休憩",
+        }
+        .to_string()
     }
 }
 
-pub struct EventProgressTable {
-    
-}
+pub struct EventProgressTable {}
 
 #[derive(Clone, Serialize, Deserialize)]
 pub struct WeekWorkSchedule {
@@ -42,49 +39,49 @@ pub struct WeekWorkSchedule {
 
 impl WeekWorkSchedule {
     pub fn new(first_day: GensoDate, schedule: [DayWorkType; 7]) -> Self {
-	WeekWorkSchedule {
-	    first_day: first_day,
-	    schedule: [
-		Some(schedule[0]),
-		Some(schedule[1]),
-		Some(schedule[2]),
-		Some(schedule[3]),
-		Some(schedule[4]),
-		Some(schedule[5]),
-		Some(schedule[6])
-	    ],
-	}
+        WeekWorkSchedule {
+            first_day: first_day,
+            schedule: [
+                Some(schedule[0]),
+                Some(schedule[1]),
+                Some(schedule[2]),
+                Some(schedule[3]),
+                Some(schedule[4]),
+                Some(schedule[5]),
+                Some(schedule[6]),
+            ],
+        }
     }
 
     pub fn new_empty(first_day: GensoDate) -> Self {
-	WeekWorkSchedule {
-	    first_day: first_day,
-	    schedule: [None, None, None, None, None, None, None],
-	}
+        WeekWorkSchedule {
+            first_day: first_day,
+            schedule: [None, None, None, None, None, None, None],
+        }
     }
-    
+
     pub fn get_first_day(&self) -> GensoDate {
-	self.first_day.clone()
+        self.first_day.clone()
     }
 
     pub fn get_schedule_at(&self, index: usize) -> Option<DayWorkType> {
-	if index >= 7 {
-	    panic!("invalid index, greater or equal to 7");
-	}
-	self.schedule[index].clone()
+        if index >= 7 {
+            panic!("invalid index, greater or equal to 7");
+        }
+        self.schedule[index].clone()
     }
 
     pub fn update_is_not_required(&self, date: &GensoDate) -> bool {
-	let diff = self.first_day.diff_day(date);
-	diff < 7 && diff >= 0 && !self.schedule.contains(&None)
+        let diff = self.first_day.diff_day(date);
+        diff < 7 && diff >= 0 && !self.schedule.contains(&None)
     }
 
     pub fn get_schedule_of(&self, day: &GensoDate) -> Option<DayWorkType> {
-	let diff = self.first_day.diff_day(day);
-	if diff < 0 {
-	    return None;
-	}
+        let diff = self.first_day.diff_day(day);
+        if diff < 0 {
+            return None;
+        }
 
-	self.get_schedule_at(diff as usize)
+        self.get_schedule_at(diff as usize)
     }
 }
