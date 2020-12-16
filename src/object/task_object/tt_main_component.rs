@@ -967,7 +967,7 @@ impl SuzuMiniSightSilhouette {
             None,
             Some("小鈴".to_string()),
         );
-	chat_box.add_message_as_mine(ctx, "いらっしゃいませ".to_string());
+        chat_box.add_message_as_mine(ctx, "いらっしゃいませ".to_string());
 
         SuzuMiniSightSilhouette {
             event_list: DelayEventList::new(),
@@ -989,6 +989,14 @@ impl SuzuMiniSightSilhouette {
                 ggraphics::Color::from_rgba_u32(0x00000000),
             ),
         }
+    }
+
+    fn mouse_wheel_event<'a>(&mut self, ctx: &mut SuzuContext<'a>, point: numeric::Point2f, x: f32, y: f32) {
+    let rpoint = self.canvas.relative_point(point);
+    println!("wheel check");
+	if self.chat_box.contains(ctx.context, rpoint) {
+        self.chat_box.scroll(ctx, point, numeric::Vector2f::new(x, y));
+	}
     }
 
     fn replace_character(&mut self, chara: SimpleObject, name: String) {
@@ -1238,7 +1246,7 @@ impl SuzuMiniSight {
             draw_request: DrawRequest::InitDraw,
         }
     }
-
+    
     pub fn silhouette_new_customer_update(
         &mut self,
         ctx: &mut ggez::Context,
@@ -1373,6 +1381,12 @@ impl SuzuMiniSight {
             self.draw_request = DrawRequest::Draw;
             self.dropping.push(d.unwrap());
         }
+    }
+
+    pub fn mouse_wheel_event<'a>(&mut self, ctx: &mut SuzuContext<'a>, point: numeric::Point2f, x: f32, y: f32) {
+        let rpoint = self.canvas.relative_point(point);
+        self.silhouette.mouse_wheel_event(ctx, rpoint, x, y);
+        self.draw_request = DrawRequest::Draw;
     }
 
     pub fn unselect_dragging_object(&mut self, ctx: &mut ggez::Context, t: Clock) {
@@ -2618,6 +2632,7 @@ impl ChatBox {
                 }
             };
             left_buttom_y -= size.y + 10.0;
+            
             text.set_position(numeric::Point2f::new(x_pos, left_buttom_y));
         }
     }
@@ -2754,4 +2769,45 @@ impl DrawableObject for ChatBox {
 
 impl TextureObject for ChatBox {
     impl_texture_object_for_wrapped! {canvas}
+}
+
+impl Scrollable for ChatBox {
+    fn scroll<'a>(
+        &mut self,
+        ctx: &mut SuzuContext<'a>,
+        _point: numeric::Point2f,
+        offset: numeric::Vector2f,
+    ) {
+	if self.messages.is_empty() {
+	    return;
+	}
+
+	let mut scroll_size = 0.0;
+    let offset = numeric::Vector2f::new(offset.x, -offset.y);
+
+    // フォーカスを下へ -> 全体をマイナス
+    if offset.y > 0.0 {
+	    let last_text = &self.messages.last().unwrap().1;
+	    if last_text.get_drawing_area(ctx.context).bottom() - offset.y + 10.0 >= self.canvas.get_drawing_size(ctx.context).y {
+		    scroll_size = -offset.y;
+	    } else if last_text.get_drawing_area(ctx.context).bottom() + 10.0 >= self.canvas.get_drawing_size(ctx.context).y {
+		    scroll_size = -(last_text.get_drawing_area(ctx.context).bottom() - self.canvas.get_drawing_size(ctx.context).y);
+	    }
+	} else {
+        // フォーカスを上へ -> 全体をプラス
+        let first_text = &self.messages.first().unwrap().1;
+	    if first_text.get_drawing_area(ctx.context).top() - offset.y <= 0.0 {
+		    scroll_size = -offset.y;
+	    } else if first_text.get_drawing_area(ctx.context).top() <= 0.0 {
+		    scroll_size = first_text.get_drawing_area(ctx.context).top();
+	    }
+    }
+    
+	for (_, text) in self.messages.iter_mut() {
+        text.move_diff(numeric::Vector2f::new(0.0, scroll_size * 4.0));
+    }
+    
+    self.draw_request = DrawRequest::Draw;
+    ctx.process_utility.redraw();
+    }
 }

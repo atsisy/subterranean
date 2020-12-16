@@ -2131,9 +2131,17 @@ impl ShopMenuMaster {
         }
     }
 
-    pub fn contains_some_menu<'a>(&self, ctx: &mut SuzuContext<'a>, point: numeric::Point2f) -> bool {
-	self.first_menu.canvas.contains(ctx.context, point) ||
-	    self.detail_menu.shelving_info.canvas.contains(ctx.context, point)
+    pub fn contains_some_menu<'a>(
+        &self,
+        ctx: &mut SuzuContext<'a>,
+        point: numeric::Point2f,
+    ) -> bool {
+        self.first_menu.canvas.contains(ctx.context, point)
+            || self
+                .detail_menu
+                .shelving_info
+                .canvas
+                .contains(ctx.context, point)
     }
 
     pub fn update_contents(
@@ -2163,14 +2171,14 @@ impl ShopMenuMaster {
     pub fn menu_key_action(&mut self, vkey: VirtualKey, t: Clock) {
         match vkey {
             VirtualKey::Action3 => {
-		self.toggle_detail_menu(t);
+                self.toggle_detail_menu(t);
             }
             _ => (),
         }
     }
 
     pub fn toggle_detail_menu(&mut self, t: Clock) {
-	if self.first_menu_is_open() {
+        if self.first_menu_is_open() {
             self.detail_menu
                 .set_slide_contents(ShopDetailMenuSymbol::ShelvingBooks);
             self.detail_menu.slide_toggle(t);

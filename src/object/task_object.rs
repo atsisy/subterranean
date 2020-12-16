@@ -1046,9 +1046,9 @@ impl TaskTable {
                         t,
                     );
 
-		    self.sight
-			.silhouette
-			.insert_customer_message_in_chatbox(ctx, phrase_text);
+                    self.sight
+                        .silhouette
+                        .insert_customer_message_in_chatbox(ctx, phrase_text);
                 }
                 _ => (),
             }
@@ -1087,26 +1087,21 @@ impl TaskTable {
     }
 
     fn show_kosuzu_payment_message<'a>(&mut self, ctx: &mut SuzuContext<'a>, price: u32, t: Clock) {
-	let msg = format!("合計{}円になります", number_to_jk(price as u64));
-        self.kosuzu_phrase.insert_new_phrase(
-            ctx,
-            &msg,
-            t,
-        );
+        let msg = format!("合計{}円になります", number_to_jk(price as u64));
+        self.kosuzu_phrase.insert_new_phrase(ctx, &msg, t);
 
-	self.sight
-	    .silhouette
-	    .insert_customer_message_in_chatbox(ctx, msg);
+        self.sight
+            .silhouette
+            .insert_customer_message_in_chatbox(ctx, msg);
     }
 
     fn show_kosuzu_returning_is_done_message<'a>(&mut self, ctx: &mut SuzuContext<'a>, t: Clock) {
-	let msg = "確認しました またお越しください";
-        self.kosuzu_phrase
-            .insert_new_phrase(ctx, msg, t);
+        let msg = "確認しました またお越しください";
+        self.kosuzu_phrase.insert_new_phrase(ctx, msg, t);
 
-	self.sight
-	    .silhouette
-	    .insert_customer_message_in_chatbox(ctx, msg.to_string());
+        self.sight
+            .silhouette
+            .insert_customer_message_in_chatbox(ctx, msg.to_string());
     }
 
     ///
@@ -1452,6 +1447,11 @@ impl TaskTable {
         if !self.try_show_menus_regarding_customer_silhoutte(ctx, click_point, t) {
             self.try_show_menus_regarding_ondesk_book_info(ctx, click_point, t);
         }
+    }
+
+    pub fn mouse_wheel_event<'a>(&mut self, ctx: &mut SuzuContext<'a>, point: numeric::Point2f, x: f32, y: f32) {
+	    let rpoint = self.canvas.relative_point(point);
+	    self.sight.mouse_wheel_event(ctx, rpoint, x, y);
     }
 }
 
