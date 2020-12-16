@@ -993,7 +993,6 @@ impl SuzuMiniSightSilhouette {
 
     fn mouse_wheel_event<'a>(&mut self, ctx: &mut SuzuContext<'a>, point: numeric::Point2f, x: f32, y: f32) {
     let rpoint = self.canvas.relative_point(point);
-    println!("wheel check");
 	if self.chat_box.contains(ctx.context, rpoint) {
         self.chat_box.scroll(ctx, point, numeric::Vector2f::new(x, y));
 	}
@@ -2185,7 +2184,7 @@ impl TaskInfoContents {
         );
 
         let mut header_text = UniText::new(
-            "Memory".to_string(),
+            "Board".to_string(),
             numeric::Point2f::new(0.0, 0.0),
             numeric::Vector2f::new(1.0, 1.0),
             0.0,

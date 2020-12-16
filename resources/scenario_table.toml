@@ -11,3 +11,101 @@ path = "./resources/scenario/day_7_24.toml"
 season = 112		
 month = 7
 day = 24
+
+[[scenario-table]]
+path = "./resources/scenario/day_7_25.toml"
+[scenario-table.date]
+season = 112		
+month = 7
+day = 25
+
+[[scenario-table]]
+path = "./resources/scenario/day_7_26.toml"
+[scenario-table.date]
+season = 112		
+month = 7
+day = 26
+
+[[scenario-table]]
+path = "./resources/scenario/day_7_27.toml"
+[scenario-table.date]
+season = 112		
+month = 7
+day = 27
+
+[[scenario-table]]
+path = "./resources/scenario/day_7_28.toml"
+[scenario-table.date]
+season = 112		
+month = 7
+day = 28
+
+[[scenario-table]]
+path = "./resources/scenario/day_7_29.toml"
+[scenario-table.date]
+season = 112		
+month = 7
+day = 29
+
+[[scenario-table]]
+path = "./resources/scenario/day_7_30.toml"
+[scenario-table.date]
+season = 112		
+month = 7
+day = 30
+
+[[scenario-table]]
+path = "./resources/scenario/day_7_31.toml"
+[scenario-table.date]
+season = 112		
+month = 7
+day = 31
+
+[[scenario-table]]
+path = "./resources/scenario/day_8_1.toml"
+[scenario-table.date]
+season = 112		
+month = 8
+day = 1
+
+[[scenario-table]]
+path = "./resources/scenario/day_8_2.toml"
+[scenario-table.date]
+season = 112
+month = 8
+day = 2
+
+[[scenario-table]]
+path = "./resources/scenario/day_8_1.toml"
+[scenario-table.date]
+season = 112		
+month = 8
+day = 1
+
+[[scenario-table]]
+path = "./resources/scenario/day_8_2.toml"
+[scenario-table.date]
+season = 112
+month = 8
+day = 2
+
+[[scenario-table]]
+path = "./resources/scenario/day_8_3.toml"
+[scenario-table.date]
+season = 112		
+month = 8
+day = 3
+
+[[scenario-table]]
+path = "./resources/scenario/day_8_4.toml"
+[scenario-table.date]
+season = 112
+month = 8
+day = 4
+
+[[scenario-table]]
+path = "./resources/scenario/day_8_5.toml"
+[scenario-table.date]
+season = 112
+month = 8
+day = 5

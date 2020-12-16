@@ -1530,6 +1530,7 @@ impl SavableData {
         self.task_result = data.task_result;
         self.suzunaan_status = data.suzunaan_status;
         self.ad_status = data.ad_status;
+        self.week_schedule = data.week_schedule;
     }
 
     pub fn change_ad_status(&mut self, ad_type: SuzunaAdType, status: bool) {

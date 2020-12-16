@@ -887,7 +887,7 @@ impl<Msg> DrawableComponent for WindowStack<Msg> {
 pub struct WeekScheduleWindow {
     canvas: SubScreen,
     frame: TableFrame,
-    current_mark: TileBatchFrame,
+    current_mark: Option<TileBatchFrame>,
     background: UniTexture,
     desc_vtext: Vec<VerticalText>,
     sched_vtext: [Option<VerticalText>; 7],
@@ -946,13 +946,15 @@ impl WeekScheduleWindow {
 
         let mut sched_vtext = [None, None, None, None, None, None, None];
         let mut week_sched = [None, None, None, None, None, None, None];
-        for i in 0..7 {
-            let day_work_type = ctx.savable_data.week_schedule.get_schedule_at(i);
-            if day_work_type.is_none() {
-                continue;
-            }
 
-            week_sched[i] = day_work_type;
+        if !scno_ctx.schedule_redefine {
+            for i in 0..7 {
+                let day_work_type = ctx.savable_data.week_schedule.get_schedule_at(i);
+                if day_work_type.is_none() {
+                    continue;
+                }
+
+                week_sched[i] = day_work_type;
 
             let mut vtext = VerticalText::new(
                 day_work_type.unwrap().to_string_jp(),
@@ -972,6 +974,7 @@ impl WeekScheduleWindow {
 
             sched_vtext[i] = Some(vtext);
         }
+    }
 
         let background = UniTexture::new(
             ctx.ref_texture(TextureID::TextBackground),
@@ -1003,34 +1006,34 @@ impl WeekScheduleWindow {
             ok_button.hide();
         }
 
-        let date_diff = ctx
+        let current_mark = if scno_ctx.schedule_redefine {
+            None
+        } else {
+            let date_diff = ctx
             .savable_data
             .week_schedule
             .get_first_day()
             .diff_day(&ctx.savable_data.date);
-        let p = frame.get_grid_topleft(
+            let p = frame.get_grid_topleft(
             numeric::Vector2u::new(date_diff.abs() as u32, 0),
             numeric::Vector2f::new(0.0, 0.0),
-        );
-        let cell_size = frame.get_cell_size(numeric::Vector2u::new(date_diff.abs() as u32, 0));
-        let frame_height = frame.get_area().h;
+            );
 
-        let mut current_mark = TileBatchFrame::new(
-            ctx.resource,
-            TileBatchTextureID::RedOldStyleFrame,
-            numeric::Rect::new(
-                p.x + 8.0,
-                p.y + 8.0,
-                cell_size.x + 32.0,
-                frame_height + 32.0,
-            ),
-            numeric::Vector2f::new(0.5, 0.5),
-            0,
-        );
-
-        if scno_ctx.schedule_redefine {
-            current_mark.hide();
-        }
+            let cell_size = frame.get_cell_size(numeric::Vector2u::new(date_diff.abs() as u32, 0));
+            let frame_height = frame.get_area().h;
+            Some(TileBatchFrame::new(
+                ctx.resource,
+                TileBatchTextureID::RedOldStyleFrame,
+                numeric::Rect::new(
+                    p.x + 8.0,
+                    p.y + 8.0,
+                    cell_size.x + 32.0,
+                    frame_height + 32.0,
+                ),
+                numeric::Vector2f::new(0.5, 0.5),
+                0,
+            ))
+        };
 
         WeekScheduleWindow {
             canvas: SubScreen::new(
@@ -1086,7 +1089,9 @@ impl DrawableComponent for WeekScheduleWindow {
 
             self.background.draw(ctx)?;
             self.frame.draw(ctx)?;
-            self.current_mark.draw(ctx)?;
+            if let Some(current_mark) = self.current_mark.as_mut() {
+                current_mark.draw(ctx)?;
+            }
 
             for vtext in self.desc_vtext.iter_mut() {
                 vtext.draw(ctx)?;
@@ -1221,7 +1226,33 @@ impl StackMessagePassingWindow<WeekScheduleMessage> for WeekScheduleWindow {
             if let Some(sched) = self.export_week_sched(date) {
                 ctx.savable_data.update_week_schedule(sched);
                 self.ok_button.hide();
-                self.current_mark.appear();
+
+
+                let date_diff = ctx
+                .savable_data
+                .week_schedule
+                .get_first_day()
+                .diff_day(&ctx.savable_data.date);
+                let p = self.frame.get_grid_topleft(
+                numeric::Vector2u::new(date_diff.abs() as u32, 0),
+                numeric::Vector2f::new(0.0, 0.0),
+                );
+                
+                let cell_size = self.frame.get_cell_size(numeric::Vector2u::new(date_diff.abs() as u32, 0));
+                let frame_height = self.frame.get_area().h;
+                
+                self.current_mark = Some(TileBatchFrame::new(
+                    ctx.resource,
+                    TileBatchTextureID::RedOldStyleFrame,
+                    numeric::Rect::new(
+                        p.x + 8.0,
+                        p.y + 8.0,
+                        cell_size.x + 32.0,
+                        frame_height + 32.0,
+                    ),
+                    numeric::Vector2f::new(0.5, 0.5),
+                    0,
+                ));
             }
         }
 
