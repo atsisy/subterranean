@@ -10,6 +10,7 @@ use torifune::graphics::object::sub_screen;
 use torifune::graphics::object::*;
 use torifune::numeric;
 use torifune::roundup2f;
+use torifune::core::Clock;
 
 use torifune::graphics::object::sub_screen::SubScreen;
 
@@ -19,6 +20,7 @@ use torifune::impl_texture_object_for_wrapped;
 use crate::core::game_system;
 use crate::core::*;
 use crate::object::util_object::*;
+use crate::object::simulation_ui::*;
 use crate::scene::scenario_scene::ScenarioContext;
 use crate::set_table_frame_cell_center;
 
@@ -33,11 +35,12 @@ pub struct SuzunaStatusMainPage {
     money_text: VerticalText,
     day_text: VerticalText,
     kosuzu_level_text: VerticalText,
+    hp_meter: ResultMeter,
     drwob_essential: DrawableObjectEssential,
 }
 
 impl SuzunaStatusMainPage {
-    pub fn new<'a>(ctx: &mut SuzuContext<'a>) -> Self {
+    pub fn new<'a>(ctx: &mut SuzuContext<'a>, t: Clock) -> Self {
         let normal_scale_font = FontInformation::new(
             ctx.resource.get_font(FontID::Cinema),
             numeric::Vector2f::new(24.0, 24.0),
@@ -52,7 +55,7 @@ impl SuzunaStatusMainPage {
 
         let table_frame = TableFrame::new(
             ctx.resource,
-            numeric::Point2f::new(150.0, 30.0),
+            numeric::Point2f::new(50.0, 50.0),
             TileBatchTextureID::OldStyleFrame,
             FrameData::new(vec![120.0, 220.0], vec![40.0; 3]),
             numeric::Vector2f::new(0.25, 0.25),
@@ -132,6 +135,17 @@ impl SuzunaStatusMainPage {
             numeric::Vector2u::new(1, 1)
         );
 
+	let hp_meter = ResultMeter::new(
+            ctx,
+	    "意欲".to_string(),
+            numeric::Rect::new(200.0, 300.0, 300.0, 50.0),
+	    6.0,
+	    100.0,
+            ctx.savable_data.suzunaan_status.kosuzu_hp,
+            1,
+            t,
+        );
+
         SuzunaStatusMainPage {
             table_frame: table_frame,
             reputation_text: reputation_text,
@@ -150,8 +164,17 @@ impl SuzunaStatusMainPage {
             ),
             money_text: money_text,
             kosuzu_level_text: kosuzu_level_text,
+	    hp_meter: hp_meter,
             drwob_essential: DrawableObjectEssential::new(true, 0),
         }
+    }
+
+    pub fn change_kosuzu_hp<'a>(&mut self, ctx: &mut SuzuContext<'a>, diff_hp: f32) {
+	self.hp_meter.apply_offset(ctx, diff_hp, 100);
+    }
+
+    pub fn update<'a>(&mut self, ctx: &mut SuzuContext<'a>, t: Clock) {
+	self.hp_meter.effect(ctx, t);
     }
 }
 
@@ -167,6 +190,8 @@ impl DrawableComponent for SuzunaStatusMainPage {
 
             self.reputation_text.draw(ctx).unwrap();
             self.money_text.draw(ctx).unwrap();
+
+	    self.hp_meter.draw(ctx)?;
 
             self.kosuzu_level_text.draw(ctx).unwrap();
         }
@@ -447,9 +472,10 @@ impl SuzunaStatusPages {
         ctx: &mut SuzuContext<'a>,
         scno_ctx: &ScenarioContext,
         rect: numeric::Rect,
+	t: Clock,
     ) -> Self {
         SuzunaStatusPages {
-            main_page: SuzunaStatusMainPage::new(ctx),
+            main_page: SuzunaStatusMainPage::new(ctx, t),
             ad_page: ScenarioAdPage::new(
                 ctx,
                 numeric::Point2f::new(0.0, 0.0),
@@ -527,15 +553,23 @@ impl SuzunaStatusPages {
         }
     }
 
-    pub fn update<'a>(&mut self, ctx: &mut SuzuContext<'a>) {
+    pub fn update<'a>(&mut self, ctx: &mut SuzuContext<'a>, t: Clock) {
         match self.current_page {
-            0 => (),
+            0 => self.main_page.update(ctx, t),
             1 => (),
             2 => self.sched_page.update(ctx),
             _ => (),
         }
     }
 
+    pub fn show_main_page(&mut self) {
+	self.current_page = 0;
+    }
+
+    pub fn change_kosuzu_hp<'a>(&mut self, ctx: &mut SuzuContext<'a>, diff: f32) {
+	self.main_page.change_kosuzu_hp(ctx, diff);
+    }
+    
     pub fn show_schedule_page(&mut self) {
         self.current_page = 2;
     }
@@ -556,6 +590,7 @@ impl SuzunaStatusScreen {
         scno_ctx: &ScenarioContext,
         rect: numeric::Rect,
         depth: i8,
+	t: Clock,
     ) -> SuzunaStatusScreen {
         let mut background_texture = UniTexture::new(
             ctx.ref_texture(TextureID::TextBackground),
@@ -601,7 +636,7 @@ impl SuzunaStatusScreen {
             ),
             background: background_texture,
             appr_frame: appr_frame,
-            pages: SuzunaStatusPages::new(ctx, scno_ctx, rect),
+            pages: SuzunaStatusPages::new(ctx, scno_ctx, rect, t),
             go_left_texture: left,
             go_right_texture: right,
         }
@@ -657,8 +692,16 @@ impl SuzunaStatusScreen {
         self.pages.mouse_button_down(ctx, rpoint, button);
     }
 
-    pub fn update<'a>(&mut self, ctx: &mut SuzuContext<'a>) {
-        self.pages.update(ctx);
+    pub fn update<'a>(&mut self, ctx: &mut SuzuContext<'a>, t: Clock) {
+        self.pages.update(ctx, t);
+    }
+
+    pub fn change_kosuzu_hp<'a>(&mut self, ctx: &mut SuzuContext<'a>, diff: f32) {
+	self.pages.change_kosuzu_hp(ctx, diff);
+    }
+
+    pub fn show_main_page(&mut self) {
+	self.pages.show_main_page();
     }
 
     pub fn show_schedule_page(&mut self) {
@@ -956,25 +999,25 @@ impl WeekScheduleWindow {
 
                 week_sched[i] = day_work_type;
 
-            let mut vtext = VerticalText::new(
-                day_work_type.unwrap().to_string_jp(),
-                numeric::Point2f::new(0.0, 0.0),
-                numeric::Vector2f::new(1.0, 1.0),
-                0.0,
-                0,
-                font_info.clone(),
-            );
+                let mut vtext = VerticalText::new(
+                    day_work_type.unwrap().to_string_jp(),
+                    numeric::Point2f::new(0.0, 0.0),
+                    numeric::Vector2f::new(1.0, 1.0),
+                    0.0,
+                    0,
+                    font_info.clone(),
+                );
 
-            set_table_frame_cell_center!(
-                ctx.context,
-                frame,
-                vtext,
-                numeric::Vector2u::new(i as u32, 1)
-            );
+                set_table_frame_cell_center!(
+                    ctx.context,
+                    frame,
+                    vtext,
+                    numeric::Vector2u::new(i as u32, 1)
+                );
 
-            sched_vtext[i] = Some(vtext);
+                sched_vtext[i] = Some(vtext);
+            }
         }
-    }
 
         let background = UniTexture::new(
             ctx.ref_texture(TextureID::TextBackground),
@@ -1010,13 +1053,13 @@ impl WeekScheduleWindow {
             None
         } else {
             let date_diff = ctx
-            .savable_data
-            .week_schedule
-            .get_first_day()
-            .diff_day(&ctx.savable_data.date);
+                .savable_data
+                .week_schedule
+                .get_first_day()
+                .diff_day(&ctx.savable_data.date);
             let p = frame.get_grid_topleft(
-            numeric::Vector2u::new(date_diff.abs() as u32, 0),
-            numeric::Vector2f::new(0.0, 0.0),
+                numeric::Vector2u::new(date_diff.abs() as u32, 0),
+                numeric::Vector2f::new(0.0, 0.0),
             );
 
             let cell_size = frame.get_cell_size(numeric::Vector2u::new(date_diff.abs() as u32, 0));
@@ -1227,20 +1270,21 @@ impl StackMessagePassingWindow<WeekScheduleMessage> for WeekScheduleWindow {
                 ctx.savable_data.update_week_schedule(sched);
                 self.ok_button.hide();
 
-
                 let date_diff = ctx
-                .savable_data
-                .week_schedule
-                .get_first_day()
-                .diff_day(&ctx.savable_data.date);
+                    .savable_data
+                    .week_schedule
+                    .get_first_day()
+                    .diff_day(&ctx.savable_data.date);
                 let p = self.frame.get_grid_topleft(
-                numeric::Vector2u::new(date_diff.abs() as u32, 0),
-                numeric::Vector2f::new(0.0, 0.0),
+                    numeric::Vector2u::new(date_diff.abs() as u32, 0),
+                    numeric::Vector2f::new(0.0, 0.0),
                 );
-                
-                let cell_size = self.frame.get_cell_size(numeric::Vector2u::new(date_diff.abs() as u32, 0));
+
+                let cell_size = self
+                    .frame
+                    .get_cell_size(numeric::Vector2u::new(date_diff.abs() as u32, 0));
                 let frame_height = self.frame.get_area().h;
-                
+
                 self.current_mark = Some(TileBatchFrame::new(
                     ctx.resource,
                     TileBatchTextureID::RedOldStyleFrame,

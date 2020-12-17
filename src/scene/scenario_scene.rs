@@ -10,11 +10,13 @@ use crate::core::{MouseInformation, SuzuContext, TileBatchTextureID};
 
 use crate::flush_delay_event;
 use crate::flush_delay_event_and_redraw_check;
+use crate::add_delay_event;
 use crate::object::effect_object;
 use crate::object::scenario::*;
 use crate::object::scenario_object::*;
 use crate::object::util_object::*;
 use crate::object::DarkEffectPanel;
+use crate::core::game_system::*;
 use effect_object::{SceneTransitionEffectType, TilingEffectType};
 use torifune::graphics::drawable::*;
 
@@ -32,6 +34,7 @@ pub struct ScenarioContext {
     pub scenario_is_finish_and_wait: bool,
     pub wait_opecode_running: bool,
     pub schedule_define_done: bool,
+    pub builtin_command_inexec: bool,
 }
 
 pub struct ScenarioScene {
@@ -89,6 +92,7 @@ impl ScenarioScene {
             scenario_is_finish_and_wait: false,
             wait_opecode_running: false,
             schedule_define_done: false,
+	    builtin_command_inexec: false,
         };
 
         ScenarioScene {
@@ -109,6 +113,7 @@ impl ScenarioScene {
                 &scenario_ctx,
                 numeric::Rect::new(30.0, 25.0, 700.0, 470.0),
                 0,
+		0
             ),
             scene_transition_type: SceneTransition::Keep,
             scenario_ctx: scenario_ctx,
@@ -225,6 +230,35 @@ impl ScenarioScene {
             self.scenario_event.release_scenario_waiting();
             self.scenario_ctx.schedule_define_done = true;
         }
+    }
+
+    pub fn start_schedule<'a>(&mut self, ctx: &mut SuzuContext<'a>) {
+	match ctx.savable_data.get_todays_schedule() {
+	    DayWorkType::ShopWork => {
+		self.scenario_ctx.builtin_command_inexec = true;
+		self.status_screen.show_main_page();
+		self.status_screen.change_kosuzu_hp(ctx, -20.0);
+		add_delay_event!(self.event_list, |slf, _, _| {
+		    slf.scene_transition = SceneID::SuzunaShop;
+                    slf.scene_transition_type = SceneTransition::SwapTransition;
+		    slf.scenario_ctx.builtin_command_inexec = false;
+		}, self.get_current_clock() + 180);
+	    },
+	    DayWorkType::TakingRest => {
+		self.scenario_ctx.builtin_command_inexec = true;
+		self.status_screen.show_main_page();
+		self.status_screen.change_kosuzu_hp(ctx, 20.0);
+		add_delay_event!(self.event_list, |slf, _, _| {
+		    slf.scene_transition = SceneID::SuzunaShop;
+                    slf.scene_transition_type = SceneTransition::SwapTransition;
+		    slf.scenario_ctx.builtin_command_inexec = false;
+		}, self.get_current_clock() + 180);
+	    },
+	    DayWorkType::GoingOut(_) => {
+		self.scene_transition = SceneID::SuzunaShop;
+                self.scene_transition_type = SceneTransition::SwapTransition;
+	    }
+	}
     }
 }
 
@@ -348,7 +382,13 @@ impl SceneManager for ScenarioScene {
         } else {
             // 再描画要求はupdate_textメソッドの中で行われている
             self.scenario_event.update_text(ctx, &mut self.scenario_ctx);
-            self.status_screen.update(ctx);
+
+            if self.scenario_event.get_status() == ScenarioEventStatus::StartSchedule &&
+		!self.scenario_ctx.builtin_command_inexec {
+                self.start_schedule(ctx);
+            }
+
+            self.status_screen.update(ctx, t);
 
             self.schedule_check(ctx);
         }

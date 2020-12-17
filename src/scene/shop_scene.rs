@@ -1391,8 +1391,8 @@ impl ShopScene {
     /// # 再描画要求有り
     ///
     pub fn update_shop_clock_regular<'a>(&mut self, ctx: &mut SuzuContext<'a>, t: Clock) {
-        if self.get_current_clock() % 14 == 0 {
-            self.shop_clock.add_minute(10);
+        if self.get_current_clock() % 15 == 0 {
+            self.shop_clock.add_minute(2);
             self.drawable_shop_clock.update_time(&self.shop_clock);
 
             if self.shop_clock.equals(12, 0) {
@@ -1606,7 +1606,7 @@ impl ShopScene {
         }
     }
 
-    fn special_button_handler<'a>(&mut self, ctx: &mut SuzuContext<'a>) {
+    fn special_button_handler<'a>(&mut self, _ctx: &mut SuzuContext<'a>) {
         if !self.shop_menu.first_menu_is_open() {
             self.dark_effect_panel
                 .new_effect(8, self.get_current_clock(), 0, 200);
@@ -1615,7 +1615,7 @@ impl ShopScene {
 
             add_delay_event!(
                 self.event_list,
-                |slf, ctx, t| {
+                |slf, _ctx, t| {
                     slf.shop_menu.toggle_detail_menu(t);
                 },
                 10

@@ -17,7 +17,7 @@ pub fn main() {
         path::PathBuf::from("./resources")
     };
 
-    let (ref mut ctx, ref mut event_loop) = ContextBuilder::new("subterranean", "akichi")
+    let (ref mut ctx, ref mut event_loop) = ContextBuilder::new("suzu", "akichi")
         .window_setup(
             conf::WindowSetup::default()
                 .title("suzu")

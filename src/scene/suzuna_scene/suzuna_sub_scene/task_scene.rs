@@ -374,9 +374,15 @@ impl SceneManager for TaskScene {
         }
     }
 
-    fn mouse_wheel_event<'a>(&mut self, ctx: &mut SuzuContext<'a>, point: numeric::Point2f, x: f32, y: f32) {
-	    println!("wheel");
-	    self.task_table.mouse_wheel_event(ctx, point, x, y);
+    fn mouse_wheel_event<'a>(
+        &mut self,
+        ctx: &mut SuzuContext<'a>,
+        point: numeric::Point2f,
+        x: f32,
+        y: f32,
+    ) {
+        println!("wheel");
+        self.task_table.mouse_wheel_event(ctx, point, x, y);
     }
 
     fn mouse_button_down_event<'a>(

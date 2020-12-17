@@ -672,6 +672,83 @@ impl ScenarioFinishAndWaitData {
     }
 }
 
+pub struct ScheduleStartEssential {
+    scenario_id: ScenarioElementID,
+    background_texture_id: Option<TextureID>,
+    tachie_data: Option<Vec<TextureID>>,
+}
+
+pub struct ScheduleStartData {
+    scenario_id: ScenarioElementID,
+    background_texture_id: Option<TextureID>,
+    tachie_data: Option<Vec<TextureID>>,
+}
+
+pub enum ScenarioBuiltinCommand {
+    ScheduleStart(ScheduleStartEssential),
+}
+
+impl ScenarioBuiltinCommand {
+    pub fn from_toml_object(toml_scripts: &toml::value::Value) -> Self {
+        match toml_scripts
+            .get("opecode")
+            .unwrap()
+            .as_str()
+            .expect("invalid ScenarioBuiltinCommand opecode format")
+        {
+            "StartSchedule" => {
+                let id = toml_scripts.get("id").unwrap().as_integer().unwrap() as i32;
+                let background_texture_id =
+                    if let Some(background_tid_str) = toml_scripts.get("background") {
+                        Some(TextureID::from_str(background_tid_str.as_str().unwrap()).unwrap())
+                    } else {
+                        None
+                    };
+
+                let tachie_data = if let Some(tachie_table) = toml_scripts.get("tachie-data") {
+                    let mut tid_vec = Vec::new();
+                    if let Some(tid) = tachie_table.get("right") {
+                        tid_vec.push(TextureID::from_str(tid.as_str().unwrap()).unwrap());
+                    }
+
+                    if let Some(tid) = tachie_table.get("left") {
+                        tid_vec.push(TextureID::from_str(tid.as_str().unwrap()).unwrap());
+                    }
+
+                    Some(tid_vec)
+                } else {
+                    None
+                };
+
+                Self::ScheduleStart(ScheduleStartEssential {
+                    scenario_id: id,
+                    background_texture_id: background_texture_id,
+                    tachie_data: tachie_data,
+                })
+            }
+            _ => panic!("Invalid ScenarioBuiltinCommand opecode"),
+        }
+    }
+
+    pub fn get_scenario_id(&self) -> ScenarioElementID {
+        match self {
+            ScenarioBuiltinCommand::ScheduleStart(data) => data.scenario_id,
+        }
+    }
+
+    pub fn get_background_texture_id(&self) -> Option<TextureID> {
+        match self {
+            ScenarioBuiltinCommand::ScheduleStart(data) => data.background_texture_id.clone(),
+        }
+    }
+
+    pub fn get_tachie_info(&self) -> Option<Vec<TextureID>> {
+        match self {
+            ScenarioBuiltinCommand::ScheduleStart(data) => data.tachie_data.clone(),
+        }
+    }
+}
+
 ///
 /// SceneIDとSceneElementIDのペア
 /// ScenarioElementIDを持っていて、SceneEventの切り替えと同じインターフェースの
@@ -685,6 +762,7 @@ pub enum ScenarioElement {
     ChoiceSwitch(ChoicePatternData),
     SceneTransition(ScenarioTransitionData),
     FinishAndWait(ScenarioFinishAndWaitData),
+    BuiltinCommand(ScenarioBuiltinCommand),
 }
 
 impl ScenarioElement {
@@ -694,6 +772,7 @@ impl ScenarioElement {
             Self::ChoiceSwitch(choice) => choice.get_scenario_id(),
             Self::SceneTransition(transition_data) => transition_data.2,
             Self::FinishAndWait(data) => data.get_scenario_id(),
+            Self::BuiltinCommand(command) => command.get_scenario_id(),
         }
     }
 
@@ -703,6 +782,7 @@ impl ScenarioElement {
             Self::ChoiceSwitch(choice) => choice.get_background_texture_id(),
             Self::SceneTransition(_) => None,
             Self::FinishAndWait(data) => data.get_background_texture_id(),
+            Self::BuiltinCommand(command) => command.get_background_texture_id(),
         }
     }
 
@@ -712,6 +792,7 @@ impl ScenarioElement {
             Self::ChoiceSwitch(choice) => choice.get_tachie_data(),
             Self::SceneTransition(_) => None,
             Self::FinishAndWait(data) => data.get_tachie_data(),
+            Self::BuiltinCommand(command) => command.get_tachie_info(),
         }
     }
 }
@@ -785,6 +866,11 @@ impl Scenario {
                     "wait" => {
                         scenario.add(ScenarioElement::FinishAndWait(
                             ScenarioFinishAndWaitData::from_toml_object(elem, game_data),
+                        ));
+                    }
+                    "builtin" => {
+                        scenario.add(ScenarioElement::BuiltinCommand(
+                            ScenarioBuiltinCommand::from_toml_object(elem),
                         ));
                     }
                     _ => eprintln!("Error"),
@@ -1386,6 +1472,7 @@ pub enum ScenarioEventStatus {
     Choice,
     SceneTransition,
     FinishAndWait,
+    StartSchedule,
 }
 
 pub struct ScenarioEvent {
@@ -1562,6 +1649,11 @@ impl ScenarioEvent {
                 self.status = ScenarioEventStatus::FinishAndWait;
                 scno_ctx.scenario_is_finish_and_wait = true;
             }
+            ScenarioElement::BuiltinCommand(ope) => match ope {
+                ScenarioBuiltinCommand::ScheduleStart(_) => {
+                    self.status = ScenarioEventStatus::StartSchedule;
+                }
+            },
         }
     }
 
@@ -1653,6 +1745,7 @@ impl ScenarioEvent {
             }
             ScenarioElement::SceneTransition(_) => (),
             ScenarioElement::FinishAndWait(_) => (),
+	    ScenarioElement::BuiltinCommand(_) => (),
         }
     }
 

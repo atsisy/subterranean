@@ -154,6 +154,7 @@ pub enum TextureID {
     GoNextPageLeft,
     GoNextPageRight,
     Library,
+    KosuzuTachie1,
     Unknown,
 }
 
@@ -251,6 +252,7 @@ impl FromStr for TextureID {
             "GoNextPageLeft" => Ok(Self::GoNextPageLeft),
             "GoNextPageRight" => Ok(Self::GoNextPageRight),
             "Library" => Ok(Self::Library),
+            "KosuzuTachie1" => Ok(Self::KosuzuTachie1),
             _ => Err(()),
         }
     }
@@ -328,6 +330,7 @@ impl TextureID {
             66 => Some(Self::GoNextPageLeft),
             67 => Some(Self::GoNextPageRight),
             68 => Some(Self::Library),
+            69 => Some(Self::KosuzuTachie1),
             _ => None,
         }
     }
@@ -1192,6 +1195,7 @@ impl SceneStack {
 pub struct SuzunaAnStatus {
     pub jinyou_balance: f32,
     pub reputation: f32,
+    pub kosuzu_hp: f32,
 }
 
 pub enum ReputationEvent {
@@ -1203,6 +1207,7 @@ impl SuzunaAnStatus {
         SuzunaAnStatus {
             jinyou_balance: 0.0,
             reputation: 50.0,
+	    kosuzu_hp: 100.0,
         }
     }
 
@@ -1557,6 +1562,10 @@ impl SavableData {
 
     pub fn update_week_schedule(&mut self, sched: WeekWorkSchedule) {
         self.week_schedule = sched;
+    }
+
+    pub fn get_todays_schedule(&self) -> game_system::DayWorkType {
+	self.week_schedule.get_schedule_of(&self.date).expect("Invalid date")
     }
 }
 

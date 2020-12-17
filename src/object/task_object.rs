@@ -1449,9 +1449,15 @@ impl TaskTable {
         }
     }
 
-    pub fn mouse_wheel_event<'a>(&mut self, ctx: &mut SuzuContext<'a>, point: numeric::Point2f, x: f32, y: f32) {
-	    let rpoint = self.canvas.relative_point(point);
-	    self.sight.mouse_wheel_event(ctx, rpoint, x, y);
+    pub fn mouse_wheel_event<'a>(
+        &mut self,
+        ctx: &mut SuzuContext<'a>,
+        point: numeric::Point2f,
+        x: f32,
+        y: f32,
+    ) {
+        let rpoint = self.canvas.relative_point(point);
+        self.sight.mouse_wheel_event(ctx, rpoint, x, y);
     }
 }
 
