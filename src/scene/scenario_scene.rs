@@ -238,6 +238,8 @@ impl ScenarioScene {
 		self.scenario_ctx.builtin_command_inexec = true;
 		self.status_screen.show_main_page();
 		self.status_screen.change_kosuzu_hp(ctx, -20.0);
+		self.status_screen.change_suzunaan_reputation(ctx, 5.0);
+		
 		add_delay_event!(self.event_list, |slf, _, _| {
 		    slf.scene_transition = SceneID::SuzunaShop;
                     slf.scene_transition_type = SceneTransition::SwapTransition;

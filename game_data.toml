@@ -354,7 +354,23 @@ NewsPaper = 100
 BunBunMaruPaper = 100
 AdPaper = 100
 
+[ad_gain_table]
+ShopNobori = 1
+TownNobori = 2
+Chindon = 3
+NewsPaper = 4
+BunBunMaruPaper = 5
+AdPaper = 6
+
 [ad_agency_cost_table]
+HakureiJinja = 10
+KirisameMahoten = 50
+GettoDango = 60
+Kusuriya = 70
+Hieda = 80
+YamaJinja = 90
+
+[ad_agency_gain_table]
 HakureiJinja = 0
 KirisameMahoten = 10
 GettoDango = 1000

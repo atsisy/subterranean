@@ -726,52 +726,80 @@ pub struct SpriteBatchData {
 #[derive(Deserialize, Serialize)]
 pub struct AdCostTable {
     ad_cost_table: HashMap<crate::object::scenario_object::SuzunaAdType, u32>,
+    ad_gain_table: HashMap<crate::object::scenario_object::SuzunaAdType, u32>,
 }
 
 impl AdCostTable {
-    pub fn from_data(data: HashMap<String, u32>) -> Self {
-        let mut table = HashMap::new();
+    pub fn from_data(cost_data: HashMap<String, u32>, gain_data: HashMap<String, u32>) -> Self {
+        let mut cost_table = HashMap::new();
+	let mut gain_table = HashMap::new();
 
-        for (s, c) in data.iter() {
-            table.insert(
+        for (s, c) in cost_data.iter() {
+            cost_table.insert(
+                crate::object::scenario_object::SuzunaAdType::from_str(s),
+                *c,
+            );
+        }
+
+	for (s, c) in gain_data.iter() {
+            gain_table.insert(
                 crate::object::scenario_object::SuzunaAdType::from_str(s),
                 *c,
             );
         }
 
         AdCostTable {
-            ad_cost_table: table,
+            ad_cost_table: cost_table,
+	    ad_gain_table: gain_table,
         }
     }
 
     pub fn get_cost(&self, ty: crate::object::scenario_object::SuzunaAdType) -> u32 {
         *self.ad_cost_table.get(&ty).unwrap()
     }
+
+    pub fn get_reputation_gain(&self, ty: crate::object::scenario_object::SuzunaAdType) -> u32 {
+        *self.ad_gain_table.get(&ty).unwrap()
+    }
 }
 
 #[derive(Deserialize, Serialize)]
 pub struct AdAgencyCostTable {
     cost_table: HashMap<SuzunaAdAgencyType, u32>,
+    money_gain_table: HashMap<SuzunaAdAgencyType, u32>,
 }
 
 impl AdAgencyCostTable {
-    pub fn from_data(data: HashMap<String, u32>) -> Self {
-        let mut table = HashMap::new();
+    pub fn from_data(cost_data: HashMap<String, u32>, gain_data: HashMap<String, u32>) -> Self {
+        let mut cost_table = HashMap::new();
+	let mut money_gain_table = HashMap::new();
 
-        for (s, c) in data.iter() {
-            table.insert(
+        for (s, c) in cost_data.iter() {
+            cost_table.insert(
+                crate::object::scenario_object::SuzunaAdAgencyType::from_str(s),
+                *c,
+            );
+        }
+
+	for (s, c) in gain_data.iter() {
+            money_gain_table.insert(
                 crate::object::scenario_object::SuzunaAdAgencyType::from_str(s),
                 *c,
             );
         }
 
         AdAgencyCostTable {
-            cost_table: table,
+            cost_table: cost_table,
+	    money_gain_table: money_gain_table,
         }
     }
 
     pub fn get_cost(&self, ty: SuzunaAdAgencyType) -> u32 {
         *self.cost_table.get(&ty).unwrap()
+    }
+
+    pub fn get_money_gain(&self, ty: SuzunaAdAgencyType) -> u32 {
+        *self.money_gain_table.get(&ty).unwrap()
     }
 }
 
@@ -786,7 +814,9 @@ pub struct RawConfigFile {
     scenario_table_path: String,
     sound_file_path: Vec<String>,
     ad_cost_table: HashMap<String, u32>,
+    ad_gain_table: HashMap<String, u32>,
     ad_agency_cost_table: HashMap<String, u32>,
+    ad_agency_gain_table: HashMap<String, u32>,
 }
 
 impl RawConfigFile {
@@ -816,8 +846,8 @@ pub struct GameResource {
     sounds: Vec<sound::SoundData>,
     bgm_manager: sound::SoundManager,
     se_manager: sound::SoundManager,
-    ad_cost_list: AdCostTable,
-    ad_agency_cost_list: AdAgencyCostTable,
+    ad_info: AdCostTable,
+    ad_agency_info: AdAgencyCostTable,
 }
 
 impl GameResource {
@@ -883,8 +913,8 @@ impl GameResource {
             sounds: sounds,
             bgm_manager: sound::SoundManager::new(),
             se_manager: sound::SoundManager::new(),
-            ad_cost_list: AdCostTable::from_data(src_file.ad_cost_table),
-	    ad_agency_cost_list: AdAgencyCostTable::from_data(src_file.ad_agency_cost_table),
+            ad_info: AdCostTable::from_data(src_file.ad_cost_table, src_file.ad_gain_table),
+	    ad_agency_info: AdAgencyCostTable::from_data(src_file.ad_agency_cost_table, src_file.ad_agency_gain_table),
         }
     }
 
@@ -1017,11 +1047,19 @@ impl GameResource {
     }
 
     pub fn get_default_ad_cost(&self, ty: crate::object::scenario_object::SuzunaAdType) -> u32 {
-        self.ad_cost_list.get_cost(ty)
+        self.ad_info.get_cost(ty)
+    }
+
+    pub fn get_default_ad_reputation_gain(&self, ty: crate::object::scenario_object::SuzunaAdType) -> u32 {
+        self.ad_info.get_reputation_gain(ty)
     }
 
     pub fn get_default_ad_agency_cost(&self, ty: SuzunaAdAgencyType) -> u32 {
-        self.ad_agency_cost_list.get_cost(ty)
+        self.ad_agency_info.get_cost(ty)
+    }
+
+    pub fn get_default_ad_agency_money_gain(&self, ty: SuzunaAdAgencyType) -> u32 {
+        self.ad_agency_info.get_money_gain(ty)
     }
 }
 

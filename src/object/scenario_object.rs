@@ -35,6 +35,7 @@ pub struct SuzunaStatusMainPage {
     money_text: VerticalText,
     day_text: VerticalText,
     kosuzu_level_text: VerticalText,
+    reputation_meter: ResultMeter,
     hp_meter: ResultMeter,
     drwob_essential: DrawableObjectEssential,
 }
@@ -135,6 +136,17 @@ impl SuzunaStatusMainPage {
             numeric::Vector2u::new(1, 1)
         );
 
+	let reputation_meter = ResultMeter::new(
+            ctx,
+	    "評判".to_string(),
+            numeric::Rect::new(200.0, 200.0, 300.0, 50.0),
+	    6.0,
+	    100.0,
+            ctx.savable_data.suzunaan_status.reputation,
+            1,
+            t,
+	);
+	
 	let hp_meter = ResultMeter::new(
             ctx,
 	    "意欲".to_string(),
@@ -164,6 +176,7 @@ impl SuzunaStatusMainPage {
             ),
             money_text: money_text,
             kosuzu_level_text: kosuzu_level_text,
+	    reputation_meter: reputation_meter,
 	    hp_meter: hp_meter,
             drwob_essential: DrawableObjectEssential::new(true, 0),
         }
@@ -173,7 +186,12 @@ impl SuzunaStatusMainPage {
 	self.hp_meter.apply_offset(ctx, diff_hp, 100);
     }
 
+    pub fn change_suzunaan_reputation<'a>(&mut self, ctx: &mut SuzuContext<'a>, diff_hp: f32) {
+	self.reputation_meter.apply_offset(ctx, diff_hp, 100);
+    }
+
     pub fn update<'a>(&mut self, ctx: &mut SuzuContext<'a>, t: Clock) {
+	self.reputation_meter.effect(ctx, t);
 	self.hp_meter.effect(ctx, t);
     }
 }
@@ -191,6 +209,7 @@ impl DrawableComponent for SuzunaStatusMainPage {
             self.reputation_text.draw(ctx).unwrap();
             self.money_text.draw(ctx).unwrap();
 
+	    self.reputation_meter.draw(ctx)?;
 	    self.hp_meter.draw(ctx)?;
 
             self.kosuzu_level_text.draw(ctx).unwrap();
@@ -354,7 +373,7 @@ impl ScenarioAdPage {
     ) -> Self {
         let mut ad_table = HashMap::new();
 
-        let mut entry_pos = numeric::Point2f::new(pos.x + 70.0, pos.y + 100.0);
+        let mut entry_pos = numeric::Point2f::new(pos.x + 50.0, pos.y + 100.0);
 
         for (index, (ty_str, ad_type)) in vec![
             ("チラシ", SuzunaAdType::AdPaper),
@@ -370,12 +389,13 @@ impl ScenarioAdPage {
             let entry = AdEntry::new(
                 ctx,
                 entry_pos,
-                numeric::Vector2f::new(32.0, 32.0),
+                numeric::Vector2f::new(34.0, 34.0),
                 ctx.savable_data.get_ad_status(*ad_type),
                 format!(
-                    "{:　<7}{:　>4}円/日",
+                    "{:　<7}{:　>4}円/日\n {:　>7}点評判増加",
                     ty_str,
-                    ctx.resource.get_default_ad_cost(*ad_type)
+                    ctx.resource.get_default_ad_cost(*ad_type),
+		    ctx.resource.get_default_ad_reputation_gain(*ad_type),
                 ),
                 depth,
             );
@@ -383,10 +403,10 @@ impl ScenarioAdPage {
             ad_table.insert(*ad_type, entry);
 
             if index % 2 == 0 {
-                entry_pos.x = 400.0;
+                entry_pos.x = 380.0;
             } else {
-                entry_pos.x = pos.x + 70.0;
-                entry_pos.y += 64.0;
+                entry_pos.x = pos.x + 50.0;
+                entry_pos.y += 80.0;
             }
         }
 
@@ -499,7 +519,7 @@ impl ScenarioAgencyPage {
     ) -> Self {
         let mut ad_table = HashMap::new();
 
-        let mut entry_pos = numeric::Point2f::new(pos.x + 70.0, pos.y + 100.0);
+        let mut entry_pos = numeric::Point2f::new(pos.x + 50.0, pos.y + 100.0);
 
         for (index, (ty_str, ad_type)) in vec![
             ("博麗神社", SuzunaAdAgencyType::HakureiJinja),
@@ -507,7 +527,7 @@ impl ScenarioAgencyPage {
             ("月兎団子屋", SuzunaAdAgencyType::GettoDango),
             ("薬屋", SuzunaAdAgencyType::Kusuriya),
             ("稗田家", SuzunaAdAgencyType::Hieda),
-            ("山の上の神社", SuzunaAdAgencyType::YamaJinja),
+            ("山頂の神社", SuzunaAdAgencyType::YamaJinja),
         ]
         .iter()
         .enumerate()
@@ -518,9 +538,10 @@ impl ScenarioAgencyPage {
                 numeric::Vector2f::new(32.0, 32.0),
                 ctx.savable_data.get_ad_agency_status(*ad_type),
                 format!(
-                    "{:　<7}{:　>4}円/日",
+                    "{:　<6}評判{:　>2}点以上\n{:　>9}円収入増加",
                     ty_str,
-                    ctx.resource.get_default_ad_agency_cost(*ad_type)
+                    ctx.resource.get_default_ad_agency_cost(*ad_type),
+		    ctx.resource.get_default_ad_agency_money_gain(*ad_type),
                 ),
                 depth,
             );
@@ -528,10 +549,10 @@ impl ScenarioAgencyPage {
             ad_table.insert(*ad_type, entry);
 
             if index % 2 == 0 {
-                entry_pos.x = 400.0;
+                entry_pos.x = 380.0;
             } else {
-                entry_pos.x = pos.x + 70.0;
-                entry_pos.y += 64.0;
+                entry_pos.x = pos.x + 50.0;
+                entry_pos.y += 80.0;
             }
         }
 
@@ -729,6 +750,10 @@ impl SuzunaStatusPages {
 	self.main_page.change_kosuzu_hp(ctx, diff);
     }
     
+    pub fn change_suzunaan_reputation<'a>(&mut self, ctx: &mut SuzuContext<'a>, diff: f32) {
+	self.main_page.change_suzunaan_reputation(ctx, diff);
+    }
+    
     pub fn show_schedule_page(&mut self) {
         self.current_page = SuzunaStatusPageID::Schedule;
     }
@@ -857,6 +882,10 @@ impl SuzunaStatusScreen {
 
     pub fn change_kosuzu_hp<'a>(&mut self, ctx: &mut SuzuContext<'a>, diff: f32) {
 	self.pages.change_kosuzu_hp(ctx, diff);
+    }
+
+    pub fn change_suzunaan_reputation<'a>(&mut self, ctx: &mut SuzuContext<'a>, diff: f32) {
+	self.pages.change_suzunaan_reputation(ctx, diff);
     }
 
     pub fn show_main_page(&mut self) {
