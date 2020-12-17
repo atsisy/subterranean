@@ -1391,8 +1391,8 @@ impl ShopScene {
     /// # 再描画要求有り
     ///
     pub fn update_shop_clock_regular<'a>(&mut self, ctx: &mut SuzuContext<'a>, t: Clock) {
-        if self.get_current_clock() % 15 == 0 {
-            self.shop_clock.add_minute(2);
+        if self.get_current_clock() % 5 == 0 {
+            self.shop_clock.add_minute(1);
             self.drawable_shop_clock.update_time(&self.shop_clock);
 
             if self.shop_clock.equals(12, 0) {

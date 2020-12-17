@@ -353,3 +353,11 @@ Chindon = 100
 NewsPaper = 100
 BunBunMaruPaper = 100
 AdPaper = 100
+
+[ad_agency_cost_table]
+HakureiJinja = 0
+KirisameMahoten = 10
+GettoDango = 1000
+Kusuriya = 3000
+Hieda = 8000
+YamaJinja = 10000

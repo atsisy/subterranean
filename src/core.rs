@@ -29,7 +29,7 @@ use std::collections::VecDeque;
 use std::rc::Rc;
 use std::str::FromStr;
 
-use crate::parse_toml_file;
+use crate::{object::scenario_object::SuzunaAdAgencyType, parse_toml_file};
 use crate::scene;
 
 use std::fs;
@@ -749,6 +749,32 @@ impl AdCostTable {
     }
 }
 
+#[derive(Deserialize, Serialize)]
+pub struct AdAgencyCostTable {
+    cost_table: HashMap<SuzunaAdAgencyType, u32>,
+}
+
+impl AdAgencyCostTable {
+    pub fn from_data(data: HashMap<String, u32>) -> Self {
+        let mut table = HashMap::new();
+
+        for (s, c) in data.iter() {
+            table.insert(
+                crate::object::scenario_object::SuzunaAdAgencyType::from_str(s),
+                *c,
+            );
+        }
+
+        AdAgencyCostTable {
+            cost_table: table,
+        }
+    }
+
+    pub fn get_cost(&self, ty: SuzunaAdAgencyType) -> u32 {
+        *self.cost_table.get(&ty).unwrap()
+    }
+}
+
 #[derive(Deserialize)]
 pub struct RawConfigFile {
     texture_paths: Vec<String>,
@@ -760,6 +786,7 @@ pub struct RawConfigFile {
     scenario_table_path: String,
     sound_file_path: Vec<String>,
     ad_cost_table: HashMap<String, u32>,
+    ad_agency_cost_table: HashMap<String, u32>,
 }
 
 impl RawConfigFile {
@@ -790,6 +817,7 @@ pub struct GameResource {
     bgm_manager: sound::SoundManager,
     se_manager: sound::SoundManager,
     ad_cost_list: AdCostTable,
+    ad_agency_cost_list: AdAgencyCostTable,
 }
 
 impl GameResource {
@@ -856,6 +884,7 @@ impl GameResource {
             bgm_manager: sound::SoundManager::new(),
             se_manager: sound::SoundManager::new(),
             ad_cost_list: AdCostTable::from_data(src_file.ad_cost_table),
+	    ad_agency_cost_list: AdAgencyCostTable::from_data(src_file.ad_agency_cost_table),
         }
     }
 
@@ -989,6 +1018,10 @@ impl GameResource {
 
     pub fn get_default_ad_cost(&self, ty: crate::object::scenario_object::SuzunaAdType) -> u32 {
         self.ad_cost_list.get_cost(ty)
+    }
+
+    pub fn get_default_ad_agency_cost(&self, ty: SuzunaAdAgencyType) -> u32 {
+        self.ad_agency_cost_list.get_cost(ty)
     }
 }
 
@@ -1469,6 +1502,7 @@ pub struct SavableData {
     pub task_result: TaskResult,
     pub suzunaan_status: SuzunaAnStatus,
     pub ad_status: HashMap<SuzunaAdType, bool>,
+    pub agency_status: HashMap<SuzunaAdAgencyType, bool>,
 }
 
 impl SavableData {
@@ -1488,6 +1522,15 @@ impl SavableData {
             (SuzunaAdType::AdPaper, false)
         ];
 
+	let ad_agency_status = hash![
+            (SuzunaAdAgencyType::HakureiJinja, false),
+            (SuzunaAdAgencyType::KirisameMahoten, false),
+            (SuzunaAdAgencyType::GettoDango, false),
+            (SuzunaAdAgencyType::Kusuriya, false),
+            (SuzunaAdAgencyType::Hieda, false),
+            (SuzunaAdAgencyType::YamaJinja, false)
+        ];
+
         SavableData {
             date: date.clone(),
             task_result: TaskResult::new(),
@@ -1496,6 +1539,7 @@ impl SavableData {
             suzuna_book_pool: suzuna_book_pool,
             returning_request_pool: returning_request_pool,
             ad_status: ad_status,
+	    agency_status: ad_agency_status,
         }
     }
 
@@ -1542,8 +1586,16 @@ impl SavableData {
         self.ad_status.insert(ad_type, status);
     }
 
+    pub fn change_ad_agency_status(&mut self, ad_type: SuzunaAdAgencyType, status: bool) {
+        self.agency_status.insert(ad_type, status);
+    }
+
     pub fn get_ad_status(&self, ad_type: SuzunaAdType) -> bool {
         *self.ad_status.get(&ad_type).unwrap()
+    }
+
+    pub fn get_ad_agency_status(&self, agency_type: SuzunaAdAgencyType) -> bool {
+        *self.agency_status.get(&agency_type).unwrap()
     }
 
     pub fn pay_ad_cost(&mut self, resource: &GameResource) -> i32 {

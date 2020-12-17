@@ -787,8 +787,14 @@ impl ResultMeter {
             ),
         ));
 
-	self.diff_per_clock = diff / time as f32;
-	self.goal = self.meter.get_value() + diff;
+	let next_goal = self.meter.get_value() + diff;
+	self.goal = if next_goal > self.meter.max {
+	    self.meter.max
+	} else {
+	    next_goal
+	};
+
+	self.diff_per_clock = (self.goal - self.meter.get_value()) / time as f32;
     }
 
     pub fn effect<'a>(&mut self, ctx: &mut SuzuContext<'a>, t: Clock) {

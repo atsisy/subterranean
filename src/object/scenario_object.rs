@@ -460,11 +460,165 @@ impl DrawableComponent for ScenarioAdPage {
     }
 }
 
+#[derive(Copy, Clone, Hash, Eq, PartialEq, Deserialize, Serialize)]
+pub enum SuzunaAdAgencyType {
+    HakureiJinja,
+    KirisameMahoten,
+    GettoDango,
+    Kusuriya,
+    Hieda,
+    YamaJinja,
+}
+
+impl SuzunaAdAgencyType {
+    pub fn from_str(s: &str) -> Self {
+        match s {
+            "HakureiJinja" => Self::HakureiJinja,
+            "KirisameMahoten" => Self::KirisameMahoten,
+            "GettoDango" => Self::GettoDango,
+            "Kusuriya" => Self::Kusuriya,
+            "Hieda" => Self::Hieda,
+            "YamaJinja" => Self::YamaJinja,
+            _ => panic!("Unknown SuzunaAdType => {:?}", s),
+        }
+    }
+}
+
+pub struct ScenarioAgencyPage {
+    header_text: UniText,
+    ad_table: HashMap<SuzunaAdAgencyType, AdEntry>,
+    drwob_essential: DrawableObjectEssential,
+}
+
+impl ScenarioAgencyPage {
+    pub fn new<'a>(
+        ctx: &mut SuzuContext<'a>,
+        pos: numeric::Point2f,
+        area_size: numeric::Vector2f,
+        depth: i8,
+    ) -> Self {
+        let mut ad_table = HashMap::new();
+
+        let mut entry_pos = numeric::Point2f::new(pos.x + 70.0, pos.y + 100.0);
+
+        for (index, (ty_str, ad_type)) in vec![
+            ("博麗神社", SuzunaAdAgencyType::HakureiJinja),
+            ("霧雨魔法店", SuzunaAdAgencyType::KirisameMahoten),
+            ("月兎団子屋", SuzunaAdAgencyType::GettoDango),
+            ("薬屋", SuzunaAdAgencyType::Kusuriya),
+            ("稗田家", SuzunaAdAgencyType::Hieda),
+            ("山の上の神社", SuzunaAdAgencyType::YamaJinja),
+        ]
+        .iter()
+        .enumerate()
+        {
+            let entry = AdEntry::new(
+                ctx,
+                entry_pos,
+                numeric::Vector2f::new(32.0, 32.0),
+                ctx.savable_data.get_ad_agency_status(*ad_type),
+                format!(
+                    "{:　<7}{:　>4}円/日",
+                    ty_str,
+                    ctx.resource.get_default_ad_agency_cost(*ad_type)
+                ),
+                depth,
+            );
+
+            ad_table.insert(*ad_type, entry);
+
+            if index % 2 == 0 {
+                entry_pos.x = 400.0;
+            } else {
+                entry_pos.x = pos.x + 70.0;
+                entry_pos.y += 64.0;
+            }
+        }
+
+        let font_info = FontInformation::new(
+            ctx.resource.get_font(FontID::Cinema),
+            numeric::Vector2f::new(30.0, 30.0),
+            ggraphics::BLACK,
+        );
+        let mut header_text = UniText::new(
+            "鈴奈庵の広告受注".to_string(),
+            numeric::Point2f::new(0.0, 0.0),
+            numeric::Vector2f::new(1.0, 1.0),
+            0.0,
+            0,
+            font_info,
+        );
+
+        header_text.make_center(ctx.context, numeric::Point2f::new(area_size.x / 2.0, 50.0));
+
+        ScenarioAgencyPage {
+            header_text: header_text,
+            ad_table: ad_table,
+            drwob_essential: DrawableObjectEssential::new(true, depth),
+        }
+    }
+
+    pub fn click_handler<'a>(&mut self, ctx: &mut SuzuContext<'a>, click_point: numeric::Point2f) {
+        for (ad_type, entry) in self.ad_table.iter_mut() {
+            entry.check_box.click_handler(click_point);
+            ctx.savable_data
+                .change_ad_agency_status(*ad_type, entry.is_checked());
+        }
+    }
+}
+
+impl DrawableComponent for ScenarioAgencyPage {
+    fn draw(&mut self, ctx: &mut ggez::Context) -> ggez::GameResult<()> {
+        if self.is_visible() {
+            self.header_text.draw(ctx)?;
+            for (_, entry) in self.ad_table.iter_mut() {
+                entry.draw(ctx)?;
+            }
+        }
+
+        Ok(())
+    }
+
+    #[inline(always)]
+    fn hide(&mut self) {
+        self.drwob_essential.visible = false;
+    }
+
+    #[inline(always)]
+    fn appear(&mut self) {
+        self.drwob_essential.visible = true;
+    }
+
+    #[inline(always)]
+    fn is_visible(&self) -> bool {
+        self.drwob_essential.visible
+    }
+
+    #[inline(always)]
+    fn set_drawing_depth(&mut self, depth: i8) {
+        self.drwob_essential.drawing_depth = depth;
+    }
+
+    #[inline(always)]
+    fn get_drawing_depth(&self) -> i8 {
+        self.drwob_essential.drawing_depth
+    }
+}
+
+#[derive(Clone)]
+pub enum SuzunaStatusPageID {
+    Main = 0,
+    Ad,
+    AdAgency,
+    Schedule,
+}
+
 pub struct SuzunaStatusPages {
     main_page: SuzunaStatusMainPage,
     ad_page: ScenarioAdPage,
+    ad_agency_page: ScenarioAgencyPage,
     sched_page: ScenarioSchedPage,
-    current_page: usize,
+    current_page: SuzunaStatusPageID,
 }
 
 impl SuzunaStatusPages {
@@ -482,47 +636,55 @@ impl SuzunaStatusPages {
                 numeric::Vector2f::new(rect.w, rect.h),
                 0,
             ),
+	    ad_agency_page: ScenarioAgencyPage::new(
+		ctx,
+                numeric::Point2f::new(0.0, 0.0),
+                numeric::Vector2f::new(rect.w, rect.h),
+                0,
+	    ),
             sched_page: ScenarioSchedPage::new(
                 ctx,
                 scno_ctx,
                 numeric::Vector2f::new(rect.w, rect.h),
                 0,
             ),
-            current_page: 0,
+            current_page: SuzunaStatusPageID::Main,
         }
     }
 
     pub fn draw_page(&mut self, ctx: &mut ggez::Context) {
         match self.current_page {
-            0 => self.main_page.draw(ctx).unwrap(),
-            1 => self.ad_page.draw(ctx).unwrap(),
-            2 => self.sched_page.draw(ctx).unwrap(),
-            _ => (),
+            SuzunaStatusPageID::Main => self.main_page.draw(ctx).unwrap(),
+            SuzunaStatusPageID::Ad => self.ad_page.draw(ctx).unwrap(),
+	    SuzunaStatusPageID::AdAgency => self.ad_agency_page.draw(ctx).unwrap(),
+            SuzunaStatusPageID::Schedule => self.sched_page.draw(ctx).unwrap(),
         }
     }
 
     fn next_page(&mut self) {
-        if self.current_page >= self.page_len() - 1 {
-            return;
+        match self.current_page {
+            SuzunaStatusPageID::Main => self.current_page = SuzunaStatusPageID::Ad,
+            SuzunaStatusPageID::Ad => self.current_page = SuzunaStatusPageID::AdAgency,
+	    SuzunaStatusPageID::AdAgency => self.current_page = SuzunaStatusPageID::Schedule,
+            SuzunaStatusPageID::Schedule => (),
         }
-
-        self.current_page += 1;
     }
 
     fn prev_page(&mut self) {
-        if self.current_page <= 0 {
-            return;
+        match self.current_page {
+            SuzunaStatusPageID::Main => (),
+            SuzunaStatusPageID::Ad => self.current_page = SuzunaStatusPageID::Main,
+	    SuzunaStatusPageID::AdAgency => self.current_page = SuzunaStatusPageID::Ad,
+            SuzunaStatusPageID::Schedule => self.current_page = SuzunaStatusPageID::AdAgency,
         }
-
-        self.current_page -= 1;
     }
 
-    pub fn get_current_page_num(&self) -> usize {
-        self.current_page
+    pub fn get_current_page_id(&self) -> SuzunaStatusPageID {
+        self.current_page.clone()
     }
 
     pub fn page_len(&self) -> usize {
-        3
+        4
     }
 
     pub fn click_handler<'a>(
@@ -532,9 +694,9 @@ impl SuzunaStatusPages {
         button: MouseButton,
     ) {
         match self.current_page {
-            0 => (),
-            1 => self.ad_page.click_handler(ctx, click_point),
-            2 => self.sched_page.click_handler(ctx, click_point, button),
+            SuzunaStatusPageID::Ad => self.ad_page.click_handler(ctx, click_point),
+	    SuzunaStatusPageID::AdAgency => self.ad_agency_page.click_handler(ctx, click_point),
+            SuzunaStatusPageID::Schedule => self.sched_page.click_handler(ctx, click_point, button),
             _ => (),
         }
     }
@@ -546,24 +708,21 @@ impl SuzunaStatusPages {
         button: MouseButton,
     ) {
         match self.current_page {
-            0 => (),
-            1 => (),
-            2 => self.sched_page.mouse_button_down(ctx, click_point, button),
+            SuzunaStatusPageID::Schedule => self.sched_page.mouse_button_down(ctx, click_point, button),
             _ => (),
         }
     }
 
     pub fn update<'a>(&mut self, ctx: &mut SuzuContext<'a>, t: Clock) {
         match self.current_page {
-            0 => self.main_page.update(ctx, t),
-            1 => (),
-            2 => self.sched_page.update(ctx),
+            SuzunaStatusPageID::Main => self.main_page.update(ctx, t),
+            SuzunaStatusPageID::Schedule => self.sched_page.update(ctx),
             _ => (),
         }
     }
 
     pub fn show_main_page(&mut self) {
-	self.current_page = 0;
+	self.current_page = SuzunaStatusPageID::Main;
     }
 
     pub fn change_kosuzu_hp<'a>(&mut self, ctx: &mut SuzuContext<'a>, diff: f32) {
@@ -571,7 +730,7 @@ impl SuzunaStatusPages {
     }
     
     pub fn show_schedule_page(&mut self) {
-        self.current_page = 2;
+        self.current_page = SuzunaStatusPageID::Schedule;
     }
 }
 
@@ -646,11 +805,11 @@ impl SuzunaStatusScreen {
         self.go_right_texture.appear();
         self.go_left_texture.appear();
 
-        if self.pages.get_current_page_num() == 0 {
-            self.go_left_texture.hide();
-        } else if self.pages.get_current_page_num() == self.pages.page_len() - 1 {
-            self.go_right_texture.hide();
-        }
+	match self.pages.get_current_page_id() {
+	    SuzunaStatusPageID::Main => self.go_left_texture.hide(),
+	    SuzunaStatusPageID::Schedule => self.go_right_texture.hide(),
+	    _ => (),
+	}
     }
 
     pub fn click_handler<'a>(
