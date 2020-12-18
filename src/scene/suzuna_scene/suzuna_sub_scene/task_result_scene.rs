@@ -108,7 +108,7 @@ impl TaskResultScene {
     fn ready_to_finish_scene<'a>(&mut self, ctx: &mut SuzuContext<'a>, t: Clock) {
         self.transition_scene = SceneID::Scenario;
         self.scene_transition_status = SceneTransition::SwapTransition;
-        ctx.savable_data.date.add_day(1);
+        ctx.go_next_day();
 
         self.scene_transition_effect = Some(effect_object::ScreenTileEffect::new(
             ctx,

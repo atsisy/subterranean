@@ -1654,8 +1654,8 @@ impl SavableData {
         self.week_schedule = sched;
     }
 
-    pub fn get_todays_schedule(&self) -> game_system::DayWorkType {
-	self.week_schedule.get_schedule_of(&self.date).expect("Invalid date")
+    pub fn get_todays_schedule(&self) -> Option<game_system::DayWorkType> {
+	self.week_schedule.get_schedule_of(&self.date).clone()
     }
 }
 
@@ -1845,6 +1845,70 @@ impl<'ctx> SuzuContext<'ctx> {
             .week_schedule
             .update_is_not_required(&self.savable_data.date)
     }
+
+    pub fn go_next_day(&mut self) {
+	self.savable_data.date.add_day(1);
+    }
+
+    pub fn current_total_ad_cost(&self) -> i32 {
+	let mut total_ad_cost = 0;
+	
+	for ad_type in vec![
+            SuzunaAdType::AdPaper,
+            SuzunaAdType::Chindon,
+            SuzunaAdType::ShopNobori,
+            SuzunaAdType::TownNobori,
+            SuzunaAdType::NewsPaper,
+            SuzunaAdType::BunBunMaruPaper,
+        ] {
+	    if *self.savable_data.ad_status.get(&ad_type).unwrap() {
+		total_ad_cost +=
+		    self.resource.get_default_ad_cost(ad_type);
+	    }
+	}
+
+	return total_ad_cost as i32;
+    }
+
+    pub fn current_total_ad_reputation_gain(&self) -> i32 {
+	let mut total_ad_reputation_gain = 0;
+	
+	for ad_type in vec![
+            SuzunaAdType::AdPaper,
+            SuzunaAdType::Chindon,
+            SuzunaAdType::ShopNobori,
+            SuzunaAdType::TownNobori,
+            SuzunaAdType::NewsPaper,
+            SuzunaAdType::BunBunMaruPaper,
+        ] {
+	    if *self.savable_data.ad_status.get(&ad_type).unwrap() {
+		total_ad_reputation_gain +=
+		    self.resource.get_default_ad_reputation_gain(ad_type);
+	    }
+	}
+
+	return total_ad_reputation_gain as i32;
+    }
+
+    pub fn current_total_ad_agency_money_gain(&self) -> i32 {
+	let mut total_ad_agency_money_gain = 0;
+	
+	for ad_type in vec![
+            SuzunaAdAgencyType::HakureiJinja,
+	    SuzunaAdAgencyType::KirisameMahoten,
+            SuzunaAdAgencyType::GettoDango,
+            SuzunaAdAgencyType::Kusuriya,
+	    SuzunaAdAgencyType::Hieda,
+	    SuzunaAdAgencyType::YamaJinja,
+        ] {
+	    if *self.savable_data.agency_status.get(&ad_type).unwrap() {
+		total_ad_agency_money_gain +=
+		    self.resource.get_default_ad_agency_money_gain(&ad_type);
+	    }
+	}
+
+	return total_ad_agency_money_gain as i32;
+    }
 }
 
 pub enum TopScene {
@@ -1992,6 +2056,13 @@ impl SceneController {
                         ))
                 }
                 TopScene::TitleScene(_) => {
+                    self.current_scene =
+                        TopScene::ScenarioScene(scene::scenario_scene::ScenarioScene::new(
+                            &mut ctx,
+                            scene::scenario_scene::ScenarioSelect::DayBegin,
+                        ))
+                }
+		TopScene::ScenarioScene(_) => {
                     self.current_scene =
                         TopScene::ScenarioScene(scene::scenario_scene::ScenarioScene::new(
                             &mut ctx,

@@ -51,7 +51,14 @@ id = 14
 
    [[scenario-group.choice-pattern]]
    pattern = "完了"
-   jump-id = 11
+   jump-id = 16
+
+[[scenario-group]]
+type = "wait"
+id = 16
+next-id = 11
+opecode = "ShowMain"
+background = "SightBackground1"
 
 
 [[scenario-group]]
@@ -63,8 +70,15 @@ background = "SightBackground1"
 [[scenario-group]]
 type = "wait"
 id = 12
-next-id = 14
+next-id = 15
 opecode = "ScheduleCheck"
+background = "SightBackground1"
+
+[[scenario-group]]
+type = "wait"
+id = 15
+next-id = 14
+opecode = "ShowAd"
 background = "SightBackground1"
 
 [scenario-group.tachie-data]

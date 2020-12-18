@@ -37,6 +37,7 @@ pub struct SuzunaStatusMainPage {
     ad_cost_text: UniText,
     ad_rep_gain_text: UniText,
     ad_money_gain_text: UniText,
+    todays_sched_text: UniText,
     money_text: UniText,
     day_text: VerticalText,
     reputation_meter: ResultMeter,
@@ -61,16 +62,16 @@ impl SuzunaStatusMainPage {
 
         let table_frame = TableFrame::new(
             ctx.resource,
-            numeric::Point2f::new(70.0, 70.0),
+            numeric::Point2f::new(70.0, 55.0),
             TileBatchTextureID::OldStyleFrame,
-            FrameData::new(vec![42.0; 4], vec![180.0, 250.0]),
+            FrameData::new(vec![42.0; 5], vec![180.0, 250.0]),
             numeric::Vector2f::new(0.25, 0.25),
             0,
         );
 
         let mut desc_text = Vec::new();
 
-        for (index, s) in vec!["広告費", "予想広告効果", "予想広告収入", "所持金"].iter().enumerate() {
+        for (index, s) in vec!["広告費", "予想広告効果", "予想広告収入", "所持金", "所用"].iter().enumerate() {
             let mut vtext = UniText::new(
                 s.to_string(),
                 numeric::Point2f::new(0.0, 0.0),
@@ -110,7 +111,7 @@ impl SuzunaStatusMainPage {
         );
 
         let mut total_ad_cost_text = UniText::new(
-            format!("a{}", number_to_jk(0)),
+            format!("{}円", ctx.current_total_ad_cost()),
             numeric::Point2f::new(0.0, 0.0),
             numeric::Vector2f::new(1.0, 1.0),
             0.0,
@@ -126,7 +127,7 @@ impl SuzunaStatusMainPage {
         );
 
 	let mut ad_rep_gain_text = UniText::new(
-            format!("b{}", number_to_jk(0)),
+            format!("{}点", ctx.current_total_ad_reputation_gain()),
             numeric::Point2f::new(0.0, 0.0),
             numeric::Vector2f::new(1.0, 1.0),
             0.0,
@@ -143,7 +144,7 @@ impl SuzunaStatusMainPage {
 
 	
 	let mut ad_money_gain_text = UniText::new(
-            format!("c{}", number_to_jk(0)),
+            format!("{}円", ctx.current_total_ad_agency_money_gain()),
             numeric::Point2f::new(0.0, 0.0),
             numeric::Vector2f::new(1.0, 1.0),
             0.0,
@@ -158,11 +159,29 @@ impl SuzunaStatusMainPage {
             numeric::Vector2u::new(1, 2)
         );
 
+	let mut todays_sched_text = UniText::new(
+            format!("{}",
+		    if let Some(sched) = ctx.savable_data.get_todays_schedule() {
+			sched.to_string_jp()
+		    } else { "未定".to_string() }),
+            numeric::Point2f::new(0.0, 0.0),
+            numeric::Vector2f::new(1.0, 1.0),
+            0.0,
+            0,
+            normal_scale_font,
+        );
+
+        set_table_frame_cell_center!(
+            ctx.context,
+            table_frame,
+	    todays_sched_text,
+            numeric::Vector2u::new(1, 4)
+        );
 
 	let reputation_meter = ResultMeter::new(
             ctx,
 	    "評判".to_string(),
-            numeric::Rect::new(90.0, 270.0, 400.0, 40.0),
+            numeric::Rect::new(90.0, 290.0, 400.0, 40.0),
 	    6.0,
 	    100.0,
             ctx.savable_data.suzunaan_status.reputation,
@@ -172,7 +191,7 @@ impl SuzunaStatusMainPage {
 	let hp_meter = ResultMeter::new(
             ctx,
 	    "意欲".to_string(),
-            numeric::Rect::new(90.0, 350.0, 400.0, 40.0),
+            numeric::Rect::new(90.0, 360.0, 400.0, 40.0),
 	    6.0,
 	    100.0,
             ctx.savable_data.suzunaan_status.kosuzu_hp,
@@ -188,7 +207,7 @@ impl SuzunaStatusMainPage {
                     number_to_jk::number_to_jk(ctx.savable_data.date.month as u64),
                     number_to_jk::number_to_jk(ctx.savable_data.date.day as u64),
                 ),
-                numeric::Point2f::new(600.0, 50.0),
+                numeric::Point2f::new(590.0, 50.0),
                 numeric::Vector2f::new(1.0, 1.0),
                 0.0,
                 0,
@@ -198,6 +217,7 @@ impl SuzunaStatusMainPage {
 	    ad_cost_text: total_ad_cost_text,
 	    ad_rep_gain_text: ad_rep_gain_text,
 	    ad_money_gain_text: ad_money_gain_text,
+	    todays_sched_text: todays_sched_text,
 	    reputation_meter: reputation_meter,
 	    hp_meter: hp_meter,
 	    event_list: DelayEventList::new(),
@@ -222,7 +242,7 @@ impl SuzunaStatusMainPage {
 		continue;
 	    }
 	    
-	    add_delay_event!(self.event_list, move |slf, ctx, t| {
+	    add_delay_event!(self.event_list, move |slf, ctx, _| {
 		slf.money_text.replace_text(
 		    &format!(
 			"{}円",
@@ -243,11 +263,53 @@ impl SuzunaStatusMainPage {
 	}
     }
 
+    pub fn update_ad_and_agency_status<'a>(&mut self, ctx: &mut SuzuContext<'a>) {
+	self.ad_cost_text.replace_text(&format!("{}円", ctx.current_total_ad_cost()));
+        set_table_frame_cell_center!(
+            ctx.context,
+            self.table_frame,
+            self.ad_cost_text,
+            numeric::Vector2u::new(1, 0)
+        );
+
+	self.ad_rep_gain_text.replace_text(&format!("{}点", ctx.current_total_ad_reputation_gain()));
+        set_table_frame_cell_center!(
+            ctx.context,
+            self.table_frame,
+	    self.ad_rep_gain_text,
+            numeric::Vector2u::new(1, 1)
+        );
+
+	self.ad_money_gain_text.replace_text(&format!("{}円", ctx.current_total_ad_agency_money_gain()));
+        set_table_frame_cell_center!(
+            ctx.context,
+            self.table_frame,
+	    self.ad_money_gain_text,
+            numeric::Vector2u::new(1, 2)
+        );
+    }
+
     pub fn update<'a>(&mut self, ctx: &mut SuzuContext<'a>, t: Clock) {
 	self.reputation_meter.effect(ctx);
 	self.hp_meter.effect(ctx);
 
         flush_delay_event_and_redraw_check!(self, self.event_list, ctx, t);
+    }
+
+    pub fn update_todays_sched_text<'a>(&mut self, ctx: &mut SuzuContext<'a>) {
+	self.todays_sched_text.replace_text(
+            &format!("{}",
+		    if let Some(sched) = ctx.savable_data.get_todays_schedule() {
+			sched.to_string_jp()
+		    } else { "未定".to_string() }),
+	);
+
+	set_table_frame_cell_center!(
+            ctx.context,
+            self.table_frame,
+	    self.todays_sched_text,
+            numeric::Vector2u::new(1, 4)
+        );
     }
 }
 
@@ -265,6 +327,7 @@ impl DrawableComponent for SuzunaStatusMainPage {
 	    self.ad_rep_gain_text.draw(ctx)?;
 	    self.ad_money_gain_text.draw(ctx)?;
             self.money_text.draw(ctx).unwrap();
+	    self.todays_sched_text.draw(ctx)?;
 
 	    self.reputation_meter.draw(ctx)?;
 	    self.hp_meter.draw(ctx)?;
@@ -827,10 +890,13 @@ impl SuzunaStatusPages {
         }
     }
 
-    fn prev_page(&mut self) {
+    fn prev_page<'a>(&mut self, ctx: &mut SuzuContext<'a>) {
         match self.current_page {
             SuzunaStatusPageID::Main => (),
-            SuzunaStatusPageID::Ad => self.current_page = SuzunaStatusPageID::Main,
+            SuzunaStatusPageID::Ad => {
+		self.current_page = SuzunaStatusPageID::Main;
+		self.update_main_ad_and_agency_status(ctx);
+	    },
 	    SuzunaStatusPageID::AdAgency => self.current_page = SuzunaStatusPageID::Ad,
             SuzunaStatusPageID::Schedule => self.current_page = SuzunaStatusPageID::AdAgency,
         }
@@ -878,9 +944,15 @@ impl SuzunaStatusPages {
         }
     }
 
-    pub fn show_main_page(&mut self) {
+    pub fn show_main_page<'a>(&mut self, ctx: &mut SuzuContext<'a>) {
 	self.current_page = SuzunaStatusPageID::Main;
+	self.update_main_ad_and_agency_status(ctx);
     }
+
+    pub fn show_ad_page(&mut self) {
+	self.current_page = SuzunaStatusPageID::Ad;
+    }
+
 
     pub fn change_kosuzu_hp<'a>(&mut self, ctx: &mut SuzuContext<'a>, diff: f32) {
 	self.main_page.change_kosuzu_hp(ctx, diff);
@@ -894,20 +966,12 @@ impl SuzunaStatusPages {
         self.current_page = SuzunaStatusPageID::Schedule;
     }
 
-    pub fn total_ad_cost<'a>(&self, ctx: &mut SuzuContext<'a>) -> i32 {
-	self.ad_page.total_ad_cost(ctx)
+    pub fn update_main_page_todays_sched_text<'a>(&mut self, ctx: &mut SuzuContext<'a>) {
+	self.main_page.update_todays_sched_text(ctx);
     }
 
-    pub fn total_ad_reputation_gain<'a>(&self, ctx: &mut SuzuContext<'a>) -> i32 {
-	self.ad_page.total_ad_reputation_gain(ctx)
-    }
-
-    pub fn total_ad_agency_cost<'a>(&self, ctx: &mut SuzuContext<'a>) -> i32 {
-	self.ad_agency_page.total_ad_agency_cost(ctx)
-    }
-
-    pub fn total_ad_agency_money_gain<'a>(&self, ctx: &mut SuzuContext<'a>) -> i32 {
-	self.ad_agency_page.total_ad_agency_money_gain(ctx)
+    pub fn update_main_ad_and_agency_status<'a>(&mut self, ctx: &mut SuzuContext<'a>) {
+	self.main_page.update_ad_and_agency_status(ctx);
     }
 }
 
@@ -1005,7 +1069,7 @@ impl SuzunaStatusScreen {
             self.check_move_page_icon_visibility();
             ctx.process_utility.redraw();
         } else if self.go_left_texture.contains(ctx.context, rpoint) {
-            self.pages.prev_page();
+            self.pages.prev_page(ctx);
             self.check_move_page_icon_visibility();
             ctx.process_utility.redraw();
         }
@@ -1039,32 +1103,27 @@ impl SuzunaStatusScreen {
 	self.pages.change_suzunaan_reputation(ctx, diff);
     }
 
-    pub fn show_main_page(&mut self) {
-	self.pages.show_main_page();
+    pub fn show_main_page<'a>(&mut self, ctx: &mut SuzuContext<'a>) {
+	self.pages.show_main_page(ctx);
+	self.check_move_page_icon_visibility();
     }
 
     pub fn show_schedule_page(&mut self) {
         self.pages.show_schedule_page();
+	self.check_move_page_icon_visibility();
     }
 
-    pub fn total_ad_cost<'a>(&self, ctx: &mut SuzuContext<'a>) -> i32 {
-	self.pages.total_ad_cost(ctx)
+    pub fn show_ad_page(&mut self) {
+        self.pages.show_ad_page();
+	self.check_move_page_icon_visibility();
     }
-
-    pub fn total_ad_reputation_gain<'a>(&self, ctx: &mut SuzuContext<'a>) -> i32 {
-	self.pages.total_ad_reputation_gain(ctx)
-    }
-
-    pub fn total_ad_agency_cost<'a>(&self, ctx: &mut SuzuContext<'a>) -> i32 {
-	self.pages.total_ad_agency_cost(ctx)
-    }
-
-    pub fn total_ad_agency_money_gain<'a>(&self, ctx: &mut SuzuContext<'a>) -> i32 {
-	self.pages.total_ad_agency_money_gain(ctx)
-    }
-
+    
     pub fn change_main_page_money<'a>(&mut self, ctx: &mut SuzuContext<'a>, diff: i32, t: Clock) {
 	self.pages.main_page.run_money_change_effect(ctx, diff, t);
+    }
+
+    pub fn update_main_page_todays_sched_text<'a>(&mut self, ctx: &mut SuzuContext<'a>) {
+	self.pages.update_main_page_todays_sched_text(ctx);
     }
 }
 

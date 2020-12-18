@@ -716,7 +716,7 @@ impl ResultMeter {
         depth: i8,
     ) -> Self {
         let meter = Meter::new(
-            numeric::Point2f::new(pos.x, pos.y + 30.0),
+            numeric::Point2f::new(pos.x, pos.y + 25.0),
             numeric::Rect::new(0.0, 0.0, pos.w, pos.h),
             ggraphics::Color::from_rgba_u32(0x362d33ff),
             numeric::Rect::new(padding, padding, pos.w - (2.0 * padding), pos.h - (2.0 * padding)),
@@ -782,7 +782,7 @@ impl ResultMeter {
             FontInformation::new(
                 ctx.resource.get_font(FontID::Cinema),
                 numeric::Vector2f::new(20.0, 20.0),
-                ggraphics::Color::from_rgba_u32(0x00ff00ff),
+                if diff >= 0.0 { ggraphics::Color::from_rgba_u32(0x00ff00ff) } else { ggraphics::Color::from_rgba_u32(0xff0000ff) },
             ),
         ));
 
