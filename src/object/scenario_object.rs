@@ -5,7 +5,7 @@ use std::rc::Rc;
 use ggez::graphics as ggraphics;
 use ggez::input::mouse::MouseButton;
 
-use torifune::graphics::drawable::*;
+use torifune::{core::Clock, graphics::drawable::*};
 use torifune::graphics::object::sub_screen;
 use torifune::graphics::object::*;
 use torifune::numeric;
@@ -22,6 +22,10 @@ use crate::object::util_object::*;
 use crate::object::simulation_ui::*;
 use crate::scene::scenario_scene::ScenarioContext;
 use crate::set_table_frame_cell_center;
+use crate::scene::DelayEventList;
+use crate::add_delay_event;
+use crate::flush_delay_event;
+use crate::flush_delay_event_and_redraw_check;
 
 use number_to_jk::number_to_jk;
 
@@ -29,13 +33,15 @@ use serde::{Deserialize, Serialize};
 
 pub struct SuzunaStatusMainPage {
     table_frame: TableFrame,
-    desc_text: Vec<VerticalText>,
-    reputation_text: VerticalText,
-    money_text: VerticalText,
+    desc_text: Vec<UniText>,
+    ad_cost_text: UniText,
+    ad_rep_gain_text: UniText,
+    ad_money_gain_text: UniText,
+    money_text: UniText,
     day_text: VerticalText,
-    kosuzu_level_text: VerticalText,
     reputation_meter: ResultMeter,
     hp_meter: ResultMeter,
+    event_list: DelayEventList<Self>,
     drwob_essential: DrawableObjectEssential,
 }
 
@@ -55,17 +61,17 @@ impl SuzunaStatusMainPage {
 
         let table_frame = TableFrame::new(
             ctx.resource,
-            numeric::Point2f::new(50.0, 50.0),
+            numeric::Point2f::new(70.0, 70.0),
             TileBatchTextureID::OldStyleFrame,
-            FrameData::new(vec![120.0, 220.0], vec![40.0; 3]),
+            FrameData::new(vec![42.0; 4], vec![180.0, 250.0]),
             numeric::Vector2f::new(0.25, 0.25),
             0,
         );
 
         let mut desc_text = Vec::new();
 
-        for (index, s) in vec!["広告費", "広告受注代", "所持金"].iter().enumerate() {
-            let mut vtext = VerticalText::new(
+        for (index, s) in vec!["広告費", "予想広告効果", "予想広告収入", "所持金"].iter().enumerate() {
+            let mut vtext = UniText::new(
                 s.to_string(),
                 numeric::Point2f::new(0.0, 0.0),
                 numeric::Vector2f::new(1.0, 1.0),
@@ -78,29 +84,13 @@ impl SuzunaStatusMainPage {
                 ctx.context,
                 table_frame,
                 vtext,
-                numeric::Vector2u::new(index as u32, 0)
+                numeric::Vector2u::new(0, index as u32)
             );
 
             desc_text.push(vtext);
         }
 
-        let mut reputation_text = VerticalText::new(
-            number_to_jk(ctx.savable_data.suzunaan_status.reputation as u64),
-            numeric::Point2f::new(0.0, 0.0),
-            numeric::Vector2f::new(1.0, 1.0),
-            0.0,
-            0,
-            normal_scale_font,
-        );
-
-        set_table_frame_cell_center!(
-            ctx.context,
-            table_frame,
-            reputation_text,
-            numeric::Vector2u::new(0, 1)
-        );
-
-        let mut money_text = VerticalText::new(
+        let mut money_text = UniText::new(
             format!(
                 "{}円",
                 number_to_jk(ctx.savable_data.task_result.total_money as u64)
@@ -116,11 +106,11 @@ impl SuzunaStatusMainPage {
             ctx.context,
             table_frame,
             money_text,
-            numeric::Vector2u::new(2, 1)
+            numeric::Vector2u::new(1, 3)
         );
 
-        let mut kosuzu_level_text = VerticalText::new(
-            format!("{}", number_to_jk(0)),
+        let mut total_ad_cost_text = UniText::new(
+            format!("a{}", number_to_jk(0)),
             numeric::Point2f::new(0.0, 0.0),
             numeric::Vector2f::new(1.0, 1.0),
             0.0,
@@ -131,14 +121,48 @@ impl SuzunaStatusMainPage {
         set_table_frame_cell_center!(
             ctx.context,
             table_frame,
-            kosuzu_level_text,
+            total_ad_cost_text,
+            numeric::Vector2u::new(1, 0)
+        );
+
+	let mut ad_rep_gain_text = UniText::new(
+            format!("b{}", number_to_jk(0)),
+            numeric::Point2f::new(0.0, 0.0),
+            numeric::Vector2f::new(1.0, 1.0),
+            0.0,
+            0,
+            normal_scale_font,
+        );
+
+        set_table_frame_cell_center!(
+            ctx.context,
+            table_frame,
+	    ad_rep_gain_text,
             numeric::Vector2u::new(1, 1)
         );
+
+	
+	let mut ad_money_gain_text = UniText::new(
+            format!("c{}", number_to_jk(0)),
+            numeric::Point2f::new(0.0, 0.0),
+            numeric::Vector2f::new(1.0, 1.0),
+            0.0,
+            0,
+            normal_scale_font,
+        );
+
+        set_table_frame_cell_center!(
+            ctx.context,
+            table_frame,
+	    ad_money_gain_text,
+            numeric::Vector2u::new(1, 2)
+        );
+
 
 	let reputation_meter = ResultMeter::new(
             ctx,
 	    "評判".to_string(),
-            numeric::Rect::new(200.0, 200.0, 300.0, 50.0),
+            numeric::Rect::new(90.0, 270.0, 400.0, 40.0),
 	    6.0,
 	    100.0,
             ctx.savable_data.suzunaan_status.reputation,
@@ -148,7 +172,7 @@ impl SuzunaStatusMainPage {
 	let hp_meter = ResultMeter::new(
             ctx,
 	    "意欲".to_string(),
-            numeric::Rect::new(200.0, 300.0, 300.0, 50.0),
+            numeric::Rect::new(90.0, 350.0, 400.0, 40.0),
 	    6.0,
 	    100.0,
             ctx.savable_data.suzunaan_status.kosuzu_hp,
@@ -157,7 +181,6 @@ impl SuzunaStatusMainPage {
 
         SuzunaStatusMainPage {
             table_frame: table_frame,
-            reputation_text: reputation_text,
             desc_text: desc_text,
             day_text: VerticalText::new(
                 format!(
@@ -172,9 +195,12 @@ impl SuzunaStatusMainPage {
                 large_scale_font,
             ),
             money_text: money_text,
-            kosuzu_level_text: kosuzu_level_text,
+	    ad_cost_text: total_ad_cost_text,
+	    ad_rep_gain_text: ad_rep_gain_text,
+	    ad_money_gain_text: ad_money_gain_text,
 	    reputation_meter: reputation_meter,
 	    hp_meter: hp_meter,
+	    event_list: DelayEventList::new(),
             drwob_essential: DrawableObjectEssential::new(true, 0),
         }
     }
@@ -187,25 +213,41 @@ impl SuzunaStatusMainPage {
 	self.reputation_meter.apply_offset(ctx, diff_hp, 100);
     }
 
-    pub fn run_money_change_effect<'a>(&mut self, ctx: &mut SuzuContext<'a>) {
-	self.money_text.replace_text(
-            format!(
-                "{}円",
-                number_to_jk(ctx.savable_data.task_result.total_money as u64)
-            )
-	);
+    pub fn run_money_change_effect<'a>(&mut self, ctx: &mut SuzuContext<'a>, diff: i32, t: Clock) {
+	let diff_per_clock = diff as f32 / 60.0;
+	let current_money = ctx.savable_data.task_result.total_money;
+	
+	for additional in 1..=60 {
+	    if additional % 5 != 0 {
+		continue;
+	    }
+	    
+	    add_delay_event!(self.event_list, move |slf, ctx, t| {
+		slf.money_text.replace_text(
+		    &format!(
+			"{}円",
+			number_to_jk((current_money as f32 + (diff_per_clock * additional as f32) as f32) as u64)
+		    )
+		);
 
-        set_table_frame_cell_center!(
-            ctx.context,
-            self.table_frame,
-            self.money_text,
-            numeric::Vector2u::new(2, 1)
-        );
+		set_table_frame_cell_center!(
+		    ctx.context,
+		    slf.table_frame,
+		    slf.money_text,
+		    numeric::Vector2u::new(1, 3)
+		);
+
+		ctx.process_utility.redraw();
+	
+	    }, t + additional);
+	}
     }
 
-    pub fn update<'a>(&mut self, ctx: &mut SuzuContext<'a>) {
+    pub fn update<'a>(&mut self, ctx: &mut SuzuContext<'a>, t: Clock) {
 	self.reputation_meter.effect(ctx);
 	self.hp_meter.effect(ctx);
+
+        flush_delay_event_and_redraw_check!(self, self.event_list, ctx, t);
     }
 }
 
@@ -219,13 +261,13 @@ impl DrawableComponent for SuzunaStatusMainPage {
                 vtext.draw(ctx).unwrap();
             }
 
-            self.reputation_text.draw(ctx).unwrap();
+	    self.ad_cost_text.draw(ctx)?;
+	    self.ad_rep_gain_text.draw(ctx)?;
+	    self.ad_money_gain_text.draw(ctx)?;
             self.money_text.draw(ctx).unwrap();
 
 	    self.reputation_meter.draw(ctx)?;
 	    self.hp_meter.draw(ctx)?;
-
-            self.kosuzu_level_text.draw(ctx).unwrap();
         }
 
         Ok(())
@@ -828,9 +870,9 @@ impl SuzunaStatusPages {
         }
     }
 
-    pub fn update<'a>(&mut self, ctx: &mut SuzuContext<'a>) {
+    pub fn update<'a>(&mut self, ctx: &mut SuzuContext<'a>, t: Clock) {
         match self.current_page {
-            SuzunaStatusPageID::Main => self.main_page.update(ctx),
+            SuzunaStatusPageID::Main => self.main_page.update(ctx, t),
             SuzunaStatusPageID::Schedule => self.sched_page.update(ctx),
             _ => (),
         }
@@ -985,8 +1027,8 @@ impl SuzunaStatusScreen {
         self.pages.mouse_button_down(ctx, rpoint, button);
     }
 
-    pub fn update<'a>(&mut self, ctx: &mut SuzuContext<'a>) {
-        self.pages.update(ctx);
+    pub fn update<'a>(&mut self, ctx: &mut SuzuContext<'a>, t: Clock) {
+        self.pages.update(ctx, t);
     }
 
     pub fn change_kosuzu_hp<'a>(&mut self, ctx: &mut SuzuContext<'a>, diff: f32) {
@@ -1021,8 +1063,8 @@ impl SuzunaStatusScreen {
 	self.pages.total_ad_agency_money_gain(ctx)
     }
 
-    pub fn change_main_page_money<'a>(&mut self, ctx: &mut SuzuContext<'a>) {
-	self.pages.main_page.run_money_change_effect(ctx);
+    pub fn change_main_page_money<'a>(&mut self, ctx: &mut SuzuContext<'a>, diff: i32, t: Clock) {
+	self.pages.main_page.run_money_change_effect(ctx, diff, t);
     }
 }
 

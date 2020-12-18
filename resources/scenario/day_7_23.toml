@@ -25,6 +25,7 @@ left = "KosuzuTachie1"
 
 [[scenario-group]]
 type = "choice"
+header_text = "サァ準備ができたわよ"
 id = 11
    [scenario-group.tachie-data]
    right = "KosuzuTachie1"
@@ -41,6 +42,19 @@ id = 11
    jump-id = 4
 
 [[scenario-group]]
+type = "choice"
+header_text = "宣伝の依頼、受注もやらないとネ"
+id = 14
+   [scenario-group.tachie-data]
+   right = "KosuzuTachie1"
+   left = "KosuzuTachie1"
+
+   [[scenario-group.choice-pattern]]
+   pattern = "完了"
+   jump-id = 11
+
+
+[[scenario-group]]
 type = "builtin"
 opecode = "StartSchedule"
 id = 13
@@ -49,7 +63,7 @@ background = "SightBackground1"
 [[scenario-group]]
 type = "wait"
 id = 12
-next-id = 11
+next-id = 14
 opecode = "ScheduleCheck"
 background = "SightBackground1"
 

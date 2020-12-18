@@ -207,9 +207,9 @@ impl ScenarioScene {
                         self.scenario_event.set_fixed_text_to_scenario_box(
                             ctx,
                             if self.scenario_ctx.schedule_redefine {
-                                "新しく計画を建てましょう"
+                                "新しく計画を建てるわヨ"
                             } else {
-                                "上記の計画で開始します"
+                                "計画通り働くわよ"
                             },
                         );
                     }
@@ -231,25 +231,33 @@ impl ScenarioScene {
         }
     }
 
+    fn start_shop_work_schedule<'a>(&mut self, ctx: &mut SuzuContext<'a>) {
+	self.scenario_ctx.builtin_command_inexec = true;
+	self.status_screen.show_main_page();
+	self.status_screen.change_kosuzu_hp(ctx, -20.0);
+
+	add_delay_event!(self.event_list, |slf, ctx, _| {
+	    let reputation_diff = slf.status_screen.total_ad_reputation_gain(ctx);
+	    slf.status_screen.change_suzunaan_reputation(ctx, reputation_diff as f32);
+	}, self.get_current_clock() + 100);
+	
+	let money_diff = self.status_screen.total_ad_agency_money_gain(ctx) - self.status_screen.total_ad_cost(ctx);
+	self.status_screen.change_main_page_money(ctx, money_diff, self.get_current_clock());
+	ctx.savable_data.task_result.total_money += money_diff;
+	
+	add_delay_event!(self.event_list, |slf, _, _| {
+	    slf.scene_transition = SceneID::SuzunaShop;
+            slf.scene_transition_type = SceneTransition::SwapTransition;
+	}, self.get_current_clock() + 300);
+	add_delay_event!(self.event_list, |slf, _, _| {
+	    slf.scenario_ctx.builtin_command_inexec = false;
+	}, self.get_current_clock() + 301);
+    }
+
     pub fn start_schedule<'a>(&mut self, ctx: &mut SuzuContext<'a>) {
 	match ctx.savable_data.get_todays_schedule() {
 	    DayWorkType::ShopWork => {
-		self.scenario_ctx.builtin_command_inexec = true;
-		self.status_screen.show_main_page();
-		self.status_screen.change_kosuzu_hp(ctx, -20.0);
-
-		let reputation_diff = self.status_screen.total_ad_reputation_gain(ctx);
-		self.status_screen.change_suzunaan_reputation(ctx, reputation_diff as f32);
-
-		let money_diff = self.status_screen.total_ad_agency_money_gain(ctx) - self.status_screen.total_ad_cost(ctx);
-		ctx.savable_data.task_result.total_money += money_diff;
-		self.status_screen.change_main_page_money(ctx);
-		
-		add_delay_event!(self.event_list, |slf, _, _| {
-		    slf.scene_transition = SceneID::SuzunaShop;
-                    slf.scene_transition_type = SceneTransition::SwapTransition;
-		    slf.scenario_ctx.builtin_command_inexec = false;
-		}, self.get_current_clock() + 180);
+		self.start_shop_work_schedule(ctx);
 	    },
 	    DayWorkType::TakingRest => {
 		self.scenario_ctx.builtin_command_inexec = true;
@@ -395,7 +403,7 @@ impl SceneManager for ScenarioScene {
                 self.start_schedule(ctx);
             }
 
-            self.status_screen.update(ctx);
+            self.status_screen.update(ctx, t);
 
             self.schedule_check(ctx);
         }

@@ -721,7 +721,7 @@ impl ResultMeter {
             ggraphics::Color::from_rgba_u32(0x362d33ff),
             numeric::Rect::new(padding, padding, pos.w - (2.0 * padding), pos.h - (2.0 * padding)),
             ggraphics::Color::from_rgba_u32(0x463d43ff),
-            ggraphics::Color::from_rgba_u32(0xf6e1d5ff),
+            ggraphics::Color::from_rgba_u32(0xb83f36ff),
             current,
 	    max,
         );

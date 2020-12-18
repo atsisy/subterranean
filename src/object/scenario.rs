@@ -370,6 +370,7 @@ impl ScenarioText {
 /// 選択肢のデータを保持する構造体
 ///
 pub struct ChoicePatternData {
+    header_text: String,
     text: Vec<String>,
     jump_scenario_id: Vec<ScenarioElementID>,
     scenario_id: ScenarioElementID,
@@ -418,6 +419,7 @@ impl ChoicePatternData {
         };
 
         ChoicePatternData {
+	    header_text: toml_scripts.get("header_text").unwrap().as_str().unwrap().to_string(),
             text: choice_pattern_array,
             jump_scenario_id: jump_scenario_array,
             scenario_id: id,
@@ -484,6 +486,7 @@ impl TextureObject for ChoicePanel {
 }
 
 pub struct ChoiceBox {
+    header_text: String,
     choice_text: Vec<String>,
     panels: Vec<FramedButton>,
     selecting: Option<usize>,
@@ -517,20 +520,30 @@ impl ChoiceBox {
     pub fn new<'a>(
         ctx: &mut SuzuContext<'a>,
         pos_rect: numeric::Rect,
+	header_text: String,
         choice_text: Vec<String>,
     ) -> Self {
         let mut panels =
             Self::generate_choice_panel(ctx, &choice_text, numeric::Vector2f::new(10.0, 0.0), 10.0);
 
+	let mut width = 10.0 * panels.len() as f32;
+	
         for panel in &mut panels {
+	    width += panel.get_area().w;
             panel.make_this_none_status(ctx);
         }
 
         ChoiceBox {
+	    header_text: header_text,
             panels: panels,
             choice_text: choice_text,
             selecting: None,
-            canvas: SubScreen::new(ctx.context, pos_rect, 0, ggraphics::Color::from_rgba_u32(0)),
+            canvas: SubScreen::new(
+		ctx.context,
+		numeric::Rect::new(pos_rect.x, pos_rect.y, width, pos_rect.h),
+		0,
+		ggraphics::Color::from_rgba_u32(0)
+	    ),
         }
     }
 
@@ -596,6 +609,14 @@ impl DrawableComponent for ChoiceBox {
     fn get_drawing_depth(&self) -> i8 {
         self.canvas.get_drawing_depth()
     }
+}
+
+impl DrawableObject for ChoiceBox {
+    impl_drawable_object_for_wrapped! {canvas}
+}
+
+impl TextureObject for ChoiceBox {
+    impl_texture_object_for_wrapped! {canvas}
 }
 
 ///
@@ -1208,7 +1229,7 @@ impl TextBox {
         self.buffered_text = text_lines;
 
         // ボックスに入ったSimpleTextの位置を設定
-        let mut pos = numeric::Point2f::new(50.0, 50.0);
+        let mut pos = numeric::Point2f::new(60.0, 60.0);
         for line in &mut self.text {
             line.set_position(pos);
             pos.y += line.get_font_scale().y;
@@ -1233,7 +1254,7 @@ impl TextBox {
             tobj::MovableText::new(
                 Box::new(tobj::UniText::new(
                     text.to_string(),
-                    numeric::Point2f::new(50.0, 50.0),
+                    numeric::Point2f::new(60.0, 60.0),
                     numeric::Vector2f::new(1.0, 1.0),
                     0.0,
                     0,
@@ -1361,6 +1382,15 @@ impl ScenarioBox {
             ),
             Vec::new(),
         );
+
+	let mut choice_box = ChoiceBox::new(
+            ctx,
+            numeric::Rect::new(400.0, 120.0, 1200.0, 150.0),
+	    choice_pattern.header_text.clone(),
+            choice_pattern.text.clone(),
+        );
+	choice_box.make_center(ctx.context, numeric::Point2f::new(rect.w / 2.0, rect.h / 2.0));
+	
         let mut scenario_box = ScenarioBox {
             text_box: TextBox::new(
                 ctx,
@@ -1370,11 +1400,7 @@ impl ScenarioBox {
                 3,
                 t,
             ),
-            choice_box: Some(ChoiceBox::new(
-                ctx,
-                numeric::Rect::new(40.0, 100.0, 1200.0, 150.0),
-                choice_pattern.text.clone(),
-            )),
+            choice_box: Some(choice_box),
             canvas: SubScreen::new(ctx.context, rect, 0, ggraphics::Color::from_rgba_u32(0x00)),
         };
         scenario_box.display_choice_box_text(font_info);
@@ -1405,13 +1431,15 @@ impl ScenarioBox {
     pub fn display_choice_box_text(&mut self, font_info: FontInformation) {
         if self.choice_box.is_some() {
             // テキストボックスに選択肢の文字列を表示する
+	    let header_text = self.choice_box.as_ref().unwrap().header_text.as_str();
             let selected_text =
                 if let Some(s) = self.choice_box.as_ref().unwrap().get_selecting_str() {
                     s.to_string()
                 } else {
                     "".to_string()
                 };
-            self.text_box.set_fixed_text(&selected_text, font_info);
+            //self.text_box.set_fixed_text(&format!("{}\n{}", header_text, selected_text), font_info);
+	    self.text_box.set_fixed_text(header_text, font_info);
         }
     }
 
@@ -1616,11 +1644,15 @@ impl ScenarioEvent {
             ScenarioElement::ChoiceSwitch(choice_pattern) => {
                 // ChoiceBoxが表示されていない場合、新しくオブジェクトを生成する
                 if !self.scenario_box.is_enable_choice_box() {
-                    self.scenario_box.insert_choice_box(Some(ChoiceBox::new(
+		    let mut choice_box = ChoiceBox::new(
                         ctx,
-                        numeric::Rect::new(40.0, 100.0, 1200.0, 150.0),
+                        numeric::Rect::new(400.0, 100.0, 1200.0, 150.0),
+			choice_pattern.header_text.clone(),
                         choice_pattern.text.clone(),
-                    )));
+                    );
+		    
+		    choice_box.make_center(ctx.context, numeric::Point2f::new(1326.0 / 2.0, 180.0));
+                    self.scenario_box.insert_choice_box(Some(choice_box));
 
                     // テキストボックスに選択肢の文字列を表示する
                     self.scenario_box
