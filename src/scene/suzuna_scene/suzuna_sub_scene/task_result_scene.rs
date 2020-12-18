@@ -1,5 +1,3 @@
-use ggez::graphics as ggraphics;
-
 use ggez::input::mouse::MouseButton;
 use torifune::core::*;
 use torifune::numeric;

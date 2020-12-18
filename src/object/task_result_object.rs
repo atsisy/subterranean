@@ -476,7 +476,6 @@ impl DrawableTaskResult {
 	    100.0,
             initial_save_data.suzunaan_status.reputation,
             1,
-            t,
         );
 	meters.set_goal(ctx, ctx.savable_data.suzunaan_status.reputation, 100);
 
@@ -511,7 +510,7 @@ impl DrawableTaskResult {
 
         self.evaluation.run_effect(ctx, t);
 
-        self.meters.effect(ctx, t);
+        self.meters.effect(ctx);
     }
 }
 

@@ -10,7 +10,6 @@ use torifune::graphics::object::sub_screen;
 use torifune::graphics::object::*;
 use torifune::numeric;
 use torifune::roundup2f;
-use torifune::core::Clock;
 
 use torifune::graphics::object::sub_screen::SubScreen;
 
@@ -41,7 +40,7 @@ pub struct SuzunaStatusMainPage {
 }
 
 impl SuzunaStatusMainPage {
-    pub fn new<'a>(ctx: &mut SuzuContext<'a>, t: Clock) -> Self {
+    pub fn new<'a>(ctx: &mut SuzuContext<'a>) -> Self {
         let normal_scale_font = FontInformation::new(
             ctx.resource.get_font(FontID::Cinema),
             numeric::Vector2f::new(24.0, 24.0),
@@ -65,7 +64,7 @@ impl SuzunaStatusMainPage {
 
         let mut desc_text = Vec::new();
 
-        for (index, s) in vec!["評判", "習熟度", "所持金"].iter().enumerate() {
+        for (index, s) in vec!["広告費", "広告受注代", "所持金"].iter().enumerate() {
             let mut vtext = VerticalText::new(
                 s.to_string(),
                 numeric::Point2f::new(0.0, 0.0),
@@ -144,7 +143,6 @@ impl SuzunaStatusMainPage {
 	    100.0,
             ctx.savable_data.suzunaan_status.reputation,
             1,
-            t,
 	);
 	
 	let hp_meter = ResultMeter::new(
@@ -155,7 +153,6 @@ impl SuzunaStatusMainPage {
 	    100.0,
             ctx.savable_data.suzunaan_status.kosuzu_hp,
             1,
-            t,
         );
 
         SuzunaStatusMainPage {
@@ -190,9 +187,25 @@ impl SuzunaStatusMainPage {
 	self.reputation_meter.apply_offset(ctx, diff_hp, 100);
     }
 
-    pub fn update<'a>(&mut self, ctx: &mut SuzuContext<'a>, t: Clock) {
-	self.reputation_meter.effect(ctx, t);
-	self.hp_meter.effect(ctx, t);
+    pub fn run_money_change_effect<'a>(&mut self, ctx: &mut SuzuContext<'a>) {
+	self.money_text.replace_text(
+            format!(
+                "{}円",
+                number_to_jk(ctx.savable_data.task_result.total_money as u64)
+            )
+	);
+
+        set_table_frame_cell_center!(
+            ctx.context,
+            self.table_frame,
+            self.money_text,
+            numeric::Vector2u::new(2, 1)
+        );
+    }
+
+    pub fn update<'a>(&mut self, ctx: &mut SuzuContext<'a>) {
+	self.reputation_meter.effect(ctx);
+	self.hp_meter.effect(ctx);
     }
 }
 
@@ -440,6 +453,46 @@ impl ScenarioAdPage {
                 .change_ad_status(*ad_type, entry.is_checked());
         }
     }
+
+    pub fn total_ad_cost<'a>(&self, ctx: &mut SuzuContext<'a>) -> i32 {
+	let mut total_ad_cost = 0;
+	
+	for ad_type in vec![
+            SuzunaAdType::AdPaper,
+            SuzunaAdType::Chindon,
+            SuzunaAdType::ShopNobori,
+            SuzunaAdType::TownNobori,
+            SuzunaAdType::NewsPaper,
+            SuzunaAdType::BunBunMaruPaper,
+        ] {
+	    if self.ad_table.get(&ad_type).unwrap().is_checked() {
+		total_ad_cost +=
+		    ctx.resource.get_default_ad_cost(ad_type);
+	    }
+	}
+
+	return total_ad_cost as i32;
+    }
+
+    pub fn total_ad_reputation_gain<'a>(&self, ctx: &mut SuzuContext<'a>) -> i32 {
+	let mut total_ad_reputation_gain = 0;
+	
+	for ad_type in vec![
+            SuzunaAdType::AdPaper,
+            SuzunaAdType::Chindon,
+            SuzunaAdType::ShopNobori,
+            SuzunaAdType::TownNobori,
+            SuzunaAdType::NewsPaper,
+            SuzunaAdType::BunBunMaruPaper,
+        ] {
+	    if self.ad_table.get(&ad_type).unwrap().is_checked() {
+		total_ad_reputation_gain +=
+		    ctx.resource.get_default_ad_reputation_gain(ad_type);
+	    }
+	}
+
+	return total_ad_reputation_gain as i32;
+    }
 }
 
 impl DrawableComponent for ScenarioAdPage {
@@ -536,12 +589,12 @@ impl ScenarioAgencyPage {
                 ctx,
                 entry_pos,
                 numeric::Vector2f::new(32.0, 32.0),
-                ctx.savable_data.get_ad_agency_status(*ad_type),
+                ctx.savable_data.get_ad_agency_status(ad_type),
                 format!(
                     "{:　<6}評判{:　>2}点以上\n{:　>9}円収入増加",
                     ty_str,
-                    ctx.resource.get_default_ad_agency_cost(*ad_type),
-		    ctx.resource.get_default_ad_agency_money_gain(*ad_type),
+                    ctx.resource.get_default_ad_agency_cost(ad_type),
+		    ctx.resource.get_default_ad_agency_money_gain(ad_type),
                 ),
                 depth,
             );
@@ -581,10 +634,52 @@ impl ScenarioAgencyPage {
 
     pub fn click_handler<'a>(&mut self, ctx: &mut SuzuContext<'a>, click_point: numeric::Point2f) {
         for (ad_type, entry) in self.ad_table.iter_mut() {
-            entry.check_box.click_handler(click_point);
-            ctx.savable_data
-                .change_ad_agency_status(*ad_type, entry.is_checked());
+	    if ctx.resource.get_default_ad_agency_cost(ad_type) as f32 <= ctx.savable_data.suzunaan_status.reputation {
+		entry.check_box.click_handler(click_point);
+		ctx.savable_data
+                    .change_ad_agency_status(*ad_type, entry.is_checked());
+	    }
         }
+    }
+
+    pub fn total_ad_agency_cost<'a>(&self, ctx: &mut SuzuContext<'a>) -> i32 {
+	let mut total_ad_cost = 0;
+	
+	for ad_type in vec![
+            SuzunaAdAgencyType::HakureiJinja,
+	    SuzunaAdAgencyType::KirisameMahoten,
+            SuzunaAdAgencyType::GettoDango,
+            SuzunaAdAgencyType::Kusuriya,
+	    SuzunaAdAgencyType::Hieda,
+	    SuzunaAdAgencyType::YamaJinja,
+        ] {
+	    if self.ad_table.get(&ad_type).unwrap().is_checked() {
+		total_ad_cost +=
+		    ctx.resource.get_default_ad_agency_cost(&ad_type);
+	    }
+	}
+
+	return total_ad_cost as i32;
+    }
+
+    pub fn total_ad_agency_money_gain<'a>(&self, ctx: &mut SuzuContext<'a>) -> i32 {
+	let mut total_ad_agency_money_gain = 0;
+	
+	for ad_type in vec![
+            SuzunaAdAgencyType::HakureiJinja,
+	    SuzunaAdAgencyType::KirisameMahoten,
+            SuzunaAdAgencyType::GettoDango,
+            SuzunaAdAgencyType::Kusuriya,
+	    SuzunaAdAgencyType::Hieda,
+	    SuzunaAdAgencyType::YamaJinja,
+        ] {
+	    if self.ad_table.get(&ad_type).unwrap().is_checked() {
+		total_ad_agency_money_gain +=
+		    ctx.resource.get_default_ad_agency_money_gain(&ad_type);
+	    }
+	}
+
+	return total_ad_agency_money_gain as i32;
     }
 }
 
@@ -647,10 +742,9 @@ impl SuzunaStatusPages {
         ctx: &mut SuzuContext<'a>,
         scno_ctx: &ScenarioContext,
         rect: numeric::Rect,
-	t: Clock,
     ) -> Self {
         SuzunaStatusPages {
-            main_page: SuzunaStatusMainPage::new(ctx, t),
+            main_page: SuzunaStatusMainPage::new(ctx),
             ad_page: ScenarioAdPage::new(
                 ctx,
                 numeric::Point2f::new(0.0, 0.0),
@@ -734,9 +828,9 @@ impl SuzunaStatusPages {
         }
     }
 
-    pub fn update<'a>(&mut self, ctx: &mut SuzuContext<'a>, t: Clock) {
+    pub fn update<'a>(&mut self, ctx: &mut SuzuContext<'a>) {
         match self.current_page {
-            SuzunaStatusPageID::Main => self.main_page.update(ctx, t),
+            SuzunaStatusPageID::Main => self.main_page.update(ctx),
             SuzunaStatusPageID::Schedule => self.sched_page.update(ctx),
             _ => (),
         }
@@ -757,6 +851,22 @@ impl SuzunaStatusPages {
     pub fn show_schedule_page(&mut self) {
         self.current_page = SuzunaStatusPageID::Schedule;
     }
+
+    pub fn total_ad_cost<'a>(&self, ctx: &mut SuzuContext<'a>) -> i32 {
+	self.ad_page.total_ad_cost(ctx)
+    }
+
+    pub fn total_ad_reputation_gain<'a>(&self, ctx: &mut SuzuContext<'a>) -> i32 {
+	self.ad_page.total_ad_reputation_gain(ctx)
+    }
+
+    pub fn total_ad_agency_cost<'a>(&self, ctx: &mut SuzuContext<'a>) -> i32 {
+	self.ad_agency_page.total_ad_agency_cost(ctx)
+    }
+
+    pub fn total_ad_agency_money_gain<'a>(&self, ctx: &mut SuzuContext<'a>) -> i32 {
+	self.ad_agency_page.total_ad_agency_money_gain(ctx)
+    }
 }
 
 pub struct SuzunaStatusScreen {
@@ -774,7 +884,6 @@ impl SuzunaStatusScreen {
         scno_ctx: &ScenarioContext,
         rect: numeric::Rect,
         depth: i8,
-	t: Clock,
     ) -> SuzunaStatusScreen {
         let mut background_texture = UniTexture::new(
             ctx.ref_texture(TextureID::TextBackground),
@@ -820,7 +929,7 @@ impl SuzunaStatusScreen {
             ),
             background: background_texture,
             appr_frame: appr_frame,
-            pages: SuzunaStatusPages::new(ctx, scno_ctx, rect, t),
+            pages: SuzunaStatusPages::new(ctx, scno_ctx, rect),
             go_left_texture: left,
             go_right_texture: right,
         }
@@ -876,8 +985,8 @@ impl SuzunaStatusScreen {
         self.pages.mouse_button_down(ctx, rpoint, button);
     }
 
-    pub fn update<'a>(&mut self, ctx: &mut SuzuContext<'a>, t: Clock) {
-        self.pages.update(ctx, t);
+    pub fn update<'a>(&mut self, ctx: &mut SuzuContext<'a>) {
+        self.pages.update(ctx);
     }
 
     pub fn change_kosuzu_hp<'a>(&mut self, ctx: &mut SuzuContext<'a>, diff: f32) {
@@ -894,6 +1003,26 @@ impl SuzunaStatusScreen {
 
     pub fn show_schedule_page(&mut self) {
         self.pages.show_schedule_page();
+    }
+
+    pub fn total_ad_cost<'a>(&self, ctx: &mut SuzuContext<'a>) -> i32 {
+	self.pages.total_ad_cost(ctx)
+    }
+
+    pub fn total_ad_reputation_gain<'a>(&self, ctx: &mut SuzuContext<'a>) -> i32 {
+	self.pages.total_ad_reputation_gain(ctx)
+    }
+
+    pub fn total_ad_agency_cost<'a>(&self, ctx: &mut SuzuContext<'a>) -> i32 {
+	self.pages.total_ad_agency_cost(ctx)
+    }
+
+    pub fn total_ad_agency_money_gain<'a>(&self, ctx: &mut SuzuContext<'a>) -> i32 {
+	self.pages.total_ad_agency_money_gain(ctx)
+    }
+
+    pub fn change_main_page_money<'a>(&mut self, ctx: &mut SuzuContext<'a>) {
+	self.pages.main_page.run_money_change_effect(ctx);
     }
 }
 

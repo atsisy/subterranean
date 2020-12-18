@@ -714,7 +714,6 @@ impl ResultMeter {
 	max: f32,
         current: f32,
         depth: i8,
-        t: Clock,
     ) -> Self {
         let meter = Meter::new(
             numeric::Point2f::new(pos.x, pos.y + 30.0),
@@ -797,7 +796,7 @@ impl ResultMeter {
 	self.diff_per_clock = (self.goal - self.meter.get_value()) / time as f32;
     }
 
-    pub fn effect<'a>(&mut self, ctx: &mut SuzuContext<'a>, t: Clock) {
+    pub fn effect<'a>(&mut self, ctx: &mut SuzuContext<'a>) {
         if (self.meter.get_value() - self.goal).abs() >= self.diff_per_clock.abs() {
             self.meter.add(self.diff_per_clock);
 

@@ -113,7 +113,6 @@ impl ScenarioScene {
                 &scenario_ctx,
                 numeric::Rect::new(30.0, 25.0, 700.0, 470.0),
                 0,
-		0
             ),
             scene_transition_type: SceneTransition::Keep,
             scenario_ctx: scenario_ctx,
@@ -238,7 +237,13 @@ impl ScenarioScene {
 		self.scenario_ctx.builtin_command_inexec = true;
 		self.status_screen.show_main_page();
 		self.status_screen.change_kosuzu_hp(ctx, -20.0);
-		self.status_screen.change_suzunaan_reputation(ctx, 5.0);
+
+		let reputation_diff = self.status_screen.total_ad_reputation_gain(ctx);
+		self.status_screen.change_suzunaan_reputation(ctx, reputation_diff as f32);
+
+		let money_diff = self.status_screen.total_ad_agency_money_gain(ctx) - self.status_screen.total_ad_cost(ctx);
+		ctx.savable_data.task_result.total_money += money_diff;
+		self.status_screen.change_main_page_money(ctx);
 		
 		add_delay_event!(self.event_list, |slf, _, _| {
 		    slf.scene_transition = SceneID::SuzunaShop;
@@ -390,7 +395,7 @@ impl SceneManager for ScenarioScene {
                 self.start_schedule(ctx);
             }
 
-            self.status_screen.update(ctx, t);
+            self.status_screen.update(ctx);
 
             self.schedule_check(ctx);
         }

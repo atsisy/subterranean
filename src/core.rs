@@ -794,12 +794,12 @@ impl AdAgencyCostTable {
         }
     }
 
-    pub fn get_cost(&self, ty: SuzunaAdAgencyType) -> u32 {
-        *self.cost_table.get(&ty).unwrap()
+    pub fn get_cost(&self, ty: &SuzunaAdAgencyType) -> u32 {
+        *self.cost_table.get(ty).unwrap()
     }
 
-    pub fn get_money_gain(&self, ty: SuzunaAdAgencyType) -> u32 {
-        *self.money_gain_table.get(&ty).unwrap()
+    pub fn get_money_gain(&self, ty: &SuzunaAdAgencyType) -> u32 {
+        *self.money_gain_table.get(ty).unwrap()
     }
 }
 
@@ -1054,11 +1054,11 @@ impl GameResource {
         self.ad_info.get_reputation_gain(ty)
     }
 
-    pub fn get_default_ad_agency_cost(&self, ty: SuzunaAdAgencyType) -> u32 {
+    pub fn get_default_ad_agency_cost(&self, ty: &SuzunaAdAgencyType) -> u32 {
         self.ad_agency_info.get_cost(ty)
     }
 
-    pub fn get_default_ad_agency_money_gain(&self, ty: SuzunaAdAgencyType) -> u32 {
+    pub fn get_default_ad_agency_money_gain(&self, ty: &SuzunaAdAgencyType) -> u32 {
         self.ad_agency_info.get_money_gain(ty)
     }
 }
@@ -1216,7 +1216,7 @@ impl TaskResult {
         TaskResult {
             done_works: 0,
             not_shelved_books: Vec::new(),
-            total_money: 0,
+            total_money: 1000,
             borrowing_books: Vec::new(),
         }
     }
@@ -1632,8 +1632,8 @@ impl SavableData {
         *self.ad_status.get(&ad_type).unwrap()
     }
 
-    pub fn get_ad_agency_status(&self, agency_type: SuzunaAdAgencyType) -> bool {
-        *self.agency_status.get(&agency_type).unwrap()
+    pub fn get_ad_agency_status(&self, agency_type: &SuzunaAdAgencyType) -> bool {
+        *self.agency_status.get(agency_type).unwrap()
     }
 
     pub fn pay_ad_cost(&mut self, resource: &GameResource) -> i32 {
