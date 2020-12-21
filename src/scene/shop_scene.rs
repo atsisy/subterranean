@@ -1391,7 +1391,7 @@ impl ShopScene {
     /// # 再描画要求有り
     ///
     pub fn update_shop_clock_regular<'a>(&mut self, ctx: &mut SuzuContext<'a>, t: Clock) {
-        if self.get_current_clock() % 5 == 0 {
+        if self.get_current_clock() % 15 == 0 {
             self.shop_clock.add_minute(1);
             self.drawable_shop_clock.update_time(&self.shop_clock);
 
@@ -1423,7 +1423,7 @@ impl ShopScene {
     /// # 再描画要求有り
     ///
     pub fn check_shop_clock_regular<'a>(&mut self, ctx: &mut SuzuContext<'a>, t: Clock) {
-        if self.shop_clock.equals(17, 0) {
+        if self.shop_clock.is_past(17, 0) {
             self.event_list.add_event(
                 Box::new(move |slf: &mut Self, ctx, _| {
                     // reportに未配架の本のIDをメモする
@@ -1444,7 +1444,7 @@ impl ShopScene {
     }
 
     fn random_add_customer<'a>(&mut self, ctx: &mut SuzuContext<'a>) {
-        if rand::random::<usize>() % 1500 == 0 {
+        if rand::random::<usize>() % 1000 == 0 {
             let character = character_factory::create_character(
                 character_factory::CharacterFactoryOrder::CustomerSample,
                 ctx,

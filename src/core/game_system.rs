@@ -19,9 +19,9 @@ impl DayWorkType {
         match self {
             DayWorkType::ShopWork => "店番",
             DayWorkType::GoingOut(dest) => match dest {
-                GoingOutEvent::AkyuTei => "外出（阿求亭）",
-                GoingOutEvent::Dangoya => "外出（団子屋）",
-                GoingOutEvent::Terakoya => "外出（寺子屋）",
+                GoingOutEvent::AkyuTei => "外出",
+                GoingOutEvent::Dangoya => "外出",
+                GoingOutEvent::Terakoya => "外出",
             },
             DayWorkType::TakingRest => "休憩",
         }
@@ -66,9 +66,10 @@ impl WeekWorkSchedule {
 
     pub fn get_schedule_at(&self, index: usize) -> Option<DayWorkType> {
         if index >= 7 {
-            panic!("invalid index, greater or equal to 7");
-        }
-        self.schedule[index].clone()
+	    None
+        } else {
+	    self.schedule[index].clone()
+	}
     }
 
     pub fn update_is_not_required(&self, date: &GensoDate) -> bool {

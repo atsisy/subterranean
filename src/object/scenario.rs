@@ -1560,6 +1560,13 @@ impl ScenarioEvent {
         }
     }
 
+    pub fn replace_scenario<'a>(&mut self, ctx: &mut SuzuContext<'a>, scno_ctx: &mut ScenarioContext, scenario_path: &str, t: Clock) {
+	self.scenario = Scenario::new(scenario_path, ctx.resource);
+	self.status = ScenarioEventStatus::Scenario;
+	self.key_down_action1(ctx, t);
+	self.update_text(ctx, scno_ctx);
+    }
+
     pub fn update_event_background_sub<'a>(
         ctx: &mut SuzuContext<'a>,
         scenario_element: &ScenarioElement,

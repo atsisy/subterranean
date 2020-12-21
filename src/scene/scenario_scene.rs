@@ -6,7 +6,7 @@ use torifune::device as tdev;
 use torifune::graphics::object::Effectable;
 use torifune::numeric;
 
-use crate::core::{MouseInformation, SuzuContext, TileBatchTextureID};
+use crate::core::{GeneralScenarioID, MouseInformation, SuzuContext, TileBatchTextureID};
 
 use crate::flush_delay_event;
 use crate::flush_delay_event_and_redraw_check;
@@ -221,16 +221,31 @@ impl ScenarioScene {
 		    "ShowAd" => {
 			add_delay_event!(self.event_list, |slf, _, _| {
 			    slf.status_screen.show_ad_page();
-			}, self.get_current_clock() + 50);
+			}, self.get_current_clock() + 30);
 			self.scenario_event.release_scenario_waiting();
 			self.scenario_ctx.wait_opecode_running = false;
 		    }
 		    "ShowMain" => {
 			add_delay_event!(self.event_list, |slf, ctx, _| {
 			    slf.status_screen.show_main_page(ctx);
-			}, self.get_current_clock() + 50);
+			}, self.get_current_clock() + 30);
 			self.scenario_event.release_scenario_waiting();
 			self.scenario_ctx.wait_opecode_running = false;
+		    }
+		    "NextDay" => {
+			self.status_screen.show_main_page(ctx);
+			self.status_screen.change_suzunaan_reputation(ctx, -2.0);
+			ctx.savable_data.suzunaan_status.reputation -= 2.0;
+			
+			add_delay_event!(self.event_list, |slf, ctx, t| {
+			    slf.scene_transition_close_effect(ctx, t);
+			}, self.get_current_clock() + 80);
+			
+			add_delay_event!(self.event_list, |slf, ctx, t| {
+			    slf.scene_transition = SceneID::Scenario;
+			    slf.scene_transition_type = SceneTransition::SwapTransition;
+			    ctx.go_next_day();
+			}, self.get_current_clock() + 120);
 		    }
                     _ => (),
                 }
@@ -270,35 +285,56 @@ impl ScenarioScene {
 	add_delay_event!(self.event_list, |slf, _, _| {
 	    slf.scenario_ctx.builtin_command_inexec = false;
 	}, self.get_current_clock() + 301);
+	add_delay_event!(self.event_list, |slf, ctx, t| {
+	    slf.scene_transition_close_effect(ctx, t);
+	}, self.get_current_clock() + 250);
     }
 
     fn start_going_out_schedule<'a>(&mut self, ctx: &mut SuzuContext<'a>) {
+	self.status_screen.show_main_page(ctx);
+	let money_diff = ctx.current_total_ad_agency_money_gain() - ctx.current_total_ad_cost() - 400;
+
+	if ctx.savable_data.task_result.total_money + money_diff < 0 {
+	    let path = ctx.resource.get_general_scenario_path(&GeneralScenarioID::NoEnoughMoney).unwrap();
+	    let t = self.get_current_clock();
+	    self.scenario_event.replace_scenario(ctx, &mut self.scenario_ctx, &path, t);
+	    return;
+	}
+	
+	self.status_screen.change_main_page_money(ctx, money_diff, self.get_current_clock());
+	ctx.savable_data.task_result.total_money += money_diff;
+
 	self.scenario_ctx.builtin_command_inexec = true;
 	self.status_screen.show_main_page(ctx);
-	self.status_screen.change_kosuzu_hp(ctx, -20.0);
+	self.status_screen.change_kosuzu_hp(ctx, 40.0);
+	ctx.savable_data.suzunaan_status.kosuzu_hp += 40.0;
+	if ctx.savable_data.suzunaan_status.kosuzu_hp > 100.0 {
+	    ctx.savable_data.suzunaan_status.kosuzu_hp = 100.0;
+	}
 
 	add_delay_event!(self.event_list, |slf, ctx, _| {
 	    let reputation_diff = ctx.current_total_ad_reputation_gain();
 	    slf.status_screen.change_suzunaan_reputation(ctx, reputation_diff as f32);
 	}, self.get_current_clock() + 100);
 	
-	let money_diff = ctx.current_total_ad_agency_money_gain() - ctx.current_total_ad_cost();
-	self.status_screen.change_main_page_money(ctx, money_diff, self.get_current_clock());
-	ctx.savable_data.task_result.total_money += money_diff;
 	
-	add_delay_event!(self.event_list, |slf, _, _| {
-	    slf.scene_transition = SceneID::SuzunaShop;
+	add_delay_event!(self.event_list, |slf, ctx, _| {
+	    slf.scene_transition = SceneID::Scenario;
             slf.scene_transition_type = SceneTransition::SwapTransition;
-	}, self.get_current_clock() + 300);
+	    ctx.go_next_day();
+	}, self.get_current_clock() + 200);
 	add_delay_event!(self.event_list, |slf, _, _| {
 	    slf.scenario_ctx.builtin_command_inexec = false;
-	}, self.get_current_clock() + 301);
+	}, self.get_current_clock() + 201);
+	add_delay_event!(self.event_list, |slf, ctx, t| {
+	    slf.scene_transition_close_effect(ctx, t);
+	}, self.get_current_clock() + 150);
     }
 
     fn start_taking_rest_schedule<'a>(&mut self, ctx: &mut SuzuContext<'a>) {
 	self.scenario_ctx.builtin_command_inexec = true;
 	self.status_screen.show_main_page(ctx);
-	self.status_screen.change_kosuzu_hp(ctx, 40.0);
+	self.status_screen.change_kosuzu_hp(ctx, 20.0);
 	ctx.savable_data.suzunaan_status.kosuzu_hp += 20.0;
 	if ctx.savable_data.suzunaan_status.kosuzu_hp > 100.0 {
 	    ctx.savable_data.suzunaan_status.kosuzu_hp = 100.0;
@@ -322,6 +358,9 @@ impl ScenarioScene {
 	add_delay_event!(self.event_list, |slf, _, _| {
 	    slf.scenario_ctx.builtin_command_inexec = false;
 	}, self.get_current_clock() + 301);
+	add_delay_event!(self.event_list, |slf, ctx, t| {
+	    slf.scene_transition_close_effect(ctx, t);
+	}, self.get_current_clock() + 250);
     }
 
     pub fn start_schedule<'a>(&mut self, ctx: &mut SuzuContext<'a>) {

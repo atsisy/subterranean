@@ -650,8 +650,23 @@ impl GensoDate {
     }
 }
 
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+pub enum GeneralScenarioID {
+    NoEnoughMoney,
+}
+
+impl GeneralScenarioID {
+    pub fn from_str(s: &str) -> Self {
+	match s {
+	    "NoEnoughMoney" => Self::NoEnoughMoney,
+	    _ => panic!("Invalid General Scenario String"),
+	}
+    }
+}
+
 pub struct ScenarioTable {
     scenario_table: HashMap<GensoDate, String>,
+    general_scenario: HashMap<GeneralScenarioID, String>,
 }
 
 impl ScenarioTable {
@@ -674,8 +689,20 @@ impl ScenarioTable {
             table.insert(genso_date, path.to_string());
         }
 
+	let mut general_scenario = HashMap::new();
+	let array = root["general-scenario-table"].as_array().unwrap();
+
+        for elem in array {
+	    let ty = elem.get("type").unwrap().as_str().unwrap();
+	    let id = GeneralScenarioID::from_str(ty);
+            let path = elem.get("path").unwrap().as_str().unwrap();
+
+            general_scenario.insert(id, path.to_string());
+        }
+
         ScenarioTable {
             scenario_table: table,
+	    general_scenario: general_scenario,
         }
     }
 
@@ -684,6 +711,15 @@ impl ScenarioTable {
             Some(s.to_string())
         } else {
             println!("Error: Invalid Date => {:?}", date);
+            None
+        }
+    }
+
+    pub fn get_general_scenario_path(&self, id: &GeneralScenarioID) -> Option<String> {
+        if let Some(s) = self.general_scenario.get(id) {
+            Some(s.to_string())
+        } else {
+            println!("Error: Invalid General Scenario ID => {:?}", id);
             None
         }
     }
@@ -992,6 +1028,10 @@ impl GameResource {
 
     pub fn get_day_scenario_path(&self, date: &GensoDate) -> Option<String> {
         self.scenario_table.get_day_scenario_path(date)
+    }
+
+    pub fn get_general_scenario_path(&self, id: &GeneralScenarioID) -> Option<String> {
+        self.scenario_table.get_general_scenario_path(id)
     }
 
     pub fn play_sound_as_bgm(
