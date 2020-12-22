@@ -1432,7 +1432,7 @@ impl ScenarioBox {
         if self.choice_box.is_some() {
             // テキストボックスに選択肢の文字列を表示する
 	    let header_text = self.choice_box.as_ref().unwrap().header_text.as_str();
-            let selected_text =
+            let _selected_text =
                 if let Some(s) = self.choice_box.as_ref().unwrap().get_selecting_str() {
                     s.to_string()
                 } else {

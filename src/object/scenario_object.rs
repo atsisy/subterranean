@@ -1122,7 +1122,7 @@ impl SuzunaStatusScreen {
 	self.check_move_page_icon_visibility();
     }
 
-    pub fn show_ad_agency_page<'a>(&mut self, ctx: &mut SuzuContext<'a>) {
+    pub fn show_ad_agency_page<'a>(&mut self) {
 	self.pages.show_ad_agency_page();
 	self.check_move_page_icon_visibility();
     }

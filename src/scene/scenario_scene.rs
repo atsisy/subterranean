@@ -233,8 +233,8 @@ impl ScenarioScene {
 			self.scenario_ctx.wait_opecode_running = false;
 		    }
 		    "ShowAdAgency" => {
-			add_delay_event!(self.event_list, |slf, ctx, _| {
-			    slf.status_screen.show_ad_agency_page(ctx);
+			add_delay_event!(self.event_list, |slf, _, _| {
+			    slf.status_screen.show_ad_agency_page();
 			}, self.get_current_clock() + 30);
 			self.scenario_event.release_scenario_waiting();
 			self.scenario_ctx.wait_opecode_running = false;
@@ -248,7 +248,7 @@ impl ScenarioScene {
 			    slf.scene_transition_close_effect(ctx, t);
 			}, self.get_current_clock() + 80);
 			
-			add_delay_event!(self.event_list, |slf, ctx, t| {
+			add_delay_event!(self.event_list, |slf, ctx, _| {
 			    slf.scene_transition = SceneID::Scenario;
 			    slf.scene_transition_type = SceneTransition::SwapTransition;
 			    ctx.go_next_day();

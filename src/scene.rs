@@ -3,6 +3,7 @@ pub mod scenario_scene;
 pub mod shop_scene;
 pub mod suzuna_scene;
 pub mod title_scene;
+pub mod end_scene;
 
 use std::str::FromStr;
 
@@ -31,6 +32,7 @@ pub enum SceneID {
     DayResult,
     Save,
     Copying,
+    End,
     Title,
 }
 
@@ -45,6 +47,7 @@ impl FromStr for SceneID {
             "WorkResult" => Ok(Self::DayResult),
             "Save" => Ok(Self::Save),
             "Title" => Ok(Self::Title),
+	    "End" => Ok(Self::End),
             _ => panic!("Error: EventTrigger::from_str"),
         }
     }

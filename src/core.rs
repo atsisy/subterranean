@@ -1974,6 +1974,7 @@ pub enum TopScene {
     SuzunaScene(scene::suzuna_scene::SuzunaScene),
     SaveScene(scene::save_scene::SaveScene),
     TitleScene(scene::title_scene::TitleScene),
+    EndScene(scene::end_scene::EndScene),
     Null(scene::NullScene),
 }
 
@@ -1984,6 +1985,7 @@ impl TopScene {
             TopScene::SuzunaScene(scene) => scene,
             TopScene::SaveScene(scene) => scene,
             TopScene::TitleScene(scene) => scene,
+	    TopScene::EndScene(scene) => scene,
             TopScene::Null(scene) => scene,
         }
     }
@@ -1994,6 +1996,7 @@ impl TopScene {
             TopScene::SuzunaScene(scene) => scene,
             TopScene::SaveScene(scene) => scene,
             TopScene::TitleScene(scene) => scene,
+	    TopScene::EndScene(scene) => scene,
             TopScene::Null(scene) => scene,
         }
     }
@@ -2137,6 +2140,12 @@ impl SceneController {
                 self.current_scene =
                     TopScene::SaveScene(scene::save_scene::SaveScene::new(&mut ctx));
             }
+	    scene::SceneID::End => {
+		self.current_scene =
+                    TopScene::EndScene(scene::end_scene::EndScene::new(
+                        &mut ctx,
+                    ))
+	    }
             scene::SceneID::Null => self.current_scene = TopScene::Null(scene::NullScene::new()),
             _ => (),
         }
