@@ -26,10 +26,14 @@ fn create_playable_doremy1<'a>(
             vec![],
         ),
         vec![
-            ObjectDirection::Down,
-            ObjectDirection::Up,
-            ObjectDirection::Right,
-            ObjectDirection::Left,
+            ObjectDirection::MoveDown,
+            ObjectDirection::MoveUp,
+            ObjectDirection::MoveRight,
+            ObjectDirection::MoveLeft,
+	    ObjectDirection::StopDown,
+	    ObjectDirection::StopUp,
+	    ObjectDirection::StopRight,
+	    ObjectDirection::StopLeft,
         ],
         vec![
             vec![
@@ -41,15 +45,31 @@ fn create_playable_doremy1<'a>(
                 ctx.ref_texture(TextureID::KosuzuDotBack3),
             ],
             vec![
+                ctx.ref_texture(TextureID::KosuzuDotRight1),
                 ctx.ref_texture(TextureID::KosuzuDotRight2),
-                ctx.ref_texture(TextureID::KosuzuDotRight3),
+		ctx.ref_texture(TextureID::KosuzuDotRight1),
+		ctx.ref_texture(TextureID::KosuzuDotRight3),
             ],
             vec![
+                ctx.ref_texture(TextureID::KosuzuDotLeft1),
                 ctx.ref_texture(TextureID::KosuzuDotLeft2),
-                ctx.ref_texture(TextureID::KosuzuDotLeft3),
+		ctx.ref_texture(TextureID::KosuzuDotLeft1),
+		ctx.ref_texture(TextureID::KosuzuDotLeft3),
             ],
+	    vec![
+                ctx.ref_texture(TextureID::KosuzuDotFront1),
+	    ],
+	    vec![
+                ctx.ref_texture(TextureID::KosuzuDotBack1),
+	    ],
+	    vec![
+                ctx.ref_texture(TextureID::KosuzuDotRight1),
+	    ],
+	    vec![
+                ctx.ref_texture(TextureID::KosuzuDotLeft1),
+	    ]
         ],
-        ObjectDirection::Down,
+        ObjectDirection::StopDown,
         TextureSpeedInfo::new(
             numeric::Vector2f::new(0.0, 0.0),
             SpeedBorder {
@@ -86,10 +106,14 @@ fn create_customer_sample<'a>(
             vec![],
         ),
         vec![
-            ObjectDirection::Down,
-            ObjectDirection::Up,
-            ObjectDirection::Right,
-            ObjectDirection::Left,
+            ObjectDirection::MoveDown,
+            ObjectDirection::MoveUp,
+            ObjectDirection::MoveRight,
+            ObjectDirection::MoveLeft,
+	    ObjectDirection::StopDown,
+	    ObjectDirection::StopUp,
+	    ObjectDirection::StopRight,
+	    ObjectDirection::StopLeft,
         ],
         vec![
             vec![
@@ -101,15 +125,31 @@ fn create_customer_sample<'a>(
                 ctx.ref_texture(TextureID::KosuzuDotBack3),
             ],
             vec![
+                ctx.ref_texture(TextureID::KosuzuDotRight1),
                 ctx.ref_texture(TextureID::KosuzuDotRight2),
-                ctx.ref_texture(TextureID::KosuzuDotRight3),
+		ctx.ref_texture(TextureID::KosuzuDotRight1),
+		ctx.ref_texture(TextureID::KosuzuDotRight3),
             ],
             vec![
+                ctx.ref_texture(TextureID::KosuzuDotLeft1),
                 ctx.ref_texture(TextureID::KosuzuDotLeft2),
-                ctx.ref_texture(TextureID::KosuzuDotLeft3),
+		ctx.ref_texture(TextureID::KosuzuDotLeft1),
+		ctx.ref_texture(TextureID::KosuzuDotLeft3),
             ],
+	    vec![
+                ctx.ref_texture(TextureID::KosuzuDotFront1),
+	    ],
+	    vec![
+                ctx.ref_texture(TextureID::KosuzuDotBack1),
+	    ],
+	    vec![
+                ctx.ref_texture(TextureID::KosuzuDotRight1),
+	    ],
+	    vec![
+                ctx.ref_texture(TextureID::KosuzuDotLeft1),
+	    ]
         ],
-        ObjectDirection::Down,
+        ObjectDirection::MoveDown,
         TextureSpeedInfo::new(
             numeric::Vector2f::new(0.0, 0.0),
             SpeedBorder {

@@ -1020,10 +1020,25 @@ pub enum ScrollDirection {
 
 #[derive(Clone, Copy, PartialEq, Eq, Hash)]
 pub enum ObjectDirection {
-    Up,
-    Down,
-    Right,
-    Left,
+    MoveUp,
+    MoveDown,
+    MoveRight,
+    MoveLeft,
+    StopUp,
+    StopDown,
+    StopRight,
+    StopLeft,
+}
+
+impl ObjectDirection {
+    pub fn make_stop(&self) -> Self {
+	match self {
+            ObjectDirection::MoveDown | ObjectDirection::StopDown => ObjectDirection::StopDown,
+            ObjectDirection::MoveUp | ObjectDirection::StopUp => ObjectDirection::StopUp,
+            ObjectDirection::MoveRight | ObjectDirection::StopRight => ObjectDirection::StopRight,
+            ObjectDirection::MoveLeft | ObjectDirection::StopLeft => ObjectDirection::StopLeft,
+	}
+    }
 }
 
 pub struct ScrollableWindow<D>

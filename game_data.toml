@@ -68,7 +68,13 @@ texture_paths = [
 	      "/textures/page_edge_left.png",
 	      "/textures/page_edge_right.png",
 	      "/textures/library.png",
-		  "/textures/kosuzu.png"
+	      "/textures/kosuzu.png",
+	      "/textures/circle.png",
+	      "/textures/money_box.png",
+	      "/textures/kosuzu_smile1.png",
+	      "/textures/100yen.png",
+	      "/textures/50yen.png",
+	      "/textures/500yen.png"
 	      ]
 font_paths = ["/fonts/azuki.ttf", "/fonts/RiiT_F.ttf", "/fonts/OradanoGSRR.ttf", "/fonts/cinecaption226.ttf"]
 tileset_paths = ["./resources/maps/suzunaan2/main.tmx"]

@@ -155,6 +155,12 @@ pub enum TextureID {
     GoNextPageRight,
     Library,
     KosuzuTachie1,
+    CheckCircle,
+    MoneyBox,
+    KosuzuSmile1,
+    Coin100Yen,
+    Coin50Yen,
+    Coin500Yen,
     Unknown,
 }
 
@@ -253,6 +259,12 @@ impl FromStr for TextureID {
             "GoNextPageRight" => Ok(Self::GoNextPageRight),
             "Library" => Ok(Self::Library),
             "KosuzuTachie1" => Ok(Self::KosuzuTachie1),
+	    "CheckCircle" => Ok(Self::CheckCircle),
+	    "MoneyBox" => Ok(Self::MoneyBox),
+	    "KosuzuSmile1" => Ok(Self::KosuzuSmile1),
+	    "Coin100Yen" => Ok(Self::Coin100Yen),
+	    "Coin50Yen" => Ok(Self::Coin50Yen),
+	    "Coin500Yen" => Ok(Self::Coin500Yen),
             _ => Err(()),
         }
     }
@@ -331,6 +343,12 @@ impl TextureID {
             67 => Some(Self::GoNextPageRight),
             68 => Some(Self::Library),
             69 => Some(Self::KosuzuTachie1),
+	    70 => Some(Self::CheckCircle),
+	    71 => Some(Self::MoneyBox),
+	    72 => Some(Self::KosuzuSmile1),
+	    73 => Some(Self::Coin100Yen),
+	    74 => Some(Self::Coin50Yen),
+	    75 => Some(Self::Coin500Yen),
             _ => None,
         }
     }

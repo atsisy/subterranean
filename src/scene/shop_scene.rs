@@ -1243,10 +1243,10 @@ impl ShopScene {
             let tile_size = self.map.get_tile_size();
 
             match self.player.get_character_object().current_direction() {
-                ObjectDirection::Down => sub_map_position.y += tile_size.y,
-                ObjectDirection::Up => sub_map_position.y -= tile_size.y,
-                ObjectDirection::Right => sub_map_position.x += tile_size.x,
-                ObjectDirection::Left => sub_map_position.x -= tile_size.x,
+                ObjectDirection::MoveDown | ObjectDirection::StopDown => sub_map_position.y += tile_size.y,
+                ObjectDirection::MoveUp | ObjectDirection::StopUp => sub_map_position.y -= tile_size.y,
+                ObjectDirection::MoveRight | ObjectDirection::StopRight => sub_map_position.x += tile_size.x,
+                ObjectDirection::MoveLeft | ObjectDirection::StopLeft => sub_map_position.x -= tile_size.x,
             }
 
             let _ = self.run_event_panel_onmap_at(ctx, trigger, sub_map_position);
@@ -1258,21 +1258,21 @@ impl ShopScene {
             // 上向き
             self.player
                 .get_mut_character_object()
-                .change_animation_mode(ObjectDirection::Down);
+                .change_animation_mode(ObjectDirection::MoveDown);
         }
 
         if rad >= 135.0_f32.to_radians() && rad < 225.0_f32.to_radians() {
             // 左向き
             self.player
                 .get_mut_character_object()
-                .change_animation_mode(ObjectDirection::Left);
+                .change_animation_mode(ObjectDirection::MoveLeft);
         }
 
         if rad >= 225.0_f32.to_radians() && rad < 315.0_f32.to_radians() {
             // 下向き
             self.player
                 .get_mut_character_object()
-                .change_animation_mode(ObjectDirection::Up);
+                .change_animation_mode(ObjectDirection::MoveUp);
         }
 
         if (rad >= 315.0_f32.to_radians() && rad <= 360.0_f32.to_radians())
@@ -1281,7 +1281,7 @@ impl ShopScene {
             // 右向き
             self.player
                 .get_mut_character_object()
-                .change_animation_mode(ObjectDirection::Right);
+                .change_animation_mode(ObjectDirection::MoveRight);
         }
     }
 
@@ -1791,6 +1791,7 @@ impl SceneManager for ShopScene {
                     }
 
                     self.player.reset_speed();
+		    self.player.update_animation_for_stop();
                     self.shop_command_palette
                         .mouse_left_button_up_handler(ctx, point);
                 }

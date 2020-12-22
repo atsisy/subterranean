@@ -232,6 +232,13 @@ impl ScenarioScene {
 			self.scenario_event.release_scenario_waiting();
 			self.scenario_ctx.wait_opecode_running = false;
 		    }
+		    "ShowAdAgency" => {
+			add_delay_event!(self.event_list, |slf, ctx, _| {
+			    slf.status_screen.show_ad_agency_page(ctx);
+			}, self.get_current_clock() + 30);
+			self.scenario_event.release_scenario_waiting();
+			self.scenario_ctx.wait_opecode_running = false;
+		    }
 		    "NextDay" => {
 			self.status_screen.show_main_page(ctx);
 			self.status_screen.change_suzunaan_reputation(ctx, -2.0);

@@ -38,17 +38,17 @@ pub fn create_coin<'a>(
     pos: numeric::Point2f,
     t: Clock,
 ) -> TaskItem {
-    let texture_id = match value {
-        500 => TextureID::ChoicePanel1,
-        100 => TextureID::ChoicePanel2,
-        50 => TextureID::ChoicePanel3,
-        _ => TextureID::ChoicePanel1,
+    let (texture_id, scale) = match value {
+        500 => (TextureID::Coin500Yen, numeric::Vector2f::new(0.11, 0.11)),
+        100 => (TextureID::Coin100Yen, numeric::Vector2f::new(0.1, 0.1)),
+        50 => (TextureID::Coin50Yen, numeric::Vector2f::new(0.08, 0.08)),
+        _ => panic!("failed to create coin texture"),
     };
 
     let s_texture = UniTexture::new(
         ctx.ref_texture(texture_id),
         pos,
-        numeric::Vector2f::new(0.25, 0.25),
+        scale,
         0.0,
         0,
     );
@@ -56,7 +56,7 @@ pub fn create_coin<'a>(
     let l_texture = UniTexture::new(
         ctx.ref_texture(texture_id),
         pos,
-        numeric::Vector2f::new(0.25, 0.25),
+        scale,
         0.0,
         0,
     );

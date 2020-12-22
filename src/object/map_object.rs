@@ -149,6 +149,10 @@ impl MapObject {
         self.object.change_mode(mode, AnimationType::Loop, mode);
     }
 
+    pub fn get_animation_mode(&self) -> ObjectDirection {
+	self.object.get_current_mode()
+    }
+
     pub fn obj(&self) -> &SimpleObject {
         self.object.get_object()
     }
@@ -434,6 +438,12 @@ impl PlayableCharacter {
         self.character.fix_collision_horizon(ctx, info, t)
     }
 
+    pub fn update_animation_for_stop(&mut self) {
+	let mode = self.get_character_object().get_animation_mode();
+	self.get_mut_character_object()
+                .change_animation_mode(mode.make_stop());
+    }
+
     pub fn fix_collision_vertical(
         &mut self,
         ctx: &mut ggez::Context,
@@ -692,6 +702,12 @@ impl CustomerCharacter {
         None
     }
 
+    pub fn update_animation_for_stop(&mut self) {
+	let mode = self.get_character_object().get_animation_mode();
+	self.get_mut_character_object()
+                .change_animation_mode(mode.make_stop());
+    }
+
     ///
     /// 進行方向に応じて、アニメーションを変更する
     ///
@@ -699,19 +715,19 @@ impl CustomerCharacter {
         if rad >= 45.0_f32.to_radians() && rad < 135.0_f32.to_radians() {
             // 上向き
             self.get_mut_character_object()
-                .change_animation_mode(ObjectDirection::Down);
+                .change_animation_mode(ObjectDirection::MoveDown);
         } else if rad >= 135.0_f32.to_radians() && rad < 225.0_f32.to_radians() {
             // 左向き
             self.get_mut_character_object()
-                .change_animation_mode(ObjectDirection::Left);
+                .change_animation_mode(ObjectDirection::MoveLeft);
         } else if rad >= 225.0_f32.to_radians() && rad < 315.0_f32.to_radians() {
             // 下向き
             self.get_mut_character_object()
-                .change_animation_mode(ObjectDirection::Up);
+                .change_animation_mode(ObjectDirection::MoveUp);
         } else {
             // 右向き
             self.get_mut_character_object()
-                .change_animation_mode(ObjectDirection::Right);
+                .change_animation_mode(ObjectDirection::MoveRight);
         }
     }
 
@@ -753,10 +769,6 @@ impl CustomerCharacter {
             speed
         };
 
-        debug::debug_screen_push_text(&format!(
-            "goal: {}:{}, speed: {}:{}",
-            goal_point.x, goal_point.y, speed.x, speed.y
-        ));
 
         // スピードを更新
         self.character.speed_info_mut().set_speed(speed);
@@ -931,7 +943,7 @@ impl CustomerCharacter {
         if !self.shopping_is_done
             && map_data.map_position_to_tile_position(current_pos).unwrap() == counter
         {
-            self.character.change_animation_mode(ObjectDirection::Left);
+            self.character.change_animation_mode(ObjectDirection::MoveLeft);
             self.customer_status = CustomerCharacterStatus::WaitOnClerk;
             self.shopping_is_done = true;
         }
@@ -1050,11 +1062,13 @@ impl CustomerCharacter {
                     self.check_been_counter(map_data, goal, counter);
                     // 速度もリセット
                     self.reset_speed();
-                    self.character.change_animation_mode(ObjectDirection::Left);
+                    self.character.change_animation_mode(ObjectDirection::MoveLeft);
                 }
             }
 
-            CustomerCharacterStatus::WaitOnBookShelf => {}
+            CustomerCharacterStatus::WaitOnBookShelf => {
+		self.update_animation_for_stop();
+	    }
             CustomerCharacterStatus::GotOut => {}
         }
     }

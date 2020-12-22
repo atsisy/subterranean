@@ -1,3 +1,7 @@
+[[general-scenario-table]]
+path = "./resources/scenario/no_enough_money.toml"
+type = "NoEnoughMoney"
+
 [[scenario-table]]
 path = "./resources/scenario/day_7_23.toml"
 [scenario-table.date]

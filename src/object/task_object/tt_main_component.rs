@@ -2487,7 +2487,7 @@ impl MoneyBox {
                 ggraphics::Color::from_rgba_u32(0),
             ),
             box_texture: UniTexture::new(
-                ctx.ref_texture(TextureID::Paper1),
+                ctx.ref_texture(TextureID::MoneyBox),
                 numeric::Point2f::new(0.0, 0.0),
                 numeric::Vector2f::new(1.0, 1.0),
                 0.0,

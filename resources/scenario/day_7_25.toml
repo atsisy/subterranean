@@ -43,8 +43,27 @@ id = 11
 
 [[scenario-group]]
 type = "choice"
-header_text = "宣伝の依頼、受注もやらないとネ"
+header_text = "宣伝の依頼もやらないとネ"
 id = 14
+   [scenario-group.tachie-data]
+   right = "KosuzuTachie1"
+   left = "KosuzuTachie1"
+
+   [[scenario-group.choice-pattern]]
+   pattern = "完了"
+   jump-id = 18
+
+[[scenario-group]]
+type = "wait"
+id = 18
+next-id = 17
+opecode = "ShowAdAgency"
+background = "SightBackground1"
+
+[[scenario-group]]
+type = "choice"
+header_text = "宣伝の受注もしないとネ"
+id = 17
    [scenario-group.tachie-data]
    right = "KosuzuTachie1"
    left = "KosuzuTachie1"
@@ -67,16 +86,10 @@ opecode = "StartSchedule"
 id = 13
 background = "SightBackground1"
 
-[[scenario-group]]
-type = "wait"
-id = 12
-next-id = 15
-opecode = "ShowSchedule"
-background = "SightBackground1"
 
 [[scenario-group]]
 type = "wait"
-id = 15
+id = 12
 next-id = 14
 opecode = "ShowAd"
 background = "SightBackground1"

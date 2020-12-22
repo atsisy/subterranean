@@ -408,7 +408,7 @@ impl AdEntry {
         );
 
         let choice_box_texture = Box::new(UniTexture::new(
-            ctx.ref_texture(TextureID::ChoicePanel1),
+            ctx.ref_texture(TextureID::CheckCircle),
             numeric::Point2f::new(0.0, 0.0),
             numeric::Vector2f::new(1.0, 1.0),
             0.0,
@@ -949,6 +949,10 @@ impl SuzunaStatusPages {
 	self.update_main_ad_and_agency_status(ctx);
     }
 
+    pub fn show_ad_agency_page(&mut self) {
+	self.current_page = SuzunaStatusPageID::AdAgency;
+    }
+    
     pub fn show_ad_page(&mut self) {
 	self.current_page = SuzunaStatusPageID::Ad;
     }
@@ -1115,6 +1119,11 @@ impl SuzunaStatusScreen {
 
     pub fn show_ad_page(&mut self) {
         self.pages.show_ad_page();
+	self.check_move_page_icon_visibility();
+    }
+
+    pub fn show_ad_agency_page<'a>(&mut self, ctx: &mut SuzuContext<'a>) {
+	self.pages.show_ad_agency_page();
 	self.check_move_page_icon_visibility();
     }
     
