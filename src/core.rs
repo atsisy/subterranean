@@ -29,7 +29,7 @@ use std::collections::VecDeque;
 use std::rc::Rc;
 use std::str::FromStr;
 
-use crate::{object::scenario_object::SuzunaAdAgencyType, parse_toml_file};
+use crate::{object::{scenario_object::SuzunaAdAgencyType, task_object::tt_sub_component::BorrowingRecordBookData}, parse_toml_file};
 use crate::scene;
 
 use std::fs;
@@ -518,7 +518,7 @@ impl BookInformation {
     }
 }
 
-#[derive(PartialEq, Clone)]
+#[derive(Clone, Serialize, Deserialize, PartialEq)]
 pub enum RentalLimit {
     ShortTerm = 0,
     LongTerm,
@@ -1023,6 +1023,16 @@ impl GameResource {
             .unwrap()
     }
 
+    pub fn search_book_with_title(&self, title: &str) -> Option<&BookInformation> {
+	for book_info in self.books_information.iter() {
+	    if book_info.name == title {
+		return Some(book_info);
+	    }
+	}
+
+	None
+    }
+
     pub fn iter_available_books(&self) -> std::slice::Iter<BookInformation> {
         self.books_information.iter()
     }
@@ -1504,7 +1514,7 @@ impl SuzunaBookPool {
         borrow_date: GensoDate,
         rental_limit: RentalLimit,
     ) -> ReturnBookInformation {
-        let mut returning_books = Vec::new();
+        let mut returning_books: Vec<BookInformation> = Vec::new();
 
         for _ in 0..((rand::random::<u32>() % 5) + 1) {
             if self.books.is_empty() {
@@ -1514,6 +1524,12 @@ impl SuzunaBookPool {
             let book_info = self
                 .books
                 .swap_remove(rand::random::<usize>() % self.books.len());
+	    if returning_books.iter().filter(|info| info.name == book_info.name).count() != 0 {
+		// 既に同じ本を取り出している
+		self.push_book(book_info);
+		continue;
+	    }
+	    
             returning_books.push(book_info);
         }
 
@@ -1592,7 +1608,7 @@ impl ReturningRequestPool {
 #[derive(Clone, Serialize, Deserialize)]
 pub struct SavableData {
     pub suzuna_book_pool: SuzunaBookPool,
-    pub returning_request_pool: ReturningRequestPool,
+    pub record_book_data: BorrowingRecordBookData,
     pub date: GensoDate,
     pub week_schedule: WeekWorkSchedule,
     pub task_result: TaskResult,
@@ -1633,7 +1649,7 @@ impl SavableData {
             suzunaan_status: SuzunaAnStatus::new(),
             week_schedule: WeekWorkSchedule::new_empty(date),
             suzuna_book_pool: suzuna_book_pool,
-            returning_request_pool: returning_request_pool,
+	    record_book_data: BorrowingRecordBookData::from_returning_request_pool(returning_request_pool),
             ad_status: ad_status,
 	    agency_status: ad_agency_status,
         }
@@ -1670,7 +1686,7 @@ impl SavableData {
 
     pub fn replace(&mut self, data: SavableData) {
         self.suzuna_book_pool = data.suzuna_book_pool;
-        self.returning_request_pool = data.returning_request_pool;
+        self.record_book_data = data.record_book_data;
         self.date = data.date;
         self.task_result = data.task_result;
         self.suzunaan_status = data.suzunaan_status;

@@ -21,6 +21,8 @@ use crate::object::move_fn;
 use crate::object::util_object::*;
 use crate::set_table_frame_cell_center;
 
+use serde::{Deserialize, Serialize};
+
 use super::Clickable;
 use crate::core::*;
 use crate::scene::DrawRequest;
@@ -522,7 +524,7 @@ impl BookConditionEvalReport {
     }
 }
 
-#[derive(Clone)]
+#[derive(Clone, Serialize, Deserialize)]
 pub struct BorrowingRecordBookPageData {
     pub borrowing_book_title: HashMap<numeric::Vector2u, BookInformation>,
     pub borrowing_book_status: HashMap<numeric::Vector2u, BookCondition>,
@@ -532,6 +534,28 @@ pub struct BorrowingRecordBookPageData {
     pub rental_limit: Option<RentalLimit>,
     pub borrowing_is_signed: bool,
     pub returning_is_signed: bool,
+}
+
+impl BorrowingRecordBookPageData {
+    pub fn is_maybe_waiting_returning(&self) -> bool {
+	!self.returning_is_signed && self.borrowing_is_signed
+	    && !self.borrowing_book_title.is_empty() && self.borrowing_book_status.is_empty()
+	    && self.customer_name.is_some() && self.return_date.is_some() && self.rental_date.is_some()
+	    && self.rental_limit.is_some()
+    }
+
+    pub fn generate_return_book_information(&self) -> Option<ReturnBookInformation> {
+	if !self.is_maybe_waiting_returning() {
+	    return None;
+	}
+	
+	return Some(ReturnBookInformation::new(
+	    self.borrowing_book_title.iter().map(|elem| elem.1.clone()).collect(),
+	    self.customer_name.as_ref().unwrap(),
+	    self.rental_date.as_ref().unwrap().clone(),
+	    self.return_date.as_ref().unwrap().clone(),
+	));
+    }
 }
 
 impl From<&ReturnBookInformation> for BorrowingRecordBookPageData {
@@ -565,8 +589,43 @@ impl From<&ReturnBookInformation> for BorrowingRecordBookPageData {
     }
 }
 
+#[derive(Clone, Serialize, Deserialize)]
 pub struct BorrowingRecordBookData {
     pub pages_data: Vec<BorrowingRecordBookPageData>,
+}
+
+impl BorrowingRecordBookData {
+    pub fn from_returning_request_pool(pool: ReturningRequestPool) -> Self {
+	BorrowingRecordBookData {
+	    pages_data: pool
+		.iter()
+		.map(|request| BorrowingRecordBookPageData::from(request))
+		.collect()
+	}
+    }
+
+    pub fn pick_returning_request_up(&self) -> Option<ReturnBookInformation> {
+	let count = self.pages_data.iter()
+	    .map(|data| if data.is_maybe_waiting_returning() { 1 } else { 0 })
+	    .fold(0, |m, v| m + v);
+	if count == 0 {
+	    return None;
+	}
+	
+	let mut picked_data = rand::random::<usize>() % count;
+	
+	for data in self.pages_data.iter() {
+	    if data.is_maybe_waiting_returning() {
+		if picked_data == 0 {
+		    return data.generate_return_book_information();
+		}
+
+		picked_data -= 1;
+	    }
+	}
+
+	None
+    }
 }
 
 #[derive(Clone)]
@@ -1922,10 +1981,10 @@ impl BorrowingRecordBook {
         ctx: &mut SuzuContext<'a>,
         rect: ggraphics::Rect,
         drawing_depth: i8,
-        mut maybe_book_data: Option<BorrowingRecordBookData>,
+        mut book_data: BorrowingRecordBookData,
         t: Clock,
     ) -> Self {
-        let pages = if let Some(book_data) = maybe_book_data.as_mut() {
+        let pages = {
             let mut pages = Vec::new();
 
             while !book_data.pages_data.is_empty() {
@@ -1940,8 +1999,6 @@ impl BorrowingRecordBook {
             }
 
             pages
-        } else {
-            Vec::new()
         };
 
         let next = UniTexture::new(

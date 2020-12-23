@@ -33,25 +33,12 @@ pub struct SuzunaSubScene {
     pub desk_work_scene: Option<Box<TaskScene>>,
     pub day_result_scene: Option<Box<TaskResultScene>>,
     scene_status: SuzunaSceneStatus,
-    borrowing_record_book_data: Option<BorrowingRecordBookData>,
     new_book_schedule: NewBookSchedule,
     date: GensoDate,
 }
 
 impl SuzunaSubScene {
     pub fn new<'a>(ctx: &mut SuzuContext<'a>, map_id: u32) -> Self {
-        let borrowing_record_book_data = BorrowingRecordBookData {
-            pages_data: ctx
-                .savable_data
-                .returning_request_pool
-                .iter()
-                .map(|ret_info| {
-                    println!("{:?}", ret_info);
-                    BorrowingRecordBookPageData::from(ret_info)
-                })
-                .collect(),
-        };
-
         let date = ctx.savable_data.date.clone();
 
         let new_book_schedule =
@@ -68,7 +55,6 @@ impl SuzunaSubScene {
             desk_work_scene: None,
             day_result_scene: None,
             scene_status: SuzunaSceneStatus::Shop,
-            borrowing_record_book_data: Some(borrowing_record_book_data),
             new_book_schedule: new_book_schedule,
             date: date,
         }
@@ -116,25 +102,16 @@ impl SuzunaSubScene {
                                 raw_info.rental_limit.clone(),
                             );
 
-                        ctx.savable_data
-                            .returning_request_pool
-                            .add_request(borrowing_info.clone());
-
                         CustomerRequest::Borrowing(borrowing_info)
                     }
                     CustomerRequest::Returning(_) => {
-                        let request = ctx
-                            .savable_data
-                            .returning_request_pool
-                            .select_returning_request_random()
-                            .unwrap();
+                        let request = ctx.savable_data.record_book_data.pick_returning_request_up().unwrap();
                         println!("returning count: {}", request.returning.len());
                         CustomerRequest::Returning(request)
                     }
                 };
 
-                let record_book_data =
-                    std::mem::replace(&mut self.borrowing_record_book_data, None);
+                let record_book_data = ctx.savable_data.record_book_data.clone();
 
                 self.scene_status = SuzunaSceneStatus::DeskWork;
                 self.desk_work_scene = Some(Box::new(TaskScene::new(
@@ -174,12 +151,11 @@ impl SuzunaSubScene {
     ) {
         if transition == SceneTransition::PoppingTransition {
             println!("switch!!!!!!!!!, deskwork -> shop");
-            self.borrowing_record_book_data = Some(
+            ctx.savable_data.record_book_data = 
                 self.desk_work_scene
-                    .as_ref()
-                    .unwrap()
-                    .export_borrowing_record_book_data(),
-            );
+                .as_ref()
+                .unwrap()
+                .export_borrowing_record_book_data();
             self.scene_status = SuzunaSceneStatus::Shop;
             self.shop_scene.as_mut().unwrap().switched_and_restart(
                 ctx,

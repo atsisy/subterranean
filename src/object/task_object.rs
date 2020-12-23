@@ -72,7 +72,7 @@ impl TaskTable {
         sight_rect: numeric::Rect,
         desk_rect: numeric::Rect,
         shelving_box_rect: numeric::Rect,
-        record_book_data: Option<BorrowingRecordBookData>,
+        record_book_data: BorrowingRecordBookData,
         customer_request: Option<CustomerRequest>,
         t: Clock,
     ) -> Self {

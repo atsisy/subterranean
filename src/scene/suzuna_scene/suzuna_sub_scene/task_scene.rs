@@ -46,7 +46,7 @@ impl TaskScene {
     pub fn new<'a>(
         ctx: &mut SuzuContext<'a>,
         customer_request: Option<CustomerRequest>,
-        record_book_data: Option<BorrowingRecordBookData>,
+        record_book_data: BorrowingRecordBookData,
     ) -> TaskScene {
         let animation_time = 30;
 
