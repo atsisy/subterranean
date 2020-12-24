@@ -21,6 +21,10 @@ tiled = "0.9.3"
 #torifune = { git = "https://github.com/atsisy/torifune.git" }
 torifune = { path = "../torifune" }
 pathfinding = "2.0.4"
+base64 = "0.13.0"
+rust-crypto = "0.2.36"
+aes-stream = "0.2.1"
+
 
 [profile.dev]
 opt-level = 3

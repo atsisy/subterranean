@@ -2,6 +2,7 @@ pub mod book_management;
 pub mod game_system;
 pub mod map_parser;
 pub mod util;
+pub mod crypt;
 
 use game_system::WeekWorkSchedule;
 use ggez::graphics as ggraphics;
@@ -1658,24 +1659,28 @@ impl SavableData {
     }
 
     pub fn save(&self, slot: u8) -> Result<(), Box<dyn std::error::Error>> {
-        let mut file = File::create(&format!("./resources/save{}.json", slot))?;
+        let mut file = File::create(&format!("./resources/save{}", slot))?;
 
-        write!(file, "{}", serde_json::to_string(self).unwrap())?;
+	file.write_all(crypt::crypt_str(&serde_json::to_string(self).unwrap()).unwrap().as_slice()).unwrap();
         file.flush()?;
 
         Ok(())
     }
 
     pub fn delete(slot: u8) {
-        std::fs::remove_file(&format!("./resources/save{}.json", slot)).unwrap();
+        std::fs::remove_file(&format!("./resources/save{}", slot)).unwrap();
     }
 
     pub fn new_load(slot: u8) -> Result<SavableData, ()> {
-        let content = fs::read_to_string(&format!("./resources/save{}.json", slot));
+	let file = std::fs::File::open(&format!("./resources/save{}", slot));
+	if file.is_err() {
+	    return Err(());
+	}
+	
+	let mut buf = Vec::new();
+	file.unwrap().read_to_end(&mut buf).expect("file read failed");
 
-        if content.is_err() {
-            return Err(());
-        }
+	let content = crypt::decrypt_str(&buf);
 
         let savable_data = serde_json::from_str(&content.unwrap());
 
