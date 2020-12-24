@@ -526,8 +526,8 @@ impl BookConditionEvalReport {
 
 #[derive(Clone, Serialize, Deserialize)]
 pub struct BorrowingRecordBookPageData {
-    pub borrowing_book_title: HashMap<numeric::Vector2u, BookInformation>,
-    pub borrowing_book_status: HashMap<numeric::Vector2u, BookCondition>,
+    pub borrowing_book_title: Vec<(numeric::Vector2u, BookInformation)>,
+    pub borrowing_book_status: Vec<(numeric::Vector2u, BookCondition)>,
     pub customer_name: Option<String>,
     pub return_date: Option<GensoDate>,
     pub rental_date: Option<GensoDate>,
@@ -560,25 +560,25 @@ impl BorrowingRecordBookPageData {
 
 impl From<&ReturnBookInformation> for BorrowingRecordBookPageData {
     fn from(info: &ReturnBookInformation) -> Self {
-        let mut borrowing_book_title = HashMap::new();
+        let mut borrowing_book_title = Vec::new();
 
         for (index, book_info) in info.returning.iter().enumerate() {
-            borrowing_book_title.insert(
-                numeric::Vector2u::new((4 - index) as u32, 0),
-                book_info.clone(),
+            borrowing_book_title.push(
+                (numeric::Vector2u::new((4 - index) as u32, 0),
+                 book_info.clone()),
             );
         }
 
         for (index, book_info) in info.returning.iter().enumerate() {
-            borrowing_book_title.insert(
-                numeric::Vector2u::new((4 - index) as u32, 0),
-                book_info.clone(),
+            borrowing_book_title.push(
+                (numeric::Vector2u::new((4 - index) as u32, 0),
+                book_info.clone()),
             );
         }
 
         BorrowingRecordBookPageData {
             borrowing_book_title: borrowing_book_title,
-            borrowing_book_status: HashMap::new(),
+            borrowing_book_status: Vec::new(),
             customer_name: Some(info.borrower.clone()),
             rental_limit: info.borrow_date.rental_limit_type(&info.return_date),
             return_date: Some(info.return_date),
@@ -1741,8 +1741,8 @@ impl BorrowingRecordBookPage {
     }
 
     pub fn export_page_data(&self) -> BorrowingRecordBookPageData {
-        let mut borrow_book_title = HashMap::new();
-        let mut borrow_book_status = HashMap::new();
+        let mut borrow_book_title = Vec::new();
+        let mut borrow_book_status = Vec::new();
 
         for index in 0..self.books_table.get_rows() {
             let position = numeric::Vector2u::new(index as u32, 0);
@@ -1752,7 +1752,7 @@ impl BorrowingRecordBookPage {
                 if !hold_data_vtext.is_none() {
                     match hold_data_vtext.copy_hold_data() {
                         HoldData::BookName(info) => {
-                            borrow_book_title.insert(position, info);
+                            borrow_book_title.push((position, info));
                         }
                         _ => (),
                     }
@@ -1768,7 +1768,7 @@ impl BorrowingRecordBookPage {
                 if !hold_data_vtext.is_none() {
                     match hold_data_vtext.copy_hold_data() {
                         HoldData::BookCondition(status) => {
-                            borrow_book_status.insert(position, status);
+                            borrow_book_status.push((position, status));
                         }
                         _ => (),
                     }

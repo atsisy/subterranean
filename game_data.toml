@@ -353,12 +353,12 @@ sprite_y_size = 64
 path = "/tile_textures/black_frame2.png"
 
 [ad_cost_table]
-AdPaper = 1000
-ShopNobori = 1500
-TownNobori = 2000
-Chindon = 3000
-NewsPaper = 5000
-BunBunMaruPaper = 8000
+AdPaper = 500
+ShopNobori = 1000
+TownNobori = 1500
+Chindon = 2000
+NewsPaper = 3000
+BunBunMaruPaper = 5000
 
 [ad_gain_table]
 AdPaper = 1

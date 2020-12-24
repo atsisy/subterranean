@@ -1352,7 +1352,7 @@ impl SuzunaAnStatus {
 
     pub fn eval_reputation(&mut self, event_type: ReputationEvent) {
         match event_type {
-            ReputationEvent::DoneDeskTask => self.reputation += 2.0,
+            ReputationEvent::DoneDeskTask => self.reputation += 1.0,
         }
     }
 }
@@ -1643,13 +1643,15 @@ impl SavableData {
             (SuzunaAdAgencyType::YamaJinja, false)
         ];
 
+	let record_book_data = BorrowingRecordBookData::from_returning_request_pool(returning_request_pool);
+
         SavableData {
             date: date.clone(),
             task_result: TaskResult::new(),
             suzunaan_status: SuzunaAnStatus::new(),
             week_schedule: WeekWorkSchedule::new_empty(date),
             suzuna_book_pool: suzuna_book_pool,
-	    record_book_data: BorrowingRecordBookData::from_returning_request_pool(returning_request_pool),
+	    record_book_data: record_book_data,
             ad_status: ad_status,
 	    agency_status: ad_agency_status,
         }
