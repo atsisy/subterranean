@@ -320,8 +320,9 @@ impl ScenarioScene {
 	}
 
 	add_delay_event!(self.event_list, |slf, ctx, _| {
-	    let reputation_diff = ctx.current_total_ad_reputation_gain();
-	    slf.status_screen.change_suzunaan_reputation(ctx, reputation_diff as f32);
+	    let reputation_diff = ctx.current_total_ad_reputation_gain() as f32;
+        slf.status_screen.change_suzunaan_reputation(ctx, reputation_diff);
+        ctx.savable_data.suzunaan_status.reputation += reputation_diff;
 	}, self.get_current_clock() + 100);
 	
 	
@@ -352,8 +353,9 @@ impl ScenarioScene {
 	ctx.savable_data.task_result.total_money += money_diff;
 	
 	add_delay_event!(self.event_list, |slf, ctx, _| {
-	    slf.status_screen.change_suzunaan_reputation(ctx, -2.0);
-	    ctx.savable_data.suzunaan_status.reputation -= 2.0;
+        let reputation_diff = ctx.current_total_ad_reputation_gain() as f32 - 2.0;
+	    slf.status_screen.change_suzunaan_reputation(ctx, reputation_diff);
+	    ctx.savable_data.suzunaan_status.reputation += reputation_diff;
 	}, self.get_current_clock() + 100);
 	
 	
