@@ -604,6 +604,14 @@ impl BorrowingRecordBookData {
 	}
     }
 
+    pub fn has_returning_request(&self) -> bool {
+        let count = self.pages_data.iter()
+	    .map(|data| if data.is_maybe_waiting_returning() { 1 } else { 0 })
+        .fold(0, |m, v| m + v);
+        
+	    count > 0
+    }
+
     pub fn pick_returning_request_up(&self) -> Option<ReturnBookInformation> {
 	let count = self.pages_data.iter()
 	    .map(|data| if data.is_maybe_waiting_returning() { 1 } else { 0 })

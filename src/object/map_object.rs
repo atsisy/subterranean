@@ -915,20 +915,22 @@ impl CustomerCharacter {
     }
 
     fn generate_hold_request<'a>(&mut self, ctx: &mut SuzuContext<'a>) -> CustomerRequest {
-        let random_select = rand::random::<usize>() % 2;
+        let random_select = rand::random::<usize>() % 2 + if !ctx.savable_data.record_book_data.has_returning_request() {
+            1
+        } else { 0 };
         let today = ctx.savable_data.date.clone();
 
         match random_select {
-            0 => CustomerRequest::Borrowing(BorrowingInformation::new(
+            0 => CustomerRequest::Returning(ReturnBookInformation::new_random(
+                ctx.resource,
+                today,
+                GensoDate::new(128, 12, 20),
+            )),
+            _ => CustomerRequest::Borrowing(BorrowingInformation::new(
                 vec![ctx.resource.book_random_select().clone()],
                 &self.customer_info.name,
                 today,
                 RentalLimit::random(),
-            )),
-            _ => CustomerRequest::Returning(ReturnBookInformation::new_random(
-                ctx.resource,
-                today,
-                GensoDate::new(128, 12, 20),
             )),
         }
     }
