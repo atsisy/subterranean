@@ -232,10 +232,12 @@ impl DrawableComponent for DrawableEvaluationFlow {
 
 pub struct DrawableTaskResult {
     result_frame: TableFrame,
-    fixed_text: Vec<EffectableWrap<MovableWrap<VerticalText>>>,
+    fixed_text: Vec<VerticalText>,
+    effect_text: Vec<EffectableWrap<MovableWrap<VerticalText>>>,
     meters: ResultMeter,
     background: SimpleObject,
     evaluation: DrawableEvaluationFlow,
+    const_canvas: SubScreen,
     canvas: SubScreen,
 }
 
@@ -273,58 +275,36 @@ impl DrawableTaskResult {
         );
 
         let mut fixed_text = Vec::new();
-        let mut title_text = EffectableWrap::new(
-            MovableWrap::new(
-                Box::new(VerticalText::new(
-                    format!("{}", date.to_string()),
-                    numeric::Point2f::new(1100.0, 80.0),
-                    numeric::Vector2f::new(1.0, 1.0),
-                    0.0,
-                    0,
-                    font_info_large,
-                )),
-                None,
-                t,
-            ),
-            vec![effect::appear_bale_down_from_top(50, t)],
+	let mut effect_text = Vec::new();
+	
+        let title_text = VerticalText::new(
+            format!("{}", date.to_string()),
+            numeric::Point2f::new(1100.0, 80.0),
+            numeric::Vector2f::new(1.0, 1.0),
+            0.0,
+            0,
+            font_info_large,
         );
-        title_text.set_crop(init_crop);
         fixed_text.push(title_text);
 
-        let mut title_desc_text = EffectableWrap::new(
-            MovableWrap::new(
-                Box::new(VerticalText::new(
-                    "御仕事結果".to_string(),
-                    numeric::Point2f::new(1040.0, 300.0),
-                    numeric::Vector2f::new(1.0, 1.0),
-                    0.0,
-                    0,
-                    font_info_large,
-                )),
-                None,
-                t,
-            ),
-            vec![effect::appear_bale_down_from_top(50, t + 50)],
+        let title_desc_text = VerticalText::new(
+            "御仕事結果".to_string(),
+            numeric::Point2f::new(1040.0, 300.0),
+            numeric::Vector2f::new(1.0, 1.0),
+            0.0,
+            0,
+            font_info_large,
         );
-        title_desc_text.set_crop(init_crop);
         fixed_text.push(title_desc_text);
 
-        let mut done_work_text = EffectableWrap::new(
-            MovableWrap::new(
-                Box::new(VerticalText::new(
-                    "御客人数".to_string(),
-                    numeric::Point2f::new(600.0, 100.0),
-                    numeric::Vector2f::new(1.0, 1.0),
-                    0.0,
-                    0,
-                    font_info,
-                )),
-                None,
-                t,
-            ),
-            vec![effect::appear_bale_down_from_top(100, t + 100)],
+        let mut done_work_text = VerticalText::new(
+            "御客人数".to_string(),
+            numeric::Point2f::new(600.0, 100.0),
+            numeric::Vector2f::new(1.0, 1.0),
+            0.0,
+            0,
+            font_info,
         );
-        done_work_text.set_crop(init_crop);
         set_table_frame_cell_center!(
             ctx.context,
             result_frame,
@@ -361,24 +341,16 @@ impl DrawableTaskResult {
             done_work_num_text,
             numeric::Vector2u::new(2, 1)
         );
-        fixed_text.push(done_work_num_text);
+        effect_text.push(done_work_num_text);
 
-        let mut money_desc_text = EffectableWrap::new(
-            MovableWrap::new(
-                Box::new(VerticalText::new(
-                    format!("収入"),
-                    numeric::Point2f::new(480.0, 100.0),
-                    numeric::Vector2f::new(1.0, 1.0),
-                    0.0,
-                    0,
-                    font_info,
-                )),
-                None,
-                t,
-            ),
-            vec![effect::appear_bale_down_from_top(100, t + 200)],
+        let mut money_desc_text = VerticalText::new(
+            format!("収入"),
+            numeric::Point2f::new(480.0, 100.0),
+            numeric::Vector2f::new(1.0, 1.0),
+            0.0,
+            0,
+            font_info,
         );
-        money_desc_text.set_crop(init_crop);
         set_table_frame_cell_center!(
             ctx.context,
             result_frame,
@@ -415,24 +387,16 @@ impl DrawableTaskResult {
             money_text,
             numeric::Vector2u::new(1, 1)
         );
-        fixed_text.push(money_text);
+        effect_text.push(money_text);
 
-        let mut total_money_desc_text = EffectableWrap::new(
-            MovableWrap::new(
-                Box::new(VerticalText::new(
-                    format!("所持金"),
-                    numeric::Point2f::new(0.0, 0.0),
-                    numeric::Vector2f::new(1.0, 1.0),
-                    0.0,
-                    0,
-                    font_info,
-                )),
-                None,
-                t,
-            ),
-            vec![effect::appear_bale_down_from_top(100, t + 300)],
+        let mut total_money_desc_text = VerticalText::new(
+            format!("所持金"),
+            numeric::Point2f::new(0.0, 0.0),
+            numeric::Vector2f::new(1.0, 1.0),
+            0.0,
+            0,
+            font_info,
         );
-        total_money_desc_text.set_crop(init_crop);
         set_table_frame_cell_center!(
             ctx.context,
             result_frame,
@@ -466,7 +430,7 @@ impl DrawableTaskResult {
             total_money_text,
             numeric::Vector2u::new(0, 1)
         );
-        fixed_text.push(total_money_text);
+        effect_text.push(total_money_text);
 
         let mut meters = ResultMeter::new(
             ctx,
@@ -488,18 +452,36 @@ impl DrawableTaskResult {
             t,
         );
 
-        DrawableTaskResult {
+        let mut this = DrawableTaskResult {
             result_frame: result_frame,
+	    effect_text: effect_text,
             fixed_text: fixed_text,
             meters: meters,
             evaluation: evaluation,
             background: background,
+	    const_canvas: SubScreen::new(ctx.context, rect_pos, 0, ggraphics::Color::from_rgba_u32(0)),
             canvas: SubScreen::new(ctx.context, rect_pos, 0, ggraphics::Color::from_rgba_u32(0)),
+        };
+	this.standby_const_canvas(ctx);
+	this
+    }
+
+    fn standby_const_canvas<'a>(&mut self, ctx: &mut SuzuContext<'a>) {
+	sub_screen::stack_screen(ctx.context, &self.const_canvas);
+	
+        self.background.draw(ctx.context).unwrap();
+        self.result_frame.draw(ctx.context).unwrap();
+	
+        for vtext in self.fixed_text.iter_mut() {
+            vtext.draw(ctx.context).unwrap();
         }
+	
+        sub_screen::pop_screen(ctx.context);
+        self.canvas.draw(ctx.context).unwrap();
     }
 
     pub fn run_effect<'a>(&mut self, ctx: &mut SuzuContext<'a>, t: Clock) {
-        for vtext in self.fixed_text.iter_mut() {
+        for vtext in self.effect_text.iter_mut() {
             if vtext.is_empty_effect() && vtext.is_stop() {
                 continue;
             }
@@ -519,14 +501,13 @@ impl DrawableComponent for DrawableTaskResult {
         if self.is_visible() {
             sub_screen::stack_screen(ctx, &self.canvas);
 
-            self.background.draw(ctx)?;
-            self.result_frame.draw(ctx)?;
-            self.meters.draw(ctx)?;
+	    self.const_canvas.draw(ctx)?;
 
-            for vtext in self.fixed_text.iter_mut() {
-                vtext.draw(ctx)?;
+	    for vtext in self.effect_text.iter_mut() {
+		vtext.draw(ctx).unwrap();
             }
-
+	    
+            self.meters.draw(ctx)?;
             self.evaluation.draw(ctx)?;
 
             sub_screen::pop_screen(ctx);
