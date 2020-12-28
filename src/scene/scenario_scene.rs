@@ -527,7 +527,7 @@ impl SceneManager for ScenarioScene {
     }
 
     fn drawing_process(&mut self, ctx: &mut ggez::Context) {
-	println!("{}", perf_measure!({
+	//println!("{}", perf_measure!({
         self.scenario_event.draw(ctx).unwrap();
         //self.scenario_menu.draw(ctx).unwrap();
         //self.graph_sample.draw(ctx).unwrap();
@@ -543,7 +543,7 @@ impl SceneManager for ScenarioScene {
         }
 
             //println!("status -> {}", if self.scenario_ctx.scenario_is_finish_and_wait { "finish" } else { "not finish" });
-	}));
+    //}));
     }
 
     fn post_process<'a>(&mut self, _ctx: &mut SuzuContext<'a>) -> SceneTransition {

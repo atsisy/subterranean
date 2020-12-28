@@ -1399,6 +1399,7 @@ impl ShelvingDetailContents {
         ctx: &mut SuzuContext<'a>,
         player_shelving: &Vec<BookInformation>,
     ) {
+	self.book_billing_number_text.clear();
         self.book_title_text.clear();
 
         let book_font_information = FontInformation::new(
@@ -1640,7 +1641,7 @@ impl ShopMenuContents {
     pub fn update_contents<'a>(&mut self, ctx: &mut SuzuContext<'a>) {
         let _normal_scale_font = FontInformation::new(
             ctx.resource.get_font(FontID::JpFude1),
-            numeric::Vector2f::new(26.0, 26.0),
+            numeric::Vector2f::new(30.0, 30.0),
             ggraphics::Color::from_rgba_u32(0x000000ff),
         );
 
@@ -1648,13 +1649,13 @@ impl ShopMenuContents {
 
         let large_scale_font = FontInformation::new(
             ctx.resource.get_font(FontID::JpFude1),
-            numeric::Vector2f::new(30.0, 30.0),
+            numeric::Vector2f::new(34.0, 34.0),
             ggraphics::Color::from_rgba_u32(0x000000ff),
         );
 
         self.day_text = VerticalText::new(
             format!("日付　{}月 {}日", number_to_jk(12), number_to_jk(12)),
-            numeric::Point2f::new(370.0, 50.0),
+	    numeric::Point2f::new(350.0, 70.0),
             numeric::Vector2f::new(1.0, 1.0),
             0.0,
             0,
@@ -1666,7 +1667,7 @@ impl ShopMenuContents {
                 "{}冊",
                 number_to_jk(task_result.borrowing_books.len() as u64)
             ),
-            numeric::Point2f::new(160.0, 150.0),
+	    numeric::Point2f::new(130.0, 170.0),
             numeric::Vector2f::new(1.0, 1.0),
             0.0,
             0,
@@ -1678,7 +1679,7 @@ impl ShopMenuContents {
                 "{}冊",
                 number_to_jk(task_result.not_shelved_books.len() as u64)
             ),
-            numeric::Point2f::new(60.0, 150.0),
+	    numeric::Point2f::new(30.0, 170.0),
             numeric::Vector2f::new(1.0, 1.0),
             0.0,
             0,
@@ -1687,7 +1688,7 @@ impl ShopMenuContents {
 
         self.kosuzu_level_num = VerticalText::new(
             format!("{}", number_to_jk((task_result.done_works / 3) as u64)),
-            numeric::Point2f::new(260.0, 450.0),
+            numeric::Point2f::new(230.0, 470.0),
             numeric::Vector2f::new(1.0, 1.0),
             0.0,
             0,

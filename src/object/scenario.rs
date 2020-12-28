@@ -1673,8 +1673,9 @@ impl ScenarioEvent {
 			choice_pattern.header_text.clone(),
                         choice_pattern.text.clone(),
                     );
-		    
-		    choice_box.make_center(ctx.context, numeric::Point2f::new(1326.0 / 2.0, 180.0));
+
+		    let scenario_box_p = self.scenario_box.text_box.canvas.get_position();
+		    choice_box.make_center(ctx.context, numeric::Point2f::new(1326.0 / 2.0, scenario_box_p.y + 180.0));
                     self.scenario_box.insert_choice_box(Some(choice_box));
 
                     // テキストボックスに選択肢の文字列を表示する
