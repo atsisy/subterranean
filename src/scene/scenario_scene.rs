@@ -19,6 +19,7 @@ use crate::object::DarkEffectPanel;
 use crate::core::game_system::*;
 use effect_object::{SceneTransitionEffectType, TilingEffectType};
 use torifune::graphics::drawable::*;
+use crate::perf_measure;
 
 use super::*;
 
@@ -429,7 +430,6 @@ impl SceneManager for ScenarioScene {
     }
 
     fn scene_popping_return_handler<'a>(&mut self, _: &mut SuzuContext<'a>) {
-        println!("recover!!!!");
         self.scene_transition = SceneID::Scenario;
         self.scene_transition_type = SceneTransition::Keep;
         self.scenario_event
@@ -501,7 +501,7 @@ impl SceneManager for ScenarioScene {
     fn pre_process<'a>(&mut self, ctx: &mut SuzuContext<'a>) {
         let t = self.get_current_clock();
 
-        flush_delay_event_and_redraw_check!(self, self.event_list, ctx, t);
+        flush_delay_event_and_redraw_check!(self, self.event_list, ctx, t, {});
 
         if self.now_paused() {
         } else {
@@ -527,6 +527,7 @@ impl SceneManager for ScenarioScene {
     }
 
     fn drawing_process(&mut self, ctx: &mut ggez::Context) {
+	println!("{}", perf_measure!({
         self.scenario_event.draw(ctx).unwrap();
         //self.scenario_menu.draw(ctx).unwrap();
         //self.graph_sample.draw(ctx).unwrap();
@@ -541,7 +542,8 @@ impl SceneManager for ScenarioScene {
             transition_effect.draw(ctx).unwrap();
         }
 
-        //println!("status -> {}", if self.scenario_ctx.scenario_is_finish_and_wait { "finish" } else { "not finish" });
+            //println!("status -> {}", if self.scenario_ctx.scenario_is_finish_and_wait { "finish" } else { "not finish" });
+	}));
     }
 
     fn post_process<'a>(&mut self, _ctx: &mut SuzuContext<'a>) -> SceneTransition {

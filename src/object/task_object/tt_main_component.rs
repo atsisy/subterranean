@@ -299,7 +299,7 @@ impl DeskObjects {
     /// # 再描画要求有り
     ///
     pub fn update<'a>(&mut self, ctx: &mut SuzuContext<'a>, t: Clock) {
-        flush_delay_event_and_redraw_check!(self, self.event_list, ctx, t);
+        flush_delay_event_and_redraw_check!(self, self.event_list, ctx, t, {});
 
         for p in self.desk_objects.get_raw_container_mut() {
             if !p.as_movable_object().is_stop() || !p.as_effectable_object().is_empty_effect() {
@@ -1911,7 +1911,7 @@ impl KosuzuPhrase {
     /// # 再描画要求有り
     ///
     pub fn update<'a>(&mut self, ctx: &mut SuzuContext<'a>, t: Clock) {
-        flush_delay_event_and_redraw_check!(self, self.event_list, ctx, t);
+        flush_delay_event_and_redraw_check!(self, self.event_list, ctx, t, {});
 
         if let Some(balloon) = self.text_balloon.as_mut() {
             if !balloon.is_stop() || !balloon.is_empty_effect() {

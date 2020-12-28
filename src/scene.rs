@@ -60,6 +60,12 @@ pub enum DrawRequest {
     Skip,
 }
 
+impl DrawRequest {
+    pub fn is_not_skip(&self) -> bool {
+	self != &DrawRequest::Skip
+    }
+}
+
 impl std::ops::BitOr for DrawRequest {
     type Output = Self;
 
@@ -247,9 +253,10 @@ macro_rules! flush_delay_event {
 
 #[macro_export]
 macro_rules! flush_delay_event_and_redraw_check {
-    ($slf: expr, $event_list: expr, $ctx: expr, $t: expr) => {{
+    ($slf: expr, $event_list: expr, $ctx: expr, $t: expr, $handle:expr) => {{
         if flush_delay_event!($slf, $event_list, $ctx, $t) > 0 {
-            $ctx.process_utility.redraw();
+	    $ctx.process_utility.redraw();
+	    let _ = $handle;
         }
     }};
 }

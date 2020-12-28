@@ -183,7 +183,7 @@ impl SceneManager for TaskResultScene {
         let t = self.get_current_clock();
 
         //println!("ResultScene::pre_process {}", perf_measure!({
-        flush_delay_event_and_redraw_check!(self, self.event_list, ctx, t);
+        flush_delay_event_and_redraw_check!(self, self.event_list, ctx, t, {});
 
         self.drawable_task_result
             .run_effect(ctx, self.get_current_clock());

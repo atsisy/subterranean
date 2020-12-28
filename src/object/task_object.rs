@@ -542,7 +542,7 @@ impl TaskTable {
     /// # 再描画要求有り
     ///
     pub fn update<'a>(&mut self, ctx: &mut SuzuContext<'a>, t: Clock) {
-        flush_delay_event_and_redraw_check!(self, self.event_list, ctx, t);
+        flush_delay_event_and_redraw_check!(self, self.event_list, ctx, t, {});
 
         self.sight.update(ctx, t);
         self.desk.update(ctx, t);

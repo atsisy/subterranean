@@ -454,7 +454,7 @@ impl SceneManager for TaskScene {
             ctx.process_utility.redraw();
         }
 
-        flush_delay_event_and_redraw_check!(self, self.event_list, ctx, self.get_current_clock());
+        flush_delay_event_and_redraw_check!(self, self.event_list, ctx, self.get_current_clock(), {()});
         //}));
     }
 

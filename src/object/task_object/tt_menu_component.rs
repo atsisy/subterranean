@@ -1856,7 +1856,7 @@ impl CustomerMenuGroup {
     /// # 再描画要求有り
     ///
     pub fn update<'a>(&mut self, ctx: &mut SuzuContext<'a>, t: Clock) {
-        flush_delay_event_and_redraw_check!(self, self.event_list, ctx, t);
+        flush_delay_event_and_redraw_check!(self, self.event_list, ctx, t, {});
 
         if let Some(customer_question_menu) = self.customer_question_menu.as_mut() {
             if !customer_question_menu.is_stop() || !customer_question_menu.is_empty_effect() {
@@ -2548,7 +2548,7 @@ impl RecordBookMenuGroup {
     /// # 再描画要求有り
     ///
     pub fn update<'a>(&mut self, ctx: &mut SuzuContext<'a>, t: Clock) {
-        flush_delay_event_and_redraw_check!(self, self.event_list, ctx, t);
+        flush_delay_event_and_redraw_check!(self, self.event_list, ctx, t, {});
 
         if let Some(book_status_menu) = self.book_status_menu.as_mut() {
             book_status_menu.move_with_func(t);
@@ -3056,7 +3056,7 @@ impl OnDeskMenuGroup {
     /// # 再描画要求有り
     ///
     pub fn update<'a>(&mut self, ctx: &mut SuzuContext<'a>, t: Clock) {
-        flush_delay_event_and_redraw_check!(self, self.event_list, ctx, t);
+        flush_delay_event_and_redraw_check!(self, self.event_list, ctx, t, {});
 
         if let Some(desk_book_menu) = self.desk_book_menu.as_mut() {
             if !desk_book_menu.is_stop() || !desk_book_menu.is_empty_effect() {

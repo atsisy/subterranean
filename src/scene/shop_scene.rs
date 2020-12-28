@@ -1834,7 +1834,7 @@ impl SceneManager for ShopScene {
 
         //println!("{}", perf_measure!({
 
-        flush_delay_event_and_redraw_check!(self, self.event_list, ctx, t);
+        flush_delay_event_and_redraw_check!(self, self.event_list, ctx, t, {});
 
         if !self.shop_menu.first_menu_is_open()
             && !self.shop_special_object.is_enable_now()
@@ -1951,6 +1951,8 @@ impl SceneManager for ShopScene {
     }
 
     fn drawing_process(&mut self, ctx: &mut ggez::Context) {
+	//println!("{}", perf_measure!({
+        
         self.map.tile_map.draw(ctx).unwrap();
 
         let mut map_obj_drawer = MapObjectDrawer::new();
@@ -2017,6 +2019,7 @@ impl SceneManager for ShopScene {
         if let Some(transition_effect) = self.scene_transition_effect.as_mut() {
             transition_effect.draw(ctx).unwrap();
         }
+    //}));
     }
 
     fn post_process<'a>(&mut self, _ctx: &mut SuzuContext<'a>) -> SceneTransition {

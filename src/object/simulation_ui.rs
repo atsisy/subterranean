@@ -10,7 +10,7 @@ use torifune::graphics::object::shape as tshape;
 use ggez::graphics as ggraphics;
 
 use super::*;
-use crate::core::{FontID, TextureID, TileBatchTextureID};
+use crate::{core::{FontID, TextureID, TileBatchTextureID}, scene::DrawRequest};
 use crate::object::util_object::*;
 use crate::set_table_frame_cell_center;
 use torifune::roundup2f;
@@ -796,7 +796,7 @@ impl ResultMeter {
 	self.diff_per_clock = (self.goal - self.meter.get_value()) / time as f32;
     }
 
-    pub fn effect<'a>(&mut self, ctx: &mut SuzuContext<'a>) {
+    pub fn effect<'a>(&mut self, ctx: &mut SuzuContext<'a>) -> DrawRequest {
         if (self.meter.get_value() - self.goal).abs() >= self.diff_per_clock.abs() {
             self.meter.add(self.diff_per_clock);
 
@@ -808,7 +808,10 @@ impl ResultMeter {
 	    self.current_value_text.move_diff(numeric::Vector2f::new(before_x - after_x, 0.0));
 	    
 	    ctx.process_utility.redraw();
+	    return DrawRequest::Draw;
         }
+
+	DrawRequest::Skip
     }
 }
 

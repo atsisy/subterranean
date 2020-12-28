@@ -11,7 +11,7 @@ use torifune::impl_drawable_object_for_wrapped;
 use torifune::impl_texture_object_for_wrapped;
 
 use super::*;
-use crate::core::{FontID, GameResource, SuzuContext, TextureID, TileBatchTextureID};
+use crate::{core::{FontID, GameResource, SuzuContext, TextureID, TileBatchTextureID}, scene::DrawRequest};
 use crate::object::util_object::*;
 use crate::parse_toml_file;
 use crate::scene::scenario_scene::ScenarioContext;
@@ -1091,6 +1091,7 @@ pub struct TextBox {
     complete_and_wait_current_line: bool,
     background: SimpleObject,
     canvas: SubScreen,
+    const_canvas: SubScreen,
 }
 
 impl TextBox {
@@ -1123,7 +1124,7 @@ impl TextBox {
         line_arrow.fit_scale(ctx.context, numeric::Vector2f::new(28.0, 28.0));
         line_arrow.hide();
 
-        TextBox {
+        let mut text_box = TextBox {
             box_lines: box_lines,
             buffered_text: VecDeque::new(),
             head_line_number: 0,
@@ -1139,7 +1140,24 @@ impl TextBox {
                 0,
                 ggraphics::Color::from_rgba_u32(0xffffffff),
             ),
-        }
+	    const_canvas: SubScreen::new(
+                ctx.context,
+                numeric::Rect::new(0.0, 0.0, rect.w, rect.h),
+                0,
+                ggraphics::Color::from_rgba_u32(0x00ffffff),
+            ),
+        };
+	text_box.draw_const_canvas(ctx);
+	text_box
+    }
+
+    fn draw_const_canvas<'a>(&mut self, ctx: &mut SuzuContext<'a>) {
+        sub_screen::stack_screen(ctx.context, &self.const_canvas);
+	
+        self.background.draw(ctx.context).unwrap();
+        self.appearance_frame.draw(ctx.context).unwrap();
+	
+        sub_screen::pop_screen(ctx.context);
     }
 
     // ScenarioTextSegmentを改行で分割しVec<SimpleText>に変換する
@@ -1283,10 +1301,7 @@ impl DrawableComponent for TextBox {
         if self.is_visible() {
             sub_screen::stack_screen(ctx, &self.canvas);
 
-            self.background.draw(ctx)?;
-
-            self.appearance_frame.draw(ctx)?;
-
+	    self.const_canvas.draw(ctx)?;
             for d in &mut self.text {
                 d.draw(ctx)?;
             }
@@ -1323,7 +1338,7 @@ impl DrawableComponent for TextBox {
 pub struct ScenarioBox {
     pub text_box: TextBox,
     pub choice_box: Option<ChoiceBox>,
-    canvas: SubScreen,
+    drwob_essential: DrawableObjectEssential,
 }
 
 impl ScenarioBox {
@@ -1332,7 +1347,7 @@ impl ScenarioBox {
             tobj::MovableUniTexture::new(
                 Box::new(UniTexture::new(
                     ctx.ref_texture(TextureID::TextBackground),
-                    numeric::Point2f::new(20.0, 20.0),
+                    numeric::Point2f::new(0.0, 0.0),
                     numeric::Vector2f::new(1.0, 1.0),
                     0.0,
                     0,
@@ -1345,68 +1360,67 @@ impl ScenarioBox {
         ScenarioBox {
             text_box: TextBox::new(
                 ctx,
-                numeric::Rect::new(0.0, 0.0, rect.w, rect.h),
+                rect,
                 background,
                 TileBatchTextureID::TaishoStyle1,
                 3,
                 t,
             ),
             choice_box: None,
-            canvas: SubScreen::new(ctx.context, rect, 0, ggraphics::Color::from_rgba_u32(0x00)),
+	    drwob_essential: DrawableObjectEssential::new(true, 0),
         }
     }
 
     pub fn contains(&self, point: numeric::Point2f) -> bool {
-        let rpoint = self.canvas.relative_point(point);
-        self.text_box.canvas.contains(rpoint)
+        self.text_box.canvas.contains(point)
     }
 
-    pub fn new_choice<'a>(
-        ctx: &mut SuzuContext<'a>,
-        rect: numeric::Rect,
-        choice_pattern: ChoicePatternData,
-        font_info: FontInformation,
-        t: Clock,
-    ) -> Self {
-        let background = tobj::SimpleObject::new(
-            tobj::MovableUniTexture::new(
-                Box::new(UniTexture::new(
-                    ctx.ref_texture(TextureID::TextBackground),
-                    numeric::Point2f::new(20.0, 20.0),
-                    numeric::Vector2f::new(0.8, 0.8),
-                    0.0,
-                    0,
-                )),
-                None,
-                0,
-            ),
-            Vec::new(),
-        );
+    // pub fn new_choice<'a>(
+    //     ctx: &mut SuzuContext<'a>,
+    //     rect: numeric::Rect,
+    //     choice_pattern: ChoicePatternData,
+    //     font_info: FontInformation,
+    //     t: Clock,
+    // ) -> Self {
+    //     let background = tobj::SimpleObject::new(
+    //         tobj::MovableUniTexture::new(
+    //             Box::new(UniTexture::new(
+    //                 ctx.ref_texture(TextureID::TextBackground),
+    //                 numeric::Point2f::new(20.0, 20.0),
+    //                 numeric::Vector2f::new(0.8, 0.8),
+    //                 0.0,
+    //                 0,
+    //             )),
+    //             None,
+    //             0,
+    //         ),
+    //         Vec::new(),
+    //     );
 
-	let mut choice_box = ChoiceBox::new(
-            ctx,
-            numeric::Rect::new(400.0, 120.0, 1200.0, 150.0),
-	    choice_pattern.header_text.clone(),
-            choice_pattern.text.clone(),
-        );
-	choice_box.make_center(ctx.context, numeric::Point2f::new(rect.w / 2.0, rect.h / 2.0));
+    // 	let mut choice_box = ChoiceBox::new(
+    //         ctx,
+    //         numeric::Rect::new(400.0, 120.0, 1200.0, 150.0),
+    // 	    choice_pattern.header_text.clone(),
+    //         choice_pattern.text.clone(),
+    //     );
+    // 	choice_box.make_center(ctx.context, numeric::Point2f::new(rect.w / 2.0, rect.h / 2.0));
 	
-        let mut scenario_box = ScenarioBox {
-            text_box: TextBox::new(
-                ctx,
-                numeric::Rect::new(0.0, 0.0, rect.w, rect.h),
-                background,
-                TileBatchTextureID::TaishoStyle1,
-                3,
-                t,
-            ),
-            choice_box: Some(choice_box),
-            canvas: SubScreen::new(ctx.context, rect, 0, ggraphics::Color::from_rgba_u32(0x00)),
-        };
-        scenario_box.display_choice_box_text(font_info);
+    //     let mut scenario_box = ScenarioBox {
+    //         text_box: TextBox::new(
+    //             ctx,
+    //             numeric::Rect::new(0.0, 0.0, rect.w, rect.h),
+    //             background,
+    //             TileBatchTextureID::TaishoStyle1,
+    //             3,
+    //             t,
+    //         ),
+    //         choice_box: Some(choice_box),
+    //         canvas: SubScreen::new(ctx.context, rect, 0, ggraphics::Color::from_rgba_u32(0x00)),
+    //     };
+    //     scenario_box.display_choice_box_text(font_info);
 
-        scenario_box
-    }
+    //     scenario_box
+    // }
 
     pub fn get_text_box_status(&self) -> TextBoxStatus {
         self.text_box.text_box_status
@@ -1458,39 +1472,34 @@ impl ScenarioBox {
 
 impl DrawableComponent for ScenarioBox {
     fn draw(&mut self, ctx: &mut ggez::Context) -> ggez::GameResult<()> {
-        if self.canvas.is_visible() {
-            sub_screen::stack_screen(ctx, &self.canvas);
-
+        if self.is_visible() {
             self.text_box.draw(ctx)?;
 
             if let Some(choice) = self.choice_box.as_mut() {
                 choice.draw(ctx)?;
             }
-
-            sub_screen::pop_screen(ctx);
-            self.canvas.draw(ctx).unwrap();
         }
         Ok(())
     }
 
     fn hide(&mut self) {
-        self.canvas.hide();
+        self.drwob_essential.visible = false;
     }
 
     fn appear(&mut self) {
-        self.canvas.appear();
+        self.drwob_essential.visible = true;
     }
 
     fn is_visible(&self) -> bool {
-        self.canvas.is_visible()
+        self.drwob_essential.visible
     }
 
     fn set_drawing_depth(&mut self, depth: i8) {
-        self.canvas.set_drawing_depth(depth);
+        self.drwob_essential.drawing_depth = depth;
     }
 
     fn get_drawing_depth(&self) -> i8 {
-        self.canvas.get_drawing_depth()
+        self.drwob_essential.drawing_depth
     }
 }
 
@@ -1513,6 +1522,7 @@ pub struct ScenarioEvent {
     background: Option<UniTexture>,
     tachie: Option<ScenarioTachie>,
     appearance_frame: TileBatchFrame,
+    redraw_request: DrawRequest,
 }
 
 impl ScenarioEvent {
@@ -1557,6 +1567,7 @@ impl ScenarioEvent {
             background: event_background,
             appearance_frame: appr_frame,
             tachie: event_tachie,
+	    redraw_request: DrawRequest::InitDraw,
         }
     }
 
@@ -1565,6 +1576,7 @@ impl ScenarioEvent {
 	self.status = ScenarioEventStatus::Scenario;
 	self.key_down_action1(ctx, t);
 	self.update_text(ctx, scno_ctx);
+	self.redraw_request = DrawRequest::Draw;
     }
 
     pub fn update_event_background_sub<'a>(
@@ -1596,6 +1608,7 @@ impl ScenarioEvent {
             let canvas_size = self.canvas.get_drawing_size(ctx.context);
             texture.fit_scale(ctx.context, canvas_size);
             self.background = Some(texture);
+	    self.redraw_request = DrawRequest::Draw;
         }
     }
 
@@ -1620,10 +1633,12 @@ impl ScenarioEvent {
             Self::update_event_tachie_sub(ctx, self.scenario.ref_current_element(), t);
         if scenario_tachie.is_some() {
             self.tachie = scenario_tachie;
+	    self.redraw_request = DrawRequest::Draw;
         }
     }
 
     pub fn scenario_control_mut(&mut self) -> &mut Scenario {
+	self.redraw_request = DrawRequest::Draw;
         &mut self.scenario
     }
 
@@ -1646,6 +1661,7 @@ impl ScenarioEvent {
 
                     // 再描画要求
                     ctx.process_utility.redraw();
+		    self.redraw_request = DrawRequest::Draw;
                 }
             }
             ScenarioElement::ChoiceSwitch(choice_pattern) => {
@@ -1673,6 +1689,7 @@ impl ScenarioEvent {
 
                     // 再描画要求
                     ctx.process_utility.redraw();
+		    self.redraw_request = DrawRequest::Draw;
                 }
             }
             ScenarioElement::SceneTransition(transition_data) => {
@@ -1683,6 +1700,7 @@ impl ScenarioEvent {
 
                 // 再描画要求
                 ctx.process_utility.redraw();
+		self.redraw_request = DrawRequest::Draw;
             }
             ScenarioElement::FinishAndWait(_) => {
                 self.status = ScenarioEventStatus::FinishAndWait;
@@ -1706,6 +1724,7 @@ impl ScenarioEvent {
     }
 
     pub fn go_next_line(&mut self) {
+	self.redraw_request = DrawRequest::Draw;
         self.scenario_box.text_box.next_button_handler();
     }
 
@@ -1726,10 +1745,12 @@ impl ScenarioEvent {
     }
 
     pub fn release_scenario_waiting(&mut self) {
+	self.redraw_request = DrawRequest::Draw;
         self.scenario.release_waiting();
     }
 
     pub fn set_fixed_text_to_scenario_box<'a>(&mut self, ctx: &mut SuzuContext<'a>, text: &str) {
+	self.redraw_request = DrawRequest::Draw;
         self.scenario_box.text_box.set_fixed_text(
             text,
             FontInformation::new(
@@ -1747,6 +1768,7 @@ impl ScenarioEvent {
         match self.scenario.ref_current_element_mut() {
             // 現在のScenarioElementがテキスト
             ScenarioElement::Text(scenario_text) => {
+		self.redraw_request = DrawRequest::Draw;
                 self.scenario_box.text_box.line_arrow.hide();
 
                 // 最後まで到達していた場合、新しいScenarioElementに遷移し、テキストボックスをリセット
@@ -1781,6 +1803,7 @@ impl ScenarioEvent {
 
                 // choice_boxは消す
                 self.scenario_box.insert_choice_box(None);
+		self.redraw_request = DrawRequest::Draw;
             }
             ScenarioElement::SceneTransition(_) => (),
             ScenarioElement::FinishAndWait(_) => (),
@@ -1794,7 +1817,6 @@ impl ScenarioEvent {
         match self.scenario.ref_current_element_mut() {
             ScenarioElement::ChoiceSwitch(_) => {
                 if let Some(choice) = self.scenario_box.choice_box.as_mut() {
-                    let rpoint = self.scenario_box.canvas.relative_point(rpoint);
                     choice.cursor_select(ctx, rpoint);
 
                     self.scenario_box
@@ -1803,6 +1825,7 @@ impl ScenarioEvent {
                             numeric::Vector2f::new(32.0, 32.0),
                             ggraphics::Color::from_rgba_u32(0x000000ff),
                         ));
+		    self.redraw_request = DrawRequest::Draw;
                 }
             }
             _ => (),
@@ -1813,21 +1836,24 @@ impl ScenarioEvent {
 impl DrawableComponent for ScenarioEvent {
     fn draw(&mut self, ctx: &mut ggez::Context) -> ggez::GameResult<()> {
         if self.is_visible() {
-            sub_screen::stack_screen(ctx, &self.canvas);
-
-            if let Some(background) = self.background.as_mut() {
-                background.draw(ctx)?;
-            }
-
-            if let Some(tachie) = self.tachie.as_mut() {
-                tachie.draw(ctx)?;
-            }
-
-            self.scenario_box.draw(ctx)?;
-
-            self.appearance_frame.draw(ctx)?;
-
-            sub_screen::pop_screen(ctx);
+	    if self.redraw_request.is_not_skip() {
+		self.redraw_request = DrawRequest::Skip;
+		sub_screen::stack_screen(ctx, &self.canvas);
+		
+		if let Some(background) = self.background.as_mut() {
+                    background.draw(ctx)?;
+		}
+		
+		if let Some(tachie) = self.tachie.as_mut() {
+                    tachie.draw(ctx)?;
+		}
+		
+		self.scenario_box.draw(ctx)?;
+		
+		self.appearance_frame.draw(ctx)?;
+		
+		sub_screen::pop_screen(ctx);
+	    }
             self.canvas.draw(ctx).unwrap();
         }
         Ok(())

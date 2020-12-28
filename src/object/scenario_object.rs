@@ -16,7 +16,7 @@ use torifune::graphics::object::sub_screen::SubScreen;
 use torifune::impl_drawable_object_for_wrapped;
 use torifune::impl_texture_object_for_wrapped;
 
-use crate::core::game_system;
+use crate::{core::game_system, scene::DrawRequest};
 use crate::core::*;
 use crate::object::util_object::*;
 use crate::object::simulation_ui::*;
@@ -289,11 +289,13 @@ impl SuzunaStatusMainPage {
         );
     }
 
-    pub fn update<'a>(&mut self, ctx: &mut SuzuContext<'a>, t: Clock) {
-	self.reputation_meter.effect(ctx);
+    pub fn update<'a>(&mut self, ctx: &mut SuzuContext<'a>, t: Clock) -> DrawRequest {
+	let mut request = self.reputation_meter.effect(ctx) |
 	self.hp_meter.effect(ctx);
 
-        flush_delay_event_and_redraw_check!(self, self.event_list, ctx, t);
+        flush_delay_event_and_redraw_check!(self, self.event_list, ctx, t, { request = DrawRequest::Draw; });
+
+	return request;
     }
 
     pub fn update_todays_sched_text<'a>(&mut self, ctx: &mut SuzuContext<'a>) {
@@ -936,11 +938,11 @@ impl SuzunaStatusPages {
         }
     }
 
-    pub fn update<'a>(&mut self, ctx: &mut SuzuContext<'a>, t: Clock) {
+    pub fn update<'a>(&mut self, ctx: &mut SuzuContext<'a>, t: Clock) -> DrawRequest {
         match self.current_page {
             SuzunaStatusPageID::Main => self.main_page.update(ctx, t),
             SuzunaStatusPageID::Schedule => self.sched_page.update(ctx),
-            _ => (),
+            _ => DrawRequest::Skip,
         }
     }
 
@@ -986,6 +988,7 @@ pub struct SuzunaStatusScreen {
     pages: SuzunaStatusPages,
     go_left_texture: UniTexture,
     go_right_texture: UniTexture,
+    redraw_request: DrawRequest,
 }
 
 impl SuzunaStatusScreen {
@@ -1042,6 +1045,7 @@ impl SuzunaStatusScreen {
             pages: SuzunaStatusPages::new(ctx, scno_ctx, rect),
             go_left_texture: left,
             go_right_texture: right,
+	    redraw_request: DrawRequest::InitDraw,
         }
     }
 
@@ -1054,6 +1058,8 @@ impl SuzunaStatusScreen {
 	    SuzunaStatusPageID::Schedule => self.go_right_texture.hide(),
 	    _ => (),
 	}
+
+	self.redraw_request = DrawRequest::Draw;
     }
 
     pub fn click_handler<'a>(
@@ -1079,6 +1085,7 @@ impl SuzunaStatusScreen {
         }
 
         self.pages.click_handler(ctx, rpoint, button);
+	self.redraw_request = DrawRequest::Draw;
     }
 
     pub fn mouse_down_handler<'a>(
@@ -1093,63 +1100,79 @@ impl SuzunaStatusScreen {
 
         let rpoint = self.canvas.relative_point(click_point);
         self.pages.mouse_button_down(ctx, rpoint, button);
+	self.redraw_request = DrawRequest::Draw;
     }
 
     pub fn update<'a>(&mut self, ctx: &mut SuzuContext<'a>, t: Clock) {
-        self.pages.update(ctx, t);
+	self.redraw_request |= self.pages.update(ctx, t);
+
+	if self.redraw_request.is_not_skip() {
+	    ctx.process_utility.redraw();
+	}
     }
 
     pub fn change_kosuzu_hp<'a>(&mut self, ctx: &mut SuzuContext<'a>, diff: f32) {
 	self.pages.change_kosuzu_hp(ctx, diff);
+	self.redraw_request = DrawRequest::Draw;
     }
 
     pub fn change_suzunaan_reputation<'a>(&mut self, ctx: &mut SuzuContext<'a>, diff: f32) {
 	self.pages.change_suzunaan_reputation(ctx, diff);
+	self.redraw_request = DrawRequest::Draw;
     }
 
     pub fn show_main_page<'a>(&mut self, ctx: &mut SuzuContext<'a>) {
 	self.pages.show_main_page(ctx);
 	self.check_move_page_icon_visibility();
+	self.redraw_request = DrawRequest::Draw;
     }
 
     pub fn show_schedule_page(&mut self) {
         self.pages.show_schedule_page();
 	self.check_move_page_icon_visibility();
+	self.redraw_request = DrawRequest::Draw;
     }
 
     pub fn show_ad_page(&mut self) {
         self.pages.show_ad_page();
 	self.check_move_page_icon_visibility();
+	self.redraw_request = DrawRequest::Draw;
     }
 
     pub fn show_ad_agency_page<'a>(&mut self) {
 	self.pages.show_ad_agency_page();
 	self.check_move_page_icon_visibility();
+	self.redraw_request = DrawRequest::Draw;
     }
     
     pub fn change_main_page_money<'a>(&mut self, ctx: &mut SuzuContext<'a>, diff: i32, t: Clock) {
-	self.pages.main_page.run_money_change_effect(ctx, diff, t);
+	self.pages.main_page.run_money_change_effect(ctx, diff, t);	
+	self.redraw_request = DrawRequest::Draw;
     }
 
     pub fn update_main_page_todays_sched_text<'a>(&mut self, ctx: &mut SuzuContext<'a>) {
 	self.pages.update_main_page_todays_sched_text(ctx);
+	self.redraw_request = DrawRequest::Draw;
     }
 }
 
 impl DrawableComponent for SuzunaStatusScreen {
     fn draw(&mut self, ctx: &mut ggez::Context) -> ggez::GameResult<()> {
         if self.is_visible() {
-            sub_screen::stack_screen(ctx, &self.canvas);
-
-            self.background.draw(ctx)?;
-            self.appr_frame.draw(ctx)?;
-
-            self.go_right_texture.draw(ctx)?;
-            self.go_left_texture.draw(ctx)?;
-
-            self.pages.draw_page(ctx);
-
-            sub_screen::pop_screen(ctx);
+	    if self.redraw_request.is_not_skip() {
+		self.redraw_request = DrawRequest::Skip;
+		sub_screen::stack_screen(ctx, &self.canvas);
+		
+		self.background.draw(ctx)?;
+		self.appr_frame.draw(ctx)?;
+		
+		self.go_right_texture.draw(ctx)?;
+		self.go_left_texture.draw(ctx)?;
+		
+		self.pages.draw_page(ctx);
+		
+		sub_screen::pop_screen(ctx);
+	    }
             self.canvas.draw(ctx).unwrap();
         }
 
@@ -1304,16 +1327,24 @@ impl<Msg> WindowStack<Msg> {
         }
     }
 
-    pub fn message_passing<'a>(&mut self, ctx: &mut SuzuContext<'a>) {
+    pub fn message_passing<'a>(&mut self, ctx: &mut SuzuContext<'a>) -> DrawRequest {
+	let mut draw_request = DrawRequest::Skip;
+	
         let mut msg = None;
         for window in self.stack.iter_mut() {
             if let Some(msg) = msg {
                 window.apply_message(ctx, msg);
+		draw_request = DrawRequest::Draw;
             }
             msg = window.check_message();
         }
 
+	if self.stack.iter().map(|e| e.close_check()).fold(false, |m, v| m | v) {
+	    draw_request = DrawRequest::Draw;
+	}
         self.stack.retain(|win| !win.close_check());
+
+	draw_request
     }
 }
 
@@ -1972,8 +2003,8 @@ impl ScenarioSchedPage {
             .mouse_down_handler(ctx, click_point, button);
     }
 
-    pub fn update<'a>(&mut self, ctx: &mut SuzuContext<'a>) {
-        self.window_stack.message_passing(ctx);
+    pub fn update<'a>(&mut self, ctx: &mut SuzuContext<'a>) -> DrawRequest {
+        self.window_stack.message_passing(ctx)
     }
 }
 
