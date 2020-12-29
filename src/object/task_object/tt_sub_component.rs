@@ -1944,9 +1944,9 @@ impl AlphaScope {
 impl DrawableComponent for AlphaScope {
     fn draw(&mut self, ctx: &mut ggez::Context) -> ggez::GameResult<()> {
         if self.is_visible() {
-            ggraphics::set_blend_mode(ctx, ggraphics::BlendMode::Subtract);
+            ggraphics::set_blend_mode(ctx, ggraphics::BlendMode::Subtract).unwrap();
             ggraphics::draw(ctx, &self.scope, self.draw_param).unwrap();
-            ggraphics::set_blend_mode(ctx, ggraphics::BlendMode::Alpha);
+            ggraphics::set_blend_mode(ctx, ggraphics::BlendMode::Alpha).unwrap();
         }
 
         Ok(())

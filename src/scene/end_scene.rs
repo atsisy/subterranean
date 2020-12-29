@@ -1,16 +1,17 @@
+
 use torifune::core::*;
 use torifune::device::*;
 use torifune::graphics::drawable::*;
 use torifune::graphics::object::*;
 use torifune::sound::*;
 
-use crate::{core::{MouseInformation, SoundID, SuzuContext, TextureID, TileBatchTextureID}, object::map_object::MapObject};
+use crate::{core::{MouseInformation, SoundID, SuzuContext, TextureID, TileBatchTextureID}, object::{effect_object::{SceneTransitionEffectType, TilingEffectType}, map_object::MapObject}};
 use crate::object::character_factory;
 use crate::object::effect_object;
 use crate::object::title_object::*;
 use crate::scene::*;
-
 use crate::flush_delay_event;
+use crate::add_delay_event;
 
 pub struct EndScene {
     mouse_info: MouseInformation,
@@ -120,6 +121,24 @@ impl EndScene {
             TitleBuiltinCommand::Exit => std::process::exit(0),
         }
     }
+
+    fn scene_transition_close_effect<'a>(&mut self, ctx: &mut SuzuContext<'a>, t: Clock) {
+        self.scene_transition_effect = Some(effect_object::ScreenTileEffect::new(
+            ctx,
+            TileBatchTextureID::Shoji,
+            numeric::Rect::new(
+                0.0,
+                0.0,
+                crate::core::WINDOW_SIZE_X as f32,
+                crate::core::WINDOW_SIZE_Y as f32,
+            ),
+            60,
+            SceneTransitionEffectType::Close,
+            TilingEffectType::WholeTile,
+            -128,
+            t,
+        ));
+    }
 }
 
 impl SceneManager for EndScene {
@@ -183,13 +202,25 @@ impl SceneManager for EndScene {
 
     fn mouse_button_up_event<'a>(
         &mut self,
-        _ctx: &mut SuzuContext<'a>,
+        ctx: &mut SuzuContext<'a>,
         button: ginput::mouse::MouseButton,
         _point: numeric::Point2f,
     ) {
-        let _t = self.get_current_clock();
+        let t = self.get_current_clock();
 
         self.mouse_info.update_dragging(button, false);
+
+	match button {
+	    ginput::mouse::MouseButton::Left => {
+		self.scene_transition_close_effect(ctx, t);
+		
+		add_delay_event!(self.event_list, |slf, _, _| {
+		    slf.scene_transition = SceneID::Title;
+		    slf.scene_transition_type = SceneTransition::SwapTransition;
+		}, t + 40);
+	    },
+	    _ => (),
+	}
     }
 
     fn mouse_motion_event<'a>(

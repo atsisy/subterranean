@@ -255,6 +255,17 @@ impl ScenarioScene {
 			    ctx.go_next_day();
 			}, self.get_current_clock() + 120);
 		    }
+		    "GoToEndRoll" => {
+			add_delay_event!(self.event_list, |slf, ctx, t| {
+			    slf.scene_transition_close_effect(ctx, t);
+			}, self.get_current_clock() + 80);
+			
+			add_delay_event!(self.event_list, |slf, ctx, _| {
+			    slf.scene_transition = SceneID::End;
+			    slf.scene_transition_type = SceneTransition::SwapTransition;
+			    ctx.go_next_day();
+			}, self.get_current_clock() + 120);
+		    }
                     _ => (),
                 }
             }

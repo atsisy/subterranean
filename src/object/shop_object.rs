@@ -1229,8 +1229,8 @@ impl DrawableComponent for SelectStoreBookUI {
 		self.store_button.draw(ctx)?;
 		
 		sub_screen::pop_screen(ctx);
-		self.canvas.draw(ctx).unwrap();
             }
+	    self.canvas.draw(ctx).unwrap();
 	}
 
         Ok(())

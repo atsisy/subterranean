@@ -16,7 +16,6 @@ use task_result_scene::*;
 use task_scene::*;
 
 use crate::object::task_object::tt_main_component::*;
-use crate::object::task_object::tt_sub_component::*;
 
 #[derive(PartialEq, Clone, Copy)]
 pub enum SuzunaSceneStatus {
