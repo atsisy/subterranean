@@ -1,5 +1,3 @@
-use std::rc::Rc;
-
 use ggez::graphics as ggraphics;
 
 use sub_screen::SubScreen;

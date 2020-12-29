@@ -1,5 +1,4 @@
 use std::collections::HashMap;
-use std::rc::Rc;
 
 use ggez::graphics as ggraphics;
 
@@ -772,7 +771,7 @@ impl TextureObject for TextButtonTexture {
         numeric::Vector2f::new(self.button_pos.x, self.button_pos.y)
     }
 
-    fn replace_texture(&mut self, _texture: Rc<ggraphics::Image>) {}
+    fn replace_texture(&mut self, _texture: ggraphics::Image) {}
 
     fn set_color(&mut self, _color: ggraphics::Color) {}
 
@@ -1243,12 +1242,12 @@ pub enum AnimationStatus {
 }
 
 struct SeqTexture {
-    textures: Vec<Rc<ggraphics::Image>>,
+    textures: Vec<ggraphics::Image>,
     index: usize,
 }
 
 impl SeqTexture {
-    pub fn new(textures: Vec<Rc<ggraphics::Image>>) -> Self {
+    pub fn new(textures: Vec<ggraphics::Image>) -> Self {
         SeqTexture {
             textures: textures,
             index: 0,
@@ -1259,14 +1258,14 @@ impl SeqTexture {
         self.index = 0;
     }
 
-    pub fn current_frame(&self) -> Rc<ggraphics::Image> {
+    pub fn current_frame(&self) -> ggraphics::Image {
         self.textures[self.index % self.textures.len()].clone()
     }
 
     pub fn next_frame(
         &mut self,
         t: AnimationType,
-    ) -> Result<Rc<ggraphics::Image>, AnimationStatus> {
+    ) -> Result<ggraphics::Image, AnimationStatus> {
         self.index += 1;
 
         match t {
@@ -1295,7 +1294,7 @@ impl TextureAnimation {
     pub fn new(
         obj: SimpleObject,
         mode_order: Vec<ObjectDirection>,
-        textures: Vec<Vec<Rc<ggraphics::Image>>>,
+        textures: Vec<Vec<ggraphics::Image>>,
         mode: ObjectDirection,
         frame_speed: Clock,
     ) -> Self {

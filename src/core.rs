@@ -27,7 +27,6 @@ use ginput::mouse::MouseButton;
 
 use std::collections::HashMap;
 use std::collections::VecDeque;
-use std::rc::Rc;
 use std::str::FromStr;
 
 use crate::{object::{scenario_object::SuzunaAdAgencyType, task_object::tt_sub_component::BorrowingRecordBookData}, parse_toml_file};
@@ -891,7 +890,7 @@ impl RawConfigFile {
 
 pub struct GameResource {
     texture_resource_paths: HashMap<TextureID, String>,
-    textures: HashMap<TextureID, Rc<ggraphics::Image>>,
+    textures: HashMap<TextureID, ggraphics::Image>,
     fonts: Vec<ggraphics::Font>,
     tile_batchs: Vec<TileBatch>,
     customers_name: Vec<String>,
@@ -977,21 +976,21 @@ impl GameResource {
         &mut self,
         ctx: &mut ggez::Context,
         id: TextureID,
-    ) -> Rc<ggraphics::Image> {
+    ) -> ggraphics::Image {
         let path = self
             .texture_resource_paths
             .get(&id)
             .expect("Delay texture load: Invalid TextureID");
         print!("delay texture loading -> {} ... ", path);
         let texture =
-            Rc::new(ggraphics::Image::new(ctx, path).expect("Delay texture load: Invalid Path"));
+            ggraphics::Image::new(ctx, path).expect("Delay texture load: Invalid Path");
         self.textures.insert(id, texture.clone());
         println!("done!");
 
         texture
     }
 
-    pub fn ref_texture(&mut self, ctx: &mut ggez::Context, id: TextureID) -> Rc<ggraphics::Image> {
+    pub fn ref_texture(&mut self, ctx: &mut ggez::Context, id: TextureID) -> ggraphics::Image {
         let maybe_texture = self.textures.get(&id);
 
         if let Some(texture) = maybe_texture {
@@ -1885,7 +1884,7 @@ pub struct SuzuContext<'ctx> {
 }
 
 impl<'ctx> SuzuContext<'ctx> {
-    pub fn ref_texture(&mut self, id: TextureID) -> Rc<ggraphics::Image> {
+    pub fn ref_texture(&mut self, id: TextureID) -> ggraphics::Image {
         self.resource.ref_texture(self.context, id)
     }
 
@@ -2235,7 +2234,7 @@ impl SceneController {
             sub_screen::pop_screen(ctx);
             self.root_screen.draw(ctx).unwrap();
         }
-        //) as f32 / 1000000.0);
+	//) as f32 / 1000000.0);
     }
 
     fn run_post_process<'a>(&mut self, ctx: &mut ggez::Context, game_data: &'a mut GameResource) {

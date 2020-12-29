@@ -1,5 +1,4 @@
 use std::collections::HashMap;
-use std::rc::Rc;
 
 use ggez::graphics as ggraphics;
 use ggez::input as ginput;
@@ -877,7 +876,7 @@ impl TextureObject for TextBalloon {
         self.canvas.get_texture_size(ctx)
     }
 
-    fn replace_texture(&mut self, _: Rc<ggraphics::Image>) {}
+    fn replace_texture(&mut self, _: ggraphics::Image) {}
 
     fn set_color(&mut self, color: ggraphics::Color) {
         self.canvas.set_color(color);

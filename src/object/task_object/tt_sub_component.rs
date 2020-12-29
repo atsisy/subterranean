@@ -1,6 +1,5 @@
 use std::cmp::Ordering;
 use std::collections::HashMap;
-use std::rc::Rc;
 
 use ggez::graphics as ggraphics;
 

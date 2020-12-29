@@ -1,6 +1,5 @@
 use std::collections::HashMap;
 use std::collections::VecDeque;
-use std::rc::Rc;
 use std::str::FromStr;
 
 use ggez::graphics as ggraphics;
@@ -71,7 +70,7 @@ impl MapObject {
     pub fn new(
         obj: SimpleObject,
         mode_order: Vec<ObjectDirection>,
-        textures: Vec<Vec<Rc<ggraphics::Image>>>,
+        textures: Vec<Vec<ggraphics::Image>>,
         mode: ObjectDirection,
         speed_info: TextureSpeedInfo,
         map_position: numeric::Point2f,

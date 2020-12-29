@@ -1,6 +1,5 @@
 use std::collections::HashMap;
 use std::collections::VecDeque;
-use std::rc::Rc;
 
 use ggez::graphics as ggraphics;
 use ggez::input::mouse::MouseButton;

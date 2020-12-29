@@ -1,6 +1,5 @@
 use std::collections::HashMap;
 
-use std::rc::Rc;
 use std::str::FromStr;
 
 use ggez::graphics as ggraphics;

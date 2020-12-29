@@ -3,8 +3,6 @@ pub mod tt_main_component;
 pub mod tt_menu_component;
 pub mod tt_sub_component;
 
-use std::rc::Rc;
-
 use ggez::graphics as ggraphics;
 use ggez::input as ginput;
 use ginput::mouse::MouseCursor;

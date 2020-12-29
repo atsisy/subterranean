@@ -16,8 +16,6 @@ pub mod task_result_object;
 pub mod title_object;
 pub mod util_object;
 
-use std::rc::Rc;
-
 use ggez::graphics as ggraphics;
 
 use torifune::core::Clock;
