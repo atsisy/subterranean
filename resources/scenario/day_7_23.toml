@@ -13,7 +13,6 @@ background = "SightBackground1"
 
 [scenario-group.tachie-data]
 right = "KosuzuTachie1"
-left = "KosuzuTachie1"
 
    [scenario-group.default-text-attribute]
    fpc = 2.0

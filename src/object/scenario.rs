@@ -158,13 +158,13 @@ pub struct ScenarioTachie {
 }
 
 impl ScenarioTachie {
-    pub fn new<'a>(ctx: &mut SuzuContext<'a>, tid_array: Vec<TextureID>, t: Clock) -> Self {
+    pub fn new<'a>(ctx: &mut SuzuContext<'a>, tachie_data: TachieData, t: Clock) -> Self {
         // left
-        let left_texture = if tid_array.len() > 0 {
+        let left_texture = if tachie_data.left.is_some() {
             Some(SimpleObject::new(
                 MovableUniTexture::new(
                     Box::new(UniTexture::new(
-                        ctx.ref_texture(tid_array[0]),
+                        ctx.ref_texture(tachie_data.left.unwrap()),
                         numeric::Point2f::new(50.0, 100.0),
                         numeric::Vector2f::new(0.3, 0.3),
                         0.0,
@@ -179,11 +179,11 @@ impl ScenarioTachie {
             None
         };
 
-        let right_texture = if tid_array.len() > 1 {
+        let right_texture = if tachie_data.right.is_some() {
             Some(SimpleObject::new(
                 MovableUniTexture::new(
                     Box::new(UniTexture::new(
-                        ctx.ref_texture(tid_array[1]),
+                        ctx.ref_texture(tachie_data.right.unwrap()),
                         numeric::Point2f::new(800.0, 50.0),
                         numeric::Vector2f::new(0.3, 0.3),
                         0.0,
@@ -242,6 +242,25 @@ impl DrawableComponent for ScenarioTachie {
     }
 }
 
+#[derive(Clone, Debug)]
+pub struct TachieData {
+    right: Option<TextureID>,
+    left: Option<TextureID>,
+}
+
+impl TachieData {
+    pub fn new_empty() -> TachieData {
+	TachieData {
+	    right: None,
+	    left: None,
+	}
+    }
+
+    pub fn is_none(&self) -> bool {
+	self.right.is_none() && self.left.is_none()
+    }
+}
+
 pub struct ScenarioText {
     seq_text: Vec<ScenarioTextSegment>,
     iterator: f32,
@@ -250,7 +269,8 @@ pub struct ScenarioText {
     scenario_id: ScenarioElementID,
     next_scenario_id: ScenarioElementID,
     background_texture_id: TextureID,
-    tachie_data: Option<Vec<TextureID>>,
+    tachie_data: TachieData,
+    
 }
 
 impl ScenarioText {
@@ -291,20 +311,25 @@ impl ScenarioText {
 
         let total_length: usize = seq_text.iter().fold(0, |sum, s| sum + s.str_len());
 
-        let tachie_data = if let Some(tachie_table) = toml_scripts.get("tachie-data") {
-            let mut tid_vec = Vec::new();
-            if let Some(tid) = tachie_table.get("right") {
-                tid_vec.push(TextureID::from_str(tid.as_str().unwrap()).unwrap());
-            }
-
-            if let Some(tid) = tachie_table.get("left") {
-                tid_vec.push(TextureID::from_str(tid.as_str().unwrap()).unwrap());
-            }
-
-            Some(tid_vec)
-        } else {
-            None
-        };
+	let tachie_data = if let Some(tachie_table) = toml_scripts.get("tachie-data") {
+	    TachieData {
+		right: if let Some(tid) = tachie_table.get("right") {
+                    Some(TextureID::from_str(tid.as_str().unwrap()).unwrap())
+		} else {
+		    None
+		},
+		left: if let Some(tid) = tachie_table.get("left") {
+		    Some(TextureID::from_str(tid.as_str().unwrap()).unwrap())
+		} else {
+		    None
+		}
+	    }
+	} else {
+	    TachieData {
+		right: None,
+		left: None,
+	    }
+	};
 
         ScenarioText {
             seq_text: seq_text,
@@ -314,7 +339,7 @@ impl ScenarioText {
             scenario_id: id,
             next_scenario_id: next_id,
             background_texture_id: background_texture_id,
-            tachie_data: tachie_data,
+	    tachie_data: tachie_data,
         }
     }
 
@@ -361,7 +386,7 @@ impl ScenarioText {
         self.background_texture_id
     }
 
-    pub fn get_tachie_data(&self) -> Option<Vec<TextureID>> {
+    pub fn get_tachie_data(&self) -> TachieData {
         self.tachie_data.clone()
     }
 }
@@ -375,7 +400,7 @@ pub struct ChoicePatternData {
     jump_scenario_id: Vec<ScenarioElementID>,
     scenario_id: ScenarioElementID,
     background_texture_id: Option<TextureID>,
-    tachie_data: Option<Vec<TextureID>>,
+    tachie_data: TachieData,
 }
 
 impl ChoicePatternData {
@@ -403,21 +428,23 @@ impl ChoicePatternData {
             None
         };
 
-        let tachie_data = if let Some(tachie_table) = toml_scripts.get("tachie-data") {
-            let mut tid_vec = Vec::new();
-            if let Some(tid) = tachie_table.get("right") {
-                tid_vec.push(TextureID::from_str(tid.as_str().unwrap()).unwrap());
-            }
-
-            if let Some(tid) = tachie_table.get("left") {
-                tid_vec.push(TextureID::from_str(tid.as_str().unwrap()).unwrap());
-            }
-
-            Some(tid_vec)
-        } else {
-            None
-        };
-
+	let tachie_data = if let Some(tachie_table) = toml_scripts.get("tachie-data") {
+	    TachieData {
+		right: if let Some(tid) = tachie_table.get("right") {
+                    Some(TextureID::from_str(tid.as_str().unwrap()).unwrap())
+		} else {
+		    None
+		},
+		left: if let Some(tid) = tachie_table.get("left") {
+		    Some(TextureID::from_str(tid.as_str().unwrap()).unwrap())
+		} else {
+		    None
+		}
+	    }
+	} else {
+	    TachieData::new_empty()
+	};
+	
         ChoicePatternData {
 	    header_text: toml_scripts.get("header_text").unwrap().as_str().unwrap().to_string(),
             text: choice_pattern_array,
@@ -436,7 +463,7 @@ impl ChoicePatternData {
         self.background_texture_id
     }
 
-    pub fn get_tachie_data(&self) -> Option<Vec<TextureID>> {
+    pub fn get_tachie_data(&self) -> TachieData {
         self.tachie_data.clone()
     }
 }
@@ -626,7 +653,7 @@ pub struct ScenarioFinishAndWaitData {
     scenario_id: ScenarioElementID,
     next_id: ScenarioElementID,
     background_texture_id: Option<TextureID>,
-    tachie_data: Option<Vec<TextureID>>,
+    tachie_data: TachieData,
     opecode: String,
 }
 
@@ -648,20 +675,22 @@ impl ScenarioFinishAndWaitData {
             None
         };
 
-        let tachie_data = if let Some(tachie_table) = toml_scripts.get("tachie-data") {
-            let mut tid_vec = Vec::new();
-            if let Some(tid) = tachie_table.get("right") {
-                tid_vec.push(TextureID::from_str(tid.as_str().unwrap()).unwrap());
-            }
-
-            if let Some(tid) = tachie_table.get("left") {
-                tid_vec.push(TextureID::from_str(tid.as_str().unwrap()).unwrap());
-            }
-
-            Some(tid_vec)
-        } else {
-            None
-        };
+	let tachie_data = if let Some(tachie_table) = toml_scripts.get("tachie-data") {
+	    TachieData {
+		right: if let Some(tid) = tachie_table.get("right") {
+                    Some(TextureID::from_str(tid.as_str().unwrap()).unwrap())
+		} else {
+		    None
+		},
+		left: if let Some(tid) = tachie_table.get("left") {
+		    Some(TextureID::from_str(tid.as_str().unwrap()).unwrap())
+		} else {
+		    None
+		}
+	    }
+	} else {
+	    TachieData::new_empty()
+	};
 
         ScenarioFinishAndWaitData {
             scenario_id: id,
@@ -680,7 +709,7 @@ impl ScenarioFinishAndWaitData {
         self.background_texture_id
     }
 
-    pub fn get_tachie_data(&self) -> Option<Vec<TextureID>> {
+    pub fn get_tachie_data(&self) -> TachieData {
         self.tachie_data.clone()
     }
 
@@ -696,13 +725,13 @@ impl ScenarioFinishAndWaitData {
 pub struct ScheduleStartEssential {
     scenario_id: ScenarioElementID,
     background_texture_id: Option<TextureID>,
-    tachie_data: Option<Vec<TextureID>>,
+    tachie_data: TachieData,
 }
 
 pub struct ScheduleStartData {
     scenario_id: ScenarioElementID,
     background_texture_id: Option<TextureID>,
-    tachie_data: Option<Vec<TextureID>>,
+    tachie_data: TachieData,
 }
 
 pub enum ScenarioBuiltinCommand {
@@ -726,21 +755,23 @@ impl ScenarioBuiltinCommand {
                         None
                     };
 
-                let tachie_data = if let Some(tachie_table) = toml_scripts.get("tachie-data") {
-                    let mut tid_vec = Vec::new();
-                    if let Some(tid) = tachie_table.get("right") {
-                        tid_vec.push(TextureID::from_str(tid.as_str().unwrap()).unwrap());
-                    }
-
-                    if let Some(tid) = tachie_table.get("left") {
-                        tid_vec.push(TextureID::from_str(tid.as_str().unwrap()).unwrap());
-                    }
-
-                    Some(tid_vec)
-                } else {
-                    None
-                };
-
+		let tachie_data = if let Some(tachie_table) = toml_scripts.get("tachie-data") {
+		    TachieData {
+			right: if let Some(tid) = tachie_table.get("right") {
+			    Some(TextureID::from_str(tid.as_str().unwrap()).unwrap())
+			} else {
+			    None
+			},
+			left: if let Some(tid) = tachie_table.get("left") {
+			    Some(TextureID::from_str(tid.as_str().unwrap()).unwrap())
+			} else {
+			    None
+			}
+		    }
+		} else {
+		    TachieData::new_empty()
+		};
+		
                 Self::ScheduleStart(ScheduleStartEssential {
                     scenario_id: id,
                     background_texture_id: background_texture_id,
@@ -763,7 +794,7 @@ impl ScenarioBuiltinCommand {
         }
     }
 
-    pub fn get_tachie_info(&self) -> Option<Vec<TextureID>> {
+    pub fn get_tachie_info(&self) -> TachieData {
         match self {
             ScenarioBuiltinCommand::ScheduleStart(data) => data.tachie_data.clone(),
         }
@@ -807,11 +838,11 @@ impl ScenarioElement {
         }
     }
 
-    pub fn get_tachie_info(&self) -> Option<Vec<TextureID>> {
+    pub fn get_tachie_info(&self) -> TachieData {
         match self {
             Self::Text(text) => text.get_tachie_data(),
             Self::ChoiceSwitch(choice) => choice.get_tachie_data(),
-            Self::SceneTransition(_) => None,
+            Self::SceneTransition(_) => TachieData::new_empty(),
             Self::FinishAndWait(data) => data.get_tachie_data(),
             Self::BuiltinCommand(command) => command.get_tachie_info(),
         }
@@ -1619,8 +1650,10 @@ impl ScenarioEvent {
     ) -> Option<ScenarioTachie> {
         // ScenarioEventの立ち絵データ取り出し
         // ScenarioElementが立ち絵情報を持っていれば、取り出す
-        if let Some(tachie_vec) = scenario_element.get_tachie_info() {
-            Some(ScenarioTachie::new(ctx, tachie_vec, t))
+	let tachie_data = scenario_element.get_tachie_info();
+	
+        if !tachie_data.is_none() {
+            Some(ScenarioTachie::new(ctx, tachie_data, t))
         } else {
             None
         }
