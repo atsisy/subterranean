@@ -62,3 +62,15 @@ pub fn devide_distance(dest: numeric::Point2f, divide_c: f32) -> Option<GenericM
         },
     ))
 }
+
+pub fn move_constant(speed: numeric::Vector2f) -> Option<GenericMoveFn> {
+    Some(Box::new(
+        move |p: &dyn tg::object::MovableObject, _t: Clock| {
+            let current_pos = p.get_position();
+            Some(numeric::Point2f::new(
+                current_pos.x + speed.x,
+                current_pos.y + speed.y,
+            ))
+        },
+    ))
+}

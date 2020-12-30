@@ -89,6 +89,13 @@ background = "SightBackground1"
 [[scenario-group]]
 type = "wait"
 id = 12
+next-id = 20
+opecode = "ShowStatusScreen"
+background = "SightBackground1"
+
+[[scenario-group]]
+type = "wait"
+id = 20
 next-id = 15
 opecode = "ScheduleCheck"
 background = "SightBackground1"

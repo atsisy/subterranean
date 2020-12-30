@@ -1194,15 +1194,16 @@ impl SelectStoreBookUI {
 	self.redraw_request = DrawRequest::Draw;
     }
 
-    fn store_shelving_books(&mut self, ctx: &mut ggez::Context) {
+    fn store_shelving_books<'a>(&mut self, ctx: &mut SuzuContext<'a>) {
         self.select_book_window.sort_selecting_index_less();
         for selecting_index in self.select_book_window.get_selecting_index().iter() {
             debug::debug_screen_push_text(&format!("remove book: {}", selecting_index));
             let returned = self.shelving_books.swap_remove(*selecting_index);
             self.stored_books.push(returned);
+	    ctx.savable_data.award_data.shelving_count += 1;
         }
 
-        self.update_window(ctx);
+        self.update_window(ctx.context);
 	self.redraw_request = DrawRequest::Draw;
     }
 
@@ -1285,7 +1286,7 @@ impl Clickable for SelectStoreBookUI {
         }
 
         if self.store_button.contains(ctx.context, rpoint) {
-            self.store_shelving_books(ctx.context);
+            self.store_shelving_books(ctx);
 	    self.redraw_request = DrawRequest::Draw;
         }
     }

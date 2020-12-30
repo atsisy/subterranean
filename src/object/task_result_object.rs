@@ -96,6 +96,7 @@ impl DrawableEvaluationFlow {
                 t + effect_clock_offset + 150,
             )],
         );
+	ctx.savable_data.award_data.returning_check_mistake_count += result_report.get_conition_eval_mistakes() as u16;
 
         eval_mistakes_vtext.set_crop(init_crop);
         set_table_frame_cell_center!(
@@ -311,13 +312,14 @@ impl DrawableTaskResult {
         );
         fixed_text.push(done_work_text);
 
+	let done_work_num = task_result.done_works - initial_save_data.task_result.done_works;
         let mut done_work_num_text = EffectableWrap::new(
             MovableWrap::new(
                 Box::new(VerticalText::new(
                     format!(
                         "{}人",
                         number_to_jk(
-                            (task_result.done_works - initial_save_data.task_result.done_works)
+                            done_work_num
                                 as u64
                         )
                     ),
@@ -340,6 +342,7 @@ impl DrawableTaskResult {
             numeric::Vector2u::new(2, 1)
         );
         effect_text.push(done_work_num_text);
+	ctx.savable_data.award_data.customer_count += done_work_num as u16;
 
         let mut money_desc_text = VerticalText::new(
             format!("収入"),

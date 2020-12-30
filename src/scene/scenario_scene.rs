@@ -96,6 +96,14 @@ impl ScenarioScene {
 	    builtin_command_inexec: false,
         };
 
+	let mut status_screen = SuzunaStatusScreen::new(
+            ctx,
+            &scenario_ctx,
+            numeric::Rect::new(30.0, 25.0, 700.0, 470.0),
+            0,
+        );
+	status_screen.hide();
+
         ScenarioScene {
             mouse_info: MouseInformation::new(),
             scenario_event: scenario,
@@ -109,12 +117,7 @@ impl ScenarioScene {
             event_list: DelayEventList::new(),
             graph_sample: graph_drawer,
             scene_transition: SceneID::Scenario,
-            status_screen: SuzunaStatusScreen::new(
-                ctx,
-                &scenario_ctx,
-                numeric::Rect::new(30.0, 25.0, 700.0, 470.0),
-                0,
-            ),
+            status_screen: status_screen,
             scene_transition_type: SceneTransition::Keep,
             scenario_ctx: scenario_ctx,
             clock: 0,
@@ -266,6 +269,11 @@ impl ScenarioScene {
 			    ctx.go_next_day();
 			}, self.get_current_clock() + 120);
 		    }
+		    "ShowStatusScreen" => {
+			self.status_screen.appear();
+			self.scenario_event.release_scenario_waiting();
+			self.scenario_ctx.wait_opecode_running = false;
+		    }
                     _ => (),
                 }
             }
@@ -297,9 +305,10 @@ impl ScenarioScene {
 	self.status_screen.change_main_page_money(ctx, money_diff, self.get_current_clock());
 	ctx.savable_data.task_result.total_money += money_diff;
 	
-	add_delay_event!(self.event_list, |slf, _, _| {
+	add_delay_event!(self.event_list, |slf, ctx, _| {
 	    slf.scene_transition = SceneID::SuzunaShop;
             slf.scene_transition_type = SceneTransition::SwapTransition;
+	    ctx.savable_data.award_data.shop_work_count += 1;
 	}, self.get_current_clock() + 300);
 	add_delay_event!(self.event_list, |slf, _, _| {
 	    slf.scenario_ctx.builtin_command_inexec = false;
@@ -341,6 +350,7 @@ impl ScenarioScene {
 	add_delay_event!(self.event_list, |slf, ctx, _| {
 	    slf.scene_transition = SceneID::Scenario;
             slf.scene_transition_type = SceneTransition::SwapTransition;
+	    ctx.savable_data.award_data.going_out_count += 1;
 	    ctx.go_next_day();
 	}, self.get_current_clock() + 200);
 	add_delay_event!(self.event_list, |slf, _, _| {
@@ -374,6 +384,7 @@ impl ScenarioScene {
 	add_delay_event!(self.event_list, |slf, ctx, _| {
 	    slf.scene_transition = SceneID::Scenario;
             slf.scene_transition_type = SceneTransition::SwapTransition;
+	    ctx.savable_data.award_data.taking_rest_count += 1;
 	    ctx.go_next_day();
 	}, self.get_current_clock() + 300);
 	add_delay_event!(self.event_list, |slf, _, _| {

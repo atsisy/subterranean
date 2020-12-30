@@ -1,22 +1,23 @@
-
 use torifune::core::*;
 use torifune::device::*;
 use torifune::graphics::drawable::*;
 use torifune::graphics::object::*;
 use torifune::sound::*;
 
-use crate::{core::{MouseInformation, SoundID, SuzuContext, TextureID, TileBatchTextureID}, object::{effect_object::{SceneTransitionEffectType, TilingEffectType}, map_object::MapObject}};
+use crate::{core::{MouseInformation, SoundID, SuzuContext, TextureID, TileBatchTextureID, WINDOW_SIZE_X, WINDOW_SIZE_Y}, object::{effect_object::{SceneTransitionEffectType, TilingEffectType}, map_object::MapObject}};
 use crate::object::character_factory;
 use crate::object::effect_object;
 use crate::object::title_object::*;
 use crate::scene::*;
 use crate::flush_delay_event;
 use crate::add_delay_event;
+use crate::object::end_object::*;
 
 pub struct EndScene {
     mouse_info: MouseInformation,
     background: UniTexture,
     event_list: DelayEventList<Self>,
+    end_flow: EndSceneFlow,
     scene_transition_effect: Option<effect_object::ScreenTileEffect>,
     scene_transition: SceneID,
     scene_transition_type: SceneTransition,
@@ -75,6 +76,7 @@ impl EndScene {
             mouse_info: MouseInformation::new(),
             background: background,
             event_list: event_list,
+	    end_flow: EndSceneFlow::new(ctx, 0),
             scene_transition_effect: scene_transition_effect,
             scene_transition: SceneID::Save,
             scene_transition_type: SceneTransition::Keep,
@@ -157,6 +159,8 @@ impl SceneManager for EndScene {
         let t = self.get_current_clock();
 
 	self.walking_kosuzu.update_texture(t);
+	self.walking_kosuzu.move_map(numeric::Vector2f::new(-0.3, 0.0));
+	self.walking_kosuzu.update_display_position(&numeric::Rect::new(0.0, 0.0, WINDOW_SIZE_X as f32, WINDOW_SIZE_Y as f32));
 	ctx.process_utility.redraw();
 	
         if let Some(transition_effect) = self.scene_transition_effect.as_mut() {
@@ -167,11 +171,14 @@ impl SceneManager for EndScene {
         if flush_delay_event!(self, self.event_list, ctx, self.get_current_clock()) > 0 {
             ctx.process_utility.redraw();
         }
+
+	self.end_flow.update(ctx, t);
     }
 
     fn drawing_process(&mut self, ctx: &mut ggez::Context) {
         self.background.draw(ctx).unwrap();
 
+	self.end_flow.draw(ctx).unwrap();
 	self.walking_kosuzu.draw(ctx).unwrap();
 
         if let Some(transition_effect) = self.scene_transition_effect.as_mut() {

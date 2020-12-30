@@ -518,7 +518,7 @@ impl BookInformation {
     }
 }
 
-#[derive(Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub enum RentalLimit {
     ShortTerm = 0,
     LongTerm,
@@ -1524,7 +1524,8 @@ impl SuzunaBookPool {
             let book_info = self
                 .books
                 .swap_remove(rand::random::<usize>() % self.books.len());
-	    if returning_books.iter().filter(|info| info.name == book_info.name).count() != 0 {
+	    if returning_books.iter()
+                .any(|info| info.name == book_info.name) {
 		// 既に同じ本を取り出している
 		self.push_book(book_info);
 		continue;
@@ -1615,6 +1616,7 @@ pub struct SavableData {
     pub suzunaan_status: SuzunaAnStatus,
     pub ad_status: HashMap<SuzunaAdType, bool>,
     pub agency_status: HashMap<SuzunaAdAgencyType, bool>,
+    pub award_data: game_system::AwardData,
 }
 
 impl SavableData {
@@ -1654,6 +1656,7 @@ impl SavableData {
 	    record_book_data: record_book_data,
             ad_status: ad_status,
 	    agency_status: ad_agency_status,
+	    award_data: game_system::AwardData::new(),
         }
     }
 
@@ -1800,6 +1803,10 @@ impl ResultReport {
         }
 
         return true;
+    }
+
+    pub fn get_conition_eval_mistakes(&self) -> usize {
+	self.condition_eval_mistakes
     }
 }
 

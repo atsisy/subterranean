@@ -2628,10 +2628,12 @@ impl ChatBox {
 
     pub fn set_partner_name(&mut self, name: String) {
         self.partner_name = Some(name);
+	self.draw_request = DrawRequest::Draw;
     }
 
     pub fn set_my_name(&mut self, name: String) {
         self.my_name = Some(name);
+	self.draw_request = DrawRequest::Draw;
     }
 
     fn put_message_in_default_place<'a>(&mut self, ctx: &mut SuzuContext<'a>) {
@@ -2655,6 +2657,7 @@ impl ChatBox {
 
             text.set_position(numeric::Point2f::new(x_pos, left_buttom_y));
         }
+	self.draw_request = DrawRequest::Draw;
     }
 
     fn last_person(&self) -> Option<ChatBoxPerson> {
@@ -2703,6 +2706,7 @@ impl ChatBox {
         };
         self.messages
             .push((ChatBoxPerson::SystemName(justified), system_text));
+	self.draw_request = DrawRequest::Draw;
     }
 
     fn add_message<'a>(&mut self, ctx: &mut SuzuContext<'a>, msg: String, person: ChatBoxPerson) {
@@ -2733,10 +2737,12 @@ impl ChatBox {
     }
 
     pub fn add_message_as_partner<'a>(&mut self, ctx: &mut SuzuContext<'a>, msg: String) {
+	self.draw_request = DrawRequest::Draw;
         self.add_message(ctx, msg, ChatBoxPerson::Partner)
     }
 
     pub fn add_message_as_mine<'a>(&mut self, ctx: &mut SuzuContext<'a>, msg: String) {
+	self.draw_request = DrawRequest::Draw;
         self.add_message(ctx, msg, ChatBoxPerson::Me)
     }
 }

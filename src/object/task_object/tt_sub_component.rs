@@ -523,7 +523,7 @@ impl BookConditionEvalReport {
     }
 }
 
-#[derive(Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct BorrowingRecordBookPageData {
     pub borrowing_book_title: Vec<(numeric::Vector2u, BookInformation)>,
     pub borrowing_book_status: Vec<(numeric::Vector2u, BookCondition)>,
@@ -547,6 +547,7 @@ impl BorrowingRecordBookPageData {
 	if !self.is_maybe_waiting_returning() {
 	    return None;
 	}
+
 	
 	return Some(ReturnBookInformation::new(
 	    self.borrowing_book_title.iter().map(|elem| elem.1.clone()).collect(),
@@ -567,14 +568,7 @@ impl From<&ReturnBookInformation> for BorrowingRecordBookPageData {
                  book_info.clone()),
             );
         }
-
-        for (index, book_info) in info.returning.iter().enumerate() {
-            borrowing_book_title.push(
-                (numeric::Vector2u::new((4 - index) as u32, 0),
-                book_info.clone()),
-            );
-        }
-
+	
         BorrowingRecordBookPageData {
             borrowing_book_title: borrowing_book_title,
             borrowing_book_status: Vec::new(),
@@ -588,7 +582,7 @@ impl From<&ReturnBookInformation> for BorrowingRecordBookPageData {
     }
 }
 
-#[derive(Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct BorrowingRecordBookData {
     pub pages_data: Vec<BorrowingRecordBookPageData>,
 }
@@ -1981,6 +1975,7 @@ pub struct BorrowingRecordBook {
     prev_page_ope_mesh: UniTexture,
     //scope: AlphaScope,
     canvas: MovableWrap<SubScreen>,
+    page_data_backup: BorrowingRecordBookData,
 }
 
 impl BorrowingRecordBook {
@@ -1991,6 +1986,7 @@ impl BorrowingRecordBook {
         mut book_data: BorrowingRecordBookData,
         t: Clock,
     ) -> Self {
+	let backup = book_data.clone();
         let pages = {
             let mut pages = Vec::new();
 
@@ -2043,7 +2039,28 @@ impl BorrowingRecordBook {
                 0,
             ),
             //scope: AlphaScope::new(ctx, 50, 230, numeric::Point2f::new(100.0, 100.0), 0),
+	    page_data_backup: backup,
         }
+    }
+
+    pub fn reset_pages_data<'a>(&mut self, ctx: &mut SuzuContext<'a>, t: Clock) {
+	self.pages = {
+            let mut pages = Vec::new();
+
+            for page_data in self.page_data_backup.pages_data.iter() {
+                pages.push(BorrowingRecordBookPage::new(
+                    ctx,
+                    self.rect,
+                    TextureID::Paper1,
+                    page_data.clone(),
+                    t,
+                ));
+            }
+
+            pages
+        };
+	ctx.process_utility.redraw();
+	self.redraw_request = DrawRequest::Draw;
     }
 
     pub fn add_empty_page<'a>(&mut self, ctx: &mut SuzuContext<'a>, t: Clock) -> &Self {

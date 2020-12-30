@@ -74,6 +74,13 @@ impl TaskScene {
             animation_time + 1,
         );
 
+	if let Some(customer_request) = customer_request.as_ref() {
+	    match customer_request {
+		CustomerRequest::Borrowing(_) => ctx.savable_data.award_data.borrowing_count += 1,
+		CustomerRequest::Returning(_) => ctx.savable_data.award_data.returning_count += 1,
+	    }
+	}
+
         TaskScene {
             task_table: TaskTable::new(
                 ctx,

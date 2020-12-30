@@ -10,16 +10,53 @@ fn create_playable_doremy1<'a>(
     camera: &numeric::Rect,
     map_position: numeric::Point2f,
 ) -> MapObject {
+    let textures = vec![
+        vec![
+            ctx.ref_texture(TextureID::KosuzuDotFront2),
+            ctx.ref_texture(TextureID::KosuzuDotFront3),
+        ],
+        vec![
+            ctx.ref_texture(TextureID::KosuzuDotBack2),
+            ctx.ref_texture(TextureID::KosuzuDotBack3),
+        ],
+        vec![
+            ctx.ref_texture(TextureID::KosuzuDotRight1),
+            ctx.ref_texture(TextureID::KosuzuDotRight2),
+	    ctx.ref_texture(TextureID::KosuzuDotRight1),
+	    ctx.ref_texture(TextureID::KosuzuDotRight3),
+        ],
+        vec![
+            ctx.ref_texture(TextureID::KosuzuDotLeft1),
+            ctx.ref_texture(TextureID::KosuzuDotLeft2),
+	    ctx.ref_texture(TextureID::KosuzuDotLeft1),
+	    ctx.ref_texture(TextureID::KosuzuDotLeft3),
+        ],
+	vec![
+            ctx.ref_texture(TextureID::KosuzuDotFront1),
+	],
+	vec![
+            ctx.ref_texture(TextureID::KosuzuDotBack1),
+	],
+	vec![
+            ctx.ref_texture(TextureID::KosuzuDotRight1),
+	],
+	vec![
+            ctx.ref_texture(TextureID::KosuzuDotLeft1),
+	]
+    ];
+
+    let obj = Box::new(UniTexture::new(
+        ctx.ref_texture(TextureID::KosuzuDotFront1),
+        mp::map_to_display(&map_position, camera),
+        numeric::Vector2f::new(1.5, 1.5),
+        0.0,
+        0,
+    ));
+    
     MapObject::new(
         tobj::SimpleObject::new(
             tobj::MovableUniTexture::new(
-                Box::new(UniTexture::new(
-                    ctx.ref_texture(TextureID::KosuzuDotFront1),
-                    mp::map_to_display(&map_position, camera),
-                    numeric::Vector2f::new(1.5, 1.5),
-                    0.0,
-                    0,
-                )),
+                obj,
                 None,
                 0,
             ),
@@ -35,40 +72,7 @@ fn create_playable_doremy1<'a>(
 	    ObjectDirection::StopRight,
 	    ObjectDirection::StopLeft,
         ],
-        vec![
-            vec![
-                ctx.ref_texture(TextureID::KosuzuDotFront2),
-                ctx.ref_texture(TextureID::KosuzuDotFront3),
-            ],
-            vec![
-                ctx.ref_texture(TextureID::KosuzuDotBack2),
-                ctx.ref_texture(TextureID::KosuzuDotBack3),
-            ],
-            vec![
-                ctx.ref_texture(TextureID::KosuzuDotRight1),
-                ctx.ref_texture(TextureID::KosuzuDotRight2),
-		ctx.ref_texture(TextureID::KosuzuDotRight1),
-		ctx.ref_texture(TextureID::KosuzuDotRight3),
-            ],
-            vec![
-                ctx.ref_texture(TextureID::KosuzuDotLeft1),
-                ctx.ref_texture(TextureID::KosuzuDotLeft2),
-		ctx.ref_texture(TextureID::KosuzuDotLeft1),
-		ctx.ref_texture(TextureID::KosuzuDotLeft3),
-            ],
-	    vec![
-                ctx.ref_texture(TextureID::KosuzuDotFront1),
-	    ],
-	    vec![
-                ctx.ref_texture(TextureID::KosuzuDotBack1),
-	    ],
-	    vec![
-                ctx.ref_texture(TextureID::KosuzuDotRight1),
-	    ],
-	    vec![
-                ctx.ref_texture(TextureID::KosuzuDotLeft1),
-	    ]
-        ],
+        textures,
         ObjectDirection::StopDown,
         TextureSpeedInfo::new(
             numeric::Vector2f::new(0.0, 0.0),
@@ -90,16 +94,53 @@ fn create_customer_sample<'a>(
     camera: &numeric::Rect,
     map_position: numeric::Point2f,
 ) -> MapObject {
+    let textures = vec![
+        vec![
+            ctx.ref_texture(TextureID::KosuzuDotFront2),
+            ctx.ref_texture(TextureID::KosuzuDotFront3),
+        ],
+        vec![
+            ctx.ref_texture(TextureID::KosuzuDotBack2),
+            ctx.ref_texture(TextureID::KosuzuDotBack3),
+        ],
+        vec![
+            ctx.ref_texture(TextureID::KosuzuDotRight1),
+            ctx.ref_texture(TextureID::KosuzuDotRight2),
+	    ctx.ref_texture(TextureID::KosuzuDotRight1),
+	    ctx.ref_texture(TextureID::KosuzuDotRight3),
+        ],
+        vec![
+            ctx.ref_texture(TextureID::KosuzuDotLeft1),
+            ctx.ref_texture(TextureID::KosuzuDotLeft2),
+	    ctx.ref_texture(TextureID::KosuzuDotLeft1),
+	    ctx.ref_texture(TextureID::KosuzuDotLeft3),
+        ],
+	vec![
+            ctx.ref_texture(TextureID::KosuzuDotFront1),
+	],
+	vec![
+            ctx.ref_texture(TextureID::KosuzuDotBack1),
+	],
+	vec![
+            ctx.ref_texture(TextureID::KosuzuDotRight1),
+	],
+	vec![
+            ctx.ref_texture(TextureID::KosuzuDotLeft1),
+	]
+    ];
+
+    let obj = Box::new(UniTexture::new(
+        ctx.ref_texture(TextureID::KosuzuDotFront1),
+        mp::map_to_display(&map_position, camera),
+        numeric::Vector2f::new(1.5, 1.5),
+        0.0,
+        0,
+    ));
+    
     MapObject::new(
         tobj::SimpleObject::new(
             tobj::MovableUniTexture::new(
-                Box::new(UniTexture::new(
-                    ctx.ref_texture(TextureID::KosuzuDotFront1),
-                    mp::map_to_display(&map_position, camera),
-                    numeric::Vector2f::new(1.5, 1.5),
-                    0.0,
-                    0,
-                )),
+                obj,
                 None,
                 0,
             ),
@@ -115,40 +156,7 @@ fn create_customer_sample<'a>(
 	    ObjectDirection::StopRight,
 	    ObjectDirection::StopLeft,
         ],
-        vec![
-            vec![
-                ctx.ref_texture(TextureID::KosuzuDotFront2),
-                ctx.ref_texture(TextureID::KosuzuDotFront3),
-            ],
-            vec![
-                ctx.ref_texture(TextureID::KosuzuDotBack2),
-                ctx.ref_texture(TextureID::KosuzuDotBack3),
-            ],
-            vec![
-                ctx.ref_texture(TextureID::KosuzuDotRight1),
-                ctx.ref_texture(TextureID::KosuzuDotRight2),
-		ctx.ref_texture(TextureID::KosuzuDotRight1),
-		ctx.ref_texture(TextureID::KosuzuDotRight3),
-            ],
-            vec![
-                ctx.ref_texture(TextureID::KosuzuDotLeft1),
-                ctx.ref_texture(TextureID::KosuzuDotLeft2),
-		ctx.ref_texture(TextureID::KosuzuDotLeft1),
-		ctx.ref_texture(TextureID::KosuzuDotLeft3),
-            ],
-	    vec![
-                ctx.ref_texture(TextureID::KosuzuDotFront1),
-	    ],
-	    vec![
-                ctx.ref_texture(TextureID::KosuzuDotBack1),
-	    ],
-	    vec![
-                ctx.ref_texture(TextureID::KosuzuDotRight1),
-	    ],
-	    vec![
-                ctx.ref_texture(TextureID::KosuzuDotLeft1),
-	    ]
-        ],
+        textures,
         ObjectDirection::MoveDown,
         TextureSpeedInfo::new(
             numeric::Vector2f::new(0.0, 0.0),
@@ -170,16 +178,60 @@ pub fn create_endroll_sample<'a>(
     camera: &numeric::Rect,
     map_position: numeric::Point2f,
 ) -> MapObject {
+    let mut textures = vec![
+        vec![
+            ctx.ref_texture(TextureID::KosuzuDotFront2),
+            ctx.ref_texture(TextureID::KosuzuDotFront3),
+        ],
+        vec![
+            ctx.ref_texture(TextureID::KosuzuDotBack2),
+            ctx.ref_texture(TextureID::KosuzuDotBack3),
+        ],
+        vec![
+            ctx.ref_texture(TextureID::KosuzuDotRight1),
+            ctx.ref_texture(TextureID::KosuzuDotRight2),
+	    ctx.ref_texture(TextureID::KosuzuDotRight1),
+	    ctx.ref_texture(TextureID::KosuzuDotRight3),
+        ],
+        vec![
+            ctx.ref_texture(TextureID::KosuzuDotLeft1),
+            ctx.ref_texture(TextureID::KosuzuDotLeft2),
+	    ctx.ref_texture(TextureID::KosuzuDotLeft1),
+	    ctx.ref_texture(TextureID::KosuzuDotLeft3),
+        ],
+	vec![
+            ctx.ref_texture(TextureID::KosuzuDotFront1),
+	],
+	vec![
+            ctx.ref_texture(TextureID::KosuzuDotBack1),
+	],
+	vec![
+            ctx.ref_texture(TextureID::KosuzuDotRight1),
+	],
+	vec![
+            ctx.ref_texture(TextureID::KosuzuDotLeft1),
+	]
+    ];
+
+    for directions in textures.iter_mut() {
+	for texture in directions.iter_mut() {
+	    texture.set_filter(ggraphics::FilterMode::Nearest);
+	}
+    }
+
+    let mut obj = Box::new(UniTexture::new(
+        ctx.ref_texture(TextureID::KosuzuDotFront1),
+        mp::map_to_display(&map_position, camera),
+        numeric::Vector2f::new(2.0, 2.0),
+        0.0,
+        0,
+    ));
+    obj.set_filter(ggraphics::FilterMode::Nearest);
+    
     MapObject::new(
         tobj::SimpleObject::new(
             tobj::MovableUniTexture::new(
-                Box::new(UniTexture::new(
-                    ctx.ref_texture(TextureID::KosuzuDotFront1),
-                    mp::map_to_display(&map_position, camera),
-                    numeric::Vector2f::new(2.0, 2.0),
-                    0.0,
-                    0,
-                )),
+                obj,
                 None,
                 0,
             ),
@@ -195,40 +247,7 @@ pub fn create_endroll_sample<'a>(
 	    ObjectDirection::StopRight,
 	    ObjectDirection::StopLeft,
         ],
-        vec![
-            vec![
-                ctx.ref_texture(TextureID::KosuzuDotFront2),
-                ctx.ref_texture(TextureID::KosuzuDotFront3),
-            ],
-            vec![
-                ctx.ref_texture(TextureID::KosuzuDotBack2),
-                ctx.ref_texture(TextureID::KosuzuDotBack3),
-            ],
-            vec![
-                ctx.ref_texture(TextureID::KosuzuDotRight1),
-                ctx.ref_texture(TextureID::KosuzuDotRight2),
-		ctx.ref_texture(TextureID::KosuzuDotRight1),
-		ctx.ref_texture(TextureID::KosuzuDotRight3),
-            ],
-            vec![
-                ctx.ref_texture(TextureID::KosuzuDotLeft1),
-                ctx.ref_texture(TextureID::KosuzuDotLeft2),
-		ctx.ref_texture(TextureID::KosuzuDotLeft1),
-		ctx.ref_texture(TextureID::KosuzuDotLeft3),
-            ],
-	    vec![
-                ctx.ref_texture(TextureID::KosuzuDotFront1),
-	    ],
-	    vec![
-                ctx.ref_texture(TextureID::KosuzuDotBack1),
-	    ],
-	    vec![
-                ctx.ref_texture(TextureID::KosuzuDotRight1),
-	    ],
-	    vec![
-                ctx.ref_texture(TextureID::KosuzuDotLeft1),
-	    ]
-        ],
+        textures,
         ObjectDirection::MoveDown,
         TextureSpeedInfo::new(
             numeric::Vector2f::new(0.0, 0.0),
