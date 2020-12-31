@@ -170,6 +170,7 @@ pub enum FontID {
     JpFude1,
     CorpMincho,
     Cinema,
+    BitMap1,
 }
 
 impl FromStr for FontID {
@@ -180,6 +181,7 @@ impl FromStr for FontID {
             "JpFude1" => Ok(FontID::JpFude1),
             "CorpMincho" => Ok(FontID::CorpMincho),
             "Cinema" => Ok(FontID::Cinema),
+	    "BitMap1" => Ok(FontID::BitMap1),
             _ => Err(()),
         }
     }
@@ -397,6 +399,12 @@ pub const LARGE_BOOK_TEXTURE: [TextureID; 3] = [
     TextureID::LargeBook1,
     TextureID::LargeBook2,
     TextureID::LargeBook3,
+];
+
+pub const MIDDLE_BOOK_TEXTURE: [TextureID; 3] = [
+    TextureID::MiddleBook1,
+    TextureID::MiddleBook2,
+    TextureID::MiddleBook3,
 ];
 
 #[derive(Clone)]

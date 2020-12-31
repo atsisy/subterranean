@@ -76,7 +76,7 @@ texture_paths = [
 	      "/textures/50yen.png",
 	      "/textures/500yen.png"
 	      ]
-font_paths = ["/fonts/azuki.ttf", "/fonts/RiiT_F.ttf", "/fonts/OradanoGSRR.ttf", "/fonts/cinecaption226.ttf"]
+font_paths = ["/fonts/azuki.ttf", "/fonts/RiiT_F.ttf", "/fonts/OradanoGSRR.ttf", "/fonts/cinecaption226.ttf", "/fonts/JF-Dot-ShinonomeMaru12B.ttf"]
 tileset_paths = ["./resources/maps/suzunaan2/main.tmx"]
 scenario_table_path = "./resources/scenario_table.toml"
 customers_name = ["霧雨魔里沙", "稗田阿求", "a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k"]

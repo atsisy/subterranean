@@ -12,11 +12,16 @@ pub fn create_dobj_book<'a>(
     book_info: BookInformation,
     t: Clock,
 ) -> TaskItem {
-    let texture = *util::random_select(LARGE_BOOK_TEXTURE.iter()).unwrap();
+    let (texture, scale) = match book_info.size.as_str() {
+	"大判本" => (*util::random_select(LARGE_BOOK_TEXTURE.iter()).unwrap(), numeric::Vector2f::new(0.1, 0.1)),
+	"中判本" => (*util::random_select(MIDDLE_BOOK_TEXTURE.iter()).unwrap(), numeric::Vector2f::new(0.18, 0.18)),
+	_ => panic!("invalid book size info"),
+    };
+    
     let uni_texture = UniTexture::new(
         ctx.ref_texture(texture),
         numeric::Point2f::new(0.0, 0.0),
-        numeric::Vector2f::new(0.1, 0.1),
+	scale,
         0.0,
         0,
     );

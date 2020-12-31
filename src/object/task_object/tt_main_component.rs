@@ -1298,9 +1298,8 @@ impl SuzuMiniSight {
                 .move_diff(numeric::Vector2f::new(point.x - last.x, point.y - last.y));
 
 	    let obj_area = obj.get_object().get_drawing_area(ctx.context);
-	    let canvas_size = self.canvas.get_drawing_size(ctx.context);
-	    if obj_area.right() > canvas_size.x {
-		obj.get_object_mut().set_position(numeric::Point2f::new(canvas_size.x - obj_area.w, obj_area.y));
+	    if obj_area.right() > 766.0 {
+		obj.get_object_mut().set_position(numeric::Point2f::new(766.0 - obj_area.w, obj_area.y));
 	    }
 	    if obj_area.x < 0.0 {
 		obj.get_object_mut().set_position(numeric::Point2f::new(0.0, obj_area.y));

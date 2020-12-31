@@ -328,7 +328,7 @@ impl CustomerQueue {
         for index in (0..self.customer_queue.len()).rev() {
             let (_, t) = self.customer_queue.get(index).unwrap();
 
-            if (now - t) > 1200 {
+            if (now - t) > 12000 {
                 let (giveup, _) = self.customer_queue.remove(index).unwrap();
                 giveup_customers.push(giveup);
             }
@@ -453,6 +453,10 @@ impl GoToCheckCustomers {
         self.customers.iter_mut().for_each(|customer| {
             ShopScene::customer_move_and_collision_check(ctx, customer, camera, tile_map, t)
         });
+    }
+
+    pub fn len(&self) -> usize {
+	self.customers.len()
     }
 
     pub fn go_moving<'a>(
@@ -1854,13 +1858,7 @@ impl SceneManager for ShopScene {
             let mut rising_customers = self
                 .goto_check_customers
                 .drain_remove_if(|customer: &CustomerCharacter| customer.is_wait_on_clerk());
-            if rising_customers.len() > 0 {
-                self.goto_check_customers.reset_each_customers_goal(
-                    ctx,
-                    &self.map.tile_map,
-                    self.customer_queue.tail_map_position(),
-                );
-            }
+	    let reset_goto_check_customers_goal_flag = !rising_customers.is_empty();
 
             // 新しく客が列に並んだら、通知をする
             if !rising_customers.is_empty() {
@@ -1875,6 +1873,14 @@ impl SceneManager for ShopScene {
 
             for customer in rising_customers {
                 self.customer_queue.push_back(customer, t);
+            }
+
+	    if reset_goto_check_customers_goal_flag {
+                self.goto_check_customers.reset_each_customers_goal(
+                    ctx,
+                    &self.map.tile_map,
+                    self.customer_queue.tail_map_position(),
+                );
             }
 
             self.check_waiting_customer_giveup(ctx, t);
