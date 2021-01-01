@@ -1,9 +1,9 @@
+pub mod end_scene;
 pub mod save_scene;
 pub mod scenario_scene;
 pub mod shop_scene;
 pub mod suzuna_scene;
 pub mod title_scene;
-pub mod end_scene;
 
 use std::str::FromStr;
 
@@ -47,7 +47,7 @@ impl FromStr for SceneID {
             "WorkResult" => Ok(Self::DayResult),
             "Save" => Ok(Self::Save),
             "Title" => Ok(Self::Title),
-	    "End" => Ok(Self::End),
+            "End" => Ok(Self::End),
             _ => panic!("Error: EventTrigger::from_str"),
         }
     }
@@ -62,7 +62,7 @@ pub enum DrawRequest {
 
 impl DrawRequest {
     pub fn is_not_skip(&self) -> bool {
-	self != &DrawRequest::Skip
+        self != &DrawRequest::Skip
     }
 }
 
@@ -255,8 +255,8 @@ macro_rules! flush_delay_event {
 macro_rules! flush_delay_event_and_redraw_check {
     ($slf: expr, $event_list: expr, $ctx: expr, $t: expr, $handle:expr) => {{
         if flush_delay_event!($slf, $event_list, $ctx, $t) > 0 {
-	    $ctx.process_utility.redraw();
-	    let _ = $handle;
+            $ctx.process_utility.redraw();
+            let _ = $handle;
         }
     }};
 }

@@ -4,27 +4,27 @@ use std::collections::VecDeque;
 use ggez::graphics as ggraphics;
 use ggez::input::mouse::MouseButton;
 
-use torifune::{core::Clock, graphics::drawable::*};
 use torifune::graphics::object::sub_screen;
 use torifune::graphics::object::*;
 use torifune::numeric;
 use torifune::roundup2f;
+use torifune::{core::Clock, graphics::drawable::*};
 
 use torifune::graphics::object::sub_screen::SubScreen;
 
 use torifune::impl_drawable_object_for_wrapped;
 use torifune::impl_texture_object_for_wrapped;
 
-use crate::{core::game_system, scene::DrawRequest};
-use crate::core::*;
-use crate::object::util_object::*;
-use crate::object::simulation_ui::*;
-use crate::scene::scenario_scene::ScenarioContext;
-use crate::set_table_frame_cell_center;
-use crate::scene::DelayEventList;
 use crate::add_delay_event;
+use crate::core::*;
 use crate::flush_delay_event;
 use crate::flush_delay_event_and_redraw_check;
+use crate::object::simulation_ui::*;
+use crate::object::util_object::*;
+use crate::scene::scenario_scene::ScenarioContext;
+use crate::scene::DelayEventList;
+use crate::set_table_frame_cell_center;
+use crate::{core::game_system, scene::DrawRequest};
 
 use number_to_jk::number_to_jk;
 
@@ -70,7 +70,10 @@ impl SuzunaStatusMainPage {
 
         let mut desc_text = Vec::new();
 
-        for (index, s) in vec!["広告費", "予想広告効果", "予想広告収入", "所持金", "所用"].iter().enumerate() {
+        for (index, s) in vec!["広告費", "予想広告効果", "予想広告収入", "所持金", "所用"]
+            .iter()
+            .enumerate()
+        {
             let mut vtext = UniText::new(
                 s.to_string(),
                 numeric::Point2f::new(0.0, 0.0),
@@ -125,7 +128,7 @@ impl SuzunaStatusMainPage {
             numeric::Vector2u::new(1, 0)
         );
 
-	let mut ad_rep_gain_text = UniText::new(
+        let mut ad_rep_gain_text = UniText::new(
             format!("{}点", ctx.current_total_ad_reputation_gain()),
             numeric::Point2f::new(0.0, 0.0),
             numeric::Vector2f::new(1.0, 1.0),
@@ -137,12 +140,11 @@ impl SuzunaStatusMainPage {
         set_table_frame_cell_center!(
             ctx.context,
             table_frame,
-	    ad_rep_gain_text,
+            ad_rep_gain_text,
             numeric::Vector2u::new(1, 1)
         );
 
-	
-	let mut ad_money_gain_text = UniText::new(
+        let mut ad_money_gain_text = UniText::new(
             format!("{}円", ctx.current_total_ad_agency_money_gain()),
             numeric::Point2f::new(0.0, 0.0),
             numeric::Vector2f::new(1.0, 1.0),
@@ -154,15 +156,19 @@ impl SuzunaStatusMainPage {
         set_table_frame_cell_center!(
             ctx.context,
             table_frame,
-	    ad_money_gain_text,
+            ad_money_gain_text,
             numeric::Vector2u::new(1, 2)
         );
 
-	let mut todays_sched_text = UniText::new(
-            format!("{}",
-		    if let Some(sched) = ctx.savable_data.get_todays_schedule() {
-			sched.to_string_jp()
-		    } else { "未定".to_string() }),
+        let mut todays_sched_text = UniText::new(
+            format!(
+                "{}",
+                if let Some(sched) = ctx.savable_data.get_todays_schedule() {
+                    sched.to_string_jp()
+                } else {
+                    "未定".to_string()
+                }
+            ),
             numeric::Point2f::new(0.0, 0.0),
             numeric::Vector2f::new(1.0, 1.0),
             0.0,
@@ -173,26 +179,26 @@ impl SuzunaStatusMainPage {
         set_table_frame_cell_center!(
             ctx.context,
             table_frame,
-	    todays_sched_text,
+            todays_sched_text,
             numeric::Vector2u::new(1, 4)
         );
 
-	let reputation_meter = ResultMeter::new(
+        let reputation_meter = ResultMeter::new(
             ctx,
-	    "評判".to_string(),
+            "評判".to_string(),
             numeric::Rect::new(90.0, 290.0, 400.0, 40.0),
-	    6.0,
-	    100.0,
+            6.0,
+            100.0,
             ctx.savable_data.suzunaan_status.reputation,
             1,
-	);
-	
-	let hp_meter = ResultMeter::new(
+        );
+
+        let hp_meter = ResultMeter::new(
             ctx,
-	    "意欲".to_string(),
+            "意欲".to_string(),
             numeric::Rect::new(90.0, 360.0, 400.0, 40.0),
-	    6.0,
-	    100.0,
+            6.0,
+            100.0,
             ctx.savable_data.suzunaan_status.kosuzu_hp,
             1,
         );
@@ -213,57 +219,62 @@ impl SuzunaStatusMainPage {
                 large_scale_font,
             ),
             money_text: money_text,
-	    ad_cost_text: total_ad_cost_text,
-	    ad_rep_gain_text: ad_rep_gain_text,
-	    ad_money_gain_text: ad_money_gain_text,
-	    todays_sched_text: todays_sched_text,
-	    reputation_meter: reputation_meter,
-	    hp_meter: hp_meter,
-	    event_list: DelayEventList::new(),
+            ad_cost_text: total_ad_cost_text,
+            ad_rep_gain_text: ad_rep_gain_text,
+            ad_money_gain_text: ad_money_gain_text,
+            todays_sched_text: todays_sched_text,
+            reputation_meter: reputation_meter,
+            hp_meter: hp_meter,
+            event_list: DelayEventList::new(),
             drwob_essential: DrawableObjectEssential::new(true, 0),
         }
     }
 
     pub fn change_kosuzu_hp<'a>(&mut self, ctx: &mut SuzuContext<'a>, diff_hp: f32) {
-	self.hp_meter.apply_offset(ctx, diff_hp, 100);
+        self.hp_meter.apply_offset(ctx, diff_hp, 100);
     }
 
     pub fn change_suzunaan_reputation<'a>(&mut self, ctx: &mut SuzuContext<'a>, diff_hp: f32) {
-	self.reputation_meter.apply_offset(ctx, diff_hp, 100);
+        self.reputation_meter.apply_offset(ctx, diff_hp, 100);
     }
 
     pub fn run_money_change_effect<'a>(&mut self, ctx: &mut SuzuContext<'a>, diff: i32, t: Clock) {
-	let diff_per_clock = diff as f32 / 60.0;
-	let current_money = ctx.savable_data.task_result.total_money;
-	
-	for additional in 1..=60 {
-	    if additional % 5 != 0 {
-		continue;
-	    }
-	    
-	    add_delay_event!(self.event_list, move |slf, ctx, _| {
-		slf.money_text.replace_text(
-		    &format!(
-			"{}円",
-			number_to_jk((current_money as f32 + (diff_per_clock * additional as f32) as f32) as u64)
-		    )
-		);
+        let diff_per_clock = diff as f32 / 60.0;
+        let current_money = ctx.savable_data.task_result.total_money;
 
-		set_table_frame_cell_center!(
-		    ctx.context,
-		    slf.table_frame,
-		    slf.money_text,
-		    numeric::Vector2u::new(1, 3)
-		);
+        for additional in 1..=60 {
+            if additional % 5 != 0 {
+                continue;
+            }
 
-		ctx.process_utility.redraw();
-	
-	    }, t + additional);
-	}
+            add_delay_event!(
+                self.event_list,
+                move |slf, ctx, _| {
+                    slf.money_text.replace_text(&format!(
+                        "{}円",
+                        number_to_jk(
+                            (current_money as f32 + (diff_per_clock * additional as f32) as f32)
+                                as u64
+                        )
+                    ));
+
+                    set_table_frame_cell_center!(
+                        ctx.context,
+                        slf.table_frame,
+                        slf.money_text,
+                        numeric::Vector2u::new(1, 3)
+                    );
+
+                    ctx.process_utility.redraw();
+                },
+                t + additional
+            );
+        }
     }
 
     pub fn update_ad_and_agency_status<'a>(&mut self, ctx: &mut SuzuContext<'a>) {
-	self.ad_cost_text.replace_text(&format!("{}円", ctx.current_total_ad_cost()));
+        self.ad_cost_text
+            .replace_text(&format!("{}円", ctx.current_total_ad_cost()));
         set_table_frame_cell_center!(
             ctx.context,
             self.table_frame,
@@ -271,44 +282,49 @@ impl SuzunaStatusMainPage {
             numeric::Vector2u::new(1, 0)
         );
 
-	self.ad_rep_gain_text.replace_text(&format!("{}点", ctx.current_total_ad_reputation_gain()));
+        self.ad_rep_gain_text
+            .replace_text(&format!("{}点", ctx.current_total_ad_reputation_gain()));
         set_table_frame_cell_center!(
             ctx.context,
             self.table_frame,
-	    self.ad_rep_gain_text,
+            self.ad_rep_gain_text,
             numeric::Vector2u::new(1, 1)
         );
 
-	self.ad_money_gain_text.replace_text(&format!("{}円", ctx.current_total_ad_agency_money_gain()));
+        self.ad_money_gain_text
+            .replace_text(&format!("{}円", ctx.current_total_ad_agency_money_gain()));
         set_table_frame_cell_center!(
             ctx.context,
             self.table_frame,
-	    self.ad_money_gain_text,
+            self.ad_money_gain_text,
             numeric::Vector2u::new(1, 2)
         );
     }
 
     pub fn update<'a>(&mut self, ctx: &mut SuzuContext<'a>, t: Clock) -> DrawRequest {
-	let mut request = self.reputation_meter.effect(ctx) |
-	self.hp_meter.effect(ctx);
+        let mut request = self.reputation_meter.effect(ctx) | self.hp_meter.effect(ctx);
 
-        flush_delay_event_and_redraw_check!(self, self.event_list, ctx, t, { request = DrawRequest::Draw; });
+        flush_delay_event_and_redraw_check!(self, self.event_list, ctx, t, {
+            request = DrawRequest::Draw;
+        });
 
-	return request;
+        return request;
     }
 
     pub fn update_todays_sched_text<'a>(&mut self, ctx: &mut SuzuContext<'a>) {
-	self.todays_sched_text.replace_text(
-            &format!("{}",
-		    if let Some(sched) = ctx.savable_data.get_todays_schedule() {
-			sched.to_string_jp()
-		    } else { "未定".to_string() }),
-	);
+        self.todays_sched_text.replace_text(&format!(
+            "{}",
+            if let Some(sched) = ctx.savable_data.get_todays_schedule() {
+                sched.to_string_jp()
+            } else {
+                "未定".to_string()
+            }
+        ));
 
-	set_table_frame_cell_center!(
+        set_table_frame_cell_center!(
             ctx.context,
             self.table_frame,
-	    self.todays_sched_text,
+            self.todays_sched_text,
             numeric::Vector2u::new(1, 4)
         );
     }
@@ -324,14 +340,14 @@ impl DrawableComponent for SuzunaStatusMainPage {
                 vtext.draw(ctx).unwrap();
             }
 
-	    self.ad_cost_text.draw(ctx)?;
-	    self.ad_rep_gain_text.draw(ctx)?;
-	    self.ad_money_gain_text.draw(ctx)?;
+            self.ad_cost_text.draw(ctx)?;
+            self.ad_rep_gain_text.draw(ctx)?;
+            self.ad_money_gain_text.draw(ctx)?;
             self.money_text.draw(ctx).unwrap();
-	    self.todays_sched_text.draw(ctx)?;
+            self.todays_sched_text.draw(ctx)?;
 
-	    self.reputation_meter.draw(ctx)?;
-	    self.hp_meter.draw(ctx)?;
+            self.reputation_meter.draw(ctx)?;
+            self.hp_meter.draw(ctx)?;
         }
 
         Ok(())
@@ -514,7 +530,7 @@ impl ScenarioAdPage {
                     "{:　<7}{:　>4}円/日\n {:　>7}点評判増加",
                     ty_str,
                     ctx.resource.get_default_ad_cost(*ad_type),
-		    ctx.resource.get_default_ad_reputation_gain(*ad_type),
+                    ctx.resource.get_default_ad_reputation_gain(*ad_type),
                 ),
                 depth,
             );
@@ -561,9 +577,9 @@ impl ScenarioAdPage {
     }
 
     pub fn total_ad_cost<'a>(&self, ctx: &mut SuzuContext<'a>) -> i32 {
-	let mut total_ad_cost = 0;
-	
-	for ad_type in vec![
+        let mut total_ad_cost = 0;
+
+        for ad_type in vec![
             SuzunaAdType::AdPaper,
             SuzunaAdType::Chindon,
             SuzunaAdType::ShopNobori,
@@ -571,19 +587,18 @@ impl ScenarioAdPage {
             SuzunaAdType::NewsPaper,
             SuzunaAdType::BunBunMaruPaper,
         ] {
-	    if self.ad_table.get(&ad_type).unwrap().is_checked() {
-		total_ad_cost +=
-		    ctx.resource.get_default_ad_cost(ad_type);
-	    }
-	}
+            if self.ad_table.get(&ad_type).unwrap().is_checked() {
+                total_ad_cost += ctx.resource.get_default_ad_cost(ad_type);
+            }
+        }
 
-	return total_ad_cost as i32;
+        return total_ad_cost as i32;
     }
 
     pub fn total_ad_reputation_gain<'a>(&self, ctx: &mut SuzuContext<'a>) -> i32 {
-	let mut total_ad_reputation_gain = 0;
-	
-	for ad_type in vec![
+        let mut total_ad_reputation_gain = 0;
+
+        for ad_type in vec![
             SuzunaAdType::AdPaper,
             SuzunaAdType::Chindon,
             SuzunaAdType::ShopNobori,
@@ -591,13 +606,12 @@ impl ScenarioAdPage {
             SuzunaAdType::NewsPaper,
             SuzunaAdType::BunBunMaruPaper,
         ] {
-	    if self.ad_table.get(&ad_type).unwrap().is_checked() {
-		total_ad_reputation_gain +=
-		    ctx.resource.get_default_ad_reputation_gain(ad_type);
-	    }
-	}
+            if self.ad_table.get(&ad_type).unwrap().is_checked() {
+                total_ad_reputation_gain += ctx.resource.get_default_ad_reputation_gain(ad_type);
+            }
+        }
 
-	return total_ad_reputation_gain as i32;
+        return total_ad_reputation_gain as i32;
     }
 }
 
@@ -700,7 +714,7 @@ impl ScenarioAgencyPage {
                     "{:　<6}評判{:　>2}点以上\n{:　>9}円収入増加",
                     ty_str,
                     ctx.resource.get_default_ad_agency_cost(ad_type),
-		    ctx.resource.get_default_ad_agency_money_gain(ad_type),
+                    ctx.resource.get_default_ad_agency_money_gain(ad_type),
                 ),
                 depth,
             );
@@ -740,52 +754,53 @@ impl ScenarioAgencyPage {
 
     pub fn click_handler<'a>(&mut self, ctx: &mut SuzuContext<'a>, click_point: numeric::Point2f) {
         for (ad_type, entry) in self.ad_table.iter_mut() {
-	    if ctx.resource.get_default_ad_agency_cost(ad_type) as f32 <= ctx.savable_data.suzunaan_status.reputation {
-		entry.check_box.click_handler(click_point);
-		ctx.savable_data
+            if ctx.resource.get_default_ad_agency_cost(ad_type) as f32
+                <= ctx.savable_data.suzunaan_status.reputation
+            {
+                entry.check_box.click_handler(click_point);
+                ctx.savable_data
                     .change_ad_agency_status(*ad_type, entry.is_checked());
-	    }
+            }
         }
     }
 
     pub fn total_ad_agency_cost<'a>(&self, ctx: &mut SuzuContext<'a>) -> i32 {
-	let mut total_ad_cost = 0;
-	
-	for ad_type in vec![
+        let mut total_ad_cost = 0;
+
+        for ad_type in vec![
             SuzunaAdAgencyType::HakureiJinja,
-	    SuzunaAdAgencyType::KirisameMahoten,
+            SuzunaAdAgencyType::KirisameMahoten,
             SuzunaAdAgencyType::GettoDango,
             SuzunaAdAgencyType::Kusuriya,
-	    SuzunaAdAgencyType::Hieda,
-	    SuzunaAdAgencyType::YamaJinja,
+            SuzunaAdAgencyType::Hieda,
+            SuzunaAdAgencyType::YamaJinja,
         ] {
-	    if self.ad_table.get(&ad_type).unwrap().is_checked() {
-		total_ad_cost +=
-		    ctx.resource.get_default_ad_agency_cost(&ad_type);
-	    }
-	}
+            if self.ad_table.get(&ad_type).unwrap().is_checked() {
+                total_ad_cost += ctx.resource.get_default_ad_agency_cost(&ad_type);
+            }
+        }
 
-	return total_ad_cost as i32;
+        return total_ad_cost as i32;
     }
 
     pub fn total_ad_agency_money_gain<'a>(&self, ctx: &mut SuzuContext<'a>) -> i32 {
-	let mut total_ad_agency_money_gain = 0;
-	
-	for ad_type in vec![
+        let mut total_ad_agency_money_gain = 0;
+
+        for ad_type in vec![
             SuzunaAdAgencyType::HakureiJinja,
-	    SuzunaAdAgencyType::KirisameMahoten,
+            SuzunaAdAgencyType::KirisameMahoten,
             SuzunaAdAgencyType::GettoDango,
             SuzunaAdAgencyType::Kusuriya,
-	    SuzunaAdAgencyType::Hieda,
-	    SuzunaAdAgencyType::YamaJinja,
+            SuzunaAdAgencyType::Hieda,
+            SuzunaAdAgencyType::YamaJinja,
         ] {
-	    if self.ad_table.get(&ad_type).unwrap().is_checked() {
-		total_ad_agency_money_gain +=
-		    ctx.resource.get_default_ad_agency_money_gain(&ad_type);
-	    }
-	}
+            if self.ad_table.get(&ad_type).unwrap().is_checked() {
+                total_ad_agency_money_gain +=
+                    ctx.resource.get_default_ad_agency_money_gain(&ad_type);
+            }
+        }
 
-	return total_ad_agency_money_gain as i32;
+        return total_ad_agency_money_gain as i32;
     }
 }
 
@@ -857,12 +872,12 @@ impl SuzunaStatusPages {
                 numeric::Vector2f::new(rect.w, rect.h),
                 0,
             ),
-	    ad_agency_page: ScenarioAgencyPage::new(
-		ctx,
+            ad_agency_page: ScenarioAgencyPage::new(
+                ctx,
                 numeric::Point2f::new(0.0, 0.0),
                 numeric::Vector2f::new(rect.w, rect.h),
                 0,
-	    ),
+            ),
             sched_page: ScenarioSchedPage::new(
                 ctx,
                 scno_ctx,
@@ -877,7 +892,7 @@ impl SuzunaStatusPages {
         match self.current_page {
             SuzunaStatusPageID::Main => self.main_page.draw(ctx).unwrap(),
             SuzunaStatusPageID::Ad => self.ad_page.draw(ctx).unwrap(),
-	    SuzunaStatusPageID::AdAgency => self.ad_agency_page.draw(ctx).unwrap(),
+            SuzunaStatusPageID::AdAgency => self.ad_agency_page.draw(ctx).unwrap(),
             SuzunaStatusPageID::Schedule => self.sched_page.draw(ctx).unwrap(),
         }
     }
@@ -886,7 +901,7 @@ impl SuzunaStatusPages {
         match self.current_page {
             SuzunaStatusPageID::Main => self.current_page = SuzunaStatusPageID::Ad,
             SuzunaStatusPageID::Ad => self.current_page = SuzunaStatusPageID::AdAgency,
-	    SuzunaStatusPageID::AdAgency => self.current_page = SuzunaStatusPageID::Schedule,
+            SuzunaStatusPageID::AdAgency => self.current_page = SuzunaStatusPageID::Schedule,
             SuzunaStatusPageID::Schedule => (),
         }
     }
@@ -895,10 +910,10 @@ impl SuzunaStatusPages {
         match self.current_page {
             SuzunaStatusPageID::Main => (),
             SuzunaStatusPageID::Ad => {
-		self.current_page = SuzunaStatusPageID::Main;
-		self.update_main_ad_and_agency_status(ctx);
-	    },
-	    SuzunaStatusPageID::AdAgency => self.current_page = SuzunaStatusPageID::Ad,
+                self.current_page = SuzunaStatusPageID::Main;
+                self.update_main_ad_and_agency_status(ctx);
+            }
+            SuzunaStatusPageID::AdAgency => self.current_page = SuzunaStatusPageID::Ad,
             SuzunaStatusPageID::Schedule => self.current_page = SuzunaStatusPageID::AdAgency,
         }
     }
@@ -919,7 +934,7 @@ impl SuzunaStatusPages {
     ) {
         match self.current_page {
             SuzunaStatusPageID::Ad => self.ad_page.click_handler(ctx, click_point),
-	    SuzunaStatusPageID::AdAgency => self.ad_agency_page.click_handler(ctx, click_point),
+            SuzunaStatusPageID::AdAgency => self.ad_agency_page.click_handler(ctx, click_point),
             SuzunaStatusPageID::Schedule => self.sched_page.click_handler(ctx, click_point, button),
             _ => (),
         }
@@ -932,7 +947,9 @@ impl SuzunaStatusPages {
         button: MouseButton,
     ) {
         match self.current_page {
-            SuzunaStatusPageID::Schedule => self.sched_page.mouse_button_down(ctx, click_point, button),
+            SuzunaStatusPageID::Schedule => {
+                self.sched_page.mouse_button_down(ctx, click_point, button)
+            }
             _ => (),
         }
     }
@@ -946,37 +963,36 @@ impl SuzunaStatusPages {
     }
 
     pub fn show_main_page<'a>(&mut self, ctx: &mut SuzuContext<'a>) {
-	self.current_page = SuzunaStatusPageID::Main;
-	self.update_main_ad_and_agency_status(ctx);
+        self.current_page = SuzunaStatusPageID::Main;
+        self.update_main_ad_and_agency_status(ctx);
     }
 
     pub fn show_ad_agency_page(&mut self) {
-	self.current_page = SuzunaStatusPageID::AdAgency;
-    }
-    
-    pub fn show_ad_page(&mut self) {
-	self.current_page = SuzunaStatusPageID::Ad;
+        self.current_page = SuzunaStatusPageID::AdAgency;
     }
 
+    pub fn show_ad_page(&mut self) {
+        self.current_page = SuzunaStatusPageID::Ad;
+    }
 
     pub fn change_kosuzu_hp<'a>(&mut self, ctx: &mut SuzuContext<'a>, diff: f32) {
-	self.main_page.change_kosuzu_hp(ctx, diff);
+        self.main_page.change_kosuzu_hp(ctx, diff);
     }
-    
+
     pub fn change_suzunaan_reputation<'a>(&mut self, ctx: &mut SuzuContext<'a>, diff: f32) {
-	self.main_page.change_suzunaan_reputation(ctx, diff);
+        self.main_page.change_suzunaan_reputation(ctx, diff);
     }
-    
+
     pub fn show_schedule_page(&mut self) {
         self.current_page = SuzunaStatusPageID::Schedule;
     }
 
     pub fn update_main_page_todays_sched_text<'a>(&mut self, ctx: &mut SuzuContext<'a>) {
-	self.main_page.update_todays_sched_text(ctx);
+        self.main_page.update_todays_sched_text(ctx);
     }
 
     pub fn update_main_ad_and_agency_status<'a>(&mut self, ctx: &mut SuzuContext<'a>) {
-	self.main_page.update_ad_and_agency_status(ctx);
+        self.main_page.update_ad_and_agency_status(ctx);
     }
 }
 
@@ -1044,7 +1060,7 @@ impl SuzunaStatusScreen {
             pages: SuzunaStatusPages::new(ctx, scno_ctx, rect),
             go_left_texture: left,
             go_right_texture: right,
-	    redraw_request: DrawRequest::InitDraw,
+            redraw_request: DrawRequest::InitDraw,
         }
     }
 
@@ -1052,13 +1068,13 @@ impl SuzunaStatusScreen {
         self.go_right_texture.appear();
         self.go_left_texture.appear();
 
-	match self.pages.get_current_page_id() {
-	    SuzunaStatusPageID::Main => self.go_left_texture.hide(),
-	    SuzunaStatusPageID::Schedule => self.go_right_texture.hide(),
-	    _ => (),
-	}
+        match self.pages.get_current_page_id() {
+            SuzunaStatusPageID::Main => self.go_left_texture.hide(),
+            SuzunaStatusPageID::Schedule => self.go_right_texture.hide(),
+            _ => (),
+        }
 
-	self.redraw_request = DrawRequest::Draw;
+        self.redraw_request = DrawRequest::Draw;
     }
 
     pub fn click_handler<'a>(
@@ -1084,7 +1100,7 @@ impl SuzunaStatusScreen {
         }
 
         self.pages.click_handler(ctx, rpoint, button);
-	self.redraw_request = DrawRequest::Draw;
+        self.redraw_request = DrawRequest::Draw;
     }
 
     pub fn mouse_down_handler<'a>(
@@ -1099,79 +1115,79 @@ impl SuzunaStatusScreen {
 
         let rpoint = self.canvas.relative_point(click_point);
         self.pages.mouse_button_down(ctx, rpoint, button);
-	self.redraw_request = DrawRequest::Draw;
+        self.redraw_request = DrawRequest::Draw;
     }
 
     pub fn update<'a>(&mut self, ctx: &mut SuzuContext<'a>, t: Clock) {
-	self.redraw_request |= self.pages.update(ctx, t);
+        self.redraw_request |= self.pages.update(ctx, t);
 
-	if self.redraw_request.is_not_skip() {
-	    ctx.process_utility.redraw();
-	}
+        if self.redraw_request.is_not_skip() {
+            ctx.process_utility.redraw();
+        }
     }
 
     pub fn change_kosuzu_hp<'a>(&mut self, ctx: &mut SuzuContext<'a>, diff: f32) {
-	self.pages.change_kosuzu_hp(ctx, diff);
-	self.redraw_request = DrawRequest::Draw;
+        self.pages.change_kosuzu_hp(ctx, diff);
+        self.redraw_request = DrawRequest::Draw;
     }
 
     pub fn change_suzunaan_reputation<'a>(&mut self, ctx: &mut SuzuContext<'a>, diff: f32) {
-	self.pages.change_suzunaan_reputation(ctx, diff);
-	self.redraw_request = DrawRequest::Draw;
+        self.pages.change_suzunaan_reputation(ctx, diff);
+        self.redraw_request = DrawRequest::Draw;
     }
 
     pub fn show_main_page<'a>(&mut self, ctx: &mut SuzuContext<'a>) {
-	self.pages.show_main_page(ctx);
-	self.check_move_page_icon_visibility();
-	self.redraw_request = DrawRequest::Draw;
+        self.pages.show_main_page(ctx);
+        self.check_move_page_icon_visibility();
+        self.redraw_request = DrawRequest::Draw;
     }
 
     pub fn show_schedule_page(&mut self) {
         self.pages.show_schedule_page();
-	self.check_move_page_icon_visibility();
-	self.redraw_request = DrawRequest::Draw;
+        self.check_move_page_icon_visibility();
+        self.redraw_request = DrawRequest::Draw;
     }
 
     pub fn show_ad_page(&mut self) {
         self.pages.show_ad_page();
-	self.check_move_page_icon_visibility();
-	self.redraw_request = DrawRequest::Draw;
+        self.check_move_page_icon_visibility();
+        self.redraw_request = DrawRequest::Draw;
     }
 
     pub fn show_ad_agency_page<'a>(&mut self) {
-	self.pages.show_ad_agency_page();
-	self.check_move_page_icon_visibility();
-	self.redraw_request = DrawRequest::Draw;
+        self.pages.show_ad_agency_page();
+        self.check_move_page_icon_visibility();
+        self.redraw_request = DrawRequest::Draw;
     }
-    
+
     pub fn change_main_page_money<'a>(&mut self, ctx: &mut SuzuContext<'a>, diff: i32, t: Clock) {
-	self.pages.main_page.run_money_change_effect(ctx, diff, t);	
-	self.redraw_request = DrawRequest::Draw;
+        self.pages.main_page.run_money_change_effect(ctx, diff, t);
+        self.redraw_request = DrawRequest::Draw;
     }
 
     pub fn update_main_page_todays_sched_text<'a>(&mut self, ctx: &mut SuzuContext<'a>) {
-	self.pages.update_main_page_todays_sched_text(ctx);
-	self.redraw_request = DrawRequest::Draw;
+        self.pages.update_main_page_todays_sched_text(ctx);
+        self.redraw_request = DrawRequest::Draw;
     }
 }
 
 impl DrawableComponent for SuzunaStatusScreen {
     fn draw(&mut self, ctx: &mut ggez::Context) -> ggez::GameResult<()> {
         if self.is_visible() {
-	    if self.redraw_request.is_not_skip() {
-		self.redraw_request = DrawRequest::Skip;
-		sub_screen::stack_screen(ctx, &self.canvas);
-		
-		self.background.draw(ctx)?;
-		self.appr_frame.draw(ctx)?;
-		
-		self.go_right_texture.draw(ctx)?;
-		self.go_left_texture.draw(ctx)?;
-		
-		self.pages.draw_page(ctx);
-		
-		sub_screen::pop_screen(ctx);
-	    }
+            if self.redraw_request.is_not_skip() {
+                self.redraw_request = DrawRequest::Skip;
+                sub_screen::stack_screen(ctx, &self.canvas);
+
+                self.background.draw(ctx)?;
+                self.appr_frame.draw(ctx)?;
+
+                self.go_right_texture.draw(ctx)?;
+                self.go_left_texture.draw(ctx)?;
+
+                self.pages.draw_page(ctx);
+
+                sub_screen::pop_screen(ctx);
+            }
             self.canvas.draw(ctx).unwrap();
         }
 
@@ -1327,23 +1343,28 @@ impl<Msg> WindowStack<Msg> {
     }
 
     pub fn message_passing<'a>(&mut self, ctx: &mut SuzuContext<'a>) -> DrawRequest {
-	let mut draw_request = DrawRequest::Skip;
-	
+        let mut draw_request = DrawRequest::Skip;
+
         let mut msg = None;
         for window in self.stack.iter_mut() {
             if let Some(msg) = msg {
                 window.apply_message(ctx, msg);
-		draw_request = DrawRequest::Draw;
+                draw_request = DrawRequest::Draw;
             }
             msg = window.check_message();
         }
 
-	if self.stack.iter().map(|e| e.close_check()).fold(false, |m, v| m | v) {
-	    draw_request = DrawRequest::Draw;
-	}
+        if self
+            .stack
+            .iter()
+            .map(|e| e.close_check())
+            .fold(false, |m, v| m | v)
+        {
+            draw_request = DrawRequest::Draw;
+        }
         self.stack.retain(|win| !win.close_check());
 
-	draw_request
+        draw_request
     }
 }
 

@@ -179,7 +179,7 @@ impl NotificationArea {
             contents: None,
             area: None,
             drwob_essential: DrawableObjectEssential::new(true, depth),
-	    redraw_request: DrawRequest::InitDraw,
+            redraw_request: DrawRequest::InitDraw,
         }
     }
 
@@ -193,7 +193,7 @@ impl NotificationArea {
             0,
         ));
 
-	self.redraw_request = DrawRequest::Draw;
+        self.redraw_request = DrawRequest::Draw;
     }
 
     pub fn insert_new_contents<'a>(
@@ -223,7 +223,7 @@ impl NotificationArea {
             }
         }
 
-	self.redraw_request = DrawRequest::Draw;
+        self.redraw_request = DrawRequest::Draw;
     }
 
     pub fn insert_new_contents_generic<'a>(
@@ -256,7 +256,7 @@ impl NotificationArea {
                 }),
                 scheduled,
             );
-	    self.redraw_request = DrawRequest::Draw;
+            self.redraw_request = DrawRequest::Draw;
         }
     }
 
@@ -303,14 +303,14 @@ impl NotificationArea {
     pub fn update<'a>(&mut self, ctx: &mut SuzuContext<'a>, t: Clock) {
         if flush_delay_event!(self, self.event_list, ctx, t) > 0 {
             ctx.process_utility.redraw();
-	    self.redraw_request = DrawRequest::Draw;
+            self.redraw_request = DrawRequest::Draw;
         }
 
         if let Some(area) = self.area.as_mut() {
             area.move_with_func(t);
             area.effect(ctx.context, t);
             ctx.process_utility.redraw();
-	    self.redraw_request = DrawRequest::Draw;
+            self.redraw_request = DrawRequest::Draw;
         }
     }
 }
@@ -318,24 +318,24 @@ impl NotificationArea {
 impl DrawableComponent for NotificationArea {
     fn draw(&mut self, ctx: &mut ggez::Context) -> ggez::GameResult<()> {
         if self.is_visible() {
-	    if let Some(canvas) = self.area.as_mut() {
-		if self.redraw_request != DrawRequest::Skip {
-		    self.redraw_request = DrawRequest::Skip;
-		
+            if let Some(canvas) = self.area.as_mut() {
+                if self.redraw_request != DrawRequest::Skip {
+                    self.redraw_request = DrawRequest::Skip;
+
                     sub_screen::stack_screen(ctx, canvas);
-		    
+
                     self.background.draw(ctx)?;
-		    
+
                     if let Some(frame) = self.appearance_frame.as_mut() {
-			frame.draw(ctx)?;
+                        frame.draw(ctx)?;
                     }
-		    
+
                     if let Some(contents) = self.contents.as_mut() {
-			contents.draw(ctx)?;
+                        contents.draw(ctx)?;
                     }
-		    
+
                     sub_screen::pop_screen(ctx);
-		}
+                }
                 canvas.draw(ctx).unwrap();
             }
         }

@@ -3,6 +3,7 @@ pub mod collision;
 pub mod copy_scene_object;
 pub mod effect;
 pub mod effect_object;
+pub mod end_object;
 pub mod map_object;
 pub mod move_fn;
 pub mod notify;
@@ -15,7 +16,6 @@ pub mod task_object;
 pub mod task_result_object;
 pub mod title_object;
 pub mod util_object;
-pub mod end_object;
 
 use ggez::graphics as ggraphics;
 

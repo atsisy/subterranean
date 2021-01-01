@@ -456,7 +456,7 @@ impl GoToCheckCustomers {
     }
 
     pub fn len(&self) -> usize {
-	self.customers.len()
+        self.customers.len()
     }
 
     pub fn go_moving<'a>(
@@ -1247,10 +1247,18 @@ impl ShopScene {
             let tile_size = self.map.get_tile_size();
 
             match self.player.get_character_object().current_direction() {
-                ObjectDirection::MoveDown | ObjectDirection::StopDown => sub_map_position.y += tile_size.y,
-                ObjectDirection::MoveUp | ObjectDirection::StopUp => sub_map_position.y -= tile_size.y,
-                ObjectDirection::MoveRight | ObjectDirection::StopRight => sub_map_position.x += tile_size.x,
-                ObjectDirection::MoveLeft | ObjectDirection::StopLeft => sub_map_position.x -= tile_size.x,
+                ObjectDirection::MoveDown | ObjectDirection::StopDown => {
+                    sub_map_position.y += tile_size.y
+                }
+                ObjectDirection::MoveUp | ObjectDirection::StopUp => {
+                    sub_map_position.y -= tile_size.y
+                }
+                ObjectDirection::MoveRight | ObjectDirection::StopRight => {
+                    sub_map_position.x += tile_size.x
+                }
+                ObjectDirection::MoveLeft | ObjectDirection::StopLeft => {
+                    sub_map_position.x -= tile_size.x
+                }
             }
 
             let _ = self.run_event_panel_onmap_at(ctx, trigger, sub_map_position);
@@ -1795,7 +1803,7 @@ impl SceneManager for ShopScene {
                     }
 
                     self.player.reset_speed();
-		    self.player.update_animation_for_stop();
+                    self.player.update_animation_for_stop();
                     self.shop_command_palette
                         .mouse_left_button_up_handler(ctx, point);
                 }
@@ -1858,7 +1866,7 @@ impl SceneManager for ShopScene {
             let mut rising_customers = self
                 .goto_check_customers
                 .drain_remove_if(|customer: &CustomerCharacter| customer.is_wait_on_clerk());
-	    let reset_goto_check_customers_goal_flag = !rising_customers.is_empty();
+            let reset_goto_check_customers_goal_flag = !rising_customers.is_empty();
 
             // 新しく客が列に並んだら、通知をする
             if !rising_customers.is_empty() {
@@ -1875,7 +1883,7 @@ impl SceneManager for ShopScene {
                 self.customer_queue.push_back(customer, t);
             }
 
-	    if reset_goto_check_customers_goal_flag {
+            if reset_goto_check_customers_goal_flag {
                 self.goto_check_customers.reset_each_customers_goal(
                     ctx,
                     &self.map.tile_map,
@@ -1957,8 +1965,8 @@ impl SceneManager for ShopScene {
     }
 
     fn drawing_process(&mut self, ctx: &mut ggez::Context) {
-	//println!("{}", perf_measure!({
-        
+        //println!("{}", perf_measure!({
+
         self.map.tile_map.draw(ctx).unwrap();
 
         let mut map_obj_drawer = MapObjectDrawer::new();
@@ -2025,7 +2033,7 @@ impl SceneManager for ShopScene {
         if let Some(transition_effect) = self.scene_transition_effect.as_mut() {
             transition_effect.draw(ctx).unwrap();
         }
-    //}));
+        //}));
     }
 
     fn post_process<'a>(&mut self, _ctx: &mut SuzuContext<'a>) -> SceneTransition {

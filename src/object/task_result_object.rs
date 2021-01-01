@@ -96,7 +96,8 @@ impl DrawableEvaluationFlow {
                 t + effect_clock_offset + 150,
             )],
         );
-	ctx.savable_data.award_data.returning_check_mistake_count += result_report.get_conition_eval_mistakes() as u16;
+        ctx.savable_data.award_data.returning_check_mistake_count +=
+            result_report.get_conition_eval_mistakes() as u16;
 
         eval_mistakes_vtext.set_crop(init_crop);
         set_table_frame_cell_center!(
@@ -274,8 +275,8 @@ impl DrawableTaskResult {
         );
 
         let mut fixed_text = Vec::new();
-	let mut effect_text = Vec::new();
-	
+        let mut effect_text = Vec::new();
+
         let title_text = VerticalText::new(
             format!("{}", date.to_string()),
             numeric::Point2f::new(1100.0, 80.0),
@@ -312,17 +313,11 @@ impl DrawableTaskResult {
         );
         fixed_text.push(done_work_text);
 
-	let done_work_num = task_result.done_works - initial_save_data.task_result.done_works;
+        let done_work_num = task_result.done_works - initial_save_data.task_result.done_works;
         let mut done_work_num_text = EffectableWrap::new(
             MovableWrap::new(
                 Box::new(VerticalText::new(
-                    format!(
-                        "{}人",
-                        number_to_jk(
-                            done_work_num
-                                as u64
-                        )
-                    ),
+                    format!("{}人", number_to_jk(done_work_num as u64)),
                     numeric::Point2f::new(600.0, 100.0),
                     numeric::Vector2f::new(1.0, 1.0),
                     0.0,
@@ -342,7 +337,7 @@ impl DrawableTaskResult {
             numeric::Vector2u::new(2, 1)
         );
         effect_text.push(done_work_num_text);
-	ctx.savable_data.award_data.customer_count += done_work_num as u16;
+        ctx.savable_data.award_data.customer_count += done_work_num as u16;
 
         let mut money_desc_text = VerticalText::new(
             format!("収入"),
@@ -435,14 +430,14 @@ impl DrawableTaskResult {
 
         let mut meters = ResultMeter::new(
             ctx,
-	    "評判".to_string(),
+            "評判".to_string(),
             numeric::Rect::new(350.0, 650.0, 500.0, 60.0),
-	    6.0,
-	    100.0,
+            6.0,
+            100.0,
             initial_save_data.suzunaan_status.reputation,
             1,
         );
-	meters.set_goal(ctx, ctx.savable_data.suzunaan_status.reputation, 100);
+        meters.set_goal(ctx, ctx.savable_data.suzunaan_status.reputation, 100);
 
         let evaluation = DrawableEvaluationFlow::new(
             ctx,
@@ -455,28 +450,33 @@ impl DrawableTaskResult {
 
         let mut this = DrawableTaskResult {
             result_frame: result_frame,
-	    effect_text: effect_text,
+            effect_text: effect_text,
             fixed_text: fixed_text,
             meters: meters,
             evaluation: evaluation,
             background: background,
-	    const_canvas: SubScreen::new(ctx.context, rect_pos, 0, ggraphics::Color::from_rgba_u32(0)),
+            const_canvas: SubScreen::new(
+                ctx.context,
+                rect_pos,
+                0,
+                ggraphics::Color::from_rgba_u32(0),
+            ),
             canvas: SubScreen::new(ctx.context, rect_pos, 0, ggraphics::Color::from_rgba_u32(0)),
         };
-	this.standby_const_canvas(ctx);
-	this
+        this.standby_const_canvas(ctx);
+        this
     }
 
     fn standby_const_canvas<'a>(&mut self, ctx: &mut SuzuContext<'a>) {
-	sub_screen::stack_screen(ctx.context, &self.const_canvas);
-	
+        sub_screen::stack_screen(ctx.context, &self.const_canvas);
+
         self.background.draw(ctx.context).unwrap();
         self.result_frame.draw(ctx.context).unwrap();
-	
+
         for vtext in self.fixed_text.iter_mut() {
             vtext.draw(ctx.context).unwrap();
         }
-	
+
         sub_screen::pop_screen(ctx.context);
         self.canvas.draw(ctx.context).unwrap();
     }
@@ -502,12 +502,12 @@ impl DrawableComponent for DrawableTaskResult {
         if self.is_visible() {
             sub_screen::stack_screen(ctx, &self.canvas);
 
-	    self.const_canvas.draw(ctx)?;
+            self.const_canvas.draw(ctx)?;
 
-	    for vtext in self.effect_text.iter_mut() {
-		vtext.draw(ctx).unwrap();
+            for vtext in self.effect_text.iter_mut() {
+                vtext.draw(ctx).unwrap();
             }
-	    
+
             self.meters.draw(ctx)?;
             self.evaluation.draw(ctx)?;
 

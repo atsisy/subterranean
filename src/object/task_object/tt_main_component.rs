@@ -1292,19 +1292,26 @@ impl SuzuMiniSight {
         count
     }
 
-    pub fn dragging_handler<'a>(&mut self, ctx: &mut SuzuContext<'a>, point: numeric::Point2f, last: numeric::Point2f) {
+    pub fn dragging_handler<'a>(
+        &mut self,
+        ctx: &mut SuzuContext<'a>,
+        point: numeric::Point2f,
+        last: numeric::Point2f,
+    ) {
         if let Some(obj) = &mut self.dragging {
             obj.get_object_mut()
                 .move_diff(numeric::Vector2f::new(point.x - last.x, point.y - last.y));
 
-	    let obj_area = obj.get_object().get_drawing_area(ctx.context);
-	    if obj_area.right() > 766.0 {
-		obj.get_object_mut().set_position(numeric::Point2f::new(766.0 - obj_area.w, obj_area.y));
-	    }
-	    if obj_area.x < 0.0 {
-		obj.get_object_mut().set_position(numeric::Point2f::new(0.0, obj_area.y));
-	    }
-	    
+            let obj_area = obj.get_object().get_drawing_area(ctx.context);
+            if obj_area.right() > 766.0 {
+                obj.get_object_mut()
+                    .set_position(numeric::Point2f::new(766.0 - obj_area.w, obj_area.y));
+            }
+            if obj_area.x < 0.0 {
+                obj.get_object_mut()
+                    .set_position(numeric::Point2f::new(0.0, obj_area.y));
+            }
+
             self.draw_request = DrawRequest::Draw;
         }
     }
@@ -2627,12 +2634,12 @@ impl ChatBox {
 
     pub fn set_partner_name(&mut self, name: String) {
         self.partner_name = Some(name);
-	self.draw_request = DrawRequest::Draw;
+        self.draw_request = DrawRequest::Draw;
     }
 
     pub fn set_my_name(&mut self, name: String) {
         self.my_name = Some(name);
-	self.draw_request = DrawRequest::Draw;
+        self.draw_request = DrawRequest::Draw;
     }
 
     fn put_message_in_default_place<'a>(&mut self, ctx: &mut SuzuContext<'a>) {
@@ -2656,7 +2663,7 @@ impl ChatBox {
 
             text.set_position(numeric::Point2f::new(x_pos, left_buttom_y));
         }
-	self.draw_request = DrawRequest::Draw;
+        self.draw_request = DrawRequest::Draw;
     }
 
     fn last_person(&self) -> Option<ChatBoxPerson> {
@@ -2705,7 +2712,7 @@ impl ChatBox {
         };
         self.messages
             .push((ChatBoxPerson::SystemName(justified), system_text));
-	self.draw_request = DrawRequest::Draw;
+        self.draw_request = DrawRequest::Draw;
     }
 
     fn add_message<'a>(&mut self, ctx: &mut SuzuContext<'a>, msg: String, person: ChatBoxPerson) {
@@ -2736,12 +2743,12 @@ impl ChatBox {
     }
 
     pub fn add_message_as_partner<'a>(&mut self, ctx: &mut SuzuContext<'a>, msg: String) {
-	self.draw_request = DrawRequest::Draw;
+        self.draw_request = DrawRequest::Draw;
         self.add_message(ctx, msg, ChatBoxPerson::Partner)
     }
 
     pub fn add_message_as_mine<'a>(&mut self, ctx: &mut SuzuContext<'a>, msg: String) {
-	self.draw_request = DrawRequest::Draw;
+        self.draw_request = DrawRequest::Draw;
         self.add_message(ctx, msg, ChatBoxPerson::Me)
     }
 }

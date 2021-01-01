@@ -7,13 +7,16 @@ use torifune::graphics::object::*;
 
 use super::super::*;
 
-use crate::{core::{MouseInformation, ResultReport, SavableData, TextureID, TileBatchTextureID}, perf_measure};
 use crate::flush_delay_event;
 use crate::flush_delay_event_and_redraw_check;
 use crate::object::effect_object;
 use crate::object::task_result_object::*;
 use crate::object::util_object;
 use crate::scene::{SceneID, SceneTransition};
+use crate::{
+    core::{MouseInformation, ResultReport, SavableData, TextureID, TileBatchTextureID},
+    perf_measure,
+};
 use effect_object::TilingEffectType;
 
 pub struct TaskResultScene {
@@ -135,7 +138,7 @@ impl SceneManager for TaskResultScene {
         point: numeric::Point2f,
         _: numeric::Vector2f,
     ) {
-	self.ok_button.mouse_motion_handler(ctx, point);
+        self.ok_button.mouse_motion_handler(ctx, point);
         if self.mouse_info.is_dragging(MouseButton::Left) {
             self.mouse_info
                 .set_last_dragged(MouseButton::Left, point, self.get_current_clock());
@@ -192,18 +195,18 @@ impl SceneManager for TaskResultScene {
             effect.effect(ctx.context, t);
             ctx.process_utility.redraw();
         }
-    //}));
+        //}));
     }
 
     fn drawing_process(&mut self, ctx: &mut ggez::Context) {
-	//println!("ResultScene::drawing_process {}", perf_measure!({
+        //println!("ResultScene::drawing_process {}", perf_measure!({
         self.drawable_task_result.draw(ctx).unwrap();
         self.ok_button.draw(ctx).unwrap();
 
         if let Some(effect) = self.scene_transition_effect.as_mut() {
             effect.draw(ctx).unwrap();
         }
-    //}));
+        //}));
     }
 
     fn post_process<'a>(&mut self, _ctx: &mut SuzuContext<'a>) -> SceneTransition {

@@ -155,13 +155,13 @@ impl TaskTable {
         }
         record_book.hide();
 
-	let mut reset_button = FramedButton::create_design1(
-	    ctx,
-	    numeric::Point2f::new(900.0, 660.0),
-	    "操作取消",
-	    numeric::Vector2f::new(28.0, 28.0)
-	);
-	reset_button.hide();
+        let mut reset_button = FramedButton::create_design1(
+            ctx,
+            numeric::Point2f::new(900.0, 660.0),
+            "操作取消",
+            numeric::Vector2f::new(28.0, 28.0),
+        );
+        reset_button.hide();
 
         TaskTable {
             canvas: SubScreen::new(
@@ -183,7 +183,7 @@ impl TaskTable {
             shelving_box: shelving_box,
             event_list: DelayEventList::new(),
             borrowing_record_book: record_book,
-	    reset_button: reset_button,
+            reset_button: reset_button,
             manual_book: EffectableWrap::new(
                 MovableWrap::new(
                     Box::new(TaskManualBook::new(
@@ -264,7 +264,7 @@ impl TaskTable {
             move_fn::devide_distance(numeric::Point2f::new(320.0, 100.0), 0.2),
             t,
         );
-	self.reset_button.appear();
+        self.reset_button.appear();
         self.dark_effect_panel.new_effect(8, t, 0, 200);
     }
 
@@ -285,7 +285,7 @@ impl TaskTable {
             t,
         );
         self.record_book_is_staged = false;
-	self.reset_button.hide();
+        self.reset_button.hide();
 
         self.record_book_menu.close_all(t);
 
@@ -1489,7 +1489,7 @@ impl DrawableComponent for TaskTable {
             self.borrowing_record_book.draw(ctx)?;
             self.manual_book.draw(ctx)?;
             self.kosuzu_phrase.draw(ctx)?;
-	    self.reset_button.draw(ctx)?;
+            self.reset_button.draw(ctx)?;
 
             self.customer_silhouette_menu.draw(ctx)?;
             self.record_book_menu.draw(ctx)?;
@@ -1589,10 +1589,10 @@ impl Clickable for TaskTable {
             return;
         }
 
-	if self.reset_button.is_visible() && self.reset_button.contains(rpoint) {
-	    self.borrowing_record_book.reset_pages_data(ctx, t);
-	    return;
-	}
+        if self.reset_button.is_visible() && self.reset_button.contains(rpoint) {
+            self.borrowing_record_book.reset_pages_data(ctx, t);
+            return;
+        }
 
         if self.borrowing_record_book.click_handler(ctx, t, rpoint) {
             // クリックハンドラが呼び出されたので終了

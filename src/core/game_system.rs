@@ -66,10 +66,10 @@ impl WeekWorkSchedule {
 
     pub fn get_schedule_at(&self, index: usize) -> Option<DayWorkType> {
         if index >= 7 {
-	    None
+            None
         } else {
-	    self.schedule[index].clone()
-	}
+            self.schedule[index].clone()
+        }
     }
 
     pub fn update_is_not_required(&self, date: &GensoDate) -> bool {
@@ -89,27 +89,27 @@ impl WeekWorkSchedule {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AwardData {
-    pub borrowing_count: u16, // ok
-    pub returning_count: u16, // ok
-    pub shelving_count: u16, // ok
-    pub customer_count: u16, // ok
+    pub borrowing_count: u16,               // ok
+    pub returning_count: u16,               // ok
+    pub shelving_count: u16,                // ok
+    pub customer_count: u16,                // ok
     pub returning_check_mistake_count: u16, // ok
-    pub shop_work_count: u16, // ok
-    pub taking_rest_count: u16, // ok
-    pub going_out_count: u16, //ok
+    pub shop_work_count: u16,               // ok
+    pub taking_rest_count: u16,             // ok
+    pub going_out_count: u16,               //ok
 }
 
 impl AwardData {
     pub fn new() -> Self {
-	AwardData {
-	    borrowing_count: 0,
-	    returning_count: 0,
-	    shelving_count: 0,
-	    customer_count: 0,
-	    returning_check_mistake_count: 0,
-	    shop_work_count: 0,
-	    taking_rest_count: 0,
-	    going_out_count: 0,
-	}
+        AwardData {
+            borrowing_count: 0,
+            returning_count: 0,
+            shelving_count: 0,
+            customer_count: 0,
+            returning_check_mistake_count: 0,
+            shop_work_count: 0,
+            taking_rest_count: 0,
+            going_out_count: 0,
+        }
     }
 }

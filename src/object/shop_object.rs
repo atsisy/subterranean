@@ -15,12 +15,12 @@ use torifune::impl_texture_object_for_wrapped;
 use torifune::numeric;
 use torifune::roundup2f;
 
-use crate::{core::*, scene::DrawRequest};
 use crate::object::move_fn;
 use crate::object::util_object::*;
 use crate::object::Clickable;
 use crate::scene::DelayEventList;
 use crate::set_table_frame_cell_center;
+use crate::{core::*, scene::DrawRequest};
 
 use crate::flush_delay_event;
 use crate::flush_delay_event_and_redraw_check;
@@ -536,7 +536,7 @@ impl SelectShelvingBookUI {
             shelving_books: shelving_book,
             move_box_to_shelving_button: move_box_to_shelving_button,
             move_shelving_to_box_button: move_shelving_to_box_button,
-	    redraw_request: DrawRequest::InitDraw,
+            redraw_request: DrawRequest::InitDraw,
         }
     }
 
@@ -561,7 +561,7 @@ impl SelectShelvingBookUI {
             .sort_by(|a, b| a.billing_number.cmp(&b.billing_number));
         self.shelving_books
             .sort_by(|a, b| a.billing_number.cmp(&b.billing_number));
-	self.redraw_request = DrawRequest::Draw;
+        self.redraw_request = DrawRequest::Draw;
     }
 
     ///
@@ -575,7 +575,7 @@ impl SelectShelvingBookUI {
         self.box_info_window.update_contents(ctx, &self.boxed_books);
         self.shelving_window
             .update_contents(ctx, &self.shelving_books);
-	self.redraw_request = DrawRequest::Draw;
+        self.redraw_request = DrawRequest::Draw;
     }
 
     ///
@@ -612,7 +612,7 @@ impl SelectShelvingBookUI {
         // Windowを更新
         self.update_window(ctx);
 
-	self.redraw_request = DrawRequest::Draw;
+        self.redraw_request = DrawRequest::Draw;
     }
 
     ///
@@ -631,7 +631,7 @@ impl SelectShelvingBookUI {
         self.shelving_window.clear_selecting_index();
 
         self.update_window(ctx);
-	self.redraw_request = DrawRequest::Draw;
+        self.redraw_request = DrawRequest::Draw;
     }
 
     ///
@@ -652,25 +652,25 @@ impl SelectShelvingBookUI {
         let rpoint = self.canvas.relative_point(point);
         self.box_info_window.scroll_handler(ctx, rpoint, x, y);
         self.shelving_window.scroll_handler(ctx, rpoint, x, y);
-	self.redraw_request = DrawRequest::Draw;
+        self.redraw_request = DrawRequest::Draw;
     }
 }
 
 impl DrawableComponent for SelectShelvingBookUI {
     fn draw(&mut self, ctx: &mut ggez::Context) -> ggez::GameResult<()> {
         if self.is_visible() {
-	    if self.redraw_request != DrawRequest::Skip {
-		self.redraw_request = DrawRequest::Skip;
-		sub_screen::stack_screen(ctx, &self.canvas);
-		
-		self.box_info_window.draw(ctx)?;
-		self.shelving_window.draw(ctx)?;
-		
-		self.move_box_to_shelving_button.draw(ctx)?;
-		self.move_shelving_to_box_button.draw(ctx)?;
-		
-		sub_screen::pop_screen(ctx);
-	    }
+            if self.redraw_request != DrawRequest::Skip {
+                self.redraw_request = DrawRequest::Skip;
+                sub_screen::stack_screen(ctx, &self.canvas);
+
+                self.box_info_window.draw(ctx)?;
+                self.shelving_window.draw(ctx)?;
+
+                self.move_box_to_shelving_button.draw(ctx)?;
+                self.move_shelving_to_box_button.draw(ctx)?;
+
+                sub_screen::pop_screen(ctx);
+            }
             self.canvas.draw(ctx).unwrap();
         }
 
@@ -720,12 +720,12 @@ impl Clickable for SelectShelvingBookUI {
 
         if self.box_info_window.contains(ctx.context, rpoint) {
             self.box_info_window.on_click(ctx, clock, button, rpoint);
-	    self.redraw_request = DrawRequest::Draw;
+            self.redraw_request = DrawRequest::Draw;
         }
 
         if self.shelving_window.contains(ctx.context, rpoint) {
             self.shelving_window.on_click(ctx, clock, button, rpoint);
-	    self.redraw_request = DrawRequest::Draw;
+            self.redraw_request = DrawRequest::Draw;
         }
 
         if self
@@ -893,7 +893,7 @@ impl SelectStoringBookWindow {
             book_storable: Vec::new(),
             background: background_texture,
             book_font: normal_font_info,
-	    redraw_request: DrawRequest::InitDraw,
+            redraw_request: DrawRequest::InitDraw,
         };
 
         window.update_contents(ctx.context, book_shelf_info, &book_info);
@@ -975,7 +975,7 @@ impl SelectStoringBookWindow {
             self.book_title_text.push(title_text);
         }
 
-	self.redraw_request = DrawRequest::Draw;
+        self.redraw_request = DrawRequest::Draw;
     }
 
     ///
@@ -983,7 +983,7 @@ impl SelectStoringBookWindow {
     ///
     pub fn sort_selecting_index_less(&mut self) {
         self.selecting_book_index.sort_by(|a, b| b.cmp(a));
-	self.redraw_request = DrawRequest::Draw;
+        self.redraw_request = DrawRequest::Draw;
     }
 
     ///
@@ -1003,41 +1003,41 @@ impl SelectStoringBookWindow {
             vtext.set_color(ggraphics::Color::from_rgba_u32(0x000000ff));
         }
 
-	self.redraw_request = DrawRequest::Draw;
+        self.redraw_request = DrawRequest::Draw;
     }
 }
 
 impl DrawableComponent for SelectStoringBookWindow {
     fn draw(&mut self, ctx: &mut ggez::Context) -> ggez::GameResult<()> {
         if self.is_visible() {
-	    if self.redraw_request != DrawRequest::Skip {
-		self.redraw_request = DrawRequest::Skip;
-		sub_screen::stack_screen(ctx, &self.canvas);
-		
-		self.background.draw(ctx)?;
-		self.appearance_frame.draw(ctx)?;
-		self.table_frame.draw(ctx)?;
-		
-		self.title.draw(ctx)?;
-		
-		for vtext in &mut self.cell_desc {
+            if self.redraw_request != DrawRequest::Skip {
+                self.redraw_request = DrawRequest::Skip;
+                sub_screen::stack_screen(ctx, &self.canvas);
+
+                self.background.draw(ctx)?;
+                self.appearance_frame.draw(ctx)?;
+                self.table_frame.draw(ctx)?;
+
+                self.title.draw(ctx)?;
+
+                for vtext in &mut self.cell_desc {
                     vtext.draw(ctx)?;
-		}
-		
-		for vtext in &mut self.book_title_text {
+                }
+
+                for vtext in &mut self.book_title_text {
                     vtext.draw(ctx)?;
-		}
-		
-		for vtext in &mut self.billing_number_text {
+                }
+
+                for vtext in &mut self.billing_number_text {
                     vtext.draw(ctx)?;
-		}
-		
-		for vtext in &mut self.storable_text {
+                }
+
+                for vtext in &mut self.storable_text {
                     vtext.draw(ctx)?;
-		}
-		
-		sub_screen::pop_screen(ctx);
-	    }
+                }
+
+                sub_screen::pop_screen(ctx);
+            }
             self.canvas.draw(ctx).unwrap();
         }
         Ok(())
@@ -1103,7 +1103,7 @@ impl Clickable for SelectStoringBookWindow {
             }
         }
 
-	self.redraw_request = DrawRequest::Draw;
+        self.redraw_request = DrawRequest::Draw;
     }
 
     fn clickable_status(
@@ -1169,7 +1169,7 @@ impl SelectStoreBookUI {
             store_button: store_button,
             reset_select_button: reset_select_button,
             book_shelf_info: book_shelf_info,
-	    redraw_request: DrawRequest::InitDraw,
+            redraw_request: DrawRequest::InitDraw,
         }
     }
 
@@ -1184,14 +1184,14 @@ impl SelectStoreBookUI {
     fn sort_book_info_greater(&mut self) {
         self.shelving_books
             .sort_by(|a, b| a.billing_number.cmp(&b.billing_number));
-	self.redraw_request = DrawRequest::Draw;
+        self.redraw_request = DrawRequest::Draw;
     }
 
     fn update_window(&mut self, ctx: &mut ggez::Context) {
         self.sort_book_info_greater();
         self.select_book_window
             .update_contents(ctx, &self.book_shelf_info, &self.shelving_books);
-	self.redraw_request = DrawRequest::Draw;
+        self.redraw_request = DrawRequest::Draw;
     }
 
     fn store_shelving_books<'a>(&mut self, ctx: &mut SuzuContext<'a>) {
@@ -1200,11 +1200,11 @@ impl SelectStoreBookUI {
             debug::debug_screen_push_text(&format!("remove book: {}", selecting_index));
             let returned = self.shelving_books.swap_remove(*selecting_index);
             self.stored_books.push(returned);
-	    ctx.savable_data.award_data.shelving_count += 1;
+            ctx.savable_data.award_data.shelving_count += 1;
         }
 
         self.update_window(ctx.context);
-	self.redraw_request = DrawRequest::Draw;
+        self.redraw_request = DrawRequest::Draw;
     }
 
     ///
@@ -1219,19 +1219,19 @@ impl SelectStoreBookUI {
 impl DrawableComponent for SelectStoreBookUI {
     fn draw(&mut self, ctx: &mut ggez::Context) -> ggez::GameResult<()> {
         if self.is_visible() {
-	    if self.redraw_request != DrawRequest::Skip {
-		self.redraw_request = DrawRequest::Skip;
-		sub_screen::stack_screen(ctx, &self.canvas);
-		
-		self.select_book_window.draw(ctx)?;
-		
-		self.reset_select_button.draw(ctx)?;
-		self.store_button.draw(ctx)?;
-		
-		sub_screen::pop_screen(ctx);
+            if self.redraw_request != DrawRequest::Skip {
+                self.redraw_request = DrawRequest::Skip;
+                sub_screen::stack_screen(ctx, &self.canvas);
+
+                self.select_book_window.draw(ctx)?;
+
+                self.reset_select_button.draw(ctx)?;
+                self.store_button.draw(ctx)?;
+
+                sub_screen::pop_screen(ctx);
             }
-	    self.canvas.draw(ctx).unwrap();
-	}
+            self.canvas.draw(ctx).unwrap();
+        }
 
         Ok(())
     }
@@ -1277,17 +1277,17 @@ impl Clickable for SelectStoreBookUI {
 
         if self.select_book_window.contains(ctx.context, rpoint) {
             self.select_book_window.on_click(ctx, clock, button, rpoint);
-	    self.redraw_request = DrawRequest::Draw;
+            self.redraw_request = DrawRequest::Draw;
         }
 
         if self.reset_select_button.contains(ctx.context, rpoint) {
             self.select_book_window.clear_selecting_index();
-	    self.redraw_request = DrawRequest::Draw;
+            self.redraw_request = DrawRequest::Draw;
         }
 
         if self.store_button.contains(ctx.context, rpoint) {
             self.store_shelving_books(ctx);
-	    self.redraw_request = DrawRequest::Draw;
+            self.redraw_request = DrawRequest::Draw;
         }
     }
 
@@ -1399,7 +1399,7 @@ impl ShelvingDetailContents {
         ctx: &mut SuzuContext<'a>,
         player_shelving: &Vec<BookInformation>,
     ) {
-	self.book_billing_number_text.clear();
+        self.book_billing_number_text.clear();
         self.book_title_text.clear();
 
         let book_font_information = FontInformation::new(
@@ -1655,7 +1655,7 @@ impl ShopMenuContents {
 
         self.day_text = VerticalText::new(
             format!("日付　{}月 {}日", number_to_jk(12), number_to_jk(12)),
-	    numeric::Point2f::new(350.0, 70.0),
+            numeric::Point2f::new(350.0, 70.0),
             numeric::Vector2f::new(1.0, 1.0),
             0.0,
             0,
@@ -1667,7 +1667,7 @@ impl ShopMenuContents {
                 "{}冊",
                 number_to_jk(task_result.borrowing_books.len() as u64)
             ),
-	    numeric::Point2f::new(130.0, 170.0),
+            numeric::Point2f::new(130.0, 170.0),
             numeric::Vector2f::new(1.0, 1.0),
             0.0,
             0,
@@ -1679,7 +1679,7 @@ impl ShopMenuContents {
                 "{}冊",
                 number_to_jk(task_result.not_shelved_books.len() as u64)
             ),
-	    numeric::Point2f::new(30.0, 170.0),
+            numeric::Point2f::new(30.0, 170.0),
             numeric::Vector2f::new(1.0, 1.0),
             0.0,
             0,
@@ -2026,7 +2026,7 @@ impl SimpleBookListViewer {
             ),
             books_data: books_data,
             ok_button: ok_button,
-	    redraw_request: DrawRequest::InitDraw,
+            redraw_request: DrawRequest::InitDraw,
         }
     }
 
@@ -2036,7 +2036,7 @@ impl SimpleBookListViewer {
     fn sort_book_info_greater(&mut self) {
         self.books_data
             .sort_by(|a, b| a.billing_number.cmp(&b.billing_number));
-	self.redraw_request = DrawRequest::Draw;
+        self.redraw_request = DrawRequest::Draw;
     }
 
     ///
@@ -2048,7 +2048,7 @@ impl SimpleBookListViewer {
 
         // 描画コンテンツを更新
         self.books_window.update_contents(ctx, &self.books_data);
-	self.redraw_request = DrawRequest::Draw;
+        self.redraw_request = DrawRequest::Draw;
     }
 
     pub fn scroll_handler<'a>(
@@ -2060,7 +2060,7 @@ impl SimpleBookListViewer {
     ) {
         let rpoint = self.canvas.relative_point(point);
         self.books_window.scroll_handler(ctx, rpoint, x, y);
-	self.redraw_request = DrawRequest::Draw;
+        self.redraw_request = DrawRequest::Draw;
     }
 
     pub fn click_and_maybe_hide<'a>(
@@ -2079,15 +2079,15 @@ impl SimpleBookListViewer {
 impl DrawableComponent for SimpleBookListViewer {
     fn draw(&mut self, ctx: &mut ggez::Context) -> ggez::GameResult<()> {
         if self.is_visible() {
-	    if self.redraw_request != DrawRequest::Skip {
-		self.redraw_request = DrawRequest::Skip;
-		sub_screen::stack_screen(ctx, &self.canvas);
-		
-		self.books_window.draw(ctx)?;
-		self.ok_button.draw(ctx)?;
-		
-		sub_screen::pop_screen(ctx);
-	    }
+            if self.redraw_request != DrawRequest::Skip {
+                self.redraw_request = DrawRequest::Skip;
+                sub_screen::stack_screen(ctx, &self.canvas);
+
+                self.books_window.draw(ctx)?;
+                self.ok_button.draw(ctx)?;
+
+                sub_screen::pop_screen(ctx);
+            }
             self.canvas.draw(ctx).unwrap();
         }
 

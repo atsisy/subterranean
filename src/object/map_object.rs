@@ -149,7 +149,7 @@ impl MapObject {
     }
 
     pub fn get_animation_mode(&self) -> ObjectDirection {
-	self.object.get_current_mode()
+        self.object.get_current_mode()
     }
 
     pub fn obj(&self) -> &SimpleObject {
@@ -438,9 +438,9 @@ impl PlayableCharacter {
     }
 
     pub fn update_animation_for_stop(&mut self) {
-	let mode = self.get_character_object().get_animation_mode();
-	self.get_mut_character_object()
-                .change_animation_mode(mode.make_stop());
+        let mode = self.get_character_object().get_animation_mode();
+        self.get_mut_character_object()
+            .change_animation_mode(mode.make_stop());
     }
 
     pub fn fix_collision_vertical(
@@ -702,9 +702,9 @@ impl CustomerCharacter {
     }
 
     pub fn update_animation_for_stop(&mut self) {
-	let mode = self.get_character_object().get_animation_mode();
-	self.get_mut_character_object()
-                .change_animation_mode(mode.make_stop());
+        let mode = self.get_character_object().get_animation_mode();
+        self.get_mut_character_object()
+            .change_animation_mode(mode.make_stop());
     }
 
     ///
@@ -767,7 +767,6 @@ impl CustomerCharacter {
 
             speed
         };
-
 
         // スピードを更新
         self.character.speed_info_mut().set_speed(speed);
@@ -914,9 +913,12 @@ impl CustomerCharacter {
     }
 
     fn generate_hold_request<'a>(&mut self, ctx: &mut SuzuContext<'a>) -> CustomerRequest {
-        let random_select = rand::random::<usize>() % 2 + if !ctx.savable_data.record_book_data.has_returning_request() {
-            1
-        } else { 0 };
+        let random_select = rand::random::<usize>() % 2
+            + if !ctx.savable_data.record_book_data.has_returning_request() {
+                1
+            } else {
+                0
+            };
         let today = ctx.savable_data.date.clone();
 
         match random_select {
@@ -944,7 +946,8 @@ impl CustomerCharacter {
         if !self.shopping_is_done
             && map_data.map_position_to_tile_position(current_pos).unwrap() == counter
         {
-            self.character.change_animation_mode(ObjectDirection::MoveLeft);
+            self.character
+                .change_animation_mode(ObjectDirection::MoveLeft);
             self.customer_status = CustomerCharacterStatus::WaitOnClerk;
             self.shopping_is_done = true;
         }
@@ -1063,13 +1066,14 @@ impl CustomerCharacter {
                     self.check_been_counter(map_data, goal, counter);
                     // 速度もリセット
                     self.reset_speed();
-                    self.character.change_animation_mode(ObjectDirection::MoveLeft);
+                    self.character
+                        .change_animation_mode(ObjectDirection::MoveLeft);
                 }
             }
 
             CustomerCharacterStatus::WaitOnBookShelf => {
-		self.update_animation_for_stop();
-	    }
+                self.update_animation_for_stop();
+            }
             CustomerCharacterStatus::GotOut => {}
         }
     }

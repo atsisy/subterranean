@@ -4,14 +4,23 @@ use torifune::graphics::drawable::*;
 use torifune::graphics::object::*;
 use torifune::sound::*;
 
-use crate::{core::{MouseInformation, SoundID, SuzuContext, TextureID, TileBatchTextureID, WINDOW_SIZE_X, WINDOW_SIZE_Y}, object::{effect_object::{SceneTransitionEffectType, TilingEffectType}, map_object::MapObject}};
+use crate::add_delay_event;
+use crate::flush_delay_event;
 use crate::object::character_factory;
 use crate::object::effect_object;
+use crate::object::end_object::*;
 use crate::object::title_object::*;
 use crate::scene::*;
-use crate::flush_delay_event;
-use crate::add_delay_event;
-use crate::object::end_object::*;
+use crate::{
+    core::{
+        MouseInformation, SoundID, SuzuContext, TextureID, TileBatchTextureID, WINDOW_SIZE_X,
+        WINDOW_SIZE_Y,
+    },
+    object::{
+        effect_object::{SceneTransitionEffectType, TilingEffectType},
+        map_object::MapObject,
+    },
+};
 
 pub struct EndScene {
     mouse_info: MouseInformation,
@@ -65,23 +74,23 @@ impl EndScene {
             Some(SoundPlayFlags::new(1000, 1.0, true, 0.1)),
         );
 
-	let mut kosuzu = character_factory::create_endroll_sample(
-	    ctx,
-	    &numeric::Rect::new(0.0, 0.0, 1366.0, 768.0),
-	    numeric::Point2f::new(1050.0, 500.0)
-	);
-	kosuzu.change_animation_mode(crate::object::util_object::ObjectDirection::MoveLeft);
+        let mut kosuzu = character_factory::create_endroll_sample(
+            ctx,
+            &numeric::Rect::new(0.0, 0.0, 1366.0, 768.0),
+            numeric::Point2f::new(1050.0, 500.0),
+        );
+        kosuzu.change_animation_mode(crate::object::util_object::ObjectDirection::MoveLeft);
 
         EndScene {
             mouse_info: MouseInformation::new(),
             background: background,
             event_list: event_list,
-	    end_flow: EndSceneFlow::new(ctx, 0),
+            end_flow: EndSceneFlow::new(ctx, 0),
             scene_transition_effect: scene_transition_effect,
             scene_transition: SceneID::Save,
             scene_transition_type: SceneTransition::Keep,
             bgm_handler: bgm_handler,
-	    walking_kosuzu: kosuzu,
+            walking_kosuzu: kosuzu,
             clock: 0,
         }
     }
@@ -158,11 +167,18 @@ impl SceneManager for EndScene {
     fn pre_process<'a>(&mut self, ctx: &mut SuzuContext<'a>) {
         let t = self.get_current_clock();
 
-	self.walking_kosuzu.update_texture(t);
-	self.walking_kosuzu.move_map(numeric::Vector2f::new(-0.3, 0.0));
-	self.walking_kosuzu.update_display_position(&numeric::Rect::new(0.0, 0.0, WINDOW_SIZE_X as f32, WINDOW_SIZE_Y as f32));
-	ctx.process_utility.redraw();
-	
+        self.walking_kosuzu.update_texture(t);
+        self.walking_kosuzu
+            .move_map(numeric::Vector2f::new(-0.3, 0.0));
+        self.walking_kosuzu
+            .update_display_position(&numeric::Rect::new(
+                0.0,
+                0.0,
+                WINDOW_SIZE_X as f32,
+                WINDOW_SIZE_Y as f32,
+            ));
+        ctx.process_utility.redraw();
+
         if let Some(transition_effect) = self.scene_transition_effect.as_mut() {
             transition_effect.effect(ctx.context, t);
             ctx.process_utility.redraw();
@@ -172,14 +188,14 @@ impl SceneManager for EndScene {
             ctx.process_utility.redraw();
         }
 
-	self.end_flow.update(ctx, t);
+        self.end_flow.update(ctx, t);
     }
 
     fn drawing_process(&mut self, ctx: &mut ggez::Context) {
         self.background.draw(ctx).unwrap();
 
-	self.end_flow.draw(ctx).unwrap();
-	self.walking_kosuzu.draw(ctx).unwrap();
+        self.end_flow.draw(ctx).unwrap();
+        self.walking_kosuzu.draw(ctx).unwrap();
 
         if let Some(transition_effect) = self.scene_transition_effect.as_mut() {
             transition_effect.draw(ctx).unwrap();
@@ -204,7 +220,6 @@ impl SceneManager for EndScene {
         self.mouse_info.set_last_down(button, point, t);
         self.mouse_info.set_last_dragged(button, point, t);
         self.mouse_info.update_dragging(button, true);
-
     }
 
     fn mouse_button_up_event<'a>(
@@ -217,17 +232,21 @@ impl SceneManager for EndScene {
 
         self.mouse_info.update_dragging(button, false);
 
-	match button {
-	    ginput::mouse::MouseButton::Left => {
-		self.scene_transition_close_effect(ctx, t);
-		
-		add_delay_event!(self.event_list, |slf, _, _| {
-		    slf.scene_transition = SceneID::Title;
-		    slf.scene_transition_type = SceneTransition::SwapTransition;
-		}, t + 40);
-	    },
-	    _ => (),
-	}
+        match button {
+            ginput::mouse::MouseButton::Left => {
+                self.scene_transition_close_effect(ctx, t);
+
+                add_delay_event!(
+                    self.event_list,
+                    |slf, _, _| {
+                        slf.scene_transition = SceneID::Title;
+                        slf.scene_transition_type = SceneTransition::SwapTransition;
+                    },
+                    t + 40
+                );
+            }
+            _ => (),
+        }
     }
 
     fn mouse_motion_event<'a>(

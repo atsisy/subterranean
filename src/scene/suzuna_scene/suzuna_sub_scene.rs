@@ -104,7 +104,11 @@ impl SuzunaSubScene {
                         CustomerRequest::Borrowing(borrowing_info)
                     }
                     CustomerRequest::Returning(_) => {
-                        let request = ctx.savable_data.record_book_data.pick_returning_request_up().unwrap();
+                        let request = ctx
+                            .savable_data
+                            .record_book_data
+                            .pick_returning_request_up()
+                            .unwrap();
                         println!("returning count: {}", request.returning.len());
                         CustomerRequest::Returning(request)
                     }
@@ -150,8 +154,8 @@ impl SuzunaSubScene {
     ) {
         if transition == SceneTransition::PoppingTransition {
             println!("switch!!!!!!!!!, deskwork -> shop");
-            ctx.savable_data.record_book_data = 
-                self.desk_work_scene
+            ctx.savable_data.record_book_data = self
+                .desk_work_scene
                 .as_ref()
                 .unwrap()
                 .export_borrowing_record_book_data();

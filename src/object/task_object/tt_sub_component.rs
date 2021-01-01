@@ -372,11 +372,17 @@ impl OnDeskBook {
             ggraphics::Color::from_rgba_u32(0x00000000),
         );
 
-	let (title_pos, title_size) = match info.size.as_str() {
-	    "大判本" => (numeric::Point2f::new(34.0, 28.0), numeric::Vector2f::new(12.0, 12.0)),
-	    "中判本" => (numeric::Point2f::new(27.0, 22.0), numeric::Vector2f::new(12.0, 12.0)),
-	    _ => panic!("invalid book size info"),
-	};
+        let (title_pos, title_size) = match info.size.as_str() {
+            "大判本" => (
+                numeric::Point2f::new(34.0, 28.0),
+                numeric::Vector2f::new(12.0, 12.0),
+            ),
+            "中判本" => (
+                numeric::Point2f::new(27.0, 22.0),
+                numeric::Vector2f::new(12.0, 12.0),
+            ),
+            _ => panic!("invalid book size info"),
+        };
 
         OnDeskBook {
             info: info,
@@ -385,13 +391,13 @@ impl OnDeskBook {
             shadow: shadow,
             title: VerticalText::new(
                 book_title,
-		title_pos,
+                title_pos,
                 numeric::Vector2f::new(1.0, 1.0),
                 0.0,
                 0,
                 FontInformation::new(
                     ctx.resource.get_font(FontID::BitMap1),
-		    title_size,
+                    title_size,
                     ggraphics::Color::from_rgba_u32(0x000000ff),
                 ),
             ),
@@ -543,24 +549,30 @@ pub struct BorrowingRecordBookPageData {
 
 impl BorrowingRecordBookPageData {
     pub fn is_maybe_waiting_returning(&self) -> bool {
-	!self.returning_is_signed && self.borrowing_is_signed
-	    && !self.borrowing_book_title.is_empty() && self.borrowing_book_status.is_empty()
-	    && self.customer_name.is_some() && self.return_date.is_some() && self.rental_date.is_some()
-	    && self.rental_limit.is_some()
+        !self.returning_is_signed
+            && self.borrowing_is_signed
+            && !self.borrowing_book_title.is_empty()
+            && self.borrowing_book_status.is_empty()
+            && self.customer_name.is_some()
+            && self.return_date.is_some()
+            && self.rental_date.is_some()
+            && self.rental_limit.is_some()
     }
 
     pub fn generate_return_book_information(&self) -> Option<ReturnBookInformation> {
-	if !self.is_maybe_waiting_returning() {
-	    return None;
-	}
+        if !self.is_maybe_waiting_returning() {
+            return None;
+        }
 
-	
-	return Some(ReturnBookInformation::new(
-	    self.borrowing_book_title.iter().map(|elem| elem.1.clone()).collect(),
-	    self.customer_name.as_ref().unwrap(),
-	    self.rental_date.as_ref().unwrap().clone(),
-	    self.return_date.as_ref().unwrap().clone(),
-	));
+        return Some(ReturnBookInformation::new(
+            self.borrowing_book_title
+                .iter()
+                .map(|elem| elem.1.clone())
+                .collect(),
+            self.customer_name.as_ref().unwrap(),
+            self.rental_date.as_ref().unwrap().clone(),
+            self.return_date.as_ref().unwrap().clone(),
+        ));
     }
 }
 
@@ -569,12 +581,12 @@ impl From<&ReturnBookInformation> for BorrowingRecordBookPageData {
         let mut borrowing_book_title = Vec::new();
 
         for (index, book_info) in info.returning.iter().enumerate() {
-            borrowing_book_title.push(
-                (numeric::Vector2u::new((4 - index) as u32, 0),
-                 book_info.clone()),
-            );
+            borrowing_book_title.push((
+                numeric::Vector2u::new((4 - index) as u32, 0),
+                book_info.clone(),
+            ));
         }
-	
+
         BorrowingRecordBookPageData {
             borrowing_book_title: borrowing_book_title,
             borrowing_book_status: Vec::new(),
@@ -595,43 +607,59 @@ pub struct BorrowingRecordBookData {
 
 impl BorrowingRecordBookData {
     pub fn from_returning_request_pool(pool: ReturningRequestPool) -> Self {
-	BorrowingRecordBookData {
-	    pages_data: pool
-		.iter()
-		.map(|request| BorrowingRecordBookPageData::from(request))
-		.collect()
-	}
+        BorrowingRecordBookData {
+            pages_data: pool
+                .iter()
+                .map(|request| BorrowingRecordBookPageData::from(request))
+                .collect(),
+        }
     }
 
     pub fn has_returning_request(&self) -> bool {
-        let count = self.pages_data.iter()
-	    .map(|data| if data.is_maybe_waiting_returning() { 1 } else { 0 })
-        .fold(0, |m, v| m + v);
-        
-	    count > 0
+        let count = self
+            .pages_data
+            .iter()
+            .map(|data| {
+                if data.is_maybe_waiting_returning() {
+                    1
+                } else {
+                    0
+                }
+            })
+            .fold(0, |m, v| m + v);
+
+        count > 0
     }
 
     pub fn pick_returning_request_up(&self) -> Option<ReturnBookInformation> {
-	let count = self.pages_data.iter()
-	    .map(|data| if data.is_maybe_waiting_returning() { 1 } else { 0 })
-	    .fold(0, |m, v| m + v);
-	if count == 0 {
-	    return None;
-	}
-	
-	let mut picked_data = rand::random::<usize>() % count;
-	
-	for data in self.pages_data.iter() {
-	    if data.is_maybe_waiting_returning() {
-		if picked_data == 0 {
-		    return data.generate_return_book_information();
-		}
+        let count = self
+            .pages_data
+            .iter()
+            .map(|data| {
+                if data.is_maybe_waiting_returning() {
+                    1
+                } else {
+                    0
+                }
+            })
+            .fold(0, |m, v| m + v);
+        if count == 0 {
+            return None;
+        }
 
-		picked_data -= 1;
-	    }
-	}
+        let mut picked_data = rand::random::<usize>() % count;
 
-	None
+        for data in self.pages_data.iter() {
+            if data.is_maybe_waiting_returning() {
+                if picked_data == 0 {
+                    return data.generate_return_book_information();
+                }
+
+                picked_data -= 1;
+            }
+        }
+
+        None
     }
 }
 
@@ -1992,7 +2020,7 @@ impl BorrowingRecordBook {
         mut book_data: BorrowingRecordBookData,
         t: Clock,
     ) -> Self {
-	let backup = book_data.clone();
+        let backup = book_data.clone();
         let pages = {
             let mut pages = Vec::new();
 
@@ -2045,12 +2073,12 @@ impl BorrowingRecordBook {
                 0,
             ),
             //scope: AlphaScope::new(ctx, 50, 230, numeric::Point2f::new(100.0, 100.0), 0),
-	    page_data_backup: backup,
+            page_data_backup: backup,
         }
     }
 
     pub fn reset_pages_data<'a>(&mut self, ctx: &mut SuzuContext<'a>, t: Clock) {
-	self.pages = {
+        self.pages = {
             let mut pages = Vec::new();
 
             for page_data in self.page_data_backup.pages_data.iter() {
@@ -2065,8 +2093,8 @@ impl BorrowingRecordBook {
 
             pages
         };
-	ctx.process_utility.redraw();
-	self.redraw_request = DrawRequest::Draw;
+        ctx.process_utility.redraw();
+        self.redraw_request = DrawRequest::Draw;
     }
 
     pub fn add_empty_page<'a>(&mut self, ctx: &mut SuzuContext<'a>, t: Clock) -> &Self {

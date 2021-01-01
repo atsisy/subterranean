@@ -22,27 +22,19 @@ fn create_playable_doremy1<'a>(
         vec![
             ctx.ref_texture(TextureID::KosuzuDotRight1),
             ctx.ref_texture(TextureID::KosuzuDotRight2),
-	    ctx.ref_texture(TextureID::KosuzuDotRight1),
-	    ctx.ref_texture(TextureID::KosuzuDotRight3),
+            ctx.ref_texture(TextureID::KosuzuDotRight1),
+            ctx.ref_texture(TextureID::KosuzuDotRight3),
         ],
         vec![
             ctx.ref_texture(TextureID::KosuzuDotLeft1),
             ctx.ref_texture(TextureID::KosuzuDotLeft2),
-	    ctx.ref_texture(TextureID::KosuzuDotLeft1),
-	    ctx.ref_texture(TextureID::KosuzuDotLeft3),
-        ],
-	vec![
-            ctx.ref_texture(TextureID::KosuzuDotFront1),
-	],
-	vec![
-            ctx.ref_texture(TextureID::KosuzuDotBack1),
-	],
-	vec![
-            ctx.ref_texture(TextureID::KosuzuDotRight1),
-	],
-	vec![
             ctx.ref_texture(TextureID::KosuzuDotLeft1),
-	]
+            ctx.ref_texture(TextureID::KosuzuDotLeft3),
+        ],
+        vec![ctx.ref_texture(TextureID::KosuzuDotFront1)],
+        vec![ctx.ref_texture(TextureID::KosuzuDotBack1)],
+        vec![ctx.ref_texture(TextureID::KosuzuDotRight1)],
+        vec![ctx.ref_texture(TextureID::KosuzuDotLeft1)],
     ];
 
     let obj = Box::new(UniTexture::new(
@@ -52,25 +44,18 @@ fn create_playable_doremy1<'a>(
         0.0,
         0,
     ));
-    
+
     MapObject::new(
-        tobj::SimpleObject::new(
-            tobj::MovableUniTexture::new(
-                obj,
-                None,
-                0,
-            ),
-            vec![],
-        ),
+        tobj::SimpleObject::new(tobj::MovableUniTexture::new(obj, None, 0), vec![]),
         vec![
             ObjectDirection::MoveDown,
             ObjectDirection::MoveUp,
             ObjectDirection::MoveRight,
             ObjectDirection::MoveLeft,
-	    ObjectDirection::StopDown,
-	    ObjectDirection::StopUp,
-	    ObjectDirection::StopRight,
-	    ObjectDirection::StopLeft,
+            ObjectDirection::StopDown,
+            ObjectDirection::StopUp,
+            ObjectDirection::StopRight,
+            ObjectDirection::StopLeft,
         ],
         textures,
         ObjectDirection::StopDown,
@@ -106,27 +91,19 @@ fn create_customer_sample<'a>(
         vec![
             ctx.ref_texture(TextureID::KosuzuDotRight1),
             ctx.ref_texture(TextureID::KosuzuDotRight2),
-	    ctx.ref_texture(TextureID::KosuzuDotRight1),
-	    ctx.ref_texture(TextureID::KosuzuDotRight3),
+            ctx.ref_texture(TextureID::KosuzuDotRight1),
+            ctx.ref_texture(TextureID::KosuzuDotRight3),
         ],
         vec![
             ctx.ref_texture(TextureID::KosuzuDotLeft1),
             ctx.ref_texture(TextureID::KosuzuDotLeft2),
-	    ctx.ref_texture(TextureID::KosuzuDotLeft1),
-	    ctx.ref_texture(TextureID::KosuzuDotLeft3),
-        ],
-	vec![
-            ctx.ref_texture(TextureID::KosuzuDotFront1),
-	],
-	vec![
-            ctx.ref_texture(TextureID::KosuzuDotBack1),
-	],
-	vec![
-            ctx.ref_texture(TextureID::KosuzuDotRight1),
-	],
-	vec![
             ctx.ref_texture(TextureID::KosuzuDotLeft1),
-	]
+            ctx.ref_texture(TextureID::KosuzuDotLeft3),
+        ],
+        vec![ctx.ref_texture(TextureID::KosuzuDotFront1)],
+        vec![ctx.ref_texture(TextureID::KosuzuDotBack1)],
+        vec![ctx.ref_texture(TextureID::KosuzuDotRight1)],
+        vec![ctx.ref_texture(TextureID::KosuzuDotLeft1)],
     ];
 
     let obj = Box::new(UniTexture::new(
@@ -136,25 +113,18 @@ fn create_customer_sample<'a>(
         0.0,
         0,
     ));
-    
+
     MapObject::new(
-        tobj::SimpleObject::new(
-            tobj::MovableUniTexture::new(
-                obj,
-                None,
-                0,
-            ),
-            vec![],
-        ),
+        tobj::SimpleObject::new(tobj::MovableUniTexture::new(obj, None, 0), vec![]),
         vec![
             ObjectDirection::MoveDown,
             ObjectDirection::MoveUp,
             ObjectDirection::MoveRight,
             ObjectDirection::MoveLeft,
-	    ObjectDirection::StopDown,
-	    ObjectDirection::StopUp,
-	    ObjectDirection::StopRight,
-	    ObjectDirection::StopLeft,
+            ObjectDirection::StopDown,
+            ObjectDirection::StopUp,
+            ObjectDirection::StopRight,
+            ObjectDirection::StopLeft,
         ],
         textures,
         ObjectDirection::MoveDown,
@@ -190,33 +160,25 @@ pub fn create_endroll_sample<'a>(
         vec![
             ctx.ref_texture(TextureID::KosuzuDotRight1),
             ctx.ref_texture(TextureID::KosuzuDotRight2),
-	    ctx.ref_texture(TextureID::KosuzuDotRight1),
-	    ctx.ref_texture(TextureID::KosuzuDotRight3),
+            ctx.ref_texture(TextureID::KosuzuDotRight1),
+            ctx.ref_texture(TextureID::KosuzuDotRight3),
         ],
         vec![
             ctx.ref_texture(TextureID::KosuzuDotLeft1),
             ctx.ref_texture(TextureID::KosuzuDotLeft2),
-	    ctx.ref_texture(TextureID::KosuzuDotLeft1),
-	    ctx.ref_texture(TextureID::KosuzuDotLeft3),
-        ],
-	vec![
-            ctx.ref_texture(TextureID::KosuzuDotFront1),
-	],
-	vec![
-            ctx.ref_texture(TextureID::KosuzuDotBack1),
-	],
-	vec![
-            ctx.ref_texture(TextureID::KosuzuDotRight1),
-	],
-	vec![
             ctx.ref_texture(TextureID::KosuzuDotLeft1),
-	]
+            ctx.ref_texture(TextureID::KosuzuDotLeft3),
+        ],
+        vec![ctx.ref_texture(TextureID::KosuzuDotFront1)],
+        vec![ctx.ref_texture(TextureID::KosuzuDotBack1)],
+        vec![ctx.ref_texture(TextureID::KosuzuDotRight1)],
+        vec![ctx.ref_texture(TextureID::KosuzuDotLeft1)],
     ];
 
     for directions in textures.iter_mut() {
-	for texture in directions.iter_mut() {
-	    texture.set_filter(ggraphics::FilterMode::Nearest);
-	}
+        for texture in directions.iter_mut() {
+            texture.set_filter(ggraphics::FilterMode::Nearest);
+        }
     }
 
     let mut obj = Box::new(UniTexture::new(
@@ -227,25 +189,18 @@ pub fn create_endroll_sample<'a>(
         0,
     ));
     obj.set_filter(ggraphics::FilterMode::Nearest);
-    
+
     MapObject::new(
-        tobj::SimpleObject::new(
-            tobj::MovableUniTexture::new(
-                obj,
-                None,
-                0,
-            ),
-            vec![],
-        ),
+        tobj::SimpleObject::new(tobj::MovableUniTexture::new(obj, None, 0), vec![]),
         vec![
             ObjectDirection::MoveDown,
             ObjectDirection::MoveUp,
             ObjectDirection::MoveRight,
             ObjectDirection::MoveLeft,
-	    ObjectDirection::StopDown,
-	    ObjectDirection::StopUp,
-	    ObjectDirection::StopRight,
-	    ObjectDirection::StopLeft,
+            ObjectDirection::StopDown,
+            ObjectDirection::StopUp,
+            ObjectDirection::StopRight,
+            ObjectDirection::StopLeft,
         ],
         textures,
         ObjectDirection::MoveDown,

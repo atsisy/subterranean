@@ -10,9 +10,12 @@ use torifune::graphics::object::shape as tshape;
 use ggez::graphics as ggraphics;
 
 use super::*;
-use crate::{core::{FontID, TextureID, TileBatchTextureID}, scene::DrawRequest};
 use crate::object::util_object::*;
 use crate::set_table_frame_cell_center;
+use crate::{
+    core::{FontID, TextureID, TileBatchTextureID},
+    scene::DrawRequest,
+};
 use torifune::roundup2f;
 
 use number_to_jk::number_to_jk;
@@ -708,10 +711,10 @@ pub struct ResultMeter {
 impl ResultMeter {
     pub fn new<'a>(
         ctx: &mut SuzuContext<'a>,
-	title: String,
+        title: String,
         pos: numeric::Rect,
-	padding: f32,
-	max: f32,
+        padding: f32,
+        max: f32,
         current: f32,
         depth: i8,
     ) -> Self {
@@ -719,62 +722,72 @@ impl ResultMeter {
             numeric::Point2f::new(pos.x, pos.y + 25.0),
             numeric::Rect::new(0.0, 0.0, pos.w, pos.h),
             ggraphics::Color::from_rgba_u32(0x362d33ff),
-            numeric::Rect::new(padding, padding, pos.w - (2.0 * padding), pos.h - (2.0 * padding)),
+            numeric::Rect::new(
+                padding,
+                padding,
+                pos.w - (2.0 * padding),
+                pos.h - (2.0 * padding),
+            ),
             ggraphics::Color::from_rgba_u32(0x463d43ff),
             ggraphics::Color::from_rgba_u32(0xb83f36ff),
             current,
-	    max,
+            max,
         );
 
-	let font_info = FontInformation::new(
+        let font_info = FontInformation::new(
             ctx.resource.get_font(FontID::Cinema),
             numeric::Vector2f::new(20.0, 20.0),
             ggraphics::Color::from_rgba_u32(0xff),
         );
 
-	let mut current_value_text = UniText::new(
-	    format!("{}", current),
-	    numeric::Point2f::new(0.0, 0.0),
-	    numeric::Vector2f::new(1.0, 1.0),
-	    0.0,
-	    0,
-	    font_info.clone(),
-	);
-	current_value_text.set_position(
-	    numeric::Point2f::new(pos.right() - current_value_text.get_drawing_size(ctx.context).x, pos.y)
-	);
+        let mut current_value_text = UniText::new(
+            format!("{}", current),
+            numeric::Point2f::new(0.0, 0.0),
+            numeric::Vector2f::new(1.0, 1.0),
+            0.0,
+            0,
+            font_info.clone(),
+        );
+        current_value_text.set_position(numeric::Point2f::new(
+            pos.right() - current_value_text.get_drawing_size(ctx.context).x,
+            pos.y,
+        ));
 
         let desc_text = UniText::new(
-	    title,
+            title,
             pos.point().into(),
             numeric::Vector2f::new(1.0, 1.0),
             0.0,
             depth,
-	    font_info,
+            font_info,
         );
 
         ResultMeter {
             meter: meter,
             desc_text: desc_text,
             diff_text: None,
-	    current_value_text: current_value_text,
+            current_value_text: current_value_text,
             goal: current,
             drwob_essential: DrawableObjectEssential::new(true, depth),
-	    diff_per_clock: 0.0,
+            diff_per_clock: 0.0,
         }
     }
 
     pub fn set_goal<'a>(&mut self, ctx: &mut SuzuContext<'a>, goal: f32, time: Clock) {
-	let current = self.meter.get_value();
-	let diff = goal - current;
-	self.apply_offset(ctx, diff, time);
+        let current = self.meter.get_value();
+        let diff = goal - current;
+        self.apply_offset(ctx, diff, time);
     }
 
     pub fn apply_offset<'a>(&mut self, ctx: &mut SuzuContext<'a>, diff: f32, time: Clock) {
-	let pos = self.desc_text.get_position();
-	
-	self.diff_text = Some(UniText::new(
-            if diff >= 0.0 { format!("{:+}", diff) } else { format!("{}", diff) },
+        let pos = self.desc_text.get_position();
+
+        self.diff_text = Some(UniText::new(
+            if diff >= 0.0 {
+                format!("{:+}", diff)
+            } else {
+                format!("{}", diff)
+            },
             numeric::Point2f::new(pos.x + 100.0, pos.y),
             numeric::Vector2f::new(1.0, 1.0),
             0.0,
@@ -782,36 +795,42 @@ impl ResultMeter {
             FontInformation::new(
                 ctx.resource.get_font(FontID::Cinema),
                 numeric::Vector2f::new(20.0, 20.0),
-                if diff >= 0.0 { ggraphics::Color::from_rgba_u32(0x00ff00ff) } else { ggraphics::Color::from_rgba_u32(0xff0000ff) },
+                if diff >= 0.0 {
+                    ggraphics::Color::from_rgba_u32(0x00ff00ff)
+                } else {
+                    ggraphics::Color::from_rgba_u32(0xff0000ff)
+                },
             ),
         ));
 
-	let next_goal = self.meter.get_value() + diff;
-	self.goal = if next_goal > self.meter.max {
-	    self.meter.max
-	} else {
-	    next_goal
-	};
+        let next_goal = self.meter.get_value() + diff;
+        self.goal = if next_goal > self.meter.max {
+            self.meter.max
+        } else {
+            next_goal
+        };
 
-	self.diff_per_clock = (self.goal - self.meter.get_value()) / time as f32;
+        self.diff_per_clock = (self.goal - self.meter.get_value()) / time as f32;
     }
 
     pub fn effect<'a>(&mut self, ctx: &mut SuzuContext<'a>) -> DrawRequest {
         if (self.meter.get_value() - self.goal).abs() >= self.diff_per_clock.abs() {
             self.meter.add(self.diff_per_clock);
 
-	    let before_x = self.current_value_text.get_drawing_size(ctx.context).x;
-	    
-	    self.current_value_text.replace_text(&format!("{}", self.meter.get_value() as i32));
+            let before_x = self.current_value_text.get_drawing_size(ctx.context).x;
 
-	    let after_x = self.current_value_text.get_drawing_size(ctx.context).x;
-	    self.current_value_text.move_diff(numeric::Vector2f::new(before_x - after_x, 0.0));
-	    
-	    ctx.process_utility.redraw();
-	    return DrawRequest::Draw;
+            self.current_value_text
+                .replace_text(&format!("{}", self.meter.get_value() as i32));
+
+            let after_x = self.current_value_text.get_drawing_size(ctx.context).x;
+            self.current_value_text
+                .move_diff(numeric::Vector2f::new(before_x - after_x, 0.0));
+
+            ctx.process_utility.redraw();
+            return DrawRequest::Draw;
         }
 
-	DrawRequest::Skip
+        DrawRequest::Skip
     }
 }
 
@@ -820,11 +839,11 @@ impl DrawableComponent for ResultMeter {
         if self.is_visible() {
             self.meter.draw(ctx)?;
             self.desc_text.draw(ctx)?;
-	    self.current_value_text.draw(ctx)?;
+            self.current_value_text.draw(ctx)?;
 
-	    if let Some(diff_text) = self.diff_text.as_mut() {
-		diff_text.draw(ctx)?;
-	    }
+            if let Some(diff_text) = self.diff_text.as_mut() {
+                diff_text.draw(ctx)?;
+            }
         }
 
         Ok(())

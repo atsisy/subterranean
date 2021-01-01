@@ -1,8 +1,8 @@
 pub mod book_management;
+pub mod crypt;
 pub mod game_system;
 pub mod map_parser;
 pub mod util;
-pub mod crypt;
 
 use game_system::WeekWorkSchedule;
 use ggez::graphics as ggraphics;
@@ -29,8 +29,13 @@ use std::collections::HashMap;
 use std::collections::VecDeque;
 use std::str::FromStr;
 
-use crate::{object::{scenario_object::SuzunaAdAgencyType, task_object::tt_sub_component::BorrowingRecordBookData}, parse_toml_file};
 use crate::scene;
+use crate::{
+    object::{
+        scenario_object::SuzunaAdAgencyType, task_object::tt_sub_component::BorrowingRecordBookData,
+    },
+    parse_toml_file,
+};
 
 use std::fs;
 use std::fs::File;
@@ -181,7 +186,7 @@ impl FromStr for FontID {
             "JpFude1" => Ok(FontID::JpFude1),
             "CorpMincho" => Ok(FontID::CorpMincho),
             "Cinema" => Ok(FontID::Cinema),
-	    "BitMap1" => Ok(FontID::BitMap1),
+            "BitMap1" => Ok(FontID::BitMap1),
             _ => Err(()),
         }
     }
@@ -261,12 +266,12 @@ impl FromStr for TextureID {
             "GoNextPageRight" => Ok(Self::GoNextPageRight),
             "Library" => Ok(Self::Library),
             "KosuzuTachie1" => Ok(Self::KosuzuTachie1),
-	    "CheckCircle" => Ok(Self::CheckCircle),
-	    "MoneyBox" => Ok(Self::MoneyBox),
-	    "KosuzuSmile1" => Ok(Self::KosuzuSmile1),
-	    "Coin100Yen" => Ok(Self::Coin100Yen),
-	    "Coin50Yen" => Ok(Self::Coin50Yen),
-	    "Coin500Yen" => Ok(Self::Coin500Yen),
+            "CheckCircle" => Ok(Self::CheckCircle),
+            "MoneyBox" => Ok(Self::MoneyBox),
+            "KosuzuSmile1" => Ok(Self::KosuzuSmile1),
+            "Coin100Yen" => Ok(Self::Coin100Yen),
+            "Coin50Yen" => Ok(Self::Coin50Yen),
+            "Coin500Yen" => Ok(Self::Coin500Yen),
             _ => Err(()),
         }
     }
@@ -345,12 +350,12 @@ impl TextureID {
             67 => Some(Self::GoNextPageRight),
             68 => Some(Self::Library),
             69 => Some(Self::KosuzuTachie1),
-	    70 => Some(Self::CheckCircle),
-	    71 => Some(Self::MoneyBox),
-	    72 => Some(Self::KosuzuSmile1),
-	    73 => Some(Self::Coin100Yen),
-	    74 => Some(Self::Coin50Yen),
-	    75 => Some(Self::Coin500Yen),
+            70 => Some(Self::CheckCircle),
+            71 => Some(Self::MoneyBox),
+            72 => Some(Self::KosuzuSmile1),
+            73 => Some(Self::Coin100Yen),
+            74 => Some(Self::Coin50Yen),
+            75 => Some(Self::Coin500Yen),
             _ => None,
         }
     }
@@ -683,10 +688,10 @@ pub enum GeneralScenarioID {
 
 impl GeneralScenarioID {
     pub fn from_str(s: &str) -> Self {
-	match s {
-	    "NoEnoughMoney" => Self::NoEnoughMoney,
-	    _ => panic!("Invalid General Scenario String"),
-	}
+        match s {
+            "NoEnoughMoney" => Self::NoEnoughMoney,
+            _ => panic!("Invalid General Scenario String"),
+        }
     }
 }
 
@@ -715,12 +720,12 @@ impl ScenarioTable {
             table.insert(genso_date, path.to_string());
         }
 
-	let mut general_scenario = HashMap::new();
-	let array = root["general-scenario-table"].as_array().unwrap();
+        let mut general_scenario = HashMap::new();
+        let array = root["general-scenario-table"].as_array().unwrap();
 
         for elem in array {
-	    let ty = elem.get("type").unwrap().as_str().unwrap();
-	    let id = GeneralScenarioID::from_str(ty);
+            let ty = elem.get("type").unwrap().as_str().unwrap();
+            let id = GeneralScenarioID::from_str(ty);
             let path = elem.get("path").unwrap().as_str().unwrap();
 
             general_scenario.insert(id, path.to_string());
@@ -728,7 +733,7 @@ impl ScenarioTable {
 
         ScenarioTable {
             scenario_table: table,
-	    general_scenario: general_scenario,
+            general_scenario: general_scenario,
         }
     }
 
@@ -794,7 +799,7 @@ pub struct AdCostTable {
 impl AdCostTable {
     pub fn from_data(cost_data: HashMap<String, u32>, gain_data: HashMap<String, u32>) -> Self {
         let mut cost_table = HashMap::new();
-	let mut gain_table = HashMap::new();
+        let mut gain_table = HashMap::new();
 
         for (s, c) in cost_data.iter() {
             cost_table.insert(
@@ -803,7 +808,7 @@ impl AdCostTable {
             );
         }
 
-	for (s, c) in gain_data.iter() {
+        for (s, c) in gain_data.iter() {
             gain_table.insert(
                 crate::object::scenario_object::SuzunaAdType::from_str(s),
                 *c,
@@ -812,7 +817,7 @@ impl AdCostTable {
 
         AdCostTable {
             ad_cost_table: cost_table,
-	    ad_gain_table: gain_table,
+            ad_gain_table: gain_table,
         }
     }
 
@@ -834,7 +839,7 @@ pub struct AdAgencyCostTable {
 impl AdAgencyCostTable {
     pub fn from_data(cost_data: HashMap<String, u32>, gain_data: HashMap<String, u32>) -> Self {
         let mut cost_table = HashMap::new();
-	let mut money_gain_table = HashMap::new();
+        let mut money_gain_table = HashMap::new();
 
         for (s, c) in cost_data.iter() {
             cost_table.insert(
@@ -843,7 +848,7 @@ impl AdAgencyCostTable {
             );
         }
 
-	for (s, c) in gain_data.iter() {
+        for (s, c) in gain_data.iter() {
             money_gain_table.insert(
                 crate::object::scenario_object::SuzunaAdAgencyType::from_str(s),
                 *c,
@@ -852,7 +857,7 @@ impl AdAgencyCostTable {
 
         AdAgencyCostTable {
             cost_table: cost_table,
-	    money_gain_table: money_gain_table,
+            money_gain_table: money_gain_table,
         }
     }
 
@@ -976,22 +981,20 @@ impl GameResource {
             bgm_manager: sound::SoundManager::new(),
             se_manager: sound::SoundManager::new(),
             ad_info: AdCostTable::from_data(src_file.ad_cost_table, src_file.ad_gain_table),
-	    ad_agency_info: AdAgencyCostTable::from_data(src_file.ad_agency_cost_table, src_file.ad_agency_gain_table),
+            ad_agency_info: AdAgencyCostTable::from_data(
+                src_file.ad_agency_cost_table,
+                src_file.ad_agency_gain_table,
+            ),
         }
     }
 
-    fn load_texture_delay(
-        &mut self,
-        ctx: &mut ggez::Context,
-        id: TextureID,
-    ) -> ggraphics::Image {
+    fn load_texture_delay(&mut self, ctx: &mut ggez::Context, id: TextureID) -> ggraphics::Image {
         let path = self
             .texture_resource_paths
             .get(&id)
             .expect("Delay texture load: Invalid TextureID");
         print!("delay texture loading -> {} ... ", path);
-        let texture =
-            ggraphics::Image::new(ctx, path).expect("Delay texture load: Invalid Path");
+        let texture = ggraphics::Image::new(ctx, path).expect("Delay texture load: Invalid Path");
         self.textures.insert(id, texture.clone());
         println!("done!");
 
@@ -1032,13 +1035,13 @@ impl GameResource {
     }
 
     pub fn search_book_with_title(&self, title: &str) -> Option<&BookInformation> {
-	for book_info in self.books_information.iter() {
-	    if book_info.name == title {
-		return Some(book_info);
-	    }
-	}
+        for book_info in self.books_information.iter() {
+            if book_info.name == title {
+                return Some(book_info);
+            }
+        }
 
-	None
+        None
     }
 
     pub fn iter_available_books(&self) -> std::slice::Iter<BookInformation> {
@@ -1126,7 +1129,10 @@ impl GameResource {
         self.ad_info.get_cost(ty)
     }
 
-    pub fn get_default_ad_reputation_gain(&self, ty: crate::object::scenario_object::SuzunaAdType) -> u32 {
+    pub fn get_default_ad_reputation_gain(
+        &self,
+        ty: crate::object::scenario_object::SuzunaAdType,
+    ) -> u32 {
         self.ad_info.get_reputation_gain(ty)
     }
 
@@ -1354,7 +1360,7 @@ impl SuzunaAnStatus {
         SuzunaAnStatus {
             jinyou_balance: 0.0,
             reputation: 50.0,
-	    kosuzu_hp: 100.0,
+            kosuzu_hp: 100.0,
         }
     }
 
@@ -1532,13 +1538,15 @@ impl SuzunaBookPool {
             let book_info = self
                 .books
                 .swap_remove(rand::random::<usize>() % self.books.len());
-	    if returning_books.iter()
-                .any(|info| info.name == book_info.name) {
-		// 既に同じ本を取り出している
-		self.push_book(book_info);
-		continue;
-	    }
-	    
+            if returning_books
+                .iter()
+                .any(|info| info.name == book_info.name)
+            {
+                // 既に同じ本を取り出している
+                self.push_book(book_info);
+                continue;
+            }
+
             returning_books.push(book_info);
         }
 
@@ -1644,7 +1652,7 @@ impl SavableData {
             (SuzunaAdType::AdPaper, false)
         ];
 
-	let ad_agency_status = hash![
+        let ad_agency_status = hash![
             (SuzunaAdAgencyType::HakureiJinja, false),
             (SuzunaAdAgencyType::KirisameMahoten, false),
             (SuzunaAdAgencyType::GettoDango, false),
@@ -1653,7 +1661,8 @@ impl SavableData {
             (SuzunaAdAgencyType::YamaJinja, false)
         ];
 
-	let record_book_data = BorrowingRecordBookData::from_returning_request_pool(returning_request_pool);
+        let record_book_data =
+            BorrowingRecordBookData::from_returning_request_pool(returning_request_pool);
 
         SavableData {
             date: date.clone(),
@@ -1661,17 +1670,22 @@ impl SavableData {
             suzunaan_status: SuzunaAnStatus::new(),
             week_schedule: WeekWorkSchedule::new_empty(date),
             suzuna_book_pool: suzuna_book_pool,
-	    record_book_data: record_book_data,
+            record_book_data: record_book_data,
             ad_status: ad_status,
-	    agency_status: ad_agency_status,
-	    award_data: game_system::AwardData::new(),
+            agency_status: ad_agency_status,
+            award_data: game_system::AwardData::new(),
         }
     }
 
     pub fn save(&self, slot: u8) -> Result<(), Box<dyn std::error::Error>> {
         let mut file = File::create(&format!("./resources/save{}", slot))?;
 
-	file.write_all(crypt::crypt_str(&serde_json::to_string(self).unwrap()).unwrap().as_slice()).unwrap();
+        file.write_all(
+            crypt::crypt_str(&serde_json::to_string(self).unwrap())
+                .unwrap()
+                .as_slice(),
+        )
+        .unwrap();
         file.flush()?;
 
         Ok(())
@@ -1682,15 +1696,17 @@ impl SavableData {
     }
 
     pub fn new_load(slot: u8) -> Result<SavableData, ()> {
-	let file = std::fs::File::open(&format!("./resources/save{}", slot));
-	if file.is_err() {
-	    return Err(());
-	}
-	
-	let mut buf = Vec::new();
-	file.unwrap().read_to_end(&mut buf).expect("file read failed");
+        let file = std::fs::File::open(&format!("./resources/save{}", slot));
+        if file.is_err() {
+            return Err(());
+        }
 
-	let content = crypt::decrypt_str(&buf);
+        let mut buf = Vec::new();
+        file.unwrap()
+            .read_to_end(&mut buf)
+            .expect("file read failed");
+
+        let content = crypt::decrypt_str(&buf);
 
         let savable_data = serde_json::from_str(&content.unwrap());
 
@@ -1746,7 +1762,7 @@ impl SavableData {
     }
 
     pub fn get_todays_schedule(&self) -> Option<game_system::DayWorkType> {
-	self.week_schedule.get_schedule_of(&self.date).clone()
+        self.week_schedule.get_schedule_of(&self.date).clone()
     }
 }
 
@@ -1814,7 +1830,7 @@ impl ResultReport {
     }
 
     pub fn get_conition_eval_mistakes(&self) -> usize {
-	self.condition_eval_mistakes
+        self.condition_eval_mistakes
     }
 }
 
@@ -1942,13 +1958,13 @@ impl<'ctx> SuzuContext<'ctx> {
     }
 
     pub fn go_next_day(&mut self) {
-	self.savable_data.date.add_day(1);
+        self.savable_data.date.add_day(1);
     }
 
     pub fn current_total_ad_cost(&self) -> i32 {
-	let mut total_ad_cost = 0;
-	
-	for ad_type in vec![
+        let mut total_ad_cost = 0;
+
+        for ad_type in vec![
             SuzunaAdType::AdPaper,
             SuzunaAdType::Chindon,
             SuzunaAdType::ShopNobori,
@@ -1956,19 +1972,18 @@ impl<'ctx> SuzuContext<'ctx> {
             SuzunaAdType::NewsPaper,
             SuzunaAdType::BunBunMaruPaper,
         ] {
-	    if *self.savable_data.ad_status.get(&ad_type).unwrap() {
-		total_ad_cost +=
-		    self.resource.get_default_ad_cost(ad_type);
-	    }
-	}
+            if *self.savable_data.ad_status.get(&ad_type).unwrap() {
+                total_ad_cost += self.resource.get_default_ad_cost(ad_type);
+            }
+        }
 
-	return total_ad_cost as i32;
+        return total_ad_cost as i32;
     }
 
     pub fn current_total_ad_reputation_gain(&self) -> i32 {
-	let mut total_ad_reputation_gain = 0;
-	
-	for ad_type in vec![
+        let mut total_ad_reputation_gain = 0;
+
+        for ad_type in vec![
             SuzunaAdType::AdPaper,
             SuzunaAdType::Chindon,
             SuzunaAdType::ShopNobori,
@@ -1976,33 +1991,32 @@ impl<'ctx> SuzuContext<'ctx> {
             SuzunaAdType::NewsPaper,
             SuzunaAdType::BunBunMaruPaper,
         ] {
-	    if *self.savable_data.ad_status.get(&ad_type).unwrap() {
-		total_ad_reputation_gain +=
-		    self.resource.get_default_ad_reputation_gain(ad_type);
-	    }
-	}
+            if *self.savable_data.ad_status.get(&ad_type).unwrap() {
+                total_ad_reputation_gain += self.resource.get_default_ad_reputation_gain(ad_type);
+            }
+        }
 
-	return total_ad_reputation_gain as i32;
+        return total_ad_reputation_gain as i32;
     }
 
     pub fn current_total_ad_agency_money_gain(&self) -> i32 {
-	let mut total_ad_agency_money_gain = 0;
-	
-	for ad_type in vec![
+        let mut total_ad_agency_money_gain = 0;
+
+        for ad_type in vec![
             SuzunaAdAgencyType::HakureiJinja,
-	    SuzunaAdAgencyType::KirisameMahoten,
+            SuzunaAdAgencyType::KirisameMahoten,
             SuzunaAdAgencyType::GettoDango,
             SuzunaAdAgencyType::Kusuriya,
-	    SuzunaAdAgencyType::Hieda,
-	    SuzunaAdAgencyType::YamaJinja,
+            SuzunaAdAgencyType::Hieda,
+            SuzunaAdAgencyType::YamaJinja,
         ] {
-	    if *self.savable_data.agency_status.get(&ad_type).unwrap() {
-		total_ad_agency_money_gain +=
-		    self.resource.get_default_ad_agency_money_gain(&ad_type);
-	    }
-	}
+            if *self.savable_data.agency_status.get(&ad_type).unwrap() {
+                total_ad_agency_money_gain +=
+                    self.resource.get_default_ad_agency_money_gain(&ad_type);
+            }
+        }
 
-	return total_ad_agency_money_gain as i32;
+        return total_ad_agency_money_gain as i32;
     }
 }
 
@@ -2022,7 +2036,7 @@ impl TopScene {
             TopScene::SuzunaScene(scene) => scene,
             TopScene::SaveScene(scene) => scene,
             TopScene::TitleScene(scene) => scene,
-	    TopScene::EndScene(scene) => scene,
+            TopScene::EndScene(scene) => scene,
             TopScene::Null(scene) => scene,
         }
     }
@@ -2033,7 +2047,7 @@ impl TopScene {
             TopScene::SuzunaScene(scene) => scene,
             TopScene::SaveScene(scene) => scene,
             TopScene::TitleScene(scene) => scene,
-	    TopScene::EndScene(scene) => scene,
+            TopScene::EndScene(scene) => scene,
             TopScene::Null(scene) => scene,
         }
     }
@@ -2160,7 +2174,7 @@ impl SceneController {
                             scene::scenario_scene::ScenarioSelect::DayBegin,
                         ))
                 }
-		TopScene::ScenarioScene(_) => {
+                TopScene::ScenarioScene(_) => {
                     self.current_scene =
                         TopScene::ScenarioScene(scene::scenario_scene::ScenarioScene::new(
                             &mut ctx,
@@ -2177,12 +2191,9 @@ impl SceneController {
                 self.current_scene =
                     TopScene::SaveScene(scene::save_scene::SaveScene::new(&mut ctx));
             }
-	    scene::SceneID::End => {
-		self.current_scene =
-                    TopScene::EndScene(scene::end_scene::EndScene::new(
-                        &mut ctx,
-                    ))
-	    }
+            scene::SceneID::End => {
+                self.current_scene = TopScene::EndScene(scene::end_scene::EndScene::new(&mut ctx))
+            }
             scene::SceneID::Null => self.current_scene = TopScene::Null(scene::NullScene::new()),
             _ => (),
         }
@@ -2249,7 +2260,7 @@ impl SceneController {
             sub_screen::pop_screen(ctx);
             self.root_screen.draw(ctx).unwrap();
         }
-	//) as f32 / 1000000.0);
+        //) as f32 / 1000000.0);
     }
 
     fn run_post_process<'a>(&mut self, ctx: &mut ggez::Context, game_data: &'a mut GameResource) {

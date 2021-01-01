@@ -1031,12 +1031,12 @@ pub enum ObjectDirection {
 
 impl ObjectDirection {
     pub fn make_stop(&self) -> Self {
-	match self {
+        match self {
             ObjectDirection::MoveDown | ObjectDirection::StopDown => ObjectDirection::StopDown,
             ObjectDirection::MoveUp | ObjectDirection::StopUp => ObjectDirection::StopUp,
             ObjectDirection::MoveRight | ObjectDirection::StopRight => ObjectDirection::StopRight,
             ObjectDirection::MoveLeft | ObjectDirection::StopLeft => ObjectDirection::StopLeft,
-	}
+        }
     }
 }
 
@@ -1262,10 +1262,7 @@ impl SeqTexture {
         self.textures[self.index % self.textures.len()].clone()
     }
 
-    pub fn next_frame(
-        &mut self,
-        t: AnimationType,
-    ) -> Result<ggraphics::Image, AnimationStatus> {
+    pub fn next_frame(&mut self, t: AnimationType) -> Result<ggraphics::Image, AnimationStatus> {
         self.index += 1;
 
         match t {

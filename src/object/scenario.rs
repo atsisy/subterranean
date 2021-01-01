@@ -11,11 +11,14 @@ use torifune::impl_drawable_object_for_wrapped;
 use torifune::impl_texture_object_for_wrapped;
 
 use super::*;
-use crate::{core::{FontID, GameResource, SuzuContext, TextureID, TileBatchTextureID}, scene::DrawRequest};
 use crate::object::util_object::*;
 use crate::parse_toml_file;
 use crate::scene::scenario_scene::ScenarioContext;
 use crate::scene::{SceneID, SceneTransition};
+use crate::{
+    core::{FontID, GameResource, SuzuContext, TextureID, TileBatchTextureID},
+    scene::DrawRequest,
+};
 use std::str::FromStr;
 
 pub type ScenarioElementID = i32;
@@ -250,14 +253,14 @@ pub struct TachieData {
 
 impl TachieData {
     pub fn new_empty() -> TachieData {
-	TachieData {
-	    right: None,
-	    left: None,
-	}
+        TachieData {
+            right: None,
+            left: None,
+        }
     }
 
     pub fn is_none(&self) -> bool {
-	self.right.is_none() && self.left.is_none()
+        self.right.is_none() && self.left.is_none()
     }
 }
 
@@ -270,7 +273,6 @@ pub struct ScenarioText {
     next_scenario_id: ScenarioElementID,
     background_texture_id: TextureID,
     tachie_data: TachieData,
-    
 }
 
 impl ScenarioText {
@@ -311,25 +313,25 @@ impl ScenarioText {
 
         let total_length: usize = seq_text.iter().fold(0, |sum, s| sum + s.str_len());
 
-	let tachie_data = if let Some(tachie_table) = toml_scripts.get("tachie-data") {
-	    TachieData {
-		right: if let Some(tid) = tachie_table.get("right") {
+        let tachie_data = if let Some(tachie_table) = toml_scripts.get("tachie-data") {
+            TachieData {
+                right: if let Some(tid) = tachie_table.get("right") {
                     Some(TextureID::from_str(tid.as_str().unwrap()).unwrap())
-		} else {
-		    None
-		},
-		left: if let Some(tid) = tachie_table.get("left") {
-		    Some(TextureID::from_str(tid.as_str().unwrap()).unwrap())
-		} else {
-		    None
-		}
-	    }
-	} else {
-	    TachieData {
-		right: None,
-		left: None,
-	    }
-	};
+                } else {
+                    None
+                },
+                left: if let Some(tid) = tachie_table.get("left") {
+                    Some(TextureID::from_str(tid.as_str().unwrap()).unwrap())
+                } else {
+                    None
+                },
+            }
+        } else {
+            TachieData {
+                right: None,
+                left: None,
+            }
+        };
 
         ScenarioText {
             seq_text: seq_text,
@@ -339,7 +341,7 @@ impl ScenarioText {
             scenario_id: id,
             next_scenario_id: next_id,
             background_texture_id: background_texture_id,
-	    tachie_data: tachie_data,
+            tachie_data: tachie_data,
         }
     }
 
@@ -428,25 +430,30 @@ impl ChoicePatternData {
             None
         };
 
-	let tachie_data = if let Some(tachie_table) = toml_scripts.get("tachie-data") {
-	    TachieData {
-		right: if let Some(tid) = tachie_table.get("right") {
+        let tachie_data = if let Some(tachie_table) = toml_scripts.get("tachie-data") {
+            TachieData {
+                right: if let Some(tid) = tachie_table.get("right") {
                     Some(TextureID::from_str(tid.as_str().unwrap()).unwrap())
-		} else {
-		    None
-		},
-		left: if let Some(tid) = tachie_table.get("left") {
-		    Some(TextureID::from_str(tid.as_str().unwrap()).unwrap())
-		} else {
-		    None
-		}
-	    }
-	} else {
-	    TachieData::new_empty()
-	};
-	
+                } else {
+                    None
+                },
+                left: if let Some(tid) = tachie_table.get("left") {
+                    Some(TextureID::from_str(tid.as_str().unwrap()).unwrap())
+                } else {
+                    None
+                },
+            }
+        } else {
+            TachieData::new_empty()
+        };
+
         ChoicePatternData {
-	    header_text: toml_scripts.get("header_text").unwrap().as_str().unwrap().to_string(),
+            header_text: toml_scripts
+                .get("header_text")
+                .unwrap()
+                .as_str()
+                .unwrap()
+                .to_string(),
             text: choice_pattern_array,
             jump_scenario_id: jump_scenario_array,
             scenario_id: id,
@@ -547,30 +554,30 @@ impl ChoiceBox {
     pub fn new<'a>(
         ctx: &mut SuzuContext<'a>,
         pos_rect: numeric::Rect,
-	header_text: String,
+        header_text: String,
         choice_text: Vec<String>,
     ) -> Self {
         let mut panels =
             Self::generate_choice_panel(ctx, &choice_text, numeric::Vector2f::new(10.0, 0.0), 10.0);
 
-	let mut width = 10.0 * panels.len() as f32;
-	
+        let mut width = 10.0 * panels.len() as f32;
+
         for panel in &mut panels {
-	    width += panel.get_area().w;
+            width += panel.get_area().w;
             panel.make_this_none_status(ctx);
         }
 
         ChoiceBox {
-	    header_text: header_text,
+            header_text: header_text,
             panels: panels,
             choice_text: choice_text,
             selecting: None,
             canvas: SubScreen::new(
-		ctx.context,
-		numeric::Rect::new(pos_rect.x, pos_rect.y, width, pos_rect.h),
-		0,
-		ggraphics::Color::from_rgba_u32(0)
-	    ),
+                ctx.context,
+                numeric::Rect::new(pos_rect.x, pos_rect.y, width, pos_rect.h),
+                0,
+                ggraphics::Color::from_rgba_u32(0),
+            ),
         }
     }
 
@@ -675,22 +682,22 @@ impl ScenarioFinishAndWaitData {
             None
         };
 
-	let tachie_data = if let Some(tachie_table) = toml_scripts.get("tachie-data") {
-	    TachieData {
-		right: if let Some(tid) = tachie_table.get("right") {
+        let tachie_data = if let Some(tachie_table) = toml_scripts.get("tachie-data") {
+            TachieData {
+                right: if let Some(tid) = tachie_table.get("right") {
                     Some(TextureID::from_str(tid.as_str().unwrap()).unwrap())
-		} else {
-		    None
-		},
-		left: if let Some(tid) = tachie_table.get("left") {
-		    Some(TextureID::from_str(tid.as_str().unwrap()).unwrap())
-		} else {
-		    None
-		}
-	    }
-	} else {
-	    TachieData::new_empty()
-	};
+                } else {
+                    None
+                },
+                left: if let Some(tid) = tachie_table.get("left") {
+                    Some(TextureID::from_str(tid.as_str().unwrap()).unwrap())
+                } else {
+                    None
+                },
+            }
+        } else {
+            TachieData::new_empty()
+        };
 
         ScenarioFinishAndWaitData {
             scenario_id: id,
@@ -755,23 +762,23 @@ impl ScenarioBuiltinCommand {
                         None
                     };
 
-		let tachie_data = if let Some(tachie_table) = toml_scripts.get("tachie-data") {
-		    TachieData {
-			right: if let Some(tid) = tachie_table.get("right") {
-			    Some(TextureID::from_str(tid.as_str().unwrap()).unwrap())
-			} else {
-			    None
-			},
-			left: if let Some(tid) = tachie_table.get("left") {
-			    Some(TextureID::from_str(tid.as_str().unwrap()).unwrap())
-			} else {
-			    None
-			}
-		    }
-		} else {
-		    TachieData::new_empty()
-		};
-		
+                let tachie_data = if let Some(tachie_table) = toml_scripts.get("tachie-data") {
+                    TachieData {
+                        right: if let Some(tid) = tachie_table.get("right") {
+                            Some(TextureID::from_str(tid.as_str().unwrap()).unwrap())
+                        } else {
+                            None
+                        },
+                        left: if let Some(tid) = tachie_table.get("left") {
+                            Some(TextureID::from_str(tid.as_str().unwrap()).unwrap())
+                        } else {
+                            None
+                        },
+                    }
+                } else {
+                    TachieData::new_empty()
+                };
+
                 Self::ScheduleStart(ScheduleStartEssential {
                     scenario_id: id,
                     background_texture_id: background_texture_id,
@@ -1171,23 +1178,23 @@ impl TextBox {
                 0,
                 ggraphics::Color::from_rgba_u32(0xffffffff),
             ),
-	    const_canvas: SubScreen::new(
+            const_canvas: SubScreen::new(
                 ctx.context,
                 numeric::Rect::new(0.0, 0.0, rect.w, rect.h),
                 0,
                 ggraphics::Color::from_rgba_u32(0x00ffffff),
             ),
         };
-	text_box.draw_const_canvas(ctx);
-	text_box
+        text_box.draw_const_canvas(ctx);
+        text_box
     }
 
     fn draw_const_canvas<'a>(&mut self, ctx: &mut SuzuContext<'a>) {
         sub_screen::stack_screen(ctx.context, &self.const_canvas);
-	
+
         self.background.draw(ctx.context).unwrap();
         self.appearance_frame.draw(ctx.context).unwrap();
-	
+
         sub_screen::pop_screen(ctx.context);
     }
 
@@ -1332,7 +1339,7 @@ impl DrawableComponent for TextBox {
         if self.is_visible() {
             sub_screen::stack_screen(ctx, &self.canvas);
 
-	    self.const_canvas.draw(ctx)?;
+            self.const_canvas.draw(ctx)?;
             for d in &mut self.text {
                 d.draw(ctx)?;
             }
@@ -1398,7 +1405,7 @@ impl ScenarioBox {
                 t,
             ),
             choice_box: None,
-	    drwob_essential: DrawableObjectEssential::new(true, 0),
+            drwob_essential: DrawableObjectEssential::new(true, 0),
         }
     }
 
@@ -1435,7 +1442,7 @@ impl ScenarioBox {
     //         choice_pattern.text.clone(),
     //     );
     // 	choice_box.make_center(ctx.context, numeric::Point2f::new(rect.w / 2.0, rect.h / 2.0));
-	
+
     //     let mut scenario_box = ScenarioBox {
     //         text_box: TextBox::new(
     //             ctx,
@@ -1476,7 +1483,7 @@ impl ScenarioBox {
     pub fn display_choice_box_text(&mut self, font_info: FontInformation) {
         if self.choice_box.is_some() {
             // テキストボックスに選択肢の文字列を表示する
-	    let header_text = self.choice_box.as_ref().unwrap().header_text.as_str();
+            let header_text = self.choice_box.as_ref().unwrap().header_text.as_str();
             let _selected_text =
                 if let Some(s) = self.choice_box.as_ref().unwrap().get_selecting_str() {
                     s.to_string()
@@ -1484,7 +1491,7 @@ impl ScenarioBox {
                     "".to_string()
                 };
             //self.text_box.set_fixed_text(&format!("{}\n{}", header_text, selected_text), font_info);
-	    self.text_box.set_fixed_text(header_text, font_info);
+            self.text_box.set_fixed_text(header_text, font_info);
         }
     }
 
@@ -1598,16 +1605,22 @@ impl ScenarioEvent {
             background: event_background,
             appearance_frame: appr_frame,
             tachie: event_tachie,
-	    redraw_request: DrawRequest::InitDraw,
+            redraw_request: DrawRequest::InitDraw,
         }
     }
 
-    pub fn replace_scenario<'a>(&mut self, ctx: &mut SuzuContext<'a>, scno_ctx: &mut ScenarioContext, scenario_path: &str, t: Clock) {
-	self.scenario = Scenario::new(scenario_path, ctx.resource);
-	self.status = ScenarioEventStatus::Scenario;
-	self.key_down_action1(ctx, t);
-	self.update_text(ctx, scno_ctx);
-	self.redraw_request = DrawRequest::Draw;
+    pub fn replace_scenario<'a>(
+        &mut self,
+        ctx: &mut SuzuContext<'a>,
+        scno_ctx: &mut ScenarioContext,
+        scenario_path: &str,
+        t: Clock,
+    ) {
+        self.scenario = Scenario::new(scenario_path, ctx.resource);
+        self.status = ScenarioEventStatus::Scenario;
+        self.key_down_action1(ctx, t);
+        self.update_text(ctx, scno_ctx);
+        self.redraw_request = DrawRequest::Draw;
     }
 
     pub fn update_event_background_sub<'a>(
@@ -1639,7 +1652,7 @@ impl ScenarioEvent {
             let canvas_size = self.canvas.get_drawing_size(ctx.context);
             texture.fit_scale(ctx.context, canvas_size);
             self.background = Some(texture);
-	    self.redraw_request = DrawRequest::Draw;
+            self.redraw_request = DrawRequest::Draw;
         }
     }
 
@@ -1650,8 +1663,8 @@ impl ScenarioEvent {
     ) -> Option<ScenarioTachie> {
         // ScenarioEventの立ち絵データ取り出し
         // ScenarioElementが立ち絵情報を持っていれば、取り出す
-	let tachie_data = scenario_element.get_tachie_info();
-	
+        let tachie_data = scenario_element.get_tachie_info();
+
         if !tachie_data.is_none() {
             Some(ScenarioTachie::new(ctx, tachie_data, t))
         } else {
@@ -1666,12 +1679,12 @@ impl ScenarioEvent {
             Self::update_event_tachie_sub(ctx, self.scenario.ref_current_element(), t);
         if scenario_tachie.is_some() {
             self.tachie = scenario_tachie;
-	    self.redraw_request = DrawRequest::Draw;
+            self.redraw_request = DrawRequest::Draw;
         }
     }
 
     pub fn scenario_control_mut(&mut self) -> &mut Scenario {
-	self.redraw_request = DrawRequest::Draw;
+        self.redraw_request = DrawRequest::Draw;
         &mut self.scenario
     }
 
@@ -1694,21 +1707,24 @@ impl ScenarioEvent {
 
                     // 再描画要求
                     ctx.process_utility.redraw();
-		    self.redraw_request = DrawRequest::Draw;
+                    self.redraw_request = DrawRequest::Draw;
                 }
             }
             ScenarioElement::ChoiceSwitch(choice_pattern) => {
                 // ChoiceBoxが表示されていない場合、新しくオブジェクトを生成する
                 if !self.scenario_box.is_enable_choice_box() {
-		    let mut choice_box = ChoiceBox::new(
+                    let mut choice_box = ChoiceBox::new(
                         ctx,
                         numeric::Rect::new(400.0, 100.0, 1200.0, 150.0),
-			choice_pattern.header_text.clone(),
+                        choice_pattern.header_text.clone(),
                         choice_pattern.text.clone(),
                     );
 
-		    let scenario_box_p = self.scenario_box.text_box.canvas.get_position();
-		    choice_box.make_center(ctx.context, numeric::Point2f::new(1326.0 / 2.0, scenario_box_p.y + 180.0));
+                    let scenario_box_p = self.scenario_box.text_box.canvas.get_position();
+                    choice_box.make_center(
+                        ctx.context,
+                        numeric::Point2f::new(1326.0 / 2.0, scenario_box_p.y + 180.0),
+                    );
                     self.scenario_box.insert_choice_box(Some(choice_box));
 
                     // テキストボックスに選択肢の文字列を表示する
@@ -1723,7 +1739,7 @@ impl ScenarioEvent {
 
                     // 再描画要求
                     ctx.process_utility.redraw();
-		    self.redraw_request = DrawRequest::Draw;
+                    self.redraw_request = DrawRequest::Draw;
                 }
             }
             ScenarioElement::SceneTransition(transition_data) => {
@@ -1734,7 +1750,7 @@ impl ScenarioEvent {
 
                 // 再描画要求
                 ctx.process_utility.redraw();
-		self.redraw_request = DrawRequest::Draw;
+                self.redraw_request = DrawRequest::Draw;
             }
             ScenarioElement::FinishAndWait(_) => {
                 self.status = ScenarioEventStatus::FinishAndWait;
@@ -1758,7 +1774,7 @@ impl ScenarioEvent {
     }
 
     pub fn go_next_line(&mut self) {
-	self.redraw_request = DrawRequest::Draw;
+        self.redraw_request = DrawRequest::Draw;
         self.scenario_box.text_box.next_button_handler();
     }
 
@@ -1779,12 +1795,12 @@ impl ScenarioEvent {
     }
 
     pub fn release_scenario_waiting(&mut self) {
-	self.redraw_request = DrawRequest::Draw;
+        self.redraw_request = DrawRequest::Draw;
         self.scenario.release_waiting();
     }
 
     pub fn set_fixed_text_to_scenario_box<'a>(&mut self, ctx: &mut SuzuContext<'a>, text: &str) {
-	self.redraw_request = DrawRequest::Draw;
+        self.redraw_request = DrawRequest::Draw;
         self.scenario_box.text_box.set_fixed_text(
             text,
             FontInformation::new(
@@ -1802,7 +1818,7 @@ impl ScenarioEvent {
         match self.scenario.ref_current_element_mut() {
             // 現在のScenarioElementがテキスト
             ScenarioElement::Text(scenario_text) => {
-		self.redraw_request = DrawRequest::Draw;
+                self.redraw_request = DrawRequest::Draw;
                 self.scenario_box.text_box.line_arrow.hide();
 
                 // 最後まで到達していた場合、新しいScenarioElementに遷移し、テキストボックスをリセット
@@ -1837,11 +1853,11 @@ impl ScenarioEvent {
 
                 // choice_boxは消す
                 self.scenario_box.insert_choice_box(None);
-		self.redraw_request = DrawRequest::Draw;
+                self.redraw_request = DrawRequest::Draw;
             }
             ScenarioElement::SceneTransition(_) => (),
             ScenarioElement::FinishAndWait(_) => (),
-	    ScenarioElement::BuiltinCommand(_) => (),
+            ScenarioElement::BuiltinCommand(_) => (),
         }
     }
 
@@ -1859,7 +1875,7 @@ impl ScenarioEvent {
                             numeric::Vector2f::new(32.0, 32.0),
                             ggraphics::Color::from_rgba_u32(0x000000ff),
                         ));
-		    self.redraw_request = DrawRequest::Draw;
+                    self.redraw_request = DrawRequest::Draw;
                 }
             }
             _ => (),
@@ -1870,24 +1886,24 @@ impl ScenarioEvent {
 impl DrawableComponent for ScenarioEvent {
     fn draw(&mut self, ctx: &mut ggez::Context) -> ggez::GameResult<()> {
         if self.is_visible() {
-	    if self.redraw_request.is_not_skip() {
-		self.redraw_request = DrawRequest::Skip;
-		sub_screen::stack_screen(ctx, &self.canvas);
-		
-		if let Some(background) = self.background.as_mut() {
+            if self.redraw_request.is_not_skip() {
+                self.redraw_request = DrawRequest::Skip;
+                sub_screen::stack_screen(ctx, &self.canvas);
+
+                if let Some(background) = self.background.as_mut() {
                     background.draw(ctx)?;
-		}
-		
-		if let Some(tachie) = self.tachie.as_mut() {
+                }
+
+                if let Some(tachie) = self.tachie.as_mut() {
                     tachie.draw(ctx)?;
-		}
-		
-		self.scenario_box.draw(ctx)?;
-		
-		self.appearance_frame.draw(ctx)?;
-		
-		sub_screen::pop_screen(ctx);
-	    }
+                }
+
+                self.scenario_box.draw(ctx)?;
+
+                self.appearance_frame.draw(ctx)?;
+
+                sub_screen::pop_screen(ctx);
+            }
             self.canvas.draw(ctx).unwrap();
         }
         Ok(())
