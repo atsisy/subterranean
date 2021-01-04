@@ -19,7 +19,7 @@ pub fn create_dobj_book<'a>(
         ),
         "中判本" => (
             *util::random_select(MIDDLE_BOOK_TEXTURE.iter()).unwrap(),
-            numeric::Vector2f::new(0.18, 0.18),
+            numeric::Vector2f::new(0.24, 0.24),
         ),
         _ => panic!("invalid book size info"),
     };

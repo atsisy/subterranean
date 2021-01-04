@@ -15,6 +15,8 @@ use torifune::numeric;
 
 use crate::core::*;
 
+use super::DarkEffectPanel;
+
 extern crate mint;
 
 pub struct FrameData {
@@ -1519,10 +1521,12 @@ pub struct PauseScreenSet {
     cursored_index: Option<usize>,
     drwob_essential: DrawableObjectEssential,
     config_panel: Option<crate::object::title_object::ConfigPanel>,
+    dark_effect: DarkEffectPanel,
+    is_paused_now: bool,
 }
 
 impl PauseScreenSet {
-    pub fn new<'a>(ctx: &mut SuzuContext<'a>, depth: i8) -> Self {
+    pub fn new<'a>(ctx: &mut SuzuContext<'a>, depth: i8, t: Clock) -> Self {
         let font_info = FontInformation::new(
             ctx.resource.get_font(FontID::Cinema),
             numeric::Vector2f::new(28.0, 28.0),
@@ -1533,14 +1537,16 @@ impl PauseScreenSet {
         let mut text_pos = numeric::Point2f::new(750.0, 200.0);
 
         for text in vec!["設定", "開始画面へ", "再開"] {
-            entries_vtext.push(VerticalText::new(
+            let mut vtext = VerticalText::new(
                 text.to_string(),
                 text_pos,
                 numeric::Vector2f::new(1.0, 1.0),
                 0.0,
                 0,
                 font_info.clone(),
-            ));
+            );
+            vtext.hide();
+            entries_vtext.push(vtext);
 
             text_pos.x -= 50.0;
         }
@@ -1550,6 +1556,12 @@ impl PauseScreenSet {
             drwob_essential: DrawableObjectEssential::new(true, depth),
             cursored_index: None,
             config_panel: None,
+            dark_effect: DarkEffectPanel::new(
+                ctx.context,
+                 numeric::Rect::new(0.0, 0.0, WINDOW_SIZE_X as f32, WINDOW_SIZE_Y as f32),
+                  t
+                ),
+            is_paused_now: false,
         }
     }
 
@@ -1652,11 +1664,43 @@ impl PauseScreenSet {
 
         None
     }
+
+    pub fn effect<'a>(&mut self, ctx: &mut SuzuContext<'a>, t: Clock) {
+        self.dark_effect.run_effect(ctx, t);
+    }
+
+    pub fn exit_pause(&mut self, t: Clock) {
+        self.is_paused_now = false;
+        self.dark_effect.new_effect(8, t, 235, 0);
+        for vtext in self.entries.iter_mut() {
+            vtext.hide();
+        }
+        if let Some(config_panel) = self.config_panel.as_mut() {
+            config_panel.hide();
+        }
+    }
+
+    pub fn enter_pause(&mut self, t: Clock) {
+        self.is_paused_now = true;
+        self.dark_effect.new_effect(8, t, 0, 235);
+        for vtext in self.entries.iter_mut() {
+            vtext.appear();
+        }
+        if let Some(config_panel) = self.config_panel.as_mut() {
+            config_panel.appear();
+        }
+    }
+
+    pub fn is_paused_now(&self) -> bool {
+        self.is_paused_now
+    }
 }
 
 impl DrawableComponent for PauseScreenSet {
     fn draw(&mut self, ctx: &mut ggez::Context) -> ggez::GameResult<()> {
         if self.is_visible() {
+            self.dark_effect.draw(ctx)?;
+
             for vtext in self.entries.iter_mut() {
                 vtext.draw(ctx)?;
             }

@@ -16,7 +16,7 @@ serde_json = { version = "1.0", default-features = false, features = ["alloc"] }
 cgmath = "0.17.0"
 rand = "0.7.2"
 num = "*"
-number_to_jk = { git = "https://github.com/atsisy/number_to_jk.git" }
+number_to_jk = { git = "https://github.com/atsisy/number_to_jk.git", rev = "4ec4ea23f0fd807b97e192f7ce03c94b2d450ef2" }
 tiled = "0.9.3"
 #torifune = { git = "https://github.com/atsisy/torifune.git" }
 torifune = { path = "../torifune" }

@@ -378,7 +378,7 @@ impl OnDeskBook {
                 numeric::Vector2f::new(12.0, 12.0),
             ),
             "中判本" => (
-                numeric::Point2f::new(27.0, 22.0),
+                numeric::Point2f::new(30.0, 22.0),
                 numeric::Vector2f::new(12.0, 12.0),
             ),
             _ => panic!("invalid book size info"),

@@ -16,7 +16,6 @@ use crate::object::effect_object;
 use crate::object::scenario::*;
 use crate::object::scenario_object::*;
 use crate::object::util_object::*;
-use crate::object::DarkEffectPanel;
 use crate::perf_measure;
 use effect_object::{SceneTransitionEffectType, TilingEffectType};
 use torifune::graphics::drawable::*;
@@ -41,8 +40,7 @@ pub struct ScenarioContext {
 pub struct ScenarioScene {
     mouse_info: MouseInformation,
     scenario_event: ScenarioEvent,
-    dark_effect_panel: DarkEffectPanel,
-    pause_screen_set: Option<PauseScreenSet>,
+    pause_screen_set: PauseScreenSet,
     graph_sample: GraphDrawer,
     event_list: DelayEventList<Self>,
     status_screen: SuzunaStatusScreen,
@@ -107,12 +105,7 @@ impl ScenarioScene {
         ScenarioScene {
             mouse_info: MouseInformation::new(),
             scenario_event: scenario,
-            pause_screen_set: None,
-            dark_effect_panel: DarkEffectPanel::new(
-                ctx.context,
-                numeric::Rect::new(0.0, 0.0, 1366.0, 768.0),
-                0,
-            ),
+            pause_screen_set: PauseScreenSet::new(ctx, 0, 0),
             scene_transition_effect: None,
             event_list: DelayEventList::new(),
             graph_sample: graph_drawer,
@@ -154,17 +147,15 @@ impl ScenarioScene {
     }
 
     fn exit_pause_screen(&mut self, t: Clock) {
-        self.dark_effect_panel.new_effect(8, t, 220, 0);
-        self.pause_screen_set = None;
+        self.pause_screen_set.exit_pause(t);
     }
 
-    fn enter_pause_screen<'a>(&mut self, ctx: &mut SuzuContext<'a>, t: Clock) {
-        self.dark_effect_panel.new_effect(8, t, 0, 220);
-        self.pause_screen_set = Some(PauseScreenSet::new(ctx, 0));
+    fn enter_pause_screen<'a>(&mut self, t: Clock) {
+        self.pause_screen_set.enter_pause(t);
     }
 
     fn now_paused(&self) -> bool {
-        self.pause_screen_set.is_some()
+        self.pause_screen_set.is_paused_now()
     }
 
     fn pause_screen_click_handler<'a>(
@@ -173,12 +164,11 @@ impl ScenarioScene {
         point: numeric::Point2f,
         t: Clock,
     ) {
-        let pause_screen_set = match self.pause_screen_set.as_mut() {
-            Some(it) => it,
-            _ => return,
-        };
+        if !self.pause_screen_set.is_paused_now() {
+            return;
+        }
 
-        if let Some(pause_result) = pause_screen_set.mouse_click_handler(ctx, point, t) {
+        if let Some(pause_result) = self.pause_screen_set.mouse_click_handler(ctx, point, t) {
             match pause_result {
                 PauseResult::GoToTitle => self.transition_to_title_scene(ctx, t),
                 PauseResult::ReleasePause => self.exit_pause_screen(t),
@@ -195,7 +185,7 @@ impl ScenarioScene {
             }
             tdev::VirtualKey::Action4 => {
                 let t = self.get_current_clock();
-                self.enter_pause_screen(ctx, t);
+                self.enter_pause_screen(t);
             }
             _ => (),
         }
@@ -289,12 +279,12 @@ impl ScenarioScene {
 
                         add_delay_event!(
                             self.event_list,
-                            |slf, ctx, _| {
+                            |slf, _, _| {
                                 slf.scene_transition = SceneID::End;
                                 slf.scene_transition_type = SceneTransition::SwapTransition;
-                                ctx.go_next_day();
+                                //ctx.go_next_day();
                             },
-                            self.get_current_clock() + 120
+                            self.get_current_clock() + 1
                         );
                     }
                     "ShowStatusScreen" => {
@@ -330,6 +320,7 @@ impl ScenarioScene {
                 let reputation_diff = ctx.current_total_ad_reputation_gain();
                 slf.status_screen
                     .change_suzunaan_reputation(ctx, reputation_diff as f32);
+                ctx.savable_data.suzunaan_status.reputation += reputation_diff as f32;
             },
             self.get_current_clock() + 100
         );
@@ -519,16 +510,16 @@ impl SceneManager for ScenarioScene {
         let t = self.get_current_clock();
 
         if self.now_paused() {
-            if let Some(pause_screen_set) = self.pause_screen_set.as_mut() {
+            if self.pause_screen_set.is_paused_now() {
                 if self.mouse_info.is_dragging(ggez::event::MouseButton::Left) {
-                    pause_screen_set.dragging_handler(
+                    self.pause_screen_set.dragging_handler(
                         ctx,
                         ggez::event::MouseButton::Left,
                         point,
                         t,
                     );
                 } else {
-                    pause_screen_set.mouse_motion_handler(ctx, point);
+                    self.pause_screen_set.mouse_motion_handler(ctx, point);
                 }
             }
         } else {
@@ -561,8 +552,8 @@ impl SceneManager for ScenarioScene {
             match button {
                 MouseButton::Left => {
                     let t = self.get_current_clock();
-                    if let Some(screen) = self.pause_screen_set.as_mut() {
-                        screen.mouse_button_down(ctx, button, point, t);
+                    if self.pause_screen_set.is_paused_now() {
+                        self.pause_screen_set.mouse_button_down(ctx, button, point, t);
                     }
                 }
                 _ => (),
@@ -619,6 +610,7 @@ impl SceneManager for ScenarioScene {
                 && !self.scenario_ctx.builtin_command_inexec
             {
                 self.start_schedule(ctx);
+                println!("{}", ctx.savable_data.task_result.total_money);
             }
 
             self.status_screen.update(ctx, t);
@@ -626,7 +618,7 @@ impl SceneManager for ScenarioScene {
             self.schedule_check(ctx);
         }
 
-        self.dark_effect_panel.run_effect(ctx, t);
+        self.pause_screen_set.effect(ctx, t);
 
         if let Some(transition_effect) = self.scene_transition_effect.as_mut() {
             transition_effect.effect(ctx.context, t);
@@ -640,11 +632,8 @@ impl SceneManager for ScenarioScene {
         //self.scenario_menu.draw(ctx).unwrap();
         //self.graph_sample.draw(ctx).unwrap();
         self.status_screen.draw(ctx).unwrap();
-        self.dark_effect_panel.draw(ctx).unwrap();
 
-        if let Some(pause_screen_set) = self.pause_screen_set.as_mut() {
-            pause_screen_set.draw(ctx).unwrap();
-        }
+        self.pause_screen_set.draw(ctx).unwrap();
 
         if let Some(transition_effect) = self.scene_transition_effect.as_mut() {
             transition_effect.draw(ctx).unwrap();

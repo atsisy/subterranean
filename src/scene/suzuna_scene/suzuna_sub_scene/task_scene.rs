@@ -6,7 +6,7 @@ use torifune::graphics::object::Effectable;
 use torifune::numeric;
 
 use super::super::*;
-use crate::object::{Clickable, DarkEffectPanel};
+use crate::object::{Clickable};
 
 use crate::core::{MouseActionRecord, MouseInformation, ReputationEvent, TileBatchTextureID};
 use crate::object::effect_object;
@@ -31,8 +31,7 @@ pub enum TaskSceneStatus {
 pub struct TaskScene {
     task_table: TaskTable,
     clock: Clock,
-    pause_screen_set: Option<PauseScreenSet>,
-    dark_effect_panel: DarkEffectPanel,
+    pause_screen_set: PauseScreenSet,
     mouse_info: MouseInformation,
     event_list: DelayEventList<Self>,
     status: TaskSceneStatus,
@@ -94,12 +93,7 @@ impl TaskScene {
                 0,
             ),
             clock: 0,
-            pause_screen_set: None,
-            dark_effect_panel: DarkEffectPanel::new(
-                ctx.context,
-                numeric::Rect::new(0.0, 0.0, 1366.0, 768.0),
-                0,
-            ),
+            pause_screen_set: PauseScreenSet::new(ctx, 0, 0),
             mouse_info: MouseInformation::new(),
             event_list: event_list,
             status: TaskSceneStatus::CustomerFree,
@@ -213,17 +207,15 @@ impl TaskScene {
     }
 
     fn exit_pause_screen(&mut self, t: Clock) {
-        self.dark_effect_panel.new_effect(8, t, 220, 0);
-        self.pause_screen_set = None;
+        self.pause_screen_set.exit_pause(t);
     }
 
-    fn enter_pause_screen<'a>(&mut self, ctx: &mut SuzuContext<'a>, t: Clock) {
-        self.dark_effect_panel.new_effect(8, t, 0, 220);
-        self.pause_screen_set = Some(PauseScreenSet::new(ctx, 0));
+    fn enter_pause_screen<'a>(&mut self, t: Clock) {
+        self.pause_screen_set.enter_pause(t);
     }
 
     fn now_paused(&self) -> bool {
-        self.pause_screen_set.is_some()
+        self.pause_screen_set.is_paused_now()
     }
 
     pub fn get_elapsed_clock(&self) -> Clock {
@@ -236,12 +228,11 @@ impl TaskScene {
         point: numeric::Point2f,
         t: Clock,
     ) {
-        let pause_screen_set = match self.pause_screen_set.as_mut() {
-            Some(it) => it,
-            _ => return,
-        };
+        if !self.pause_screen_set.is_paused_now() {
+            return;
+        }
 
-        if let Some(pause_result) = pause_screen_set.mouse_click_handler(ctx, point, t) {
+        if let Some(pause_result) = self.pause_screen_set.mouse_click_handler(ctx, point, t) {
             match pause_result {
                 PauseResult::GoToTitle => self.transition_to_title_scene(ctx, t),
                 PauseResult::ReleasePause => self.exit_pause_screen(t),
@@ -338,7 +329,7 @@ impl SceneManager for TaskScene {
             match vkey {
                 tdev::VirtualKey::Action4 => {
                     let t = self.get_current_clock();
-                    self.enter_pause_screen(ctx, t);
+                    self.enter_pause_screen(t);
                 }
                 _ => (),
             }
@@ -356,11 +347,11 @@ impl SceneManager for TaskScene {
         let t = self.get_current_clock();
 
         if self.now_paused() {
-            if let Some(pause_screen_set) = self.pause_screen_set.as_mut() {
+            if self.pause_screen_set.is_paused_now() {
                 if self.mouse_info.is_dragging(MouseButton::Left) {
-                    pause_screen_set.dragging_handler(ctx, MouseButton::Left, point, t);
+                    self.pause_screen_set.dragging_handler(ctx, MouseButton::Left, point, t);
                 } else {
-                    pause_screen_set.mouse_motion_handler(ctx, point);
+                    self.pause_screen_set.mouse_motion_handler(ctx, point);
                 }
             }
         } else {
@@ -402,8 +393,8 @@ impl SceneManager for TaskScene {
 
         if self.now_paused() {
             let t = self.get_current_clock();
-            if let Some(panel) = self.pause_screen_set.as_mut() {
-                panel.mouse_button_down(ctx, button, point, t);
+            if self.pause_screen_set.is_paused_now() {
+                self.pause_screen_set.mouse_button_down(ctx, button, point, t);
             }
         } else {
             self.non_paused_mouse_button_down_event(ctx, button, point);
@@ -454,7 +445,7 @@ impl SceneManager for TaskScene {
             }
         }
 
-        self.dark_effect_panel.run_effect(ctx, t);
+        self.pause_screen_set.effect(ctx, t);
 
         if let Some(transition_effect) = self.scene_transition_effect.as_mut() {
             transition_effect.effect(ctx.context, t);
@@ -475,12 +466,7 @@ impl SceneManager for TaskScene {
         //println!("{}", perf_measure!(
         {
             self.task_table.draw(ctx).unwrap();
-            self.dark_effect_panel.draw(ctx).unwrap();
-
-            if let Some(pause_screen_set) = self.pause_screen_set.as_mut() {
-                pause_screen_set.draw(ctx).unwrap();
-            }
-            self.dark_effect_panel.draw(ctx).unwrap();
+            self.pause_screen_set.draw(ctx).unwrap();
 
             if let Some(transition_effect) = self.scene_transition_effect.as_mut() {
                 transition_effect.draw(ctx).unwrap();
