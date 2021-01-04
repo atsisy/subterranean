@@ -325,11 +325,18 @@ impl OnDeskBook {
         texture_id: TextureID,
         info: BookInformation,
     ) -> Self {
+        let texture_scale = match info.size.as_str() {
+            "大判本" => 
+                numeric::Vector2f::new(0.16, 0.16),
+            "中判本" => 
+                numeric::Vector2f::new(0.2, 0.2),
+            _ => panic!("invalid book size info"),
+        };
         let texture = ctx.ref_texture(texture_id);
         let book_texture = UniTexture::new(
             texture,
             numeric::Point2f::new(6.0, 6.0),
-            numeric::Vector2f::new(0.16, 0.16),
+            texture_scale,
             0.0,
             0,
         );
@@ -2236,9 +2243,11 @@ impl BorrowingRecordBook {
 
         if self.next_page_ope_mesh.contains(ctx.context, rpoint) {
             self.next_page(ctx, t);
+            self.check_move_page_icon_visibility();
             return true;
         } else if self.prev_page_ope_mesh.contains(ctx.context, rpoint) {
             self.prev_page(ctx);
+            self.check_move_page_icon_visibility();
             return true;
         }
 
@@ -2350,6 +2359,17 @@ impl BorrowingRecordBook {
         } else {
             None
         }
+    }
+
+    fn check_move_page_icon_visibility(&mut self) {
+        self.next_page_ope_mesh.appear();
+        self.prev_page_ope_mesh.appear();
+
+        if self.current_page == 0 {
+            self.prev_page_ope_mesh.hide();
+        }
+
+        self.redraw_request = DrawRequest::Draw;
     }
 }
 

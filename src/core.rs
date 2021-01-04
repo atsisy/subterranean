@@ -1575,18 +1575,24 @@ impl ReturningRequestPool {
     pub fn new(book_pool: &mut SuzunaBookPool, game_data: &GameResource, today: GensoDate) -> Self {
         let mut returning_request = Vec::new();
 
-        for _ in 1..=5 {
-            let rental_limit = match rand::random::<u32>() % 2 {
-                0 => RentalLimit::ShortTerm,
-                1 => RentalLimit::LongTerm,
-                _ => panic!(""),
-            };
+        let mut day = today.clone();
+        day.day -= 7;
 
-            returning_request.push(book_pool.generate_returning_request(
-                game_data.customer_random_select(),
-                today,
-                rental_limit,
-            ));
+        for _ in 1..=7 {
+            for _ in 1..=2 {
+                let rental_limit = match rand::random::<u32>() % 2 {
+                    0 => RentalLimit::ShortTerm,
+                    1 => RentalLimit::LongTerm,
+                    _ => panic!(""),
+                };
+
+                returning_request.push(book_pool.generate_returning_request(
+                    game_data.customer_random_select(),
+                    day,
+                    rental_limit,
+                ));
+            }
+            day.add_day(1);
         }
 
         ReturningRequestPool {
