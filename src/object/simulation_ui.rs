@@ -782,7 +782,7 @@ impl ResultMeter {
         } else {
             goal - current
         };
-        
+
         self.apply_offset(ctx, diff, time);
     }
 

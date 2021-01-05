@@ -6,7 +6,7 @@ use torifune::graphics::object::Effectable;
 use torifune::numeric;
 
 use super::super::*;
-use crate::object::{Clickable};
+use crate::object::Clickable;
 
 use crate::core::{MouseActionRecord, MouseInformation, ReputationEvent, TileBatchTextureID};
 use crate::object::effect_object;
@@ -349,7 +349,8 @@ impl SceneManager for TaskScene {
         if self.now_paused() {
             if self.pause_screen_set.is_paused_now() {
                 if self.mouse_info.is_dragging(MouseButton::Left) {
-                    self.pause_screen_set.dragging_handler(ctx, MouseButton::Left, point, t);
+                    self.pause_screen_set
+                        .dragging_handler(ctx, MouseButton::Left, point, t);
                 } else {
                     self.pause_screen_set.mouse_motion_handler(ctx, point);
                 }
@@ -394,7 +395,8 @@ impl SceneManager for TaskScene {
         if self.now_paused() {
             let t = self.get_current_clock();
             if self.pause_screen_set.is_paused_now() {
-                self.pause_screen_set.mouse_button_down(ctx, button, point, t);
+                self.pause_screen_set
+                    .mouse_button_down(ctx, button, point, t);
             }
         } else {
             self.non_paused_mouse_button_down_event(ctx, button, point);

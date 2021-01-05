@@ -742,7 +742,7 @@ impl ScenarioAgencyPage {
             SuzunaAdAgencyType::YamaJinja,
         ] {
             if let Some(is_checked) = ctx.savable_data.agency_status.get(&ad_type) {
-                if *is_checked {                 
+                if *is_checked {
                     ad_table.get_mut(&ad_type).unwrap().check_box.apply_check();
                 }
             }

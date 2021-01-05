@@ -1458,7 +1458,9 @@ impl ReturnBookInformation {
     }
 
     pub fn get_rental_limit(&self) -> RentalLimit {
-        self.borrow_date.rental_limit_type(&self.return_date).unwrap()
+        self.borrow_date
+            .rental_limit_type(&self.return_date)
+            .unwrap()
     }
 }
 

@@ -1558,9 +1558,9 @@ impl PauseScreenSet {
             config_panel: None,
             dark_effect: DarkEffectPanel::new(
                 ctx.context,
-                 numeric::Rect::new(0.0, 0.0, WINDOW_SIZE_X as f32, WINDOW_SIZE_Y as f32),
-                  t
-                ),
+                numeric::Rect::new(0.0, 0.0, WINDOW_SIZE_X as f32, WINDOW_SIZE_Y as f32),
+                t,
+            ),
             is_paused_now: false,
         }
     }

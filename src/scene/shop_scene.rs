@@ -1697,7 +1697,8 @@ impl SceneManager for ShopScene {
 
         if self.now_paused() {
             if self.pause_screen_set.is_paused_now() {
-                self.pause_screen_set.mouse_button_down(ctx, button, point, t);
+                self.pause_screen_set
+                    .mouse_button_down(ctx, button, point, t);
             }
         } else {
             match button {
@@ -1879,7 +1880,9 @@ impl SceneManager for ShopScene {
             }
 
             for mut customer in rising_customers {
-                customer.get_mut_character_object().change_animation_mode(ObjectDirection::StopLeft);
+                customer
+                    .get_mut_character_object()
+                    .change_animation_mode(ObjectDirection::StopLeft);
                 self.customer_queue.push_back(customer, t);
             }
 

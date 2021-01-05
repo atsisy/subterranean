@@ -326,10 +326,8 @@ impl OnDeskBook {
         info: BookInformation,
     ) -> Self {
         let texture_scale = match info.size.as_str() {
-            "大判本" => 
-                numeric::Vector2f::new(0.16, 0.16),
-            "中判本" => 
-                numeric::Vector2f::new(0.2, 0.2),
+            "大判本" => numeric::Vector2f::new(0.16, 0.16),
+            "中判本" => numeric::Vector2f::new(0.2, 0.2),
             _ => panic!("invalid book size info"),
         };
         let texture = ctx.ref_texture(texture_id);

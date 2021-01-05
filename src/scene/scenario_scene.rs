@@ -553,7 +553,8 @@ impl SceneManager for ScenarioScene {
                 MouseButton::Left => {
                     let t = self.get_current_clock();
                     if self.pause_screen_set.is_paused_now() {
-                        self.pause_screen_set.mouse_button_down(ctx, button, point, t);
+                        self.pause_screen_set
+                            .mouse_button_down(ctx, button, point, t);
                     }
                 }
                 _ => (),

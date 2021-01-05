@@ -73,7 +73,7 @@ impl TitleScene {
             background: background,
             event_list: event_list,
             scene_transition_effect: scene_transition_effect,
-            scene_transition: SceneID::Save,
+            scene_transition: SceneID::Title,
             scene_transition_type: SceneTransition::Keep,
             current_title_contents: title_contents_set.remove_pickup("init-menu"),
             title_contents_set: title_contents_set,
@@ -86,6 +86,7 @@ impl TitleScene {
         &mut self,
         ctx: &mut SuzuContext<'a>,
         scene_id: SceneID,
+        trans: SceneTransition,
         t: Clock,
     ) {
         self.scene_transition_effect = Some(effect_object::ScreenTileEffect::new(
@@ -107,7 +108,7 @@ impl TitleScene {
         self.event_list.add_event(
             Box::new(move |slf: &mut Self, ctx, _| {
                 slf.scene_transition = scene_id;
-                slf.scene_transition_type = SceneTransition::SwapTransition;
+                slf.scene_transition_type = trans;
                 ctx.resource.stop_bgm(slf.bgm_handler);
             }),
             t + 31,
@@ -193,8 +194,8 @@ impl TitleScene {
                         TitleContentsEvent::NextContents(content_name) => {
                             self.switch_current_content(content_name);
                         }
-                        TitleContentsEvent::SceneTransition(scene_id) => {
-                            self.transition_selected_scene(ctx, scene_id, t);
+                        TitleContentsEvent::SceneTransition((scene_id, trans)) => {
+                            self.transition_selected_scene(ctx, scene_id, trans, t);
                         }
                         TitleContentsEvent::BuiltinEvent(command) => {
                             self.run_builtin_command(command);
@@ -225,9 +226,6 @@ impl SceneManager for TitleScene {
         let t = self.get_current_clock();
 
         match vkey {
-            VirtualKey::Action1 => {
-                self.transition_selected_scene(ctx, SceneID::Scenario, t);
-            }
             VirtualKey::Action2 => {
                 if let Some(content) = self.current_title_contents.as_mut() {
                     match content {
@@ -327,6 +325,26 @@ impl SceneManager for TitleScene {
         } else {
             self.contents_mouse_motion_handler(ctx, point, offset);
         }
+    }
+    fn scene_popping_return_handler<'a>(&mut self, ctx: &mut SuzuContext<'a>) {
+        self.scene_transition_type = SceneTransition::Keep;
+        self.scene_transition = SceneID::Title;
+
+        self.scene_transition_effect = Some(effect_object::ScreenTileEffect::new(
+            ctx,
+            TileBatchTextureID::Shoji,
+            numeric::Rect::new(
+                0.0,
+                0.0,
+                crate::core::WINDOW_SIZE_X as f32,
+                crate::core::WINDOW_SIZE_Y as f32,
+            ),
+            30,
+            effect_object::SceneTransitionEffectType::Open,
+            effect_object::TilingEffectType::WholeTile,
+            -128,
+            self.get_current_clock(),
+        ));
     }
 
     fn transition(&self) -> SceneID {

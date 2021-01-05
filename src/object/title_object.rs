@@ -14,9 +14,12 @@ use torifune::graphics::drawable::*;
 use torifune::graphics::object::*;
 use torifune::numeric;
 
-use crate::core::{font_information_from_toml_value, FontID, SuzuContext, TextureID};
 use crate::object::util_object::{CheckBox, SeekBar, SelectButton, TextButtonTexture};
 use crate::scene::SceneID;
+use crate::{
+    core::{font_information_from_toml_value, FontID, SuzuContext, TextureID},
+    scene::SceneTransition,
+};
 
 #[derive(Clone, Copy)]
 pub enum TitleBuiltinCommand {
@@ -36,7 +39,7 @@ impl FromStr for TitleBuiltinCommand {
 #[derive(Clone)]
 pub enum TitleContentsEvent {
     NextContents(String),
-    SceneTransition(SceneID),
+    SceneTransition((SceneID, SceneTransition)),
     BuiltinEvent(TitleBuiltinCommand),
 }
 
@@ -48,7 +51,12 @@ impl TitleContentsEvent {
             "SceneTransition" => {
                 let next_scene_str = toml_value["next-scene"].as_str().expect("error");
                 let next_scene = SceneID::from_str(next_scene_str).expect("Unknown next scene");
-                Some(TitleContentsEvent::SceneTransition(next_scene))
+                let next_trans_str = toml_value["transition-method"].as_str().expect("error");
+                let next_trans =
+                    SceneTransition::from_str(next_trans_str).expect("Unknown next scene");
+                Some(TitleContentsEvent::SceneTransition((
+                    next_scene, next_trans,
+                )))
             }
             "NextContents" => {
                 let next_scene_str = toml_value["next-contents-name"]

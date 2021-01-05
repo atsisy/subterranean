@@ -1061,7 +1061,7 @@ impl TaskTable {
                     self.sight
                         .silhouette
                         .insert_customer_message_in_chatbox(ctx, phrase_text);
-                },
+                }
                 CustomerRequest::Returning(info) => {
                     let rental_limit = info.get_rental_limit();
                     let phrase_text = match &rental_limit {
@@ -1082,7 +1082,6 @@ impl TaskTable {
                         .silhouette
                         .insert_customer_message_in_chatbox(ctx, phrase_text);
                 }
-                _ => (),
             }
         }
     }

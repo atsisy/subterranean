@@ -21,11 +21,13 @@ y = 30.0
 [[each_entry_data]]
 text = "開演"
 event-type = "SceneTransition"
+transition-method = "SwapTransition"
 next-scene = "Scenario"
 
 [[each_entry_data]]
 text = "再入場"
 event-type = "SceneTransition"
+transition-method = "StackingTransition"
 next-scene = "Save"
 
 [[each_entry_data]]
@@ -46,4 +48,5 @@ builtin-command = "exit"
 [[each_entry_data]]
 text = "テスト"
 event-type = "SceneTransition"
+transition-method = "SwapTransition"
 next-scene = "End"

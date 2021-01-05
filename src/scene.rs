@@ -23,6 +23,21 @@ pub enum SceneTransition {
     PoppingTransition,
 }
 
+impl FromStr for SceneTransition {
+    type Err = ();
+
+    fn from_str(scene_str: &str) -> Result<Self, Self::Err> {
+        match scene_str {
+            "Keep" => Ok(Self::Keep),
+            "Reset" => Ok(Self::Reset),
+            "SwapTransition" => Ok(Self::SwapTransition),
+            "StackingTransition" => Ok(Self::StackingTransition),
+            "PoppingTransition" => Ok(Self::PoppingTransition),
+            _ => panic!("Error: EventTrigger::from_str"),
+        }
+    }
+}
+
 #[derive(Debug, Eq, PartialEq, Clone, Copy)]
 pub enum SceneID {
     Null,
