@@ -2085,6 +2085,7 @@ impl BorrowingRecordBook {
     }
 
     pub fn reset_pages_data<'a>(&mut self, ctx: &mut SuzuContext<'a>, t: Clock) {
+        let pages_len = self.pages.len();
         self.pages = {
             let mut pages = Vec::new();
 
@@ -2100,6 +2101,11 @@ impl BorrowingRecordBook {
 
             pages
         };
+
+        while self.pages.len() < pages_len {
+            self.add_empty_page(ctx, t);
+        }
+
         ctx.process_utility.redraw();
         self.redraw_request = DrawRequest::Draw;
     }

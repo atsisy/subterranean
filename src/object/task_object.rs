@@ -1039,6 +1039,9 @@ impl TaskTable {
     ///
     fn insert_rental_limit_phrase<'a>(&mut self, ctx: &mut SuzuContext<'a>, t: Clock) {
         if let Some(customer_request) = self.current_customer_request.as_ref() {
+            self.sight
+                .silhouette
+                .insert_kosuzu_message_in_chatbox(ctx, "貸出期間はいかがでしたか？".to_string());
             match customer_request {
                 CustomerRequest::Borrowing(info) => {
                     let phrase_text = match info.rental_limit {
@@ -1051,6 +1054,26 @@ impl TaskTable {
                     self.sight.silhouette.insert_new_balloon_phrase(
                         phrase_text.clone(),
                         TextBalloonPhraseType::RentalLimit(info.rental_limit.clone()),
+                        20,
+                        t,
+                    );
+
+                    self.sight
+                        .silhouette
+                        .insert_customer_message_in_chatbox(ctx, phrase_text);
+                },
+                CustomerRequest::Returning(info) => {
+                    let rental_limit = info.get_rental_limit();
+                    let phrase_text = match &rental_limit {
+                        RentalLimit::ShortTerm => "短期貸出でした",
+                        RentalLimit::LongTerm => "長期貸出でした",
+                        _ => "",
+                    }
+                    .to_string();
+
+                    self.sight.silhouette.insert_new_balloon_phrase(
+                        phrase_text.clone(),
+                        TextBalloonPhraseType::RentalLimit(rental_limit),
                         20,
                         t,
                     );
@@ -1101,7 +1124,7 @@ impl TaskTable {
 
         self.sight
             .silhouette
-            .insert_customer_message_in_chatbox(ctx, msg);
+            .insert_kosuzu_message_in_chatbox(ctx, msg);
     }
 
     fn show_kosuzu_returning_is_done_message<'a>(&mut self, ctx: &mut SuzuContext<'a>, t: Clock) {
@@ -1110,7 +1133,7 @@ impl TaskTable {
 
         self.sight
             .silhouette
-            .insert_customer_message_in_chatbox(ctx, msg.to_string());
+            .insert_kosuzu_message_in_chatbox(ctx, msg.to_string());
     }
 
     ///

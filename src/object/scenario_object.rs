@@ -455,6 +455,10 @@ impl AdEntry {
     pub fn is_checked(&self) -> bool {
         self.check_box.checked_now()
     }
+
+    pub fn apply_check(&mut self) {
+        self.check_box.apply_check();
+    }
 }
 
 impl DrawableComponent for AdEntry {
@@ -726,6 +730,21 @@ impl ScenarioAgencyPage {
             } else {
                 entry_pos.x = pos.x + 50.0;
                 entry_pos.y += 80.0;
+            }
+        }
+
+        for ad_type in vec![
+            SuzunaAdAgencyType::HakureiJinja,
+            SuzunaAdAgencyType::KirisameMahoten,
+            SuzunaAdAgencyType::GettoDango,
+            SuzunaAdAgencyType::Kusuriya,
+            SuzunaAdAgencyType::Hieda,
+            SuzunaAdAgencyType::YamaJinja,
+        ] {
+            if let Some(is_checked) = ctx.savable_data.agency_status.get(&ad_type) {
+                if *is_checked {                 
+                    ad_table.get_mut(&ad_type).unwrap().check_box.apply_check();
+                }
             }
         }
 

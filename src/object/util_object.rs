@@ -1971,6 +1971,11 @@ impl CheckBox {
     pub fn checked_now(&self) -> bool {
         self.is_checked
     }
+
+    pub fn apply_check(&mut self) {
+        self.is_checked = true;
+        self.check_texture.appear();
+    }
 }
 
 impl DrawableComponent for CheckBox {

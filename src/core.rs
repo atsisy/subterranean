@@ -1216,7 +1216,7 @@ impl MouseInformation {
             .insert(button, MouseActionRecord::new(point, t))
             == None
         {
-            panic!("No such a mouse button")
+            eprintln!("Not basic button is clicked.");
         }
     }
 
@@ -1455,6 +1455,10 @@ impl ReturnBookInformation {
             borrow_date,
             return_date,
         )
+    }
+
+    pub fn get_rental_limit(&self) -> RentalLimit {
+        self.borrow_date.rental_limit_type(&self.return_date).unwrap()
     }
 }
 
@@ -1730,6 +1734,7 @@ impl SavableData {
         self.task_result = data.task_result;
         self.suzunaan_status = data.suzunaan_status;
         self.ad_status = data.ad_status;
+        self.agency_status = data.agency_status;
         self.week_schedule = data.week_schedule;
     }
 

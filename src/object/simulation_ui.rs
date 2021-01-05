@@ -775,7 +775,14 @@ impl ResultMeter {
 
     pub fn set_goal<'a>(&mut self, ctx: &mut SuzuContext<'a>, goal: f32, time: Clock) {
         let current = self.meter.get_value();
-        let diff = goal - current;
+        let diff = if goal > self.meter.max {
+            self.meter.max - current
+        } else if goal < 0.0 {
+            -current
+        } else {
+            goal - current
+        };
+        
         self.apply_offset(ctx, diff, time);
     }
 
