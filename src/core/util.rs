@@ -1,5 +1,6 @@
 use std::cell::RefCell;
 use torifune::numeric;
+use std::io::Read;
 
 pub fn year_to_season(year: i64) -> i64 {
     year
@@ -178,4 +179,11 @@ pub fn random_point_in_rect(rect: numeric::Rect) -> numeric::Point2f {
         (begin_x + rand::random::<usize>() % rect.w as usize) as f32,
         (begin_y + rand::random::<usize>() % rect.h as usize) as f32,
     )
+}
+
+pub fn read_from_resources_as_string(ctx: &mut ggez::Context, path: &str) -> String {
+    let mut file = ggez::filesystem::open(ctx, path).unwrap();
+    let mut buffer = Vec::new();
+    file.read_to_end(&mut buffer).unwrap();
+    std::str::from_utf8(&buffer).unwrap().to_string()
 }

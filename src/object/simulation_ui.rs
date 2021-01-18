@@ -773,7 +773,7 @@ impl ResultMeter {
         }
     }
 
-    pub fn set_goal<'a>(&mut self, ctx: &mut SuzuContext<'a>, goal: f32, time: Clock) {
+    pub fn set_goal<'a>(&mut self, ctx: &mut SuzuContext<'a>, goal: f32, time: Clock)  {
         let current = self.meter.get_value();
         let diff = if goal > self.meter.max {
             self.meter.max - current

@@ -357,8 +357,11 @@ impl StageObjectMap {
         scale: numeric::Vector2f,
     ) -> StageObjectMap {
         // マップ情報を読み込む
-        let tile_map = tiled::parse_file(std::path::Path::new(path)).unwrap();
-
+	println!("FIXME: map_parse.rs StageObjectMap::new");
+        //let file = ggez::filesystem::open(ctx, path).unwrap();
+	//let tile_map = tiled::parse(file).unwrap();
+	let tile_map = tiled::parse_file(std::path::Path::new(path)).unwrap();
+	
         // タイルセットを読み込み、それと同時にタイルセットの画像からSpriteBatchを生成する
         let mut batchs = HashMap::new();
         let tilesets: Vec<TileSet> = tile_map

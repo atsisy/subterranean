@@ -75,19 +75,6 @@ impl InitialDisplay {
     }
 }
 
-fn read_whole_file(path: String) -> Result<String, String> {
-    let mut file_content = String::new();
-
-    let mut fr = fs::File::open(path)
-        .map(|f| BufReader::new(f))
-        .map_err(|e| e.to_string())?;
-
-    fr.read_to_string(&mut file_content)
-        .map_err(|e| e.to_string())?;
-
-    Ok(file_content)
-}
-
 #[derive(Debug, Clone, Copy, Eq, PartialEq, Hash)]
 pub enum TextureID {
     Ghost1 = 0,
@@ -887,11 +874,8 @@ pub struct RawConfigFile {
 }
 
 impl RawConfigFile {
-    pub fn new(file_path: String) -> RawConfigFile {
-        let s = match read_whole_file(file_path) {
-            Ok(s) => s,
-            Err(e) => panic!("Failed to read file: {}", e),
-        };
+    pub fn new(ctx: &mut ggez::Context, file_path: String) -> RawConfigFile {
+        let s = util::read_from_resources_as_string(ctx, file_path.as_str());
 
         let raw_data: Result<RawConfigFile, toml::de::Error> = toml::from_str(&s);
         match raw_data {
@@ -902,6 +886,7 @@ impl RawConfigFile {
 }
 
 pub struct GameResource {
+
     texture_resource_paths: HashMap<TextureID, String>,
     textures: HashMap<TextureID, ggraphics::Image>,
     fonts: Vec<ggraphics::Font>,
@@ -922,7 +907,7 @@ impl GameResource {
         let init_display = InitialDisplay::new(ctx);
         init_display.draw(ctx);
 
-        let src_file = RawConfigFile::new(file_path);
+        let src_file = RawConfigFile::new(ctx, file_path);
 
         let textures = HashMap::new();
         let mut fonts = Vec::new();
@@ -1786,7 +1771,7 @@ pub struct ResultReportStringTable {
     pub total_ad_cost: String,
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct ResultReport {
     new_books_id: Vec<u64>,
     yet_shelved_books_id: Vec<u64>,
@@ -1845,6 +1830,48 @@ impl ResultReport {
     pub fn get_conition_eval_mistakes(&self) -> usize {
         self.condition_eval_mistakes
     }
+
+    fn number_of_yet_shelved_and_new_books(&self) -> usize {
+	let mut count = 0;
+	
+	for yet_id in self.yet_shelved_books_id.iter() {
+	    if self.new_books_id.contains(yet_id) {
+		count += 1;
+	    }
+        }
+
+	count
+    }
+    
+    pub fn generate_eval_str(&self) -> &str {
+	let missed_books_num = self.number_of_yet_shelved_and_new_books();
+	let total_waiting_minute = self.total_customers_waiting_time / 60;
+	
+	if missed_books_num == 0 &&
+	    total_waiting_minute < 30 &&
+	    self.condition_eval_mistakes == 0 {
+		return "鈴奈庵の主";
+	    }
+
+	if missed_books_num == 0 &&
+	    total_waiting_minute < 60 &&
+	    self.condition_eval_mistakes == 0 {
+		return "占い師より向いてる";
+	    }
+
+	if missed_books_num <= 3 &&
+	    total_waiting_minute < 120 &&
+	    self.condition_eval_mistakes == 1 {
+		return "見習い";
+	    }
+
+	if missed_books_num <= 3 &&
+	    total_waiting_minute < 120 {
+		return "霊夢より働く";
+	    }
+
+	return "素人";
+    }
 }
 
 impl ResultReportStringTable {
@@ -1875,11 +1902,8 @@ pub struct GameConfig {
 }
 
 impl GameConfig {
-    pub fn new_from_toml(path: &str) -> Self {
-        let s = match read_whole_file(path.to_string()) {
-            Ok(s) => s,
-            Err(e) => panic!("Failed to read file: {}", e),
-        };
+    pub fn new_from_toml(ctx: &mut ggez::Context, path: &str) -> Self {
+        let s = util::read_from_resources_as_string(ctx, path);
 
         let raw_data: Result<GameConfig, toml::de::Error> = toml::from_str(&s);
         match raw_data {
@@ -2112,7 +2136,7 @@ impl SceneController {
         debug::debug_screen_hide();
 
         let mut game_status = SavableData::new(game_data);
-        let mut game_config = GameConfig::new_from_toml("./resources/default_game_config.toml");
+        let mut game_config = GameConfig::new_from_toml(ctx, "/default_game_config.toml");
 
         let mut _redraw_request = scene::DrawRequest::Draw;
 

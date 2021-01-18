@@ -108,6 +108,34 @@ impl DrawableEvaluationFlow {
         );
         result_text.push(eval_mistakes_vtext);
 
+	let mut total_eval_text = EffectableWrap::new(
+            MovableWrap::new(
+                Box::new(VerticalText::new(
+                    result_report.generate_eval_str().to_string(),
+                    numeric::Point2f::new(0.0, 0.0),
+                    numeric::Vector2f::new(1.0, 1.0),
+                    0.0,
+                    0,
+                    font_info.clone(),
+                )),
+                None,
+                t,
+            ),
+            vec![effect::appear_bale_down_from_top(
+                100,
+                t + effect_clock_offset + 200,
+            )],
+        );
+
+        total_eval_text.set_crop(init_crop);
+        set_table_frame_cell_center!(
+            ctx.context,
+            eval_frame,
+            total_eval_text,
+            numeric::Vector2u::new(0, 1)
+        );
+        result_text.push(total_eval_text);
+
         let mut shelving_vtext = EffectableWrap::new(
             MovableWrap::new(
                 Box::new(VerticalText::new(
