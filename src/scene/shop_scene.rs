@@ -723,8 +723,9 @@ impl ShopScene {
             drawable_shop_clock: drawble_shop_clock,
             shop_command_palette: ShopCommandPalette::new(
                 ctx,
-                numeric::Point2f::new(WINDOW_SIZE_X as f32 * 3.0 / 4.0, WINDOW_SIZE_Y as f32 / 1.5),
+                numeric::Rect::new(150.0, 720.0, 1066.0, 100.0),
                 0,
+		0,
             ),
         }
     }
@@ -1451,7 +1452,6 @@ impl ShopScene {
             );
 
             self.scene_transition_close_effect(ctx, t);
-            ctx.process_utility.redraw();
         }
     }
 
@@ -1672,13 +1672,14 @@ impl SceneManager for ShopScene {
                 }
             }
         } else {
-            if ggez::input::mouse::button_pressed(ctx.context, MouseButton::Left) {
+	    let left_pressed = ggez::input::mouse::button_pressed(ctx.context, MouseButton::Left);
+            if left_pressed {
                 if !self.shop_command_palette.contains_buttons(point) {
                     self.start_mouse_move(ctx.context, point);
                 }
             }
 
-            self.shop_command_palette.mouse_motion_handler(ctx, point);
+            self.shop_command_palette.mouse_motion_handler(ctx, point, left_pressed, t);
         }
     }
 
@@ -1940,6 +1941,7 @@ impl SceneManager for ShopScene {
             self.map.tile_map.update(ctx.context, t);
 
             self.shop_map.move_with_func(t);
+	    self.shop_command_palette.effect(t);
 
             // 時刻の更新
             self.update_shop_clock_regular(ctx, t);

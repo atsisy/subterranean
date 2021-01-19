@@ -2828,12 +2828,12 @@ pub enum CommandPaletteFunc {
 }
 
 pub struct ShopCommandPalette {
+    canvas: EffectableWrap<MovableWrap<SubScreen>>,
     action_button: FramedButton,
-    drwob_essential: DrawableObjectEssential,
 }
 
 impl ShopCommandPalette {
-    pub fn new<'a>(ctx: &mut SuzuContext<'a>, pos: numeric::Point2f, depth: i8) -> Self {
+    pub fn new<'a>(ctx: &mut SuzuContext<'a>, pos: numeric::Rect, depth: i8, t: Clock) -> Self {
         let font_info = FontInformation::new(
             ctx.resource.get_font(FontID::JpFude1),
             numeric::Vector2f::new(32.0, 32.0),
@@ -2842,7 +2842,7 @@ impl ShopCommandPalette {
 
         let action_button = FramedButton::new(
             ctx,
-            numeric::Rect::new(pos.x, pos.y, 120.0, 70.0),
+            numeric::Rect::new(150.0, 15.0, 120.0, 85.0),
             [
                 numeric::Vector2f::new(10.0, 10.0),
                 numeric::Vector2f::new(10.0, 10.0),
@@ -2857,13 +2857,33 @@ impl ShopCommandPalette {
             0,
         );
         ShopCommandPalette {
+	    canvas: EffectableWrap::new(
+		MovableWrap::new(
+		    Box::new(
+			SubScreen::new(
+			    ctx.context,
+			    pos,
+			    depth,
+			    ggraphics::Color::from_rgba_u32(0x00),
+			)),
+		    None, t
+		), Vec::new(),
+	    ),
             action_button: action_button,
-            drwob_essential: DrawableObjectEssential::new(true, depth),
         }
     }
 
-    pub fn mouse_motion_handler<'a>(&mut self, ctx: &mut SuzuContext<'a>, p: numeric::Point2f) {
-        self.action_button.mouse_motion_handler(ctx, p);
+    pub fn mouse_motion_handler<'a>(&mut self, ctx: &mut SuzuContext<'a>, p: numeric::Point2f, is_dragged: bool, t: Clock) {
+	let rpoint = self.canvas.relative_point(p);
+        self.action_button.mouse_motion_handler(ctx, rpoint);
+
+	if !is_dragged {
+	    if p.y <= 650.0 {
+		self.slide_out(t);
+	    } else {
+		self.slide_in(t);
+	    }
+	}
     }
 
     pub fn mouse_left_button_down_handler<'a>(
@@ -2871,7 +2891,8 @@ impl ShopCommandPalette {
         ctx: &mut SuzuContext<'a>,
         p: numeric::Point2f,
     ) {
-        self.action_button.mouse_left_button_down(ctx, p);
+	let rpoint = self.canvas.relative_point(p);
+        self.action_button.mouse_left_button_down(ctx, rpoint);
     }
 
     pub fn mouse_left_button_up_handler<'a>(
@@ -2879,51 +2900,74 @@ impl ShopCommandPalette {
         ctx: &mut SuzuContext<'a>,
         p: numeric::Point2f,
     ) {
-        self.action_button.mouse_left_button_up(ctx, p);
+	let rpoint = self.canvas.relative_point(p);
+        self.action_button.mouse_left_button_up(ctx, rpoint);
     }
 
     pub fn contains_buttons(&self, p: numeric::Point2f) -> bool {
-        self.action_button.contains(p)
+	let rpoint = self.canvas.relative_point(p);
+        self.action_button.contains(rpoint)
     }
 
     pub fn check_button_func(&self, p: numeric::Point2f) -> Option<CommandPaletteFunc> {
-        if self.action_button.contains(p) {
+	let rpoint = self.canvas.relative_point(p);
+	
+        if self.action_button.contains(rpoint) {
             return Some(CommandPaletteFunc::Action);
         }
 
         None
     }
+
+    pub fn slide_in(&mut self, t: Clock) {
+	self.canvas.override_move_func(move_fn::move_constant_dest(
+	    numeric::Point2f::new(150.0, 650.0),
+	    numeric::Vector2f::new(0.0, -10.0)), t);
+    }
+
+    pub fn slide_out(&mut self, t: Clock) {
+	self.canvas.override_move_func(move_fn::move_constant_dest(
+	    numeric::Point2f::new(150.0, 720.0),
+	    numeric::Vector2f::new(0.0, 10.0)), t);
+    }
+
+    pub fn effect(&mut self, t: Clock) {
+	self.canvas.move_with_func(t);
+    }
 }
 
 impl DrawableComponent for ShopCommandPalette {
     fn draw(&mut self, ctx: &mut ggez::Context) -> ggez::GameResult<()> {
-        self.action_button.draw(ctx)?;
+	if self.canvas.is_visible() {
+	    sub_screen::stack_screen(ctx, &self.canvas);
+	    
+	    self.action_button.draw(ctx)?;
+	    
+            sub_screen::pop_screen(ctx);
+            self.canvas.draw(ctx)?;
+	}
 
         Ok(())
     }
 
-    #[inline(always)]
     fn hide(&mut self) {
-        self.drwob_essential.visible = false;
+        self.canvas.hide();
     }
 
-    #[inline(always)]
     fn appear(&mut self) {
-        self.drwob_essential.visible = true;
+        self.canvas.appear();
     }
 
-    #[inline(always)]
     fn is_visible(&self) -> bool {
-        self.drwob_essential.visible
+        self.canvas.is_visible()
     }
 
-    #[inline(always)]
     fn set_drawing_depth(&mut self, depth: i8) {
-        self.drwob_essential.drawing_depth = depth;
+        self.canvas.set_drawing_depth(depth);
     }
 
-    #[inline(always)]
     fn get_drawing_depth(&self) -> i8 {
-        self.drwob_essential.drawing_depth
+        self.canvas.get_drawing_depth()
     }
 }
+

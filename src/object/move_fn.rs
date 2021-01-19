@@ -74,3 +74,29 @@ pub fn move_constant(speed: numeric::Vector2f) -> Option<GenericMoveFn> {
         },
     ))
 }
+
+pub fn move_constant_dest(dest: numeric::Point2f, speed: numeric::Vector2f) -> Option<GenericMoveFn> {
+    Some(Box::new(
+        move |p: &dyn tg::object::MovableObject, _t: Clock| {
+	    let current_pos = p.get_position();
+
+	    if current_pos == dest {
+		return None;
+	    }
+	    
+	    let next_pos = numeric::Point2f::new(
+                current_pos.x + speed.x,
+                current_pos.y + speed.y,
+            );
+
+	    let current_distance = distance!(dest, current_pos);
+	    let next_distance = distance!(dest, next_pos);
+
+	    if next_distance < current_distance {
+		Some(next_pos)
+	    } else {
+		Some(dest)
+	    }
+        },
+    ))
+}
