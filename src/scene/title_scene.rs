@@ -223,8 +223,6 @@ impl TitleScene {
 
 impl SceneManager for TitleScene {
     fn key_up_event<'a>(&mut self, ctx: &mut SuzuContext<'a>, vkey: tdev::VirtualKey) {
-        let t = self.get_current_clock();
-
         match vkey {
             VirtualKey::Action2 => {
                 if let Some(content) = self.current_title_contents.as_mut() {

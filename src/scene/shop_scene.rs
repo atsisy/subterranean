@@ -17,7 +17,7 @@ use torifune::numeric;
 
 use super::*;
 use crate::add_delay_event;
-use crate::core::{map_parser as mp, WINDOW_SIZE_X, WINDOW_SIZE_Y};
+use crate::core::{map_parser as mp};
 use crate::core::{
     BookInformation, FontID, MouseInformation, ResultReport, SavableData, SuzuContext,
     TileBatchTextureID,
@@ -577,7 +577,6 @@ pub struct ShopScene {
     player: PlayableCharacter,
     character_group: CharacterGroup,
     shop_special_object: ShopSpecialObject,
-    special_button: FramedButton,
     key_listener: tdev::KeyboardListener,
     clock: Clock,
     shop_clock: ShopClock,
@@ -671,19 +670,11 @@ impl ShopScene {
 
         //ctx.pay_ad_cost();
 
-        let special_button = FramedButton::create_design1(
-            ctx,
-            numeric::Point2f::new(-10.0, 200.0),
-            "様態",
-            numeric::Vector2f::new(24.0, 24.0),
-        );
-
         ShopScene {
             mouse_info: MouseInformation::new(),
             player: player,
             character_group: character_group,
             shop_special_object: ShopSpecialObject::new(),
-            special_button: special_button,
             key_listener: key_listener,
             clock: 0,
             shop_clock: shop_time,
@@ -1108,11 +1099,26 @@ impl ShopScene {
         self.move_playable_character_y(ctx, t);
     }
 
-    pub fn command_palette_go_register_handler(&mut self) {}
+    pub fn command_palette_go_register_handler<'a>(&mut self, ctx: &mut SuzuContext<'a>) {
+	if let Some(scenario_box) = self.map.scenario_box.as_mut() {
+            if scenario_box.get_text_box_status()
+                == TextBoxStatus::FixedText
+            {
+                self.map.scenario_box = None;
+            }
+        } else {
+            self.check_event_panel_onmap(ctx, EventTrigger::Action);
+        }
+    }
 
-    pub fn command_palette_handler(&mut self, func: CommandPaletteFunc) {
-        match func {
-            CommandPaletteFunc::Action => self.command_palette_go_register_handler(),
+    pub fn command_palette_handler<'a>(&mut self, ctx: &mut SuzuContext<'a>, func: CommandPaletteFunc) {
+	match func {
+            CommandPaletteFunc::Action => {
+		self.command_palette_go_register_handler(ctx);
+            },
+	    CommandPaletteFunc::ShowShopMenu => {
+		self.special_button_handler(ctx);
+	    }
         }
     }
 
@@ -1727,26 +1733,11 @@ impl SceneManager for ShopScene {
                             self.shop_menu.toggle_detail_menu(t);
                         }
                     }
-                    if self.special_button.contains(point) {
-                        self.special_button_handler(ctx);
-                    }
 
                     self.shop_command_palette
                         .mouse_left_button_down_handler(ctx, point);
                     if let Some(func) = self.shop_command_palette.check_button_func(point) {
-                        match func {
-                            CommandPaletteFunc::Action => {
-                                if let Some(scenario_box) = self.map.scenario_box.as_mut() {
-                                    if scenario_box.get_text_box_status()
-                                        == TextBoxStatus::FixedText
-                                    {
-                                        self.map.scenario_box = None;
-                                    }
-                                } else {
-                                    self.check_event_panel_onmap(ctx, EventTrigger::Action);
-                                }
-                            }
-                        }
+			self.command_palette_handler(ctx, func);
                     }
                 }
                 MouseButton::Right => {
@@ -1941,7 +1932,7 @@ impl SceneManager for ShopScene {
             self.map.tile_map.update(ctx.context, t);
 
             self.shop_map.move_with_func(t);
-	    self.shop_command_palette.effect(t);
+	    self.shop_command_palette.effect(ctx, t);
 
             // 時刻の更新
             self.update_shop_clock_regular(ctx, t);
@@ -2023,7 +2014,6 @@ impl SceneManager for ShopScene {
 
         self.drawable_shop_clock.draw(ctx).unwrap();
         self.shop_command_palette.draw(ctx).unwrap();
-        self.special_button.draw(ctx).unwrap();
 
         self.dark_effect_panel.draw(ctx).unwrap();
 

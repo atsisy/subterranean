@@ -2825,11 +2825,13 @@ impl TextureObject for ShopMapViewer {
 
 pub enum CommandPaletteFunc {
     Action,
+    ShowShopMenu,
 }
 
 pub struct ShopCommandPalette {
     canvas: EffectableWrap<MovableWrap<SubScreen>>,
     action_button: FramedButton,
+    shop_menu_button: FramedButton,
 }
 
 impl ShopCommandPalette {
@@ -2856,6 +2858,24 @@ impl ShopCommandPalette {
             font_info,
             0,
         );
+
+	let shop_menu_button = FramedButton::new(
+            ctx,
+            numeric::Rect::new(350.0, 15.0, 120.0, 85.0),
+            [
+                numeric::Vector2f::new(10.0, 10.0),
+                numeric::Vector2f::new(10.0, 10.0),
+                numeric::Vector2f::new(10.0, 10.0),
+                numeric::Vector2f::new(10.0, 10.0),
+            ],
+            2.0,
+            ggraphics::Color::from_rgba(90, 80, 63, 255),
+            ggraphics::Color::from_rgba(219, 212, 184, 255),
+            "状態".to_string(),
+            font_info,
+            0,
+        );
+	
         ShopCommandPalette {
 	    canvas: EffectableWrap::new(
 		MovableWrap::new(
@@ -2870,12 +2890,14 @@ impl ShopCommandPalette {
 		), Vec::new(),
 	    ),
             action_button: action_button,
+	    shop_menu_button: shop_menu_button,
         }
     }
 
     pub fn mouse_motion_handler<'a>(&mut self, ctx: &mut SuzuContext<'a>, p: numeric::Point2f, is_dragged: bool, t: Clock) {
 	let rpoint = self.canvas.relative_point(p);
         self.action_button.mouse_motion_handler(ctx, rpoint);
+	self.shop_menu_button.mouse_motion_handler(ctx, rpoint);
 
 	if !is_dragged {
 	    if p.y <= 650.0 {
@@ -2893,6 +2915,7 @@ impl ShopCommandPalette {
     ) {
 	let rpoint = self.canvas.relative_point(p);
         self.action_button.mouse_left_button_down(ctx, rpoint);
+	self.shop_menu_button.mouse_left_button_down(ctx, rpoint);
     }
 
     pub fn mouse_left_button_up_handler<'a>(
@@ -2902,11 +2925,13 @@ impl ShopCommandPalette {
     ) {
 	let rpoint = self.canvas.relative_point(p);
         self.action_button.mouse_left_button_up(ctx, rpoint);
+	self.shop_menu_button.mouse_left_button_up(ctx, rpoint);
     }
 
     pub fn contains_buttons(&self, p: numeric::Point2f) -> bool {
 	let rpoint = self.canvas.relative_point(p);
-        self.action_button.contains(rpoint)
+        self.action_button.contains(rpoint) ||
+	    self.shop_menu_button.contains(rpoint)
     }
 
     pub fn check_button_func(&self, p: numeric::Point2f) -> Option<CommandPaletteFunc> {
@@ -2914,6 +2939,10 @@ impl ShopCommandPalette {
 	
         if self.action_button.contains(rpoint) {
             return Some(CommandPaletteFunc::Action);
+        }
+
+	if self.shop_menu_button.contains(rpoint) {
+            return Some(CommandPaletteFunc::ShowShopMenu);
         }
 
         None
@@ -2931,8 +2960,11 @@ impl ShopCommandPalette {
 	    numeric::Vector2f::new(0.0, 10.0)), t);
     }
 
-    pub fn effect(&mut self, t: Clock) {
-	self.canvas.move_with_func(t);
+    pub fn effect<'a>(&mut self, ctx: &mut SuzuContext<'a>, t: Clock) {
+	if !self.canvas.is_stop() {
+	    ctx.process_utility.redraw();
+	    self.canvas.move_with_func(t);
+	}
     }
 }
 
@@ -2942,6 +2974,7 @@ impl DrawableComponent for ShopCommandPalette {
 	    sub_screen::stack_screen(ctx, &self.canvas);
 	    
 	    self.action_button.draw(ctx)?;
+	    self.shop_menu_button.draw(ctx)?;
 	    
             sub_screen::pop_screen(ctx);
             self.canvas.draw(ctx)?;
