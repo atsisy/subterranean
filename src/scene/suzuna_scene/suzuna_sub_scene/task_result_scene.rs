@@ -177,6 +177,8 @@ impl SceneManager for TaskResultScene {
             self.ready_to_finish_scene(ctx, t);
         }
 
+	self.drawable_task_result.click_handler(t);
+
         self.mouse_info.update_dragging(button, false);
         self.mouse_info
             .set_last_up(button, point, self.get_current_clock());

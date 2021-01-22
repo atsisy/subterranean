@@ -1,3 +1,5 @@
+use std::collections::VecDeque;
+
 use ggez::graphics as ggraphics;
 
 use torifune::core::Clock;
@@ -21,7 +23,9 @@ use number_to_jk::number_to_jk;
 struct DrawableEvaluationFlow {
     eval_frame: TableFrame,
     desc_text: Vec<VerticalText>,
-    result_text: Vec<EffectableWrap<MovableWrap<VerticalText>>>,
+    yet_effect_text: VecDeque<EffectableWrap<MovableWrap<VerticalText>>>,
+    effect_time_list: VecDeque<Clock>,
+    now_effect_text: VecDeque<EffectableWrap<MovableWrap<VerticalText>>>,
     drwob_essential: DrawableObjectEssential,
 }
 
@@ -45,8 +49,14 @@ impl DrawableEvaluationFlow {
         let init_crop = numeric::Rect::new(0.0, 0.0, 1.0, 0.0);
 
         let mut desc_text = Vec::new();
-        let mut result_text = Vec::new();
+        let mut yet_effect_text = VecDeque::new();
 
+	let mut effect_time_list = VecDeque::new();
+	effect_time_list.push_back(t + effect_clock_offset + 50);
+	effect_time_list.push_back(t + effect_clock_offset + 150);
+	effect_time_list.push_back(t + effect_clock_offset + 250);
+	effect_time_list.push_back(t + effect_clock_offset + 350);
+	
         let font_info = FontInformation::new(
             ctx.resource.get_font(FontID::JpFude1),
             numeric::Vector2f::new(28.0, 28.0),
@@ -91,10 +101,7 @@ impl DrawableEvaluationFlow {
                 None,
                 t,
             ),
-            vec![effect::appear_bale_down_from_top(
-                100,
-                t + effect_clock_offset + 150,
-            )],
+            Vec::new(),
         );
         ctx.savable_data.award_data.returning_check_mistake_count +=
             result_report.get_conition_eval_mistakes() as u16;
@@ -106,7 +113,6 @@ impl DrawableEvaluationFlow {
             eval_mistakes_vtext,
             numeric::Vector2u::new(1, 1)
         );
-        result_text.push(eval_mistakes_vtext);
 
 	let mut total_eval_text = EffectableWrap::new(
             MovableWrap::new(
@@ -121,10 +127,7 @@ impl DrawableEvaluationFlow {
                 None,
                 t,
             ),
-            vec![effect::appear_bale_down_from_top(
-                100,
-                t + effect_clock_offset + 200,
-            )],
+	    Vec::new(),
         );
 
         total_eval_text.set_crop(init_crop);
@@ -134,7 +137,6 @@ impl DrawableEvaluationFlow {
             total_eval_text,
             numeric::Vector2u::new(0, 1)
         );
-        result_text.push(total_eval_text);
 
         let mut shelving_vtext = EffectableWrap::new(
             MovableWrap::new(
@@ -149,10 +151,7 @@ impl DrawableEvaluationFlow {
                 None,
                 t,
             ),
-            vec![effect::appear_bale_down_from_top(
-                100,
-                t + effect_clock_offset + 100,
-            )],
+	    Vec::new(),
         );
 
         shelving_vtext.set_crop(init_crop);
@@ -162,7 +161,6 @@ impl DrawableEvaluationFlow {
             shelving_vtext,
             numeric::Vector2u::new(2, 1)
         );
-        result_text.push(shelving_vtext);
 
         let mut waiting_vtext = EffectableWrap::new(
             MovableWrap::new(
@@ -177,10 +175,7 @@ impl DrawableEvaluationFlow {
                 None,
                 t,
             ),
-            vec![effect::appear_bale_down_from_top(
-                100,
-                t + effect_clock_offset + 50,
-            )],
+	    Vec::new(),
         );
         waiting_vtext.set_crop(init_crop);
 
@@ -190,12 +185,19 @@ impl DrawableEvaluationFlow {
             waiting_vtext,
             numeric::Vector2u::new(3, 1)
         );
-        result_text.push(waiting_vtext);
 
+	
+        yet_effect_text.push_back(waiting_vtext);
+	yet_effect_text.push_back(shelving_vtext);
+	yet_effect_text.push_back(eval_mistakes_vtext);
+	yet_effect_text.push_back(total_eval_text);
+	
         DrawableEvaluationFlow {
             eval_frame: eval_frame,
             desc_text: desc_text,
-            result_text: result_text,
+            yet_effect_text: yet_effect_text,
+	    now_effect_text: VecDeque::new(),
+	    effect_time_list: effect_time_list,
             drwob_essential: DrawableObjectEssential::new(true, depth),
         }
     }
@@ -204,7 +206,19 @@ impl DrawableEvaluationFlow {
     /// # 描画要求有り
     ///
     pub fn run_effect<'a>(&mut self, ctx: &mut SuzuContext<'a>, t: Clock) {
-        for vtext in self.result_text.iter_mut() {
+	while !self.effect_time_list.is_empty() {
+	    if self.effect_time_list[0] <= t {
+		let mut vtext = self.yet_effect_text.pop_front().unwrap();
+		vtext.clear_effect();
+		vtext.add_effect(vec![effect::appear_bale_down_from_top(100, t)]);
+		self.now_effect_text.push_back(vtext);
+		self.effect_time_list.pop_front();
+	    } else {
+		break;
+	    }
+	}
+	
+        for vtext in self.now_effect_text.iter_mut() {
             if vtext.is_empty_effect() && vtext.is_stop() {
                 continue;
             }
@@ -212,6 +226,20 @@ impl DrawableEvaluationFlow {
             vtext.effect(ctx.context, t);
             ctx.process_utility.redraw();
         }
+    }
+
+    pub fn skip_effect<'a>(&mut self, t: Clock) {
+	for vtext in self.now_effect_text.iter_mut() {
+	    vtext.clear_effect();
+	    vtext.set_crop(numeric::Rect::new(0.0, 0.0, 1.0, 1.0));
+	}
+
+	if let Some(next_effect_time) = self.effect_time_list.front() {
+	    let diff = next_effect_time - t;
+	    for effect_time in self.effect_time_list.iter_mut() {
+		*effect_time -= diff;
+	    }
+	}
     }
 }
 
@@ -224,7 +252,11 @@ impl DrawableComponent for DrawableEvaluationFlow {
                 vtext.draw(ctx)?;
             }
 
-            for vtext in self.result_text.iter_mut() {
+            for vtext in self.yet_effect_text.iter_mut() {
+                vtext.draw(ctx)?;
+            }
+
+	    for vtext in self.now_effect_text.iter_mut() {
                 vtext.draw(ctx)?;
             }
         }
@@ -260,8 +292,10 @@ impl DrawableComponent for DrawableEvaluationFlow {
 
 pub struct DrawableTaskResult {
     result_frame: TableFrame,
+    effect_time_list: VecDeque<Clock>,
     fixed_text: Vec<VerticalText>,
-    effect_text: Vec<EffectableWrap<MovableWrap<VerticalText>>>,
+    yet_effect_text: VecDeque<EffectableWrap<MovableWrap<VerticalText>>>,
+    now_effect_text: VecDeque<EffectableWrap<MovableWrap<VerticalText>>>,
     meters: ResultMeter,
     background: SimpleObject,
     evaluation: DrawableEvaluationFlow,
@@ -303,7 +337,7 @@ impl DrawableTaskResult {
         );
 
         let mut fixed_text = Vec::new();
-        let mut effect_text = Vec::new();
+        let mut effect_text = VecDeque::new();
 
         let title_text = VerticalText::new(
             format!("{}", date.to_string()),
@@ -341,6 +375,11 @@ impl DrawableTaskResult {
         );
         fixed_text.push(done_work_text);
 
+	let mut effect_time_list = VecDeque::new();
+	effect_time_list.push_back(t + 50);
+	effect_time_list.push_back(t + 150);
+	effect_time_list.push_back(t + 250);
+	
         let done_work_num = task_result.done_works - initial_save_data.task_result.done_works;
         let mut done_work_num_text = EffectableWrap::new(
             MovableWrap::new(
@@ -355,7 +394,7 @@ impl DrawableTaskResult {
                 None,
                 t,
             ),
-            vec![effect::appear_bale_down_from_top(100, t + 150)],
+	    Vec::new(),
         );
         done_work_num_text.set_crop(init_crop);
         set_table_frame_cell_center!(
@@ -364,7 +403,7 @@ impl DrawableTaskResult {
             done_work_num_text,
             numeric::Vector2u::new(2, 1)
         );
-        effect_text.push(done_work_num_text);
+        effect_text.push_back(done_work_num_text);
         ctx.savable_data.award_data.customer_count += done_work_num as u16;
 
         let mut money_desc_text = VerticalText::new(
@@ -402,7 +441,7 @@ impl DrawableTaskResult {
                 None,
                 t,
             ),
-            vec![effect::appear_bale_down_from_top(100, t + 250)],
+	    Vec::new(),
         );
         money_text.set_crop(init_crop);
         set_table_frame_cell_center!(
@@ -411,7 +450,7 @@ impl DrawableTaskResult {
             money_text,
             numeric::Vector2u::new(1, 1)
         );
-        effect_text.push(money_text);
+        effect_text.push_back(money_text);
 
         let mut total_money_desc_text = VerticalText::new(
             format!("所持金"),
@@ -445,7 +484,7 @@ impl DrawableTaskResult {
                 None,
                 t,
             ),
-            vec![effect::appear_bale_down_from_top(100, t + 350)],
+            Vec::new(),
         );
         total_money_text.set_crop(init_crop);
         set_table_frame_cell_center!(
@@ -454,7 +493,7 @@ impl DrawableTaskResult {
             total_money_text,
             numeric::Vector2u::new(0, 1)
         );
-        effect_text.push(total_money_text);
+        effect_text.push_back(total_money_text);
 
         let mut meters = ResultMeter::new(
             ctx,
@@ -477,8 +516,10 @@ impl DrawableTaskResult {
         );
 
         let mut this = DrawableTaskResult {
+	    effect_time_list: effect_time_list,
             result_frame: result_frame,
-            effect_text: effect_text,
+            yet_effect_text: effect_text,
+	    now_effect_text: VecDeque::new(),
             fixed_text: fixed_text,
             meters: meters,
             evaluation: evaluation,
@@ -510,7 +551,19 @@ impl DrawableTaskResult {
     }
 
     pub fn run_effect<'a>(&mut self, ctx: &mut SuzuContext<'a>, t: Clock) {
-        for vtext in self.effect_text.iter_mut() {
+	while !self.effect_time_list.is_empty() {
+	    if self.effect_time_list[0] <= t {
+		let mut vtext = self.yet_effect_text.pop_front().unwrap();
+		vtext.clear_effect();
+		vtext.add_effect(vec![effect::appear_bale_down_from_top(100, t)]);
+		self.now_effect_text.push_back(vtext);
+		self.effect_time_list.pop_front();
+	    } else {
+		break;
+	    }
+	}
+	
+        for vtext in self.now_effect_text.iter_mut() {
             if vtext.is_empty_effect() && vtext.is_stop() {
                 continue;
             }
@@ -523,6 +576,22 @@ impl DrawableTaskResult {
 
         self.meters.effect(ctx);
     }
+
+    pub fn click_handler(&mut self, t: Clock) {
+	for vtext in self.now_effect_text.iter_mut() {
+	    vtext.clear_effect();
+	    vtext.set_crop(numeric::Rect::new(0.0, 0.0, 1.0, 1.0));
+	}
+
+	if let Some(next_effect_time) = self.effect_time_list.front() {
+	    let diff = next_effect_time - t;
+	    for effect_time in self.effect_time_list.iter_mut() {
+		*effect_time -= diff;
+	    }
+	} else {
+	    self.evaluation.skip_effect(t);
+	}
+    }
 }
 
 impl DrawableComponent for DrawableTaskResult {
@@ -532,7 +601,11 @@ impl DrawableComponent for DrawableTaskResult {
 
             self.const_canvas.draw(ctx)?;
 
-            for vtext in self.effect_text.iter_mut() {
+            for vtext in self.yet_effect_text.iter_mut() {
+                vtext.draw(ctx).unwrap();
+            }
+
+            for vtext in self.now_effect_text.iter_mut() {
                 vtext.draw(ctx).unwrap();
             }
 
