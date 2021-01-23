@@ -16,7 +16,7 @@ use ggez::input::mouse::MouseButton;
 use torifune::numeric;
 
 use super::*;
-use crate::add_delay_event;
+use crate::{add_delay_event, core::WINDOW_SIZE_X};
 use crate::core::{map_parser as mp};
 use crate::core::{
     BookInformation, FontID, MouseInformation, ResultReport, SavableData, SuzuContext,
@@ -557,6 +557,16 @@ pub enum ShopTimeStatus {
     Closing,
 }
 
+impl ShopTimeStatus {
+    pub fn to_string(&self) -> String {
+	match self {
+	    ShopTimeStatus::Preparing => "仕度中",
+	    ShopTimeStatus::Opening => "営業中",
+	    ShopTimeStatus::Closing => "終業中",
+	}.to_string()
+    }
+}
+
 ///
 /// # 夢の中のステージ
 ///
@@ -607,6 +617,7 @@ pub struct ShopScene {
     drawable_shop_clock: DrawableShopClock,
     shop_command_palette: ShopCommandPalette,
     shop_time_status: ShopTimeStatus,
+    shop_time_status_header: EffectableWrap<MovableWrap<UniText>>,
 }
 
 impl ShopScene {
@@ -676,6 +687,24 @@ impl ShopScene {
             31,
         );
 
+	let mut shop_time_status_header = EffectableWrap::new(
+	    MovableWrap::new(
+		Box::new(UniText::new(
+		    ShopTimeStatus::Preparing.to_string(),
+		    numeric::Point2f::new(0.0, 0.0),
+		    numeric::Vector2f::new(1.0, 1.0),
+		    0.0,
+		    0,
+		    FontInformation::new(
+			ctx.resource.get_font(FontID::Cinema),
+			numeric::Vector2f::new(28.0, 28.0),
+			ggraphics::Color::from_rgba(30, 20, 12, 255),
+		    ))),
+		None,
+		0
+	    ),Vec::new()
+	);
+	shop_time_status_header.make_center(ctx.context, numeric::Point2f::new(WINDOW_SIZE_X as f32 / 2.0, 45.0));
         //ctx.pay_ad_cost();
 
         ShopScene {
@@ -727,6 +756,7 @@ impl ShopScene {
 		0,
             ),
 	    shop_time_status: ShopTimeStatus::Preparing,
+	    shop_time_status_header: shop_time_status_header,
         }
     }
 
@@ -1453,10 +1483,34 @@ impl ShopScene {
     pub fn check_shop_clock_regular<'a>(&mut self, ctx: &mut SuzuContext<'a>, t: Clock) {
 	if self.shop_time_status == ShopTimeStatus::Preparing && self.shop_clock.is_past(9, 0) {
 	    self.shop_time_status = ShopTimeStatus::Opening;
+	    self.shop_time_status_header.make_center(ctx.context, numeric::Point2f::new(WINDOW_SIZE_X as f32 / 2.0, 45.0));
+	    self.shop_time_status_header.clear_effect();
+	    self.shop_time_status_header.add_effect(vec![
+		effect::alpha_effect(20, t, 255, 0), effect::alpha_effect(20, t + 20, 0, 255)
+	    ]);
+	    add_delay_event!(
+                self.event_list,
+                |slf, _ctx, _t| {
+		    slf.shop_time_status_header.replace_text(&slf.shop_time_status.to_string());
+                },
+                t + 20
+            );
 	}
 
 	if self.shop_time_status == ShopTimeStatus::Opening && self.shop_clock.is_past(17, 0) {
 	    self.shop_time_status = ShopTimeStatus::Closing;
+	    self.shop_time_status_header.make_center(ctx.context, numeric::Point2f::new(WINDOW_SIZE_X as f32 / 2.0, 45.0));
+	    	    self.shop_time_status_header.clear_effect();
+	    self.shop_time_status_header.add_effect(vec![
+		effect::alpha_effect(20, t, 255, 0), effect::alpha_effect(20, t + 20, 0, 255)
+	    ]);
+	    add_delay_event!(
+                self.event_list,
+                |slf, _ctx, _t| {
+		    slf.shop_time_status_header.replace_text(&slf.shop_time_status.to_string());
+                },
+                t + 20
+            );
 	}
 	
         if self.shop_time_status == ShopTimeStatus::Closing && self.shop_clock.is_past(18, 0) {
@@ -1944,6 +1998,8 @@ impl SceneManager for ShopScene {
                 customer.get_mut_character_object().update_texture(t);
             }
 
+	    self.shop_time_status_header.effect(ctx.context, t);
+
             self.character_group.remove_if(|c| c.is_got_out());
 
             self.character_group.sort_by_y_position();
@@ -2036,6 +2092,7 @@ impl SceneManager for ShopScene {
 
         self.drawable_shop_clock.draw(ctx).unwrap();
         self.shop_command_palette.draw(ctx).unwrap();
+	self.shop_time_status_header.draw(ctx).unwrap();
 
         self.dark_effect_panel.draw(ctx).unwrap();
 
