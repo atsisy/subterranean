@@ -550,6 +550,13 @@ impl DrawableComponent for GoToCheckCustomers {
     }
 }
 
+#[derive(Debug, Clone, PartialEq)]
+pub enum ShopTimeStatus {
+    Preparing,
+    Opening,
+    Closing,
+}
+
 ///
 /// # 夢の中のステージ
 ///
@@ -599,6 +606,7 @@ pub struct ShopScene {
     begining_save_data: SavableData,
     drawable_shop_clock: DrawableShopClock,
     shop_command_palette: ShopCommandPalette,
+    shop_time_status: ShopTimeStatus,
 }
 
 impl ShopScene {
@@ -643,7 +651,7 @@ impl ShopScene {
         let mut map = MapData::new(ctx, map_id, camera.clone());
         map.tile_map.build_collision_map();
 
-        let shop_time = ShopClock::new(9, 0);
+        let shop_time = ShopClock::new(8, 0);
         let drawble_shop_clock = DrawableShopClock::from_toml(
             ctx,
             "resources/other_config/shop_clock.toml",
@@ -718,6 +726,7 @@ impl ShopScene {
                 0,
 		0,
             ),
+	    shop_time_status: ShopTimeStatus::Preparing,
         }
     }
 
@@ -1442,7 +1451,15 @@ impl ShopScene {
     /// # 再描画要求有り
     ///
     pub fn check_shop_clock_regular<'a>(&mut self, ctx: &mut SuzuContext<'a>, t: Clock) {
-        if self.shop_clock.is_past(17, 0) {
+	if self.shop_time_status == ShopTimeStatus::Preparing && self.shop_clock.is_past(9, 0) {
+	    self.shop_time_status = ShopTimeStatus::Opening;
+	}
+
+	if self.shop_time_status == ShopTimeStatus::Opening && self.shop_clock.is_past(17, 0) {
+	    self.shop_time_status = ShopTimeStatus::Closing;
+	}
+	
+        if self.shop_time_status == ShopTimeStatus::Closing && self.shop_clock.is_past(18, 0) {
             self.event_list.add_event(
                 Box::new(move |slf: &mut Self, ctx, _| {
                     // reportに未配架の本のIDをメモする
@@ -1462,6 +1479,11 @@ impl ShopScene {
     }
 
     fn random_add_customer<'a>(&mut self, ctx: &mut SuzuContext<'a>) {
+	match self.shop_time_status {
+	    ShopTimeStatus::Opening => (),
+	    _ => return,
+	}
+	
         if rand::random::<usize>() % 1000 == 0 {
             let character = character_factory::create_character(
                 character_factory::CharacterFactoryOrder::CustomerSample,
