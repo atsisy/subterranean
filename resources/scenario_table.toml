@@ -113,3 +113,10 @@ path = "./resources/scenario/day_8_5.toml"
 season = 112
 month = 8
 day = 5
+
+[[scenario-table]]
+path = "./resources/scenario/day_8_6.toml"
+[scenario-table.date]
+season = 112
+month = 8
+day = 6
