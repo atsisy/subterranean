@@ -555,6 +555,7 @@ pub enum ShopTimeStatus {
     Preparing,
     Opening,
     Closing,
+    Closed,
 }
 
 impl ShopTimeStatus {
@@ -563,6 +564,7 @@ impl ShopTimeStatus {
 	    ShopTimeStatus::Preparing => "仕度中",
 	    ShopTimeStatus::Opening => "営業中",
 	    ShopTimeStatus::Closing => "終業中",
+	    ShopTimeStatus::Closed => "閉店",
 	}.to_string()
     }
 }
@@ -1450,7 +1452,7 @@ impl ShopScene {
     ///
     pub fn update_shop_clock_regular<'a>(&mut self, ctx: &mut SuzuContext<'a>, t: Clock) {
         if self.get_current_clock() % 15 == 0 {
-            self.shop_clock.add_minute(10);
+            self.shop_clock.add_minute(20);
             self.drawable_shop_clock.update_time(&self.shop_clock);
 
             if self.shop_clock.equals(12, 0) {
@@ -1529,6 +1531,7 @@ impl ShopScene {
             );
 
             self.scene_transition_close_effect(ctx, t);
+	    self.shop_time_status = ShopTimeStatus::Closed;
         }
     }
 
