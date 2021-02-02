@@ -821,23 +821,27 @@ impl ResultMeter {
     }
 
     pub fn effect<'a>(&mut self, ctx: &mut SuzuContext<'a>) -> DrawRequest {
+	if self.diff_per_clock == 0.0 {
+	    return DrawRequest::Skip;
+	}
+
         if (self.meter.get_value() - self.goal).abs() >= self.diff_per_clock.abs() {
             self.meter.add(self.diff_per_clock);
+        } else {
+	    self.meter.set_value(self.goal);
+	}
 
-            let before_x = self.current_value_text.get_drawing_size(ctx.context).x;
-
-            self.current_value_text
-                .replace_text(&format!("{}", self.meter.get_value() as i32));
-
-            let after_x = self.current_value_text.get_drawing_size(ctx.context).x;
-            self.current_value_text
-                .move_diff(numeric::Vector2f::new(before_x - after_x, 0.0));
-
-            ctx.process_utility.redraw();
-            return DrawRequest::Draw;
-        }
-
-        DrawRequest::Skip
+	let before_x = self.current_value_text.get_drawing_size(ctx.context).x;
+	
+        self.current_value_text
+            .replace_text(&format!("{}", self.meter.get_value() as i32));
+	
+        let after_x = self.current_value_text.get_drawing_size(ctx.context).x;
+        self.current_value_text
+            .move_diff(numeric::Vector2f::new(before_x - after_x, 0.0));
+	
+	ctx.process_utility.redraw();
+	return DrawRequest::Draw;
     }
 }
 
