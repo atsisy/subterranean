@@ -929,16 +929,31 @@ impl TaskTable {
                 .click_book_title_menu(ctx, button, point, t)
             && !self.record_book_menu.click_date_menu(ctx, button, point, t)
             && !self
-                .record_book_menu
-                .click_customer_name_menu(ctx, button, point, t)
+            .record_book_menu
+            .click_customer_name_menu(ctx, button, point, t)
             && !self
-                .record_book_menu
-                .click_payment_menu(ctx, button, point, t)
+            .record_book_menu
+            .click_payment_menu(ctx, button, point, t)
+	    && !self
+            .record_book_menu
+            .click_date_check_menu(ctx, button, point, t)
         {
             // メニューをクリックしていない場合はfalseをクリックして終了
             return false;
         }
 
+	if self.record_book_menu.date_check_menu_check_button_clicked() {
+	    if let Some(return_date) = self.borrowing_record_book.get_current_page_return_date() {
+		if return_date.is_past(&self.today) {
+		    self.add_fee_coins(ctx, 300, t);
+		    self.slide_hide_record_book(t);
+		    self.insert_kosuzu_message_set(ctx, "延滞してます\n延滞料金は三百円です", t);	    
+		} else {
+		    self.insert_kosuzu_message_set(ctx, "（延滞はしていない）", t);		    
+		}
+	    }
+	}
+	
         if let Some(index) = self.record_book_menu.book_status_menu_last_clicked() {
             let menu_position = self
                 .record_book_menu
@@ -1135,6 +1150,14 @@ impl TaskTable {
             .insert_kosuzu_message_in_chatbox(ctx, msg.to_string());
     }
 
+    fn insert_kosuzu_message_set<'a>(&mut self, ctx: &mut SuzuContext<'a>, msg: &str, t: Clock) {
+        self.kosuzu_phrase.insert_new_phrase(ctx, msg, t);
+
+        self.sight
+            .silhouette
+            .insert_kosuzu_message_in_chatbox(ctx, msg.to_string());
+    }
+
     ///
     /// メニューのエントリをクリックしていたらtrueを返し、そうでなければfalseを返す
     ///
@@ -1308,8 +1331,18 @@ impl TaskTable {
             } else if grid_pos == numeric::Vector2u::new(1, 1)
                 || grid_pos == numeric::Vector2u::new(0, 1)
             {
-                self.record_book_menu
-                    .show_date_menu(ctx, click_point, self.today.clone(), t);
+		if let Some(request) = self.current_customer_request.as_ref() {
+		    match request {
+			CustomerRequest::Borrowing(_) => {
+			    self.record_book_menu
+				.show_date_menu(ctx, click_point, self.today.clone(), t);
+			},
+			CustomerRequest::Returning(_) => {
+			    self.record_book_menu
+				.show_date_check_menu(ctx, click_point, self.today.clone(), t);			    
+			}
+		    }
+		}
             }
 
             true

@@ -1119,6 +1119,193 @@ impl Clickable for DateMenu {
 
 pub type DateDropMenu = DropDownArea<DateMenu>;
 
+pub struct DateCheckMenu {
+    date_data: Vec<GensoDate>,
+    date_table_frame: TableFrame,
+    today: GensoDate,
+    desc_vtext: Vec<VerticalText>,
+    date_vtext: Vec<VerticalText>,
+    date_check_button: FramedButton,
+    drwob_essential: DrawableObjectEssential,
+    check_button_clicked: bool,
+}
+
+impl DateCheckMenu {
+    pub fn new<'a>(ctx: &mut SuzuContext<'a>, today: GensoDate, drawing_depth: i8) -> Self {
+	let mut desc_vtext = Vec::new();
+	let mut date_data = Vec::new();
+	let mut date_vtext = Vec::new();
+	
+	let font_info = FontInformation::new(
+            ctx.resource.get_font(FontID::Cinema),
+            numeric::Vector2f::new(20.0, 20.0),
+            ggraphics::Color::from_rgba_u32(0xff),
+        );
+
+        let date_table_frame = TableFrame::new(
+            ctx.resource,
+            numeric::Point2f::new(48.0, 50.0),
+            TileBatchTextureID::OldStyleFrame,
+            FrameData::new(vec![110.0, 256.0], vec![56.0; 2]),
+            numeric::Vector2f::new(0.3, 0.3),
+            0,
+        );
+
+        for (index, s) in vec!["本日", "返却日"].iter().enumerate() {
+            let mut vtext = VerticalText::new(
+                s.to_string(),
+                numeric::Point2f::new(0.0, 0.0),
+                numeric::Vector2f::new(1.0, 1.0),
+                0.0,
+                drawing_depth,
+                font_info,
+            );
+
+            set_table_frame_cell_center!(
+                ctx.context,
+                date_table_frame,
+                vtext,
+                numeric::Vector2u::new(index as u32, 0)
+            );
+
+            desc_vtext.push(vtext);
+        }
+
+	for (index, date) in vec![today.clone(), today.clone()].iter().enumerate() {
+            let name_vtext_line = date.to_string();
+            let mut vtext = VerticalText::new(
+                name_vtext_line,
+                numeric::Point2f::new(0.0, 0.0),
+                numeric::Vector2f::new(1.0, 1.0),
+                0.0,
+                drawing_depth,
+                font_info,
+            );
+
+            set_table_frame_cell_center!(
+                ctx.context,
+                date_table_frame,
+                vtext,
+                numeric::Vector2u::new(index as u32, 1)
+            );
+
+            date_vtext.push(vtext);
+            date_data.push(date.clone());
+        }
+
+	let area = date_table_frame.get_area();
+	let date_check_button = FramedButton::create_design1(
+	    ctx,
+	    numeric::Point2f::new(area.x + 10.0, area.bottom() + 20.0),
+	    "指摘",
+	    numeric::Vector2f::new(24.0, 24.0)
+	);
+
+	DateCheckMenu {
+	    date_data: date_data,
+	    date_table_frame: date_table_frame,
+	    date_vtext: date_vtext,
+	    today: today,
+	    desc_vtext: desc_vtext,
+	    date_check_button: date_check_button,
+	    drwob_essential: DrawableObjectEssential::new(true, drawing_depth),
+	    check_button_clicked: false,
+	}
+    }
+
+    pub fn set_to_center<'a>(&mut self, ctx: &mut SuzuContext<'a>, center: numeric::Point2f) {
+	self.date_table_frame
+            .make_center(numeric::Point2f::new(center.x, center.y - 30.0));
+
+        for (index, text) in self.date_vtext.iter_mut().enumerate() {
+            set_table_frame_cell_center!(
+                ctx.context,
+                self.date_table_frame,
+                text,
+                numeric::Vector2u::new(index as u32, 1)
+            );
+        }
+
+        for (index, text) in self.desc_vtext.iter_mut().enumerate() {
+            set_table_frame_cell_center!(
+                ctx.context,
+                self.date_table_frame,
+                text,
+                numeric::Vector2u::new(index as u32, 0)
+            );
+        }
+    }
+
+    pub fn click_handler(&mut self, _ctx: &mut ggez::Context, point: numeric::Point2f) {
+	if self.date_check_button.contains(point) {
+	    self.check_button_clicked = true;
+	}
+    }
+
+    pub fn check_button_is_clicked_volatile(&mut self) -> bool {
+	let ret = self.check_button_clicked;
+	self.check_button_clicked = false;
+	ret
+    }
+
+    pub fn get_date_frame_size(&self) -> numeric::Vector2f {
+	self.date_table_frame.size() + numeric::Vector2f::new(0.0, 50.0)
+    }
+}
+
+impl DrawableComponent for DateCheckMenu {
+    fn draw(&mut self, ctx: &mut ggez::Context) -> ggez::GameResult<()> {
+        if self.is_visible() {
+	    self.date_table_frame.draw(ctx)?;
+
+            for vtext in &mut self.date_vtext {
+                vtext.draw(ctx)?;
+            }
+
+            for vtext in &mut self.desc_vtext {
+                vtext.draw(ctx)?;
+            }
+	    
+	    self.date_check_button.draw(ctx)?;
+        }
+        Ok(())
+    }
+
+    fn hide(&mut self) {
+        self.drwob_essential.visible = false;
+    }
+
+    fn appear(&mut self) {
+        self.drwob_essential.visible = true;
+    }
+
+    fn is_visible(&self) -> bool {
+        self.drwob_essential.visible
+    }
+
+    fn set_drawing_depth(&mut self, depth: i8) {
+        self.drwob_essential.drawing_depth = depth;
+    }
+
+    fn get_drawing_depth(&self) -> i8 {
+        self.drwob_essential.drawing_depth
+    }
+}
+
+impl Clickable for DateCheckMenu {
+    fn on_click<'a>(
+        &mut self,
+        ctx: &mut SuzuContext<'a>,
+        _t: Clock,
+        _button: ggez::event::MouseButton,
+        point: numeric::Point2f,
+    ) {
+        self.click_handler(ctx.context, point);
+    }
+}
+
+pub type DateCheckDropMenu = DropDownArea<DateCheckMenu>;
+
 pub struct PaymentMenu {
     select_table_frame: TableFrame,
     select_vtext: Vec<VerticalText>,
@@ -1918,6 +2105,7 @@ pub struct RecordBookMenuGroup {
     customer_name_menu: Option<CustomerNameDropMenu>,
     simple_message_menu: Option<SimpleMessageDropMenu>,
     date_menu: Option<DateDropMenu>,
+    date_check_menu: Option<DateCheckDropMenu>,
     payment_menu: Option<PaymentDropMenu>,
     drwob_essential: DrawableObjectEssential,
 }
@@ -1931,6 +2119,7 @@ impl RecordBookMenuGroup {
             customer_name_menu: None,
             simple_message_menu: None,
             date_menu: None,
+	    date_check_menu: None,
             payment_menu: None,
             drwob_essential: DrawableObjectEssential::new(true, drawing_depth),
         }
@@ -1941,6 +2130,7 @@ impl RecordBookMenuGroup {
             || self.book_title_menu.is_some()
             || self.customer_name_menu.is_some()
             || self.date_menu.is_some()
+	    || self.date_check_menu.is_some()
             || self.payment_menu.is_some()
             || self.simple_message_menu.is_some()
     }
@@ -1989,6 +2179,18 @@ impl RecordBookMenuGroup {
         date_menu.add_effect(vec![effect::fade_out(10, t)]);
         self.event_list.add_event(
             Box::new(|slf: &mut RecordBookMenuGroup, _, _| slf.date_menu = None),
+            t + 11,
+        );
+    }
+
+    pub fn close_date_check_menu(&mut self, t: Clock) {
+        let date_menu = match self.date_check_menu.as_mut() {
+            Some(it) => it,
+            _ => return,
+        };
+        date_menu.add_effect(vec![effect::fade_out(10, t)]);
+        self.event_list.add_event(
+            Box::new(|slf: &mut RecordBookMenuGroup, _, _| slf.date_check_menu = None),
             t + 11,
         );
     }
@@ -2052,6 +2254,10 @@ impl RecordBookMenuGroup {
         self.date_menu.is_some() && self.date_menu.as_ref().unwrap().contains(ctx, point)
     }
 
+    pub fn contains_date_check_menu(&self, ctx: &mut ggez::Context, point: numeric::Point2f) -> bool {
+        self.date_check_menu.is_some() && self.date_check_menu.as_ref().unwrap().contains(ctx, point)
+    }
+
     pub fn contains_payment_menu(&self, ctx: &mut ggez::Context, point: numeric::Point2f) -> bool {
         self.payment_menu.is_some() && self.payment_menu.as_ref().unwrap().contains(ctx, point)
     }
@@ -2074,6 +2280,7 @@ impl RecordBookMenuGroup {
             || self.contains_book_status_menu(ctx, point)
             || self.contains_customer_name_menu(ctx, point)
             || self.contains_date_menu(ctx, point)
+	    || self.contains_date_check_menu(ctx, point)
             || self.contains_payment_menu(ctx, point)
             || self.contains_simple_message_menu(ctx, point)
     }
@@ -2104,6 +2311,14 @@ impl RecordBookMenuGroup {
 
     pub fn get_date_menu_position(&self) -> Option<numeric::Point2f> {
         if let Some(date_menu) = self.date_menu.as_ref() {
+            Some(date_menu.get_click_position())
+        } else {
+            None
+        }
+    }
+
+    pub fn get_date_check_menu_position(&self) -> Option<numeric::Point2f> {
+        if let Some(date_menu) = self.date_check_menu.as_ref() {
             Some(date_menu.get_click_position())
         } else {
             None
@@ -2218,6 +2433,26 @@ impl RecordBookMenuGroup {
         }
     }
 
+    pub fn click_date_check_menu<'a>(
+        &mut self,
+        ctx: &mut SuzuContext<'a>,
+        button: ggez::input::mouse::MouseButton,
+        point: numeric::Point2f,
+        t: Clock,
+    ) -> bool {
+        // ボタンエリア内をクリックしていない場合は、即終了
+        if !self.contains_date_check_menu(ctx.context, point) {
+            return false;
+        }
+
+        if let Some(date_menu) = self.date_check_menu.as_mut() {
+            date_menu.on_click(ctx, t, button, point);
+            true
+        } else {
+            false
+        }
+    }
+
     ///
     /// メニューのエントリをクリックしていたらtrueを返し、そうでなければfalseを返す
     ///
@@ -2288,6 +2523,14 @@ impl RecordBookMenuGroup {
         }
     }
 
+    pub fn date_check_menu_check_button_clicked(&mut self) -> bool {
+        if let Some(date_menu) = self.date_check_menu.as_mut() {
+	    date_menu.get_component_mut().check_button_is_clicked_volatile()
+        } else {
+	    false
+        }
+    }
+
     pub fn payment_menu_last_clicked(&mut self) -> Option<usize> {
         if let Some(payment_menu) = self.payment_menu.as_mut() {
             payment_menu.get_component().get_last_clicked_index()
@@ -2301,6 +2544,7 @@ impl RecordBookMenuGroup {
         self.close_book_title_menu(t);
         self.close_customer_name_menu(t);
         self.close_date_menu(t);
+	self.close_date_check_menu(t);
         self.close_payment_menu(t);
         self.close_simple_message_menu(t);
     }
@@ -2503,6 +2747,42 @@ impl RecordBookMenuGroup {
         self.date_menu = Some(date_menu_area);
     }
 
+    pub fn show_date_check_menu<'a>(
+        &mut self,
+        ctx: &mut SuzuContext<'a>,
+        position: numeric::Point2f,
+        today: GensoDate,
+        t: Clock,
+    ) {
+        let mut date_menu = DateCheckMenu::new(ctx, today, 0);
+
+        let frame_size = date_menu.get_date_frame_size();
+
+        let menu_size = numeric::Point2f::new(frame_size.x + 80.0, frame_size.y + 120.0);
+
+        let pos = util::find_proper_window_position(
+            numeric::Rect::new(position.x, position.y, menu_size.x, menu_size.y),
+            numeric::Rect::new(
+                0.0,
+                0.0,
+                core::WINDOW_SIZE_X as f32,
+                core::WINDOW_SIZE_Y as f32,
+            ),
+        );
+
+        let menu_rect = numeric::Rect::new(pos.x, pos.y, menu_size.x, menu_size.y);
+
+        date_menu.set_to_center(
+            ctx,
+            numeric::Point2f::new(menu_size.x / 2.0, menu_size.y / 2.0),
+        );
+
+        let mut date_menu_area = DropDownArea::new(ctx, position, menu_rect, 0, date_menu, t);
+        date_menu_area.add_effect(vec![effect::fade_in(10, t)]);
+
+        self.date_check_menu = Some(date_menu_area);
+    }
+
     pub fn show_payment_menu(
         &mut self,
         ctx: &mut SuzuContext,
@@ -2572,6 +2852,12 @@ impl RecordBookMenuGroup {
             ctx.process_utility.redraw();
         }
 
+	if let Some(date_menu) = self.date_check_menu.as_mut() {
+            date_menu.move_with_func(t);
+            date_menu.effect(ctx.context, t);
+            ctx.process_utility.redraw();
+        }
+
         if let Some(payment_menu) = self.payment_menu.as_mut() {
             payment_menu.move_with_func(t);
             payment_menu.effect(ctx.context, t);
@@ -2602,6 +2888,10 @@ impl DrawableComponent for RecordBookMenuGroup {
             }
 
             if let Some(date_menu) = self.date_menu.as_mut() {
+                date_menu.draw(ctx)?;
+            }
+
+	    if let Some(date_menu) = self.date_check_menu.as_mut() {
                 date_menu.draw(ctx)?;
             }
 

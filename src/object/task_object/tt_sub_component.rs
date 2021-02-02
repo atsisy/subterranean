@@ -1779,7 +1779,15 @@ impl BorrowingRecordBookPage {
         let info = self.borrow_book.get_mut(&grid_position).unwrap();
         info.reset(HoldData::None);
     }
-
+    
+    pub fn get_return_date(&self) -> Option<GensoDate> {
+        if let Some(data) = self.request_information.get(&numeric::Vector2u::new(0, 1)) {
+            data.ref_hold_data().to_date()
+        } else {
+            None
+        }
+    }
+    
     pub fn export_page_data(&self) -> BorrowingRecordBookPageData {
         let mut borrow_book_title = Vec::new();
         let mut borrow_book_status = Vec::new();
@@ -1830,12 +1838,7 @@ impl BorrowingRecordBookPage {
                 None
             };
 
-        let return_date =
-            if let Some(data) = self.request_information.get(&numeric::Vector2u::new(0, 1)) {
-                data.ref_hold_data().to_date()
-            } else {
-                None
-            };
+        let return_date = self.get_return_date();
 
         let rental_limit = if let Some(data) = self.pay_frame.rental_limit_data.as_ref() {
             Some(data.clone())
@@ -2180,6 +2183,14 @@ impl BorrowingRecordBook {
     pub fn get_current_page_written_books<'a>(&self) -> Option<Vec<BookInformation>> {
         if let Some(page) = self.get_current_page() {
             Some(page.get_written_books())
+        } else {
+            None
+        }
+    }
+
+    pub fn get_current_page_return_date(&self) -> Option<GensoDate> {	
+        if let Some(page) = self.get_current_page() {
+            page.get_return_date()
         } else {
             None
         }
@@ -3066,7 +3077,6 @@ impl DrawableComponent for TaskManualBook {
         if self.is_visible() {
             if self.redraw_request != DrawRequest::Skip {
                 self.redraw_request = DrawRequest::Skip;
-                println!("draw");
 
                 sub_screen::stack_screen(ctx, &self.canvas);
 

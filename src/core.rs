@@ -665,6 +665,21 @@ impl GensoDate {
             None
         }
     }
+
+    pub fn is_past(&self, date: &GensoDate) -> bool {
+	match self.season.cmp(&date.season) {
+	    std::cmp::Ordering::Less => false,
+	    std::cmp::Ordering::Greater => true,
+	    std::cmp::Ordering::Equal => match self.month.cmp(&date.month) {
+		std::cmp::Ordering::Less => false,
+		std::cmp::Ordering::Greater => true,
+		std::cmp::Ordering::Equal => match self.day.cmp(&date.day) {
+		    std::cmp::Ordering::Less | std::cmp::Ordering::Equal => false,
+		    std::cmp::Ordering::Greater => true,
+		}
+	    }
+	}
+    }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
@@ -2553,6 +2568,11 @@ impl<'data> ggez::event::EventHandler for State<'data> {
         self.scene_controller.run_post_process(ctx, self.game_data);
 
         Ok(())
+    }
+
+    fn quit_event(&mut self, ctx: &mut Context) -> bool {
+	ggez::event::quit(ctx);
+	false
     }
 
     fn key_down_event(

@@ -222,7 +222,7 @@ impl TitleScene {
 }
 
 impl SceneManager for TitleScene {
-    fn key_up_event<'a>(&mut self, ctx: &mut SuzuContext<'a>, vkey: tdev::VirtualKey) {
+    fn key_up_event<'a>(&mut self, _ctx: &mut SuzuContext<'a>, vkey: tdev::VirtualKey) {
         match vkey {
             VirtualKey::Action2 => {
                 if let Some(content) = self.current_title_contents.as_mut() {
