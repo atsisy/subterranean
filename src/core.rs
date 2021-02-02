@@ -702,10 +702,10 @@ pub struct ScenarioTable {
 }
 
 impl ScenarioTable {
-    pub fn new(table_toml_path: &str) -> Self {
+    pub fn new(ctx: &mut ggez::Context, table_toml_path: &str) -> Self {
         let mut table = HashMap::new();
 
-        let root = parse_toml_file!(table_toml_path);
+        let root = parse_toml_file!(ctx, table_toml_path);
         let array = root["scenario-table"].as_array().unwrap();
 
         for elem in array {
@@ -965,7 +965,7 @@ impl GameResource {
             sounds.push(sound_data);
         }
 
-        let scenario_table = ScenarioTable::new(&src_file.scenario_table_path);
+        let scenario_table = ScenarioTable::new(ctx, &src_file.scenario_table_path);
 
         GameResource {
             texture_resource_paths: texture_paths_map,

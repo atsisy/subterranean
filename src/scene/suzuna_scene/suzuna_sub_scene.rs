@@ -41,7 +41,7 @@ impl SuzunaSubScene {
         let date = ctx.savable_data.date.clone();
 
         let new_book_schedule =
-            NewBookSchedule::from_toml("./resources/other_config/new_book_schedule.toml");
+            NewBookSchedule::from_toml(ctx, "/other_config/new_book_schedule.toml");
 
         let todays_new_books = new_book_schedule.get_schedule_at(&date).unwrap().clone();
 

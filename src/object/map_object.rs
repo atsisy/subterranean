@@ -1391,13 +1391,10 @@ pub struct MapEventList {
 }
 
 impl MapEventList {
-    pub fn from_file(file_path: &str) -> Self {
+    pub fn from_file<'a>(ctx: &mut SuzuContext<'a>, file_path: &str) -> Self {
         let mut table = HashMap::new();
 
-        let content = match std::fs::read_to_string(file_path) {
-            Ok(c) => c,
-            Err(_) => panic!("Failed to read: {}", file_path),
-        };
+	let content = util::read_from_resources_as_string(ctx.context, file_path);
 
         let root = content.parse::<toml::Value>().unwrap();
         let array = root["event-panel"].as_array().unwrap();

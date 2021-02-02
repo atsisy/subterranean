@@ -78,7 +78,7 @@ texture_paths = [
 	      ]
 font_paths = ["/fonts/azuki.ttf", "/fonts/RiiT_F.ttf", "/fonts/OradanoGSRR.ttf", "/fonts/cinecaption226.ttf", "/fonts/JF-Dot-ShinonomeMaru12B.ttf"]
 tileset_paths = ["/maps/suzunaan2/main.tmx"]
-scenario_table_path = "./resources/scenario_table.toml"
+scenario_table_path = "/scenario_table.toml"
 customers_name = ["霧雨魔里沙", "稗田阿求", "a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k"]
 sound_file_path = ["/sound/bgm/title.mp3", "/sound/se/turn_the_page.wav"]
 
@@ -86,7 +86,7 @@ sound_file_path = ["/sound/bgm/title.mp3", "/sound/se/turn_the_page.wav"]
 id = 1
 comment = "鈴奈庵マップ1"
 map_file_path = "./resources/maps/suzunaan2/main.tmx"
-event_map_file_path = "./resources/event_map1.toml"
+event_map_file_path = "/event_map1.toml"
 
 [[books_information]]
 name = "テスト本 壱"

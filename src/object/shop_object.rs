@@ -2603,7 +2603,7 @@ pub struct DrawableShopClock {
 
 impl DrawableShopClock {
     pub fn from_toml<'a>(ctx: &mut SuzuContext<'a>, path: &str, time: ShopClock) -> Self {
-        let root = parse_toml_file!(path);
+        let root = parse_toml_file!(ctx.context, path);
 
         let background_texture_id = root["background-texture"].as_str().unwrap();
         let short_needle_texture_id = root["short-needle-texture"].as_str().unwrap();

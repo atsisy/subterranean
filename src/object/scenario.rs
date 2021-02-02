@@ -11,7 +11,7 @@ use torifune::impl_drawable_object_for_wrapped;
 use torifune::impl_texture_object_for_wrapped;
 
 use super::*;
-use crate::object::util_object::*;
+use crate::{core::util, object::util_object::*};
 use crate::parse_toml_file;
 use crate::scene::scenario_scene::ScenarioContext;
 use crate::scene::{SceneID, SceneTransition};
@@ -902,10 +902,12 @@ pub struct Scenario {
 }
 
 impl Scenario {
-    pub fn new(file_path: &str, game_data: &GameResource) -> Self {
+    pub fn new<'a>(ctx: &mut SuzuContext<'a>, file_path: &str) -> Self {
+	let game_data = &ctx.resource;
+	
         let mut scenario = ScenarioElementPool::new_empty();
 
-        let root = parse_toml_file!(file_path);
+        let root = parse_toml_file!(ctx.context, file_path);
 
         let first_scenario_id = root["first-scenario-id"].as_integer().unwrap();
 
@@ -1570,7 +1572,7 @@ impl ScenarioEvent {
         file_path: &str,
         t: Clock,
     ) -> Self {
-        let scenario = Scenario::new(file_path, ctx.resource);
+        let scenario = Scenario::new(ctx, file_path);
 
         let event_background = if let Some(mut texture) =
             Self::update_event_background_sub(ctx, scenario.ref_current_element())
@@ -1616,7 +1618,7 @@ impl ScenarioEvent {
         scenario_path: &str,
         t: Clock,
     ) {
-        self.scenario = Scenario::new(scenario_path, ctx.resource);
+        self.scenario = Scenario::new(ctx, scenario_path);
         self.status = ScenarioEventStatus::Scenario;
         self.key_down_action1(ctx, t);
         self.update_text(ctx, scno_ctx);

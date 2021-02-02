@@ -14,7 +14,7 @@ pub fn main() {
         path.push("resources");
         path
     } else {
-        path::PathBuf::from("./resources")
+        path::PathBuf::from("resources")
     };
 
     let (ref mut ctx, ref mut event_loop) = ContextBuilder::new("suzu", "akichi")

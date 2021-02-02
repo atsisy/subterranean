@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use crate::parse_toml_file;
 
-use super::BookInformation;
+use super::{BookInformation, SuzuContext};
 use super::GensoDate;
 
 #[derive(Clone)]
@@ -47,10 +47,10 @@ pub struct NewBookSchedule {
 }
 
 impl NewBookSchedule {
-    pub fn from_toml(file_path: &str) -> Self {
+    pub fn from_toml<'a>(ctx: &mut SuzuContext<'a>, file_path: &str) -> Self {
         let mut schedule_map = HashMap::new();
 
-        let root = parse_toml_file!(file_path);
+        let root = parse_toml_file!(ctx.context, file_path);
 
         let new_book_schedule = root["new-book-schedule"].as_array().unwrap();
 

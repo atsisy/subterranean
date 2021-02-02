@@ -230,7 +230,7 @@ impl MapData {
                 numeric::Rect::new(0.0, 0.0, 1366.0, 768.0),
                 numeric::Vector2f::new(3.0, 3.0),
             ),
-            event_map: MapEventList::from_file(&map_constract_data.event_map_file_path),
+            event_map: MapEventList::from_file(ctx, &map_constract_data.event_map_file_path),
             scenario_box: None,
         }
     }
@@ -667,7 +667,7 @@ impl ShopScene {
         let shop_time = ShopClock::new(8, 0);
         let drawble_shop_clock = DrawableShopClock::from_toml(
             ctx,
-            "resources/other_config/shop_clock.toml",
+            "/other_config/shop_clock.toml",
             shop_time.clone(),
         );
 

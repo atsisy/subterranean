@@ -96,20 +96,6 @@ macro_rules! perf_measure {
     }};
 }
 
-#[macro_export]
-macro_rules! parse_toml_file {
-    ( $path:expr) => {{
-        let content = match std::fs::read_to_string($path) {
-            Ok(c) => c,
-            Err(_) => panic!("Failed to read: {}", $path),
-        };
-
-        content
-            .parse::<toml::Value>()
-            .expect("Failed to parse toml file")
-    }};
-}
-
 pub fn clock_needle_angle(hour: u8, minute: u8) -> (f32, f32) {
     let hour = hour % 12;
 
@@ -186,4 +172,15 @@ pub fn read_from_resources_as_string(ctx: &mut ggez::Context, path: &str) -> Str
     let mut buffer = Vec::new();
     file.read_to_end(&mut buffer).unwrap();
     std::str::from_utf8(&buffer).unwrap().to_string()
+}
+
+#[macro_export]
+macro_rules! parse_toml_file {
+    ( $ctx:expr, $path:expr) => {{
+        let content = crate::core::util::read_from_resources_as_string($ctx, $path);
+
+        content
+            .parse::<toml::Value>()
+            .expect("Failed to parse toml file")
+    }};
 }
