@@ -2069,6 +2069,10 @@ impl<'ctx> SuzuContext<'ctx> {
 
         return total_ad_agency_money_gain as i32;
     }
+
+    pub fn reset_save_data(&mut self) {
+	*self.savable_data = SavableData::new(&self.resource);
+    }
 }
 
 pub enum TopScene {

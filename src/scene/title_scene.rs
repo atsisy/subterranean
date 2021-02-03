@@ -105,6 +105,11 @@ impl TitleScene {
             t,
         ));
 
+	// 新規開始ならセーブデータを初期化
+	if scene_id == SceneID::Scenario {
+	    ctx.reset_save_data();
+	}
+
         self.event_list.add_event(
             Box::new(move |slf: &mut Self, ctx, _| {
                 slf.scene_transition = scene_id;
