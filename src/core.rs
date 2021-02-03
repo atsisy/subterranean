@@ -540,6 +540,14 @@ impl RentalLimit {
             RentalLimit::Today => 0.0,
         }
     }
+
+    pub fn to_str(&self) -> &str {
+	match self {
+	    RentalLimit::ShortTerm => "短期",
+	    RentalLimit::LongTerm => "長期",
+	    RentalLimit::Today => "本日",
+	}
+    }
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
@@ -570,6 +578,14 @@ impl GensoDate {
         format!(
             "{}季 {}月 {}日",
             number_to_jk(self.season as u64),
+            number_to_jk(self.month as u64),
+            number_to_jk(self.day as u64)
+        )
+    }
+
+    pub fn to_short_string(&self) -> String {
+        format!(
+            "{}月{}日",
             number_to_jk(self.month as u64),
             number_to_jk(self.day as u64)
         )

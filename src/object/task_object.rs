@@ -131,7 +131,7 @@ impl TaskTable {
             t,
         );
         manual_book.enable_large();
-        desk.add_object(TaskItem::Texture(manual_book));
+        //desk.add_object(TaskItem::Texture(manual_book));
 
         let appr_frame = TileBatchFrame::new(
             ctx.resource,
@@ -1076,7 +1076,8 @@ impl TaskTable {
                     self.sight
                         .silhouette
                         .insert_customer_message_in_chatbox(ctx, phrase_text);
-                }
+		    self.info_panel.set_rental_limit(ctx, info.rental_limit.clone());
+                },
                 CustomerRequest::Returning(info) => {
                     let rental_limit = info.get_rental_limit();
                     let phrase_text = match &rental_limit {
@@ -1088,7 +1089,7 @@ impl TaskTable {
 
                     self.sight.silhouette.insert_new_balloon_phrase(
                         phrase_text.clone(),
-                        TextBalloonPhraseType::RentalLimit(rental_limit),
+                        TextBalloonPhraseType::RentalLimit(rental_limit.clone()),
                         20,
                         t,
                     );
@@ -1096,6 +1097,7 @@ impl TaskTable {
                     self.sight
                         .silhouette
                         .insert_customer_message_in_chatbox(ctx, phrase_text);
+		    self.info_panel.set_rental_limit(ctx, rental_limit);
                 }
             }
         }
@@ -1287,15 +1289,31 @@ impl TaskTable {
             }
 
             match grid_pos.unwrap().y {
-                0 => self.record_book_menu.show_book_title_menu(
-                    ctx,
-                    click_point,
-                    &self.kosuzu_memory,
-                    t,
-                ),
-                1 => self
-                    .record_book_menu
-                    .show_book_status_menu(ctx, click_point, t),
+                0 => {
+		    if let Some(request) = self.current_customer_request.as_ref() {
+			match request {
+			    CustomerRequest::Borrowing(_) =>
+				self.record_book_menu.show_book_title_menu(
+				    ctx,
+				    click_point,
+				    &self.kosuzu_memory,
+				    t,
+				),
+			    _ => (),
+			}
+		    }
+		},
+                1 => {
+		    if let Some(request) = self.current_customer_request.as_ref() {
+			match request {
+			    CustomerRequest::Returning(_) =>
+				self
+				.record_book_menu
+				.show_book_status_menu(ctx, click_point, t),
+			    _ => (),
+			}
+		    }
+		},
                 _ => (),
             }
 
@@ -1322,12 +1340,19 @@ impl TaskTable {
 
         if let Some(grid_pos) = maybe_grid_pos {
             if grid_pos == numeric::Vector2u::new(2, 1) {
-                self.record_book_menu.show_customer_name_menu(
-                    ctx,
-                    click_point,
-                    &self.kosuzu_memory,
-                    t,
-                );
+		if let Some(request) = self.current_customer_request.as_ref() {
+		    match request {
+			CustomerRequest::Borrowing(_) => {
+			    self.record_book_menu.show_customer_name_menu(
+				ctx,
+				click_point,
+				&self.kosuzu_memory,
+				t,
+			    );
+			},
+			_ => (),
+		    }
+		}
             } else if grid_pos == numeric::Vector2u::new(1, 1)
                 || grid_pos == numeric::Vector2u::new(0, 1)
             {
@@ -1338,8 +1363,10 @@ impl TaskTable {
 				.show_date_menu(ctx, click_point, self.today.clone(), t);
 			},
 			CustomerRequest::Returning(_) => {
-			    self.record_book_menu
-				.show_date_check_menu(ctx, click_point, self.today.clone(), t);			    
+			    if grid_pos.x == 0 {
+				self.record_book_menu
+				    .show_date_check_menu(ctx, click_point, self.today.clone(), t);
+			    }
 			}
 		    }
 		}

@@ -2205,7 +2205,7 @@ impl TaskInfoContents {
             ctx.resource,
             numeric::Point2f::new(50.0, 65.0),
             TileBatchTextureID::OldStyleFrame,
-            FrameData::new(vec![130.0, 130.0], vec![45.0; 4]),
+            FrameData::new(vec![150.0, 170.0], vec![45.0; 4]),
             numeric::Vector2f::new(0.25, 0.25),
             0,
         );
@@ -2223,7 +2223,7 @@ impl TaskInfoContents {
         let mut desc_text = Vec::new();
         let mut request_text = HashMap::new();
 
-        for (index, s) in vec!["妖怪疑念度", "要件", "氏名", "本日"]
+        for (index, s) in vec!["本日", "要件", "氏名", "期限"]
             .iter()
             .enumerate()
         {
@@ -2267,6 +2267,24 @@ impl TaskInfoContents {
         );
 
         request_text.insert("youken".to_string(), request_type_vtext);
+
+	let mut today_vtext = VerticalText::new(
+	    ctx.savable_data.date.to_short_string(),
+            numeric::Point2f::new(0.0, 0.0),
+            numeric::Vector2f::new(1.0, 1.0),
+            0.0,
+            0,
+            normal_scale_font,
+        );
+
+        set_table_frame_cell_center!(
+            ctx.context,
+            general_frame,
+            today_vtext,
+            numeric::Vector2u::new(0, 1)
+        );
+
+        request_text.insert("date".to_string(), today_vtext);
 
         let book_floating = FloatingMemoryObject::new(
             ctx,
@@ -2326,6 +2344,38 @@ impl TaskInfoContents {
             self.general_table_frame,
             vtext,
             numeric::Vector2u::new(2, 1)
+        );
+
+        self.request_info_text.insert(key.to_string(), vtext);
+    }
+
+    pub fn set_rental_limit<'a>(&mut self, ctx: &mut SuzuContext<'a>, rental_limit: RentalLimit) {
+        let normal_scale_font = FontInformation::new(
+            ctx.resource.get_font(FontID::Cinema),
+            numeric::Vector2f::new(24.0, 24.0),
+            ggraphics::Color::from_rgba_u32(0x000000ff),
+        );
+
+        let key = "limit";
+
+        if self.request_info_text.contains_key(key) {
+            self.request_info_text.remove(key);
+        }
+
+        let mut vtext = VerticalText::new(
+	    rental_limit.to_str().to_string(),
+            numeric::Point2f::new(0.0, 0.0),
+            numeric::Vector2f::new(1.0, 1.0),
+            0.0,
+            0,
+            normal_scale_font,
+        );
+
+        set_table_frame_cell_center!(
+            ctx.context,
+            self.general_table_frame,
+            vtext,
+            numeric::Vector2u::new(3, 1)
         );
 
         self.request_info_text.insert(key.to_string(), vtext);
@@ -2446,6 +2496,11 @@ impl TaskInfoPanel {
             _ => (),
         }
     }
+
+    pub fn set_rental_limit<'a>(&mut self, ctx: &mut SuzuContext<'a>, rental_limit: RentalLimit) {
+	self.contents.set_rental_limit(ctx, rental_limit);
+        self.draw_request = DrawRequest::Draw;
+    } 
 }
 
 impl DrawableComponent for TaskInfoPanel {
