@@ -644,22 +644,7 @@ impl ShopScene {
             map_position,
         ));
 
-        let character = character_factory::create_character(
-            character_factory::CharacterFactoryOrder::CustomerSample,
-            ctx,
-            &camera.borrow(),
-            numeric::Point2f::new(1430.0, 1246.0),
-        );
-        let mut character_group = CharacterGroup::new();
-        character_group.add(CustomerCharacter::new(
-            ctx.resource,
-            character,
-            CustomerDestPoint::new(vec![
-                numeric::Vector2u::new(10, 4),
-                numeric::Vector2u::new(6, 4),
-                //numeric::Vector2u::new(5, 14),
-            ]),
-        ));
+        let character_group = CharacterGroup::new();
 
         let mut map = MapData::new(ctx, map_id, camera.clone());
         map.tile_map.build_collision_map();
