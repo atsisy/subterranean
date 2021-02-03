@@ -1159,6 +1159,13 @@ impl ShopScene {
             },
 	    CommandPaletteFunc::ShowShopMenu => {
 		self.special_button_handler(ctx);
+	    },
+	    CommandPaletteFunc::ShowMap => {
+		self.toggle_shop_map_appearing();
+	    },
+	    CommandPaletteFunc::Pause => {
+                let t = self.get_current_clock();
+                self.enter_pause_screen(t);
 	    }
         }
     }
@@ -1718,6 +1725,23 @@ impl ShopScene {
             );
         }
     }
+
+    fn toggle_shop_map_appearing(&mut self) {
+	let t = self.get_current_clock();
+        if self.shop_map_is_staged {
+            self.shop_map.override_move_func(
+                move_fn::devide_distance(numeric::Point2f::new(1366.0, 70.0), 0.25),
+                t,
+            );
+        } else {
+            self.shop_map.override_move_func(
+                move_fn::devide_distance(numeric::Point2f::new(158.0, 70.0), 0.25),
+                t,
+            );
+        }
+	
+        self.shop_map_is_staged = !self.shop_map_is_staged;
+    }
 }
 
 impl SceneManager for ShopScene {
@@ -1879,19 +1903,7 @@ impl SceneManager for ShopScene {
                         .mouse_left_button_up_handler(ctx, point);
                 }
                 MouseButton::Right => {
-                    if self.shop_map_is_staged {
-                        self.shop_map.override_move_func(
-                            move_fn::devide_distance(numeric::Point2f::new(1366.0, 70.0), 0.25),
-                            self.get_current_clock(),
-                        );
-                    } else {
-                        self.shop_map.override_move_func(
-                            move_fn::devide_distance(numeric::Point2f::new(158.0, 70.0), 0.25),
-                            self.get_current_clock(),
-                        );
-                    }
-
-                    self.shop_map_is_staged = !self.shop_map_is_staged;
+		    self.toggle_shop_map_appearing();
                 }
                 _ => (),
             }

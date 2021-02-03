@@ -2007,7 +2007,7 @@ impl SimpleBookListViewer {
         );
         ok_button.make_center(
             ctx.context,
-            numeric::Point2f::new(window_rect.w - 100.0, window_rect.h - 40.0),
+            numeric::Point2f::new(window_rect.w - 110.0, window_rect.h - 95.0),
         );
 
         SimpleBookListViewer {
@@ -2826,12 +2826,16 @@ impl TextureObject for ShopMapViewer {
 pub enum CommandPaletteFunc {
     Action,
     ShowShopMenu,
+    ShowMap,
+    Pause,
 }
 
 pub struct ShopCommandPalette {
     canvas: EffectableWrap<MovableWrap<SubScreen>>,
     action_button: FramedButton,
     shop_menu_button: FramedButton,
+    show_map_button: FramedButton,
+    pause_button: FramedButton,
 }
 
 impl ShopCommandPalette {
@@ -2875,6 +2879,40 @@ impl ShopCommandPalette {
             font_info,
             0,
         );
+
+	let show_map_button = FramedButton::new(
+	    ctx,
+            numeric::Rect::new(550.0, 15.0, 120.0, 85.0),
+            [
+                numeric::Vector2f::new(10.0, 10.0),
+                numeric::Vector2f::new(10.0, 10.0),
+                numeric::Vector2f::new(10.0, 10.0),
+                numeric::Vector2f::new(10.0, 10.0),
+            ],
+            2.0,
+            ggraphics::Color::from_rgba(90, 80, 63, 255),
+            ggraphics::Color::from_rgba(219, 212, 184, 255),
+            "配置図".to_string(),
+            font_info,
+            0,
+	);
+
+	let pause_button = FramedButton::new(
+	    ctx,
+            numeric::Rect::new(750.0, 15.0, 120.0, 85.0),
+            [
+                numeric::Vector2f::new(10.0, 10.0),
+                numeric::Vector2f::new(10.0, 10.0),
+                numeric::Vector2f::new(10.0, 10.0),
+                numeric::Vector2f::new(10.0, 10.0),
+            ],
+            2.0,
+            ggraphics::Color::from_rgba(90, 80, 63, 255),
+            ggraphics::Color::from_rgba(219, 212, 184, 255),
+            "休止".to_string(),
+            font_info,
+            0,
+	);
 	
         ShopCommandPalette {
 	    canvas: EffectableWrap::new(
@@ -2891,6 +2929,8 @@ impl ShopCommandPalette {
 	    ),
             action_button: action_button,
 	    shop_menu_button: shop_menu_button,
+	    show_map_button: show_map_button,
+	    pause_button: pause_button,
         }
     }
 
@@ -2898,6 +2938,8 @@ impl ShopCommandPalette {
 	let rpoint = self.canvas.relative_point(p);
         self.action_button.mouse_motion_handler(ctx, rpoint);
 	self.shop_menu_button.mouse_motion_handler(ctx, rpoint);
+	self.show_map_button.mouse_motion_handler(ctx, rpoint);
+	self.pause_button.mouse_motion_handler(ctx, rpoint);
 
 	if !is_dragged {
 	    if p.y <= 650.0 {
@@ -2916,6 +2958,8 @@ impl ShopCommandPalette {
 	let rpoint = self.canvas.relative_point(p);
         self.action_button.mouse_left_button_down(ctx, rpoint);
 	self.shop_menu_button.mouse_left_button_down(ctx, rpoint);
+	self.show_map_button.mouse_left_button_down(ctx, rpoint);
+	self.pause_button.mouse_left_button_down(ctx, rpoint);
     }
 
     pub fn mouse_left_button_up_handler<'a>(
@@ -2926,12 +2970,16 @@ impl ShopCommandPalette {
 	let rpoint = self.canvas.relative_point(p);
         self.action_button.mouse_left_button_up(ctx, rpoint);
 	self.shop_menu_button.mouse_left_button_up(ctx, rpoint);
+    	self.show_map_button.mouse_left_button_up(ctx, rpoint);
+	self.pause_button.mouse_left_button_up(ctx, rpoint);
     }
 
     pub fn contains_buttons(&self, p: numeric::Point2f) -> bool {
 	let rpoint = self.canvas.relative_point(p);
         self.action_button.contains(rpoint) ||
-	    self.shop_menu_button.contains(rpoint)
+	    self.shop_menu_button.contains(rpoint) ||
+	    self.show_map_button.contains(rpoint) ||
+	    self.pause_button.contains(rpoint)
     }
 
     pub fn check_button_func(&self, p: numeric::Point2f) -> Option<CommandPaletteFunc> {
@@ -2943,6 +2991,14 @@ impl ShopCommandPalette {
 
 	if self.shop_menu_button.contains(rpoint) {
             return Some(CommandPaletteFunc::ShowShopMenu);
+        }
+
+	if self.show_map_button.contains(rpoint) {
+            return Some(CommandPaletteFunc::ShowMap);
+        }
+
+	if self.pause_button.contains(rpoint) {
+            return Some(CommandPaletteFunc::Pause);
         }
 
         None
@@ -2975,6 +3031,8 @@ impl DrawableComponent for ShopCommandPalette {
 	    
 	    self.action_button.draw(ctx)?;
 	    self.shop_menu_button.draw(ctx)?;
+	    self.show_map_button.draw(ctx)?;
+	    self.pause_button.draw(ctx)?;
 	    
             sub_screen::pop_screen(ctx);
             self.canvas.draw(ctx)?;
