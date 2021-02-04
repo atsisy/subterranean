@@ -1306,129 +1306,6 @@ impl Clickable for DateCheckMenu {
 
 pub type DateCheckDropMenu = DropDownArea<DateCheckMenu>;
 
-pub struct PaymentMenu {
-    select_table_frame: TableFrame,
-    select_vtext: Vec<VerticalText>,
-    drwob_essential: DrawableObjectEssential,
-    price: u32,
-    last_clicked: Option<usize>,
-}
-
-impl PaymentMenu {
-    pub fn new<'a>(ctx: &mut SuzuContext<'a>, price: u32, drawing_depth: i8) -> Self {
-        let mut select_vtext = Vec::new();
-
-        let font_info = FontInformation::new(
-            ctx.resource.get_font(FontID::Cinema),
-            numeric::Vector2f::new(26.0, 26.0),
-            ggraphics::Color::from_rgba_u32(0xff),
-        );
-
-        let select_table_frame = TableFrame::new(
-            ctx.resource,
-            numeric::Point2f::new(10.0, 10.0),
-            TileBatchTextureID::OldStyleFrame,
-            FrameData::new(vec![240.0], vec![64.0]),
-            numeric::Vector2f::new(0.3, 0.3),
-            0,
-        );
-
-        for (index, s) in vec!["支払いをお願いする"].iter().enumerate() {
-            let mut vtext = VerticalText::new(
-                s.to_string(),
-                numeric::Point2f::new(0.0, 0.0),
-                numeric::Vector2f::new(1.0, 1.0),
-                0.0,
-                drawing_depth,
-                font_info,
-            );
-
-            set_table_frame_cell_center!(
-                ctx.context,
-                select_table_frame,
-                vtext,
-                numeric::Vector2u::new(index as u32, 0)
-            );
-
-            select_vtext.push(vtext);
-        }
-
-        PaymentMenu {
-            select_table_frame: select_table_frame,
-            select_vtext: select_vtext,
-            drwob_essential: DrawableObjectEssential::new(true, drawing_depth),
-            price: price,
-            last_clicked: None,
-        }
-    }
-
-    pub fn click_handler(&mut self, ctx: &mut ggez::Context, point: numeric::Point2f) {
-        let maybe_grid_position = self.select_table_frame.get_grid_position(ctx, point);
-        if let Some(grid_position) = maybe_grid_position {
-            self.last_clicked = Some(grid_position.x as usize);
-        }
-    }
-
-    pub fn get_last_clicked_index(&self) -> Option<usize> {
-        self.last_clicked
-    }
-
-    pub fn get_payment_frame_size(&self) -> numeric::Vector2f {
-        self.select_table_frame.size()
-    }
-
-    pub fn get_price(&self) -> u32 {
-        self.price
-    }
-}
-
-impl DrawableComponent for PaymentMenu {
-    fn draw(&mut self, ctx: &mut ggez::Context) -> ggez::GameResult<()> {
-        if self.is_visible() {
-            self.select_table_frame.draw(ctx)?;
-
-            for vtext in &mut self.select_vtext {
-                vtext.draw(ctx)?;
-            }
-        }
-        Ok(())
-    }
-
-    fn hide(&mut self) {
-        self.drwob_essential.visible = false;
-    }
-
-    fn appear(&mut self) {
-        self.drwob_essential.visible = true;
-    }
-
-    fn is_visible(&self) -> bool {
-        self.drwob_essential.visible
-    }
-
-    fn set_drawing_depth(&mut self, depth: i8) {
-        self.drwob_essential.drawing_depth = depth;
-    }
-
-    fn get_drawing_depth(&self) -> i8 {
-        self.drwob_essential.drawing_depth
-    }
-}
-
-impl Clickable for PaymentMenu {
-    fn on_click<'a>(
-        &mut self,
-        ctx: &mut SuzuContext<'a>,
-        _t: Clock,
-        _button: ggez::event::MouseButton,
-        point: numeric::Point2f,
-    ) {
-        self.click_handler(ctx.context, point);
-    }
-}
-
-pub type PaymentDropMenu = DropDownArea<PaymentMenu>;
-
 pub struct CustomerQuestionMenu {
     question_table_frame: TableFrame,
     question_vtext: Vec<VerticalText>,
@@ -2106,7 +1983,6 @@ pub struct RecordBookMenuGroup {
     simple_message_menu: Option<SimpleMessageDropMenu>,
     date_menu: Option<DateDropMenu>,
     date_check_menu: Option<DateCheckDropMenu>,
-    payment_menu: Option<PaymentDropMenu>,
     drwob_essential: DrawableObjectEssential,
 }
 
@@ -2120,7 +1996,6 @@ impl RecordBookMenuGroup {
             simple_message_menu: None,
             date_menu: None,
 	    date_check_menu: None,
-            payment_menu: None,
             drwob_essential: DrawableObjectEssential::new(true, drawing_depth),
         }
     }
@@ -2131,7 +2006,6 @@ impl RecordBookMenuGroup {
             || self.customer_name_menu.is_some()
             || self.date_menu.is_some()
 	    || self.date_check_menu.is_some()
-            || self.payment_menu.is_some()
             || self.simple_message_menu.is_some()
     }
 
@@ -2195,18 +2069,6 @@ impl RecordBookMenuGroup {
         );
     }
 
-    pub fn close_payment_menu(&mut self, t: Clock) {
-        let payment_menu = match self.payment_menu.as_mut() {
-            Some(it) => it,
-            _ => return,
-        };
-        payment_menu.add_effect(vec![effect::fade_out(10, t)]);
-        self.event_list.add_event(
-            Box::new(|slf: &mut RecordBookMenuGroup, _, _| slf.payment_menu = None),
-            t + 11,
-        );
-    }
-
     pub fn close_simple_message_menu(&mut self, t: Clock) {
         let msg_menu = match self.simple_message_menu.as_mut() {
             Some(it) => it,
@@ -2258,10 +2120,6 @@ impl RecordBookMenuGroup {
         self.date_check_menu.is_some() && self.date_check_menu.as_ref().unwrap().contains(ctx, point)
     }
 
-    pub fn contains_payment_menu(&self, ctx: &mut ggez::Context, point: numeric::Point2f) -> bool {
-        self.payment_menu.is_some() && self.payment_menu.as_ref().unwrap().contains(ctx, point)
-    }
-
     pub fn contains_simple_message_menu(
         &self,
         ctx: &mut ggez::Context,
@@ -2281,7 +2139,6 @@ impl RecordBookMenuGroup {
             || self.contains_customer_name_menu(ctx, point)
             || self.contains_date_menu(ctx, point)
 	    || self.contains_date_check_menu(ctx, point)
-            || self.contains_payment_menu(ctx, point)
             || self.contains_simple_message_menu(ctx, point)
     }
 
@@ -2320,14 +2177,6 @@ impl RecordBookMenuGroup {
     pub fn get_date_check_menu_position(&self) -> Option<numeric::Point2f> {
         if let Some(date_menu) = self.date_check_menu.as_ref() {
             Some(date_menu.get_click_position())
-        } else {
-            None
-        }
-    }
-
-    pub fn get_payment_menu_position(&self) -> Option<numeric::Point2f> {
-        if let Some(payment_menu) = self.payment_menu.as_ref() {
-            Some(payment_menu.get_click_position())
         } else {
             None
         }
@@ -2453,29 +2302,6 @@ impl RecordBookMenuGroup {
         }
     }
 
-    ///
-    /// メニューのエントリをクリックしていたらtrueを返し、そうでなければfalseを返す
-    ///
-    pub fn click_payment_menu<'a>(
-        &mut self,
-        ctx: &mut SuzuContext<'a>,
-        button: ggez::input::mouse::MouseButton,
-        point: numeric::Point2f,
-        t: Clock,
-    ) -> bool {
-        // ボタンエリア内をクリックしていない場合は、即終了
-        if !self.contains_payment_menu(ctx.context, point) {
-            return false;
-        }
-
-        if let Some(payment_menu) = self.payment_menu.as_mut() {
-            payment_menu.on_click(ctx, t, button, point);
-            true
-        } else {
-            false
-        }
-    }
-
     pub fn book_status_menu_last_clicked(&mut self) -> Option<usize> {
         if let Some(book_status_menu) = self.book_status_menu.as_mut() {
             book_status_menu.get_component().get_last_clicked()
@@ -2531,21 +2357,12 @@ impl RecordBookMenuGroup {
         }
     }
 
-    pub fn payment_menu_last_clicked(&mut self) -> Option<usize> {
-        if let Some(payment_menu) = self.payment_menu.as_mut() {
-            payment_menu.get_component().get_last_clicked_index()
-        } else {
-            None
-        }
-    }
-
     pub fn close_all(&mut self, t: Clock) {
         self.close_book_status_menu(t);
         self.close_book_title_menu(t);
         self.close_customer_name_menu(t);
         self.close_date_menu(t);
 	self.close_date_check_menu(t);
-        self.close_payment_menu(t);
         self.close_simple_message_menu(t);
     }
 
@@ -2783,45 +2600,6 @@ impl RecordBookMenuGroup {
         self.date_check_menu = Some(date_menu_area);
     }
 
-    pub fn show_payment_menu(
-        &mut self,
-        ctx: &mut SuzuContext,
-        position: numeric::Point2f,
-        price: u32,
-        t: Clock,
-    ) {
-        let payment_menu = PaymentMenu::new(ctx, price, 0);
-
-        let frame_size = payment_menu.get_payment_frame_size();
-
-        let menu_size = numeric::Point2f::new(frame_size.x + 96.0, frame_size.y + 40.0);
-
-        let pos = util::find_proper_window_position(
-            numeric::Rect::new(position.x, position.y, menu_size.x, menu_size.y),
-            numeric::Rect::new(
-                0.0,
-                0.0,
-                core::WINDOW_SIZE_X as f32,
-                core::WINDOW_SIZE_Y as f32,
-            ),
-        );
-
-        let menu_rect = numeric::Rect::new(pos.x, pos.y, menu_size.x, menu_size.y);
-
-        let mut payment_menu_area = DropDownArea::new(ctx, position, menu_rect, 0, payment_menu, t);
-        payment_menu_area.add_effect(vec![effect::fade_in(10, t)]);
-
-        self.payment_menu = Some(payment_menu_area);
-    }
-
-    pub fn get_payment_menu_price(&self) -> Option<u32> {
-        if let Some(menu) = self.payment_menu.as_ref() {
-            Some(menu.get_component().get_price())
-        } else {
-            None
-        }
-    }
-
     ///
     /// # 再描画要求有り
     ///
@@ -2858,12 +2636,6 @@ impl RecordBookMenuGroup {
             ctx.process_utility.redraw();
         }
 
-        if let Some(payment_menu) = self.payment_menu.as_mut() {
-            payment_menu.move_with_func(t);
-            payment_menu.effect(ctx.context, t);
-            ctx.process_utility.redraw();
-        }
-
         if let Some(msg_menu) = self.simple_message_menu.as_mut() {
             msg_menu.move_with_func(t);
             msg_menu.effect(ctx.context, t);
@@ -2893,10 +2665,6 @@ impl DrawableComponent for RecordBookMenuGroup {
 
 	    if let Some(date_menu) = self.date_check_menu.as_mut() {
                 date_menu.draw(ctx)?;
-            }
-
-            if let Some(payment_menu) = self.payment_menu.as_mut() {
-                payment_menu.draw(ctx)?;
             }
 
             if let Some(msg_menu) = self.simple_message_menu.as_mut() {

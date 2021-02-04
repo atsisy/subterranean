@@ -931,9 +931,6 @@ impl TaskTable {
             && !self
             .record_book_menu
             .click_customer_name_menu(ctx, button, point, t)
-            && !self
-            .record_book_menu
-            .click_payment_menu(ctx, button, point, t)
 	    && !self
             .record_book_menu
             .click_date_check_menu(ctx, button, point, t)
@@ -1379,34 +1376,6 @@ impl TaskTable {
     }
 
     ///
-    /// customer_info_frameに関するメニューを表示する
-    ///
-    /// customer_info_frameをクリックした場合、true, そうでなければ、false
-    ///
-    fn try_show_menus_regarding_record_book_payment<'a>(
-        &mut self,
-        ctx: &mut SuzuContext<'a>,
-        click_point: numeric::Point2f,
-        t: Clock,
-    ) -> bool {
-        let maybe_grid_pos = self
-            .borrowing_record_book
-            .get_payment_frame_grid_position(ctx.context, click_point);
-
-        if let Some(grid_pos) = maybe_grid_pos {
-            if grid_pos == numeric::Vector2u::new(0, 1) {
-                let price = self.borrowing_record_book.get_calculated_price().unwrap();
-                self.record_book_menu
-                    .show_payment_menu(ctx, click_point, price, t);
-            }
-
-            true
-        } else {
-            false
-        }
-    }
-
-    ///
     /// シルエットに関するメニューを表示する
     ///
     /// customer_menuをクリックした場合、true, そうでなければ、false
@@ -1498,10 +1467,6 @@ impl TaskTable {
         if self.on_desk_menu.is_some_menu_opened() {
             self.on_desk_menu.close_all(t);
             return ();
-        }
-
-        if self.try_show_menus_regarding_record_book_payment(ctx, click_point, t) {
-            return;
         }
 
         if self.try_show_menus_regarding_book_info(ctx, click_point, t) {
