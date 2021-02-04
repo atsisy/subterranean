@@ -377,35 +377,39 @@ impl OnDeskBook {
             ggraphics::Color::from_rgba_u32(0x00000000),
         );
 
-        let (title_pos, title_size) = match info.size.as_str() {
+        let (title_center, title_size) = match info.size.as_str() {
             "大判本" => (
-                numeric::Point2f::new(34.0, 28.0),
+                numeric::Point2f::new(43.0, 66.0),
                 numeric::Vector2f::new(12.0, 12.0),
             ),
             "中判本" => (
-                numeric::Point2f::new(30.0, 22.0),
+                numeric::Point2f::new(37.0, 63.0),
                 numeric::Vector2f::new(12.0, 12.0),
             ),
             _ => panic!("invalid book size info"),
         };
 
+	let mut title_vtext = VerticalText::new(
+            book_title,
+            title_center,
+            numeric::Vector2f::new(1.0, 1.0),
+            0.0,
+            0,
+            FontInformation::new(
+                ctx.resource.get_font(FontID::BitMap1),
+                title_size,
+                ggraphics::Color::from_rgba_u32(0x000000ff),
+            ),
+        );
+
+	title_vtext.make_center(ctx.context, title_center);
+	
         OnDeskBook {
             info: info,
             book_texture: book_texture,
             scratch_texture: scratch_texture,
             shadow: shadow,
-            title: VerticalText::new(
-                book_title,
-                title_pos,
-                numeric::Vector2f::new(1.0, 1.0),
-                0.0,
-                0,
-                FontInformation::new(
-                    ctx.resource.get_font(FontID::BitMap1),
-                    title_size,
-                    ggraphics::Color::from_rgba_u32(0x000000ff),
-                ),
-            ),
+            title: title_vtext,
             canvas: canvas,
         }
     }
