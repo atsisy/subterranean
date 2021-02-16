@@ -213,6 +213,7 @@ impl ScenarioScene {
                 match opecode {
                     "ScheduleCheck" => {
                         self.status_screen.show_schedule_page();
+			self.status_screen.unlock_schedule_page();
                         self.scenario_event.set_fixed_text_to_scenario_box(
                             ctx,
                             if self.scenario_ctx.schedule_redefine {

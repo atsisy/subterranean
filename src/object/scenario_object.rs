@@ -1186,6 +1186,10 @@ impl SuzunaStatusScreen {
         self.redraw_request = DrawRequest::Draw;
     }
 
+    pub fn unlock_schedule_page(&mut self) {
+        self.pages.sched_page.unlock();
+    }
+
     pub fn show_ad_page(&mut self) {
         self.pages.show_ad_page();
         self.check_move_page_icon_visibility();
@@ -1767,7 +1771,7 @@ impl StackMessagePassingWindow<WeekScheduleMessage> for WeekScheduleWindow {
         let rpoint = self.canvas.relative_point(point);
         let maybe_grid_position = self.frame.get_grid_position(ctx.context, rpoint);
         if let Some(grid_position) = maybe_grid_position {
-            if grid_position.x >= 7 {
+            if grid_position.x >= 7 || grid_position.y != 1 {
                 return None;
             }
 
@@ -1999,6 +2003,7 @@ pub struct ScenarioSchedPage {
     header_text: UniText,
     window_stack: WindowStack<WeekScheduleMessage>,
     drwob_essential: DrawableObjectEssential,
+    locked: bool,
 }
 
 impl ScenarioSchedPage {
@@ -2037,18 +2042,25 @@ impl ScenarioSchedPage {
             header_text: header_text,
             window_stack: window_stack,
             drwob_essential: DrawableObjectEssential::new(true, depth),
+	    locked: true,
         }
     }
 
+    pub fn unlock(&mut self) {
+	self.locked = false;
+    }
+    
     pub fn click_handler<'a>(
         &mut self,
         ctx: &mut SuzuContext<'a>,
         click_point: numeric::Point2f,
         button: MouseButton,
     ) {
-        self.window_stack
-            .mouse_click_handler(ctx, click_point, button);
-        self.window_stack.check_outofclick_hide(ctx, click_point, 1);
+	if !self.locked {
+            self.window_stack
+		.mouse_click_handler(ctx, click_point, button);
+            self.window_stack.check_outofclick_hide(ctx, click_point, 1);
+	}
     }
 
     pub fn mouse_button_down<'a>(
@@ -2057,8 +2069,10 @@ impl ScenarioSchedPage {
         click_point: numeric::Point2f,
         button: MouseButton,
     ) {
-        self.window_stack
-            .mouse_down_handler(ctx, click_point, button);
+	if !self.locked {
+            self.window_stack
+		.mouse_down_handler(ctx, click_point, button);
+	}
     }
 
     pub fn update<'a>(&mut self, ctx: &mut SuzuContext<'a>) -> DrawRequest {
