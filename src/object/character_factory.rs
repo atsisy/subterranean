@@ -127,7 +127,7 @@ fn create_customer_sample<'a>(
             ObjectDirection::StopLeft,
         ],
         textures,
-        ObjectDirection::MoveDown,
+        ObjectDirection::MoveLeft,
         TextureSpeedInfo::new(
             numeric::Vector2f::new(0.0, 0.0),
             SpeedBorder {

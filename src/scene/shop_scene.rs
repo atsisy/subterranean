@@ -1533,13 +1533,14 @@ impl ShopScene {
 	    _ => return,
 	}
 	
-        if rand::random::<usize>() % 1000 == 0 {
+        if rand::random::<usize>() % 900 == 0 {
             let character = character_factory::create_character(
                 character_factory::CharacterFactoryOrder::CustomerSample,
                 ctx,
                 &self.camera.borrow(),
                 numeric::Point2f::new(1430.0, 1246.0),
             );
+	    
             self.character_group.add(CustomerCharacter::new(
                 ctx.resource,
                 character,

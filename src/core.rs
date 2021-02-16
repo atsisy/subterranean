@@ -616,6 +616,11 @@ impl GensoDate {
         .to_string()
     }
 
+    pub fn add_day_chain(mut self, day: i32) -> Self {
+	self.add_day(day);
+	self
+    }
+
     pub fn add_day(&mut self, mut day: i32) {
         static MONTH: [i32; 12] = [31, 28, 31, 30, 30, 30, 31, 31, 30, 31, 30, 31];
 
@@ -1308,6 +1313,52 @@ impl MouseInformation {
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct TimeAttackModeData {
+    goal: u32,
+    limit: GensoDate,
+}
+
+impl TimeAttackModeData {
+    pub fn new(goal: u32, limit: GensoDate) -> Self {
+	TimeAttackModeData {
+	    goal: goal,
+	    limit: limit,
+	}
+    }
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub enum GameMode {
+    Story,
+    TimeAttack(TimeAttackModeData),
+}
+
+impl GameMode {
+    pub fn story() -> Self {
+	Self::Story
+    }
+
+    pub fn time_attack(goal: u32) -> Self {
+	match goal {
+	    300000 => {
+		let date = GensoDate::new(112, 7, 23).add_day_chain(60);
+		Self::TimeAttack(TimeAttackModeData::new(goal, date))
+	    }
+	    500000 => {
+		let date = GensoDate::new(112, 7, 23).add_day_chain(90);
+		Self::TimeAttack(TimeAttackModeData::new(goal, date))
+	    }
+	    1000000 => {
+		let date = GensoDate::new(112, 7, 23).add_day_chain(120);
+		Self::TimeAttack(TimeAttackModeData::new(goal, date))
+	    }
+	    _ => panic!("invalid goal"),
+	}
+    }
+}
+
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct TaskResult {
     pub done_works: u32,                         // 総仕事数
     pub not_shelved_books: Vec<BookInformation>, // 返却済, 未配架
@@ -1667,6 +1718,7 @@ pub struct SavableData {
     pub ad_status: HashMap<SuzunaAdType, bool>,
     pub agency_status: HashMap<SuzunaAdAgencyType, bool>,
     pub award_data: game_system::AwardData,
+    pub game_mode: GameMode,
 }
 
 impl SavableData {
@@ -1708,6 +1760,7 @@ impl SavableData {
             ad_status: ad_status,
             agency_status: ad_agency_status,
             award_data: game_system::AwardData::new(),
+	    game_mode: GameMode::Story,
         }
     }
 
@@ -1760,6 +1813,8 @@ impl SavableData {
         self.ad_status = data.ad_status;
         self.agency_status = data.agency_status;
         self.week_schedule = data.week_schedule;
+	self.award_data = data.award_data;
+	self.game_mode = data.game_mode;
     }
 
     pub fn change_ad_status(&mut self, ad_type: SuzunaAdType, status: bool) {
