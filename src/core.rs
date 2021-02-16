@@ -707,6 +707,11 @@ impl GensoDate {
 	    }
 	}
     }
+
+    pub fn is_week_first(&self) -> bool {
+	let diff = self.diff_day(&GensoDate::new(112, 7, 23));
+	diff % 7 == 0
+    }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
@@ -1324,6 +1329,14 @@ impl TimeAttackModeData {
 	    goal: goal,
 	    limit: limit,
 	}
+    }
+
+    pub fn get_goal(&self) -> u32 {
+	goal
+    }
+
+    pub fn get_limit(&self) -> &GensoDate {
+	&self.limit
     }
 }
 

@@ -55,13 +55,21 @@ impl ScenarioScene {
     pub fn new<'a>(ctx: &mut SuzuContext<'a>, scenario_select: ScenarioSelect) -> Self {
         let file_path = match scenario_select {
             ScenarioSelect::DayBegin => {
-		match ctx.take_save_data().game_mode {
+		match &ctx.take_save_data().game_mode {
 		    GameMode::Story => 		ctx
 			.resource
 			.get_day_scenario_path(&ctx.take_save_data().date)
 			.expect("BUG"),
-		    GameMode::TimeAttack(_) => {
-			"/scenario/time_attack_default.toml".to_string()
+		    GameMode::TimeAttack(data) => {
+			if ctx.take_save_data().task_result.total_money > data.get_goal() {
+			    "/scenario/time_attack_goal.toml".to_string()	    
+			} else if data.get_limit().is_past(&ctx.take_save_data().date) {
+			    "/scenario/time_attack_over.toml".to_string()
+			} else if ctx.take_save_data().date.is_week_first() {
+			    "/scenario/time_attack_week_first.toml".to_string()
+			} else {
+			    "/scenario/time_attack_default.toml".to_string()
+			}
 		    }
 		}
 	    },
