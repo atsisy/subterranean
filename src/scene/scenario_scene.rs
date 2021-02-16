@@ -61,7 +61,7 @@ impl ScenarioScene {
 			.get_day_scenario_path(&ctx.take_save_data().date)
 			.expect("BUG"),
 		    GameMode::TimeAttack(data) => {
-			if ctx.take_save_data().task_result.total_money > data.get_goal() {
+			if ctx.take_save_data().task_result.total_money > data.get_goal() as i32 {
 			    "/scenario/time_attack_goal.toml".to_string()	    
 			} else if data.get_limit().is_past(&ctx.take_save_data().date) {
 			    "/scenario/time_attack_over.toml".to_string()

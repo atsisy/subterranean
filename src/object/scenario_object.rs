@@ -573,7 +573,28 @@ impl ScenarioAdPage {
     }
 
     pub fn click_handler<'a>(&mut self, ctx: &mut SuzuContext<'a>, click_point: numeric::Point2f) {
+	let total_ad_cost = self.total_ad_cost(ctx);
+	
         for (ad_type, entry) in self.ad_table.iter_mut() {
+	    // クリックされてるか確認する広告の値段
+	    let add_cost = ctx.resource.get_default_ad_cost(*ad_type) as i32;
+
+	    // この広告が追加または削除された時に変動する値段
+	    let expected_total_ad_cost = if entry.is_checked() {
+		// 既にチェックされてるということは、これが外される
+		total_ad_cost - add_cost
+	    } else {
+		// その逆
+		total_ad_cost + add_cost
+	    };
+
+	    // 予想される合計価格 の方が 所持金 より大きいなら -> 追加をやめる
+	    if expected_total_ad_cost
+		> ctx.take_save_data().task_result.total_money {
+		    continue;
+		}
+
+	    // 追加実行
             entry.check_box.click_handler(click_point);
             ctx.change_ad_status(*ad_type, entry.is_checked());
         }

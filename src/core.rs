@@ -1332,7 +1332,7 @@ impl TimeAttackModeData {
     }
 
     pub fn get_goal(&self) -> u32 {
-	goal
+	self.goal
     }
 
     pub fn get_limit(&self) -> &GensoDate {
