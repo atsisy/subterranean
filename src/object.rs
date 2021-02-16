@@ -209,6 +209,10 @@ impl DarkEffectPanel {
             self.canvas.effect(ctx.context, t);
         }
     }
+
+    pub fn set_alpha(&mut self, alpha: f32) {
+	self.canvas.set_alpha(alpha);
+    }
 }
 
 impl DrawableComponent for DarkEffectPanel {

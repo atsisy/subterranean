@@ -1936,11 +1936,35 @@ pub struct GameConfig {
     bgm_volume: f32,
     se_volume: f32,
     minute_per_clock: Clock,
+    pause_when_inactive: bool,
 }
 
 impl GameConfig {
     pub fn new_from_toml(ctx: &mut ggez::Context, path: &str) -> Self {
-        let s = util::read_from_resources_as_string(ctx, path);
+	match File::open("./game_config") {
+	    Ok(mut file) => {
+		let mut buf = Vec::new();
+		match file
+		    .read_to_end(&mut buf) {
+			Ok(_) => (),
+			Err(_) => return Self::load_default_config(ctx, path),
+		    }
+		
+		let content = crypt::decrypt_str(&buf);
+		
+		let game_config = serde_json::from_str(&content.unwrap());
+
+		match game_config {
+		    Ok(game_config) => game_config,
+		    Err(_) => Self::load_default_config(ctx, path)
+		}
+	    },
+	    Err(_) => Self::load_default_config(ctx, path)
+	}
+    }
+
+    fn load_default_config(ctx: &mut ggez::Context, path: &str) -> Self {
+	let s = util::read_from_resources_as_string(ctx, path);
 
         let raw_data: Result<GameConfig, toml::de::Error> = toml::from_str(&s);
         match raw_data {
@@ -1963,6 +1987,26 @@ impl GameConfig {
 
     pub fn get_se_volume(&self) -> f32 {
         self.se_volume
+    }
+
+    pub fn is_pause_when_inactive(&self) -> bool {
+	self.pause_when_inactive
+    }
+
+    pub fn set_pause_when_inactive(&mut self, flag: bool) {
+	self.pause_when_inactive = flag;
+    }
+
+    pub fn save_config(&self) {
+	let mut file = File::create("./game_config").expect("failed to create game config file.");
+
+        file.write_all(
+            crypt::crypt_str(&serde_json::to_string(self).unwrap())
+                .unwrap()
+                .as_slice(),
+        )
+        .unwrap();
+        file.flush().expect("failed to flush game config file");
     }
 }
 

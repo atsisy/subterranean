@@ -14,12 +14,14 @@ use torifune::graphics::drawable::*;
 use torifune::graphics::object::*;
 use torifune::numeric;
 
-use crate::object::util_object::{CheckBox, SeekBar, SelectButton, TextButtonTexture};
+use crate::{core::WINDOW_SIZE_X, object::util_object::{CheckBox, SeekBar, SelectButton, TextButtonTexture}};
 use crate::scene::SceneID;
 use crate::{
     core::{font_information_from_toml_value, FontID, SuzuContext, TextureID},
     scene::SceneTransition,
 };
+
+use super::DarkEffectPanel;
 
 #[derive(Clone, Copy)]
 pub enum TitleBuiltinCommand {
@@ -373,6 +375,7 @@ pub enum GameConfigElement {
 struct TemporaryConfigData {
     bgm_volume: f32,
     se_volume: f32,
+    pause_when_inactive: bool,
 }
 
 impl TemporaryConfigData {
@@ -380,16 +383,17 @@ impl TemporaryConfigData {
         TemporaryConfigData {
             bgm_volume: ctx.config.get_bgm_volume(),
             se_volume: ctx.config.get_se_volume(),
+	    pause_when_inactive: ctx.config.is_pause_when_inactive(),
         }
     }
 }
 
 pub struct ConfigPanel {
     canvas: sub_screen::SubScreen,
-    background: UniTexture,
+    background: DarkEffectPanel,
     hrzn_text_list: Vec<UniText>,
     sb_dynamic_text: HashMap<GameConfigElement, UniText>,
-    header_text: VerticalText,
+    header_text: UniText,
     bgm_volume_bar: SeekBar,
     se_volume_bar: SeekBar,
     checkbox: CheckBox,
@@ -399,24 +403,23 @@ pub struct ConfigPanel {
 }
 
 impl ConfigPanel {
-    pub fn new<'a>(ctx: &mut SuzuContext<'a>, pos_rect: numeric::Rect, depth: i8) -> Self {
+    pub fn new<'a>(ctx: &mut SuzuContext<'a>, pos_rect: numeric::Rect, depth: i8, t: Clock) -> Self {
         let font_info = FontInformation::new(
             ctx.resource.get_font(FontID::Cinema),
-            numeric::Vector2f::new(56.0, 56.0),
+            numeric::Vector2f::new(32.0, 32.0),
             ggraphics::Color::from_rgba_u32(0xbbbbbbff),
         );
 
-        let background = UniTexture::new(
-            ctx.ref_texture(TextureID::TextBackground),
-            numeric::Point2f::new(20.0, 20.0),
-            numeric::Vector2f::new(1.0, 1.0),
-            0.0,
-            0,
+        let mut background = DarkEffectPanel::new(
+            ctx.context,
+            numeric::Rect::new(0.0, 0.0, WINDOW_SIZE_X as f32, WINDOW_SIZE_X as f32),
+            t,
         );
+	background.set_alpha(0.5);
 
-        let header_text = VerticalText::new(
+        let header_text = UniText::new(
             "設定".to_string(),
-            numeric::Point2f::new(1150.0, 80.0),
+            numeric::Point2f::new(650.0, 80.0),
             numeric::Vector2f::new(1.0, 1.0),
             0.0,
             0,
@@ -431,7 +434,7 @@ impl ConfigPanel {
             ggraphics::Color::from_rgba_u32(0xbbbbbbff),
         );
 
-        for (s, p) in vec![("BGM音量", 70.0), ("SE音量", 170.0)] {
+        for (s, p) in vec![("BGM音量", 180.0), ("SE音量", 280.0)] {
             let text = UniText::new(
                 s.to_string(),
                 numeric::Point2f::new(200.0, p),
@@ -449,8 +452,8 @@ impl ConfigPanel {
         sb_dynamic_text.insert(
             GameConfigElement::BGMVolume,
             UniText::new(
-                format!("{}%", ctx.config.get_bgm_volume() * 100.0),
-                numeric::Point2f::new(400.0, 70.0),
+                format!("{}%", (ctx.config.get_bgm_volume() * 100.0).round()),
+                numeric::Point2f::new(400.0, 180.0),
                 numeric::Vector2f::new(1.0, 1.0),
                 0.0,
                 0,
@@ -461,8 +464,8 @@ impl ConfigPanel {
         sb_dynamic_text.insert(
             GameConfigElement::SEVolume,
             UniText::new(
-                format!("{}%", ctx.config.get_se_volume() * 100.0),
-                numeric::Point2f::new(400.0, 170.0),
+                format!("{}%", (ctx.config.get_se_volume() * 100.0).round()),
+                numeric::Point2f::new(400.0, 280.0),
                 numeric::Vector2f::new(1.0, 1.0),
                 0.0,
                 0,
@@ -502,18 +505,27 @@ impl ConfigPanel {
             text_texture,
         );
 
-        let choice_box_texture = Box::new(UniTexture::new(
-            ctx.ref_texture(TextureID::ChoicePanel1),
+	let pause_text = UniText::new(
+            "店番中の非アクティブ時にポーズ".to_string(),
             numeric::Point2f::new(200.0, 400.0),
+            numeric::Vector2f::new(1.0, 1.0),
+            0.0,
+            0,
+            hrzn_text_font_info.clone(),
+        );
+	hrzn_text_list.push(pause_text);
+        let choice_box_texture = Box::new(UniTexture::new(
+            ctx.ref_texture(TextureID::CheckCircle),
+            numeric::Point2f::new(200.0, 440.0),
             numeric::Vector2f::new(1.0, 1.0),
             0.0,
             0,
         ));
         let check_box = CheckBox::new(
             ctx,
-            numeric::Rect::new(200.0, 400.0, 50.0, 50.0),
+            numeric::Rect::new(200.0, 440.0, 50.0, 50.0),
             choice_box_texture,
-            false,
+            ctx.config.is_pause_when_inactive(),
             0,
         );
 
@@ -530,7 +542,7 @@ impl ConfigPanel {
             hrzn_text_list: hrzn_text_list,
             bgm_volume_bar: SeekBar::new(
                 ctx,
-                numeric::Rect::new(200.0, 100.0, 450.0, 40.0),
+                numeric::Rect::new(200.0, 210.0, 450.0, 40.0),
                 10.0,
                 100.0,
                 0.0,
@@ -539,7 +551,7 @@ impl ConfigPanel {
             ),
             se_volume_bar: SeekBar::new(
                 ctx,
-                numeric::Rect::new(200.0, 200.0, 450.0, 40.0),
+                numeric::Rect::new(200.0, 310.0, 450.0, 40.0),
                 10.0,
                 100.0,
                 0.0,
@@ -570,12 +582,15 @@ impl ConfigPanel {
     fn recover_original_config<'a>(&mut self, ctx: &mut SuzuContext<'a>) {
         let original_bgm = self.original_config_data.bgm_volume * 100.0;
         let original_se = self.original_config_data.se_volume * 100.0;
+	let original_pause = self.original_config_data.pause_when_inactive;
 
         ctx.change_bgm_volume(original_bgm);
         ctx.change_se_volume(original_se);
+	ctx.config.set_pause_when_inactive(original_pause);
 
         self.bgm_volume_bar.set_value(ctx, original_bgm);
         self.se_volume_bar.set_value(ctx, original_se);
+	self.checkbox.try_check(original_pause);
     }
 
     pub fn get_name(&self) -> String {
@@ -608,12 +623,15 @@ impl ConfigPanel {
     ) -> Option<TitleContentsEvent> {
         self.bgm_volume_bar.release_handler();
         self.se_volume_bar.release_handler();
-
+	
         let rpoint = self.canvas.relative_point(point);
+	self.checkbox.click_handler(rpoint);
 
         if self.apply_button.contains(ctx.context, rpoint) {
             ctx.change_bgm_volume(self.bgm_volume_bar.get_current_value());
             ctx.change_se_volume(self.se_volume_bar.get_current_value());
+	    ctx.config.set_pause_when_inactive(self.checkbox.checked_now());
+	    ctx.config.save_config();
             return Some(TitleContentsEvent::NextContents("init-menu".to_string()));
         }
 
@@ -621,8 +639,6 @@ impl ConfigPanel {
             self.recover_original_config(ctx);
             return Some(TitleContentsEvent::NextContents("init-menu".to_string()));
         }
-
-        self.checkbox.click_handler(rpoint);
 
         None
     }
@@ -708,6 +724,7 @@ impl TitleContents {
     pub fn from_toml_object<'a>(
         ctx: &mut SuzuContext<'a>,
         toml_src: &toml::Value,
+	t: Clock,
     ) -> Option<TitleContents> {
         let name = toml_src
             .get("name")
@@ -745,6 +762,7 @@ impl TitleContents {
                 ctx,
                 numeric::Rect::new(0.0, 0.0, 1366.0, 768.0),
                 0,
+		t
             ))),
             _ => None,
         }
@@ -820,7 +838,7 @@ impl TitleContentsSet {
         }
     }
 
-    pub fn from_file<'a>(ctx: &mut SuzuContext<'a>, file_path: &str) -> Self {
+    pub fn from_file<'a>(ctx: &mut SuzuContext<'a>, file_path: &str, t: Clock) -> Self {
         let content = match std::fs::read_to_string(file_path) {
             Ok(c) => c,
             Err(_) => panic!("Failed to read: {}", file_path),
@@ -832,7 +850,7 @@ impl TitleContentsSet {
         let mut contents_set = HashMap::new();
 
         for content in contents_list {
-            let title_content = TitleContents::from_toml_object(ctx, content).unwrap();
+            let title_content = TitleContents::from_toml_object(ctx, content, t).unwrap();
             contents_set.insert(title_content.get_content_name(), title_content);
         }
 

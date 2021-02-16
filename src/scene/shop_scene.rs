@@ -2114,9 +2114,11 @@ impl SceneManager for ShopScene {
         self.transition_status
     }
 
-    fn unfocus_event<'a>(&mut self, _: &mut SuzuContext<'a>) {
-        let t = self.get_current_clock();
-        self.enter_pause_screen(t);
+    fn unfocus_event<'a>(&mut self, ctx: &mut SuzuContext<'a>) {
+	if ctx.config.is_pause_when_inactive() {
+            let t = self.get_current_clock();
+            self.enter_pause_screen(t);
+	}
     }
 
     fn transition(&self) -> SceneID {

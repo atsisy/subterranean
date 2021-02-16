@@ -61,7 +61,7 @@ impl TitleScene {
         );
 
         let mut title_contents_set =
-            TitleContentsSet::from_file(ctx, "./resources/title_contents/title_contents_list.toml");
+            TitleContentsSet::from_file(ctx, "./resources/title_contents/title_contents_list.toml", 0);
 
         let bgm_handler = ctx.play_sound_as_bgm(
             SoundID::Title,
@@ -190,6 +190,8 @@ impl TitleScene {
         if self.current_title_contents.is_none() {
             return;
         }
+
+	ctx.process_utility.redraw();
 
         match &mut self.current_title_contents.as_mut().unwrap() {
             TitleContents::InitialMenu(contents) => {

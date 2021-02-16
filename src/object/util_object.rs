@@ -1654,6 +1654,7 @@ impl PauseScreenSet {
                             ctx,
                             numeric::Rect::new(50.0, 50.0, 1266.0, 668.0),
                             0,
+			    t
                         ));
                         None
                     }
@@ -1968,6 +1969,16 @@ impl CheckBox {
             } else {
                 self.check_texture.hide();
             }
+        }
+    }
+
+    pub fn try_check(&mut self, check: bool) {
+	self.is_checked = check;
+	
+	if self.is_checked {
+            self.check_texture.appear();
+        } else {
+            self.check_texture.hide();
         }
     }
 
