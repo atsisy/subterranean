@@ -1,8 +1,7 @@
 use std::collections::HashMap;
 
 use ggez::graphics as ggraphics;
-use ggez::input as ginput;
-use ginput::mouse::MouseCursor;
+use ggez::input::mouse::CursorIcon;
 
 use torifune::core::Clock;
 use torifune::graphics::drawable::*;
@@ -13,7 +12,7 @@ use torifune::graphics::object::*;
 use torifune::impl_drawable_object_for_wrapped;
 use torifune::impl_texture_object_for_wrapped;
 use torifune::roundup2f;
-use torifune::{debug, numeric};
+use torifune::{debug, numeric, mintp_new, mintp};
 
 use crate::core::FontID;
 use crate::flush_delay_event;
@@ -99,9 +98,6 @@ pub struct DeskObjects {
 
 impl DeskObjects {
     pub fn new<'a>(ctx: &mut SuzuContext<'a>, rect: ggraphics::Rect) -> DeskObjects {
-        let mut dparam = ggraphics::DrawParam::default();
-        dparam.dest = numeric::Point2f::new(rect.x, rect.y).into();
-
         let appr_frame = TileBatchFrame::new(
             ctx.resource,
             TileBatchTextureID::BlackFrame,
@@ -260,7 +256,7 @@ impl DeskObjects {
         let item_area = item.get_object().get_drawing_area(ctx.context);
 
         if !moneybox_area.contains(item_area.point())
-            || !moneybox_area.contains(numeric::Point2f::new(item_area.right(), item_area.bottom()))
+            || !moneybox_area.contains(mintp_new!(item_area.right(), item_area.bottom()))
             || !self.money_box_is_pulled
         {
             return Some(item);
@@ -470,27 +466,27 @@ impl DeskObjects {
         &mut self,
         ctx: &mut ggez::Context,
         point: numeric::Point2f,
-    ) -> MouseCursor {
-        if self.canvas.get_drawing_area(ctx).contains(point) {
+    ) -> CursorIcon {
+        if self.canvas.get_drawing_area(ctx).contains(mintp!(point)) {
             let rpoint = self.canvas.relative_point(point);
 
             // オブジェクトは深度が深い順にソートされているので、
             // 逆順から検索していくことで、最も手前に表示されているオブジェクトを
             // 取り出すことができる
             for obj in self.desk_objects.get_raw_container_mut().iter_mut().rev() {
-                if obj.get_object().get_drawing_area(ctx).contains(rpoint) {
-                    return MouseCursor::Grabbing;
+                if obj.get_object().get_drawing_area(ctx).contains(mintp!(rpoint)) {
+                    return CursorIcon::Grabbing;
                 }
             }
 
             if let Some(dragging) = self.dragging.as_ref() {
                 if dragging.get_object().contains(ctx, rpoint) {
-                    return MouseCursor::Grabbing;
+                    return CursorIcon::Grabbing;
                 }
             }
         }
 
-        MouseCursor::Default
+        CursorIcon::Default
     }
 
     pub fn get_desk_objects_list(&self) -> &Vec<TaskItem> {
@@ -645,14 +641,14 @@ impl Clickable for TaskSilhouette {
         &mut self,
         ctx: &mut ggez::Context,
         point: numeric::Point2f,
-    ) -> ggez::input::mouse::MouseCursor {
+    ) -> ggez::input::mouse::CursorIcon {
         if let Some(character) = &self.character {
-            if character.get_drawing_area(ctx).contains(point) {
-                return MouseCursor::Grab;
+            if character.get_drawing_area(ctx).contains(mintp!(point)) {
+                return CursorIcon::Grab;
             }
         }
 
-        MouseCursor::Default
+        CursorIcon::Default
     }
 }
 
@@ -726,7 +722,7 @@ pub struct TextBalloon {
     back_canvas: SubScreen,
     text: VerticalText,
     phrase_type: TextBalloonPhraseType,
-    text_balloon: shape::FramedTextBalloon,
+    text_balloon: shape::FramedLeadingRect,
 }
 
 impl TextBalloon {
@@ -748,24 +744,22 @@ impl TextBalloon {
 
         let vtext_size = vtext.get_drawing_size(ctx);
 
-        vtext.make_center(
+        let balloon = shape::FramedLeadingRect::new(
             ctx,
-            numeric::Point2f::new((vtext_size.x + 80.0) / 2.0, (vtext_size.y + 60.0) / 2.0),
-        );
-
-        let balloon = shape::FramedTextBalloon::new(
-            ctx,
-            numeric::Rect::new(0.0, 0.0, vtext_size.x + 100.0, vtext_size.y + 50.0),
-            [
-                numeric::Vector2f::new(50.0, 50.0),
-                numeric::Vector2f::new(10.0, 10.0),
-                numeric::Vector2f::new(50.0, 50.0),
-                numeric::Vector2f::new(10.0, 10.0),
-            ],
+            numeric::Rect::new(25.0, 0.0, vtext_size.x + 100.0, vtext_size.y + 50.0),
+	    0.0,
             2.0,
-            ggraphics::WHITE,
+	    numeric::Vector2f::new(-25.0, 50.0),
+	    numeric::Vector2f::new(15.0, 15.0),
+            ggraphics::Color::WHITE,
             ggraphics::Color::from_rgb_u32(0x111111),
             0,
+        );
+
+	let balloon_area = balloon.get_drawing_area();
+	vtext.make_center(
+            ctx,
+            numeric::Point2f::new(balloon_area.x + (balloon_area.w / 2.0), balloon_area.y + (balloon_area.h / 2.0)),
         );
 
         TextBalloon {
@@ -791,25 +785,24 @@ impl TextBalloon {
         self.text.replace_text(text.to_string());
         let vtext_size = self.text.get_drawing_size(ctx);
 
-        self.text_balloon = shape::FramedTextBalloon::new(
+        self.text_balloon = shape::FramedLeadingRect::new(
             ctx,
-            numeric::Rect::new(0.0, 0.0, vtext_size.x + 100.0, vtext_size.y + 50.0),
-            [
-                numeric::Vector2f::new(50.0, 50.0),
-                numeric::Vector2f::new(10.0, 10.0),
-                numeric::Vector2f::new(50.0, 50.0),
-                numeric::Vector2f::new(10.0, 10.0),
-            ],
+            numeric::Rect::new(25.0, 0.0, vtext_size.x + 100.0, vtext_size.y + 50.0),
+	    0.0,
             2.0,
-            ggraphics::WHITE,
+	    numeric::Vector2f::new(-25.0, 50.0),
+	    numeric::Vector2f::new(15.0, 15.0),
+            ggraphics::Color::WHITE,
             ggraphics::Color::from_rgb_u32(0x111111),
             0,
         );
 
-        self.text.make_center(
+	let balloon_area = self.text_balloon.get_drawing_area();	
+	self.text.make_center(
             ctx,
-            numeric::Point2f::new((vtext_size.x + 100.0) / 2.0, (vtext_size.y + 60.0) / 2.0),
+            numeric::Point2f::new(balloon_area.x + (balloon_area.w / 2.0), balloon_area.y + (balloon_area.h / 2.0)),
         );
+
 
         self.phrase_type = phrase_type;
     }
@@ -947,7 +940,7 @@ impl SuzuMiniSightSilhouette {
     ) -> Self {
         let mut text_balloon = Box::new(TextBalloon::new(
             ctx.context,
-            numeric::Rect::new(400.0, 10.0, 200.0, 300.0),
+            numeric::Rect::new(330.0, 10.0, 200.0, 300.0),
             "",
             TextBalloonPhraseType::SimplePhrase,
             FontInformation::new(
@@ -1188,7 +1181,7 @@ impl Clickable for SuzuMiniSightSilhouette {
         &mut self,
         ctx: &mut ggez::Context,
         point: numeric::Point2f,
-    ) -> ggez::input::mouse::MouseCursor {
+    ) -> ggez::input::mouse::CursorIcon {
         self.silhouette.clickable_status(ctx, point)
     }
 }
@@ -1199,7 +1192,7 @@ impl OnDesk for SuzuMiniSightSilhouette {
     }
 
     fn click_hold_data(&self, ctx: &mut ggez::Context, point: numeric::Point2f) -> HoldData {
-        if self.silhouette.get_drawing_area(ctx).contains(point) {
+        if self.silhouette.get_drawing_area(ctx).contains(mintp!(point)) {
             self.silhouette.click_hold_data(ctx, point)
         } else {
             HoldData::None
@@ -1477,13 +1470,13 @@ impl SuzuMiniSight {
         &mut self,
         ctx: &mut ggez::Context,
         point: numeric::Point2f,
-    ) -> MouseCursor {
-        if self.canvas.get_drawing_area(ctx).contains(point) {
+    ) -> CursorIcon {
+        if self.canvas.get_drawing_area(ctx).contains(mintp!(point)) {
             let rpoint = self.canvas.relative_point(point);
             return self.silhouette.clickable_status(ctx, rpoint);
         }
 
-        MouseCursor::Default
+        CursorIcon::Default
     }
 }
 
@@ -1609,9 +1602,6 @@ pub struct ShelvingBookBox {
 
 impl ShelvingBookBox {
     pub fn new<'a>(ctx: &mut SuzuContext<'a>, rect: ggraphics::Rect) -> ShelvingBookBox {
-        let mut dparam = ggraphics::DrawParam::default();
-        dparam.dest = numeric::Point2f::new(rect.x, rect.y).into();
-
         let box_back = UniTexture::new(
             ctx.ref_texture(TextureID::BookBoxBack),
             numeric::Point2f::new(0.0, rect.h - 300.0),
@@ -1678,7 +1668,7 @@ impl ShelvingBookBox {
         // 逆順から検索していくことで、最も手前に表示されているオブジェクトを
         // 取り出すことができる
         for obj in self.shelved.iter_mut().rev() {
-            let contains = obj.get_object().get_drawing_area(ctx).contains(rpoint);
+            let contains = obj.get_object().get_drawing_area(ctx).contains(mintp!(rpoint));
             if contains {
                 clicked_data = obj.get_object_mut().click_hold_data(ctx, rpoint);
                 self.draw_request = DrawRequest::Draw;
@@ -1793,21 +1783,21 @@ impl ShelvingBookBox {
         &mut self,
         ctx: &mut ggez::Context,
         point: numeric::Point2f,
-    ) -> MouseCursor {
-        if self.canvas.get_drawing_area(ctx).contains(point) {
+    ) -> CursorIcon {
+        if self.canvas.get_drawing_area(ctx).contains(mintp!(point)) {
             let rpoint = self.canvas.relative_point(point);
 
             // オブジェクトは深度が深い順にソートされているので、
             // 逆順から検索していくことで、最も手前に表示されているオブジェクトを
             // 取り出すことができる
             for obj in self.shelved.iter_mut().rev() {
-                if obj.get_object().get_drawing_area(ctx).contains(rpoint) {
-                    return MouseCursor::Grab;
+                if obj.get_object().get_drawing_area(ctx).contains(mintp!(rpoint)) {
+                    return CursorIcon::Grab;
                 }
             }
         }
 
-        MouseCursor::Default
+        CursorIcon::Default
     }
 }
 
@@ -1896,7 +1886,7 @@ impl KosuzuPhrase {
                     FontInformation::new(
                         ctx.resource.get_font(FontID::JpFude1),
                         numeric::Vector2f::new(21.0, 21.0),
-                        ggraphics::BLACK,
+                        ggraphics::Color::BLACK,
                     ),
                 )),
                 None,
@@ -2454,7 +2444,7 @@ impl TaskInfoPanel {
             ),
             draw_request: DrawRequest::InitDraw,
             background: UniTexture::new(
-                ctx.ref_texture(TextureID::TextBackground),
+                ctx.ref_texture(TextureID::BaraBG),
                 numeric::Point2f::new(0.0, 0.0),
                 numeric::Vector2f::new(1.0, 1.0),
                 0.0,
@@ -2757,7 +2747,7 @@ impl ChatBox {
             FontInformation::new(
                 ctx.resource.get_font(FontID::Cinema),
                 numeric::Vector2f::new(22.0, 22.0),
-                ggraphics::BLACK,
+                ggraphics::Color::BLACK,
             ),
         );
 
@@ -2780,7 +2770,7 @@ impl ChatBox {
             FontInformation::new(
                 ctx.resource.get_font(FontID::Cinema),
                 numeric::Vector2f::new(22.0, 22.0),
-                ggraphics::BLACK,
+                ggraphics::Color::BLACK,
             ),
         );
 

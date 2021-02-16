@@ -5,7 +5,7 @@ pub mod tt_sub_component;
 
 use ggez::graphics as ggraphics;
 use ggez::input as ginput;
-use ginput::mouse::MouseCursor;
+use ginput::mouse::CursorIcon;
 
 use torifune::core::Clock;
 use torifune::debug;
@@ -1691,17 +1691,17 @@ impl Clickable for TaskTable {
         &mut self,
         ctx: &mut ggez::Context,
         point: numeric::Point2f,
-    ) -> ggez::input::mouse::MouseCursor {
+    ) -> ggez::input::mouse::CursorIcon {
         let rpoint = self.canvas.relative_point(point);
 
         let mut cursor_status = self.desk.check_mouse_cursor_status(ctx, rpoint);
 
-        if cursor_status != MouseCursor::Default {
+        if cursor_status != CursorIcon::Default {
             return cursor_status;
         }
 
         cursor_status = self.sight.check_mouse_cursor_status(ctx, rpoint);
-        if cursor_status != MouseCursor::Default {
+        if cursor_status != CursorIcon::Default {
             return cursor_status;
         }
 

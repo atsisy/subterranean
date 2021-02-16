@@ -121,7 +121,7 @@ impl EndScene {
             Box::new(move |slf: &mut Self, ctx, _| {
                 slf.scene_transition = scene_id;
                 slf.scene_transition_type = SceneTransition::SwapTransition;
-                ctx.resource.stop_bgm(slf.bgm_handler);
+                ctx.resource.stop_bgm(ctx.context, slf.bgm_handler);
             }),
             t + 31,
         );

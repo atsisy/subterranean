@@ -468,8 +468,8 @@ impl Clickable for SelectBookWindow {
         &mut self,
         _ctx: &mut ggez::Context,
         _point: numeric::Point2f,
-    ) -> ggez::input::mouse::MouseCursor {
-        ggez::input::mouse::MouseCursor::Default
+    ) -> ggez::input::mouse::CursorIcon {
+        ggez::input::mouse::CursorIcon::Default
     }
 }
 
@@ -747,8 +747,8 @@ impl Clickable for SelectShelvingBookUI {
         &mut self,
         _ctx: &mut ggez::Context,
         _point: numeric::Point2f,
-    ) -> ggez::input::mouse::MouseCursor {
-        ggez::input::mouse::MouseCursor::Default
+    ) -> ggez::input::mouse::CursorIcon {
+        ggez::input::mouse::CursorIcon::Default
     }
 }
 
@@ -1110,8 +1110,8 @@ impl Clickable for SelectStoringBookWindow {
         &mut self,
         _ctx: &mut ggez::Context,
         _point: numeric::Point2f,
-    ) -> ggez::input::mouse::MouseCursor {
-        ggez::input::mouse::MouseCursor::Default
+    ) -> ggez::input::mouse::CursorIcon {
+        ggez::input::mouse::CursorIcon::Default
     }
 }
 
@@ -1295,8 +1295,8 @@ impl Clickable for SelectStoreBookUI {
         &mut self,
         _ctx: &mut ggez::Context,
         _point: numeric::Point2f,
-    ) -> ggez::input::mouse::MouseCursor {
-        ggez::input::mouse::MouseCursor::Default
+    ) -> ggez::input::mouse::CursorIcon {
+        ggez::input::mouse::CursorIcon::Default
     }
 }
 
@@ -2137,8 +2137,8 @@ impl Clickable for SimpleBookListViewer {
         &mut self,
         _ctx: &mut ggez::Context,
         _point: numeric::Point2f,
-    ) -> ggez::input::mouse::MouseCursor {
-        ggez::input::mouse::MouseCursor::Default
+    ) -> ggez::input::mouse::CursorIcon {
+        ggez::input::mouse::CursorIcon::Default
     }
 }
 
@@ -2770,7 +2770,7 @@ impl ShopMapViewer {
         ShopMapViewer {
             canvas: canvas,
             map_texture: UniTexture::new(
-                ctx.ref_texture(TextureID::Paper1),
+                ctx.ref_texture(TextureID::SuzunaanMap),
                 numeric::Point2f::new(0.0, 0.0),
                 numeric::Vector2f::new(1.0, 1.0),
                 0.0,
@@ -2843,18 +2843,13 @@ impl ShopCommandPalette {
         let font_info = FontInformation::new(
             ctx.resource.get_font(FontID::JpFude1),
             numeric::Vector2f::new(32.0, 32.0),
-            ggraphics::WHITE,
+            ggraphics::Color::WHITE,
         );
 
         let action_button = FramedButton::new(
             ctx,
             numeric::Rect::new(150.0, 15.0, 120.0, 85.0),
-            [
-                numeric::Vector2f::new(10.0, 10.0),
-                numeric::Vector2f::new(10.0, 10.0),
-                numeric::Vector2f::new(10.0, 10.0),
-                numeric::Vector2f::new(10.0, 10.0),
-            ],
+	    10.0,
             2.0,
             ggraphics::Color::from_rgba(90, 80, 63, 255),
             ggraphics::Color::from_rgba(219, 212, 184, 255),
@@ -2866,12 +2861,7 @@ impl ShopCommandPalette {
 	let shop_menu_button = FramedButton::new(
             ctx,
             numeric::Rect::new(350.0, 15.0, 120.0, 85.0),
-            [
-                numeric::Vector2f::new(10.0, 10.0),
-                numeric::Vector2f::new(10.0, 10.0),
-                numeric::Vector2f::new(10.0, 10.0),
-                numeric::Vector2f::new(10.0, 10.0),
-            ],
+	    10.0,
             2.0,
             ggraphics::Color::from_rgba(90, 80, 63, 255),
             ggraphics::Color::from_rgba(219, 212, 184, 255),
@@ -2883,12 +2873,7 @@ impl ShopCommandPalette {
 	let show_map_button = FramedButton::new(
 	    ctx,
             numeric::Rect::new(550.0, 15.0, 120.0, 85.0),
-            [
-                numeric::Vector2f::new(10.0, 10.0),
-                numeric::Vector2f::new(10.0, 10.0),
-                numeric::Vector2f::new(10.0, 10.0),
-                numeric::Vector2f::new(10.0, 10.0),
-            ],
+	    10.0,
             2.0,
             ggraphics::Color::from_rgba(90, 80, 63, 255),
             ggraphics::Color::from_rgba(219, 212, 184, 255),
@@ -2900,12 +2885,7 @@ impl ShopCommandPalette {
 	let pause_button = FramedButton::new(
 	    ctx,
             numeric::Rect::new(750.0, 15.0, 120.0, 85.0),
-            [
-                numeric::Vector2f::new(10.0, 10.0),
-                numeric::Vector2f::new(10.0, 10.0),
-                numeric::Vector2f::new(10.0, 10.0),
-                numeric::Vector2f::new(10.0, 10.0),
-            ],
+	    10.0,
             2.0,
             ggraphics::Color::from_rgba(90, 80, 63, 255),
             ggraphics::Color::from_rgba(219, 212, 184, 255),

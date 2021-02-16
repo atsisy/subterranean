@@ -12,6 +12,7 @@ use torifune::graphics::object::*;
 use torifune::impl_drawable_object_for_wrapped;
 use torifune::impl_texture_object_for_wrapped;
 use torifune::numeric;
+use torifune::{mintp, mintp_new};
 
 use crate::core::*;
 
@@ -105,7 +106,7 @@ impl TableFrame {
             .get(grid_position.x as usize)
             .unwrap();
         let click_area = numeric::Rect::new(grid_lefttop.x, grid_lefttop.y, *width, *height);
-        click_area.contains(point)
+        click_area.contains(mintp!(point))
     }
 
     fn get_scaled_tile_size(&self) -> numeric::Vector2f {
@@ -680,13 +681,13 @@ impl TextButtonTexture {
 impl DrawableComponent for TextButtonTexture {
     fn draw(&mut self, ctx: &mut ggez::Context) -> ggez::GameResult<()> {
         if self.is_visible() {
+	    let draw_param = ggraphics::DrawParam::default()
+		.dest(mintp_new!(self.button_pos.x, self.button_pos.y));
+
             ggraphics::draw(
                 ctx,
                 &self.background,
-                ggraphics::DrawParam {
-                    dest: numeric::Point2f::new(self.button_pos.x, self.button_pos.y).into(),
-                    ..Default::default()
-                },
+		draw_param,
             )?;
             self.text.draw(ctx)?;
         }
@@ -722,7 +723,8 @@ impl DrawableObject for TextButtonTexture {
     }
 
     fn get_position(&self) -> numeric::Point2f {
-        self.button_pos.point().into()
+        let p = self.button_pos.point();
+	numeric::Point2f::new(p.x, p.y)
     }
 
     fn move_diff(&mut self, offset: numeric::Vector2f) {
@@ -754,7 +756,7 @@ impl TextureObject for TextButtonTexture {
     fn set_drawing_color(&mut self, _color: ggraphics::Color) {}
 
     fn get_drawing_color(&self) -> ggraphics::Color {
-        ggraphics::WHITE
+        ggraphics::Color::WHITE
     }
 
     fn set_alpha(&mut self, _alpha: f32) {}
@@ -778,7 +780,7 @@ impl TextureObject for TextButtonTexture {
     fn set_color(&mut self, _color: ggraphics::Color) {}
 
     fn get_color(&mut self) -> ggraphics::Color {
-        ggraphics::WHITE
+        ggraphics::Color::WHITE
     }
 }
 
@@ -1444,7 +1446,7 @@ impl GraphDrawer {
                 point_radius,
                 0.01,
                 point_color,
-            );
+            ).expect("failed to create ");
         }
 
         let mint_p_vec: Vec<mint::Point2<f32>> = scaled_points
@@ -1530,7 +1532,7 @@ impl PauseScreenSet {
         let font_info = FontInformation::new(
             ctx.resource.get_font(FontID::Cinema),
             numeric::Vector2f::new(28.0, 28.0),
-            ggraphics::BLACK,
+            ggraphics::Color::BLACK,
         );
 
         let mut entries_vtext = Vec::new();
@@ -1586,7 +1588,7 @@ impl PauseScreenSet {
 
     fn unselect_entries_handler(&mut self) {
         for vtext in self.entries.iter_mut() {
-            vtext.set_color(ggraphics::BLACK);
+            vtext.set_color(ggraphics::Color::BLACK);
         }
     }
 
@@ -1917,9 +1919,10 @@ impl CheckBox {
         is_checked: bool,
         depth: i8,
     ) -> Self {
+	let frame_pos = pos_rect.point();
         let frame = TableFrame::new(
             ctx.resource,
-            pos_rect.point().into(),
+            numeric::Point2f::new(frame_pos.x, frame_pos.y),
             TileBatchTextureID::OldStyleFrame,
             FrameData::new(vec![pos_rect.h], vec![pos_rect.w]),
             numeric::Vector2f::new(0.25, 0.25),
@@ -1957,7 +1960,7 @@ impl CheckBox {
     }
 
     pub fn click_handler(&mut self, point: numeric::Point2f) {
-        if self.frame.get_area().contains(point) {
+        if self.frame.get_area().contains(mintp!(point)) {
             self.is_checked = !self.is_checked;
 
             if self.is_checked {
@@ -2022,16 +2025,62 @@ pub enum ButtonStatus {
 
 pub struct FramedButton {
     button_status: ButtonStatus,
-    texture: shape::FramedTextBalloon,
+    texture: shape::FramedRoundRect,
     text: UniText,
     drwob_essential: DrawableObjectEssential,
 }
 
 impl FramedButton {
+    // pub fn new<'a>(
+    //     ctx: &mut SuzuContext<'a>,
+    //     rect: numeric::Rect,
+    //     borders: [numeric::Vector2f; 4],
+    //     frame_width: f32,
+    //     inner_color: ggraphics::Color,
+    //     outer_color: ggraphics::Color,
+    //     text: String,
+    //     font_info: FontInformation,
+    //     depth: i8,
+    // ) -> Self {
+    //     let texture = shape::FramedTextBalloon::new(
+    //         ctx.context,
+    //         rect,
+    //         borders,
+    //         frame_width,
+    //         inner_color,
+    //         outer_color,
+    //         0,
+    //     );
+
+    //     let mut text = UniText::new(
+    //         text,
+    //         numeric::Point2f::new(0.0, 0.0),
+    //         numeric::Vector2f::new(1.0, 1.0),
+    //         0.0,
+    //         0,
+    //         font_info,
+    //     );
+    //     let area = texture.get_drawing_area();
+    //     text.make_center(
+    //         ctx.context,
+    //         numeric::Point2f::new(area.x + (area.w / 2.0), area.y + (area.h / 2.0)),
+    //     );
+
+    //     let mut button = FramedButton {
+    //         button_status: ButtonStatus::None,
+    //         texture: texture,
+    //         text: text,
+    //         drwob_essential: DrawableObjectEssential::new(true, depth),
+    //     };
+
+    //     button.make_this_none_status(ctx);
+    //     button
+    // }
+    
     pub fn new<'a>(
         ctx: &mut SuzuContext<'a>,
         rect: numeric::Rect,
-        borders: [numeric::Vector2f; 4],
+	r: f32,
         frame_width: f32,
         inner_color: ggraphics::Color,
         outer_color: ggraphics::Color,
@@ -2039,10 +2088,10 @@ impl FramedButton {
         font_info: FontInformation,
         depth: i8,
     ) -> Self {
-        let texture = shape::FramedTextBalloon::new(
+        let texture = shape::FramedRoundRect::new(
             ctx.context,
             rect,
-            borders,
+	    r,
             frame_width,
             inner_color,
             outer_color,
@@ -2083,10 +2132,31 @@ impl FramedButton {
         let font_info = FontInformation::new(
             ctx.resource.get_font(FontID::JpFude1),
             font_size,
-            ggraphics::WHITE,
+            ggraphics::Color::WHITE,
         );
 
-        FramedButton::new(
+        // FramedButton::new(
+        //     ctx,
+        //     numeric::Rect::new(
+        //         pos.x,
+        //         pos.y,
+        //         font_size.x * (text.len() as f32 / 3.0) + 50.0,
+        //         font_size.y + 50.0,
+        //     ),
+        //     [
+        //         numeric::Vector2f::new(5.0, 5.0),
+        //         numeric::Vector2f::new(5.0, 5.0),
+        //         numeric::Vector2f::new(5.0, 5.0),
+        //         numeric::Vector2f::new(5.0, 5.0),
+        //     ],
+        //     2.0,
+        //     ggraphics::Color::from_rgba(90, 80, 63, 255),
+        //     ggraphics::Color::from_rgba(219, 212, 184, 255),
+        //     text.to_string(),
+        //     font_info,
+        //     0,
+        // )
+	FramedButton::new(
             ctx,
             numeric::Rect::new(
                 pos.x,
@@ -2094,12 +2164,7 @@ impl FramedButton {
                 font_size.x * (text.len() as f32 / 3.0) + 50.0,
                 font_size.y + 50.0,
             ),
-            [
-                numeric::Vector2f::new(5.0, 5.0),
-                numeric::Vector2f::new(5.0, 5.0),
-                numeric::Vector2f::new(5.0, 5.0),
-                numeric::Vector2f::new(5.0, 5.0),
-            ],
+	    5.0,
             2.0,
             ggraphics::Color::from_rgba(90, 80, 63, 255),
             ggraphics::Color::from_rgba(219, 212, 184, 255),

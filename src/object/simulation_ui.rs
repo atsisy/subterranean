@@ -16,7 +16,7 @@ use crate::{
     core::{FontID, TextureID, TileBatchTextureID},
     scene::DrawRequest,
 };
-use torifune::roundup2f;
+use torifune::{mintp, roundup2f};
 
 use number_to_jk::number_to_jk;
 
@@ -209,23 +209,23 @@ impl DrawableComponent for Meter {
                 self.frame.get_mode(),
                 self.frame.get_bounds(),
                 self.frame.get_color(),
-            )
+            ).expect("failed to create rectangle")
             .rectangle(
                 self.empty_fill.get_mode(),
                 self.empty_fill.get_bounds(),
                 self.empty_fill.get_color(),
-            )
+            ).expect("failed to create rectangle")
             .rectangle(
                 self.count_fill.get_mode(),
                 self.count_fill.get_bounds(),
                 self.count_fill.get_color(),
-            )
+            ).expect("failed to create rectangle")
             .build(ctx)?;
 
         ggraphics::draw(
             ctx,
             &mesh,
-            ggraphics::DrawParam::default().dest(self.position),
+            ggraphics::DrawParam::default().dest(mintp!(self.position)),
         )
     }
 
@@ -280,7 +280,7 @@ impl Choice {
                                 FontInformation::new(
                                     ctx.resource.get_font(FontID::DEFAULT),
                                     numeric::Vector2f::new(24.0, 24.0),
-                                    ggraphics::BLACK,
+                                    ggraphics::Color::BLACK,
                                 ),
                             )),
                             None,
@@ -753,9 +753,10 @@ impl ResultMeter {
             pos.y,
         ));
 
+	let rect_pos = pos.point();
         let desc_text = UniText::new(
             title,
-            pos.point().into(),
+	    numeric::Point2f::new(rect_pos.x, rect_pos.y),
             numeric::Vector2f::new(1.0, 1.0),
             0.0,
             depth,

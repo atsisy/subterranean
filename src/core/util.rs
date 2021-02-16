@@ -146,11 +146,11 @@ pub fn find_proper_window_position(
 }
 
 thread_local! {
-    static unique_id: RefCell<u64> = RefCell::new(0);
+    static UNIQUE_ID: RefCell<u64> = RefCell::new(0);
 }
 
 pub fn get_unique_id() -> u64 {
-    unique_id.with(|id| {
+    UNIQUE_ID.with(|id| {
         // インクリメント
         *id.borrow_mut() += 1;
         id.borrow().clone()

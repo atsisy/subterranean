@@ -152,6 +152,8 @@ pub enum TextureID {
     Coin100Yen,
     Coin50Yen,
     Coin500Yen,
+    BaraBG,
+    SuzunaanMap,
     Unknown,
 }
 
@@ -258,6 +260,8 @@ impl FromStr for TextureID {
             "Coin100Yen" => Ok(Self::Coin100Yen),
             "Coin50Yen" => Ok(Self::Coin50Yen),
             "Coin500Yen" => Ok(Self::Coin500Yen),
+	    "BaraBG" => Ok(Self::BaraBG),
+	    "SuzunaanMap" => Ok(Self::SuzunaanMap),
             _ => Err(()),
         }
     }
@@ -342,6 +346,8 @@ impl TextureID {
             73 => Some(Self::Coin100Yen),
             74 => Some(Self::Coin50Yen),
             75 => Some(Self::Coin500Yen),
+	    76 => Some(Self::BaraBG),
+	    77 => Some(Self::SuzunaanMap),
             _ => None,
         }
     }
@@ -987,6 +993,7 @@ impl GameResource {
             texture_resource_paths: texture_paths_map,
             textures: textures,
             fonts: fonts,
+	    
             tile_batchs: sprite_batchs,
             customers_name: src_file.customers_name,
             books_information: src_file.books_information,
@@ -1108,12 +1115,12 @@ impl GameResource {
         self.se_manager.play(ctx, sound_data.clone(), flags)
     }
 
-    pub fn stop_bgm(&mut self, handler: sound::SoundHandler) {
-        self.bgm_manager.stop(handler);
+    pub fn stop_bgm(&mut self, ctx: &mut ggez::Context, handler: sound::SoundHandler) {
+        self.bgm_manager.stop(ctx, handler);
     }
 
-    pub fn stop_se(&mut self, handler: sound::SoundHandler) {
-        self.bgm_manager.stop(handler);
+    pub fn stop_se(&mut self, ctx: &mut ggez::Context, handler: sound::SoundHandler) {
+        self.bgm_manager.stop(ctx, handler);
     }
 
     pub fn ref_bgm(&self, handler: sound::SoundHandler) -> &sound::PlayableSound {
@@ -2555,16 +2562,16 @@ impl SceneController {
     }
 }
 
-pub struct State<'data> {
+pub struct State {
     clock: Clock,
     fps: f64,
     scene_controller: SceneController,
-    game_data: &'data mut GameResource,
+    game_data: GameResource,
 }
 
-impl<'data> ggez::event::EventHandler for State<'data> {
+impl ggez::event::EventHandler for State {
     fn update(&mut self, ctx: &mut Context) -> GameResult<()> {
-        self.scene_controller.run_pre_process(ctx, self.game_data);
+        self.scene_controller.run_pre_process(ctx, &mut self.game_data);
 
         self.clock += 1;
         if (self.clock % 100) == 0 {
@@ -2585,7 +2592,7 @@ impl<'data> ggez::event::EventHandler for State<'data> {
 
         graphics::present(ctx)?;
 
-        self.scene_controller.run_post_process(ctx, self.game_data);
+        self.scene_controller.run_post_process(ctx, &mut self.game_data);
 
         Ok(())
     }
@@ -2603,18 +2610,18 @@ impl<'data> ggez::event::EventHandler for State<'data> {
         repeat: bool,
     ) {
         self.scene_controller
-            .key_down_event(ctx, self.game_data, keycode, keymods, repeat);
+            .key_down_event(ctx, &mut self.game_data, keycode, keymods, repeat);
     }
 
     fn key_up_event(&mut self, ctx: &mut ggez::Context, keycode: KeyCode, keymods: KeyMods) {
         self.scene_controller
-            .key_up_event(ctx, self.game_data, keycode, keymods);
+            .key_up_event(ctx, &mut self.game_data, keycode, keymods);
     }
 
     fn mouse_motion_event(&mut self, ctx: &mut Context, x: f32, y: f32, dx: f32, dy: f32) {
         self.scene_controller.mouse_motion_event(
             ctx,
-            self.game_data,
+            &mut self.game_data,
             numeric::Point2f::new(x, y),
             numeric::Vector2f::new(dx, dy),
         );
@@ -2629,7 +2636,7 @@ impl<'data> ggez::event::EventHandler for State<'data> {
     ) {
         self.scene_controller.mouse_button_down_event(
             ctx,
-            self.game_data,
+            &mut self.game_data,
             button,
             numeric::Point2f::new(x, y),
         );
@@ -2644,7 +2651,7 @@ impl<'data> ggez::event::EventHandler for State<'data> {
     ) {
         self.scene_controller.mouse_button_up_event(
             ctx,
-            self.game_data,
+            &mut self.game_data,
             button,
             numeric::Point2f::new(x, y),
         );
@@ -2652,21 +2659,21 @@ impl<'data> ggez::event::EventHandler for State<'data> {
 
     fn mouse_wheel_event(&mut self, ctx: &mut Context, x: f32, y: f32) {
         self.scene_controller
-            .mouse_wheel_scroll_event(ctx, self.game_data, x, y);
+            .mouse_wheel_scroll_event(ctx, &mut self.game_data, x, y);
     }
 
     fn focus_event(&mut self, ctx: &mut Context, gained: bool) {
         if gained {
-            self.scene_controller.focus_event(ctx, self.game_data);
+            self.scene_controller.focus_event(ctx, &mut self.game_data);
         } else {
-            self.scene_controller.unfocus_event(ctx, self.game_data);
+            self.scene_controller.unfocus_event(ctx, &mut self.game_data);
         }
     }
 }
 
-impl<'data> State<'data> {
-    pub fn new(ctx: &mut Context, game_data: &'data mut GameResource) -> GameResult<State<'data>> {
-        let scene_controller = SceneController::new(ctx, game_data);
+impl State {
+    pub fn new(ctx: &mut Context, mut game_data: GameResource) -> GameResult<State> {
+        let scene_controller = SceneController::new(ctx, &mut game_data);
 
         game_data
             .bgm_manager

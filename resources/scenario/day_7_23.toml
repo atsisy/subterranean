@@ -8,7 +8,7 @@ save = 4
 [[scenario-group]]
 type = "scenario"
 id = 10
-next-id = 12
+next-id = 11
 background = "SightBackground1"
 
 [scenario-group.tachie-data]
@@ -23,89 +23,201 @@ right = "KosuzuTachie1"
    text_src_path = "./resources/scenario/7_23/1.txt"
 
 [[scenario-group]]
-type = "choice"
-header_text = "サァ準備ができたわよ"
+type = "wait"
 id = 11
-   [scenario-group.tachie-data]
-   right = "KosuzuSmile1"
-   left = "KosuzuTachie1"
+next-id = 12
+opecode = "ShowStatusScreen"
+background = "SightBackground1"
 
-   [[scenario-group.choice-pattern]]
-   pattern = "行動開始"
-   jump-id = 13
-   [[scenario-group.choice-pattern]]
-   pattern = "状態確認"
-   jump-id = 2
-   [[scenario-group.choice-pattern]]
-   pattern = "保存"
-   jump-id = 4
+[[scenario-group]]
+type = "wait"
+id = 12
+next-id = 13
+opecode = "ShowAd"
+background = "SightBackground1"
+
+[[scenario-group]]
+type = "scenario"
+id = 13
+next-id = 14
+background = "SightBackground1"
+
+[[scenario-group.text]]
+text = """
+
+まずこれネ。お店の評判は重要よ。お客さんがたくさん来てくれるかもしれないわ。
+もし悪評が広まれば商売上がったりネ。"""
+
+
+[scenario-group.tachie-data]
+right = "KosuzuTachie1"
+
+   [scenario-group.default-text-attribute]
+   fpc = 2.0
+   font_scale = 32.0
+   color = 0x000000ff
+
+[[scenario-group]]
+type = "wait"
+id = 14
+next-id = 15
+opecode = "ShowAdAgency"
+background = "SightBackground1"
+
+[[scenario-group]]
+type = "scenario"
+id = 15
+next-id = 16
+background = "SightBackground1"
+
+[[scenario-group.text]]
+text = """
+
+次にこれ。人間の里で商売してるのはあなただけじゃない。
+みんな自分の店の宣伝をしようとしているわ。
+その手段として他のお店に宣伝をお願いすることもあります。
+鈴奈庵も例外じゃないわ。鈴奈庵の評判が良ければ大きなお店から宣伝をお願いされるかも。
+宣伝をすることでもられるお金も立派なお給料よ。
+"""
+
+[scenario-group.tachie-data]
+right = "KosuzuTachie1"
+
+   [scenario-group.default-text-attribute]
+   fpc = 2.0
+   font_scale = 32.0
+   color = 0x000000ff
+
+[[scenario-group]]
+type = "wait"
+id = 16
+next-id = 17
+opecode = "ShowSchedule"
+background = "SightBackground1"
+
+[[scenario-group]]
+type = "scenario"
+id = 17
+next-id = 18
+background = "SightBackground1"
+
+[[scenario-group.text]]
+text = """
+
+次はこれを見て。まだ今週の予定は決めてないみたいネ。
+週の始まりにはその週の予定を決めましょう。"""
+
+[scenario-group.tachie-data]
+right = "KosuzuTachie1"
+
+   [scenario-group.default-text-attribute]
+   fpc = 2.0
+   font_scale = 32.0
+   color = 0x000000ff
+
+[[scenario-group]]
+type = "wait"
+id = 18
+next-id = 19
+opecode = "ShowMain"
+background = "SightBackground1"
+
+[[scenario-group]]
+type = "scenario"
+id = 19
+next-id = 20
+background = "SightBackground1"
+
+[[scenario-group.text]]
+text = """
+
+最後にこれ。今の所持金だったりお店の状態が分かるわ。
+これを参考にしながら計画的にお仕事を頑張りなさい。
+
+分かったような分からないような。
+
+習うより慣れろよ。それじゃ、また今度鈴奈庵に来るわネ。
+
+一体何しに来たんだ。"""
+
+[scenario-group.tachie-data]
+right = "KosuzuTachie1"
+
+   [scenario-group.default-text-attribute]
+   fpc = 2.0
+   font_scale = 32.0
+   color = 0x000000ff
+
+[[scenario-group]]
+type = "wait"
+id = 20
+next-id = 21
+opecode = "ScheduleCheck"
+background = "SightBackground1"
+
+[[scenario-group]]
+type = "wait"
+id = 21
+next-id = 22
+opecode = "ShowAd"
+background = "SightBackground1"
 
 [[scenario-group]]
 type = "choice"
-header_text = "宣伝の依頼もしないとネ"
-id = 14
+header_text = "宣伝の依頼もやらないとネ"
+id = 22
    [scenario-group.tachie-data]
    right = "KosuzuTachie1"
    left = "KosuzuTachie1"
 
    [[scenario-group.choice-pattern]]
    pattern = "完了"
-   jump-id = 18
+   jump-id = 23
 
 [[scenario-group]]
 type = "wait"
-id = 18
-next-id = 17
+id = 23
+next-id = 24
 opecode = "ShowAdAgency"
 background = "SightBackground1"
 
 [[scenario-group]]
 type = "choice"
 header_text = "宣伝の受注もしないとネ"
-id = 17
+id = 24
    [scenario-group.tachie-data]
    right = "KosuzuTachie1"
    left = "KosuzuTachie1"
 
    [[scenario-group.choice-pattern]]
    pattern = "完了"
-   jump-id = 16
+   jump-id = 25
 
 [[scenario-group]]
 type = "wait"
-id = 16
-next-id = 11
+id = 25
+next-id = 26
 opecode = "ShowMain"
 background = "SightBackground1"
+
+[[scenario-group]]
+type = "choice"
+header_text = "サァ準備ができたわよ"
+id = 26
+   [scenario-group.tachie-data]
+   right = "KosuzuSmile1"
+   left = "KosuzuTachie1"
+
+   [[scenario-group.choice-pattern]]
+   pattern = "行動開始"
+   jump-id = 27
+   [[scenario-group.choice-pattern]]
+   pattern = "保存"
+   jump-id = 4
 
 
 [[scenario-group]]
 type = "builtin"
 opecode = "StartSchedule"
-id = 13
+id = 27
 background = "SightBackground1"
-
-[[scenario-group]]
-type = "wait"
-id = 12
-next-id = 20
-opecode = "ShowStatusScreen"
-background = "SightBackground1"
-
-[[scenario-group]]
-type = "wait"
-id = 20
-next-id = 15
-opecode = "ScheduleCheck"
-background = "SightBackground1"
-
-[[scenario-group]]
-type = "wait"
-id = 15
-next-id = 14
-opecode = "ShowAd"
-background = "SightBackground1"
-
-[scenario-group.tachie-data]
-right = "KosuzuTachie1"
-left = "KosuzuTachie1"

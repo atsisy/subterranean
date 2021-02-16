@@ -13,7 +13,7 @@ use torifune::hash;
 use torifune::impl_drawable_object_for_wrapped;
 use torifune::impl_texture_object_for_wrapped;
 use torifune::numeric;
-use torifune::roundup2f;
+use torifune::{mintp_new, mintp, roundup2f};
 
 use crate::core::{BookInformation, RentalLimit, TileBatchTextureID};
 use crate::object::move_fn;
@@ -1959,22 +1959,22 @@ impl AlphaScope {
         for r in 0..radius {
             builder.circle(
                 ggraphics::DrawMode::stroke(1.0),
-                numeric::Point2f::new(0.0, 0.0),
+                mintp_new!(0.0, 0.0),
                 r as f32,
                 0.0001,
                 ggraphics::Color::from_rgba_u32(alpha as u32),
-            );
+            ).expect("Failed to create circle");
 
             alpha -= p_alpha;
         }
 
+	let draw_param = ggraphics::DrawParam::default()
+	    .dest(mintp!(pos))
+	    .color(ggraphics::Color::from_rgba_u32(0xffffff00));
+
         AlphaScope {
             scope: builder.build(ctx.context).unwrap(),
-            draw_param: ggraphics::DrawParam {
-                dest: pos.into(),
-                color: ggraphics::Color::from_rgba_u32(0xffffff00),
-                ..Default::default()
-            },
+            draw_param: draw_param,
             drwob_essential: DrawableObjectEssential::new(true, depth),
         }
     }

@@ -17,7 +17,7 @@ pub fn main() {
         path::PathBuf::from("resources")
     };
 
-    let (ref mut ctx, ref mut event_loop) = ContextBuilder::new("suzu", "akichi")
+    let (mut ctx, event_loop) = ContextBuilder::new("suzu", "akichi")
         .window_setup(
             conf::WindowSetup::default()
                 .title("suzu")
@@ -34,15 +34,16 @@ pub fn main() {
             max_width: 0.0,
             min_height: 0.0,
             max_height: 0.0,
+	    visible: true,
             resizable: false,
         })
         .build()
         .unwrap();
 
-    let mut game_data: GameResource = GameResource::new(ctx, "/game_data.toml".to_owned());
+    let game_data: GameResource = GameResource::new(&mut ctx, "/game_data.toml".to_owned());
 
     {
-        let state = &mut State::new(ctx, &mut game_data).unwrap();
-        event::run(ctx, event_loop, state).unwrap();
+        let state = State::new(&mut ctx, game_data).unwrap();
+        event::run(ctx, event_loop, state);
     }
 }

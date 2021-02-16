@@ -552,7 +552,7 @@ impl ScenarioAdPage {
         let font_info = FontInformation::new(
             ctx.resource.get_font(FontID::Cinema),
             numeric::Vector2f::new(30.0, 30.0),
-            ggraphics::BLACK,
+            ggraphics::Color::BLACK,
         );
         let mut header_text = UniText::new(
             "鈴奈庵の宣伝広告".to_string(),
@@ -751,7 +751,7 @@ impl ScenarioAgencyPage {
         let font_info = FontInformation::new(
             ctx.resource.get_font(FontID::Cinema),
             numeric::Vector2f::new(30.0, 30.0),
-            ggraphics::BLACK,
+            ggraphics::Color::BLACK,
         );
         let mut header_text = UniText::new(
             "鈴奈庵の広告受注".to_string(),
@@ -1992,7 +1992,7 @@ impl ScenarioSchedPage {
         let font_info = FontInformation::new(
             ctx.resource.get_font(FontID::Cinema),
             numeric::Vector2f::new(30.0, 30.0),
-            ggraphics::BLACK,
+            ggraphics::Color::BLACK,
         );
         let mut header_text = UniText::new(
             "鈴奈庵店番計画表".to_string(),

@@ -7,7 +7,7 @@ edition = "2018"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-ggez = "0.5.1"
+ggez = { git = "https://github.com/ggez/ggez.git", branch = "devel" }
 mint = "0.5.5"
 toml = "0.5.6"
 collision = "0.20.1"

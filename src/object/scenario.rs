@@ -11,7 +11,7 @@ use torifune::impl_drawable_object_for_wrapped;
 use torifune::impl_texture_object_for_wrapped;
 
 use super::*;
-use crate::{core::util, object::util_object::*};
+use crate::object::util_object::*;
 use crate::parse_toml_file;
 use crate::scene::scenario_scene::ScenarioContext;
 use crate::scene::{SceneID, SceneTransition};
@@ -1808,7 +1808,7 @@ impl ScenarioEvent {
             FontInformation::new(
                 ctx.resource.get_font(FontID::Cinema),
                 numeric::Vector2f::new(32.0, 32.0),
-                ggraphics::BLACK,
+                ggraphics::Color::BLACK,
             ),
         );
     }

@@ -63,8 +63,8 @@ pub trait Clickable {
         &mut self,
         _ctx: &mut ggez::Context,
         _point: numeric::Point2f,
-    ) -> ggez::input::mouse::MouseCursor {
-        ggez::input::mouse::MouseCursor::Default
+    ) -> ggez::input::mouse::CursorIcon {
+        ggez::input::mouse::CursorIcon::Default
     }
 }
 
