@@ -6,7 +6,7 @@ use torifune::device as tdev;
 use torifune::graphics::object::Effectable;
 use torifune::numeric;
 
-use crate::core::{GeneralScenarioID, MouseInformation, SuzuContext, TileBatchTextureID};
+use crate::core::{GameMode, GeneralScenarioID, MouseInformation, SuzuContext, TileBatchTextureID};
 
 use crate::add_delay_event;
 use crate::core::game_system::*;
@@ -54,10 +54,17 @@ pub struct ScenarioScene {
 impl ScenarioScene {
     pub fn new<'a>(ctx: &mut SuzuContext<'a>, scenario_select: ScenarioSelect) -> Self {
         let file_path = match scenario_select {
-            ScenarioSelect::DayBegin => ctx
-                .resource
-                .get_day_scenario_path(&ctx.take_save_data().date)
-                .expect("BUG"),
+            ScenarioSelect::DayBegin => {
+		match ctx.take_save_data().game_mode {
+		    GameMode::Story => 		ctx
+			.resource
+			.get_day_scenario_path(&ctx.take_save_data().date)
+			.expect("BUG"),
+		    GameMode::TimeAttack(_) => {
+			"/scenario/time_attack_default.toml".to_string()
+		    }
+		}
+	    },
             ScenarioSelect::OpeningEpisode => panic!(""),
             _ => panic!(""),
         };
