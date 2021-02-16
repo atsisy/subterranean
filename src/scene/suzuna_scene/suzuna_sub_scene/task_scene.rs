@@ -75,8 +75,8 @@ impl TaskScene {
 
         if let Some(customer_request) = customer_request.as_ref() {
             match customer_request {
-                CustomerRequest::Borrowing(_) => ctx.savable_data.award_data.borrowing_count += 1,
-                CustomerRequest::Returning(_) => ctx.savable_data.award_data.returning_count += 1,
+                CustomerRequest::Borrowing(_) => ctx.take_save_data_mut().award_data.borrowing_count += 1,
+                CustomerRequest::Returning(_) => ctx.take_save_data_mut().award_data.returning_count += 1,
             }
         }
 
@@ -132,7 +132,7 @@ impl TaskScene {
     }
 
     fn check_done_today_work<'a>(&mut self, ctx: &mut SuzuContext<'a>, request: CustomerRequest) {
-        let task_result = &mut ctx.savable_data.task_result;
+        let task_result = &mut ctx.take_save_data_mut().task_result;
         match request {
             CustomerRequest::Borrowing(request_information) => {
                 // 貸出本を記録
@@ -168,7 +168,7 @@ impl TaskScene {
 
         self.scene_transition_close_effect(ctx, t);
 
-        ctx.savable_data
+        ctx.take_save_data_mut()
             .suzunaan_status
             .eval_reputation(ReputationEvent::DoneDeskTask);
     }

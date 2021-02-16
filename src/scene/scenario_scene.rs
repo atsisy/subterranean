@@ -56,7 +56,7 @@ impl ScenarioScene {
         let file_path = match scenario_select {
             ScenarioSelect::DayBegin => ctx
                 .resource
-                .get_day_scenario_path(&ctx.savable_data.date)
+                .get_day_scenario_path(&ctx.take_save_data().date)
                 .expect("BUG"),
             ScenarioSelect::OpeningEpisode => panic!(""),
             _ => panic!(""),
@@ -248,7 +248,7 @@ impl ScenarioScene {
                     "NextDay" => {
                         self.status_screen.show_main_page(ctx);
                         self.status_screen.change_suzunaan_reputation(ctx, -2.0);
-                        ctx.savable_data.suzunaan_status.reputation -= 2.0;
+                        ctx.take_save_data_mut().suzunaan_status.reputation -= 2.0;
 
                         add_delay_event!(
                             self.event_list,
@@ -312,7 +312,7 @@ impl ScenarioScene {
         self.scenario_ctx.builtin_command_inexec = true;
         self.status_screen.show_main_page(ctx);
         self.status_screen.change_kosuzu_hp(ctx, -20.0);
-        ctx.savable_data.suzunaan_status.kosuzu_hp -= 20.0;
+        ctx.take_save_data_mut().suzunaan_status.kosuzu_hp -= 20.0;
 
         add_delay_event!(
             self.event_list,
@@ -320,7 +320,7 @@ impl ScenarioScene {
                 let reputation_diff = ctx.current_total_ad_reputation_gain();
                 slf.status_screen
                     .change_suzunaan_reputation(ctx, reputation_diff as f32);
-                ctx.savable_data.suzunaan_status.reputation += reputation_diff as f32;
+                ctx.take_save_data_mut().suzunaan_status.reputation += reputation_diff as f32;
             },
             self.get_current_clock() + 100
         );
@@ -328,14 +328,14 @@ impl ScenarioScene {
         let money_diff = ctx.current_total_ad_agency_money_gain() - ctx.current_total_ad_cost();
         self.status_screen
             .change_main_page_money(ctx, money_diff, self.get_current_clock());
-        ctx.savable_data.task_result.total_money += money_diff;
+        ctx.take_save_data_mut().task_result.total_money += money_diff;
 
         add_delay_event!(
             self.event_list,
             |slf, ctx, _| {
                 slf.scene_transition = SceneID::SuzunaShop;
                 slf.scene_transition_type = SceneTransition::SwapTransition;
-                ctx.savable_data.award_data.shop_work_count += 1;
+                ctx.take_save_data_mut().award_data.shop_work_count += 1;
             },
             self.get_current_clock() + 300
         );
@@ -360,7 +360,7 @@ impl ScenarioScene {
         let money_diff =
             ctx.current_total_ad_agency_money_gain() - ctx.current_total_ad_cost() - 400;
 
-        if ctx.savable_data.task_result.total_money + money_diff < 0 {
+        if ctx.take_save_data().task_result.total_money + money_diff < 0 {
             let path = ctx
                 .resource
                 .get_general_scenario_path(&GeneralScenarioID::NoEnoughMoney)
@@ -373,14 +373,14 @@ impl ScenarioScene {
 
         self.status_screen
             .change_main_page_money(ctx, money_diff, self.get_current_clock());
-        ctx.savable_data.task_result.total_money += money_diff;
+        ctx.take_save_data_mut().task_result.add_total_money(money_diff);
 
         self.scenario_ctx.builtin_command_inexec = true;
         self.status_screen.show_main_page(ctx);
         self.status_screen.change_kosuzu_hp(ctx, 40.0);
-        ctx.savable_data.suzunaan_status.kosuzu_hp += 40.0;
-        if ctx.savable_data.suzunaan_status.kosuzu_hp > 100.0 {
-            ctx.savable_data.suzunaan_status.kosuzu_hp = 100.0;
+        ctx.take_save_data_mut().suzunaan_status.kosuzu_hp += 40.0;
+        if ctx.take_save_data().suzunaan_status.kosuzu_hp > 100.0 {
+            ctx.take_save_data_mut().suzunaan_status.kosuzu_hp = 100.0;
         }
 
         add_delay_event!(
@@ -389,7 +389,7 @@ impl ScenarioScene {
                 let reputation_diff = ctx.current_total_ad_reputation_gain() as f32;
                 slf.status_screen
                     .change_suzunaan_reputation(ctx, reputation_diff);
-                ctx.savable_data.suzunaan_status.reputation += reputation_diff;
+                ctx.take_save_data_mut().suzunaan_status.reputation += reputation_diff;
             },
             self.get_current_clock() + 100
         );
@@ -399,7 +399,7 @@ impl ScenarioScene {
             |slf, ctx, _| {
                 slf.scene_transition = SceneID::Scenario;
                 slf.scene_transition_type = SceneTransition::SwapTransition;
-                ctx.savable_data.award_data.going_out_count += 1;
+                ctx.take_save_data_mut().award_data.going_out_count += 1;
                 ctx.go_next_day();
             },
             self.get_current_clock() + 200
@@ -424,15 +424,15 @@ impl ScenarioScene {
         self.scenario_ctx.builtin_command_inexec = true;
         self.status_screen.show_main_page(ctx);
         self.status_screen.change_kosuzu_hp(ctx, 20.0);
-        ctx.savable_data.suzunaan_status.kosuzu_hp += 20.0;
-        if ctx.savable_data.suzunaan_status.kosuzu_hp > 100.0 {
-            ctx.savable_data.suzunaan_status.kosuzu_hp = 100.0;
+        ctx.take_save_data_mut().suzunaan_status.kosuzu_hp += 20.0;
+        if ctx.take_save_data().suzunaan_status.kosuzu_hp > 100.0 {
+            ctx.take_save_data_mut().suzunaan_status.kosuzu_hp = 100.0;
         }
 
         let money_diff = ctx.current_total_ad_agency_money_gain() - ctx.current_total_ad_cost();
         self.status_screen
             .change_main_page_money(ctx, money_diff, self.get_current_clock());
-        ctx.savable_data.task_result.total_money += money_diff;
+        ctx.take_save_data_mut().task_result.total_money += money_diff;
 
         add_delay_event!(
             self.event_list,
@@ -440,7 +440,7 @@ impl ScenarioScene {
                 let reputation_diff = ctx.current_total_ad_reputation_gain() as f32 - 2.0;
                 slf.status_screen
                     .change_suzunaan_reputation(ctx, reputation_diff);
-                ctx.savable_data.suzunaan_status.reputation += reputation_diff;
+                ctx.take_save_data_mut().suzunaan_status.reputation += reputation_diff;
             },
             self.get_current_clock() + 100
         );
@@ -450,7 +450,7 @@ impl ScenarioScene {
             |slf, ctx, _| {
                 slf.scene_transition = SceneID::Scenario;
                 slf.scene_transition_type = SceneTransition::SwapTransition;
-                ctx.savable_data.award_data.taking_rest_count += 1;
+                ctx.take_save_data_mut().award_data.taking_rest_count += 1;
                 ctx.go_next_day();
             },
             self.get_current_clock() + 300
@@ -472,7 +472,7 @@ impl ScenarioScene {
     }
 
     pub fn start_schedule<'a>(&mut self, ctx: &mut SuzuContext<'a>) {
-        match ctx.savable_data.get_todays_schedule().unwrap() {
+        match ctx.take_save_data().get_todays_schedule().unwrap() {
             DayWorkType::ShopWork => {
                 self.start_shop_work_schedule(ctx);
             }
@@ -611,7 +611,6 @@ impl SceneManager for ScenarioScene {
                 && !self.scenario_ctx.builtin_command_inexec
             {
                 self.start_schedule(ctx);
-                println!("{}", ctx.savable_data.task_result.total_money);
             }
 
             self.status_screen.update(ctx, t);

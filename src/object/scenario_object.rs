@@ -96,7 +96,7 @@ impl SuzunaStatusMainPage {
         let mut money_text = UniText::new(
             format!(
                 "{}円",
-                number_to_jk(ctx.savable_data.task_result.total_money as u64)
+                number_to_jk(ctx.take_save_data().task_result.total_money as u64)
             ),
             numeric::Point2f::new(0.0, 0.0),
             numeric::Vector2f::new(1.0, 1.0),
@@ -163,7 +163,7 @@ impl SuzunaStatusMainPage {
         let mut todays_sched_text = UniText::new(
             format!(
                 "{}",
-                if let Some(sched) = ctx.savable_data.get_todays_schedule() {
+                if let Some(sched) = ctx.take_save_data().get_todays_schedule() {
                     sched.to_string_jp()
                 } else {
                     "未定".to_string()
@@ -189,7 +189,7 @@ impl SuzunaStatusMainPage {
             numeric::Rect::new(90.0, 290.0, 400.0, 40.0),
             6.0,
             100.0,
-            ctx.savable_data.suzunaan_status.reputation,
+            ctx.take_save_data().suzunaan_status.reputation,
             1,
         );
 
@@ -199,7 +199,7 @@ impl SuzunaStatusMainPage {
             numeric::Rect::new(90.0, 360.0, 400.0, 40.0),
             6.0,
             100.0,
-            ctx.savable_data.suzunaan_status.kosuzu_hp,
+            ctx.take_save_data().suzunaan_status.kosuzu_hp,
             1,
         );
 
@@ -209,8 +209,8 @@ impl SuzunaStatusMainPage {
             day_text: VerticalText::new(
                 format!(
                     "{}月{}日",
-                    number_to_jk::number_to_jk(ctx.savable_data.date.month as u64),
-                    number_to_jk::number_to_jk(ctx.savable_data.date.day as u64),
+                    number_to_jk::number_to_jk(ctx.take_save_data().date.month as u64),
+                    number_to_jk::number_to_jk(ctx.take_save_data().date.day as u64),
                 ),
                 numeric::Point2f::new(590.0, 50.0),
                 numeric::Vector2f::new(1.0, 1.0),
@@ -240,7 +240,7 @@ impl SuzunaStatusMainPage {
 
     pub fn run_money_change_effect<'a>(&mut self, ctx: &mut SuzuContext<'a>, diff: i32, t: Clock) {
         let diff_per_clock = diff as f32 / 60.0;
-        let current_money = ctx.savable_data.task_result.total_money;
+        let current_money = ctx.take_save_data().task_result.total_money;
 
         for additional in 1..=60 {
             if additional % 5 != 0 {
@@ -314,7 +314,7 @@ impl SuzunaStatusMainPage {
     pub fn update_todays_sched_text<'a>(&mut self, ctx: &mut SuzuContext<'a>) {
         self.todays_sched_text.replace_text(&format!(
             "{}",
-            if let Some(sched) = ctx.savable_data.get_todays_schedule() {
+            if let Some(sched) = ctx.take_save_data().get_todays_schedule() {
                 sched.to_string_jp()
             } else {
                 "未定".to_string()
@@ -529,7 +529,7 @@ impl ScenarioAdPage {
                 ctx,
                 entry_pos,
                 numeric::Vector2f::new(34.0, 34.0),
-                ctx.savable_data.get_ad_status(*ad_type),
+                ctx.take_save_data().get_ad_status(*ad_type),
                 format!(
                     "{:　<7}{:　>4}円/日\n {:　>7}点評判増加",
                     ty_str,
@@ -575,8 +575,7 @@ impl ScenarioAdPage {
     pub fn click_handler<'a>(&mut self, ctx: &mut SuzuContext<'a>, click_point: numeric::Point2f) {
         for (ad_type, entry) in self.ad_table.iter_mut() {
             entry.check_box.click_handler(click_point);
-            ctx.savable_data
-                .change_ad_status(*ad_type, entry.is_checked());
+            ctx.change_ad_status(*ad_type, entry.is_checked());
         }
     }
 
@@ -713,7 +712,7 @@ impl ScenarioAgencyPage {
                 ctx,
                 entry_pos,
                 numeric::Vector2f::new(32.0, 32.0),
-                ctx.savable_data.get_ad_agency_status(ad_type),
+                ctx.take_save_data().get_ad_agency_status(ad_type),
                 format!(
                     "{:　<6}評判{:　>2}点以上\n{:　>9}円収入増加",
                     ty_str,
@@ -741,7 +740,7 @@ impl ScenarioAgencyPage {
             SuzunaAdAgencyType::Hieda,
             SuzunaAdAgencyType::YamaJinja,
         ] {
-            if let Some(is_checked) = ctx.savable_data.agency_status.get(&ad_type) {
+            if let Some(is_checked) = ctx.take_save_data().agency_status.get(&ad_type) {
                 if *is_checked {
                     ad_table.get_mut(&ad_type).unwrap().check_box.apply_check();
                 }
@@ -774,11 +773,10 @@ impl ScenarioAgencyPage {
     pub fn click_handler<'a>(&mut self, ctx: &mut SuzuContext<'a>, click_point: numeric::Point2f) {
         for (ad_type, entry) in self.ad_table.iter_mut() {
             if ctx.resource.get_default_ad_agency_cost(ad_type) as f32
-                <= ctx.savable_data.suzunaan_status.reputation
+                <= ctx.take_save_data().suzunaan_status.reputation
             {
                 entry.check_box.click_handler(click_point);
-                ctx.savable_data
-                    .change_ad_agency_status(*ad_type, entry.is_checked());
+                ctx.change_ad_agency_status(*ad_type, entry.is_checked());
             }
         }
     }
@@ -1489,7 +1487,7 @@ impl WeekScheduleWindow {
 
         if !scno_ctx.schedule_redefine {
             for i in 0..7 {
-                let day_work_type = ctx.savable_data.week_schedule.get_schedule_at(i);
+                let day_work_type = ctx.take_save_data().week_schedule.get_schedule_at(i);
                 if day_work_type.is_none() {
                     continue;
                 }
@@ -1550,10 +1548,10 @@ impl WeekScheduleWindow {
             None
         } else {
             let date_diff = ctx
-                .savable_data
+                .take_save_data()
                 .week_schedule
                 .get_first_day()
-                .diff_day(&ctx.savable_data.date);
+                .diff_day(&ctx.take_save_data().date);
             let p = frame.get_grid_topleft(
                 numeric::Vector2u::new(date_diff.abs() as u32, 0),
                 numeric::Vector2f::new(0.0, 0.0),
@@ -1762,16 +1760,16 @@ impl StackMessagePassingWindow<WeekScheduleMessage> for WeekScheduleWindow {
         }
 
         if self.ok_button.contains(ctx.context, rpoint) {
-            let date = ctx.savable_data.date.clone();
+            let date = ctx.take_save_data().date.clone();
             if let Some(sched) = self.export_week_sched(date) {
-                ctx.savable_data.update_week_schedule(sched);
+                ctx.update_week_schedule(sched);
                 self.ok_button.hide();
 
                 let date_diff = ctx
-                    .savable_data
+                    .take_save_data()
                     .week_schedule
                     .get_first_day()
-                    .diff_day(&ctx.savable_data.date);
+                    .diff_day(&ctx.take_save_data().date);
                 let p = self.frame.get_grid_topleft(
                     numeric::Vector2u::new(date_diff.abs() as u32, 0),
                     numeric::Vector2f::new(0.0, 0.0),

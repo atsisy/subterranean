@@ -521,7 +521,7 @@ impl ScenarioMenuContents {
         }
 
         let mut reputation_text = VerticalText::new(
-            number_to_jk(ctx.savable_data.suzunaan_status.reputation as u64),
+            number_to_jk(ctx.take_save_data().suzunaan_status.reputation as u64),
             numeric::Point2f::new(0.0, 0.0),
             numeric::Vector2f::new(1.0, 1.0),
             0.0,
@@ -539,7 +539,7 @@ impl ScenarioMenuContents {
         let mut money_text = VerticalText::new(
             format!(
                 "{}円",
-                number_to_jk(ctx.savable_data.task_result.total_money as u64)
+                number_to_jk(ctx.take_save_data().task_result.total_money as u64)
             ),
             numeric::Point2f::new(0.0, 0.0),
             numeric::Vector2f::new(1.0, 1.0),
@@ -578,8 +578,8 @@ impl ScenarioMenuContents {
             day_text: UniText::new(
                 format!(
                     "{}, {}",
-                    ctx.savable_data.date.day,
-                    ctx.savable_data.date.to_month_string_eng_short()
+                    ctx.take_save_data().date.day,
+                    ctx.take_save_data().date.to_month_string_eng_short()
                 ),
                 numeric::Point2f::new(40.0, 70.0),
                 numeric::Vector2f::new(1.0, 1.0),

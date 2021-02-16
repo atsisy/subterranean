@@ -490,7 +490,7 @@ impl SelectShelvingBookUI {
         ui_rect: numeric::Rect,
         mut shelving_book: Vec<BookInformation>,
     ) -> Self {
-        let mut box_book_info = ctx.savable_data.task_result.not_shelved_books.clone();
+        let mut box_book_info = ctx.take_save_data().task_result.not_shelved_books.clone();
 
         box_book_info.sort_by(|a, b| a.billing_number.cmp(&b.billing_number));
         shelving_book.sort_by(|a, b| a.billing_number.cmp(&b.billing_number));
@@ -1200,7 +1200,7 @@ impl SelectStoreBookUI {
             debug::debug_screen_push_text(&format!("remove book: {}", selecting_index));
             let returned = self.shelving_books.swap_remove(*selecting_index);
             self.stored_books.push(returned);
-            ctx.savable_data.award_data.shelving_count += 1;
+            ctx.take_save_data_mut().award_data.shelving_count += 1;
         }
 
         self.update_window(ctx.context);
@@ -1645,7 +1645,7 @@ impl ShopMenuContents {
             ggraphics::Color::from_rgba_u32(0x000000ff),
         );
 
-        let task_result = &ctx.savable_data.task_result;
+        let task_result = &ctx.take_save_data().task_result;
 
         let large_scale_font = FontInformation::new(
             ctx.resource.get_font(FontID::JpFude1),

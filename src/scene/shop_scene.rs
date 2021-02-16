@@ -628,7 +628,7 @@ impl ShopScene {
         map_id: u32,
         new_books: Vec<BookInformation>,
     ) -> ShopScene {
-        let begining_save_data = ctx.savable_data.clone();
+        let begining_save_data = ctx.take_save_data().clone();
 
         let key_listener =
             tdev::KeyboardListener::new_masked(vec![tdev::KeyInputDevice::GenericKeyboard], vec![]);
@@ -658,7 +658,7 @@ impl ShopScene {
 
         let mut result_report = ResultReport::new();
         for new_book in new_books.iter() {
-            ctx.savable_data
+            ctx.take_save_data_mut()
                 .task_result
                 .not_shelved_books
                 .push(new_book.clone());
@@ -1413,7 +1413,7 @@ impl ShopScene {
             .shop_special_object
             .hide_shelving_select_ui(self.get_current_clock());
         if let Some((boxed, shelving)) = select_result {
-            ctx.savable_data.task_result.not_shelved_books = boxed;
+            ctx.take_save_data_mut().task_result.not_shelved_books = boxed;
             self.player.update_shelving_book(shelving);
             self.shop_menu
                 .update_contents(ctx, self.player.get_shelving_book());
@@ -1511,7 +1511,7 @@ impl ShopScene {
             self.event_list.add_event(
                 Box::new(move |slf: &mut Self, ctx, _| {
                     // reportに未配架の本のIDをメモする
-                    for book_info in ctx.savable_data.task_result.not_shelved_books.iter() {
+                    for book_info in ctx.take_save_data().task_result.not_shelved_books.iter() {
                         slf.result_report
                             .add_yet_shelved_book_id(book_info.get_unique_id());
                     }

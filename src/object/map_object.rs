@@ -914,12 +914,12 @@ impl CustomerCharacter {
 
     fn generate_hold_request<'a>(&mut self, ctx: &mut SuzuContext<'a>) -> CustomerRequest {
         let random_select = rand::random::<usize>() % 2
-            + if !ctx.savable_data.record_book_data.has_returning_request() {
+            + if !ctx.take_save_data().record_book_data.has_returning_request() {
                 1
             } else {
                 0
             };
-        let today = ctx.savable_data.date.clone();
+        let today = ctx.take_save_data().date.clone();
 
         match random_select {
             0 => CustomerRequest::Returning(ReturnBookInformation::new_random(

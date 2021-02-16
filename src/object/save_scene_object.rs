@@ -271,8 +271,8 @@ impl DrawableSaveEntry {
     }
 
     fn save_action<'a>(&mut self, ctx: &mut SuzuContext<'a>) {
-        ctx.savable_data.save(self.slot_id).unwrap();
-        let savable_data = ctx.savable_data.clone();
+	ctx.save(self.slot_id);
+        let savable_data = ctx.take_save_data().clone();
         self.update_entry_contents(ctx, savable_data);
     }
 

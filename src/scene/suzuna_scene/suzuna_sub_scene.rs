@@ -38,7 +38,7 @@ pub struct SuzunaSubScene {
 
 impl SuzunaSubScene {
     pub fn new<'a>(ctx: &mut SuzuContext<'a>, map_id: u32) -> Self {
-        let date = ctx.savable_data.date.clone();
+        let date = ctx.take_save_data().date.clone();
 
         let new_book_schedule =
             NewBookSchedule::from_toml(ctx, "/other_config/new_book_schedule.toml");
@@ -93,7 +93,7 @@ impl SuzunaSubScene {
                 let customer_request = match customer_request_hint.as_ref().unwrap() {
                     CustomerRequest::Borrowing(raw_info) => {
                         let borrowing_info = ctx
-                            .savable_data
+                            .take_save_data_mut()
                             .suzuna_book_pool
                             .generate_borrowing_request(
                                 &raw_info.borrower,
@@ -105,7 +105,7 @@ impl SuzunaSubScene {
                     }
                     CustomerRequest::Returning(_) => {
                         let request = ctx
-                            .savable_data
+                            .take_save_data()
                             .record_book_data
                             .pick_returning_request_up()
                             .unwrap();
@@ -114,7 +114,7 @@ impl SuzunaSubScene {
                     }
                 };
 
-                let record_book_data = ctx.savable_data.record_book_data.clone();
+                let record_book_data = ctx.take_save_data().record_book_data.clone();
 
                 self.scene_status = SuzunaSceneStatus::DeskWork;
                 self.desk_work_scene = Some(Box::new(TaskScene::new(
@@ -154,7 +154,7 @@ impl SuzunaSubScene {
     ) {
         if transition == SceneTransition::PoppingTransition {
             println!("switch!!!!!!!!!, deskwork -> shop");
-            ctx.savable_data.record_book_data = self
+            ctx.take_save_data_mut().record_book_data = self
                 .desk_work_scene
                 .as_ref()
                 .unwrap()

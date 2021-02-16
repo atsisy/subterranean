@@ -203,7 +203,7 @@ impl TaskTable {
             record_book_menu: RecordBookMenuGroup::new(0),
             current_customer_request: None,
             kosuzu_phrase: KosuzuPhrase::new(ctx, 0),
-            today: ctx.savable_data.date,
+            today: ctx.take_save_data().date,
             task_is_done: false,
             appearance_frame: appr_frame,
             current_page_book_condition_report: None,

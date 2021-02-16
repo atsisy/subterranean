@@ -103,7 +103,7 @@ impl DrawableEvaluationFlow {
             ),
             Vec::new(),
         );
-        ctx.savable_data.award_data.returning_check_mistake_count +=
+        ctx.take_save_data_mut().award_data.returning_check_mistake_count +=
             result_report.get_conition_eval_mistakes() as u16;
 
         eval_mistakes_vtext.set_crop(init_crop);
@@ -313,8 +313,6 @@ impl DrawableTaskResult {
         date: GensoDate,
         t: Clock,
     ) -> Self {
-        let task_result = &ctx.savable_data.task_result;
-
         let font_info_large = FontInformation::new(
             ctx.resource.get_font(FontID::JpFude1),
             numeric::Vector2f::new(45.0, 45.0),
@@ -379,6 +377,8 @@ impl DrawableTaskResult {
 	effect_time_list.push_back(t + 50);
 	effect_time_list.push_back(t + 150);
 	effect_time_list.push_back(t + 250);
+
+        let task_result = ctx.take_save_data().task_result.clone();
 	
         let done_work_num = task_result.done_works - initial_save_data.task_result.done_works;
         let mut done_work_num_text = EffectableWrap::new(
@@ -404,7 +404,7 @@ impl DrawableTaskResult {
             numeric::Vector2u::new(2, 1)
         );
         effect_text.push_back(done_work_num_text);
-        ctx.savable_data.award_data.customer_count += done_work_num as u16;
+        ctx.take_save_data_mut().award_data.add_customer_count(done_work_num as u16);
 
         let mut money_desc_text = VerticalText::new(
             format!("収入"),
@@ -473,7 +473,7 @@ impl DrawableTaskResult {
                 Box::new(VerticalText::new(
                     format!(
                         "{}円",
-                        number_to_jk(ctx.savable_data.task_result.total_money as u64)
+                        number_to_jk(ctx.take_save_data().task_result.total_money as u64)
                     ),
                     numeric::Point2f::new(0.0, 0.0),
                     numeric::Vector2f::new(1.0, 1.0),
@@ -504,7 +504,7 @@ impl DrawableTaskResult {
             initial_save_data.suzunaan_status.reputation,
             1,
         );
-        meters.set_goal(ctx, ctx.savable_data.suzunaan_status.reputation, 100);
+        meters.set_goal(ctx, ctx.take_save_data().suzunaan_status.reputation, 100);
 
         let evaluation = DrawableEvaluationFlow::new(
             ctx,

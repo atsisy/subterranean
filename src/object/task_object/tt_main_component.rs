@@ -2259,7 +2259,7 @@ impl TaskInfoContents {
         request_text.insert("youken".to_string(), request_type_vtext);
 
 	let mut today_vtext = VerticalText::new(
-	    ctx.savable_data.date.to_short_string(),
+	    ctx.take_save_data().date.to_short_string(),
             numeric::Point2f::new(0.0, 0.0),
             numeric::Vector2f::new(1.0, 1.0),
             0.0,

@@ -1395,6 +1395,11 @@ impl TaskResult {
 
         self
     }
+
+    pub fn add_total_money(&mut self, money: i32) -> &mut Self {
+	self.total_money += money;
+	self
+    }
 }
 
 struct SceneStack {
@@ -2082,12 +2087,20 @@ impl<'ctx> ProcessUtility<'ctx> {
 pub struct SuzuContext<'ctx> {
     pub context: &'ctx mut ggez::Context,
     pub resource: &'ctx mut GameResource,
-    pub savable_data: &'ctx mut SavableData,
+    pub savable_data: &'ctx mut Option<SavableData>,
     pub config: &'ctx mut GameConfig,
     pub process_utility: ProcessUtility<'ctx>,
 }
 
 impl<'ctx> SuzuContext<'ctx> {
+    pub fn take_save_data_mut(&mut self) -> &mut SavableData {
+	self.savable_data.as_mut().expect("save data not found")
+    }
+
+    pub fn take_save_data(&self) -> &SavableData {
+	self.savable_data.as_ref().expect("save data not found")
+    }
+    
     pub fn ref_texture(&mut self, id: TextureID) -> ggraphics::Image {
         self.resource.ref_texture(self.context, id)
     }
@@ -2121,17 +2134,17 @@ impl<'ctx> SuzuContext<'ctx> {
     }
 
     pub fn pay_ad_cost(&mut self) -> i32 {
-        self.savable_data.pay_ad_cost(self.resource)
+        self.savable_data.as_mut().expect("save data not found").pay_ad_cost(self.resource)
     }
 
     pub fn holding_week_schedule_is_available(&self) -> bool {
-        self.savable_data
+        self.take_save_data()
             .week_schedule
-            .update_is_not_required(&self.savable_data.date)
+            .update_is_not_required(&self.take_save_data().date)
     }
 
     pub fn go_next_day(&mut self) {
-        self.savable_data.date.add_day(1);
+        self.take_save_data_mut().date.add_day(1);
     }
 
     pub fn current_total_ad_cost(&self) -> i32 {
@@ -2145,7 +2158,7 @@ impl<'ctx> SuzuContext<'ctx> {
             SuzunaAdType::NewsPaper,
             SuzunaAdType::BunBunMaruPaper,
         ] {
-            if *self.savable_data.ad_status.get(&ad_type).unwrap() {
+            if *self.take_save_data().ad_status.get(&ad_type).unwrap() {
                 total_ad_cost += self.resource.get_default_ad_cost(ad_type);
             }
         }
@@ -2164,7 +2177,7 @@ impl<'ctx> SuzuContext<'ctx> {
             SuzunaAdType::NewsPaper,
             SuzunaAdType::BunBunMaruPaper,
         ] {
-            if *self.savable_data.ad_status.get(&ad_type).unwrap() {
+            if *self.take_save_data().ad_status.get(&ad_type).unwrap() {
                 total_ad_reputation_gain += self.resource.get_default_ad_reputation_gain(ad_type);
             }
         }
@@ -2183,7 +2196,7 @@ impl<'ctx> SuzuContext<'ctx> {
             SuzunaAdAgencyType::Hieda,
             SuzunaAdAgencyType::YamaJinja,
         ] {
-            if *self.savable_data.agency_status.get(&ad_type).unwrap() {
+            if *self.take_save_data().agency_status.get(&ad_type).unwrap() {
                 total_ad_agency_money_gain +=
                     self.resource.get_default_ad_agency_money_gain(&ad_type);
             }
@@ -2193,7 +2206,23 @@ impl<'ctx> SuzuContext<'ctx> {
     }
 
     pub fn reset_save_data(&mut self) {
-	*self.savable_data = SavableData::new(&self.resource);
+	*self.savable_data = Some(SavableData::new(&self.resource));
+    }
+
+    pub fn save(&mut self, slot_id: u8) {
+	self.take_save_data_mut().save(slot_id).unwrap();
+    }
+
+    pub fn change_ad_status(&mut self, ad_type: SuzunaAdType, status: bool) {
+	self.take_save_data_mut().change_ad_status(ad_type, status);
+    }
+
+    pub fn change_ad_agency_status(&mut self, ad_type: SuzunaAdAgencyType, status: bool) {
+	self.take_save_data_mut().change_ad_agency_status(ad_type, status);
+    }
+
+    pub fn update_week_schedule(&mut self, sched: WeekWorkSchedule) {
+	self.take_save_data_mut().update_week_schedule(sched);
     }
 }
 
@@ -2243,7 +2272,7 @@ struct SceneController {
     key_map: tdev::ProgramableGenericKey,
     global_clock: u64,
     root_screen: SubScreen,
-    game_status: SavableData,
+    game_status: Option<SavableData>,
     game_config: GameConfig,
     redraw_request: scene::DrawRequest,
 }
@@ -2275,7 +2304,7 @@ impl SceneController {
         );
         debug::debug_screen_hide();
 
-        let mut game_status = SavableData::new(game_data);
+        let mut game_status = None;
         let mut game_config = GameConfig::new_from_toml(ctx, "/default_game_config.toml");
 
         let mut _redraw_request = scene::DrawRequest::Draw;
