@@ -6,7 +6,7 @@ use torifune::graphics::drawable::*;
 use torifune::graphics::object::*;
 use torifune::sound::*;
 
-use crate::core::{MouseInformation, SoundID, SuzuContext, TextureID, TileBatchTextureID};
+use crate::core::{GameMode, MouseInformation, SoundID, SuzuContext, TextureID, TileBatchTextureID};
 use crate::object::effect_object;
 use crate::object::title_object::*;
 use crate::scene::*;
@@ -87,6 +87,7 @@ impl TitleScene {
         ctx: &mut SuzuContext<'a>,
         scene_id: SceneID,
         trans: SceneTransition,
+	game_mode: Option<GameMode>,
         t: Clock,
     ) {
         self.scene_transition_effect = Some(effect_object::ScreenTileEffect::new(
@@ -107,7 +108,13 @@ impl TitleScene {
 
 	// 新規開始ならセーブデータを初期化
 	if scene_id == SceneID::Scenario {
-	    ctx.reset_save_data();
+	    ctx.reset_save_data(
+		if let Some(game_mode) = game_mode {
+		    game_mode
+		} else {
+		    GameMode::story()
+		}
+	    );
 	}
 
         self.event_list.add_event(
@@ -201,8 +208,8 @@ impl TitleScene {
                         TitleContentsEvent::NextContents(content_name) => {
                             self.switch_current_content(content_name);
                         }
-                        TitleContentsEvent::SceneTransition((scene_id, trans)) => {
-                            self.transition_selected_scene(ctx, scene_id, trans, t);
+                        TitleContentsEvent::SceneTransition((scene_id, trans, game_mode)) => {
+                            self.transition_selected_scene(ctx, scene_id, trans, game_mode, t);
                         }
                         TitleContentsEvent::BuiltinEvent(command) => {
                             self.run_builtin_command(command);

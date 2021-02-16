@@ -1,0 +1,35 @@
+padding = 10.0
+
+[position]
+x = 150.0
+y = 550.0
+
+[normal_font]
+FontID = "Cinema"
+color = 0xbbbbbbff
+[normal_font.scale]
+x = 30.0
+y = 30.0
+
+[large_font]
+FontID = "Cinema"
+color = 0xbbbbbbff
+[large_font.scale]
+x = 30.0
+y = 30.0
+
+[[each_entry_data]]
+text = "通常"
+event-type = "SceneTransition"
+transition-method = "SwapTransition"
+next-scene = "ScenarioStory"
+
+[[each_entry_data]]
+text = "熟練"
+event-type = "NextContents"
+next-contents-name = "hard-menu"
+
+[[each_entry_data]]
+text = "逆戻"
+event-type = "NextContents"
+next-contents-name = "init-menu"

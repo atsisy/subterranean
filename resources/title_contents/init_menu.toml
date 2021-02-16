@@ -20,20 +20,14 @@ y = 30.0
 
 [[each_entry_data]]
 text = "開演"
-event-type = "SceneTransition"
-transition-method = "SwapTransition"
-next-scene = "Scenario"
+event-type = "NextContents"
+next-contents-name = "new-game-menu"
 
 [[each_entry_data]]
 text = "再入場"
 event-type = "SceneTransition"
 transition-method = "StackingTransition"
 next-scene = "Save"
-
-[[each_entry_data]]
-text = "蓄音機"
-event-type = "NextContents"
-next-contents-name = "sound-player"
 
 [[each_entry_data]]
 text = "設定"

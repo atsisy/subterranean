@@ -1727,7 +1727,7 @@ pub struct SavableData {
 }
 
 impl SavableData {
-    pub fn new(game_data: &GameResource) -> Self {
+    pub fn new(game_data: &GameResource, game_mode: GameMode) -> Self {
         let date = GensoDate::new(112, 7, 23);
 
         let mut suzuna_book_pool = SuzunaBookPool::new(game_data);
@@ -1765,7 +1765,7 @@ impl SavableData {
             ad_status: ad_status,
             agency_status: ad_agency_status,
             award_data: game_system::AwardData::new(),
-	    game_mode: GameMode::Story,
+	    game_mode: game_mode,
         }
     }
 
@@ -2205,8 +2205,8 @@ impl<'ctx> SuzuContext<'ctx> {
         return total_ad_agency_money_gain as i32;
     }
 
-    pub fn reset_save_data(&mut self) {
-	*self.savable_data = Some(SavableData::new(&self.resource));
+    pub fn reset_save_data(&mut self, game_mode: GameMode) {
+	*self.savable_data = Some(SavableData::new(&self.resource, game_mode));
     }
 
     pub fn save(&mut self, slot_id: u8) {

@@ -1,0 +1,42 @@
+padding = 10.0
+
+[position]
+x = 150.0
+y = 550.0
+
+[normal_font]
+FontID = "Cinema"
+color = 0xbbbbbbff
+[normal_font.scale]
+x = 30.0
+y = 30.0
+
+[large_font]
+FontID = "Cinema"
+color = 0xbbbbbbff
+[large_font.scale]
+x = 30.0
+y = 30.0
+
+[[each_entry_data]]
+text = "三十萬"
+event-type = "SceneTransition"
+transition-method = "SwapTransition"
+next-scene = "ScenarioTA300000"
+
+[[each_entry_data]]
+text = "五十萬"
+event-type = "SceneTransition"
+transition-method = "SwapTransition"
+next-scene = "ScenarioTA500000"
+
+[[each_entry_data]]
+text = "百萬"
+event-type = "SceneTransition"
+transition-method = "SwapTransition"
+next-scene = "ScenarioTA1000000"
+
+[[each_entry_data]]
+text = "逆戻"
+event-type = "NextContents"
+next-contents-name = "new-game-menu"

@@ -63,7 +63,7 @@ impl FromStr for SceneID {
             "Save" => Ok(Self::Save),
             "Title" => Ok(Self::Title),
             "End" => Ok(Self::End),
-            _ => panic!("Error: EventTrigger::from_str"),
+            _ => Err(()),
         }
     }
 }

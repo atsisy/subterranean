@@ -14,7 +14,7 @@ use torifune::graphics::drawable::*;
 use torifune::graphics::object::*;
 use torifune::numeric;
 
-use crate::{core::WINDOW_SIZE_X, object::util_object::{CheckBox, SeekBar, SelectButton, TextButtonTexture}};
+use crate::{core::{GameMode, WINDOW_SIZE_X}, object::util_object::{CheckBox, SeekBar, SelectButton, TextButtonTexture}};
 use crate::scene::SceneID;
 use crate::{
     core::{font_information_from_toml_value, FontID, SuzuContext, TextureID},
@@ -41,7 +41,7 @@ impl FromStr for TitleBuiltinCommand {
 #[derive(Clone)]
 pub enum TitleContentsEvent {
     NextContents(String),
-    SceneTransition((SceneID, SceneTransition)),
+    SceneTransition((SceneID, SceneTransition, Option<GameMode>)),
     BuiltinEvent(TitleBuiltinCommand),
 }
 
@@ -52,12 +52,23 @@ impl TitleContentsEvent {
         match s {
             "SceneTransition" => {
                 let next_scene_str = toml_value["next-scene"].as_str().expect("error");
-                let next_scene = SceneID::from_str(next_scene_str).expect("Unknown next scene");
+                let (next_scene, game_mode) = 
+		    match SceneID::from_str(next_scene_str) {
+			Ok(id) => (id, None),
+			Err(_) => match next_scene_str {
+			    "ScenarioStory" => (SceneID::Scenario, Some(GameMode::story())),
+			    "ScenarioTA300000" => (SceneID::Scenario, Some(GameMode::time_attack(300000))),
+			    "ScenarioTA500000" => (SceneID::Scenario, Some(GameMode::time_attack(500000))),
+			    "ScenarioTA1000000" => (SceneID::Scenario, Some(GameMode::time_attack(1000000))),
+			    _ => panic!("invalid next-scene-str field"),
+			}
+		    };
+		
                 let next_trans_str = toml_value["transition-method"].as_str().expect("error");
                 let next_trans =
                     SceneTransition::from_str(next_trans_str).expect("Unknown next scene");
                 Some(TitleContentsEvent::SceneTransition((
-                    next_scene, next_trans,
+                    next_scene, next_trans, game_mode,
                 )))
             }
             "NextContents" => {
