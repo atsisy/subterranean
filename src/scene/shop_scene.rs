@@ -1776,7 +1776,11 @@ impl SceneManager for ShopScene {
                 }
             }
 
-            self.shop_command_palette.mouse_motion_handler(ctx, point, left_pressed, t);
+	    if !self.shop_menu.first_menu_is_open()
+                && !self.shop_menu.detail_menu_is_open()
+		&& !self.shop_special_object.is_enable_now() {
+		    self.shop_command_palette.mouse_motion_handler(ctx, point, left_pressed, t);
+		}
         }
     }
 
@@ -1804,6 +1808,7 @@ impl SceneManager for ShopScene {
                     if !self.shop_command_palette.contains_buttons(point)
                         && !self.shop_menu.first_menu_is_open()
                         && !self.shop_menu.detail_menu_is_open()
+			&& !self.shop_special_object.is_enable_now()
                     {
                         self.start_mouse_move(ctx.context, point);
                     }
@@ -1885,10 +1890,13 @@ impl SceneManager for ShopScene {
                         }
                     }
 
-                    self.player.reset_speed();
-                    self.player.update_animation_for_stop();
-                    self.shop_command_palette
-                        .mouse_left_button_up_handler(ctx, point);
+		    if !self.shop_menu.first_menu_is_open()
+			&& !self.shop_special_object.is_enable_now() {
+			    self.player.reset_speed();
+			    self.player.update_animation_for_stop();
+			    self.shop_command_palette
+				.mouse_left_button_up_handler(ctx, point);
+			}
                 }
                 MouseButton::Right => {
 		    self.toggle_shop_map_appearing();
@@ -1919,10 +1927,7 @@ impl SceneManager for ShopScene {
 
         flush_delay_event_and_redraw_check!(self, self.event_list, ctx, t, {});
 
-        if !self.shop_menu.first_menu_is_open()
-            && !self.shop_special_object.is_enable_now()
-            && !self.now_paused()
-        {
+        if !self.now_paused() {
             self.random_add_customer(ctx);
             self.move_playable_character(ctx.context, t);
             self.check_event_panel_onmap(ctx, EventTrigger::Touch);
