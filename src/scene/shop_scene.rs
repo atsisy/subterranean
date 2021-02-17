@@ -1507,6 +1507,7 @@ impl ShopScene {
                 },
                 t + 20
             );
+	    self.get_out_all_customers(ctx);
 	}
 	
         if self.shop_time_status == ShopTimeStatus::Closing && self.shop_clock.is_past(18, 0) {
@@ -1729,6 +1730,24 @@ impl ShopScene {
         }
 	
         self.shop_map_is_staged = !self.shop_map_is_staged;
+    }
+
+    fn get_out_all_customers<'a>(&mut self, ctx: &mut SuzuContext<'a>) {
+	for customer in self.character_group.iter_mut() {
+	    customer.get_out_shop(ctx.context, &self.map.tile_map, numeric::Vector2u::new(15, 14));
+	}
+
+	for mut customer in self.goto_check_customers.drain_remove_if(|_| true) {
+	    customer.get_out_shop(ctx.context, &self.map.tile_map, numeric::Vector2u::new(15, 14));
+	    self.character_group.add(customer);
+	}
+
+	while let Some((mut customer, _)) = self.customer_queue.pop_head_customer() {
+	    customer.get_out_shop(ctx.context, &self.map.tile_map, numeric::Vector2u::new(15, 14));
+	    self.character_group.add(customer);	    
+	}
+
+	self.customer_request_queue.clear();
     }
 }
 

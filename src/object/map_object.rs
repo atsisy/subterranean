@@ -880,7 +880,10 @@ impl CustomerCharacter {
         dest: numeric::Vector2u,
     ) {
         match self.set_destination_forced(ctx, map_data, dest) {
-            Ok(_) => self.customer_status = CustomerCharacterStatus::GettingOut,
+            Ok(_) => {
+		self.customer_status = CustomerCharacterStatus::GettingOut;
+		self.shopping_is_done = true;
+	    },
             Err(_) => panic!("Failed to find route"),
         }
     }
