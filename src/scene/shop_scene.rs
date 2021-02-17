@@ -620,6 +620,7 @@ pub struct ShopScene {
     shop_command_palette: ShopCommandPalette,
     shop_time_status: ShopTimeStatus,
     shop_time_status_header: EffectableWrap<MovableWrap<UniText>>,
+    random_customer_add_timing: Clock,
 }
 
 impl ShopScene {
@@ -744,6 +745,7 @@ impl ShopScene {
             ),
 	    shop_time_status: ShopTimeStatus::Preparing,
 	    shop_time_status_header: shop_time_status_header,
+	    random_customer_add_timing: ctx.resource.get_todays_customer_dist(&ctx.take_save_data().date),
         }
     }
 
@@ -1532,8 +1534,8 @@ impl ShopScene {
 	    ShopTimeStatus::Opening => (),
 	    _ => return,
 	}
-	
-        if rand::random::<usize>() % 900 == 0 {
+
+        if rand::random::<usize>() % self.random_customer_add_timing as usize == 0 {
             let character = character_factory::create_character(
                 character_factory::CharacterFactoryOrder::CustomerSample,
                 ctx,

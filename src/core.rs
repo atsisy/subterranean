@@ -903,6 +903,45 @@ impl AdAgencyCostTable {
     }
 }
 
+pub struct DailyCustomerDist {
+    sun: Clock,
+    mon: Clock,
+    tue: Clock,
+    wed: Clock,
+    thu: Clock,
+    fri: Clock,
+    sat: Clock,
+}
+
+impl DailyCustomerDist {
+    pub fn from_toml_file(ctx: &mut ggez::Context, path: &str) -> Self {
+	let root = parse_toml_file!(ctx, path);
+	DailyCustomerDist {
+	    sun: root["sun"].as_integer().unwrap() as Clock,
+	    mon: root["mon"].as_integer().unwrap() as Clock,
+	    tue: root["tue"].as_integer().unwrap() as Clock,
+	    wed: root["wed"].as_integer().unwrap() as Clock,
+	    thu: root["thu"].as_integer().unwrap() as Clock,
+	    fri: root["fri"].as_integer().unwrap() as Clock,
+	    sat: root["sat"].as_integer().unwrap() as Clock,
+	}
+    }
+
+    pub fn get_customer_dist_default(&self, day: &GensoDate) -> Clock {
+	let offset = day.diff_day(&GensoDate::new(112, 7, 23)) % 7;
+	match offset {
+	    0 => self.sun,
+	    1 => self.mon,
+	    2 => self.tue,
+	    3 => self.wed,
+	    4 => self.thu,
+	    5 => self.fri,
+	    6 => self.sat,
+	    _ => panic!("BUG"),
+	}
+    }
+}
+
 #[derive(Deserialize)]
 pub struct RawConfigFile {
     texture_paths: Vec<String>,
@@ -917,6 +956,7 @@ pub struct RawConfigFile {
     ad_gain_table: HashMap<String, u32>,
     ad_agency_cost_table: HashMap<String, u32>,
     ad_agency_gain_table: HashMap<String, u32>,
+    daily_customer_dist_path: String,
 }
 
 impl RawConfigFile {
@@ -932,7 +972,6 @@ impl RawConfigFile {
 }
 
 pub struct GameResource {
-
     texture_resource_paths: HashMap<TextureID, String>,
     textures: HashMap<TextureID, ggraphics::Image>,
     fonts: Vec<ggraphics::Font>,
@@ -946,6 +985,7 @@ pub struct GameResource {
     se_manager: sound::SoundManager,
     ad_info: AdCostTable,
     ad_agency_info: AdAgencyCostTable,
+    daily_customer_dist: DailyCustomerDist,
 }
 
 impl GameResource {
@@ -999,6 +1039,8 @@ impl GameResource {
 
         let scenario_table = ScenarioTable::new(ctx, &src_file.scenario_table_path);
 
+	let daily_customer_dist = DailyCustomerDist::from_toml_file(ctx, &src_file.daily_customer_dist_path);
+
         GameResource {
             texture_resource_paths: texture_paths_map,
             textures: textures,
@@ -1017,6 +1059,7 @@ impl GameResource {
                 src_file.ad_agency_cost_table,
                 src_file.ad_agency_gain_table,
             ),
+	    daily_customer_dist: daily_customer_dist,
         }
     }
 
@@ -1174,6 +1217,10 @@ impl GameResource {
 
     pub fn get_default_ad_agency_money_gain(&self, ty: &SuzunaAdAgencyType) -> u32 {
         self.ad_agency_info.get_money_gain(ty)
+    }
+
+    pub fn get_todays_customer_dist(&self, date: &GensoDate) -> Clock {
+	self.daily_customer_dist.get_customer_dist_default(date)
     }
 }
 
