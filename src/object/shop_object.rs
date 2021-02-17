@@ -1197,13 +1197,13 @@ impl SelectStoreBookUI {
     fn store_shelving_books<'a>(&mut self, ctx: &mut SuzuContext<'a>) {
         self.select_book_window.sort_selecting_index_less();
         for selecting_index in self.select_book_window.get_selecting_index().iter() {
-            debug::debug_screen_push_text(&format!("remove book: {}", selecting_index));
             let returned = self.shelving_books.swap_remove(*selecting_index);
             self.stored_books.push(returned);
             ctx.take_save_data_mut().award_data.shelving_count += 1;
         }
 
         self.update_window(ctx.context);
+	self.select_book_window.clear_selecting_index();
         self.redraw_request = DrawRequest::Draw;
     }
 
