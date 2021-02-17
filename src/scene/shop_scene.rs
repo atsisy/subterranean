@@ -1769,16 +1769,16 @@ impl SceneManager for ShopScene {
                 }
             }
         } else {
-	    let left_pressed = ggez::input::mouse::button_pressed(ctx.context, MouseButton::Left);
-            if left_pressed {
-                if !self.shop_command_palette.contains_buttons(point) {
-                    self.start_mouse_move(ctx.context, point);
-                }
-            }
-
 	    if !self.shop_menu.first_menu_is_open()
                 && !self.shop_menu.detail_menu_is_open()
 		&& !self.shop_special_object.is_enable_now() {
+		    let left_pressed = ggez::input::mouse::button_pressed(ctx.context, MouseButton::Left);
+		    if left_pressed {
+			if !self.shop_command_palette.contains_buttons(point) {
+			    self.start_mouse_move(ctx.context, point);
+			}
+		    }
+		    
 		    self.shop_command_palette.mouse_motion_handler(ctx, point, left_pressed, t);
 		}
         }
