@@ -175,7 +175,7 @@ impl DrawableSaveEntry {
             slot_id: slot_id,
         };
 
-        entry.update_entry_contents(ctx, savable_data);
+        entry.update_entry_contents(ctx.resource, &savable_data);
         entry
     }
 
@@ -206,7 +206,7 @@ impl DrawableSaveEntry {
         entry
     }
 
-    fn update_entry_contents<'a>(&mut self, ctx: &mut SuzuContext<'a>, savable_data: SavableData) {
+    fn update_entry_contents(&mut self, resource: &GameResource, savable_data: &SavableData) {
         let date_text = VerticalText::new(
             format!(
                 "{}月{}日",
@@ -218,7 +218,7 @@ impl DrawableSaveEntry {
             0.0,
             0,
             FontInformation::new(
-                ctx.resource.get_font(FontID::JpFude1),
+                resource.get_font(FontID::JpFude1),
                 numeric::Vector2f::new(40.0, 40.0),
                 ggraphics::Color::from_rgba_u32(0xff),
             ),
@@ -234,7 +234,7 @@ impl DrawableSaveEntry {
             0.0,
             0,
             FontInformation::new(
-                ctx.resource.get_font(FontID::JpFude1),
+                resource.get_font(FontID::JpFude1),
                 numeric::Vector2f::new(35.0, 35.0),
                 ggraphics::Color::from_rgba_u32(0xff),
             ),
@@ -271,9 +271,14 @@ impl DrawableSaveEntry {
     }
 
     fn save_action<'a>(&mut self, ctx: &mut SuzuContext<'a>) {
-	ctx.save(self.slot_id);
-        let savable_data = ctx.take_save_data().clone();
-        self.update_entry_contents(ctx, savable_data);
+	match ctx.save(self.slot_id) {
+	    Err(_) => return,
+	    _ => (),
+	}
+
+	if let Some(data) = ctx.savable_data.as_mut() {
+	    self.update_entry_contents(ctx.resource, data);
+	}
     }
 
     fn delete_action<'a>(&mut self, ctx: &mut SuzuContext<'a>) {

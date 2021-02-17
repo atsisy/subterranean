@@ -1797,7 +1797,10 @@ impl SavableData {
     }
 
     pub fn delete(slot: u8) {
-        std::fs::remove_file(&format!("./resources/save{}", slot)).unwrap();
+        match std::fs::remove_file(&format!("./resources/save{}", slot)) {
+	    Ok(_) => (),
+	    Err(e) => eprintln!("{}", e),
+	}
     }
 
     pub fn new_load(slot: u8) -> Result<SavableData, ()> {
@@ -1807,9 +1810,12 @@ impl SavableData {
         }
 
         let mut buf = Vec::new();
-        file.unwrap()
-            .read_to_end(&mut buf)
-            .expect("file read failed");
+        if let Ok(_) = file.unwrap()
+                    .read_to_end(&mut buf) {
+            ()
+        } else {
+            return Err(())
+        }
 
         let content = crypt::decrypt_str(&buf);
 
@@ -2222,8 +2228,15 @@ impl<'ctx> SuzuContext<'ctx> {
 	*self.savable_data = Some(SavableData::new(&self.resource, game_mode));
     }
 
-    pub fn save(&mut self, slot_id: u8) {
-	self.take_save_data_mut().save(slot_id).unwrap();
+    pub fn save(&mut self, slot_id: u8) -> Result<(), ()> {
+	if let Some(save_data) = self.savable_data.as_mut() {
+	    match save_data.save(slot_id) {
+		Ok(_) => Ok(()),
+		Err(_) => Err(()),
+	    }
+	} else {
+	    Err(())
+	}
     }
 
     pub fn change_ad_status(&mut self, ad_type: SuzunaAdType, status: bool) {

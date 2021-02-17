@@ -135,8 +135,12 @@ impl SaveScene {
     }
 
     fn load_and_scene_swap<'a>(&mut self, ctx: &mut SuzuContext<'a>, slot: u8, t: Clock) {
-        ctx.savable_data
-            .replace(SavableData::new_load(slot).unwrap());
+	match SavableData::new_load(slot) {
+	    Ok(data) => {
+		ctx.savable_data.replace(data);
+	    },
+	    Err(_) => return,
+	}
 
         self.scene_transition_effect = Some(effect_object::ScreenTileEffect::new(
             ctx,
