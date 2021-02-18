@@ -585,11 +585,11 @@ impl ConfigPanel {
         self.sb_dynamic_text
             .get_mut(&GameConfigElement::BGMVolume)
             .unwrap()
-            .replace_text(&format!("{}%", bgm_volume));
+            .replace_text(format!("{}%", bgm_volume));
         self.sb_dynamic_text
             .get_mut(&GameConfigElement::SEVolume)
             .unwrap()
-            .replace_text(&format!("{}%", se_volume));
+            .replace_text(format!("{}%", se_volume));
     }
 
     fn recover_original_config<'a>(&mut self, ctx: &mut SuzuContext<'a>) {
@@ -948,7 +948,7 @@ impl UpdatePanel {
     }
 
     pub fn replace_main_message<'a>(&mut self, ctx: &mut SuzuContext<'a>, s: &str) {
-	self.main_message.replace_text(s);
+	self.main_message.replace_text(s.to_string());
 	self.main_message.make_center(
 	    ctx.context,
 	    numeric::Point2f::new(WINDOW_SIZE_X as f32 / 2.0, WINDOW_SIZE_Y as f32 / 2.0)

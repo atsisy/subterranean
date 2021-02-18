@@ -1487,7 +1487,7 @@ impl ShopScene {
 	    add_delay_event!(
                 self.event_list,
                 |slf, _ctx, _t| {
-		    slf.shop_time_status_header.replace_text(&slf.shop_time_status.to_string());
+		    slf.shop_time_status_header.replace_text(slf.shop_time_status.to_string());
                 },
                 t + 20
             );
@@ -1503,7 +1503,7 @@ impl ShopScene {
 	    add_delay_event!(
                 self.event_list,
                 |slf, _ctx, _t| {
-		    slf.shop_time_status_header.replace_text(&slf.shop_time_status.to_string());
+		    slf.shop_time_status_header.replace_text(slf.shop_time_status.to_string());
                 },
                 t + 20
             );

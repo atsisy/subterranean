@@ -250,7 +250,7 @@ impl SuzunaStatusMainPage {
             add_delay_event!(
                 self.event_list,
                 move |slf, ctx, _| {
-                    slf.money_text.replace_text(&format!(
+                    slf.money_text.replace_text(format!(
                         "{}円",
                         number_to_jk(
                             (current_money as f32 + (diff_per_clock * additional as f32) as f32)
@@ -274,7 +274,7 @@ impl SuzunaStatusMainPage {
 
     pub fn update_ad_and_agency_status<'a>(&mut self, ctx: &mut SuzuContext<'a>) {
         self.ad_cost_text
-            .replace_text(&format!("{}円", ctx.current_total_ad_cost()));
+            .replace_text(format!("{}円", ctx.current_total_ad_cost()));
         set_table_frame_cell_center!(
             ctx.context,
             self.table_frame,
@@ -283,7 +283,7 @@ impl SuzunaStatusMainPage {
         );
 
         self.ad_rep_gain_text
-            .replace_text(&format!("{}点", ctx.current_total_ad_reputation_gain()));
+            .replace_text(format!("{}点", ctx.current_total_ad_reputation_gain()));
         set_table_frame_cell_center!(
             ctx.context,
             self.table_frame,
@@ -292,7 +292,7 @@ impl SuzunaStatusMainPage {
         );
 
         self.ad_money_gain_text
-            .replace_text(&format!("{}円", ctx.current_total_ad_agency_money_gain()));
+            .replace_text(format!("{}円", ctx.current_total_ad_agency_money_gain()));
         set_table_frame_cell_center!(
             ctx.context,
             self.table_frame,
@@ -312,7 +312,7 @@ impl SuzunaStatusMainPage {
     }
 
     pub fn update_todays_sched_text<'a>(&mut self, ctx: &mut SuzuContext<'a>) {
-        self.todays_sched_text.replace_text(&format!(
+        self.todays_sched_text.replace_text(format!(
             "{}",
             if let Some(sched) = ctx.take_save_data().get_todays_schedule() {
                 sched.to_string_jp()

@@ -121,7 +121,7 @@ impl<T: std::fmt::Display + std::ops::AddAssign + Clone + Copy + std::ops::AddAs
 
     pub fn update_text(&mut self) {
         let value = self.get_value();
-        self.text.replace_text(&(self.display_method)(value))
+        self.text.replace_text((self.display_method)(value))
     }
 }
 
@@ -835,7 +835,7 @@ impl ResultMeter {
 	let before_x = self.current_value_text.get_drawing_size(ctx.context).x;
 	
         self.current_value_text
-            .replace_text(&format!("{}", self.meter.get_value() as i32));
+            .replace_text(format!("{}", self.meter.get_value() as i32));
 	
         let after_x = self.current_value_text.get_drawing_size(ctx.context).x;
         self.current_value_text
