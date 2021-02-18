@@ -35,6 +35,11 @@ event-type = "NextContents"
 next-contents-name = "config-panel"
 
 [[each_entry_data]]
+text = "更新"
+event-type = "NextContents"
+next-contents-name = "update-panel"
+
+[[each_entry_data]]
 text = "退場"
 event-type = "BuiltinCommand"
 builtin-command = "exit"

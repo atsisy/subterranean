@@ -145,7 +145,8 @@ impl TitleScene {
                 println!("sound-player");
                 contents.dragging_handler(ctx, point, offset);
             }
-            TitleContents::ConfigPanel(_) => println!("config!!"),
+            TitleContents::ConfigPanel(_) => (),
+	    TitleContents::UpdatePanel(_) => (),
         }
     }
 
@@ -169,12 +170,14 @@ impl TitleScene {
         }
     }
 
-    fn switch_current_content(&mut self, content_name: String) {
-        let next_content = self.title_contents_set.remove_pickup(&content_name);
+    fn switch_current_content<'a>(&mut self, ctx: &mut SuzuContext<'a>, content_name: String, t: Clock) {
+        let mut next_content = self.title_contents_set.remove_pickup(&content_name);
         if next_content.is_none() {
             print!("{}?", content_name);
             panic!("target title contents not found.");
         }
+
+	next_content.as_mut().unwrap().notify_switched(ctx, t);
 
         // contentの切り替え
         let old = std::mem::replace(&mut self.current_title_contents, next_content);
@@ -206,7 +209,7 @@ impl TitleScene {
                 if let Some(event) = maybe_event {
                     match event {
                         TitleContentsEvent::NextContents(content_name) => {
-                            self.switch_current_content(content_name);
+                            self.switch_current_content(ctx, content_name, t);
                         }
                         TitleContentsEvent::SceneTransition((scene_id, trans, game_mode)) => {
                             self.transition_selected_scene(ctx, scene_id, trans, game_mode, t);
@@ -225,7 +228,18 @@ impl TitleScene {
                 if let Some(event) = maybe_event {
                     match event {
                         TitleContentsEvent::NextContents(content_name) => {
-                            self.switch_current_content(content_name);
+                            self.switch_current_content(ctx, content_name, t);
+                        }
+                        _ => (),
+                    }
+                }
+            }
+	    TitleContents::UpdatePanel(panel) => {
+                let maybe_event = panel.mouse_button_up(ctx, point, t);
+                if let Some(event) = maybe_event {
+                    match event {
+                        TitleContentsEvent::NextContents(content_name) => {
+                            self.switch_current_content(ctx, content_name, t);
                         }
                         _ => (),
                     }
@@ -271,6 +285,10 @@ impl SceneManager for TitleScene {
         if flush_delay_event!(self, self.event_list, ctx, self.get_current_clock()) > 0 {
             ctx.process_utility.redraw();
         }
+
+	if let Some(contents) = self.current_title_contents.as_mut() {
+	    contents.update(ctx, t);
+	}
     }
 
     fn drawing_process(&mut self, ctx: &mut ggez::Context) {

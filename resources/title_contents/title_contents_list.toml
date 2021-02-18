@@ -19,6 +19,11 @@ type = "TitleSoundPlayer"
 src = "./resources/title_contents/sound_player.toml"
 
 [[contents-list]]
+name = "update-panel"
+type = "UpdatePanel"
+src = "./resources/title_contents/update_panel.toml"
+
+[[contents-list]]
 name = "config-panel"
 type = "ConfigPanel"
 src = "./resources/title_contents/config_panel.toml"

@@ -77,6 +77,7 @@ texture_paths = [
 	      "/textures/500yen.png",
 	      "/textures/bara.png",
    	      "/textures/suzunaan_map.png",
+	      "/textures/mob1_default.png",
 	      ]
 font_paths = ["/fonts/azuki.ttf", "/fonts/RiiT_F.ttf", "/fonts/OradanoGSRR.ttf", "/fonts/cinecaption226.ttf", "/fonts/JF-Dot-ShinonomeMaru12B.ttf"]
 tileset_paths = ["/maps/suzunaan2/main.tmx"]

@@ -48,6 +48,8 @@ use number_to_jk::number_to_jk;
 
 extern crate num;
 
+pub const VERSION: f64 = 0.92;
+
 pub const WINDOW_SIZE_X: i16 = 1366;
 pub const WINDOW_SIZE_Y: i16 = 768;
 
@@ -154,6 +156,7 @@ pub enum TextureID {
     Coin500Yen,
     BaraBG,
     SuzunaanMap,
+    Mob1TachieDefault,
     Unknown,
 }
 
@@ -262,6 +265,7 @@ impl FromStr for TextureID {
             "Coin500Yen" => Ok(Self::Coin500Yen),
 	    "BaraBG" => Ok(Self::BaraBG),
 	    "SuzunaanMap" => Ok(Self::SuzunaanMap),
+	    "Mob1TachieDefaule" => Ok(Self::Mob1TachieDefault),
             _ => Err(()),
         }
     }
@@ -348,6 +352,7 @@ impl TextureID {
             75 => Some(Self::Coin500Yen),
 	    76 => Some(Self::BaraBG),
 	    77 => Some(Self::SuzunaanMap),
+	    78 => Some(Self::Mob1TachieDefault),
             _ => None,
         }
     }

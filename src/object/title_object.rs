@@ -14,7 +14,7 @@ use torifune::graphics::drawable::*;
 use torifune::graphics::object::*;
 use torifune::numeric;
 
-use crate::{core::{GameMode, WINDOW_SIZE_X}, object::util_object::{CheckBox, SeekBar, SelectButton, TextButtonTexture}};
+use crate::{core::{GameMode, WINDOW_SIZE_X, WINDOW_SIZE_Y}, flush_delay_event, flush_delay_event_and_redraw_check, object::util_object::{CheckBox, SeekBar, SelectButton, TextButtonTexture}, scene::DelayEventList};
 use crate::scene::SceneID;
 use crate::{
     core::{font_information_from_toml_value, FontID, SuzuContext, TextureID},
@@ -22,6 +22,8 @@ use crate::{
 };
 
 use super::DarkEffectPanel;
+
+extern crate reqwest;
 
 #[derive(Clone, Copy)]
 pub enum TitleBuiltinCommand {
@@ -639,6 +641,7 @@ impl ConfigPanel {
 	self.checkbox.click_handler(rpoint);
 
         if self.apply_button.contains(ctx.context, rpoint) {
+	    crate::core::crypt::encrypt_game_binary();
             ctx.change_bgm_volume(self.bgm_volume_bar.get_current_value());
             ctx.change_se_volume(self.se_volume_bar.get_current_value());
 	    ctx.config.set_pause_when_inactive(self.checkbox.checked_now());
@@ -725,10 +728,279 @@ impl DrawableComponent for ConfigPanel {
     }
 }
 
+
+pub struct UpdatePanel {
+    canvas: sub_screen::SubScreen,
+    background: DarkEffectPanel,
+    header_text: UniText,
+    main_message: UniText,
+    apply_button: SelectButton,
+    cancel_button: SelectButton,
+    event_list: DelayEventList<Self>,
+    latest_version: Option<f64>,
+}
+
+impl UpdatePanel {
+    pub fn new<'a>(ctx: &mut SuzuContext<'a>, pos_rect: numeric::Rect, depth: i8, t: Clock) -> Self {
+        let font_info = FontInformation::new(
+            ctx.resource.get_font(FontID::Cinema),
+            numeric::Vector2f::new(32.0, 32.0),
+            ggraphics::Color::from_rgba_u32(0xbbbbbbff),
+        );
+
+        let mut background = DarkEffectPanel::new(
+            ctx.context,
+            numeric::Rect::new(0.0, 0.0, WINDOW_SIZE_X as f32, WINDOW_SIZE_X as f32),
+            t,
+        );
+	background.set_alpha(0.5);
+
+	let hrzn_text_font_info = FontInformation::new(
+            ctx.resource.get_font(FontID::Cinema),
+            numeric::Vector2f::new(29.0, 29.0),
+            ggraphics::Color::from_rgba_u32(0xbbbbbbff),
+        );
+
+        let header_text = UniText::new(
+            "更新".to_string(),
+            numeric::Point2f::new(650.0, 80.0),
+            numeric::Vector2f::new(1.0, 1.0),
+            0.0,
+            0,
+            font_info,
+        );
+
+	let main_message = UniText::new(
+	    "".to_string(),
+            numeric::Point2f::new(650.0, 200.0),
+            numeric::Vector2f::new(1.0, 1.0),
+            0.0,
+            0,
+            font_info,
+	);
+
+        let text_texture = Box::new(TextButtonTexture::new(
+            ctx,
+            numeric::Point2f::new(0.0, 0.0),
+            "更新".to_string(),
+            hrzn_text_font_info.clone(),
+            8.0,
+            ggraphics::Color::from_rgba_u32(0x362d33ff),
+            0,
+        ));
+
+        let apply_button = SelectButton::new(
+            ctx,
+            numeric::Rect::new(650.0, 600.0, 100.0, 50.0),
+            text_texture,
+        );
+
+        let text_texture = Box::new(TextButtonTexture::new(
+            ctx,
+            numeric::Point2f::new(0.0, 0.0),
+            "逆戻".to_string(),
+            hrzn_text_font_info.clone(),
+            8.0,
+            ggraphics::Color::from_rgba_u32(0x362d33ff),
+            0,
+        ));
+
+        let cancel_button = SelectButton::new(
+            ctx,
+            numeric::Rect::new(850.0, 600.0, 100.0, 50.0),
+            text_texture,
+        );
+	
+        UpdatePanel {
+            header_text: header_text,
+            canvas: sub_screen::SubScreen::new(
+                ctx.context,
+                pos_rect,
+                depth,
+                ggraphics::Color::from_rgba_u32(0),
+            ),
+	    main_message: main_message,
+            background: background,
+            apply_button: apply_button,
+            cancel_button: cancel_button,
+	    event_list: DelayEventList::new(),
+	    latest_version: None,
+        }
+    }
+    
+    pub fn get_name(&self) -> String {
+        "update-panel".to_string()
+    }
+
+    pub fn mouse_button_down<'a>(
+        &mut self,
+        _ctx: &mut SuzuContext<'a>,
+        button: MouseButton,
+	_point: numeric::Point2f,
+        _t: Clock,
+    ) {
+        match button {
+            MouseButton::Left => {
+		()
+            }
+            _ => (),
+        }
+    }
+
+    pub fn mouse_button_up<'a>(
+        &mut self,
+        ctx: &mut SuzuContext<'a>,
+        point: numeric::Point2f,
+        t: Clock,
+    ) -> Option<TitleContentsEvent> {
+        let rpoint = self.canvas.relative_point(point);
+
+        if self.apply_button.contains(ctx.context, rpoint) {
+	    if let Some(version) = self.latest_version {
+		self.replace_main_message(ctx, "更新中・・・");
+		
+		self.event_list.add_event(
+		    Box::new(move |slf: &mut UpdatePanel, ctx, _t| {
+			slf.exec_update(version);
+			slf.replace_main_message(ctx, &format!("更新完了 ver.{}", version));
+			slf.latest_version = None;
+			
+		    }
+		), t + 1);
+	    }
+        }
+
+        if self.cancel_button.contains(ctx.context, rpoint) {
+            return Some(TitleContentsEvent::NextContents("init-menu".to_string()));
+        }
+
+        None
+    }
+
+    pub fn check_update<'a>(&mut self, _ctx: &mut SuzuContext<'a>, _t: Clock) -> Result<f64, ()> {
+	let resp = match reqwest::blocking::get("https://boxed-sumire.fun/suzu/update.toml") {
+	    Ok(resp) => match resp.text() {
+		Ok(text) => text,
+		Err(_) => return Err(()),
+	    },
+	    Err(_) => return Err(()),
+	};
+	
+	let root = match resp.parse::<toml::Value>() {
+	    Ok(root) => root,
+	    Err(_) => return Err(()),
+	};
+	
+	if let Some(latest_version) = root["latest"].as_float() {
+	    if latest_version > crate::core::VERSION {
+		Ok(latest_version)
+	    } else {
+		Err(())
+	    }
+	} else {
+	    Err(())
+	}
+    }
+
+    pub fn exec_update(&self, version: f64) -> Result<(), ()> {
+	if version < crate::core::VERSION {
+	    return Err(());
+	}
+
+	let bytes = match reqwest::blocking::get(&format!("https://boxed-sumire.fun/suzu/suzu-{}.encrypted", version)) {
+	    Ok(resp) => match resp.bytes() {
+		Ok(bytes) => bytes,
+		Err(_) => return Err(()),
+	    },
+	    Err(_) => return Err(()),
+	};
+
+	crate::core::crypt::decrypt_game_binary(&bytes.to_vec());
+	Ok(())
+    }
+    
+    pub fn flush_delayed_event<'a>(&mut self, ctx: &mut SuzuContext<'a>, t: Clock) {
+	flush_delay_event_and_redraw_check!(self, self.event_list, ctx, t, { });
+    }
+
+    pub fn notify_switched<'a>(&mut self, ctx: &mut SuzuContext<'a>, t: Clock) {
+	self.replace_main_message(ctx, "更新確認中・・・");
+
+	self.event_list.add_event(
+            Box::new(move |slf: &mut UpdatePanel, ctx, t| {
+		match slf.check_update(ctx, t) {
+		    Ok(version) => {
+			slf.latest_version = Some(version);
+			slf.replace_main_message(
+			    ctx,
+			    &format!("ver.{} → ver.{}の更新が見つかりました", crate::core::VERSION, version)
+			);
+		    },
+		    Err(()) => {
+			slf.replace_main_message(ctx, &format!("最新版です ver.{}", crate::core::VERSION));
+		    },
+		}
+            }),
+	    t + 2,
+	);
+    }
+
+    pub fn replace_main_message<'a>(&mut self, ctx: &mut SuzuContext<'a>, s: &str) {
+	self.main_message.replace_text(s);
+	self.main_message.make_center(
+	    ctx.context,
+	    numeric::Point2f::new(WINDOW_SIZE_X as f32 / 2.0, WINDOW_SIZE_Y as f32 / 2.0)
+	);
+    }
+}
+
+impl DrawableComponent for UpdatePanel {
+    fn draw(&mut self, ctx: &mut ggez::Context) -> ggez::GameResult<()> {
+        if self.is_visible() {
+            sub_screen::stack_screen(ctx, &self.canvas);
+
+            self.background.draw(ctx)?;
+
+            self.header_text.draw(ctx)?;
+	    self.main_message.draw(ctx)?;
+
+            self.apply_button.draw(ctx)?;
+            self.cancel_button.draw(ctx)?;
+
+            sub_screen::pop_screen(ctx);
+            self.canvas.draw(ctx).unwrap();
+        }
+
+        Ok(())
+    }
+
+    fn hide(&mut self) {
+        self.canvas.hide();
+    }
+
+    fn appear(&mut self) {
+        self.canvas.appear();
+    }
+
+    fn is_visible(&self) -> bool {
+        self.canvas.is_visible()
+    }
+
+    fn set_drawing_depth(&mut self, depth: i8) {
+        self.canvas.set_drawing_depth(depth);
+    }
+
+    fn get_drawing_depth(&self) -> i8 {
+        self.canvas.get_drawing_depth()
+    }
+}
+
+
 pub enum TitleContents {
     InitialMenu(VTextList),
     TitleSoundPlayer(DynamicTitleSoundPlayer),
     ConfigPanel(ConfigPanel),
+    UpdatePanel(UpdatePanel),
 }
 
 impl TitleContents {
@@ -775,6 +1047,12 @@ impl TitleContents {
                 0,
 		t
             ))),
+	    "UpdatePanel" => Some(TitleContents::UpdatePanel(UpdatePanel::new(
+                ctx,
+                numeric::Rect::new(0.0, 0.0, 1366.0, 768.0),
+                0,
+		t
+            ))),
             _ => None,
         }
     }
@@ -784,7 +1062,26 @@ impl TitleContents {
             TitleContents::InitialMenu(menu) => menu.contents_name.to_string(),
             TitleContents::TitleSoundPlayer(player) => player.get_name(),
             TitleContents::ConfigPanel(panel) => panel.get_name(),
+	    TitleContents::UpdatePanel(panel) => panel.get_name(),
         }
+    }
+
+    pub fn update<'a>(&mut self, ctx: &mut SuzuContext<'a>, t: Clock) {
+        match self {
+            TitleContents::InitialMenu(_) => (),
+            TitleContents::TitleSoundPlayer(_) => (),
+            TitleContents::ConfigPanel(_) => (),
+	    TitleContents::UpdatePanel(panel) => panel.flush_delayed_event(ctx, t),
+        }
+    }
+
+    pub fn notify_switched<'a>(&mut self, ctx: &mut SuzuContext<'a>, t: Clock) {
+        match self {
+            TitleContents::InitialMenu(_) => (),
+            TitleContents::TitleSoundPlayer(_) => (),
+            TitleContents::ConfigPanel(_) => (),
+	    TitleContents::UpdatePanel(panel) => panel.notify_switched(ctx, t),
+        }	
     }
 }
 
@@ -794,6 +1091,7 @@ impl DrawableComponent for TitleContents {
             TitleContents::InitialMenu(contents) => contents.draw(ctx),
             TitleContents::TitleSoundPlayer(contents) => contents.draw(ctx),
             TitleContents::ConfigPanel(panel) => panel.draw(ctx),
+	    TitleContents::UpdatePanel(panel) => panel.draw(ctx),
         }
     }
 
@@ -802,6 +1100,7 @@ impl DrawableComponent for TitleContents {
             TitleContents::InitialMenu(contents) => contents.hide(),
             TitleContents::TitleSoundPlayer(contents) => contents.hide(),
             TitleContents::ConfigPanel(panel) => panel.hide(),
+	    TitleContents::UpdatePanel(panel) => panel.hide(),
         }
     }
 
@@ -810,6 +1109,7 @@ impl DrawableComponent for TitleContents {
             TitleContents::InitialMenu(contents) => contents.appear(),
             TitleContents::TitleSoundPlayer(contents) => contents.appear(),
             TitleContents::ConfigPanel(panel) => panel.appear(),
+	    TitleContents::UpdatePanel(panel) => panel.appear(),
         }
     }
 
@@ -818,6 +1118,7 @@ impl DrawableComponent for TitleContents {
             TitleContents::InitialMenu(contents) => contents.is_visible(),
             TitleContents::TitleSoundPlayer(contents) => contents.is_visible(),
             TitleContents::ConfigPanel(panel) => panel.is_visible(),
+	    TitleContents::UpdatePanel(panel) => panel.is_visible(),
         }
     }
 
@@ -826,6 +1127,7 @@ impl DrawableComponent for TitleContents {
             TitleContents::InitialMenu(contents) => contents.set_drawing_depth(depth),
             TitleContents::TitleSoundPlayer(contents) => contents.set_drawing_depth(depth),
             TitleContents::ConfigPanel(panel) => panel.set_drawing_depth(depth),
+	    TitleContents::UpdatePanel(panel) => panel.set_drawing_depth(depth),
         }
     }
 
@@ -834,6 +1136,7 @@ impl DrawableComponent for TitleContents {
             TitleContents::InitialMenu(contents) => contents.get_drawing_depth(),
             TitleContents::TitleSoundPlayer(contents) => contents.get_drawing_depth(),
             TitleContents::ConfigPanel(panel) => panel.get_drawing_depth(),
+	    TitleContents::UpdatePanel(panel) => panel.get_drawing_depth(),
         }
     }
 }
@@ -854,7 +1157,7 @@ impl TitleContentsSet {
             Ok(c) => c,
             Err(_) => panic!("Failed to read: {}", file_path),
         };
-
+	
         let root = content.parse::<toml::Value>().unwrap();
         let contents_list = root["contents-list"].as_array().unwrap();
 
