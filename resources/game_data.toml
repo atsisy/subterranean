@@ -84,7 +84,12 @@ tileset_paths = ["/maps/suzunaan2/main.tmx"]
 scenario_table_path = "/scenario_table.toml"
 daily_customer_dist_path = "/daily_customer_dist.toml"
 customers_name = ["霧雨魔里沙", "稗田阿求", "a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k"]
-sound_file_path = ["/sound/bgm/title.mp3", "/sound/se/turn_the_page.wav"]
+sound_file_path = [
+		"/sound/bgm/title.mp3",
+		"/sound/se/turn_the_page.wav",
+		"/sound/se/onjin/bell.mp3",
+		"/sound/se/se_lab/message.mp3",
+		]
 
 [[map_information]]
 id = 1

@@ -1,7 +1,7 @@
 use std::collections::LinkedList;
 use std::collections::VecDeque;
 
-use torifune::graphics::drawable::*;
+use torifune::{graphics::drawable::*, sound::SoundHandler};
 use torifune::graphics::object::sub_screen;
 use torifune::graphics::object::sub_screen::SubScreen;
 use torifune::graphics::object::*;
@@ -11,7 +11,7 @@ use torifune::impl_drawable_object_for_wrapped;
 use torifune::impl_texture_object_for_wrapped;
 
 use super::*;
-use crate::object::util_object::*;
+use crate::{core::SoundID, object::util_object::*};
 use crate::parse_toml_file;
 use crate::scene::scenario_scene::ScenarioContext;
 use crate::scene::{SceneID, SceneTransition};
@@ -1033,7 +1033,7 @@ impl Scenario {
     /// Scenarioの状態遷移を行うメソッド
     /// このメソッドは通常のテキストから他の状態に遷移する際に呼び出す
     ///
-    pub fn go_next_scenario_from_text_scenario(&mut self) {
+    pub fn go_next_scenario_from_text_scenario<'a>(&mut self) {
         // 次のScenarioElementIDは、ScenarioTextがフィールドとして保持しているので取り出す
         let next_id = match self.ref_current_element_mut() {
             ScenarioElement::Text(obj) => obj.next_scenario_id,
@@ -1563,6 +1563,7 @@ pub struct ScenarioEvent {
     tachie: Option<ScenarioTachie>,
     appearance_frame: TileBatchFrame,
     redraw_request: DrawRequest,
+    se_handlers: [Option<SoundHandler>; 1],
 }
 
 impl ScenarioEvent {
@@ -1608,6 +1609,7 @@ impl ScenarioEvent {
             appearance_frame: appr_frame,
             tachie: event_tachie,
             redraw_request: DrawRequest::InitDraw,
+	    se_handlers: [None],
         }
     }
 
@@ -1840,6 +1842,10 @@ impl ScenarioEvent {
                 } else {
                     // すでにchoice_boxがNoneなら、text_boxの行を進める動作
                     self.go_next_line();
+
+		    if self.se_handlers[0].is_none() || !ctx.is_se_playing(self.se_handlers[0].unwrap()) {
+			self.se_handlers[0] = Some(ctx.play_sound_as_se(SoundID::SeMessage, None));
+		    }
                 }
             }
             ScenarioElement::ChoiceSwitch(_) => {

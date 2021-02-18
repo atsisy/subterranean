@@ -5,11 +5,12 @@ use torifune::graphics::drawable::*;
 use torifune::graphics::object::sub_screen;
 use torifune::graphics::object::*;
 use torifune::numeric;
+use torifune::roundup2f;
 
 use torifune::impl_drawable_object_for_wrapped;
 use torifune::impl_texture_object_for_wrapped;
 
-use crate::core::*;
+use crate::{core::*, set_table_frame_cell_center};
 use crate::object::util_object::*;
 
 use number_to_jk::number_to_jk;
@@ -24,9 +25,10 @@ pub enum SaveDataOperation {
 pub struct DrawableSaveEntry {
     slot_id: u8,
     background: UniTexture,
+    desc_text: Vec<VerticalText>,
     date_text: Option<VerticalText>,
     money_text: Option<VerticalText>,
-    none_text: Option<VerticalText>,
+    table_frame: TableFrame,
     save_button: SelectButton,
     delete_button: SelectButton,
     load_button: SelectButton,
@@ -66,7 +68,7 @@ impl DrawableSaveEntry {
 
         let save_button = SelectButton::new(
             ctx,
-            numeric::Rect::new(30.0, pos_rect.h - 80.0, 60.0, 60.0),
+            numeric::Rect::new(30.0, pos_rect.h - 70.0, 60.0, 60.0),
             button_texture,
         );
 
@@ -86,7 +88,7 @@ impl DrawableSaveEntry {
 
         let delete_button = SelectButton::new(
             ctx,
-            numeric::Rect::new(110.0, pos_rect.h - 80.0, 60.0, 60.0),
+            numeric::Rect::new(110.0, pos_rect.h - 70.0, 60.0, 60.0),
             button_texture,
         );
 
@@ -106,7 +108,7 @@ impl DrawableSaveEntry {
 
         let load_button = SelectButton::new(
             ctx,
-            numeric::Rect::new(190.0, pos_rect.h - 80.0, 60.0, 60.0),
+            numeric::Rect::new(190.0, pos_rect.h - 70.0, 60.0, 60.0),
             button_texture,
         );
 
@@ -125,6 +127,17 @@ impl DrawableSaveEntry {
             0,
         );
 
+	let mut table_frame = TableFrame::new(
+	    ctx.resource,
+	    numeric::Point2f::new(20.0, 20.0),
+	    TileBatchTextureID::OldStyleFrame,
+	    FrameData::new(vec![80.0, 300.0], vec![50.0; 3]),
+	    numeric::Vector2f::new(0.3, 0.3),
+	    0
+	);
+
+	table_frame.make_center(numeric::Point2f::new(pos_rect.w / 2.0 - 10.0, pos_rect.h / 2.0 - 30.0));
+
         if let Some(savable_data) = savable_data {
             Self::new_some(
                 ctx,
@@ -132,6 +145,7 @@ impl DrawableSaveEntry {
                 appr_frame,
                 savable_data,
                 pos_rect,
+		table_frame,
                 save_button,
                 load_button,
                 delete_button,
@@ -143,6 +157,7 @@ impl DrawableSaveEntry {
                 background,
                 appr_frame,
                 pos_rect,
+		table_frame,
                 save_button,
                 load_button,
                 delete_button,
@@ -157,6 +172,7 @@ impl DrawableSaveEntry {
         appr_frame: TileBatchFrame,
         savable_data: SavableData,
         pos_rect: numeric::Rect,
+	table_frame: TableFrame,
         save_button: SelectButton,
         load_button: SelectButton,
         delete_button: SelectButton,
@@ -166,16 +182,17 @@ impl DrawableSaveEntry {
             background: background,
             date_text: None,
             money_text: None,
-            none_text: None,
+	    desc_text: Vec::new(),
             save_button: save_button,
             load_button: load_button,
             delete_button: delete_button,
             appearance_frame: appr_frame,
             canvas: SubScreen::new(ctx.context, pos_rect, 0, ggraphics::Color::from_rgba_u32(0)),
             slot_id: slot_id,
+	    table_frame: table_frame,
         };
 
-        entry.update_entry_contents(ctx.resource, &savable_data);
+        entry.update_entry_contents(ctx.context, ctx.resource, &savable_data);
         entry
     }
 
@@ -184,6 +201,7 @@ impl DrawableSaveEntry {
         background: UniTexture,
         appr_frame: TileBatchFrame,
         pos_rect: numeric::Rect,
+	table_frame: TableFrame,
         save_button: SelectButton,
         load_button: SelectButton,
         delete_button: SelectButton,
@@ -193,21 +211,87 @@ impl DrawableSaveEntry {
             background: background,
             date_text: None,
             money_text: None,
-            none_text: None,
+	    desc_text: Vec::new(),
             save_button: save_button,
             load_button: load_button,
             delete_button: delete_button,
             appearance_frame: appr_frame,
             canvas: SubScreen::new(ctx.context, pos_rect, 0, ggraphics::Color::from_rgba_u32(0)),
             slot_id: slot_id,
+	    table_frame: table_frame,
         };
 
         entry.update_none_contents(ctx);
         entry
     }
 
-    fn update_entry_contents(&mut self, resource: &GameResource, savable_data: &SavableData) {
-        let date_text = VerticalText::new(
+    fn update_entry_contents(&mut self, ctx: &mut ggez::Context, resource: &GameResource, savable_data: &SavableData) {
+	self.desc_text.clear();
+
+	let mut mode_desc_text = VerticalText::new(
+	    "規則".to_string(),
+            numeric::Point2f::new(220.0, 60.0),
+            numeric::Vector2f::new(1.0, 1.0),
+            0.0,
+            0,
+            FontInformation::new(
+                resource.get_font(FontID::JpFude1),
+                numeric::Vector2f::new(24.0, 24.0),
+                ggraphics::Color::from_rgba_u32(0xff),
+            ),
+        );
+
+	set_table_frame_cell_center!(
+            ctx,
+            self.table_frame,
+            mode_desc_text,
+            numeric::Vector2u::new(1, 0)
+        );
+	self.desc_text.push(mode_desc_text);
+	
+	let mut mode_text = VerticalText::new(
+	    savable_data.game_mode.to_str_jp().to_string(),
+            numeric::Point2f::new(220.0, 60.0),
+            numeric::Vector2f::new(1.0, 1.0),
+            0.0,
+            0,
+            FontInformation::new(
+                resource.get_font(FontID::JpFude1),
+                numeric::Vector2f::new(24.0, 24.0),
+                ggraphics::Color::from_rgba_u32(0xff),
+            ),
+        );
+
+	set_table_frame_cell_center!(
+            ctx,
+            self.table_frame,
+            mode_text,
+            numeric::Vector2u::new(1, 1)
+        );
+	self.desc_text.push(mode_text);
+	
+	let mut day_desc_text = VerticalText::new(
+	    "日付".to_string(),
+            numeric::Point2f::new(220.0, 60.0),
+            numeric::Vector2f::new(1.0, 1.0),
+            0.0,
+            0,
+            FontInformation::new(
+                resource.get_font(FontID::JpFude1),
+                numeric::Vector2f::new(24.0, 24.0),
+                ggraphics::Color::from_rgba_u32(0xff),
+            ),
+        );
+
+	set_table_frame_cell_center!(
+            ctx,
+            self.table_frame,
+            day_desc_text,
+            numeric::Vector2u::new(2, 0)
+        );
+	self.desc_text.push(day_desc_text);
+	
+        let mut date_text = VerticalText::new(
             format!(
                 "{}月{}日",
                 number_to_jk(savable_data.date.month as u64),
@@ -219,55 +303,67 @@ impl DrawableSaveEntry {
             0,
             FontInformation::new(
                 resource.get_font(FontID::JpFude1),
-                numeric::Vector2f::new(40.0, 40.0),
+                numeric::Vector2f::new(24.0, 24.0),
                 ggraphics::Color::from_rgba_u32(0xff),
             ),
         );
+	set_table_frame_cell_center!(
+            ctx,
+            self.table_frame,
+            date_text,
+            numeric::Vector2u::new(2, 1)
+        );
 
-        let money_text = VerticalText::new(
-            format!(
-                "所持金{}円",
-                number_to_jk(savable_data.task_result.total_money as u64)
-            ),
-            numeric::Point2f::new(150.0, 160.0),
+	let mut money_desc_text = VerticalText::new(
+	    "所持金".to_string(),
+            numeric::Point2f::new(220.0, 60.0),
             numeric::Vector2f::new(1.0, 1.0),
             0.0,
             0,
             FontInformation::new(
                 resource.get_font(FontID::JpFude1),
-                numeric::Vector2f::new(35.0, 35.0),
+                numeric::Vector2f::new(24.0, 24.0),
                 ggraphics::Color::from_rgba_u32(0xff),
             ),
         );
 
-        self.date_text = Some(date_text);
-        self.money_text = Some(money_text);
-        self.none_text = None;
-    }
-
-    fn update_none_contents<'a>(&mut self, ctx: &mut SuzuContext<'a>) {
-        let mut none_text = VerticalText::new(
-            "記録ガ在リマセン".to_string(),
-            numeric::Point2f::new(0.0, 0.0),
+	set_table_frame_cell_center!(
+            ctx,
+            self.table_frame,
+            money_desc_text,
+            numeric::Vector2u::new(0, 0)
+        );
+	self.desc_text.push(money_desc_text);
+	
+        let mut money_text = VerticalText::new(
+            format!(
+                "{}円",
+                number_to_jk(savable_data.task_result.total_money as u64)
+            ),
+            numeric::Point2f::new(150.0, 60.0),
             numeric::Vector2f::new(1.0, 1.0),
             0.0,
             0,
             FontInformation::new(
-                ctx.resource.get_font(FontID::JpFude1),
-                numeric::Vector2f::new(40.0, 40.0),
+                resource.get_font(FontID::JpFude1),
+                numeric::Vector2f::new(18.0, 18.0),
                 ggraphics::Color::from_rgba_u32(0xff),
             ),
         );
-
-        let size = self.canvas.get_drawing_size(ctx.context);
-        none_text.make_center(
-            ctx.context,
-            numeric::Point2f::new(size.x / 2.0, size.y / 2.0),
+	set_table_frame_cell_center!(
+            ctx,
+            self.table_frame,
+            money_text,
+            numeric::Vector2u::new(0, 1)
         );
 
+        self.date_text = Some(date_text);
+        self.money_text = Some(money_text);
+    }
+
+    fn update_none_contents<'a>(&mut self, _ctx: &mut SuzuContext<'a>) {
         self.date_text = None;
         self.money_text = None;
-        self.none_text = Some(none_text);
     }
 
     fn save_action<'a>(&mut self, ctx: &mut SuzuContext<'a>) {
@@ -277,7 +373,7 @@ impl DrawableSaveEntry {
 	}
 
 	if let Some(data) = ctx.savable_data.as_mut() {
-	    self.update_entry_contents(ctx.resource, data);
+	    self.update_entry_contents(ctx.context, ctx.resource, data);
 	}
     }
 
@@ -315,6 +411,8 @@ impl DrawableComponent for DrawableSaveEntry {
             self.appearance_frame.draw(ctx)?;
             self.background.draw(ctx)?;
 
+	    self.table_frame.draw(ctx)?;
+
             if let Some(vtext) = self.date_text.as_mut() {
                 vtext.draw(ctx)?;
             }
@@ -323,9 +421,9 @@ impl DrawableComponent for DrawableSaveEntry {
                 vtext.draw(ctx)?;
             }
 
-            if let Some(vtext) = self.none_text.as_mut() {
-                vtext.draw(ctx)?;
-            }
+	    for vtext in self.desc_text.iter_mut() {
+		vtext.draw(ctx)?;
+	    }
 
             self.save_button.draw(ctx)?;
             self.load_button.draw(ctx)?;

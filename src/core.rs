@@ -5,7 +5,7 @@ pub mod map_parser;
 pub mod util;
 
 use game_system::WeekWorkSchedule;
-use ggez::graphics as ggraphics;
+use ggez::{audio::SoundSource, graphics as ggraphics};
 use ggez::*;
 
 use tdev::ProgramableKey;
@@ -413,6 +413,8 @@ pub const MIDDLE_BOOK_TEXTURE: [TextureID; 3] = [
 pub enum SoundID {
     Title = 0,
     SeTurnThePage,
+    SeCustomerBell,
+    SeMessage,
     Unknown,
 }
 
@@ -1173,6 +1175,14 @@ impl GameResource {
         self.se_manager.play(ctx, sound_data.clone(), flags)
     }
 
+    pub fn is_se_playing(&self, handler: sound::SoundHandler) -> bool {
+	self.ref_se(handler).playing()
+    }
+
+    pub fn is_bgm_playing(&self, handler: sound::SoundHandler) -> bool {
+	self.ref_se(handler).playing()
+    }
+    
     pub fn stop_bgm(&mut self, ctx: &mut ggez::Context, handler: sound::SoundHandler) {
         self.bgm_manager.stop(ctx, handler);
     }
@@ -1418,6 +1428,26 @@ impl GameMode {
 		Self::TimeAttack(TimeAttackModeData::new(goal, date))
 	    }
 	    _ => panic!("invalid goal"),
+	}
+    }
+
+    pub fn to_str_jp(&self) -> &str {
+	match self {
+	    GameMode::Story => "通常",
+	    GameMode::TimeAttack(data) => {
+		match data.goal {
+		    300000 => {
+			"熟練三十萬"
+		    }
+		    500000 => {
+			"熟練五十萬"
+		    }
+		    1000000 => {
+			"熟練百萬"
+		    }
+		    _ => panic!("invalid parameter"),
+		}
+	    }
 	}
     }
 }
@@ -2174,6 +2204,22 @@ impl<'ctx> SuzuContext<'ctx> {
     
     pub fn ref_texture(&mut self, id: TextureID) -> ggraphics::Image {
         self.resource.ref_texture(self.context, id)
+    }
+
+    pub fn is_bgm_playing(
+        &self,
+	handler: sound::SoundHandler
+    ) -> bool {
+        self.resource
+            .is_bgm_playing(handler)
+    }
+
+    pub fn is_se_playing(
+        &self,
+	handler: sound::SoundHandler
+    ) -> bool {
+        self.resource
+            .is_se_playing(handler)
     }
 
     pub fn play_sound_as_bgm(

@@ -16,7 +16,7 @@ use ggez::input::mouse::MouseButton;
 use torifune::numeric;
 
 use super::*;
-use crate::{add_delay_event, core::WINDOW_SIZE_X};
+use crate::{add_delay_event, core::{SoundID, WINDOW_SIZE_X}};
 use crate::core::{map_parser as mp};
 use crate::core::{
     BookInformation, FontID, MouseInformation, ResultReport, SavableData, SuzuContext,
@@ -1568,6 +1568,7 @@ impl ShopScene {
         ));
         self.notification_area
             .insert_new_contents(ctx, notification, t);
+	ctx.play_sound_as_se(SoundID::SeCustomerBell, None);
     }
 
     fn transition_to_title_scene<'a>(&mut self, ctx: &mut SuzuContext<'a>, t: Clock) {

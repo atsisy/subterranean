@@ -861,8 +861,10 @@ impl UpdatePanel {
 		
 		self.event_list.add_event(
 		    Box::new(move |slf: &mut UpdatePanel, ctx, _t| {
-			slf.exec_update(version);
-			slf.replace_main_message(ctx, &format!("更新完了 ver.{}", version));
+			match slf.exec_update(version) {
+			    Ok(_) => slf.replace_main_message(ctx, &format!("更新完了 ver.{}", version)),
+			    Err(_) => slf.replace_main_message(ctx, "更新失敗 時間を置いて再度お試しください"),
+			}
 			slf.latest_version = None;
 			
 		    }
