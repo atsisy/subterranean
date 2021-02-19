@@ -2848,7 +2848,7 @@ impl ShopCommandPalette {
 
         let action_button = FramedButton::new(
             ctx,
-            numeric::Rect::new(150.0, 15.0, 120.0, 85.0),
+            numeric::Rect::new(350.0, 15.0, 120.0, 85.0),
 	    10.0,
             2.0,
             ggraphics::Color::from_rgba(90, 80, 63, 255),
@@ -2860,7 +2860,7 @@ impl ShopCommandPalette {
 
 	let shop_menu_button = FramedButton::new(
             ctx,
-            numeric::Rect::new(350.0, 15.0, 120.0, 85.0),
+	    numeric::Rect::new(150.0, 15.0, 120.0, 85.0),
 	    10.0,
             2.0,
             ggraphics::Color::from_rgba(90, 80, 63, 255),
@@ -2986,13 +2986,13 @@ impl ShopCommandPalette {
 
     pub fn slide_in(&mut self, t: Clock) {
 	self.canvas.override_move_func(move_fn::move_constant_dest(
-	    numeric::Point2f::new(150.0, 650.0),
+	    numeric::Point2f::new(160.0, 650.0),
 	    numeric::Vector2f::new(0.0, -10.0)), t);
     }
 
     pub fn slide_out(&mut self, t: Clock) {
 	self.canvas.override_move_func(move_fn::move_constant_dest(
-	    numeric::Point2f::new(150.0, 720.0),
+	    numeric::Point2f::new(160.0, 720.0),
 	    numeric::Vector2f::new(0.0, 10.0)), t);
     }
 

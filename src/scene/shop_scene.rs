@@ -739,7 +739,7 @@ impl ShopScene {
             drawable_shop_clock: drawble_shop_clock,
             shop_command_palette: ShopCommandPalette::new(
                 ctx,
-                numeric::Rect::new(150.0, 720.0, 1066.0, 100.0),
+                numeric::Rect::new(160.0, 720.0, 1066.0, 100.0),
                 0,
 		0,
             ),

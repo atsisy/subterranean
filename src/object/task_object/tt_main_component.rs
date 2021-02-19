@@ -2193,7 +2193,7 @@ impl TaskInfoContents {
 
         let general_frame = TableFrame::new(
             ctx.resource,
-            numeric::Point2f::new(50.0, 65.0),
+            numeric::Point2f::new(50.0, 95.0),
             TileBatchTextureID::OldStyleFrame,
             FrameData::new(vec![150.0, 170.0], vec![45.0; 4]),
             numeric::Vector2f::new(0.25, 0.25),
@@ -2208,7 +2208,7 @@ impl TaskInfoContents {
             0,
             large_scale_font,
         );
-        header_text.make_center(ctx.context, numeric::Point2f::new(150.0, 30.0));
+        header_text.make_center(ctx.context, numeric::Point2f::new(150.0, 60.0));
 
         let mut desc_text = Vec::new();
         let mut request_text = HashMap::new();
@@ -2278,7 +2278,7 @@ impl TaskInfoContents {
 
         let book_floating = FloatingMemoryObject::new(
             ctx,
-            numeric::Rect::new(25.0, 400.0, 250.0, 250.0),
+            numeric::Rect::new(25.0, 440.0, 250.0, 250.0),
             "-Books-".to_string(),
             10.0,
             TileBatchTextureID::TaishoStyle1,

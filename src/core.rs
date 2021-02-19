@@ -1751,7 +1751,7 @@ pub struct ReturningRequestPool {
 }
 
 impl ReturningRequestPool {
-    pub fn new(book_pool: &mut SuzunaBookPool, game_data: &GameResource, today: GensoDate) -> Self {
+    pub fn new(book_pool: &mut SuzunaBookPool, game_data: &GameResource, today: &GensoDate) -> Self {
         let mut returning_request = Vec::new();
 
         let mut day = today.clone();
@@ -1827,7 +1827,7 @@ impl SavableData {
 
         let mut suzuna_book_pool = SuzunaBookPool::new(game_data);
         let returning_request_pool =
-            ReturningRequestPool::new(&mut suzuna_book_pool, game_data, date);
+            ReturningRequestPool::new(&mut suzuna_book_pool, game_data, &date);
 
         let ad_status = hash![
             (SuzunaAdType::ShopNobori, false),

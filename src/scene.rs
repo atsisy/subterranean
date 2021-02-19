@@ -243,6 +243,10 @@ impl<T> DelayEventList<T> {
     pub fn len(&self) -> usize {
         self.list.len()
     }
+
+    pub fn clear(&mut self) {
+	self.list.clear();
+    }
 }
 
 #[macro_export]

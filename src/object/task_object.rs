@@ -145,7 +145,7 @@ impl TaskTable {
 
         let mut record_book = BorrowingRecordBook::new(
             ctx,
-            numeric::Rect::new(320.0, -550.0, 1000.0, 550.0),
+            numeric::Rect::new(250.0, -550.0, 1000.0, 550.0),
             0,
             record_book_data,
             t,
@@ -261,7 +261,7 @@ impl TaskTable {
         self.borrowing_record_book.appear();
 
         self.borrowing_record_book.override_move_func(
-            move_fn::devide_distance(numeric::Point2f::new(320.0, 100.0), 0.2),
+            move_fn::devide_distance(numeric::Point2f::new(250.0, 100.0), 0.2),
             t,
         );
         self.reset_button.appear();
@@ -272,7 +272,7 @@ impl TaskTable {
         self.manual_book.appear();
 
         self.manual_book.override_move_func(
-            move_fn::devide_distance(numeric::Point2f::new(320.0, 100.0), 0.2),
+            move_fn::devide_distance(numeric::Point2f::new(250.0, 100.0), 0.2),
             t,
         );
 
@@ -281,7 +281,7 @@ impl TaskTable {
 
     fn slide_hide_record_book(&mut self, t: Clock) {
         self.borrowing_record_book.override_move_func(
-            move_fn::devide_distance(numeric::Point2f::new(320.0, -550.0), 0.2),
+            move_fn::devide_distance(numeric::Point2f::new(250.0, -550.0), 0.2),
             t,
         );
         self.record_book_is_staged = false;
@@ -294,7 +294,7 @@ impl TaskTable {
 
     fn slide_hide_manual_book(&mut self, t: Clock) {
         self.manual_book.override_move_func(
-            move_fn::devide_distance(numeric::Point2f::new(320.0, -550.0), 0.2),
+            move_fn::devide_distance(numeric::Point2f::new(250.0, -550.0), 0.2),
             t,
         );
         self.manual_book_is_staged = false;
@@ -1532,17 +1532,17 @@ impl DrawableComponent for TaskTable {
             }
 
             self.dark_effect_panel.draw(ctx).unwrap();
-
-            self.borrowing_record_book.draw(ctx)?;
-            self.manual_book.draw(ctx)?;
-            self.kosuzu_phrase.draw(ctx)?;
-            self.reset_button.draw(ctx)?;
-
-            self.customer_silhouette_menu.draw(ctx)?;
-            self.record_book_menu.draw(ctx)?;
-            self.on_desk_menu.draw(ctx)?;
+	    
+            //self.manual_book.draw(ctx)?;
 
             self.appearance_frame.draw(ctx)?;
+
+	    self.borrowing_record_book.draw(ctx)?;
+	    self.kosuzu_phrase.draw(ctx)?;
+	    self.reset_button.draw(ctx)?;
+	    self.customer_silhouette_menu.draw(ctx)?;
+            self.record_book_menu.draw(ctx)?;
+            self.on_desk_menu.draw(ctx)?;
 
             sub_screen::pop_screen(ctx);
             self.canvas.draw(ctx).unwrap();

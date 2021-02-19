@@ -15,7 +15,7 @@ use torifune::impl_texture_object_for_wrapped;
 use torifune::numeric;
 use torifune::{mintp_new, mintp, roundup2f};
 
-use crate::core::{BookInformation, RentalLimit, TileBatchTextureID};
+use crate::{core::{BookInformation, RentalLimit, TileBatchTextureID}, flush_delay_event_and_redraw_check, flush_delay_event, scene::DelayEventList};
 use crate::object::move_fn;
 use crate::object::util_object::*;
 use crate::set_table_frame_cell_center;
@@ -1175,7 +1175,7 @@ impl BorrowingRecordBookPage {
     ) -> Self {
         let table_frame = TableFrame::new(
             ctx.resource,
-            numeric::Point2f::new(rect.w - 200.0, 40.0),
+            numeric::Point2f::new(rect.right() - 200.0, 40.0),
             TileBatchTextureID::OldStyleFrame,
             FrameData::new(vec![150.0, 300.0], vec![40.0; 3]),
             numeric::Vector2f::new(0.3, 0.3),
@@ -1244,7 +1244,7 @@ impl BorrowingRecordBookPage {
 
         let books_table = TableFrame::new(
             ctx.resource,
-            numeric::Point2f::new(rect.w - 550.0, 30.0),
+            numeric::Point2f::new(rect.right() - 550.0, 30.0),
             TileBatchTextureID::OldStyleFrame,
             FrameData::new(vec![380.0, 70.0], vec![40.0; 6]),
             numeric::Vector2f::new(0.3, 0.3),
@@ -1295,7 +1295,7 @@ impl BorrowingRecordBookPage {
             MovableUniTexture::new(
                 Box::new(UniTexture::new(
                     ctx.ref_texture(paper_tid),
-                    numeric::Point2f::new(0.0, 0.0),
+                    numeric::Point2f::new(rect.x, rect.y),
                     numeric::Vector2f::new(1.0, 1.0),
                     0.0,
                     0,
@@ -1477,8 +1477,8 @@ impl BorrowingRecordBookPage {
             book_status: book_status,
             paper_texture: paper_texture,
             borrow_date: borrow_date,
-            pay_frame: PayFrame::new(ctx, numeric::Point2f::new(170.0, 40.0), 0),
-            sign_frame: SignFrame::new(ctx, numeric::Point2f::new(30.0, rect.h - 190.0), 0),
+            pay_frame: PayFrame::new(ctx, numeric::Point2f::new(180.0, 40.0), 0),
+            sign_frame: SignFrame::new(ctx, numeric::Point2f::new(rect.right() + 30.0, rect.bottom() - 190.0), 0),
             return_date: return_date,
             drwob_essential: DrawableObjectEssential::new(true, 0),
         }
@@ -2015,13 +2015,17 @@ impl DrawableComponent for AlphaScope {
 pub struct BorrowingRecordBook {
     redraw_request: DrawRequest,
     pages: Vec<BorrowingRecordBookPage>,
-    rect: numeric::Rect,
+    host_rect: numeric::Rect,
+    page_rect: numeric::Rect,
     current_page: usize,
     next_page_ope_mesh: UniTexture,
     prev_page_ope_mesh: UniTexture,
+    page_scroll_event_list: DelayEventList<Self>,
     //scope: AlphaScope,
     canvas: MovableWrap<SubScreen>,
     page_data_backup: BorrowingRecordBookData,
+    next10_button: SelectButton,
+    prev10_button: SelectButton,
 }
 
 impl BorrowingRecordBook {
@@ -2033,14 +2037,17 @@ impl BorrowingRecordBook {
         t: Clock,
     ) -> Self {
         let backup = book_data.clone();
+	let page_rect = numeric::Rect::new(60.0, 0.0, rect.w, rect.h);
+	let host_rect = numeric::Rect::new(rect.x, rect.y, rect.w + 60.0, rect.h);
+	
         let pages = {
             let mut pages = Vec::new();
-
+	    
             while !book_data.pages_data.is_empty() {
                 let page_data = book_data.pages_data.remove(0);
                 pages.push(BorrowingRecordBookPage::new(
                     ctx,
-                    rect,
+                    page_rect,
                     TextureID::Paper1,
                     page_data,
                     t,
@@ -2052,7 +2059,7 @@ impl BorrowingRecordBook {
 
         let next = UniTexture::new(
             ctx.ref_texture(TextureID::GoNextPageLeft),
-            numeric::Point2f::new(0.0, rect.h - 32.0),
+            numeric::Point2f::new(page_rect.x, page_rect.h - 32.0),
             numeric::Vector2f::new(0.5, 0.5),
             0.0,
             0,
@@ -2060,32 +2067,76 @@ impl BorrowingRecordBook {
 
         let mut prev = UniTexture::new(
             ctx.ref_texture(TextureID::GoNextPageRight),
-            numeric::Point2f::new(rect.w - 32.0, rect.h - 32.0),
+            numeric::Point2f::new(page_rect.right() - 32.0, page_rect.h - 32.0),
             numeric::Vector2f::new(0.5, 0.5),
             0.0,
             0,
         );
         prev.hide();
 
+	let button_texture = Box::new(TextButtonTexture::new(
+            ctx,
+            numeric::Point2f::new(0.0, 0.0),
+            "次10".to_string(),
+            FontInformation::new(
+                ctx.resource.get_font(FontID::Cinema),
+                numeric::Vector2f::new(22.0, 22.0),
+                ggraphics::Color::from_rgba_u32(0xff),
+            ),
+            10.0,
+            ggraphics::Color::from_rgba_u32(0xfcf0eaff),
+            0,
+        ));
+
+        let next10_button = SelectButton::new(
+            ctx,
+            numeric::Rect::new(0.0, 40.0, 60.0, 60.0),
+            button_texture,
+        );
+
+	let button_texture = Box::new(TextButtonTexture::new(
+            ctx,
+            numeric::Point2f::new(0.0, 0.0),
+            "前10".to_string(),
+            FontInformation::new(
+                ctx.resource.get_font(FontID::Cinema),
+                numeric::Vector2f::new(22.0, 22.0),
+                ggraphics::Color::from_rgba_u32(0xff),
+            ),
+            10.0,
+            ggraphics::Color::from_rgba_u32(0xfff8edff),
+            0,
+        ));
+
+        let prev10_button = SelectButton::new(
+            ctx,
+            numeric::Rect::new(0.0, 0.0, 60.0, 60.0),
+            button_texture,
+        );
+	
         BorrowingRecordBook {
             redraw_request: DrawRequest::InitDraw,
             pages: pages,
-            rect: rect,
+	    host_rect: host_rect,
+	    page_rect: page_rect,
             current_page: 0,
             next_page_ope_mesh: next,
             prev_page_ope_mesh: prev,
             canvas: MovableWrap::new(
                 Box::new(SubScreen::new(
                     ctx.context,
-                    rect,
+                    host_rect,
                     drawing_depth,
-                    ggraphics::Color::from_rgba_u32(0xffffffff),
+                    ggraphics::Color::from_rgba_u32(0),
                 )),
                 None,
                 0,
             ),
             //scope: AlphaScope::new(ctx, 50, 230, numeric::Point2f::new(100.0, 100.0), 0),
             page_data_backup: backup,
+	    next10_button: next10_button,
+	    prev10_button: prev10_button,
+	    page_scroll_event_list: DelayEventList::new(),
         }
     }
 
@@ -2097,7 +2148,7 @@ impl BorrowingRecordBook {
             for page_data in self.page_data_backup.pages_data.iter() {
                 pages.push(BorrowingRecordBookPage::new(
                     ctx,
-                    self.rect,
+                    self.page_rect,
                     TextureID::Paper1,
                     page_data.clone(),
                     t,
@@ -2120,7 +2171,7 @@ impl BorrowingRecordBook {
 
         self.pages.push(BorrowingRecordBookPage::new_empty(
             ctx,
-            self.rect,
+            self.page_rect,
             TextureID::Paper1,
             t,
         ));
@@ -2268,7 +2319,44 @@ impl BorrowingRecordBook {
             self.prev_page(ctx);
             self.check_move_page_icon_visibility();
             return true;
-        }
+        } else if self.next10_button.contains(ctx.context, rpoint) {
+	    self.redraw_request = DrawRequest::Draw;
+	    self.page_scroll_event_list.clear();
+	    
+	    for i in 0..10 {
+		if self.current_page + i + 1 < self.pages.len() {
+		    self.page_scroll_event_list.add_event(
+			Box::new(|slf, _, _| {
+			    slf.current_page += 1;
+			    slf.redraw_request = DrawRequest::Draw;
+			    slf.check_move_page_icon_visibility();
+			}),
+			t + (i * 2) as Clock,
+		    );
+		} else {
+		    break;
+		}
+	    }
+	    ctx.play_sound_as_se(SoundID::SeTurnThePage, None);
+	    self.check_move_page_icon_visibility();
+	} else if self.prev10_button.contains(ctx.context, rpoint) {
+	    self.page_scroll_event_list.clear();
+	    for i in 0..10 {
+		if self.current_page as i32 - i > 0 {
+		    self.page_scroll_event_list.add_event(
+			Box::new(|slf, _, _| {
+			    slf.current_page -= 1;
+			    slf.redraw_request = DrawRequest::Draw;
+			    slf.check_move_page_icon_visibility();
+			}),
+			t + (i * 2) as Clock,
+		    );
+		} else {
+		    break;
+		}
+	    }
+	    ctx.play_sound_as_se(SoundID::SeTurnThePage, None);
+	}
 
         false
     }
@@ -2300,6 +2388,8 @@ impl BorrowingRecordBook {
             ctx.process_utility.redraw();
             self.move_with_func(t);
         }
+
+	flush_delay_event_and_redraw_check!(self, self.page_scroll_event_list, ctx, t, {})
     }
 
     pub fn get_book_info_frame_grid_position(
@@ -2400,10 +2490,13 @@ impl DrawableComponent for BorrowingRecordBook {
                 self.redraw_request = DrawRequest::Skip;
                 sub_screen::stack_screen(ctx, &self.canvas);
 
+		self.next10_button.draw(ctx)?;
+		self.prev10_button.draw(ctx)?;
+		
                 if self.pages.len() > 0 {
                     self.pages.get_mut(self.current_page).unwrap().draw(ctx)?;
                 }
-
+		
                 self.prev_page_ope_mesh.draw(ctx)?;
                 self.next_page_ope_mesh.draw(ctx)?;
 
