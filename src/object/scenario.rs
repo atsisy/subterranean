@@ -598,6 +598,8 @@ impl ChoiceBox {
     pub fn cursor_select<'a>(&mut self, ctx: &mut SuzuContext<'a>, point: numeric::Point2f) {
         let rpoint = self.canvas.relative_point(point);
 
+        self.selecting = None;
+	
         for (index, panel) in self.panels.iter_mut().enumerate() {
             if panel.contains(rpoint) {
                 panel.make_this_hovered_status(ctx);
@@ -1622,7 +1624,7 @@ impl ScenarioEvent {
     ) {
         self.scenario = Scenario::new(ctx, scenario_path);
         self.status = ScenarioEventStatus::Scenario;
-        self.key_down_action1(ctx, t);
+        self.key_down_action1(ctx, None, t);
         self.update_text(ctx, scno_ctx);
         self.redraw_request = DrawRequest::Draw;
     }
@@ -1818,7 +1820,7 @@ impl ScenarioEvent {
     ///
     /// Action1キーが押されたときの、ScenarioEventの挙動
     ///
-    pub fn key_down_action1<'a>(&mut self, ctx: &mut SuzuContext<'a>, _: Clock) {
+    pub fn key_down_action1<'a>(&mut self, ctx: &mut SuzuContext<'a>, click_point: Option<numeric::Point2f>, _: Clock) {
         match self.scenario.ref_current_element_mut() {
             // 現在のScenarioElementがテキスト
             ScenarioElement::Text(scenario_text) => {
@@ -1849,6 +1851,13 @@ impl ScenarioEvent {
                 }
             }
             ScenarioElement::ChoiceSwitch(_) => {
+		if click_point.is_none() {
+		    return;
+		}
+
+		let rpoint = self.canvas.relative_point(click_point.unwrap());
+		
+		self.scenario_box.choice_box.as_mut().unwrap().cursor_select(ctx, rpoint);
                 let maybe_index = self.scenario_box.get_choice_selecting_index();
                 if maybe_index.is_none() {
                     return;

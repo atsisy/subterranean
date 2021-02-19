@@ -194,9 +194,8 @@ impl ScenarioScene {
     fn non_paused_key_down_event(&mut self, ctx: &mut SuzuContext, vkey: tdev::VirtualKey) {
         match vkey {
             tdev::VirtualKey::Action1 => {
-                println!("Action1 down!");
                 self.scenario_event
-                    .key_down_action1(ctx, self.get_current_clock());
+                    .key_down_action1(ctx, None, self.get_current_clock());
             }
             tdev::VirtualKey::Action4 => {
                 let t = self.get_current_clock();
@@ -605,7 +604,7 @@ impl SceneManager for ScenarioScene {
 
                     if self.scenario_event.contains_scenario_text_box(point) {
                         self.scenario_event
-                            .key_down_action1(ctx, self.get_current_clock());
+                            .key_down_action1(ctx, Some(point), self.get_current_clock());
                     }
                 }
                 _ => (),
