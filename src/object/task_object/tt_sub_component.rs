@@ -1477,8 +1477,8 @@ impl BorrowingRecordBookPage {
             book_status: book_status,
             paper_texture: paper_texture,
             borrow_date: borrow_date,
-            pay_frame: PayFrame::new(ctx, numeric::Point2f::new(180.0, 40.0), 0),
-            sign_frame: SignFrame::new(ctx, numeric::Point2f::new(rect.right() + 30.0, rect.bottom() - 190.0), 0),
+            pay_frame: PayFrame::new(ctx, numeric::Point2f::new(220.0, 40.0), 0),
+            sign_frame: SignFrame::new(ctx, numeric::Point2f::new(rect.left() + 30.0, rect.bottom() - 190.0), 0),
             return_date: return_date,
             drwob_essential: DrawableObjectEssential::new(true, 0),
         }

@@ -50,7 +50,7 @@ text = """
 
 
 [scenario-group.tachie-data]
-right = "KosuzuTachie1"
+right = "AkyuTachieDefault"
 
    [scenario-group.default-text-attribute]
    fpc = 2.0
@@ -81,7 +81,7 @@ text = """
 """
 
 [scenario-group.tachie-data]
-right = "KosuzuTachie1"
+right = "AkyuTachieDefault"
 
    [scenario-group.default-text-attribute]
    fpc = 2.0
@@ -108,7 +108,7 @@ text = """
 週の始まりにはその週の予定を決めましょう。"""
 
 [scenario-group.tachie-data]
-right = "KosuzuTachie1"
+right = "AkyuTachieDefault"
 
    [scenario-group.default-text-attribute]
    fpc = 2.0

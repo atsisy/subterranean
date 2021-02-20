@@ -157,6 +157,8 @@ pub enum TextureID {
     BaraBG,
     SuzunaanMap,
     Mob1TachieDefault,
+    SuzuLogo,
+    AkyuTachieDefault,
     Unknown,
 }
 
@@ -266,6 +268,8 @@ impl FromStr for TextureID {
 	    "BaraBG" => Ok(Self::BaraBG),
 	    "SuzunaanMap" => Ok(Self::SuzunaanMap),
 	    "Mob1TachieDefaule" => Ok(Self::Mob1TachieDefault),
+	    "SuzuLogo" => Ok(Self::SuzuLogo),
+	    "AkyuTachieDefault" => Ok(Self::AkyuTachieDefault),
             _ => Err(()),
         }
     }
@@ -353,6 +357,8 @@ impl TextureID {
 	    76 => Some(Self::BaraBG),
 	    77 => Some(Self::SuzunaanMap),
 	    78 => Some(Self::Mob1TachieDefault),
+	    79 => Some(Self::SuzuLogo),
+	    80 => Some(Self::AkyuTachieDefault),
             _ => None,
         }
     }

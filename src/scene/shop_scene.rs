@@ -1207,19 +1207,8 @@ impl ShopScene {
         if let Some(event_element) = target_event {
             match event_element {
                 MapEventElement::TextEvent(text) => {
-                    println!("{}", text.get_text());
-
-                    let mut scenario_box =
-                        ScenarioBox::new(ctx, numeric::Rect::new(33.0, 470.0, 1300.0, 270.0), t);
-                    scenario_box.text_box.set_fixed_text(
-                        text.get_text(),
-                        FontInformation::new(
-                            ctx.resource.get_font(FontID::JpFude1),
-                            numeric::Vector2f::new(32.0, 32.0),
-                            ggraphics::Color::from_rgba_u32(0x000000ff),
-                        ),
-                    );
-                    self.map.scenario_box = Some(scenario_box);
+		    let text = text.get_text().to_string();
+		    self.set_fixed_text_into_scenario_box(ctx, text, t);
                 }
                 MapEventElement::SwitchScene(switch_scene) => {
                     if !self.customer_request_queue.is_empty() && !self.customer_queue.is_empty() {
@@ -1750,6 +1739,20 @@ impl ShopScene {
 
 	self.customer_request_queue.clear();
     }
+
+    fn set_fixed_text_into_scenario_box<'a>(&mut self, ctx: &mut SuzuContext<'a>, text: String, t: Clock) {
+	let mut scenario_box =
+            ScenarioBox::new(ctx, numeric::Rect::new(33.0, 470.0, 1300.0, 270.0), t);
+        scenario_box.text_box.set_fixed_text(
+            text,
+            FontInformation::new(
+                ctx.resource.get_font(FontID::Cinema),
+                numeric::Vector2f::new(32.0, 32.0),
+                ggraphics::Color::from_rgba_u32(0x000000ff),
+            ),
+        );
+        self.map.scenario_box = Some(scenario_box);
+    }
 }
 
 impl SceneManager for ShopScene {
@@ -1850,11 +1853,15 @@ impl SceneManager for ShopScene {
                         }
                     }
 
-                    self.shop_command_palette
-                        .mouse_left_button_down_handler(ctx, point);
-                    if let Some(func) = self.shop_command_palette.check_button_func(point) {
-			self.command_palette_handler(ctx, func);
-                    }
+		    if !self.shop_menu.first_menu_is_open()
+			&& !self.shop_menu.detail_menu_is_open()
+			&& !self.shop_special_object.is_enable_now() {
+			    self.shop_command_palette
+				.mouse_left_button_down_handler(ctx, point);
+			    if let Some(func) = self.shop_command_palette.check_button_func(point) {
+				self.command_palette_handler(ctx, func);
+			    }
+			}
                 }
                 MouseButton::Right => {
                     self.player.reset_speed();

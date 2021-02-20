@@ -216,9 +216,9 @@ impl ScenarioScene {
                         self.scenario_event.set_fixed_text_to_scenario_box(
                             ctx,
                             if self.scenario_ctx.schedule_redefine {
-                                "新しく計画を建てるわヨ"
+                                "新しく計画を建てるわヨ".to_string()
                             } else {
-                                "計画通り働くわよ"
+                                "計画通り働くわよ".to_string()
                             },
                         );
                     }

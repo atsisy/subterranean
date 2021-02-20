@@ -16,6 +16,7 @@ use crate::flush_delay_event;
 pub struct TitleScene {
     mouse_info: MouseInformation,
     background: UniTexture,
+    logo: UniTexture,
     event_list: DelayEventList<Self>,
     scene_transition_effect: Option<effect_object::ScreenTileEffect>,
     scene_transition: SceneID,
@@ -32,6 +33,14 @@ impl TitleScene {
             ctx.ref_texture(TextureID::JpHouseTexture),
             numeric::Point2f::new(0.0, 0.0),
             numeric::Vector2f::new(0.7, 0.7),
+            0.0,
+            0,
+        );
+
+	let logo = UniTexture::new(
+            ctx.ref_texture(TextureID::SuzuLogo),
+            numeric::Point2f::new(950.0, 50.0),
+            numeric::Vector2f::new(1.0, 1.0),
             0.0,
             0,
         );
@@ -78,6 +87,7 @@ impl TitleScene {
             current_title_contents: title_contents_set.remove_pickup("init-menu"),
             title_contents_set: title_contents_set,
             bgm_handler: bgm_handler,
+	    logo: logo,
             clock: 0,
         }
     }
@@ -293,6 +303,7 @@ impl SceneManager for TitleScene {
 
     fn drawing_process(&mut self, ctx: &mut ggez::Context) {
         self.background.draw(ctx).unwrap();
+	//self.logo.draw(ctx).unwrap();
 
         if let Some(contetns) = self.current_title_contents.as_mut() {
             contetns.draw(ctx).unwrap();

@@ -1605,12 +1605,14 @@ impl PauseScreenSet {
     }
 
     pub fn mouse_motion_handler<'a>(&mut self, ctx: &mut SuzuContext<'a>, point: numeric::Point2f) {
-        for (index, vtext) in self.entries.iter().enumerate() {
-            if vtext.contains(ctx.context, point) {
-                self.select_entries_handler(ctx, index);
-                return;
+	if self.config_panel.is_none() {
+            for (index, vtext) in self.entries.iter().enumerate() {
+		if vtext.contains(ctx.context, point) {
+                    self.select_entries_handler(ctx, index);
+                    return;
+		}
             }
-        }
+	}
 
         // ここまで到達するのは、すべてのテキストにカーソルが重なっていなかった場合
         if self.cursored_index.is_some() {

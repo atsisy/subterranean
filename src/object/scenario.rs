@@ -1308,12 +1308,12 @@ impl TextBox {
         segs.len() - 1
     }
 
-    pub fn set_fixed_text(&mut self, text: &str, font_info: FontInformation) {
+    pub fn set_fixed_text(&mut self, text: String, font_info: FontInformation) {
         self.text.clear();
         self.text.push_back(SimpleText::new(
             tobj::MovableText::new(
                 Box::new(tobj::UniText::new(
-                    text.to_string(),
+                    text,
                     numeric::Point2f::new(60.0, 60.0),
                     numeric::Vector2f::new(1.0, 1.0),
                     0.0,
@@ -1495,7 +1495,7 @@ impl ScenarioBox {
                     "".to_string()
                 };
             //self.text_box.set_fixed_text(&format!("{}\n{}", header_text, selected_text), font_info);
-            self.text_box.set_fixed_text(header_text, font_info);
+            self.text_box.set_fixed_text(header_text.to_string(), font_info);
         }
     }
 
@@ -1805,7 +1805,7 @@ impl ScenarioEvent {
         self.scenario.release_waiting();
     }
 
-    pub fn set_fixed_text_to_scenario_box<'a>(&mut self, ctx: &mut SuzuContext<'a>, text: &str) {
+    pub fn set_fixed_text_to_scenario_box<'a>(&mut self, ctx: &mut SuzuContext<'a>, text: String) {
         self.redraw_request = DrawRequest::Draw;
         self.scenario_box.text_box.set_fixed_text(
             text,

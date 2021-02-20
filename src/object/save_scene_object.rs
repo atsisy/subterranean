@@ -380,6 +380,7 @@ impl DrawableSaveEntry {
     fn delete_action<'a>(&mut self, ctx: &mut SuzuContext<'a>) {
         SavableData::delete(self.slot_id);
         self.update_none_contents(ctx);
+	self.desc_text.clear();
     }
 
     pub fn click_handler<'a>(
