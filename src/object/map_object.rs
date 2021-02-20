@@ -843,6 +843,7 @@ impl CustomerCharacter {
         ctx: &mut ggez::Context,
         map_data: &mp::StageObjectMap,
         dest: numeric::Vector2u,
+	t: Clock,
     ) -> Result<(), ()> {
         // 現在の移動キューをクリア
         self.move_queue.clear();
@@ -855,6 +856,7 @@ impl CustomerCharacter {
         if let Some(next_route) = maybe_next_route {
             self.move_queue.enqueue(next_route);
             self.customer_status = CustomerCharacterStatus::Ready;
+	    self.update_move_effect(ctx, map_data, t);
             Ok(())
         } else {
             println!(
@@ -878,8 +880,9 @@ impl CustomerCharacter {
         ctx: &mut ggez::Context,
         map_data: &mp::StageObjectMap,
         dest: numeric::Vector2u,
+	t: Clock,
     ) {
-        match self.set_destination_forced(ctx, map_data, dest) {
+        match self.set_destination_forced(ctx, map_data, dest, t) {
             Ok(_) => {
 		self.customer_status = CustomerCharacterStatus::GettingOut;
 		self.shopping_is_done = true;
@@ -893,8 +896,9 @@ impl CustomerCharacter {
         ctx: &mut ggez::Context,
         map_data: &mp::StageObjectMap,
         dest: numeric::Vector2u,
+	t: Clock,
     ) {
-        match self.set_destination_forced(ctx, map_data, dest) {
+        match self.set_destination_forced(ctx, map_data, dest, t) {
             Ok(_) => {
                 self.customer_status = CustomerCharacterStatus::GoToCheck;
             }

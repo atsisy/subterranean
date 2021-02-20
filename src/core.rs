@@ -725,6 +725,10 @@ impl GensoDate {
 	let diff = self.diff_day(&GensoDate::new(112, 7, 23));
 	diff % 7 == 0
     }
+
+    pub fn first_day(&self) -> bool {
+	self == &GensoDate::new(112, 7, 23)
+    }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]

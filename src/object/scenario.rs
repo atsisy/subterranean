@@ -271,7 +271,7 @@ pub struct ScenarioText {
     total_length: usize,
     scenario_id: ScenarioElementID,
     next_scenario_id: ScenarioElementID,
-    background_texture_id: TextureID,
+    background_texture_id: Option<TextureID>,
     tachie_data: TachieData,
 }
 
@@ -308,8 +308,10 @@ impl ScenarioText {
             }
         }
 
-        let background_texture_id =
-            TextureID::from_str(toml_scripts.get("background").unwrap().as_str().unwrap()).unwrap();
+        let background_texture_id = match toml_scripts.get("background") {
+	    Some(background) => Some(TextureID::from_str(background.as_str().unwrap()).unwrap()),
+	    None => None,
+	};
 
         let total_length: usize = seq_text.iter().fold(0, |sum, s| sum + s.str_len());
 
@@ -384,7 +386,7 @@ impl ScenarioText {
         self.current_segment_index = 0;
     }
 
-    pub fn get_background_texture_id(&self) -> TextureID {
+    pub fn get_background_texture_id(&self) -> Option<TextureID> {
         self.background_texture_id
     }
 
@@ -839,7 +841,7 @@ impl ScenarioElement {
 
     pub fn get_background_texture(&self) -> Option<TextureID> {
         match self {
-            Self::Text(text) => Some(text.get_background_texture_id()),
+            Self::Text(text) => text.get_background_texture_id(),
             Self::ChoiceSwitch(choice) => choice.get_background_texture_id(),
             Self::SceneTransition(_) => None,
             Self::FinishAndWait(data) => data.get_background_texture_id(),
@@ -1625,7 +1627,7 @@ impl ScenarioEvent {
         self.scenario = Scenario::new(ctx, scenario_path);
         self.status = ScenarioEventStatus::Scenario;
         self.key_down_action1(ctx, None, t);
-        self.update_text(ctx, scno_ctx);
+        self.update_text(ctx, Some(scno_ctx));
         self.redraw_request = DrawRequest::Draw;
     }
 
@@ -1697,7 +1699,7 @@ impl ScenarioEvent {
     ///
     /// 表示しているテキストや選択肢を更新するメソッド
     ///
-    pub fn update_text<'a>(&mut self, ctx: &mut SuzuContext<'a>, scno_ctx: &mut ScenarioContext) {
+    pub fn update_text<'a>(&mut self, ctx: &mut SuzuContext<'a>, scno_ctx: Option<&mut ScenarioContext>) {
         match self.scenario.ref_current_element_mut() {
             ScenarioElement::Text(scenario_text) => {
                 if self.scenario_box.get_text_box_status() == TextBoxStatus::UpdatingText {
@@ -1759,8 +1761,10 @@ impl ScenarioEvent {
                 self.redraw_request = DrawRequest::Draw;
             }
             ScenarioElement::FinishAndWait(_) => {
-                self.status = ScenarioEventStatus::FinishAndWait;
-                scno_ctx.scenario_is_finish_and_wait = true;
+		if let Some(scno_ctx) = scno_ctx {
+                    self.status = ScenarioEventStatus::FinishAndWait;
+                    scno_ctx.scenario_is_finish_and_wait = true;
+		}
             }
             ScenarioElement::BuiltinCommand(ope) => match ope {
                 ScenarioBuiltinCommand::ScheduleStart(_) => {

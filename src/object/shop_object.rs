@@ -2451,12 +2451,23 @@ impl ShopSpecialObject {
         if let Some(ui) = self.storing_select_ui.as_mut() {
             ui.on_click(ctx, t, button, point);
         }
-
-        if let Some(ui) = self.new_books_viewer.as_mut() {
+    }
+    
+    pub fn try_close_new_books_viewer<'a>(
+	&mut self,
+	ctx: &mut SuzuContext<'a>,
+        button: MouseButton,
+        point: numeric::Point2f,
+        t: Clock,
+    ) -> bool {
+	if let Some(ui) = self.new_books_viewer.as_mut() {
             if ui.click_and_maybe_hide(ctx, t, button, point) {
                 self.hide_new_books_viewer(t);
+		return true;
             }
         }
+
+	false
     }
 
     pub fn mouse_wheel_scroll_action<'a>(

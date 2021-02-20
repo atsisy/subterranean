@@ -620,7 +620,7 @@ impl SceneManager for ScenarioScene {
         if self.now_paused() {
         } else {
             // 再描画要求はupdate_textメソッドの中で行われている
-            self.scenario_event.update_text(ctx, &mut self.scenario_ctx);
+            self.scenario_event.update_text(ctx, Some(&mut self.scenario_ctx));
 
             if self.scenario_event.get_status() == ScenarioEventStatus::StartSchedule
                 && !self.scenario_ctx.builtin_command_inexec
