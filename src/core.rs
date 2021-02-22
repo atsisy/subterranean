@@ -1460,6 +1460,20 @@ impl GameMode {
 	    }
 	}
     }
+
+    pub fn is_story_mode(&self) -> bool {
+	match self {
+	    GameMode::Story => true,
+	    GameMode::TimeAttack(_) => false,
+	}
+    }
+
+    pub fn is_ta_mode(&self) -> bool {
+	match self {
+	    GameMode::Story => false,
+	    GameMode::TimeAttack(_) => true,
+	}
+    }
 }
 
 

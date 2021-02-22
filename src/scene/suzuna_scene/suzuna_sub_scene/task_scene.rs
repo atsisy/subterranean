@@ -6,7 +6,7 @@ use torifune::graphics::object::Effectable;
 use torifune::numeric;
 
 use super::super::*;
-use crate::object::Clickable;
+use crate::object::{Clickable, scenario::ScenarioEvent};
 
 use crate::core::{MouseActionRecord, MouseInformation, ReputationEvent, TileBatchTextureID};
 use crate::object::effect_object;
@@ -39,6 +39,8 @@ pub struct TaskScene {
     transition_status: SceneTransition,
     transition_scene: SceneID,
     scene_transition_effect: Option<effect_object::ScreenTileEffect>,
+    tutorial_context: TutorialContext,
+    scenario_event: Option<ScenarioEvent>,
 }
 
 impl TaskScene {
@@ -46,6 +48,7 @@ impl TaskScene {
         ctx: &mut SuzuContext<'a>,
         customer_request: Option<CustomerRequest>,
         record_book_data: BorrowingRecordBookData,
+	tutorial_context: &TutorialContext,
     ) -> TaskScene {
         let animation_time = 30;
 
@@ -75,8 +78,28 @@ impl TaskScene {
 
         if let Some(customer_request) = customer_request.as_ref() {
             match customer_request {
-                CustomerRequest::Borrowing(_) => ctx.take_save_data_mut().award_data.borrowing_count += 1,
-                CustomerRequest::Returning(_) => ctx.take_save_data_mut().award_data.returning_count += 1,
+                CustomerRequest::Borrowing(_) => {
+		    ctx.take_save_data_mut().award_data.borrowing_count += 1;
+		    if !tutorial_context.borrowing_request {
+			event_list.add_event(
+			    Box::new(move |slf: &mut TaskScene, ctx, t| {
+				slf.set_fixed_text_into_scenario_box(ctx, "/scenario/tutorial/task/b1.toml", t);
+			    }),
+			    31
+			);
+		    }
+		},
+                CustomerRequest::Returning(_) => {
+		    ctx.take_save_data_mut().award_data.returning_count += 1;
+		    if !tutorial_context.returning_request {
+			event_list.add_event(
+			    Box::new(move |slf: &mut TaskScene, ctx, t| {
+				slf.set_fixed_text_into_scenario_box(ctx, "/scenario/tutorial/task/r1.toml", t);
+			    }),
+			    31
+			);
+		    }
+		}
             }
         }
 
@@ -101,6 +124,8 @@ impl TaskScene {
             transition_status: SceneTransition::Keep,
             transition_scene: SceneID::MainDesk,
             scene_transition_effect: scene_transition_effect,
+	    tutorial_context: tutorial_context.clone(),
+	    scenario_event: None,
         }
     }
 
@@ -177,6 +202,10 @@ impl TaskScene {
         self.task_table.export_borrowing_record_book_data()
     }
 
+    pub fn get_tutorial_context(&self) -> &TutorialContext {
+	&self.tutorial_context
+    }
+
     fn scene_transition_close_effect<'a>(&mut self, ctx: &mut SuzuContext<'a>, t: Clock) {
         self.scene_transition_effect = Some(effect_object::ScreenTileEffect::new(
             ctx,
@@ -245,6 +274,7 @@ impl TaskScene {
         ctx: &mut SuzuContext<'a>,
         button: MouseButton,
         point: numeric::Point2f,
+	t: Clock,
     ) {
         //self.paper.button_up(ctx, button, point);
         self.unselect_dragging_object(ctx, self.get_current_clock());
@@ -260,6 +290,13 @@ impl TaskScene {
 
         self.mouse_info
             .set_last_up(button, point, self.get_current_clock());
+
+	if let Some(scenario_event) = self.scenario_event.as_mut() {
+	    if scenario_event.contains_scenario_text_box(point) {
+                scenario_event
+		    .key_down_action1(ctx, Some(point), t);
+	    }
+	}
     }
 
     fn non_paused_mouse_button_down_event<'a>(
@@ -312,6 +349,29 @@ impl TaskScene {
         }
 
         ctx.process_utility.redraw();
+    }
+
+    fn scenario_event_handler<'a>(&mut self, _ctx: &mut SuzuContext<'a>, _t: Clock) {
+	if let Some(scenario_event) = self.scenario_event.as_ref() {
+	    if let Some(opecode) = scenario_event.get_scenario_waiting_opecode() {
+		match opecode {
+		    "TutorialFinishBorrowing" => {
+			self.scenario_event = None;
+			self.tutorial_context.borrowing_request = true;
+		    },
+		    "TutorialFinishReturning" => {
+			self.scenario_event = None;
+			self.tutorial_context.returning_request = true;
+		    },
+		    _ => (),
+		}
+	    }
+	}
+    }
+
+    fn set_fixed_text_into_scenario_box<'a>(&mut self, ctx: &mut SuzuContext<'a>, path: &str, t: Clock) {
+	let scenario_box = ScenarioEvent::new(ctx, numeric::Rect::new(0.0, 0.0, 1366.0, 748.0), path, t);
+        self.scenario_event = Some(scenario_box);
     }
 }
 
@@ -409,18 +469,18 @@ impl SceneManager for TaskScene {
         button: MouseButton,
         point: numeric::Point2f,
     ) {
+	let t = self.get_current_clock();
         self.mouse_info.update_dragging(button, false);
 
         if self.now_paused() {
             match button {
                 MouseButton::Left => {
-                    let t = self.get_current_clock();
                     self.pause_screen_click_handler(ctx, point, t);
                 }
                 _ => (),
             }
         } else {
-            self.non_paused_mouse_button_up_event(ctx, button, point);
+            self.non_paused_mouse_button_up_event(ctx, button, point, t);
         }
     }
 
@@ -429,6 +489,11 @@ impl SceneManager for TaskScene {
         let t = self.get_current_clock();
 
         if !self.now_paused() {
+	    if let Some(scenario_event) = self.scenario_event.as_mut() {
+		scenario_event.update_text(ctx, None);
+	    }
+	    self.scenario_event_handler(ctx, t);
+	    
             self.task_table.update(ctx, self.get_current_clock());
 
             if self.status == TaskSceneStatus::CustomerEvent && self.task_table.task_is_done() {
@@ -469,6 +534,10 @@ impl SceneManager for TaskScene {
         {
             self.task_table.draw(ctx).unwrap();
             self.pause_screen_set.draw(ctx).unwrap();
+
+	    if let Some(scenario_box) = self.scenario_event.as_mut() {
+		scenario_box.draw(ctx).unwrap();
+            }
 
             if let Some(transition_effect) = self.scene_transition_effect.as_mut() {
                 transition_effect.draw(ctx).unwrap();

@@ -1589,6 +1589,12 @@ impl ToString for CustomerRequest {
     }
 }
 
+#[derive(Clone)]
+pub enum CustomerRequestOrder {
+    BorrowingOrder,
+    ReturningOrder,
+}
+
 pub struct ShelvingBookBox {
     pub canvas: SubScreen,
     pub shelved: Vec<TaskItem>,

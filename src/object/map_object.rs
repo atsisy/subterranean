@@ -19,6 +19,8 @@ use crate::object::task_object::tt_main_component::CustomerRequest;
 use crate::object::util_object::*;
 use crate::scene::{DelayEventList, SceneID};
 
+use super::task_object::tt_main_component::CustomerRequestOrder;
+
 pub struct TwoStepPoint {
     pub previous: numeric::Point2f,
     pub current: numeric::Point2f,
@@ -943,6 +945,24 @@ impl CustomerCharacter {
         }
     }
 
+    fn generate_hold_request_with_order<'a>(&mut self, ctx: &mut SuzuContext<'a>, order: CustomerRequestOrder) -> CustomerRequest {
+        let today = ctx.take_save_data().date.clone();
+
+        match order {
+            CustomerRequestOrder::ReturningOrder => CustomerRequest::Returning(ReturnBookInformation::new_random(
+                ctx.resource,
+                today,
+                GensoDate::new(128, 12, 20),
+            )),
+            CustomerRequestOrder::BorrowingOrder => CustomerRequest::Borrowing(BorrowingInformation::new(
+                vec![ctx.resource.book_random_select().clone()],
+                &self.customer_info.name,
+                today,
+                RentalLimit::random(),
+            )),
+        }
+    }
+
     fn check_been_counter(
         &mut self,
         map_data: &mp::StageObjectMap,
@@ -1089,9 +1109,12 @@ impl CustomerCharacter {
         self.customer_status == CustomerCharacterStatus::WaitOnClerk
     }
 
-    pub fn check_rise_hand<'a>(&mut self, ctx: &mut SuzuContext<'a>) -> Option<CustomerRequest> {
+    pub fn check_rise_hand<'a>(&mut self, ctx: &mut SuzuContext<'a>, order: Option<CustomerRequestOrder>) -> Option<CustomerRequest> {
         if self.customer_status == CustomerCharacterStatus::WaitOnClerk {
-            Some(self.generate_hold_request(ctx))
+	    match order {
+		Some(order) => Some(self.generate_hold_request_with_order(ctx, order)),
+		None => Some(self.generate_hold_request(ctx)),
+	    }
         } else {
             None
         }

@@ -63,7 +63,7 @@ impl ScenarioScene {
 		    GameMode::TimeAttack(data) => {
 			if ctx.take_save_data().task_result.total_money > data.get_goal() as i32 {
 			    "/scenario/time_attack_goal.toml".to_string()	    
-			} else if data.get_limit().is_past(&ctx.take_save_data().date) {
+			} else if ctx.take_save_data().date.is_past(data.get_limit()) {
 			    "/scenario/time_attack_over.toml".to_string()
 			} else if ctx.take_save_data().date.is_week_first() {
 			    "/scenario/time_attack_week_first.toml".to_string()

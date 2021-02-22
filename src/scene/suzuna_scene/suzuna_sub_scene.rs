@@ -24,6 +24,28 @@ pub enum SuzunaSceneStatus {
     DayResult,
 }
 
+#[derive(Clone)]
+pub struct TutorialContext {
+    borrowing_request: bool,
+    returning_request: bool,
+}
+
+impl TutorialContext {
+    pub fn new() -> Self {
+	TutorialContext {
+	    borrowing_request: false,
+	    returning_request: false,
+	}
+    }
+
+    pub fn new_done() -> Self {
+	TutorialContext {
+	    borrowing_request: true,
+	    returning_request: true,
+	}
+    }
+}
+
 ///
 /// 鈴奈庵シーンのサブシーンをまとめる構造体
 ///
@@ -33,6 +55,7 @@ pub struct SuzunaSubScene {
     pub day_result_scene: Option<Box<TaskResultScene>>,
     scene_status: SuzunaSceneStatus,
     new_book_schedule: NewBookSchedule,
+    tutorial_context: TutorialContext,
     date: GensoDate,
 }
 
@@ -56,10 +79,15 @@ impl SuzunaSubScene {
             scene_status: SuzunaSceneStatus::Shop,
             new_book_schedule: new_book_schedule,
             date: date,
+	    tutorial_context: if ctx.take_save_data().date.first_day() && ctx.take_save_data().game_mode.is_story_mode() {
+		TutorialContext::new()
+	    } else {
+		TutorialContext::new_done()
+	    }
         }
     }
 
-    pub fn get_shop_scene_mut(&mut self) -> Option<&mut Box<ShopScene>> {
+     pub fn get_shop_scene_mut(&mut self) -> Option<&mut Box<ShopScene>> {
         self.shop_scene.as_mut()
     }
 
@@ -121,6 +149,7 @@ impl SuzunaSubScene {
                     ctx,
                     Some(customer_request),
                     record_book_data,
+		    &self.tutorial_context,
                 )));
             }
         }
@@ -159,6 +188,7 @@ impl SuzunaSubScene {
                 .as_ref()
                 .unwrap()
                 .export_borrowing_record_book_data();
+	    self.tutorial_context = self.desk_work_scene.as_ref().unwrap().get_tutorial_context().clone();
             self.scene_status = SuzunaSceneStatus::Shop;
             self.shop_scene.as_mut().unwrap().switched_and_restart(
                 ctx,

@@ -16,7 +16,7 @@ use ggez::input::mouse::MouseButton;
 use torifune::numeric;
 
 use super::*;
-use crate::{add_delay_event, core::{SoundID, WINDOW_SIZE_X}};
+use crate::{add_delay_event, core::{SoundID, WINDOW_SIZE_X}, object::task_object::tt_main_component::CustomerRequestOrder};
 use crate::core::{map_parser as mp};
 use crate::core::{
     BookInformation, FontID, MouseInformation, ResultReport, SavableData, SuzuContext,
@@ -577,6 +577,8 @@ struct ShopTutorialList {
     first_ret_box: bool,
     go_shelving: bool,
     shelving_is_done: bool,
+    customer_is_comming: bool,
+    checking_customer_count: i64,
 }
 
 impl ShopTutorialList {
@@ -587,7 +589,28 @@ impl ShopTutorialList {
 	    first_ret_box: false,
 	    go_shelving: false,
 	    shelving_is_done: false,
+	    customer_is_comming: false,
+	    checking_customer_count: 0,
 	}
+    }
+
+    pub fn new_done() -> Self {
+	ShopTutorialList {
+	    hello: true,
+	    go_ret_box: true,
+	    first_ret_box: true,
+	    go_shelving: true,
+	    shelving_is_done: true,
+	    customer_is_comming: true,
+	    checking_customer_count: 100,
+	}
+    }
+
+    pub fn is_book_shelf_unlocked(&self) -> bool {
+	self.hello &&
+	    self.go_ret_box &&
+	    self.first_ret_box &&
+	    self.go_shelving
     }
 
     pub fn all_done(&self) -> bool {
@@ -595,7 +618,21 @@ impl ShopTutorialList {
 	    self.go_ret_box &&
 	    self.first_ret_box &&
 	    self.go_shelving &&
-	    self.shelving_is_done
+	    self.shelving_is_done &&
+	    self.customer_is_comming &&
+	    self.gen_tutorial_customer_order().is_none()
+    }
+
+    pub fn inc_checking_customer_count(&mut self) {
+	self.checking_customer_count += 1;
+    }
+
+    pub fn gen_tutorial_customer_order(&self) -> Option<CustomerRequestOrder> {
+	match self.checking_customer_count {
+	    0 => Some(CustomerRequestOrder::BorrowingOrder),
+	    1 => Some(CustomerRequestOrder::ReturningOrder),
+	    _ => None,
+	}
     }
 }
 
@@ -700,7 +737,7 @@ impl ShopScene {
 
         let mut delay_event_list = DelayEventList::new();
 
-	if ctx.take_save_data().date.first_day() || true {
+	if ctx.take_save_data().date.first_day() && ctx.take_save_data().game_mode.is_story_mode() {
 	    delay_event_list.add_event(
 		Box::new(move |slf: &mut ShopScene, ctx, t| {
 		    slf.set_fixed_text_into_scenario_box(ctx, "/scenario/tutorial/1.toml", t);
@@ -791,7 +828,11 @@ impl ShopScene {
 	    shop_time_status_header: shop_time_status_header,
 	    random_customer_add_timing: ctx.resource.get_todays_customer_dist(&ctx.take_save_data().date),
 	    new_books: new_books,
-	    tutorial_list: ShopTutorialList::new(),
+	    tutorial_list: if ctx.take_save_data().date.first_day() && ctx.take_save_data().game_mode.is_story_mode() {	
+		ShopTutorialList::new()
+	    } else {
+		ShopTutorialList::new_done()
+	    }
         }
     }
 
@@ -1297,23 +1338,25 @@ impl ShopScene {
                     }
                 }
                 MapEventElement::BookStoreEvent(book_store_event) => {
-                    self.dark_effect_panel
-                        .new_effect(8, self.get_current_clock(), 0, 200);
-                    self.shop_special_object.show_storing_select_ui(
-                        ctx,
-                        book_store_event.get_book_shelf_info().clone(),
-                        self.player.get_shelving_book().clone(),
-                        t,
-                    );
-
-		    if !self.tutorial_list.shelving_is_done {
-			self.event_list.add_event(
-			    Box::new(move |slf: &mut ShopScene, ctx, t| {
-				slf.set_fixed_text_into_scenario_box(ctx, "/scenario/tutorial/5.toml", t);
-				slf.dark_effect_panel.new_effect(8, t, 0, 220);
-			    }),
-			    31
+		    if self.tutorial_list.is_book_shelf_unlocked() {
+			self.dark_effect_panel
+                            .new_effect(8, self.get_current_clock(), 0, 200);
+			self.shop_special_object.show_storing_select_ui(
+                            ctx,
+                            book_store_event.get_book_shelf_info().clone(),
+                            self.player.get_shelving_book().clone(),
+                            t,
 			);
+			
+			if !self.tutorial_list.shelving_is_done {
+			    self.event_list.add_event(
+				Box::new(move |slf: &mut ShopScene, ctx, t| {
+				    slf.set_fixed_text_into_scenario_box(ctx, "/scenario/tutorial/5.toml", t);
+				    slf.dark_effect_panel.new_effect(8, t, 0, 220);
+				}),
+				31
+			    );
+			}
 		    }
                 }
                 MapEventElement::BuiltinEvent(builtin_event) => {
@@ -1482,7 +1525,7 @@ impl ShopScene {
 	}
     }
 
-    fn try_hide_storing_select_ui<'a>(&mut self, ctx: &mut SuzuContext<'a>) {
+    fn try_hide_storing_select_ui<'a>(&mut self, ctx: &mut SuzuContext<'a>, t: Clock) {
         let store_result = self
             .shop_special_object
             .hide_storing_select_ui(self.get_current_clock());
@@ -1492,6 +1535,16 @@ impl ShopScene {
                 .update_contents(ctx, self.player.get_shelving_book());
             self.dark_effect_panel
                 .new_effect(8, self.get_current_clock(), 200, 0);
+
+	    if !self.tutorial_list.customer_is_comming {
+		self.event_list.add_event(
+		    Box::new(move |slf: &mut ShopScene, ctx, t| {
+			slf.set_fixed_text_into_scenario_box(ctx, "/scenario/tutorial/6.toml", t);
+			slf.dark_effect_panel.new_effect(8, t, 0, 220);
+		    }),
+		    t + 30
+		);
+	    }
         }
     }
 
@@ -1596,7 +1649,7 @@ impl ShopScene {
             numeric::Point2f::new(1430.0, 1246.0),
         );
 
-	let mut customer = CustomerCharacter::new(
+	let customer = CustomerCharacter::new(
 	    ctx.resource,
 	    customer,
 	    CustomerDestPoint::new(vec![
@@ -1839,6 +1892,7 @@ impl ShopScene {
     fn set_fixed_text_into_scenario_box<'a>(&mut self, ctx: &mut SuzuContext<'a>, path: &str, t: Clock) {
 	let scenario_box = ScenarioEvent::new(ctx, numeric::Rect::new(0.0, 0.0, 1366.0, 748.0), path, t);
         self.map.scenario_event = Some(scenario_box);
+	self.player.reset_speed();
     }
 
     fn try_finish_scenario_event<'a>(&mut self, ctx: &mut SuzuContext<'a>, t: Clock) {
@@ -1878,7 +1932,19 @@ impl ShopScene {
 			self.tutorial_list.shelving_is_done = true;
 
 			self.insert_goto_check_customer(ctx, t);
-		    }
+	
+			self.event_list.add_event(
+			    Box::new(move |slf: &mut ShopScene, ctx, t| {
+				slf.insert_goto_check_customer(ctx, t);				
+			    }),
+			    t + 60
+			);
+		    },
+		    "TutorialCustomerComming" => {
+			self.map.scenario_event = None;
+			self.dark_effect_panel.new_effect(8, t, 220, 0);
+			self.tutorial_list.customer_is_comming = true;
+		    },
 		    _ => (),
 		}
 	    }
@@ -2015,7 +2081,8 @@ impl SceneManager for ShopScene {
                     button,
                     point,
                     self.get_current_clock(),
-		) {
+		) &&
+		    !self.tutorial_list.go_ret_box {
 		    self.event_list.add_event(
 			Box::new(move |slf: &mut ShopScene, ctx, t| {
 			    slf.set_fixed_text_into_scenario_box(ctx, "/scenario/tutorial/2.toml", t);
@@ -2069,7 +2136,7 @@ impl SceneManager for ShopScene {
                                 .shop_special_object
                                 .contains_storing_select_ui_windows(ctx, point)
                             {
-                                self.try_hide_storing_select_ui(ctx);
+                                self.try_hide_storing_select_ui(ctx, t);
                             }
                         }
                     }
@@ -2114,13 +2181,12 @@ impl SceneManager for ShopScene {
 
 	if let Some(scenario_event) = self.map.scenario_event.as_mut() {
 	    scenario_event.update_text(ctx, None);
+	    self.try_finish_scenario_event(ctx, t);
 	}
-        if !self.now_paused() {
+        if !self.now_paused() && self.map.scenario_event.is_none() {
             self.random_add_customer(ctx);
             self.move_playable_character(ctx.context, t);
             self.check_event_panel_onmap(ctx, EventTrigger::Touch);
-
-	    self.try_finish_scenario_event(ctx, t);
 
             self.character_group.move_and_collision_check(
                 ctx.context,
@@ -2140,7 +2206,8 @@ impl SceneManager for ShopScene {
             }
 
             for customer in &mut rising_customers {
-                if let Some(request) = customer.check_rise_hand(ctx) {
+                if let Some(request) = customer.check_rise_hand(ctx, self.tutorial_list.gen_tutorial_customer_order()) {
+		    self.tutorial_list.inc_checking_customer_count();
                     self.customer_request_queue.push_back(request);
                 }
             }
