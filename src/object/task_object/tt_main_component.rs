@@ -286,6 +286,7 @@ impl DeskObjects {
 
             self.desk_objects.sort_with_depth();
             self.draw_request = DrawRequest::Draw;
+	    ctx.process_utility.redraw();
         }
     }
 

@@ -341,7 +341,7 @@ impl OnDeskBook {
         let book_size = book_texture.get_drawing_size(ctx.context);
         let book_title = info.get_name().to_string();
 
-        let scratch_texture = match info.get_condition() {
+        let mut scratch_texture = match info.get_condition() {
             BookCondition::Good => None,
             BookCondition::Fair => Some(UniTexture::new(
                 ctx.ref_texture(TextureID::random_large_book_scratch_fair()),
@@ -358,6 +358,10 @@ impl OnDeskBook {
                 0,
             )),
         };
+
+	if let Some(texture) = scratch_texture.as_mut() {
+	    texture.fit_scale(ctx.context, book_size);
+	}
 
         let shadow_bounds = numeric::Rect::new(0.0, 0.0, book_size.x + 12.0, book_size.y + 12.0);
 

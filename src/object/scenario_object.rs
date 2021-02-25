@@ -1070,7 +1070,7 @@ impl SuzunaStatusScreen {
         );
 
         let mut left = UniTexture::new(
-            ctx.ref_texture(TextureID::GoNextPageLeft),
+            ctx.ref_texture(TextureID::GoNextPageLeftNotAlpha),
             numeric::Point2f::new(0.0, rect.h - 32.0),
             numeric::Vector2f::new(0.5, 0.5),
             0.0,
@@ -1079,7 +1079,7 @@ impl SuzunaStatusScreen {
         left.hide();
 
         let right = UniTexture::new(
-            ctx.ref_texture(TextureID::GoNextPageRight),
+            ctx.ref_texture(TextureID::GoNextPageRightNotAlpha),
             numeric::Point2f::new(rect.w - 32.0, rect.h - 32.0),
             numeric::Vector2f::new(0.5, 0.5),
             0.0,

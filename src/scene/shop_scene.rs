@@ -1304,16 +1304,11 @@ impl ShopScene {
 
                         self.event_list.add_event(
                             Box::new(move |slf: &mut ShopScene, ctx, _| {
-                                slf.transition_status = SceneTransition::StackingTransition;
-                                slf.transition_scene = switch_scene_id;
-
-                                if slf.transition_scene == SceneID::MainDesk {
-                                    slf.shop_clock.add_minute(10);
-                                    slf.drawable_shop_clock.update_time(&slf.shop_clock);
-                                }
-
-                                let (mut customer, _) =
-                                    slf.customer_queue.pop_head_customer().unwrap();
+				let mut customer = if let Some((customer, _)) = slf.customer_queue.pop_head_customer() {
+				    customer
+				} else {
+				    return;
+				};
 
                                 customer.get_out_shop(
                                     ctx.context,
@@ -1330,6 +1325,14 @@ impl ShopScene {
                                 );
 
                                 slf.character_group.add(customer);
+
+				slf.transition_status = SceneTransition::StackingTransition;
+                                slf.transition_scene = switch_scene_id;
+
+                                if slf.transition_scene == SceneID::MainDesk {
+                                    slf.shop_clock.add_minute(10);
+                                    slf.drawable_shop_clock.update_time(&slf.shop_clock);
+                                }
                             }),
                             t + 31,
                         );

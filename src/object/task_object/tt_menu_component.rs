@@ -935,7 +935,7 @@ impl DateMenu {
 
         let font_info = FontInformation::new(
             ctx.resource.get_font(FontID::Cinema),
-            numeric::Vector2f::new(20.0, 20.0),
+            numeric::Vector2f::new(19.0, 19.0),
             ggraphics::Color::from_rgba_u32(0xff),
         );
 

@@ -36,7 +36,7 @@ texture_paths = [
 	      "/textures/kosuzu_right3.png",
 	      "/textures/kosuzu_left1.png",
 	      "/textures/kosuzu_left2.png",
-	      "/textures/kosuzu_left3.png",	      
+	      "/textures/kosuzu_left3.png",  
 	      "/textures/store_button.png",
 	      "/textures/reset_button.png",
 	      "/textures/menu_art1.png",
@@ -79,7 +79,21 @@ texture_paths = [
    	      "/textures/suzunaan_map.png",
 	      "/textures/mob1_default.png",
 	      "/textures/logo.png",
-	      "/textures/akyu_default.png"
+	      "/textures/akyu_default.png",
+	      "/textures/pixel_character/mob1/front1.png",
+	      "/textures/pixel_character/mob1/front2.png",
+	      "/textures/pixel_character/mob1/front3.png",
+	      "/textures/pixel_character/mob1/back1.png",
+	      "/textures/pixel_character/mob1/back2.png",
+	      "/textures/pixel_character/mob1/back3.png",
+	      "/textures/pixel_character/mob1/right1.png",
+	      "/textures/pixel_character/mob1/right2.png",
+	      "/textures/pixel_character/mob1/right3.png",
+	      "/textures/pixel_character/mob1/left1.png",
+	      "/textures/pixel_character/mob1/left2.png",
+	      "/textures/pixel_character/mob1/left3.png",
+	      "/textures/page_edge_left_not_alpha.png",
+	      "/textures/page_edge_right_not_alpha.png",
 	      ]
 font_paths = ["/fonts/azuki.ttf", "/fonts/RiiT_F.ttf", "/fonts/OradanoGSRR.ttf", "/fonts/cinecaption226.ttf", "/fonts/JF-Dot-ShinonomeMaru12B.ttf"]
 tileset_paths = ["/maps/suzunaan2/main.tmx"]

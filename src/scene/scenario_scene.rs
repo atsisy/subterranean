@@ -224,7 +224,7 @@ impl ScenarioScene {
                     }
                     "ShowSchedule" => {
                         self.status_screen.show_schedule_page();
-                        self.scenario_event.release_scenario_waiting();
+                        self.scenario_event.release_scenario_waiting(ctx);
                         self.scenario_ctx.wait_opecode_running = false;
                     }
                     "ShowAd" => {
@@ -235,7 +235,7 @@ impl ScenarioScene {
                             },
                             self.get_current_clock() + 30
                         );
-                        self.scenario_event.release_scenario_waiting();
+                        self.scenario_event.release_scenario_waiting(ctx);
                         self.scenario_ctx.wait_opecode_running = false;
                     }
                     "ShowMain" => {
@@ -246,7 +246,7 @@ impl ScenarioScene {
                             },
                             self.get_current_clock() + 30
                         );
-                        self.scenario_event.release_scenario_waiting();
+                        self.scenario_event.release_scenario_waiting(ctx);
                         self.scenario_ctx.wait_opecode_running = false;
                     }
                     "ShowAdAgency" => {
@@ -257,7 +257,7 @@ impl ScenarioScene {
                             },
                             self.get_current_clock() + 30
                         );
-                        self.scenario_event.release_scenario_waiting();
+                        self.scenario_event.release_scenario_waiting(ctx);
                         self.scenario_ctx.wait_opecode_running = false;
                     }
                     "NextDay" => {
@@ -304,7 +304,7 @@ impl ScenarioScene {
                     }
                     "ShowStatusScreen" => {
                         self.status_screen.appear();
-                        self.scenario_event.release_scenario_waiting();
+                        self.scenario_event.release_scenario_waiting(ctx);
                         self.scenario_ctx.wait_opecode_running = false;
                     }
                     _ => (),
@@ -316,7 +316,7 @@ impl ScenarioScene {
             && ctx.holding_week_schedule_is_available()
             && !self.scenario_ctx.schedule_define_done
         {
-            self.scenario_event.release_scenario_waiting();
+            self.scenario_event.release_scenario_waiting(ctx);
             self.status_screen.update_main_page_todays_sched_text(ctx);
             self.scenario_ctx.schedule_define_done = true;
             self.scenario_ctx.wait_opecode_running = false;

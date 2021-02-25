@@ -8,7 +8,7 @@ save = 4
 [[scenario-group]]
 type = "scenario"
 id = 10
-next-id = 11
+next-id = 101
 background = "SightBackground1"
 
 [scenario-group.tachie-data]
@@ -21,6 +21,41 @@ right = "KosuzuTachie1"
 
    [[scenario-group.text]]
    text_src_path = "./resources/scenario/7_23/1.txt"
+
+[[scenario-group]]
+type = "scenario"
+id = 101
+next-id = 11
+background = "SightBackground1"
+
+[[scenario-group.text]]
+text = """
+
+ちょっと何張り切ってんのよ。
+
+あ、阿求じゃない。ちょっとカクカクシカジカで・・・。
+
+・・・
+
+ふーん。大金を稼がないといけないことは分かったけど大丈夫なの？
+
+まあ何回かお店の手伝いはしたことはあるから。
+
+どうも心配ネ。ここは私が稗田家に伝わる商売術を伝授するわよ。
+
+稗田家に商売術なんて伝わってるのかしら。
+
+"""
+
+
+[scenario-group.tachie-data]
+right = "KosuzuTachie1"
+left = "AkyuTachieDefault"
+
+   [scenario-group.default-text-attribute]
+   fpc = 2.0
+   font_scale = 32.0
+   color = 0x000000ff
 
 [[scenario-group]]
 type = "wait"
@@ -50,7 +85,8 @@ text = """
 
 
 [scenario-group.tachie-data]
-right = "AkyuTachieDefault"
+right = "KosuzuTachie1"
+inner-right = "AkyuTachieDefault"
 
    [scenario-group.default-text-attribute]
    fpc = 2.0
@@ -81,7 +117,8 @@ text = """
 """
 
 [scenario-group.tachie-data]
-right = "AkyuTachieDefault"
+right = "KosuzuTachie1"
+inner-right = "AkyuTachieDefault"
 
    [scenario-group.default-text-attribute]
    fpc = 2.0
@@ -108,7 +145,8 @@ text = """
 週の始まりにはその週の予定を決めましょう。"""
 
 [scenario-group.tachie-data]
-right = "AkyuTachieDefault"
+right = "KosuzuTachie1"
+inner-right = "AkyuTachieDefault"
 
    [scenario-group.default-text-attribute]
    fpc = 2.0
@@ -142,6 +180,7 @@ text = """
 
 [scenario-group.tachie-data]
 right = "KosuzuTachie1"
+inner-right = "AkyuTachieDefault"
 
    [scenario-group.default-text-attribute]
    fpc = 2.0
@@ -154,6 +193,9 @@ id = 20
 next-id = 21
 opecode = "ScheduleCheck"
 background = "SightBackground1"
+
+	   [scenario-group.tachie-data]
+	   right = "KosuzuTachie1"
 
 [[scenario-group]]
 type = "wait"

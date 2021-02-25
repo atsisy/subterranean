@@ -159,6 +159,20 @@ pub enum TextureID {
     Mob1TachieDefault,
     SuzuLogo,
     AkyuTachieDefault,
+    Mob1DotFront1,
+    Mob1DotFront2,
+    Mob1DotFront3,
+    Mob1DotBack1,
+    Mob1DotBack2,
+    Mob1DotBack3,
+    Mob1DotRight1,
+    Mob1DotRight2,
+    Mob1DotRight3,
+    Mob1DotLeft1,
+    Mob1DotLeft2,
+    Mob1DotLeft3,
+    GoNextPageLeftNotAlpha,
+    GoNextPageRightNotAlpha,
     Unknown,
 }
 
@@ -270,6 +284,20 @@ impl FromStr for TextureID {
 	    "Mob1TachieDefaule" => Ok(Self::Mob1TachieDefault),
 	    "SuzuLogo" => Ok(Self::SuzuLogo),
 	    "AkyuTachieDefault" => Ok(Self::AkyuTachieDefault),
+	    "Mob1DotFront1" => Ok(Self::Mob1DotFront1),
+            "Mob1DotFront2" => Ok(Self::Mob1DotFront2),
+            "Mob1DotFront3" => Ok(Self::Mob1DotFront3),
+            "Mob1DotBack1" => Ok(Self::Mob1DotBack1),
+            "Mob1DotBack2" => Ok(Self::Mob1DotBack2),
+            "Mob1DotBack3" => Ok(Self::Mob1DotBack3),
+            "Mob1DotRight1" => Ok(Self::Mob1DotRight1),
+            "Mob1DotRight2" => Ok(Self::Mob1DotRight2),
+            "Mob1DotRight3" => Ok(Self::Mob1DotRight3),
+            "Mob1DotLeft1" => Ok(Self::Mob1DotLeft1),
+            "Mob1DotLeft2" => Ok(Self::Mob1DotLeft2),
+            "Mob1DotLeft3" => Ok(Self::Mob1DotLeft3),
+	    "GoNextPageLeftNotAlpha" => Ok(Self::GoNextPageLeftNotAlpha),
+	    "GoNextPageRightNotAlpha" => Ok(Self::GoNextPageRightNotAlpha),
             _ => Err(()),
         }
     }
@@ -359,6 +387,20 @@ impl TextureID {
 	    78 => Some(Self::Mob1TachieDefault),
 	    79 => Some(Self::SuzuLogo),
 	    80 => Some(Self::AkyuTachieDefault),
+	    81 => Some(Self::Mob1DotFront1),
+            82 => Some(Self::Mob1DotFront2),
+            83 => Some(Self::Mob1DotFront3),
+            84 => Some(Self::Mob1DotBack1),
+            85 => Some(Self::Mob1DotBack2),
+            86 => Some(Self::Mob1DotBack3),
+            87 => Some(Self::Mob1DotRight1),
+            88 => Some(Self::Mob1DotRight2),
+            89 => Some(Self::Mob1DotRight3),
+            90 => Some(Self::Mob1DotLeft1),
+            91 => Some(Self::Mob1DotLeft2),
+            92 => Some(Self::Mob1DotLeft3),
+	    93 => Some(Self::GoNextPageLeftNotAlpha),
+	    94 => Some(Self::GoNextPageRightNotAlpha),
             _ => None,
         }
     }
@@ -945,7 +987,7 @@ impl DailyCustomerDist {
     }
 
     pub fn get_customer_dist_default(&self, day: &GensoDate) -> Clock {
-	let offset = day.diff_day(&GensoDate::new(112, 7, 23)) % 7;
+	let offset = GensoDate::new(112, 7, 23).diff_day(day) % 7;
 	match offset {
 	    0 => self.sun,
 	    1 => self.mon,
@@ -954,7 +996,10 @@ impl DailyCustomerDist {
 	    4 => self.thu,
 	    5 => self.fri,
 	    6 => self.sat,
-	    _ => panic!("BUG"),
+	    _ => {
+		eprintln!("offset => {}, {:?}", offset, day);
+		panic!("BUG");
+	    },
 	}
     }
 }

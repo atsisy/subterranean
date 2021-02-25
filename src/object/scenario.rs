@@ -157,19 +157,50 @@ impl ScenarioTextSegment {
 pub struct ScenarioTachie {
     left: Option<SimpleObject>,
     right: Option<SimpleObject>,
+    inner_right: Option<SimpleObject>,
     drwob_essential: DrawableObjectEssential,
 }
 
 impl ScenarioTachie {
+    fn tachie_texture_scale(id: TextureID) -> numeric::Vector2f {
+	match id {
+	    TextureID::KosuzuTachie1 => numeric::Vector2f::new(0.3, 0.3),
+	    TextureID::AkyuTachieDefault => numeric::Vector2f::new(0.248, 0.248),
+	    _ => numeric::Vector2f::new(1.0, 1.0),
+	}
+    }
+    
     pub fn new<'a>(ctx: &mut SuzuContext<'a>, tachie_data: TachieData, t: Clock) -> Self {
         // left
         let left_texture = if tachie_data.left.is_some() {
+	    let texture_id = tachie_data.left.unwrap();
             Some(SimpleObject::new(
                 MovableUniTexture::new(
                     Box::new(UniTexture::new(
-                        ctx.ref_texture(tachie_data.left.unwrap()),
-                        numeric::Point2f::new(50.0, 100.0),
-                        numeric::Vector2f::new(0.3, 0.3),
+                        ctx.ref_texture(texture_id),
+                        numeric::Point2f::new(70.0, 88.0),
+                        Self::tachie_texture_scale(texture_id),
+                        0.0,
+                        0,
+                    )),
+                    None,
+                    t,
+                ),
+                Vec::new(),
+            ))
+        } else {
+            None
+        };
+
+	
+	let inner_right_texture = if tachie_data.inner_right.is_some() {
+	    let texture_id = tachie_data.inner_right.unwrap();
+            Some(SimpleObject::new(
+                MovableUniTexture::new(
+                    Box::new(UniTexture::new(
+                        ctx.ref_texture(texture_id),
+                        numeric::Point2f::new(680.0, 88.0),
+                        Self::tachie_texture_scale(texture_id),
                         0.0,
                         0,
                     )),
@@ -183,12 +214,16 @@ impl ScenarioTachie {
         };
 
         let right_texture = if tachie_data.right.is_some() {
+	    let texture_id = tachie_data.right.unwrap();
             Some(SimpleObject::new(
                 MovableUniTexture::new(
                     Box::new(UniTexture::new(
-                        ctx.ref_texture(tachie_data.right.unwrap()),
-                        numeric::Point2f::new(800.0, 50.0),
-                        numeric::Vector2f::new(0.3, 0.3),
+                        ctx.ref_texture(texture_id),
+                        numeric::Point2f::new(
+			    if inner_right_texture.is_some() { 880.0 } else { 820.0 },
+			    60.0
+			),
+                        Self::tachie_texture_scale(texture_id),
                         0.0,
                         0,
                     )),
@@ -201,7 +236,9 @@ impl ScenarioTachie {
             None
         };
 
+
         ScenarioTachie {
+	    inner_right: inner_right_texture,
             left: left_texture,
             right: right_texture,
             drwob_essential: DrawableObjectEssential::new(true, 0),
@@ -217,6 +254,10 @@ impl DrawableComponent for ScenarioTachie {
             }
 
             if let Some(texture) = self.right.as_mut() {
+                texture.draw(ctx)?;
+            }
+
+	    if let Some(texture) = self.inner_right.as_mut() {
                 texture.draw(ctx)?;
             }
         }
@@ -248,19 +289,21 @@ impl DrawableComponent for ScenarioTachie {
 #[derive(Clone, Debug)]
 pub struct TachieData {
     right: Option<TextureID>,
+    inner_right: Option<TextureID>,
     left: Option<TextureID>,
 }
 
 impl TachieData {
     pub fn new_empty() -> TachieData {
         TachieData {
+	    inner_right: None,
             right: None,
             left: None,
         }
     }
 
     pub fn is_none(&self) -> bool {
-        self.right.is_none() && self.left.is_none()
+        self.right.is_none() && self.left.is_none() && self.inner_right.is_none()
     }
 }
 
@@ -322,6 +365,11 @@ impl ScenarioText {
                 } else {
                     None
                 },
+		inner_right: if let Some(tid) = tachie_table.get("inner-right") {
+                    Some(TextureID::from_str(tid.as_str().unwrap()).unwrap())
+                } else {
+                    None
+                },
                 left: if let Some(tid) = tachie_table.get("left") {
                     Some(TextureID::from_str(tid.as_str().unwrap()).unwrap())
                 } else {
@@ -330,6 +378,7 @@ impl ScenarioText {
             }
         } else {
             TachieData {
+		inner_right: None,
                 right: None,
                 left: None,
             }
@@ -435,6 +484,11 @@ impl ChoicePatternData {
         let tachie_data = if let Some(tachie_table) = toml_scripts.get("tachie-data") {
             TachieData {
                 right: if let Some(tid) = tachie_table.get("right") {
+                    Some(TextureID::from_str(tid.as_str().unwrap()).unwrap())
+                } else {
+                    None
+                },
+		inner_right: if let Some(tid) = tachie_table.get("inner-right") {
                     Some(TextureID::from_str(tid.as_str().unwrap()).unwrap())
                 } else {
                     None
@@ -693,6 +747,11 @@ impl ScenarioFinishAndWaitData {
                 } else {
                     None
                 },
+		inner_right: if let Some(tid) = tachie_table.get("inner-right") {
+                    Some(TextureID::from_str(tid.as_str().unwrap()).unwrap())
+                } else {
+                    None
+                },
                 left: if let Some(tid) = tachie_table.get("left") {
                     Some(TextureID::from_str(tid.as_str().unwrap()).unwrap())
                 } else {
@@ -773,6 +832,11 @@ impl ScenarioBuiltinCommand {
                         } else {
                             None
                         },
+			inner_right: if let Some(tid) = tachie_table.get("inner-right") {
+			    Some(TextureID::from_str(tid.as_str().unwrap()).unwrap())
+			} else {
+			    None
+			},
                         left: if let Some(tid) = tachie_table.get("left") {
                             Some(TextureID::from_str(tid.as_str().unwrap()).unwrap())
                         } else {
@@ -1112,7 +1176,7 @@ impl Scenario {
         }
     }
 
-    pub fn release_waiting(&mut self) {
+    pub fn release_waiting<'a>(&mut self) {
         self.go_next_scenario_from_waiting();
     }
 }
@@ -1804,9 +1868,12 @@ impl ScenarioEvent {
         self.scenario.get_waiting_opecode()
     }
 
-    pub fn release_scenario_waiting(&mut self) {
+    pub fn release_scenario_waiting<'a>(&mut self, ctx: &mut SuzuContext<'a>) {
         self.redraw_request = DrawRequest::Draw;
         self.scenario.release_waiting();
+
+	self.update_event_background(ctx);
+        self.update_event_tachie(ctx, 0);
     }
 
     pub fn set_fixed_text_to_scenario_box<'a>(&mut self, ctx: &mut SuzuContext<'a>, text: String) {

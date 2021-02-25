@@ -81,33 +81,33 @@ fn create_customer_sample<'a>(
 ) -> MapObject {
     let textures = vec![
         vec![
-            ctx.ref_texture(TextureID::KosuzuDotFront2),
-            ctx.ref_texture(TextureID::KosuzuDotFront3),
+            ctx.ref_texture(TextureID::Mob1DotFront2),
+            ctx.ref_texture(TextureID::Mob1DotFront3),
         ],
         vec![
-            ctx.ref_texture(TextureID::KosuzuDotBack2),
-            ctx.ref_texture(TextureID::KosuzuDotBack3),
+            ctx.ref_texture(TextureID::Mob1DotBack2),
+            ctx.ref_texture(TextureID::Mob1DotBack3),
         ],
         vec![
-            ctx.ref_texture(TextureID::KosuzuDotRight1),
-            ctx.ref_texture(TextureID::KosuzuDotRight2),
-            ctx.ref_texture(TextureID::KosuzuDotRight1),
-            ctx.ref_texture(TextureID::KosuzuDotRight3),
+            ctx.ref_texture(TextureID::Mob1DotRight1),
+            ctx.ref_texture(TextureID::Mob1DotRight2),
+            ctx.ref_texture(TextureID::Mob1DotRight1),
+            ctx.ref_texture(TextureID::Mob1DotRight3),
         ],
         vec![
-            ctx.ref_texture(TextureID::KosuzuDotLeft1),
-            ctx.ref_texture(TextureID::KosuzuDotLeft2),
-            ctx.ref_texture(TextureID::KosuzuDotLeft1),
-            ctx.ref_texture(TextureID::KosuzuDotLeft3),
+            ctx.ref_texture(TextureID::Mob1DotLeft1),
+            ctx.ref_texture(TextureID::Mob1DotLeft2),
+            ctx.ref_texture(TextureID::Mob1DotLeft1),
+            ctx.ref_texture(TextureID::Mob1DotLeft3),
         ],
-        vec![ctx.ref_texture(TextureID::KosuzuDotFront1)],
-        vec![ctx.ref_texture(TextureID::KosuzuDotBack1)],
-        vec![ctx.ref_texture(TextureID::KosuzuDotRight1)],
-        vec![ctx.ref_texture(TextureID::KosuzuDotLeft1)],
+        vec![ctx.ref_texture(TextureID::Mob1DotFront1)],
+        vec![ctx.ref_texture(TextureID::Mob1DotBack1)],
+        vec![ctx.ref_texture(TextureID::Mob1DotRight1)],
+        vec![ctx.ref_texture(TextureID::Mob1DotLeft1)],
     ];
 
     let obj = Box::new(UniTexture::new(
-        ctx.ref_texture(TextureID::KosuzuDotFront1),
+        ctx.ref_texture(TextureID::Mob1DotFront1),
         mp::map_to_display(&map_position, camera),
         numeric::Vector2f::new(1.5, 1.5),
         0.0,

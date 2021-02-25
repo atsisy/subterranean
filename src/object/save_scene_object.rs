@@ -375,6 +375,8 @@ impl DrawableSaveEntry {
 	if let Some(data) = ctx.savable_data.as_mut() {
 	    self.update_entry_contents(ctx.context, ctx.resource, data);
 	}
+
+	ctx.process_utility.redraw();
     }
 
     fn delete_action<'a>(&mut self, ctx: &mut SuzuContext<'a>) {
