@@ -565,11 +565,17 @@ impl ScenarioAdPage {
 
         header_text.make_center(ctx.context, numeric::Point2f::new(area_size.x / 2.0, 50.0));
 
-        ScenarioAdPage {
+        let mut ad_page = ScenarioAdPage {
             header_text: header_text,
             ad_table: ad_table,
             drwob_essential: DrawableObjectEssential::new(true, depth),
-        }
+        };
+
+	while ad_page.total_ad_cost(ctx) > ctx.take_save_data().task_result.total_money {
+	    ad_page.uncheck_most_expensive(ctx);
+	}
+
+	ad_page
     }
 
     pub fn click_handler<'a>(&mut self, ctx: &mut SuzuContext<'a>, click_point: numeric::Point2f) {
@@ -636,6 +642,22 @@ impl ScenarioAdPage {
         }
 
         return total_ad_reputation_gain as i32;
+    }
+
+    pub fn uncheck_most_expensive<'a>(&mut self, ctx: &mut SuzuContext<'a>) {
+	for ad_type in vec![
+            SuzunaAdType::AdPaper,
+            SuzunaAdType::Chindon,
+            SuzunaAdType::ShopNobori,
+            SuzunaAdType::TownNobori,
+            SuzunaAdType::NewsPaper,
+            SuzunaAdType::BunBunMaruPaper,
+        ].as_slice().iter().rev() {
+            if self.ad_table.get(ad_type).unwrap().is_checked() {
+		self.ad_table.get_mut(ad_type).unwrap().check_box.try_check(false);
+		ctx.change_ad_status(*ad_type, false);
+            }
+        }
     }
 }
 
@@ -840,6 +862,24 @@ impl ScenarioAgencyPage {
 
         return total_ad_agency_money_gain as i32;
     }
+
+    pub fn uncheck_not_cleared_agencies<'a>(&mut self, ctx: &mut SuzuContext<'a>) {
+        for ad_type in vec![
+            SuzunaAdAgencyType::HakureiJinja,
+            SuzunaAdAgencyType::KirisameMahoten,
+            SuzunaAdAgencyType::GettoDango,
+            SuzunaAdAgencyType::Kusuriya,
+            SuzunaAdAgencyType::Hieda,
+            SuzunaAdAgencyType::YamaJinja,
+        ] {
+            if self.ad_table.get(&ad_type).unwrap().is_checked() {
+                if ctx.resource.get_default_ad_agency_cost(&ad_type) as f32 > ctx.take_save_data().suzunaan_status.reputation {
+		    self.ad_table.get_mut(&ad_type).unwrap().check_box.try_check(false);
+		    ctx.change_ad_agency_status(ad_type, false);
+		}
+            }
+        }
+    }
 }
 
 impl DrawableComponent for ScenarioAgencyPage {
@@ -902,20 +942,26 @@ impl SuzunaStatusPages {
         scno_ctx: &ScenarioContext,
         rect: numeric::Rect,
     ) -> Self {
+	let ad_page = ScenarioAdPage::new(
+            ctx,
+            numeric::Point2f::new(0.0, 0.0),
+            numeric::Vector2f::new(rect.w, rect.h),
+            0,
+        );
+
+	let ad_agency_page = ScenarioAgencyPage::new(
+            ctx,
+            numeric::Point2f::new(0.0, 0.0),
+            numeric::Vector2f::new(rect.w, rect.h),
+            0,
+        );
+
+	let main_page = SuzunaStatusMainPage::new(ctx);
+	
         SuzunaStatusPages {
-            main_page: SuzunaStatusMainPage::new(ctx),
-            ad_page: ScenarioAdPage::new(
-                ctx,
-                numeric::Point2f::new(0.0, 0.0),
-                numeric::Vector2f::new(rect.w, rect.h),
-                0,
-            ),
-            ad_agency_page: ScenarioAgencyPage::new(
-                ctx,
-                numeric::Point2f::new(0.0, 0.0),
-                numeric::Vector2f::new(rect.w, rect.h),
-                0,
-            ),
+            main_page: main_page,
+            ad_page: ad_page,
+            ad_agency_page: ad_agency_page,
             sched_page: ScenarioSchedPage::new(
                 ctx,
                 scno_ctx,

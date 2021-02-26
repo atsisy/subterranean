@@ -328,7 +328,7 @@ impl CustomerQueue {
         for index in (0..self.customer_queue.len()).rev() {
             let (_, t) = self.customer_queue.get(index).unwrap();
 
-            if (now - t) > 12000 {
+            if (now - t) > 1200 {
                 let (giveup, _) = self.customer_queue.remove(index).unwrap();
                 giveup_customers.push(giveup);
             }
