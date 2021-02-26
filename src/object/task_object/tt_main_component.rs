@@ -173,8 +173,19 @@ impl DeskObjects {
             if obj.is_shelving_box_handover_locked() {
                 if next_position.x + area.w > canvas_size.x {
                     obj.get_object_mut()
-                        .set_position(numeric::Point2f::new(canvas_size.x - area.w, area.y));
+                        .set_position(numeric::Point2f::new(canvas_size.x - area.w, next_position.y));
                 }
+            }
+	    
+	    if next_position.x < 0.0 {
+                obj.get_object_mut()
+                    .set_position(numeric::Point2f::new(0.0, next_position.y));
+            }
+
+	    if next_position.y + area.h > canvas_size.y {
+		let np = obj.get_object_mut().get_position();
+                obj.get_object_mut()
+                    .set_position(numeric::Point2f::new(np.x, canvas_size.y - area.h));
             }
 
             self.draw_request = DrawRequest::Draw;
