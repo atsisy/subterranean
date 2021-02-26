@@ -471,14 +471,14 @@ impl GoToCheckCustomers {
         self.move_and_collision_check(ctx.context, camera, map_data, t);
 
         for customer in self.customers.iter_mut() {
-            customer.try_update_move_effect(
+	    customer.try_update_move_effect(
                 ctx,
                 map_data,
                 numeric::Vector2u::new(5, 14),
                 numeric::Vector2u::new(15, 14),
                 t,
-            );
-            customer.get_mut_character_object().update_texture(t);
+	    );
+	    customer.get_mut_character_object().update_texture(t);
         }
     }
 
@@ -1783,6 +1783,7 @@ impl ShopScene {
 		now
             );
             self.character_group.add(customer);
+	    self.customer_request_queue.pop_front();
         }
     }
 
@@ -1888,8 +1889,6 @@ impl ShopScene {
 	    customer.get_out_shop(ctx.context, &self.map.tile_map, numeric::Vector2u::new(15, 14), t);
 	    self.character_group.add(customer);	    
 	}
-
-	self.customer_request_queue.clear();
     }
 
     fn set_fixed_text_into_scenario_box<'a>(&mut self, ctx: &mut SuzuContext<'a>, path: &str, t: Clock) {
@@ -2177,7 +2176,7 @@ impl SceneManager for ShopScene {
 
     fn pre_process<'a>(&mut self, ctx: &mut SuzuContext<'a>) {
         let t = self.get_current_clock();
-
+	
         //println!("{}", perf_measure!({
 
         flush_delay_event_and_redraw_check!(self, self.event_list, ctx, t, {});

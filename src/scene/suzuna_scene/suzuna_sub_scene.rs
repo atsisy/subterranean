@@ -112,7 +112,6 @@ impl SuzunaSubScene {
             if let Some(shop_scene) = self.shop_scene.as_mut() {
                 // CustomerRequestを構築する上で必須な要素を取得
                 let customer_request_hint = shop_scene.pop_customer_request();
-
                 if customer_request_hint.is_none() {
                     return ();
                 }

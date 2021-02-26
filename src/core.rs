@@ -476,10 +476,9 @@ pub enum BookCondition {
 impl From<i32> for BookCondition {
     fn from(integer: i32) -> Self {
         match integer {
-            0 => BookCondition::Good,
             1 => BookCondition::Fair,
             2 => BookCondition::Bad,
-            _ => panic!("Not reserved number"),
+            _ => BookCondition::Good, // 0かバグでそれ以外
         }
     }
 }
@@ -487,10 +486,9 @@ impl From<i32> for BookCondition {
 impl BookCondition {
     fn from_u32(value: u32) -> Self {
         match value {
-            0 => Self::Good,
             1 => Self::Fair,
             2 => Self::Bad,
-            _ => panic!(""),
+            _ => Self::Good, // 0かバグでそれ以外
         }
     }
 
@@ -666,7 +664,10 @@ impl GensoDate {
             10 => "Oct.",
             11 => "Nov.",
             12 => "Dec.",
-            _ => panic!("Invalid month"),
+            _ => {
+		eprintln!("Invalid month");
+		"Dec."
+	    },
         }
         .to_string()
     }
@@ -997,8 +998,8 @@ impl DailyCustomerDist {
 	    5 => self.fri,
 	    6 => self.sat,
 	    _ => {
-		eprintln!("offset => {}, {:?}", offset, day);
-		panic!("BUG");
+		eprintln!("Error offset => {}, {:?}", offset, day);
+		self.sun
 	    },
 	}
     }
@@ -1355,7 +1356,10 @@ impl MouseInformation {
     pub fn get_last_clicked(&self, button: MouseButton) -> numeric::Point2f {
         match self.last_clicked.get(&button) {
             Some(x) => x.point,
-            None => panic!("No such a mouse button"),
+            None => {
+		eprintln!("No such a mouse button");
+		numeric::Point2f::new(0.0, 0.0)
+	    }
         }
     }
 
@@ -1372,64 +1376,72 @@ impl MouseInformation {
     pub fn get_last_dragged(&self, button: MouseButton) -> numeric::Point2f {
         match self.last_dragged.get(&button) {
             Some(x) => x.point,
-            None => panic!("No such a mouse button"),
+            None => {
+		eprintln!("No such a mouse button");
+		numeric::Point2f::new(0.0, 0.0)
+	    }
         }
     }
 
     pub fn set_last_dragged(&mut self, button: MouseButton, point: numeric::Point2f, t: Clock) {
         if self
             .last_dragged
-            .insert(button, MouseActionRecord::new(point, t))
-            == None
+            .insert(button, MouseActionRecord::new(point, t)).is_none()
         {
-            panic!("No such a mouse button")
+            eprintln!("No such a mouse button")
         }
     }
 
     pub fn get_last_down(&self, button: MouseButton) -> numeric::Point2f {
         match self.last_down.get(&button) {
             Some(x) => x.point,
-            None => panic!("No such a mouse button"),
+            None => {
+		eprintln!("No such a mouse button");
+		numeric::Point2f::new(0.0, 0.0)
+	    },
         }
     }
 
     pub fn set_last_down(&mut self, button: MouseButton, point: numeric::Point2f, t: Clock) {
         if self
             .last_down
-            .insert(button, MouseActionRecord::new(point, t))
-            == None
-        {
-            panic!("No such a mouse button")
-        }
+            .insert(button, MouseActionRecord::new(point, t)).is_none() {
+		eprintln!("No such a mouse button")
+            }
     }
 
     pub fn get_last_up(&self, button: MouseButton) -> numeric::Point2f {
         match self.last_up.get(&button) {
             Some(x) => x.point,
-            None => panic!("No such a mouse button"),
+            None => {
+		eprintln!("No such a mouse button");
+		numeric::Point2f::new(0.0, 0.0)
+            },
         }
     }
 
     pub fn set_last_up(&mut self, button: MouseButton, point: numeric::Point2f, t: Clock) {
         if self
             .last_up
-            .insert(button, MouseActionRecord::new(point, t))
-            == None
+            .insert(button, MouseActionRecord::new(point, t)).is_none()
         {
-            panic!("No such a mouse button")
+            eprintln!("No such a mouse button")
         }
     }
 
     pub fn is_dragging(&self, button: ginput::mouse::MouseButton) -> bool {
         match self.dragging.get(&button) {
             Some(x) => *x,
-            None => panic!("No such a mouse button"),
+            None => {
+		eprintln!("No such a mouse button");
+		false
+            },
         }
     }
 
     pub fn update_dragging(&mut self, button: MouseButton, drag: bool) {
-        if self.dragging.insert(button, drag) == None {
-            panic!("No such a mouse button")
+        if self.dragging.insert(button, drag).is_none() {
+            eprintln!("No such a mouse button")
         }
     }
 }

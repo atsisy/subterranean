@@ -1094,7 +1094,7 @@ impl CustomerCharacter {
                     // 速度もリセット
                     self.reset_speed();
                     self.character
-                        .change_animation_mode(ObjectDirection::MoveLeft);
+                        .change_animation_mode(ObjectDirection::StopLeft);
                 }
             }
 
