@@ -1802,6 +1802,9 @@ impl ShopScene {
                         .new_effect(8, self.get_current_clock(), 200, 0);
                 }
             }
+	    tdev::VirtualKey::Action3 => {
+		self.shop_clock.add_minute(60);
+            }
             tdev::VirtualKey::Action4 => {
                 let t = self.get_current_clock();
                 self.enter_pause_screen(t);

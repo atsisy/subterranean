@@ -318,11 +318,19 @@ impl DrawableTaskResult {
             numeric::Vector2f::new(45.0, 45.0),
             ggraphics::Color::from_rgba_u32(0x000000ff),
         );
-        let font_info = FontInformation::new(
+
+	let font_info = FontInformation::new(
             ctx.resource.get_font(FontID::JpFude1),
             numeric::Vector2f::new(32.0, 32.0),
             ggraphics::Color::from_rgba_u32(0x000000ff),
         );
+
+	let font_info_small = FontInformation::new(
+            ctx.resource.get_font(FontID::JpFude1),
+            numeric::Vector2f::new(24.0, 24.0),
+            ggraphics::Color::from_rgba_u32(0x000000ff),
+	);
+	
         let init_crop = numeric::Rect::new(0.0, 0.0, 1.0, 0.0);
 
         let result_frame = TableFrame::new(
@@ -467,7 +475,7 @@ impl DrawableTaskResult {
             numeric::Vector2u::new(0, 0)
         );
         fixed_text.push(total_money_desc_text);
-
+	
         let mut total_money_text = EffectableWrap::new(
             MovableWrap::new(
                 Box::new(VerticalText::new(
@@ -479,7 +487,7 @@ impl DrawableTaskResult {
                     numeric::Vector2f::new(1.0, 1.0),
                     0.0,
                     0,
-                    font_info,
+                    font_info_small,
                 )),
                 None,
                 t,

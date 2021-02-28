@@ -66,7 +66,11 @@ impl SuzunaSubScene {
         let new_book_schedule =
             NewBookSchedule::from_toml(ctx, "/other_config/new_book_schedule.toml");
 
-        let todays_new_books = new_book_schedule.get_schedule_at(&date).unwrap().clone();
+        let todays_new_books = if let Some(sched) = new_book_schedule.get_schedule_at(&date) {
+	    sched.clone()
+	} else {
+	    new_book_schedule.get_schedule_at(&GensoDate::new(112, 7, 23)).unwrap().clone()
+	};
 
         SuzunaSubScene {
             shop_scene: Some(Box::new(ShopScene::new(
