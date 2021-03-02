@@ -21,7 +21,7 @@ use crate::{
     scene::SceneTransition,
 };
 
-use super::DarkEffectPanel;
+use super::{DarkEffectPanel, scenario::ScenarioEvent};
 
 extern crate reqwest;
 
@@ -998,11 +998,207 @@ impl DrawableComponent for UpdatePanel {
 }
 
 
+pub struct Gallery {
+    canvas: sub_screen::SubScreen,
+    background: DarkEffectPanel,
+    header_text: UniText,
+    event_list: DelayEventList<Self>,
+    gallery_list: Vec<UniTexture>,
+    scenario_event: ScenarioEvent,
+    gallery_index: i64,
+}
+
+impl Gallery {
+    pub fn new<'a>(ctx: &mut SuzuContext<'a>, pos_rect: numeric::Rect, depth: i8, t: Clock) -> Self {
+        let font_info = FontInformation::new(
+            ctx.resource.get_font(FontID::Cinema),
+            numeric::Vector2f::new(32.0, 32.0),
+            ggraphics::Color::from_rgba_u32(0xbbbbbbff),
+        );
+
+        let mut background = DarkEffectPanel::new(
+            ctx.context,
+            numeric::Rect::new(0.0, 0.0, WINDOW_SIZE_X as f32, WINDOW_SIZE_X as f32),
+            t,
+        );
+	background.set_alpha(0.5);
+
+        let header_text = UniText::new(
+            "供養".to_string(),
+            numeric::Point2f::new(650.0, 80.0),
+            numeric::Vector2f::new(1.0, 1.0),
+            0.0,
+            0,
+            font_info,
+        );
+
+	let mut gallery_list = Vec::new();
+
+	{
+	    let mut texture = UniTexture::new(
+		ctx.ref_texture(TextureID::KosuzuTachie1),
+		numeric::Point2f::new(0.0, 0.0),
+		numeric::Vector2f::new(0.227, 0.227),
+		0.0,
+		0
+	    );
+	    texture.make_center(ctx.context, numeric::Point2f::new(WINDOW_SIZE_X as f32 / 2.0, 300.0));
+	    gallery_list.push(texture);
+	}
+
+	{
+	    let mut texture = UniTexture::new(
+		ctx.ref_texture(TextureID::AkyuTachieDefault),
+		numeric::Point2f::new(0.0, 0.0),
+		numeric::Vector2f::new(0.22, 0.22),
+		0.0,
+		0
+	    );
+	    texture.make_center(ctx.context, numeric::Point2f::new(WINDOW_SIZE_X as f32 / 2.0, 320.0));
+	    gallery_list.push(texture);
+	}
+
+	{
+	    let mut texture = UniTexture::new(
+		ctx.ref_texture(TextureID::Mob1TachieDefault),
+		numeric::Point2f::new(0.0, 0.0),
+		numeric::Vector2f::new(0.235, 0.235),
+		0.0,
+		0
+	    );
+	    texture.make_center(ctx.context, numeric::Point2f::new(WINDOW_SIZE_X as f32 / 2.0, 300.0));
+	    gallery_list.push(texture);
+	}
+
+	let mut g = Gallery {
+            header_text: header_text,
+            canvas: sub_screen::SubScreen::new(
+                ctx.context,
+                pos_rect,
+                depth,
+                ggraphics::Color::from_rgba_u32(0),
+            ),
+            background: background,
+	    event_list: DelayEventList::new(),
+	    gallery_list: gallery_list,
+	    scenario_event: ScenarioEvent::new(
+		ctx,
+		numeric::Rect::new(0.0, 0.0, 1366.0, 748.0),
+		"/scenario/empty.toml",
+		true,
+		t
+	    ),
+	    gallery_index: 0,
+        };
+
+	g.update_gallery_text(ctx);
+	g
+    }
+    
+    pub fn get_name(&self) -> String {
+        "gallery".to_string()
+    }
+
+    pub fn current_gallery_image(&mut self) -> Option<&mut dyn DrawableComponent> {
+	let index = self.gallery_index.abs() % 3;
+
+	match index {
+	    0 | 1 | 2 => {
+		Some(self.gallery_list.get_mut(index as usize).unwrap() as &mut dyn DrawableComponent)
+	    }
+	    _=> None,
+	}
+    }
+
+    pub fn update_gallery_text<'a>(&mut self, ctx: &mut SuzuContext<'a>) {
+	let index = self.gallery_index.abs() % 3;
+
+	match index {
+	    0 => {
+		self.scenario_event.set_fixed_text_to_scenario_box(ctx, "本居小鈴の立ち絵\n一番最初に書きました。ちゃんと練習もしました。".to_string());
+	    }
+	    1 => {
+		self.scenario_event.set_fixed_text_to_scenario_box(ctx, "稗田阿求の立ち絵\n二番目に書きました。なんか上手く描けた気がする。".to_string());
+	    }
+	    2 => {
+		self.scenario_event.set_fixed_text_to_scenario_box(ctx, "モブの立ち絵1号\nロリっぽく描こうとしたら結構可愛くなりました。".to_string());
+	    }
+	    _=> (),
+	}
+    }
+
+    pub fn mouse_button_up<'a>(
+        &mut self,
+        ctx: &mut SuzuContext<'a>,
+        _point: numeric::Point2f,
+        _t: Clock,
+    ) -> Option<TitleContentsEvent> {
+	if false {
+            return Some(TitleContentsEvent::NextContents("init-menu".to_string()));
+        }
+
+	self.gallery_index += 1;
+
+	self.update_gallery_text(ctx);
+
+        None
+    }
+    
+    pub fn flush_delayed_event<'a>(&mut self, ctx: &mut SuzuContext<'a>, t: Clock) {
+	flush_delay_event_and_redraw_check!(self, self.event_list, ctx, t, { });
+    }
+}
+
+impl DrawableComponent for Gallery {
+    fn draw(&mut self, ctx: &mut ggez::Context) -> ggez::GameResult<()> {
+        if self.is_visible() {
+            sub_screen::stack_screen(ctx, &self.canvas);
+
+            self.background.draw(ctx)?;
+
+            self.header_text.draw(ctx)?;
+
+	    if let Some(obj) = self.current_gallery_image() {
+		obj.draw(ctx)?;
+	    }
+
+	    self.scenario_event.draw(ctx)?;
+
+            sub_screen::pop_screen(ctx);
+            self.canvas.draw(ctx).unwrap();
+        }
+
+        Ok(())
+    }
+
+    fn hide(&mut self) {
+        self.canvas.hide();
+    }
+
+    fn appear(&mut self) {
+        self.canvas.appear();
+    }
+
+    fn is_visible(&self) -> bool {
+        self.canvas.is_visible()
+    }
+
+    fn set_drawing_depth(&mut self, depth: i8) {
+        self.canvas.set_drawing_depth(depth);
+    }
+
+    fn get_drawing_depth(&self) -> i8 {
+        self.canvas.get_drawing_depth()
+    }
+}
+
+
 pub enum TitleContents {
     InitialMenu(VTextList),
     TitleSoundPlayer(DynamicTitleSoundPlayer),
     ConfigPanel(ConfigPanel),
     UpdatePanel(UpdatePanel),
+    Gallery(Gallery),
 }
 
 impl TitleContents {
@@ -1055,6 +1251,12 @@ impl TitleContents {
                 0,
 		t
             ))),
+	    "Gallery" => Some(TitleContents::Gallery(Gallery::new(
+                ctx,
+                numeric::Rect::new(0.0, 0.0, 1366.0, 768.0),
+                0,
+		t
+            ))),
             _ => None,
         }
     }
@@ -1065,6 +1267,7 @@ impl TitleContents {
             TitleContents::TitleSoundPlayer(player) => player.get_name(),
             TitleContents::ConfigPanel(panel) => panel.get_name(),
 	    TitleContents::UpdatePanel(panel) => panel.get_name(),
+	    TitleContents::Gallery(gallery) => gallery.get_name(),
         }
     }
 
@@ -1074,6 +1277,7 @@ impl TitleContents {
             TitleContents::TitleSoundPlayer(_) => (),
             TitleContents::ConfigPanel(_) => (),
 	    TitleContents::UpdatePanel(panel) => panel.flush_delayed_event(ctx, t),
+	    TitleContents::Gallery(gallery) => gallery.flush_delayed_event(ctx, t),
         }
     }
 
@@ -1083,6 +1287,7 @@ impl TitleContents {
             TitleContents::TitleSoundPlayer(_) => (),
             TitleContents::ConfigPanel(_) => (),
 	    TitleContents::UpdatePanel(panel) => panel.notify_switched(ctx, t),
+	    TitleContents::Gallery(_) => (),
         }	
     }
 }
@@ -1094,6 +1299,7 @@ impl DrawableComponent for TitleContents {
             TitleContents::TitleSoundPlayer(contents) => contents.draw(ctx),
             TitleContents::ConfigPanel(panel) => panel.draw(ctx),
 	    TitleContents::UpdatePanel(panel) => panel.draw(ctx),
+	    TitleContents::Gallery(gallery) => gallery.draw(ctx),
         }
     }
 
@@ -1103,6 +1309,7 @@ impl DrawableComponent for TitleContents {
             TitleContents::TitleSoundPlayer(contents) => contents.hide(),
             TitleContents::ConfigPanel(panel) => panel.hide(),
 	    TitleContents::UpdatePanel(panel) => panel.hide(),
+	    TitleContents::Gallery(gallery) => gallery.hide(),
         }
     }
 
@@ -1112,6 +1319,7 @@ impl DrawableComponent for TitleContents {
             TitleContents::TitleSoundPlayer(contents) => contents.appear(),
             TitleContents::ConfigPanel(panel) => panel.appear(),
 	    TitleContents::UpdatePanel(panel) => panel.appear(),
+	    TitleContents::Gallery(gallery) => gallery.appear(),
         }
     }
 
@@ -1121,6 +1329,7 @@ impl DrawableComponent for TitleContents {
             TitleContents::TitleSoundPlayer(contents) => contents.is_visible(),
             TitleContents::ConfigPanel(panel) => panel.is_visible(),
 	    TitleContents::UpdatePanel(panel) => panel.is_visible(),
+	    TitleContents::Gallery(gallery) => gallery.is_visible(),
         }
     }
 
@@ -1130,6 +1339,7 @@ impl DrawableComponent for TitleContents {
             TitleContents::TitleSoundPlayer(contents) => contents.set_drawing_depth(depth),
             TitleContents::ConfigPanel(panel) => panel.set_drawing_depth(depth),
 	    TitleContents::UpdatePanel(panel) => panel.set_drawing_depth(depth),
+	    TitleContents::Gallery(gallery) => gallery.set_drawing_depth(depth),
         }
     }
 
@@ -1139,6 +1349,7 @@ impl DrawableComponent for TitleContents {
             TitleContents::TitleSoundPlayer(contents) => contents.get_drawing_depth(),
             TitleContents::ConfigPanel(panel) => panel.get_drawing_depth(),
 	    TitleContents::UpdatePanel(panel) => panel.get_drawing_depth(),
+	    TitleContents::Gallery(gallery) => gallery.get_drawing_depth(),
         }
     }
 }

@@ -13,7 +13,7 @@ use torifune::hash;
 use torifune::impl_drawable_object_for_wrapped;
 use torifune::impl_texture_object_for_wrapped;
 use torifune::numeric;
-use torifune::{mintp_new, mintp, roundup2f};
+use torifune::roundup2f;
 
 use crate::{core::{BookInformation, RentalLimit, TileBatchTextureID}, flush_delay_event_and_redraw_check, flush_delay_event, scene::DelayEventList};
 use crate::object::move_fn;
@@ -1629,7 +1629,13 @@ impl BorrowingRecordBookPage {
 
     fn borrowing_signing_is_available(&self) -> bool {
         // 何らかの値段が設定されていればOK
-        self.pay_frame.calculated_price.is_some() && !self.sign_frame.borrowing_signing_is_done()
+        self.pay_frame.calculated_price.is_some() &&
+	    !self.sign_frame.borrowing_signing_is_done() &&
+	    self.count_written_book_title() > 0
+    }
+
+    pub fn borrowing_sign_is_done(&self) -> bool {
+	self.sign_frame.borrowing_signing_is_done()
     }
 
     fn returning_signing_is_available(&self) -> bool {
@@ -1968,9 +1974,10 @@ impl DrawableComponent for BorrowingRecordBookPage {
     }
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub enum RecordBookLockStatus {
     BorrowingOk,
+    BorrowingLocked,
     ReturningMatched,
     ReturningVary,
 }
@@ -2476,6 +2483,19 @@ impl BorrowingRecordBook {
 	    }
 
 	return RecordBookLockStatus::ReturningMatched;
+    }
+
+    pub fn current_page_is_borrowing_signed(&self) -> RecordBookLockStatus {
+	let page = match self.get_current_page() {
+	    Some(page) => page,
+	    None => return RecordBookLockStatus::BorrowingLocked,
+	};
+
+	if page.borrowing_sign_is_done() {
+	    RecordBookLockStatus::BorrowingLocked
+	} else {
+	    RecordBookLockStatus::BorrowingOk
+	}
     }
 }
 

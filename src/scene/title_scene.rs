@@ -157,6 +157,7 @@ impl TitleScene {
             }
             TitleContents::ConfigPanel(_) => (),
 	    TitleContents::UpdatePanel(_) => (),
+	    TitleContents::Gallery(_) => (),
         }
     }
 
@@ -255,6 +256,17 @@ impl TitleScene {
                     }
                 }
             }
+	    TitleContents::Gallery(gallery) => {
+		let maybe_event = gallery.mouse_button_up(ctx, point, t);
+                if let Some(event) = maybe_event {
+                    match event {
+                        TitleContentsEvent::NextContents(content_name) => {
+                            self.switch_current_content(ctx, content_name, t);
+                        }
+                        _ => (),
+                    }
+                }
+	    }
         }
     }
 }
@@ -303,7 +315,7 @@ impl SceneManager for TitleScene {
 
     fn drawing_process(&mut self, ctx: &mut ggez::Context) {
         self.background.draw(ctx).unwrap();
-	//self.logo.draw(ctx).unwrap();
+	self.logo.draw(ctx).unwrap();
 
         if let Some(contetns) = self.current_title_contents.as_mut() {
             contetns.draw(ctx).unwrap();

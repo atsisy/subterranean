@@ -23,7 +23,7 @@ use crate::set_table_frame_cell_center;
 
 pub struct KosuzuMemory {
     remembered_book_info: Vec<BookInformation>,
-    book_black_list: Vec<BookInformation>,
+    borrowing_written_book: Vec<BookInformation>,
     customers_name: Vec<String>,
     dates: Vec<GensoDate>,
 }
@@ -32,14 +32,14 @@ impl KosuzuMemory {
     pub fn new() -> Self {
         KosuzuMemory {
             remembered_book_info: Vec::new(),
-            book_black_list: Vec::new(),
+            borrowing_written_book: Vec::new(),
             customers_name: Vec::new(),
             dates: Vec::new(),
         }
     }
 
     pub fn add_book_info(&mut self, book_info: BookInformation) {
-        if self.is_in_blacklist(&book_info) {
+        if self.is_written_in_record(&book_info) {
             return;
         }
 
@@ -54,20 +54,10 @@ impl KosuzuMemory {
         self.remembered_book_info.push(book_info);
     }
 
-    pub fn is_in_blacklist(&self, book_info: &BookInformation) -> bool {
-        self.book_black_list.contains(book_info)
+    pub fn is_written_in_record(&self, book_info: &BookInformation) -> bool {
+        self.borrowing_written_book.contains(book_info)
     }
-
-    pub fn full_of_blacklist(&self, book_info_list: &Vec<BookInformation>) -> bool {
-        for info in book_info_list.iter() {
-            if !self.is_in_blacklist(info) {
-                return false;
-            }
-        }
-
-        return true;
-    }
-
+    
     pub fn add_customer_name(&mut self, name: String) {
         if self.customers_name.contains(&name) {
             return;
@@ -79,8 +69,8 @@ impl KosuzuMemory {
         self.dates.push(date);
     }
 
-    pub fn add_book_to_black_list(&mut self, book_info: BookInformation) {
-        self.book_black_list.push(book_info);
+    pub fn add_book_to_written_list(&mut self, book_info: BookInformation) {
+        self.borrowing_written_book.push(book_info);
     }
 
     pub fn get_book_info_remove(&mut self, index: usize) -> Option<BookInformation> {
@@ -935,7 +925,7 @@ impl DateMenu {
 
         let font_info = FontInformation::new(
             ctx.resource.get_font(FontID::Cinema),
-            numeric::Vector2f::new(19.0, 19.0),
+            numeric::Vector2f::new(24.0, 24.0),
             ggraphics::Color::from_rgba_u32(0xff),
         );
 
@@ -954,7 +944,7 @@ impl DateMenu {
             let mut vtext = VerticalText::new(
                 name_vtext_line,
                 numeric::Point2f::new(0.0, 0.0),
-                numeric::Vector2f::new(1.0, 1.0),
+                numeric::Vector2f::new(0.85, 0.85),
                 0.0,
                 drawing_depth,
                 font_info,
@@ -976,7 +966,7 @@ impl DateMenu {
             let mut vtext = VerticalText::new(
                 s.to_string(),
                 numeric::Point2f::new(0.0, 0.0),
-                numeric::Vector2f::new(1.0, 1.0),
+                numeric::Vector2f::new(0.85, 0.85),
                 0.0,
                 drawing_depth,
                 font_info,
@@ -995,7 +985,7 @@ impl DateMenu {
         let mut header_text = UniText::new(
             "日付情報".to_string(),
             numeric::Point2f::new(0.0, 0.0),
-            numeric::Vector2f::new(1.0, 1.0),
+            numeric::Vector2f::new(0.85, 0.85),
             0.0,
             0,
             font_info,

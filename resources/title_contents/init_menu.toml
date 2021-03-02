@@ -45,7 +45,6 @@ event-type = "BuiltinCommand"
 builtin-command = "exit"
 
 [[each_entry_data]]
-text = "テスト"
-event-type = "SceneTransition"
-transition-method = "SwapTransition"
-next-scene = "End"
+text = "供養"
+event-type = "NextContents"
+next-contents-name = "gallery"

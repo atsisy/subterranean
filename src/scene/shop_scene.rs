@@ -1920,7 +1920,7 @@ impl ShopScene {
     }
 
     fn set_fixed_text_into_scenario_box<'a>(&mut self, ctx: &mut SuzuContext<'a>, path: &str, t: Clock) {
-	let scenario_box = ScenarioEvent::new(ctx, numeric::Rect::new(0.0, 0.0, 1366.0, 748.0), path, t);
+	let scenario_box = ScenarioEvent::new(ctx, numeric::Rect::new(0.0, 0.0, 1366.0, 748.0), path, true, t);
         self.map.scenario_event = Some(scenario_box);
 	self.player.reset_speed();
     }

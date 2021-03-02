@@ -38,7 +38,7 @@ use crate::{
 };
 
 use std::fs::File;
-use std::io::{BufReader, Read, Write};
+use std::io::{Read, Write};
 
 use serde::{Deserialize, Serialize};
 extern crate serde_json;

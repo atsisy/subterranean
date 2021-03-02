@@ -1275,7 +1275,7 @@ impl SuzuMiniSight {
         if let Some(dragging) = self.dragging.as_ref() {
             match dragging {
                 TaskItem::Book(item) => {
-                    if !kosuzu_memory.is_in_blacklist(item.get_large_object().get_book_info()) {
+                    if !kosuzu_memory.is_written_in_record(item.get_large_object().get_book_info()) {
                         count += 1;
                     }
                 }
@@ -1286,7 +1286,7 @@ impl SuzuMiniSight {
         for obj in self.dropping_to_desk.iter() {
             match obj {
                 TaskItem::Book(item) => {
-                    if !kosuzu_memory.is_in_blacklist(item.get_large_object().get_book_info()) {
+                    if !kosuzu_memory.is_written_in_record(item.get_large_object().get_book_info()) {
                         count += 1;
                     }
                 }
@@ -2036,7 +2036,11 @@ impl FloatingMemoryObject {
                 ggraphics::Color::from_rgba_u32(0x0),
             ),
             padding: padding,
-            font_info: font_info,
+            font_info: FontInformation::new(
+		ctx.resource.get_font(FontID::JpFude1),
+		numeric::Vector2f::new(28.0, 28.0),
+		ggraphics::Color::from_rgba_u32(0xff)
+	    ),
         }
     }
 
@@ -2050,7 +2054,7 @@ impl FloatingMemoryObject {
 
     fn required_canvas_size(&self, _ctx: &mut ggez::Context) -> numeric::Vector2f {
         let outer_frame_width = 2.0 * self.padding;
-        let height = self.next_position_y() + outer_frame_width + 16.0;
+        let height = self.next_position_y() + outer_frame_width + 8.0;
 
         numeric::Vector2f::new(250.0, height)
     }

@@ -81,6 +81,7 @@ impl ScenarioScene {
             ctx,
             numeric::Rect::new(0.0, 0.0, 1366.0, 768.0),
             &file_path,
+	    false,
             0,
         );
 

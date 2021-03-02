@@ -715,13 +715,8 @@ impl TaskTable {
         let mut item_counts = 0;
         for obj in self.desk.desk_objects.get_raw_container().iter() {
             match obj {
-                TaskItem::Book(item) => {
-                    if !self
-                        .kosuzu_memory
-                        .is_in_blacklist(item.get_large_object().get_book_info())
-                    {
-                        item_counts += 1;
-                    }
+                TaskItem::Book(_) => {
+                    item_counts += 1;
                 }
                 TaskItem::Coin(_) => item_counts += 1,
                 _ => (),
@@ -734,13 +729,8 @@ impl TaskTable {
 
         if let Some(dragging) = self.desk.dragging.as_ref() {
             match dragging {
-                TaskItem::Book(item) => {
-                    if !self
-                        .kosuzu_memory
-                        .is_in_blacklist(item.get_large_object().get_book_info())
-                    {
-                        item_counts += 1;
-                    }
+                TaskItem::Book(_) => {
+                    item_counts += 1;
                 }
                 _ => (),
             }
@@ -766,13 +756,8 @@ impl TaskTable {
 
         if let Some(dragging) = self.desk.dragging.as_ref() {
             match dragging {
-                TaskItem::Book(item) => {
-                    if !self
-                        .kosuzu_memory
-                        .is_in_blacklist(item.get_large_object().get_book_info())
-                    {
-                        book_count += 1;
-                    }
+                TaskItem::Book(_) => {
+                    book_count += 1;
                 }
                 _ => (),
             }
@@ -853,6 +838,7 @@ impl TaskTable {
             .borrowing_record_book
             .get_current_page_written_books()
             .unwrap();
+
         for item in self.desk.desk_objects.get_raw_container_mut().iter_mut() {
             match item {
                 TaskItem::Book(book) => {
@@ -872,6 +858,10 @@ impl TaskTable {
             20,
             t,
         );
+
+	for book in written_books {
+	    self.kosuzu_memory.add_book_to_written_list(book);
+	}
     }
 
     pub fn signing_returning_handler<'a>(
@@ -1100,37 +1090,6 @@ impl TaskTable {
         }
     }
 
-    fn refusing_book_borrowing_conversation(&mut self, t: Clock) {
-        self.event_list.add_event(
-            Box::new(move |slf: &mut Self, ctx, t| {
-                let s = "すみません　この本は貸し出せません";
-
-                slf.kosuzu_phrase.insert_new_phrase(ctx, s, t);
-            }),
-            t + 1,
-        );
-
-        self.event_list.add_event(
-            Box::new(move |slf: &mut Self, ctx, _| {
-                slf.sight.silhouette.replace_text(
-                    ctx.context,
-                    "あ そうなんですか",
-                    TextBalloonPhraseType::SimplePhrase,
-                );
-            }),
-            t + 30,
-        );
-
-        if let Some(customer_request) = self.current_customer_request.as_ref() {
-            match customer_request {
-                CustomerRequest::Borrowing(info) => {
-                    if self.kosuzu_memory.full_of_blacklist(&info.borrowing) {}
-                }
-                _ => (),
-            }
-        }
-    }
-
     fn show_kosuzu_payment_message<'a>(&mut self, ctx: &mut SuzuContext<'a>, price: u32, t: Clock) {
         let msg = format!("合計{}円になります", number_to_jk(price as u64));
         self.kosuzu_phrase.insert_new_phrase(ctx, &msg, t);
@@ -1226,14 +1185,13 @@ impl TaskTable {
                     // 題名を記憶する
                     //
                     0 => {
-                        if self.kosuzu_memory.is_in_blacklist(&book_info) {
+                        if self.kosuzu_memory.is_written_in_record(&book_info) {
                             self.kosuzu_phrase.insert_new_phrase(
                                 ctx,
-                                "これは貸出しないはずの本だ",
+                                "この本はもう貸出記録した",
                                 t,
                             );
                         } else {
-                            println!("Ok, This book info is not in blacklist");
                             // info panel
                             self.info_panel
                                 .add_book_info(ctx, book_info.clone(), point, t);
@@ -1241,14 +1199,6 @@ impl TaskTable {
                             // internal memory
                             self.kosuzu_memory.add_book_info(book_info);
                         }
-                        true
-                    }
-                    1 => {
-                        let target_book_info =
-                            self.on_desk_menu.get_desk_menu_target_book_info().unwrap();
-                        self.kosuzu_memory.add_book_to_black_list(target_book_info);
-
-                        self.refusing_book_borrowing_conversation(t);
                         true
                     }
                     _ => false,
@@ -1291,12 +1241,17 @@ impl TaskTable {
 		    if let Some(request) = self.current_customer_request.as_ref() {
 			match request {
 			    CustomerRequest::Borrowing(_) => {
-				self.record_book_menu.show_book_title_menu(
-				    ctx,
-				    click_point,
-				    &self.kosuzu_memory,
-				    t,
-				);
+				match lock_status {
+				    RecordBookLockStatus::BorrowingOk => {
+					self.record_book_menu.show_book_title_menu(
+					    ctx,
+					    click_point,
+					    &self.kosuzu_memory,
+					    t,
+					);
+				    },
+				    _ => (),
+				}
 			    },
 			    _ => (),
 			}
@@ -1353,12 +1308,14 @@ impl TaskTable {
 		if let Some(request) = self.current_customer_request.as_ref() {
 		    match request {
 			CustomerRequest::Borrowing(_) => {
-			    self.record_book_menu.show_customer_name_menu(
-				ctx,
-				click_point,
-				&self.kosuzu_memory,
-				t,
-			    );
+			    if self.borrowing_record_book.current_page_is_borrowing_signed() != RecordBookLockStatus::BorrowingLocked {
+				self.record_book_menu.show_customer_name_menu(
+				    ctx,
+				    click_point,
+				    &self.kosuzu_memory,
+				    t,
+				);
+			    }
 			},
 			_ => (),
 		    }
@@ -1369,8 +1326,10 @@ impl TaskTable {
 		if let Some(request) = self.current_customer_request.as_ref() {
 		    match request {
 			CustomerRequest::Borrowing(_) => {
-			    self.record_book_menu
-				.show_date_menu(ctx, click_point, self.today.clone(), t);
+			    if self.borrowing_record_book.current_page_is_borrowing_signed() != RecordBookLockStatus::BorrowingLocked {
+				self.record_book_menu
+				    .show_date_menu(ctx, click_point, self.today.clone(), t);
+			    }
 			},
 			CustomerRequest::Returning(_) => {
 			    if grid_pos.x == 0 {
@@ -1482,9 +1441,17 @@ impl TaskTable {
             return ();
         }
 
-	let record_book_lock_status = self.borrowing_record_book.check_current_page_is_matched_with(
-	    self.current_customer_request.as_ref()
-	);
+	let record_book_lock_status =
+	    match self.current_customer_request.as_ref().unwrap() {
+		CustomerRequest::Borrowing(_) => {
+		    self.borrowing_record_book.current_page_is_borrowing_signed()
+		},
+		CustomerRequest::Returning(_) => {
+		    self.borrowing_record_book.check_current_page_is_matched_with(
+			self.current_customer_request.as_ref()
+		    )
+		}
+	    };
 	
         if self.try_show_menus_regarding_book_info(ctx, click_point, &record_book_lock_status, t) {
 	    return;

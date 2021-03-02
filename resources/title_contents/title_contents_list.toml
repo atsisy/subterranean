@@ -27,3 +27,8 @@ src = "./resources/title_contents/update_panel.toml"
 name = "config-panel"
 type = "ConfigPanel"
 src = "./resources/title_contents/config_panel.toml"
+
+[[contents-list]]
+name = "gallery"
+type = "Gallery"
+src = "./resources/title_contents/gallery.toml"

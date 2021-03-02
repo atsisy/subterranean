@@ -798,11 +798,11 @@ pub struct ScheduleStartEssential {
     tachie_data: TachieData,
 }
 
-pub struct ScheduleStartData {
-    scenario_id: ScenarioElementID,
-    background_texture_id: Option<TextureID>,
-    tachie_data: TachieData,
-}
+// pub struct ScheduleStartData {
+//     scenario_id: ScenarioElementID,
+//     background_texture_id: Option<TextureID>,
+//     tachie_data: TachieData,
+// }
 
 pub enum ScenarioBuiltinCommand {
     ScheduleStart(ScheduleStartEssential),
@@ -1639,6 +1639,7 @@ impl ScenarioEvent {
         ctx: &mut SuzuContext<'a>,
         rect: numeric::Rect,
         file_path: &str,
+	hide_shadow: bool,
         t: Clock,
     ) -> Self {
         let scenario = Scenario::new(ctx, file_path);
@@ -1654,13 +1655,16 @@ impl ScenarioEvent {
 
         let event_tachie = Self::update_event_tachie_sub(ctx, scenario.ref_current_element(), t);
 
-        let appr_frame = TileBatchFrame::new(
+        let mut appr_frame = TileBatchFrame::new(
             ctx.resource,
             TileBatchTextureID::BlackFrame,
             numeric::Rect::new(0.0, 0.0, rect.w, rect.h),
             numeric::Vector2f::new(1.0, 1.0),
             0,
         );
+	if hide_shadow {
+	    appr_frame.hide();
+	}
 
         ScenarioEvent {
             scenario: scenario,
