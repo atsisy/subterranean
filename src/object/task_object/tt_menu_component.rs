@@ -2479,6 +2479,21 @@ impl RecordBookMenuGroup {
         self.simple_message_menu = Some(drop_menu);
     }
 
+    pub fn show_locked_menu<'a>(
+	&mut self,
+	ctx: &mut SuzuContext<'a>,
+        position: numeric::Point2f,
+	t: Clock,
+    ) {
+	self.show_simple_message_menu(
+            ctx,
+            position,
+            "".to_string(),
+            "このページじゃないかも".to_string(),
+            t,
+        );
+    }
+
     pub fn show_customer_name_menu<'a>(
         &mut self,
         ctx: &mut SuzuContext<'a>,

@@ -1268,6 +1268,7 @@ impl TaskTable {
         &mut self,
         ctx: &mut SuzuContext<'a>,
         click_point: numeric::Point2f,
+	lock_status: &RecordBookLockStatus,
         t: Clock,
     ) -> bool {
         let grid_pos = self
@@ -1289,13 +1290,14 @@ impl TaskTable {
                 0 => {
 		    if let Some(request) = self.current_customer_request.as_ref() {
 			match request {
-			    CustomerRequest::Borrowing(_) =>
+			    CustomerRequest::Borrowing(_) => {
 				self.record_book_menu.show_book_title_menu(
 				    ctx,
 				    click_point,
 				    &self.kosuzu_memory,
 				    t,
-				),
+				);
+			    },
 			    _ => (),
 			}
 		    }
@@ -1303,10 +1305,20 @@ impl TaskTable {
                 1 => {
 		    if let Some(request) = self.current_customer_request.as_ref() {
 			match request {
-			    CustomerRequest::Returning(_) =>
-				self
-				.record_book_menu
-				.show_book_status_menu(ctx, click_point, t),
+			    CustomerRequest::Returning(_) => {
+				match lock_status {
+				    RecordBookLockStatus::ReturningMatched => {
+					self
+					    .record_book_menu
+					    .show_book_status_menu(ctx, click_point, t);	
+				    },
+				    RecordBookLockStatus::ReturningVary => {
+					self.record_book_menu
+					    .show_locked_menu(ctx, click_point, t);
+				    },
+				    _ => (),
+				}
+			    }
 			    _ => (),
 			}
 		    }
@@ -1329,6 +1341,7 @@ impl TaskTable {
         &mut self,
         ctx: &mut SuzuContext<'a>,
         click_point: numeric::Point2f,
+	lock_status: &RecordBookLockStatus,
         t: Clock,
     ) -> bool {
         let maybe_grid_pos = self
@@ -1469,19 +1482,23 @@ impl TaskTable {
             return ();
         }
 
-        if self.try_show_menus_regarding_book_info(ctx, click_point, t) {
-            return;
+	let record_book_lock_status = self.borrowing_record_book.check_current_page_is_matched_with(
+	    self.current_customer_request.as_ref()
+	);
+	
+        if self.try_show_menus_regarding_book_info(ctx, click_point, &record_book_lock_status, t) {
+	    return;
         }
-
-        if self.try_show_menus_regarding_customer_info(ctx, click_point, t) {
-            return;
+	
+        if self.try_show_menus_regarding_customer_info(ctx, click_point, &record_book_lock_status, t) {
+	    return;
         }
-
+	
         if self
-            .borrowing_record_book
-            .contains(ctx.context, click_point)
+	    .borrowing_record_book
+	    .contains(ctx.context, click_point)
         {
-            return;
+	    return;
         } else {
             if self.record_book_is_staged {
                 self.slide_hide_record_book(t);

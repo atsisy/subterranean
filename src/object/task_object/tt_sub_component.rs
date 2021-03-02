@@ -22,7 +22,7 @@ use crate::set_table_frame_cell_center;
 
 use serde::{Deserialize, Serialize};
 
-use super::Clickable;
+use super::{Clickable, tt_main_component::CustomerRequest};
 use crate::core::*;
 use crate::scene::DrawRequest;
 
@@ -572,8 +572,34 @@ impl BorrowingRecordBookPageData {
             && self.rental_limit.is_some()
     }
 
+    pub fn is_borrowing_done(&self) -> bool {
+        !self.returning_is_signed
+            && self.borrowing_is_signed
+            && !self.borrowing_book_title.is_empty()
+            && self.customer_name.is_some()
+            && self.return_date.is_some()
+            && self.rental_date.is_some()
+            && self.rental_limit.is_some()
+    }
+
     pub fn generate_return_book_information(&self) -> Option<ReturnBookInformation> {
         if !self.is_maybe_waiting_returning() {
+            return None;
+        }
+
+        return Some(ReturnBookInformation::new(
+            self.borrowing_book_title
+                .iter()
+                .map(|elem| elem.1.clone())
+                .collect(),
+            self.customer_name.as_ref().unwrap(),
+            self.rental_date.as_ref().unwrap().clone(),
+            self.return_date.as_ref().unwrap().clone(),
+        ));
+    }
+
+    pub fn generate_return_book_information_with_cut(&self) -> Option<ReturnBookInformation> {
+        if !self.is_borrowing_done() {
             return None;
         }
 
@@ -1942,6 +1968,13 @@ impl DrawableComponent for BorrowingRecordBookPage {
     }
 }
 
+#[derive(Clone, Debug)]
+pub enum RecordBookLockStatus {
+    BorrowingOk,
+    ReturningMatched,
+    ReturningVary,
+}
+
 pub struct BorrowingRecordBook {
     redraw_request: DrawRequest,
     pages: Vec<BorrowingRecordBookPage>,
@@ -2408,6 +2441,41 @@ impl BorrowingRecordBook {
         }
 
         self.redraw_request = DrawRequest::Draw;
+    }
+
+    pub fn check_current_page_is_matched_with(&self, customer_request: Option<&CustomerRequest>) -> RecordBookLockStatus {
+	if customer_request.is_none() {
+	    return RecordBookLockStatus::ReturningVary;
+	}
+
+	let return_info = match customer_request.unwrap() {
+	    CustomerRequest::Returning(return_info) => return_info,
+	    _ => return RecordBookLockStatus::BorrowingOk,
+	};
+	
+	let page = match self.get_current_page() {
+	    Some(page) => page,
+	    None => return RecordBookLockStatus::ReturningVary,
+	};
+
+	let info = match page.export_page_data().generate_return_book_information_with_cut() {
+	    Some(info) => info,
+	    None => return RecordBookLockStatus::ReturningVary,
+	};
+
+	for book_info in info.returning.iter() {
+	    if !return_info.returning.contains(book_info) {
+		return RecordBookLockStatus::ReturningVary;
+	    }
+	}
+
+	if return_info.borrower != info.borrower ||
+	    return_info.borrow_date != info.borrow_date ||
+	    return_info.return_date != info.return_date {
+		return RecordBookLockStatus::ReturningVary;
+	    }
+
+	return RecordBookLockStatus::ReturningMatched;
     }
 }
 
