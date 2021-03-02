@@ -2489,7 +2489,7 @@ impl RecordBookMenuGroup {
             ctx,
             position,
             "".to_string(),
-            "このページじゃないかも".to_string(),
+            "この項じゃないかも".to_string(),
             t,
         );
     }
@@ -2865,7 +2865,6 @@ pub struct DeskBookMenu {
     book_info_drawer: BookInfoDrawer,
     book_info: BookInformation,
     memo_button: SelectButton,
-    deny_button: SelectButton,
     drwob_essential: DrawableObjectEssential,
     last_clicked: Option<usize>,
 }
@@ -2893,9 +2892,9 @@ impl DeskBookMenu {
 
         let book_info_drawer = BookInfoDrawer::new(ctx, book_info.clone(), 0);
 
-        let mut button_rect = numeric::Rect::new(30.0, 410.0, 140.0, 50.0);
+        let mut button_rect = numeric::Rect::new(110.0, 410.0, 140.0, 50.0);
         let mut buttons = Vec::new();
-        for s in vec!["メモ", "貸出拒否"].iter() {
+        for s in vec!["メモ"].iter() {
             let text_texture = TextButtonTexture::new(
                 ctx,
                 numeric::Point2f::new(0.0, 0.0),
@@ -2916,7 +2915,6 @@ impl DeskBookMenu {
             header_text: header_text,
             book_info_drawer: book_info_drawer,
             book_info: book_info,
-            deny_button: buttons.pop().unwrap(),
             memo_button: buttons.pop().unwrap(),
             drwob_essential: DrawableObjectEssential::new(true, drawing_depth),
             last_clicked: None,
@@ -2937,10 +2935,6 @@ impl DeskBookMenu {
     pub fn click_handler(&mut self, ctx: &mut ggez::Context, point: numeric::Point2f) {
         if self.memo_button.contains(ctx, point) {
             self.last_clicked = Some(0 as usize);
-        }
-
-        if self.deny_button.contains(ctx, point) {
-            self.last_clicked = Some(1 as usize);
         }
     }
 
@@ -2967,7 +2961,6 @@ impl DrawableComponent for DeskBookMenu {
             self.book_info_drawer.draw(ctx)?;
 
             self.memo_button.draw(ctx)?;
-            self.deny_button.draw(ctx)?;
         }
         Ok(())
     }

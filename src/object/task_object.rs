@@ -1341,7 +1341,7 @@ impl TaskTable {
         &mut self,
         ctx: &mut SuzuContext<'a>,
         click_point: numeric::Point2f,
-	lock_status: &RecordBookLockStatus,
+	_lock_status: &RecordBookLockStatus,
         t: Clock,
     ) -> bool {
         let maybe_grid_pos = self

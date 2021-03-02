@@ -2231,7 +2231,7 @@ impl TaskInfoContents {
         let mut desc_text = Vec::new();
         let mut request_text = HashMap::new();
 
-        for (index, s) in vec!["本日", "要件", "氏名", "期限"]
+        for (index, s) in vec!["本日", "用件", "氏名", "期限"]
             .iter()
             .enumerate()
         {
