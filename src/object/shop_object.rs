@@ -514,7 +514,7 @@ impl SelectShelvingBookUI {
         ));
 
         let move_shelving_to_box_button =
-            SelectButton::new(ctx, numeric::Rect::new(650.0, 500.0, 100.0, 50.0), texture);
+            SelectButton::new(ctx, numeric::Rect::new(650.0, 350.0, 100.0, 50.0), texture);
 
         SelectShelvingBookUI {
             canvas: SubScreen::new(ctx.context, ui_rect, 0, ggraphics::Color::from_rgba_u32(0)),
@@ -1548,22 +1548,23 @@ pub struct ShopMenuContents {
 }
 
 impl ShopMenuContents {
-    pub fn new(game_data: &GameResource) -> Self {
+    pub fn new<'a>(ctx: &mut SuzuContext<'a>) -> Self {
         let normal_scale_font = FontInformation::new(
-            game_data.get_font(FontID::JpFude1),
+            ctx.resource.get_font(FontID::JpFude1),
             numeric::Vector2f::new(30.0, 30.0),
             ggraphics::Color::from_rgba_u32(0x000000ff),
         );
 
         let large_scale_font = FontInformation::new(
-            game_data.get_font(FontID::JpFude1),
+            ctx.resource.get_font(FontID::JpFude1),
             numeric::Vector2f::new(34.0, 34.0),
             ggraphics::Color::from_rgba_u32(0x000000ff),
         );
 
+	let date = &ctx.take_save_data().date;
         ShopMenuContents {
             day_text: VerticalText::new(
-                format!("日付　{}月 {}日", number_to_jk(12), number_to_jk(12)),
+                format!("日付　{}月 {}日", number_to_jk(date.month as u64), number_to_jk(date.day as u64)),
                 numeric::Point2f::new(350.0, 70.0),
                 numeric::Vector2f::new(1.0, 1.0),
                 0.0,
@@ -1571,7 +1572,7 @@ impl ShopMenuContents {
                 large_scale_font,
             ),
             copy_request: VerticalText::new(
-                format!("写本受注数"),
+                format!("総接客人数"),
                 numeric::Point2f::new(275.0, 70.0),
                 numeric::Vector2f::new(1.0, 1.0),
                 0.0,
@@ -1579,7 +1580,7 @@ impl ShopMenuContents {
                 normal_scale_font,
             ),
             copy_request_num: VerticalText::new(
-                format!("{}件", number_to_jk(0)),
+                format!("{}人", number_to_jk(ctx.take_save_data().award_data.customer_count as u64)),
                 numeric::Point2f::new(230.0, 170.0),
                 numeric::Vector2f::new(1.0, 1.0),
                 0.0,
@@ -1619,7 +1620,7 @@ impl ShopMenuContents {
                 large_scale_font,
             ),
             kosuzu_level: VerticalText::new(
-                format!("小鈴 習熟度"),
+                format!("評判"),
                 numeric::Point2f::new(275.0, 370.0),
                 numeric::Vector2f::new(1.0, 1.0),
                 0.0,
@@ -1627,7 +1628,7 @@ impl ShopMenuContents {
                 normal_scale_font,
             ),
             kosuzu_level_num: VerticalText::new(
-                format!("{}", number_to_jk(0)),
+                format!("{}", number_to_jk(ctx.take_save_data().suzunaan_status.reputation as u64)),
                 numeric::Point2f::new(230.0, 470.0),
                 numeric::Vector2f::new(1.0, 1.0),
                 0.0,
@@ -1653,8 +1654,9 @@ impl ShopMenuContents {
             ggraphics::Color::from_rgba_u32(0x000000ff),
         );
 
+	let date = &ctx.take_save_data().date;
         self.day_text = VerticalText::new(
-            format!("日付　{}月 {}日", number_to_jk(12), number_to_jk(12)),
+            format!("日付　{}月 {}日", number_to_jk(date.month as u64), number_to_jk(date.day as u64)),
             numeric::Point2f::new(350.0, 70.0),
             numeric::Vector2f::new(1.0, 1.0),
             0.0,
@@ -1771,7 +1773,7 @@ impl ShopMenu {
                 0.0,
                 0,
             ),
-            menu_contents: ShopMenuContents::new(ctx.resource),
+            menu_contents: ShopMenuContents::new(ctx),
             menu_canvas_size: size,
             now_appear: false,
         }

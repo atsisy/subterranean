@@ -2763,8 +2763,8 @@ impl ChatBox {
             0.0,
             0,
             FontInformation::new(
-                ctx.resource.get_font(FontID::Cinema),
-                numeric::Vector2f::new(22.0, 22.0),
+                ctx.resource.get_font(FontID::BitMap1),
+                numeric::Vector2f::new(12.0, 12.0),
                 ggraphics::Color::BLACK,
             ),
         );
@@ -2786,8 +2786,8 @@ impl ChatBox {
             0.0,
             0,
             FontInformation::new(
-                ctx.resource.get_font(FontID::Cinema),
-                numeric::Vector2f::new(22.0, 22.0),
+                ctx.resource.get_font(FontID::BitMap1),
+                numeric::Vector2f::new(12.0, 12.0),
                 ggraphics::Color::BLACK,
             ),
         );

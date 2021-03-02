@@ -99,7 +99,7 @@ font_paths = ["/fonts/azuki.ttf", "/fonts/RiiT_F.ttf", "/fonts/OradanoGSRR.ttf",
 tileset_paths = ["/maps/suzunaan2/main.tmx"]
 scenario_table_path = "/scenario_table.toml"
 daily_customer_dist_path = "/daily_customer_dist.toml"
-customers_name = ["霧雨魔里沙", "稗田阿求", "a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k"]
+customers_name = ["マリ", "さくら", "千代", "ハル", "ハナ", "はる", "スズコ", "文子", "タエコ", "ユリ", "ユイ", "ヨウコ", "アサ"]
 sound_file_path = [
 		"/sound/bgm/title.mp3",
 		"/sound/se/turn_the_page.wav",
@@ -114,7 +114,7 @@ map_file_path = "./resources/maps/suzunaan2/main.tmx"
 event_map_file_path = "/event_map1.toml"
 
 [[books_information]]
-name = "テスト本 壱"
+name = "女大学"
 pages = 128
 size = "大判本"
 billing_number = 1
@@ -123,7 +123,7 @@ condition = "Bad"
 unique_id = 0
 
 [[books_information]]
-name = "テスト本 弐"
+name = "春雨物語"
 pages = 128
 size = "中判本"
 billing_number = 1
@@ -132,7 +132,7 @@ condition = "Bad"
 unique_id = 0
 
 [[books_information]]
-name = "テスト本 参"
+name = "雨月物語"
 pages = 128
 size = "大判本"
 billing_number = 1
@@ -141,7 +141,7 @@ condition = "Bad"
 unique_id = 0
 
 [[books_information]]
-name = "テスト本 肆"
+name = "団子屋図解"
 pages = 128
 size = "中判本"
 billing_number = 1
@@ -150,7 +150,7 @@ condition = "Bad"
 unique_id = 0
 
 [[books_information]]
-name = "テスト本 伍"
+name = "養生訓"
 pages = 128
 size = "大判本"
 billing_number = 1
@@ -159,7 +159,7 @@ condition = "Bad"
 unique_id = 0
 
 [[books_information]]
-name = "テスト本 陸"
+name = "奥の細道"
 pages = 128
 size = "中判本"
 billing_number = 1
@@ -168,7 +168,7 @@ condition = "Bad"
 unique_id = 0
 
 [[books_information]]
-name = "テスト本 漆"
+name = "野ざらし紀行"
 pages = 128
 size = "大判本"
 billing_number = 1
@@ -177,7 +177,7 @@ condition = "Bad"
 unique_id = 0
 
 [[books_information]]
-name = "テスト本 捌"
+name = "古事記傳 一"
 pages = 128
 size = "中判本"
 billing_number = 1
@@ -186,7 +186,34 @@ condition = "Bad"
 unique_id = 0
 
 [[books_information]]
-name = "テスト本 玖"
+name = "古事記傳 二"
+pages = 128
+size = "中判本"
+billing_number = 1
+base_price = 100
+condition = "Good"
+unique_id = 0
+
+[[books_information]]
+name = "古事記傳 三"
+pages = 128
+size = "中判本"
+billing_number = 1
+base_price = 100
+condition = "Good"
+unique_id = 0
+
+[[books_information]]
+name = "古事記傳 四"
+pages = 128
+size = "中判本"
+billing_number = 1
+base_price = 100
+condition = "Good"
+unique_id = 0
+
+[[books_information]]
+name = "古事記傳 五"
 pages = 128
 size = "中判本"
 billing_number = 1

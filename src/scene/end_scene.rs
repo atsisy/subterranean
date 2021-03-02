@@ -72,7 +72,7 @@ impl EndScene {
 
         let bgm_handler = ctx.play_sound_as_bgm(
             SoundID::Title,
-            Some(SoundPlayFlags::new(1000, 1.0, true, 0.1)),
+            Some(SoundPlayFlags::new(1000, 1.0, true, ctx.config.get_bgm_volume())),
         );
 
         let mut kosuzu = character_factory::create_endroll_sample(
@@ -84,7 +84,6 @@ impl EndScene {
 
 	let mut flow = EndSceneFlow::new(ctx, 0);
 	flow.start_result(0);
-	
 
         EndScene {
             mouse_info: MouseInformation::new(),
@@ -199,14 +198,21 @@ impl SceneManager for EndScene {
 	if self.end_flow.get_scene_transition_status() != SceneTransition::Keep {
 	    self.scene_transition_close_effect(ctx, t);
 	    self.kosuzu_speed = numeric::Vector2f::new(-2.0, 0.0);
-	    
+
+	    add_delay_event!(
+                self.event_list,
+                |slf, ctx, t| {
+		    slf.scene_transition_close_effect(ctx, t);
+                },
+                t + 80
+            );
             add_delay_event!(
                 self.event_list,
                 |slf, _, _| {
                     slf.scene_transition = SceneID::Title;
                     slf.scene_transition_type = SceneTransition::SwapTransition;
                 },
-                t + 120
+                t + 140
             );
 	}
     }

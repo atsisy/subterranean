@@ -96,7 +96,7 @@ impl SuzunaStatusMainPage {
         let mut money_text = UniText::new(
             format!(
                 "{}円",
-                number_to_jk(ctx.take_save_data().task_result.total_money as u64)
+		ctx.take_save_data().task_result.total_money
             ),
             numeric::Point2f::new(0.0, 0.0),
             numeric::Vector2f::new(1.0, 1.0),

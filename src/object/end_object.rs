@@ -34,15 +34,15 @@ impl EndSceneFlow {
 	let mut book_collection = Vec::new();
 	let mut pos = numeric::Point2f::new(1000.0, 90.0);
 	
-	for s in vec![
-	    format!("評判\n　{}", ctx.take_save_data().suzunaan_status.reputation as i32),
-	    format!("総収入\n　　{}円", ctx.take_save_data().task_result.total_money as i32),
-	    format!("接客回数\n　{}回", ctx.take_save_data().award_data.customer_count as i32),
-	    format!("貸出回数\n　{}回", ctx.take_save_data().award_data.borrowing_count as i32),
-	    format!("返却回数\n　{}回", ctx.take_save_data().award_data.returning_count as i32),
-	    format!("配架冊数\n　{}冊", ctx.take_save_data().award_data.shelving_count as i32),
-	    format!("誤評価数\n　{}回", ctx.take_save_data().award_data.returning_check_mistake_count as i32),
-	] {
+	vec![
+	    format!("評判\n　{}", number_to_jk::number_to_jk(ctx.take_save_data().suzunaan_status.reputation as u64)),
+	    format!("総収入\n　　{}円", number_to_jk::number_to_jk(ctx.take_save_data().task_result.total_money as u64)),
+	    format!("接客回数\n　{}回", number_to_jk::number_to_jk(ctx.take_save_data().award_data.customer_count as u64)),
+	    format!("貸出回数\n　{}回", number_to_jk::number_to_jk(ctx.take_save_data().award_data.borrowing_count as u64)),
+	    format!("返却回数\n　{}回", number_to_jk::number_to_jk(ctx.take_save_data().award_data.returning_count as u64)),
+	    format!("配架冊数\n　{}冊", number_to_jk::number_to_jk(ctx.take_save_data().award_data.shelving_count as u64)),
+	    format!("誤評価数\n　{}回", number_to_jk::number_to_jk(ctx.take_save_data().award_data.returning_check_mistake_count as u64)),
+	].into_iter().for_each(|s| {
 	    let mut vtext = VerticalText::new(
 		s,
 		pos,
@@ -62,7 +62,7 @@ impl EndSceneFlow {
 	    );
 
 	    pos.x -= 100.0;
-	}
+	});
 
 	let font_info = FontInformation::new(
 	    ctx.resource.get_font(FontID::JpFude1),
@@ -113,7 +113,7 @@ impl EndSceneFlow {
 	let mut ok_result_button =
 	    FramedButton::create_design1(
 		ctx,
-		numeric::Point2f::new(100.0, 500.0),
+		numeric::Point2f::new(100.0, 350.0),
 		"次へ",
 		numeric::Vector2f::new(28.0, 28.0)
 	    );
@@ -161,9 +161,12 @@ impl EndSceneFlow {
 	    );
 	    texture.set_alpha(0.0);
 	    texture.hide();
+
+	    let area = texture.get_drawing_area(ctx.context);
+	    
 	    book_collection.push(texture);
 	    
-	    texture_pos.x += 150.0;
+	    texture_pos.x += area.w + 50.0;
 	}
 	
         EndSceneFlow {
@@ -204,7 +207,7 @@ impl EndSceneFlow {
 	animation_start += 60;
 	
 	self.event_list.add_event(
-	    Box::new(move |slf: &mut Self, _, t| {
+	    Box::new(move |slf: &mut Self, _, _| {
 		slf.ok_result_button.appear();
 	    }),
 	    animation_start
@@ -271,7 +274,7 @@ impl EndSceneFlow {
         flush_delay_event_and_redraw_check!(self, self.event_list, ctx, t, {});
     }
 
-    pub fn click_handler<'a>(&mut self, ctx: &mut SuzuContext<'a>, point: numeric::Point2f, t: Clock) {
+    pub fn click_handler<'a>(&mut self, _ctx: &mut SuzuContext<'a>, point: numeric::Point2f, t: Clock) {
 	if self.ok_result_button.is_visible() && self.ok_result_button.contains(point) {
 	    self.ok_result_button.hide();
 	    self.start_credit(t);

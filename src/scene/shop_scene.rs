@@ -1220,19 +1220,27 @@ impl ShopScene {
 
     pub fn command_palette_handler<'a>(&mut self, ctx: &mut SuzuContext<'a>, func: CommandPaletteFunc) {
 	match func {
-            CommandPaletteFunc::Action => {
-		self.command_palette_go_register_handler(ctx);
+            CommandPaletteFunc::Action | CommandPaletteFunc::ShowMap | CommandPaletteFunc::Pause => {
+		if self.shop_menu.first_menu_is_open() {
+		    return;
+		}
+		match func {
+		    CommandPaletteFunc::Action => {
+			self.command_palette_go_register_handler(ctx);
+		    },
+		    CommandPaletteFunc::ShowMap => {
+			self.toggle_shop_map_appearing();
+		    },
+		    CommandPaletteFunc::Pause => {
+			let t = self.get_current_clock();
+			self.enter_pause_screen(t);
+		    },
+		    _ => (),
+		}
             },
 	    CommandPaletteFunc::ShowShopMenu => {
 		self.special_button_handler(ctx);
 	    },
-	    CommandPaletteFunc::ShowMap => {
-		self.toggle_shop_map_appearing();
-	    },
-	    CommandPaletteFunc::Pause => {
-                let t = self.get_current_clock();
-                self.enter_pause_screen(t);
-	    }
         }
     }
 
@@ -1858,7 +1866,24 @@ impl ShopScene {
                 },
                 10
             );
-        }
+        } else {
+	    self.dark_effect_panel
+                .new_effect(8, self.get_current_clock(), 200, 0);
+	    
+	    add_delay_event!(
+                self.event_list,
+                |slf, _ctx, t| {
+		    if slf.shop_menu.first_menu_is_open() {
+			slf.shop_menu.toggle_first_menu(t);
+		    }
+                },
+                10
+            );
+	    
+            if self.shop_menu.detail_menu_is_open() {
+                self.shop_menu.toggle_detail_menu(self.get_current_clock());
+            }
+	}
     }
 
     fn toggle_shop_map_appearing(&mut self) {
@@ -1994,19 +2019,20 @@ impl SceneManager for ShopScene {
                 }
             }
         } else {
+	    let left_pressed = ggez::input::mouse::button_pressed(ctx.context, MouseButton::Left);
+	    
 	    if !self.shop_menu.first_menu_is_open()
                 && !self.shop_menu.detail_menu_is_open()
 		&& self.map.scenario_event.is_none()
 		&& !self.shop_special_object.is_enable_now() {
-		    let left_pressed = ggez::input::mouse::button_pressed(ctx.context, MouseButton::Left);
 		    if left_pressed {
 			if !self.shop_command_palette.contains_buttons(point) {
 			    self.start_mouse_move(ctx.context, point);
 			}
 		    }
-		    
-		    self.shop_command_palette.mouse_motion_handler(ctx, point, left_pressed, t);
 		}
+
+	    self.shop_command_palette.mouse_motion_handler(ctx, point, left_pressed, t);
         }
     }
 
@@ -2057,9 +2083,7 @@ impl SceneManager for ShopScene {
                         }
                     }
 
-		    if !self.shop_menu.first_menu_is_open()
-			&& !self.shop_menu.detail_menu_is_open()
-			&& self.map.scenario_event.is_none()
+		    if self.map.scenario_event.is_none()
 			&& !self.shop_special_object.is_enable_now() {
 			    self.shop_command_palette
 				.mouse_left_button_down_handler(ctx, point);
@@ -2358,7 +2382,6 @@ impl SceneManager for ShopScene {
         self.shop_map.draw(ctx).unwrap();
 
         self.drawable_shop_clock.draw(ctx).unwrap();
-        self.shop_command_palette.draw(ctx).unwrap();
 	self.shop_time_status_header.draw(ctx).unwrap();
 
         self.dark_effect_panel.draw(ctx).unwrap();
@@ -2366,10 +2389,11 @@ impl SceneManager for ShopScene {
         self.shop_special_object.draw(ctx).unwrap();
         self.shop_menu.draw(ctx).unwrap();
 
+	self.shop_command_palette.draw(ctx).unwrap();
+
 	if let Some(scenario_box) = self.map.scenario_event.as_mut() {
             scenario_box.draw(ctx).unwrap();
         }
-	
 	
         self.notification_area.draw(ctx).unwrap();
 
