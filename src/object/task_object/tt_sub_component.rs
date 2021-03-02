@@ -1942,80 +1942,6 @@ impl DrawableComponent for BorrowingRecordBookPage {
     }
 }
 
-pub struct AlphaScope {
-    scope: ggraphics::Mesh,
-    draw_param: ggraphics::DrawParam,
-    drwob_essential: DrawableObjectEssential,
-}
-
-impl AlphaScope {
-    pub fn new<'a>(
-        ctx: &mut SuzuContext<'a>,
-        radius: u32,
-        max_sub_alpha: u8,
-        pos: numeric::Point2f,
-        depth: i8,
-    ) -> Self {
-        let mut builder = ggraphics::MeshBuilder::new();
-        let p_alpha = max_sub_alpha as f32 / radius as f32;
-        let mut alpha = max_sub_alpha as f32;
-
-        for r in 0..radius {
-            builder.circle(
-                ggraphics::DrawMode::stroke(1.0),
-                mintp_new!(0.0, 0.0),
-                r as f32,
-                0.0001,
-                ggraphics::Color::from_rgba_u32(alpha as u32),
-            ).expect("Failed to create circle");
-
-            alpha -= p_alpha;
-        }
-
-	let draw_param = ggraphics::DrawParam::default()
-	    .dest(mintp!(pos))
-	    .color(ggraphics::Color::from_rgba_u32(0xffffff00));
-
-        AlphaScope {
-            scope: builder.build(ctx.context).unwrap(),
-            draw_param: draw_param,
-            drwob_essential: DrawableObjectEssential::new(true, depth),
-        }
-    }
-}
-
-impl DrawableComponent for AlphaScope {
-    fn draw(&mut self, ctx: &mut ggez::Context) -> ggez::GameResult<()> {
-        if self.is_visible() {
-            ggraphics::set_blend_mode(ctx, ggraphics::BlendMode::Subtract).unwrap();
-            ggraphics::draw(ctx, &self.scope, self.draw_param).unwrap();
-            ggraphics::set_blend_mode(ctx, ggraphics::BlendMode::Alpha).unwrap();
-        }
-
-        Ok(())
-    }
-
-    fn hide(&mut self) {
-        self.drwob_essential.visible = false;
-    }
-
-    fn appear(&mut self) {
-        self.drwob_essential.visible = true;
-    }
-
-    fn is_visible(&self) -> bool {
-        self.drwob_essential.visible
-    }
-
-    fn set_drawing_depth(&mut self, depth: i8) {
-        self.drwob_essential.drawing_depth = depth;
-    }
-
-    fn get_drawing_depth(&self) -> i8 {
-        self.drwob_essential.drawing_depth
-    }
-}
-
 pub struct BorrowingRecordBook {
     redraw_request: DrawRequest,
     pages: Vec<BorrowingRecordBookPage>,
@@ -2025,7 +1951,6 @@ pub struct BorrowingRecordBook {
     next_page_ope_mesh: UniTexture,
     prev_page_ope_mesh: UniTexture,
     page_scroll_event_list: DelayEventList<Self>,
-    //scope: AlphaScope,
     canvas: MovableWrap<SubScreen>,
     page_data_backup: BorrowingRecordBookData,
     next10_button: SelectButton,

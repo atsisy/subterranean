@@ -6,7 +6,7 @@ use torifune::numeric;
 use crate::{core::*, flush_delay_event, flush_delay_event_and_redraw_check, scene::{DelayEventList, SceneTransition}};
 use crate::core::util::read_from_resources_as_string;
 
-use super::{effect, move_fn, util_object::FramedButton};
+use super::{effect, util_object::FramedButton};
 
 pub struct EndSceneFlow {
     thanks_text: EffectableWrap<MovableWrap<UniText>>,
