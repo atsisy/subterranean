@@ -16,6 +16,7 @@ use ggez::input::mouse::MouseButton;
 use torifune::numeric;
 
 use super::*;
+use super::suzuna_scene::suzuna_sub_scene::TaskTutorialContext;
 use crate::{add_delay_event, core::{SoundID, WINDOW_SIZE_X}, object::task_object::tt_main_component::CustomerRequestOrder};
 use crate::core::{map_parser as mp};
 use crate::core::{
@@ -677,6 +678,7 @@ pub struct ShopScene {
     goto_check_customers: GoToCheckCustomers,
     camera: Rc<RefCell<numeric::Rect>>,
     dark_effect_panel: DarkEffectPanel,
+    dark_effect_panel_shallow: DarkEffectPanel,
     pause_screen_set: PauseScreenSet,
     transition_status: SceneTransition,
     transition_scene: SceneID,
@@ -690,6 +692,7 @@ pub struct ShopScene {
     random_customer_add_timing: Clock,
     new_books: Vec<BookInformation>,
     tutorial_list: ShopTutorialList,
+    task_tutorial_context: TaskTutorialContext,
 }
 
 impl ShopScene {
@@ -741,7 +744,7 @@ impl ShopScene {
 	    delay_event_list.add_event(
 		Box::new(move |slf: &mut ShopScene, ctx, t| {
 		    slf.set_fixed_text_into_scenario_box(ctx, "/scenario/tutorial/1.toml", t);
-		    slf.dark_effect_panel.new_effect(8, t, 0, 220);
+		    slf.dark_effect_panel_shallow.new_effect(8, t, 0, 220);
 		}),
 		31
 	    );
@@ -806,6 +809,11 @@ impl ShopScene {
                 numeric::Rect::new(0.0, 0.0, 1366.0, 768.0),
                 0,
             ),
+	    dark_effect_panel_shallow: DarkEffectPanel::new(
+                ctx.context,
+                numeric::Rect::new(0.0, 0.0, 1366.0, 768.0),
+                0,
+            ),
             pause_screen_set: PauseScreenSet::new(ctx, 0, 0),
             camera: camera,
             transition_scene: SceneID::SuzunaShop,
@@ -832,7 +840,8 @@ impl ShopScene {
 		ShopTutorialList::new()
 	    } else {
 		ShopTutorialList::new_done()
-	    }
+	    },
+	    task_tutorial_context: TaskTutorialContext::new(),
         }
     }
 
@@ -1263,7 +1272,7 @@ impl ShopScene {
 		    self.event_list.add_event(
 			Box::new(move |slf: &mut ShopScene, ctx, t| {
 			    slf.set_fixed_text_into_scenario_box(ctx, "/scenario/tutorial/3.toml", t);
-			    slf.dark_effect_panel.new_effect(8, t, 0, 220);
+			    slf.dark_effect_panel_shallow.new_effect(8, t, 0, 220);
 			}),
 			31
 		    );
@@ -1363,7 +1372,7 @@ impl ShopScene {
 			    self.event_list.add_event(
 				Box::new(move |slf: &mut ShopScene, ctx, t| {
 				    slf.set_fixed_text_into_scenario_box(ctx, "/scenario/tutorial/5.toml", t);
-				    slf.dark_effect_panel.new_effect(8, t, 0, 220);
+				    slf.dark_effect_panel_shallow.new_effect(8, t, 0, 220);
 				}),
 				31
 			    );
@@ -1473,6 +1482,7 @@ impl ShopScene {
         ctx: &mut SuzuContext<'a>,
         elapsed_clock: Clock,
         condition_eval_report: Option<BookConditionEvalReport>,
+	task_tutorial: TaskTutorialContext,
     ) {
         let t = self.get_current_clock();
         let animation_time = 30;
@@ -1500,6 +1510,8 @@ impl ShopScene {
             self.result_report
                 .add_condition_eval_mistakes(report.count_mistake());
         }
+
+	self.task_tutorial_context = task_tutorial;
 
         // self.event_list.add_event(
         //     Box::new(move |slf: &mut ShopScene, _, _| { slf.scene_transition_effect = None; }),
@@ -1529,7 +1541,7 @@ impl ShopScene {
 	    self.event_list.add_event(
 		Box::new(move |slf: &mut ShopScene, ctx, t| {
 		    slf.set_fixed_text_into_scenario_box(ctx, "/scenario/tutorial/4.toml", t);
-		    slf.dark_effect_panel.new_effect(8, t, 0, 220);
+		    slf.dark_effect_panel_shallow.new_effect(8, t, 0, 220);
 		}),
 		31
 	    );
@@ -1551,7 +1563,7 @@ impl ShopScene {
 		self.event_list.add_event(
 		    Box::new(move |slf: &mut ShopScene, ctx, t| {
 			slf.set_fixed_text_into_scenario_box(ctx, "/scenario/tutorial/6.toml", t);
-			slf.dark_effect_panel.new_effect(8, t, 0, 220);
+			slf.dark_effect_panel_shallow.new_effect(8, t, 0, 220);
 		    }),
 		    t + 30
 		);
@@ -1567,6 +1579,10 @@ impl ShopScene {
     /// # 再描画要求有り
     ///
     pub fn update_shop_clock_regular<'a>(&mut self, ctx: &mut SuzuContext<'a>, t: Clock) {
+	if self.shop_clock.is_past(9, 59) && !self.tutorial_is_done() {
+	    return;
+	}
+	
         if self.get_current_clock() % 15 == 0 {
             self.shop_clock.add_minute(1);
             self.drawable_shop_clock.update_time(&self.shop_clock);
@@ -1683,7 +1699,7 @@ impl ShopScene {
     }
 
     fn random_add_customer<'a>(&mut self, ctx: &mut SuzuContext<'a>) {
-	if !self.tutorial_list.all_done() {
+	if !self.tutorial_is_done() {
 	    return;
 	}
 	
@@ -1771,7 +1787,15 @@ impl ShopScene {
         }
     }
 
+    fn tutorial_is_done(&self) -> bool {
+	self.tutorial_list.all_done() && self.task_tutorial_context.all_done()
+    }
+
     fn check_waiting_customer_giveup<'a>(&mut self, ctx: &mut SuzuContext<'a>, now: Clock) {
+	if !self.tutorial_is_done() {
+	    return;
+	}
+	
         let giveup_customers = self.customer_queue.drain_giveup_customers(now);
 
         if giveup_customers.len() > 0 {
@@ -1936,29 +1960,29 @@ impl ShopScene {
 			    Box::new(move |slf: &mut ShopScene, ctx, t| {
 				slf.shop_special_object
 				    .show_new_books_viewer(ctx, slf.new_books.clone(), t);
-				slf.dark_effect_panel.new_effect(8, t, 220, 0);
+				slf.dark_effect_panel_shallow.new_effect(8, t, 220, 0);
 			    }),
 			    t + 10,
 			);
 		    },
 		    "TutorialGoReturnBox" => {
 			self.map.scenario_event = None;
-			self.dark_effect_panel.new_effect(8, t, 220, 0);
+			self.dark_effect_panel_shallow.new_effect(8, t, 220, 0);
 			self.tutorial_list.go_ret_box = true;
 		    },
 		    "TutorialFirstReturnBox" => {
 			self.map.scenario_event = None;
-			self.dark_effect_panel.new_effect(8, t, 220, 0);
+			self.dark_effect_panel_shallow.new_effect(8, t, 220, 0);
 			self.tutorial_list.first_ret_box = true;
 		    },
 		    "TutorialGoShelving" => {
 			self.map.scenario_event = None;
-			self.dark_effect_panel.new_effect(8, t, 220, 0);
+			self.dark_effect_panel_shallow.new_effect(8, t, 220, 0);
 			self.tutorial_list.go_shelving = true;
 		    },
 		    "TutorialShelvingDone" => {
 			self.map.scenario_event = None;
-			self.dark_effect_panel.new_effect(8, t, 220, 0);
+			self.dark_effect_panel_shallow.new_effect(8, t, 220, 0);
 			self.tutorial_list.shelving_is_done = true;
 
 			self.insert_goto_check_customer(ctx, t);
@@ -1972,7 +1996,7 @@ impl ShopScene {
 		    },
 		    "TutorialCustomerComming" => {
 			self.map.scenario_event = None;
-			self.dark_effect_panel.new_effect(8, t, 220, 0);
+			self.dark_effect_panel_shallow.new_effect(8, t, 220, 0);
 			self.tutorial_list.customer_is_comming = true;
 		    },
 		    _ => (),
@@ -2115,7 +2139,7 @@ impl SceneManager for ShopScene {
 		    self.event_list.add_event(
 			Box::new(move |slf: &mut ShopScene, ctx, t| {
 			    slf.set_fixed_text_into_scenario_box(ctx, "/scenario/tutorial/2.toml", t);
-			    slf.dark_effect_panel.new_effect(8, t, 0, 220);
+			    slf.dark_effect_panel_shallow.new_effect(8, t, 0, 220);
 			}),
 			t + 10,
 		    );
@@ -2319,6 +2343,7 @@ impl SceneManager for ShopScene {
 
         // 暗転の描画
         self.dark_effect_panel.run_effect(ctx, t);
+	self.dark_effect_panel_shallow.run_effect(ctx, t);
         self.pause_screen_set.effect(ctx, t);
 
         if let Some(transition_effect) = self.scene_transition_effect.as_mut() {
@@ -2388,6 +2413,8 @@ impl SceneManager for ShopScene {
 
         self.shop_special_object.draw(ctx).unwrap();
         self.shop_menu.draw(ctx).unwrap();
+
+	self.dark_effect_panel_shallow.draw(ctx).unwrap();
 
 	self.shop_command_palette.draw(ctx).unwrap();
 

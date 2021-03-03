@@ -48,7 +48,6 @@ pub struct TaskTable {
     shelving_box: ShelvingBookBox,
     event_list: DelayEventList<TaskTable>,
     borrowing_record_book: BorrowingRecordBook,
-    reset_button: FramedButton,
     manual_book: EffectableWrap<MovableWrap<TaskManualBook>>,
     record_book_is_staged: bool,
     manual_book_is_staged: bool,
@@ -155,14 +154,6 @@ impl TaskTable {
         }
         record_book.hide();
 
-        let mut reset_button = FramedButton::create_design1(
-            ctx,
-            numeric::Point2f::new(900.0, 660.0),
-            "操作取消",
-            numeric::Vector2f::new(28.0, 28.0),
-        );
-        reset_button.hide();
-
         TaskTable {
             canvas: SubScreen::new(
                 ctx.context,
@@ -183,7 +174,6 @@ impl TaskTable {
             shelving_box: shelving_box,
             event_list: DelayEventList::new(),
             borrowing_record_book: record_book,
-            reset_button: reset_button,
             manual_book: EffectableWrap::new(
                 MovableWrap::new(
                     Box::new(TaskManualBook::new(
@@ -264,7 +254,6 @@ impl TaskTable {
             move_fn::devide_distance(numeric::Point2f::new(250.0, 100.0), 0.2),
             t,
         );
-        self.reset_button.appear();
         self.dark_effect_panel.new_effect(8, t, 0, 200);
     }
 
@@ -285,7 +274,6 @@ impl TaskTable {
             t,
         );
         self.record_book_is_staged = false;
-        self.reset_button.hide();
 
         self.record_book_menu.close_all(t);
 
@@ -1441,25 +1429,27 @@ impl TaskTable {
             return ();
         }
 
-	let record_book_lock_status =
-	    match self.current_customer_request.as_ref().unwrap() {
-		CustomerRequest::Borrowing(_) => {
-		    self.borrowing_record_book.current_page_is_borrowing_signed()
-		},
-		CustomerRequest::Returning(_) => {
-		    self.borrowing_record_book.check_current_page_is_matched_with(
-			self.current_customer_request.as_ref()
-		    )
-		}
-	    };
-	
-        if self.try_show_menus_regarding_book_info(ctx, click_point, &record_book_lock_status, t) {
-	    return;
-        }
-	
-        if self.try_show_menus_regarding_customer_info(ctx, click_point, &record_book_lock_status, t) {
-	    return;
-        }
+	if self.current_customer_request.is_some() {
+	    let record_book_lock_status =
+		match self.current_customer_request.as_ref().unwrap() {
+		    CustomerRequest::Borrowing(_) => {
+			self.borrowing_record_book.current_page_is_borrowing_signed()
+		    },
+		    CustomerRequest::Returning(_) => {
+			self.borrowing_record_book.check_current_page_is_matched_with(
+			    self.current_customer_request.as_ref()
+			)
+		    }
+		};
+	    
+            if self.try_show_menus_regarding_book_info(ctx, click_point, &record_book_lock_status, t) {
+		return;
+            }
+	    
+            if self.try_show_menus_regarding_customer_info(ctx, click_point, &record_book_lock_status, t) {
+		return;
+            }
+	}
 	
         if self
 	    .borrowing_record_book
@@ -1523,7 +1513,6 @@ impl DrawableComponent for TaskTable {
 
 	    self.borrowing_record_book.draw(ctx)?;
 	    self.kosuzu_phrase.draw(ctx)?;
-	    self.reset_button.draw(ctx)?;
 	    self.customer_silhouette_menu.draw(ctx)?;
             self.record_book_menu.draw(ctx)?;
             self.on_desk_menu.draw(ctx)?;
@@ -1617,11 +1606,6 @@ impl Clickable for TaskTable {
 
         if self.click_record_book_menu(ctx, button, rpoint, t) {
             self.record_book_menu.close_all(t);
-            return;
-        }
-
-        if self.reset_button.is_visible() && self.reset_button.contains(rpoint) {
-            self.borrowing_record_book.reset_pages_data(ctx, t);
             return;
         }
 

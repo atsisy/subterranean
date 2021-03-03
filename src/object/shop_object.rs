@@ -2012,7 +2012,7 @@ impl SimpleBookListViewer {
             numeric::Point2f::new(window_rect.w - 110.0, window_rect.h - 95.0),
         );
 
-        SimpleBookListViewer {
+        let mut viewer = SimpleBookListViewer {
             canvas: SubScreen::new(
                 ctx.context,
                 window_rect,
@@ -2029,7 +2029,10 @@ impl SimpleBookListViewer {
             books_data: books_data,
             ok_button: ok_button,
             redraw_request: DrawRequest::InitDraw,
-        }
+        };
+
+	viewer.update_window(ctx.context);
+	viewer
     }
 
     ///

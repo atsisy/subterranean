@@ -25,24 +25,28 @@ pub enum SuzunaSceneStatus {
 }
 
 #[derive(Clone)]
-pub struct TutorialContext {
+pub struct TaskTutorialContext {
     borrowing_request: bool,
     returning_request: bool,
 }
 
-impl TutorialContext {
+impl TaskTutorialContext {
     pub fn new() -> Self {
-	TutorialContext {
+	TaskTutorialContext {
 	    borrowing_request: false,
 	    returning_request: false,
 	}
     }
 
     pub fn new_done() -> Self {
-	TutorialContext {
+	TaskTutorialContext {
 	    borrowing_request: true,
 	    returning_request: true,
 	}
+    }
+
+    pub fn all_done(&self) -> bool {
+	self.borrowing_request && self.returning_request
     }
 }
 
@@ -55,7 +59,7 @@ pub struct SuzunaSubScene {
     pub day_result_scene: Option<Box<TaskResultScene>>,
     scene_status: SuzunaSceneStatus,
     new_book_schedule: NewBookSchedule,
-    tutorial_context: TutorialContext,
+    tutorial_context: TaskTutorialContext,
     date: GensoDate,
 }
 
@@ -84,9 +88,9 @@ impl SuzunaSubScene {
             new_book_schedule: new_book_schedule,
             date: date,
 	    tutorial_context: if ctx.take_save_data().date.first_day() && ctx.take_save_data().game_mode.is_story_mode() {
-		TutorialContext::new()
+		TaskTutorialContext::new()
 	    } else {
-		TutorialContext::new_done()
+		TaskTutorialContext::new_done()
 	    }
         }
     }
@@ -200,6 +204,7 @@ impl SuzunaSubScene {
                     .as_ref()
                     .unwrap()
                     .get_target_page_book_condition_eval_report(),
+		self.tutorial_context.clone(),
             );
             self.desk_work_scene = None;
         }

@@ -1875,6 +1875,7 @@ pub struct ScheduleSelectWindow {
     frame: TableFrame,
     background: UniTexture,
     candidate_vtext: Vec<VerticalText>,
+    appr_frame: TileBatchFrame,
     selected_schedule: Option<game_system::DayWorkType>,
 }
 
@@ -1882,13 +1883,21 @@ impl ScheduleSelectWindow {
     pub fn new<'a>(ctx: &mut SuzuContext<'a>, pos: numeric::Point2f, depth: i8) -> Self {
         let frame = TableFrame::new(
             ctx.resource,
-            numeric::Point2f::new(25.0, 25.0),
+            numeric::Point2f::new(30.0, 30.0),
             TileBatchTextureID::OldStyleFrame,
             FrameData::new(vec![220.0], vec![56.0; 3]),
             numeric::Vector2f::new(0.3, 0.3),
             0,
         );
         let frame_area = frame.get_area();
+
+        let appr_frame = TileBatchFrame::new(
+            ctx.resource,
+            TileBatchTextureID::TaishoStyle1,
+            numeric::Rect::new(0.0, 0.0, frame_area.w + 60.0, frame_area.h + 60.0),
+            numeric::Vector2f::new(0.28, 0.28),
+            0,
+        );
 
         let font_info = FontInformation::new(
             ctx.resource.get_font(FontID::Cinema),
@@ -1927,7 +1936,7 @@ impl ScheduleSelectWindow {
 
         let canvas = SubScreen::new(
             ctx.context,
-            numeric::Rect::new(pos.x, pos.y, frame_area.w + 50.0, frame_area.h + 50.0),
+            numeric::Rect::new(pos.x, pos.y, frame_area.w + 60.0, frame_area.h + 60.0),
             depth,
             ggraphics::Color::from_rgba_u32(0),
         );
@@ -1938,6 +1947,7 @@ impl ScheduleSelectWindow {
             background: background,
             candidate_vtext: candidate_vtext,
             selected_schedule: None,
+	    appr_frame: appr_frame,
         }
     }
 }
@@ -1953,6 +1963,8 @@ impl DrawableComponent for ScheduleSelectWindow {
             for vtext in self.candidate_vtext.iter_mut() {
                 vtext.draw(ctx)?;
             }
+
+	    self.appr_frame.draw(ctx)?;
 
             sub_screen::pop_screen(ctx);
             self.canvas.draw(ctx).unwrap();

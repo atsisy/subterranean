@@ -19,12 +19,12 @@ x = 30.0
 y = 30.0
 
 [[each_entry_data]]
-text = "開演"
+text = "開始"
 event-type = "NextContents"
 next-contents-name = "new-game-menu"
 
 [[each_entry_data]]
-text = "再入場"
+text = "復帰"
 event-type = "SceneTransition"
 transition-method = "StackingTransition"
 next-scene = "Save"
@@ -40,11 +40,11 @@ event-type = "NextContents"
 next-contents-name = "update-panel"
 
 [[each_entry_data]]
-text = "退場"
-event-type = "BuiltinCommand"
-builtin-command = "exit"
-
-[[each_entry_data]]
 text = "供養"
 event-type = "NextContents"
 next-contents-name = "gallery"
+
+[[each_entry_data]]
+text = "退場"
+event-type = "BuiltinCommand"
+builtin-command = "exit"

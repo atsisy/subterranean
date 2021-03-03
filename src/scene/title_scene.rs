@@ -24,6 +24,7 @@ pub struct TitleScene {
     current_title_contents: Option<TitleContents>,
     title_contents_set: TitleContentsSet,
     bgm_handler: SoundHandler,
+    scene_transition_lock: bool,
     clock: Clock,
 }
 
@@ -88,8 +89,21 @@ impl TitleScene {
             title_contents_set: title_contents_set,
             bgm_handler: bgm_handler,
 	    logo: logo,
+	    scene_transition_lock: false,
             clock: 0,
         }
+    }
+
+    fn lock_scene_transition(&mut self) {
+	self.scene_transition_lock = true;
+    }
+
+    fn unlock_scene_transition(&mut self) {
+	self.scene_transition_lock = false;
+    }
+
+    fn is_scene_transition_locked(&self) -> bool {
+	self.scene_transition_lock
     }
 
     pub fn transition_selected_scene<'a>(
@@ -100,6 +114,12 @@ impl TitleScene {
 	game_mode: Option<GameMode>,
         t: Clock,
     ) {
+	if self.is_scene_transition_locked() {
+	    return;
+	}
+
+	self.lock_scene_transition();
+	
         self.scene_transition_effect = Some(effect_object::ScreenTileEffect::new(
             ctx,
             TileBatchTextureID::Shoji,
@@ -131,6 +151,7 @@ impl TitleScene {
             Box::new(move |slf: &mut Self, ctx, _| {
                 slf.scene_transition = scene_id;
                 slf.scene_transition_type = trans;
+		slf.unlock_scene_transition();
                 ctx.resource.stop_bgm(ctx.context, slf.bgm_handler);
             }),
             t + 31,

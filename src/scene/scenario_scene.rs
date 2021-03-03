@@ -234,7 +234,7 @@ impl ScenarioScene {
                             |slf, _, _| {
                                 slf.status_screen.show_ad_page();
                             },
-                            self.get_current_clock() + 30
+                            self.get_current_clock() + 3
                         );
                         self.scenario_event.release_scenario_waiting(ctx);
                         self.scenario_ctx.wait_opecode_running = false;
@@ -245,7 +245,7 @@ impl ScenarioScene {
                             |slf, ctx, _| {
                                 slf.status_screen.show_main_page(ctx);
                             },
-                            self.get_current_clock() + 30
+                            self.get_current_clock() + 3
                         );
                         self.scenario_event.release_scenario_waiting(ctx);
                         self.scenario_ctx.wait_opecode_running = false;
@@ -256,7 +256,7 @@ impl ScenarioScene {
                             |slf, _, _| {
                                 slf.status_screen.show_ad_agency_page();
                             },
-                            self.get_current_clock() + 30
+                            self.get_current_clock() + 3
                         );
                         self.scenario_event.release_scenario_waiting(ctx);
                         self.scenario_ctx.wait_opecode_running = false;

@@ -22,9 +22,6 @@ use crate::{
 use std::str::FromStr;
 
 pub type ScenarioElementID = i32;
-const SCENAIRO_DEFAULT_SHOP_WORK_ID: ScenarioElementID = -1;
-const SCENAIRO_DEFAULT_GOINGOUT_WORK_ID: ScenarioElementID = -2;
-const SCENAIRO_DEFAULT_REST_WORK_ID: ScenarioElementID = -3;
 
 pub struct ScenarioTextAttribute {
     pub fpc: f32,
@@ -529,50 +526,6 @@ impl ChoicePatternData {
     pub fn get_tachie_data(&self) -> TachieData {
         self.tachie_data.clone()
     }
-}
-
-struct ChoicePanel {
-    panel: UniTexture,
-}
-
-impl ChoicePanel {
-    pub fn new(panel: UniTexture) -> Self {
-        ChoicePanel { panel: panel }
-    }
-}
-
-impl DrawableComponent for ChoicePanel {
-    fn draw(&mut self, ctx: &mut ggez::Context) -> ggez::GameResult<()> {
-        self.panel.draw(ctx)
-    }
-
-    fn hide(&mut self) {
-        self.panel.hide();
-    }
-
-    fn appear(&mut self) {
-        self.panel.appear();
-    }
-
-    fn is_visible(&self) -> bool {
-        self.panel.is_visible()
-    }
-
-    fn set_drawing_depth(&mut self, depth: i8) {
-        self.panel.set_drawing_depth(depth)
-    }
-
-    fn get_drawing_depth(&self) -> i8 {
-        self.panel.get_drawing_depth()
-    }
-}
-
-impl DrawableObject for ChoicePanel {
-    impl_drawable_object_for_wrapped! {panel}
-}
-
-impl TextureObject for ChoicePanel {
-    impl_texture_object_for_wrapped! {panel}
 }
 
 pub struct ChoiceBox {

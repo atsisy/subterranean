@@ -6,7 +6,7 @@ use torifune::graphics::object::Effectable;
 use torifune::numeric;
 
 use super::super::*;
-use crate::object::{Clickable, scenario::ScenarioEvent};
+use crate::object::{Clickable, DarkEffectPanel, scenario::ScenarioEvent};
 
 use crate::core::{MouseActionRecord, MouseInformation, ReputationEvent, TileBatchTextureID};
 use crate::object::effect_object;
@@ -39,8 +39,9 @@ pub struct TaskScene {
     transition_status: SceneTransition,
     transition_scene: SceneID,
     scene_transition_effect: Option<effect_object::ScreenTileEffect>,
-    tutorial_context: TutorialContext,
+    tutorial_context: TaskTutorialContext,
     scenario_event: Option<ScenarioEvent>,
+    dark_effect_panel: DarkEffectPanel,
 }
 
 impl TaskScene {
@@ -48,7 +49,7 @@ impl TaskScene {
         ctx: &mut SuzuContext<'a>,
         customer_request: Option<CustomerRequest>,
         record_book_data: BorrowingRecordBookData,
-	tutorial_context: &TutorialContext,
+	tutorial_context: &TaskTutorialContext,
     ) -> TaskScene {
         let animation_time = 30;
 
@@ -84,6 +85,8 @@ impl TaskScene {
 			event_list.add_event(
 			    Box::new(move |slf: &mut TaskScene, ctx, t| {
 				slf.set_fixed_text_into_scenario_box(ctx, "/scenario/tutorial/task/b1.toml", t);
+				slf.dark_effect_panel
+				    .new_effect(8, t, 0, 200);
 			    }),
 			    31
 			);
@@ -95,6 +98,8 @@ impl TaskScene {
 			event_list.add_event(
 			    Box::new(move |slf: &mut TaskScene, ctx, t| {
 				slf.set_fixed_text_into_scenario_box(ctx, "/scenario/tutorial/task/r1.toml", t);
+				slf.dark_effect_panel
+				    .new_effect(8, t, 0, 200);
 			    }),
 			    31
 			);
@@ -126,6 +131,11 @@ impl TaskScene {
             scene_transition_effect: scene_transition_effect,
 	    tutorial_context: tutorial_context.clone(),
 	    scenario_event: None,
+	    dark_effect_panel: DarkEffectPanel::new(
+                ctx.context,
+                numeric::Rect::new(0.0, 0.0, 1366.0, 768.0),
+                0,
+            ),
         }
     }
 
@@ -202,7 +212,7 @@ impl TaskScene {
         self.task_table.export_borrowing_record_book_data()
     }
 
-    pub fn get_tutorial_context(&self) -> &TutorialContext {
+    pub fn get_tutorial_context(&self) -> &TaskTutorialContext {
 	&self.tutorial_context
     }
 
@@ -351,17 +361,19 @@ impl TaskScene {
         ctx.process_utility.redraw();
     }
 
-    fn scenario_event_handler<'a>(&mut self, _ctx: &mut SuzuContext<'a>, _t: Clock) {
+    fn scenario_event_handler<'a>(&mut self, _ctx: &mut SuzuContext<'a>, t: Clock) {
 	if let Some(scenario_event) = self.scenario_event.as_ref() {
 	    if let Some(opecode) = scenario_event.get_scenario_waiting_opecode() {
 		match opecode {
 		    "TutorialFinishBorrowing" => {
 			self.scenario_event = None;
 			self.tutorial_context.borrowing_request = true;
+			self.dark_effect_panel.new_effect(8, t, 200, 0);
 		    },
 		    "TutorialFinishReturning" => {
 			self.scenario_event = None;
 			self.tutorial_context.returning_request = true;
+			self.dark_effect_panel.new_effect(8, t, 200, 0);
 		    },
 		    _ => (),
 		}
@@ -512,6 +524,7 @@ impl SceneManager for TaskScene {
             }
         }
 
+	self.dark_effect_panel.run_effect(ctx, t);
         self.pause_screen_set.effect(ctx, t);
 
         if let Some(transition_effect) = self.scene_transition_effect.as_mut() {
@@ -534,6 +547,8 @@ impl SceneManager for TaskScene {
         {
             self.task_table.draw(ctx).unwrap();
             self.pause_screen_set.draw(ctx).unwrap();
+
+	    self.dark_effect_panel.draw(ctx).unwrap();
 
 	    if let Some(scenario_box) = self.scenario_event.as_mut() {
 		scenario_box.draw(ctx).unwrap();
