@@ -700,6 +700,7 @@ impl ShopScene {
         ctx: &mut SuzuContext<'a>,
         map_id: u32,
         new_books: Vec<BookInformation>,
+	task_tutorial: TaskTutorialContext,
     ) -> ShopScene {
         let begining_save_data = ctx.take_save_data().clone();
 
@@ -841,7 +842,7 @@ impl ShopScene {
 	    } else {
 		ShopTutorialList::new_done()
 	    },
-	    task_tutorial_context: TaskTutorialContext::new(),
+	    task_tutorial_context: task_tutorial,
         }
     }
 

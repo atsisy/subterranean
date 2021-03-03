@@ -76,22 +76,25 @@ impl SuzunaSubScene {
 	    new_book_schedule.get_schedule_at(&GensoDate::new(112, 7, 23)).unwrap().clone()
 	};
 
+	let task_tutorial = if ctx.take_save_data().date.first_day() && ctx.take_save_data().game_mode.is_story_mode() {
+	    TaskTutorialContext::new()
+	} else {
+	    TaskTutorialContext::new_done()
+	};
+
         SuzunaSubScene {
             shop_scene: Some(Box::new(ShopScene::new(
                 ctx,
                 map_id,
                 todays_new_books.get_new_books(),
+		task_tutorial.clone()
             ))),
             desk_work_scene: None,
             day_result_scene: None,
             scene_status: SuzunaSceneStatus::Shop,
             new_book_schedule: new_book_schedule,
             date: date,
-	    tutorial_context: if ctx.take_save_data().date.first_day() && ctx.take_save_data().game_mode.is_story_mode() {
-		TaskTutorialContext::new()
-	    } else {
-		TaskTutorialContext::new_done()
-	    }
+	    tutorial_context: task_tutorial,
         }
     }
 

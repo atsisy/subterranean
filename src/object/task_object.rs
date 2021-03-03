@@ -1056,11 +1056,10 @@ impl TaskTable {
                 CustomerRequest::Returning(info) => {
                     let rental_limit = info.get_rental_limit();
                     let phrase_text = match &rental_limit {
-                        RentalLimit::ShortTerm => "短期貸出でした",
-                        RentalLimit::LongTerm => "長期貸出でした",
-                        _ => "",
-                    }
-                    .to_string();
+                        RentalLimit::ShortTerm => format!("{}に\n短期で借りました", info.borrow_date.to_short_string()),
+                        RentalLimit::LongTerm => format!("{}に\n長期で借りました", info.borrow_date.to_short_string()),
+                        _ => "".to_string(),
+                    };
 
                     self.sight.silhouette.insert_new_balloon_phrase(
                         phrase_text.clone(),

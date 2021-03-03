@@ -452,7 +452,6 @@ impl SceneManager for TaskScene {
         x: f32,
         y: f32,
     ) {
-        println!("wheel");
         self.task_table.mouse_wheel_event(ctx, point, x, y);
     }
 
