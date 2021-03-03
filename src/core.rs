@@ -281,7 +281,7 @@ impl FromStr for TextureID {
             "Coin500Yen" => Ok(Self::Coin500Yen),
 	    "BaraBG" => Ok(Self::BaraBG),
 	    "SuzunaanMap" => Ok(Self::SuzunaanMap),
-	    "Mob1TachieDefaule" => Ok(Self::Mob1TachieDefault),
+	    "Mob1TachieDefault" => Ok(Self::Mob1TachieDefault),
 	    "SuzuLogo" => Ok(Self::SuzuLogo),
 	    "AkyuTachieDefault" => Ok(Self::AkyuTachieDefault),
 	    "Mob1DotFront1" => Ok(Self::Mob1DotFront1),

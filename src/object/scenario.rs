@@ -94,10 +94,6 @@ impl ScenarioTextSegment {
         unsafe { self.text.as_str().get_unchecked(begin..end) }
     }
 
-    fn end_with_indent(&self) -> bool {
-        self.text.chars().last().unwrap() == '\n'
-    }
-
     fn last_line_length(&self) -> usize {
         let mut length: usize = 0;
         let it = self.text.chars().rev();

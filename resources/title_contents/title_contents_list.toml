@@ -31,4 +31,4 @@ src = "./resources/title_contents/config_panel.toml"
 [[contents-list]]
 name = "gallery"
 type = "Gallery"
-src = "./resources/title_contents/gallery.toml"
+src = "/title_contents/gallery.toml"

@@ -141,10 +141,6 @@ impl CharacterGroup {
         // }
     }
 
-    pub fn iter(&self) -> std::slice::Iter<CustomerCharacter> {
-        self.group.iter()
-    }
-
     pub fn iter_mut(&mut self) -> std::slice::IterMut<CustomerCharacter> {
         self.group.iter_mut()
     }
@@ -664,7 +660,6 @@ pub struct ShopScene {
     player: PlayableCharacter,
     character_group: CharacterGroup,
     shop_special_object: ShopSpecialObject,
-    key_listener: tdev::KeyboardListener,
     clock: Clock,
     shop_clock: ShopClock,
     map: MapData,
@@ -703,9 +698,6 @@ impl ShopScene {
 	task_tutorial: TaskTutorialContext,
     ) -> ShopScene {
         let begining_save_data = ctx.take_save_data().clone();
-
-        let key_listener =
-            tdev::KeyboardListener::new_masked(vec![tdev::KeyInputDevice::GenericKeyboard], vec![]);
 
         let camera = Rc::new(RefCell::new(numeric::Rect::new(0.0, 0.0, 1366.0, 768.0)));
 
@@ -785,7 +777,6 @@ impl ShopScene {
             player: player,
             character_group: character_group,
             shop_special_object: ShopSpecialObject::new(),
-            key_listener: key_listener,
             clock: 0,
             shop_clock: shop_time,
             map: map,

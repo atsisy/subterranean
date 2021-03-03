@@ -14,14 +14,16 @@ use torifune::graphics::drawable::*;
 use torifune::graphics::object::*;
 use torifune::numeric;
 
+use crate::object::character_factory;
 use crate::{core::{GameMode, WINDOW_SIZE_X, WINDOW_SIZE_Y}, flush_delay_event, flush_delay_event_and_redraw_check, object::util_object::{CheckBox, SeekBar, SelectButton, TextButtonTexture}, scene::DelayEventList};
 use crate::scene::SceneID;
 use crate::{
     core::{font_information_from_toml_value, FontID, SuzuContext, TextureID},
     scene::SceneTransition,
+    parse_toml_file,
 };
 
-use super::{DarkEffectPanel, scenario::ScenarioEvent};
+use super::{DarkEffectPanel, map_object::MapObject, scenario::ScenarioEvent};
 
 extern crate reqwest;
 
@@ -1003,13 +1005,14 @@ pub struct Gallery {
     background: DarkEffectPanel,
     header_text: UniText,
     event_list: DelayEventList<Self>,
-    gallery_list: Vec<UniTexture>,
+    gallery_list: Vec<(UniTexture, String)>,
+    char_list: Vec<(MapObject, String)>,
     scenario_event: ScenarioEvent,
     gallery_index: i64,
 }
 
 impl Gallery {
-    pub fn new<'a>(ctx: &mut SuzuContext<'a>, pos_rect: numeric::Rect, depth: i8, t: Clock) -> Self {
+    pub fn new<'a>(ctx: &mut SuzuContext<'a>, pos_rect: numeric::Rect, toml_path: &str, depth: i8, t: Clock) -> Self {
         let font_info = FontInformation::new(
             ctx.resource.get_font(FontID::Cinema),
             numeric::Vector2f::new(32.0, 32.0),
@@ -1033,41 +1036,60 @@ impl Gallery {
         );
 
 	let mut gallery_list = Vec::new();
+	let mut char_list = Vec::new();
 
-	{
-	    let mut texture = UniTexture::new(
-		ctx.ref_texture(TextureID::KosuzuTachie1),
-		numeric::Point2f::new(0.0, 0.0),
-		numeric::Vector2f::new(0.227, 0.227),
-		0.0,
-		0
-	    );
-	    texture.make_center(ctx.context, numeric::Point2f::new(WINDOW_SIZE_X as f32 / 2.0, 300.0));
-	    gallery_list.push(texture);
-	}
+	let root = parse_toml_file!(ctx.context, toml_path);
+        let items = root["items"].as_array().unwrap();
 
-	{
-	    let mut texture = UniTexture::new(
-		ctx.ref_texture(TextureID::AkyuTachieDefault),
-		numeric::Point2f::new(0.0, 0.0),
-		numeric::Vector2f::new(0.22, 0.22),
-		0.0,
-		0
-	    );
-	    texture.make_center(ctx.context, numeric::Point2f::new(WINDOW_SIZE_X as f32 / 2.0, 320.0));
-	    gallery_list.push(texture);
-	}
+	for item in items {
+	    match item["type"].as_str().unwrap() {
+		"texture" => {
+		    let scale = item["scale"].as_float().unwrap() as f32;
+		    let pos_y = item["pos-y"].as_float().unwrap() as f32;
+		    
+		    let mut texture = UniTexture::new(
+			ctx.ref_texture(TextureID::from_str(item["texture-id"].as_str().unwrap()).unwrap()),
+			numeric::Point2f::new(0.0, 0.0),
+			numeric::Vector2f::new(scale, scale),
+			0.0,
+			0
+		    );
+		    texture.make_center(ctx.context, numeric::Point2f::new(WINDOW_SIZE_X as f32 / 2.0, pos_y));
 
-	{
-	    let mut texture = UniTexture::new(
-		ctx.ref_texture(TextureID::Mob1TachieDefault),
-		numeric::Point2f::new(0.0, 0.0),
-		numeric::Vector2f::new(0.235, 0.235),
-		0.0,
-		0
-	    );
-	    texture.make_center(ctx.context, numeric::Point2f::new(WINDOW_SIZE_X as f32 / 2.0, 300.0));
-	    gallery_list.push(texture);
+		    let msg = item["msg"].as_str().unwrap().to_string();
+		    gallery_list.push((texture, msg));
+		},
+		"character" => {
+		    let pos_y = item["pos-y"].as_float().unwrap() as f32;
+		    let character = match item["name"].as_str().unwrap() {
+			"kosuzu" => {
+			    let mut kosuzu = character_factory::create_kuyou_kosuzu(
+				ctx,
+				&numeric::Rect::new(0.0, 0.0, 1366.0, 768.0),
+				numeric::Point2f::new(600.0, pos_y),
+			    );
+			    kosuzu.change_animation_mode(crate::object::util_object::ObjectDirection::MoveDown);
+
+			    kosuzu
+			},
+			"mob1" => {
+			    let mut kosuzu = character_factory::create_customer_kuyou(
+				ctx,
+				&numeric::Rect::new(0.0, 0.0, 1366.0, 768.0),
+				numeric::Point2f::new(600.0, pos_y),
+			    );
+			    kosuzu.change_animation_mode(crate::object::util_object::ObjectDirection::MoveDown);
+
+			    kosuzu
+			},
+			_ => panic!("invalid character name"),
+		    };
+		    
+		    let msg = item["msg"].as_str().unwrap().to_string();
+		    char_list.push((character, msg));
+		}
+		_ => (),
+	    }
 	}
 
 	let mut g = Gallery {
@@ -1081,6 +1103,7 @@ impl Gallery {
             background: background,
 	    event_list: DelayEventList::new(),
 	    gallery_list: gallery_list,
+	    char_list: char_list,
 	    scenario_event: ScenarioEvent::new(
 		ctx,
 		numeric::Rect::new(0.0, 0.0, 1366.0, 748.0),
@@ -1100,28 +1123,42 @@ impl Gallery {
     }
 
     pub fn current_gallery_image(&mut self) -> Option<&mut dyn DrawableComponent> {
-	let index = self.gallery_index.abs() % 3;
+	let index = self.get_current_index();
 
 	match index {
 	    0 | 1 | 2 => {
-		Some(self.gallery_list.get_mut(index as usize).unwrap() as &mut dyn DrawableComponent)
+		Some(&mut self.gallery_list.get_mut(index as usize).unwrap().0 as &mut dyn DrawableComponent)
+	    },
+	    3 | 4 => {
+		let index = (index as usize - self.gallery_list.len()) as usize;
+		Some(&mut self.char_list.get_mut(
+		    index
+		).unwrap().0 as &mut dyn DrawableComponent)
 	    }
 	    _=> None,
 	}
     }
 
+    fn get_current_index(&self) -> i64 {
+	self.gallery_index.abs() % (self.gallery_list.len() + self.char_list.len()) as i64
+    }
+    
     pub fn update_gallery_text<'a>(&mut self, ctx: &mut SuzuContext<'a>) {
-	let index = self.gallery_index.abs() % 3;
+	let index = self.get_current_index();
 
 	match index {
-	    0 => {
-		self.scenario_event.set_fixed_text_to_scenario_box(ctx, "本居小鈴の立ち絵\n一番最初に書きました。ちゃんと練習もしました。".to_string());
-	    }
-	    1 => {
-		self.scenario_event.set_fixed_text_to_scenario_box(ctx, "稗田阿求の立ち絵\n二番目に書きました。なんか上手く描けた気がする。".to_string());
-	    }
-	    2 => {
-		self.scenario_event.set_fixed_text_to_scenario_box(ctx, "モブの立ち絵1号\nロリっぽく描こうとしたら結構可愛くなりました。".to_string());
+	    0 | 1 | 2 => {
+		self.scenario_event.set_fixed_text_to_scenario_box(
+		    ctx,
+		    self.gallery_list.get(index as usize).unwrap().1.clone(),
+		);
+	    },
+	    3 | 4 => {
+		let index = (index as usize - self.gallery_list.len()) as usize;
+		self.scenario_event.set_fixed_text_to_scenario_box(
+		    ctx,
+		    self.char_list.get(index).unwrap().1.clone(),
+		);
 	    }
 	    _=> (),
 	}
@@ -1146,6 +1183,16 @@ impl Gallery {
     
     pub fn flush_delayed_event<'a>(&mut self, ctx: &mut SuzuContext<'a>, t: Clock) {
 	flush_delay_event_and_redraw_check!(self, self.event_list, ctx, t, { });
+
+	let index = self.get_current_index() as i64;
+	match index {
+	    3 | 4 => {
+		let index = (index as usize - self.gallery_list.len()) as usize;
+		self.char_list.get_mut(index).unwrap().0.update_texture(t);
+		ctx.process_utility.redraw();
+	    }
+	    _=> (),
+	}
     }
 }
 
@@ -1254,6 +1301,7 @@ impl TitleContents {
 	    "Gallery" => Some(TitleContents::Gallery(Gallery::new(
                 ctx,
                 numeric::Rect::new(0.0, 0.0, 1366.0, 768.0),
+		details_source_file,
                 0,
 		t
             ))),
