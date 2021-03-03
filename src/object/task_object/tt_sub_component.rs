@@ -1535,6 +1535,14 @@ impl BorrowingRecordBookPage {
         book_info
     }
 
+    pub fn is_books_table_some_data_at(&self, position: numeric::Vector2u) -> bool {
+	if let Some(hold_data) = self.borrow_book.get(&position) {
+	    hold_data.data.is_some()
+	} else {
+	    false
+	}
+    }
+
     pub fn create_current_book_condition_report(&self) -> BookConditionEvalReport {
         let mut originals = Vec::new();
         let mut evals = Vec::new();
@@ -2218,6 +2226,15 @@ impl BorrowingRecordBook {
         } else {
             None
         }
+    }
+
+    pub fn is_current_books_table_some_data_at(&self, position: numeric::Vector2u) -> bool {
+	if let Some(page) = self.get_current_page() {
+            page.is_books_table_some_data_at(position)
+        } else {
+	    false
+        }
+
     }
 
     pub fn insert_date_data_to_customer_info<'a>(

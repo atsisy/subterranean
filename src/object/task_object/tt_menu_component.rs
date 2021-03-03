@@ -504,7 +504,7 @@ impl BookTitleMenu {
         let mut title_vtext = Vec::new();
 
         let font_info = FontInformation::new(
-            ctx.resource.get_font(FontID::Cinema),
+            ctx.resource.get_font(FontID::JpFude1),
             numeric::Vector2f::new(32.0, 32.0),
             ggraphics::Color::from_rgba_u32(0xff),
         );
@@ -545,7 +545,11 @@ impl BookTitleMenu {
             numeric::Vector2f::new(1.0, 1.0),
             0.0,
             0,
-            font_info,
+            FontInformation::new(
+		ctx.resource.get_font(FontID::Cinema),
+		numeric::Vector2f::new(32.0, 32.0),
+		ggraphics::Color::from_rgba_u32(0xff),
+            ),
         );
 
         BookTitleMenu {

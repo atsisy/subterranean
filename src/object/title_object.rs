@@ -23,7 +23,7 @@ use crate::{
     parse_toml_file,
 };
 
-use super::{DarkEffectPanel, map_object::MapObject, scenario::ScenarioEvent};
+use super::{DarkEffectPanel, map_object::MapObject, scenario::ScenarioEvent, util_object::FramedButton};
 
 extern crate reqwest;
 
@@ -162,8 +162,6 @@ pub struct VTextList {
     contents_name: String,
     vtext_list: Vec<VerticalText>,
     menu_entries_data: Vec<TextMenuEntryData>,
-    normal_font: FontInformation,
-    large_font: FontInformation,
     drwob_essential: DrawableObjectEssential,
 }
 
@@ -173,7 +171,7 @@ impl VTextList {
         let mut position = text_menu_data.position;
 
         let normal_font_info = text_menu_data.normal_font_info.clone();
-        let large_font_info = text_menu_data.large_font_info.clone();
+        let _large_font_info = text_menu_data.large_font_info.clone();
 
         for content_data in text_menu_data.entries_data.iter().rev() {
             let text = content_data.text.to_string();
@@ -195,8 +193,6 @@ impl VTextList {
             contents_name: text_menu_data.contents_name,
             menu_entries_data: text_menu_data.entries_data,
             vtext_list: vtext_list,
-            normal_font: normal_font_info,
-            large_font: large_font_info,
             drwob_essential: DrawableObjectEssential::new(true, drawing_depth),
         }
     }
@@ -1008,6 +1004,7 @@ pub struct Gallery {
     gallery_list: Vec<(UniTexture, String)>,
     char_list: Vec<(MapObject, String)>,
     scenario_event: ScenarioEvent,
+    exit_button: FramedButton,
     gallery_index: i64,
 }
 
@@ -1092,6 +1089,11 @@ impl Gallery {
 	    }
 	}
 
+	let exit_button = FramedButton::create_design1(
+	    ctx, numeric::Point2f::new(50.0, 400.0), "逆戻",
+	    numeric::Vector2f::new(24.0, 24.0),
+	);
+
 	let mut g = Gallery {
             header_text: header_text,
             canvas: sub_screen::SubScreen::new(
@@ -1112,6 +1114,7 @@ impl Gallery {
 		t
 	    ),
 	    gallery_index: 0,
+	    exit_button: exit_button,
         };
 
 	g.update_gallery_text(ctx);
@@ -1164,13 +1167,18 @@ impl Gallery {
 	}
     }
 
+    pub fn reset(&mut self) {
+	self.gallery_index = 0;
+    }
+
     pub fn mouse_button_up<'a>(
         &mut self,
         ctx: &mut SuzuContext<'a>,
-        _point: numeric::Point2f,
+        point: numeric::Point2f,
         _t: Clock,
     ) -> Option<TitleContentsEvent> {
-	if false {
+	if self.exit_button.contains(point) {
+	    self.reset();
             return Some(TitleContentsEvent::NextContents("init-menu".to_string()));
         }
 
@@ -1210,6 +1218,7 @@ impl DrawableComponent for Gallery {
 	    }
 
 	    self.scenario_event.draw(ctx)?;
+	    self.exit_button.draw(ctx)?;
 
             sub_screen::pop_screen(ctx);
             self.canvas.draw(ctx).unwrap();

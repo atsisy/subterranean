@@ -13,6 +13,8 @@ use crate::object::effect_object;
 use crate::object::task_result_object::*;
 use crate::object::util_object;
 use crate::scene::{SceneID, SceneTransition};
+
+#[allow(unused_imports)] 
 use crate::{
     core::{MouseInformation, ResultReport, SavableData, TextureID, TileBatchTextureID},
     perf_measure,

@@ -14,6 +14,7 @@ use crate::object::task_object::*;
 use crate::object::util_object::*;
 use crate::scene::{SceneID, SceneTransition};
 
+#[allow(unused_imports)]
 use crate::perf_measure;
 
 use crate::flush_delay_event;

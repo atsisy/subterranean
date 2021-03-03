@@ -34,7 +34,10 @@ use crate::object::task_object::tt_main_component::CustomerRequest;
 use crate::object::task_object::tt_sub_component::BookConditionEvalReport;
 use crate::object::util_object::*;
 use crate::object::*;
+
+#[allow(unused_imports)]
 use crate::perf_measure;
+
 use effect_object::{SceneTransitionEffectType, TilingEffectType};
 use notify::*;
 

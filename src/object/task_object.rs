@@ -1250,9 +1250,13 @@ impl TaskTable {
 			    CustomerRequest::Returning(_) => {
 				match lock_status {
 				    RecordBookLockStatus::ReturningMatched => {
-					self
-					    .record_book_menu
-					    .show_book_status_menu(ctx, click_point, t);	
+					if self.borrowing_record_book.is_current_books_table_some_data_at(
+					    numeric::Vector2u::new(grid_pos.unwrap().x, 0)
+					) {
+					    self
+						.record_book_menu
+						.show_book_status_menu(ctx, click_point, t);
+					}
 				    },
 				    RecordBookLockStatus::ReturningVary => {
 					self.record_book_menu
