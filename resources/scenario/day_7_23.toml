@@ -210,7 +210,6 @@ header_text = "宣伝の依頼もやらないとネ"
 id = 22
    [scenario-group.tachie-data]
    right = "KosuzuTachie1"
-   left = "KosuzuTachie1"
 
    [[scenario-group.choice-pattern]]
    pattern = "完了"
@@ -229,7 +228,6 @@ header_text = "宣伝の受注もしないとネ"
 id = 24
    [scenario-group.tachie-data]
    right = "KosuzuTachie1"
-   left = "KosuzuTachie1"
 
    [[scenario-group.choice-pattern]]
    pattern = "完了"
@@ -247,8 +245,7 @@ type = "choice"
 header_text = "サァ準備ができたわよ"
 id = 26
    [scenario-group.tachie-data]
-   right = "KosuzuSmile1"
-   left = "KosuzuTachie1"
+   right = "KosuzuTachie1"
 
    [[scenario-group.choice-pattern]]
    pattern = "行動開始"

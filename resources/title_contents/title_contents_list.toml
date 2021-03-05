@@ -8,10 +8,10 @@ name = "new-game-menu"
 type = "VTextList"
 src = "./resources/title_contents/new_game_menu.toml"
 
-[[contents-list]]
-name = "hard-menu"
-type = "VTextList"
-src = "./resources/title_contents/hard_menu.toml"
+# [[contents-list]]
+# name = "hard-menu"
+# type = "VTextList"
+# src = "./resources/title_contents/hard_menu.toml"
 
 [[contents-list]]
 name = "sound-player"

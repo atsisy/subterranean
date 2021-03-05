@@ -68,7 +68,7 @@ impl EndSceneFlow {
 
 	let game_cleared = match ctx.take_save_data().game_mode {
 	    GameMode::Story => ctx.take_save_data().task_result.total_money > 100000,
-	    GameMode::TimeAttack(_) => false,
+	    GameMode::TimeAttack(_) => true,
 	};
 
 	let font_info = FontInformation::new(
@@ -77,8 +77,11 @@ impl EndSceneFlow {
 	    ggez::graphics::Color::from_rgba_u32(0x150808ff)
 	);
 	let mut result_main_vtext = VerticalText::new(
-	    if game_cleared { "目標達成" } else { "達成失敗" }.to_string(),
-	    pos,
+	    match ctx.take_save_data().game_mode {
+		GameMode::Story =>  if game_cleared { "目標達成" } else { "達成失敗" },
+		GameMode::TimeAttack(_) => "熟練\nお疲れ様でした",
+	    }.to_string(),
+	    numeric::Point2f::new(pos.x - 50.0, pos.y),
 	    numeric::Vector2f::new(1.0, 1.0),
 	    0.0,
 	    0,

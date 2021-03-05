@@ -61,9 +61,7 @@ impl TitleContentsEvent {
 			Ok(id) => (id, None),
 			Err(_) => match next_scene_str {
 			    "ScenarioStory" => (SceneID::Scenario, Some(GameMode::story())),
-			    "ScenarioTA300000" => (SceneID::Scenario, Some(GameMode::time_attack(300000))),
-			    "ScenarioTA500000" => (SceneID::Scenario, Some(GameMode::time_attack(500000))),
-			    "ScenarioTA1000000" => (SceneID::Scenario, Some(GameMode::time_attack(1000000))),
+			    "ScenarioTA" => (SceneID::Scenario, Some(GameMode::time_attack())),
 			    _ => panic!("invalid next-scene-str field"),
 			}
 		    };

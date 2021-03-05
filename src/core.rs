@@ -1469,20 +1469,14 @@ impl MouseInformation {
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct TimeAttackModeData {
-    goal: u32,
     limit: GensoDate,
 }
 
 impl TimeAttackModeData {
-    pub fn new(goal: u32, limit: GensoDate) -> Self {
+    pub fn new(limit: GensoDate) -> Self {
 	TimeAttackModeData {
-	    goal: goal,
 	    limit: limit,
 	}
-    }
-
-    pub fn get_goal(&self) -> u32 {
-	self.goal
     }
 
     pub fn get_limit(&self) -> &GensoDate {
@@ -1501,41 +1495,14 @@ impl GameMode {
 	Self::Story
     }
 
-    pub fn time_attack(goal: u32) -> Self {
-	match goal {
-	    300000 => {
-		let date = GensoDate::new(112, 7, 23).add_day_chain(60);
-		Self::TimeAttack(TimeAttackModeData::new(goal, date))
-	    }
-	    500000 => {
-		let date = GensoDate::new(112, 7, 23).add_day_chain(90);
-		Self::TimeAttack(TimeAttackModeData::new(goal, date))
-	    }
-	    1000000 => {
-		let date = GensoDate::new(112, 7, 23).add_day_chain(120);
-		Self::TimeAttack(TimeAttackModeData::new(goal, date))
-	    }
-	    _ => panic!("invalid goal"),
-	}
+    pub fn time_attack() -> Self {
+	Self::TimeAttack(TimeAttackModeData::new(GensoDate::new(112, 7, 23).add_day_chain(60)))
     }
 
     pub fn to_str_jp(&self) -> &str {
 	match self {
 	    GameMode::Story => "通常",
-	    GameMode::TimeAttack(data) => {
-		match data.goal {
-		    300000 => {
-			"熟練三十萬"
-		    }
-		    500000 => {
-			"熟練五十萬"
-		    }
-		    1000000 => {
-			"熟練百萬"
-		    }
-		    _ => panic!("invalid parameter"),
-		}
-	    }
+	    GameMode::TimeAttack(_) => "熟練",
 	}
     }
 

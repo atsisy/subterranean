@@ -2,7 +2,6 @@ use torifune::core::*;
 use torifune::device::*;
 use torifune::graphics::drawable::*;
 use torifune::graphics::object::*;
-use torifune::sound::*;
 
 use crate::add_delay_event;
 use crate::flush_delay_event;

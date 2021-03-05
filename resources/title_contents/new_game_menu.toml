@@ -26,8 +26,9 @@ next-scene = "ScenarioStory"
 
 [[each_entry_data]]
 text = "熟練"
-event-type = "NextContents"
-next-contents-name = "hard-menu"
+event-type = "SceneTransition"
+transition-method = "SwapTransition"
+next-scene = "ScenarioTA"
 
 [[each_entry_data]]
 text = "逆戻"

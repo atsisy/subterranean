@@ -13,7 +13,6 @@ background = "SightBackground1"
 
 [scenario-group.tachie-data]
 right = "KosuzuTachie1"
-left = "KosuzuTachie1"
 
    [scenario-group.default-text-attribute]
    fpc = 2.0
@@ -29,7 +28,6 @@ header_text = "サァ準備ができたわよ"
 id = 11
    [scenario-group.tachie-data]
    right = "KosuzuTachie1"
-   left = "KosuzuTachie1"
 
    [[scenario-group.choice-pattern]]
    pattern = "行動開始"
@@ -47,7 +45,6 @@ header_text = "宣伝の依頼もやらないとネ"
 id = 14
    [scenario-group.tachie-data]
    right = "KosuzuTachie1"
-   left = "KosuzuTachie1"
 
    [[scenario-group.choice-pattern]]
    pattern = "完了"
@@ -66,7 +63,6 @@ header_text = "宣伝の受注もしないとネ"
 id = 17
    [scenario-group.tachie-data]
    right = "KosuzuTachie1"
-   left = "KosuzuTachie1"
 
    [[scenario-group.choice-pattern]]
    pattern = "完了"
@@ -109,4 +105,3 @@ background = "SightBackground1"
 
 [scenario-group.tachie-data]
 right = "KosuzuTachie1"
-left = "KosuzuTachie1"
