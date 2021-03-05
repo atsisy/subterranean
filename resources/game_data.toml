@@ -101,10 +101,13 @@ scenario_table_path = "/scenario_table.toml"
 daily_customer_dist_path = "/daily_customer_dist.toml"
 customers_name = ["マリ", "さくら", "千代", "ハル", "ハナ", "はる", "スズコ", "文子", "タエコ", "ユリ", "ユイ", "ヨウコ", "アサ"]
 sound_file_path = [
-		"/sound/bgm/title.mp3",
+		"/sound/bgm/title2.wav",
 		"/sound/se/turn_the_page.wav",
 		"/sound/se/onjin/bell.mp3",
 		"/sound/se/se_lab/message.mp3",
+		"/sound/bgm/scenario.wav",
+		"/sound/bgm/shop.wav",
+		"/sound/bgm/end.wav"
 		]
 
 [[map_information]]

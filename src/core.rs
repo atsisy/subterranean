@@ -457,12 +457,15 @@ pub const MIDDLE_BOOK_TEXTURE: [TextureID; 3] = [
     TextureID::MiddleBook3,
 ];
 
-#[derive(Clone)]
+#[derive(Clone, PartialEq, Eq, Hash)]
 pub enum SoundID {
     Title = 0,
     SeTurnThePage,
     SeCustomerBell,
     SeMessage,
+    ScenarioBGM,
+    ShopBGM,
+    EndBGM,
     Unknown,
 }
 
@@ -1046,6 +1049,7 @@ pub struct GameResource {
     sounds: Vec<sound::SoundData>,
     bgm_manager: sound::SoundManager,
     se_manager: sound::SoundManager,
+    bgm_table: HashMap<SoundID, Option<sound::SoundHandler>>,
     ad_info: AdCostTable,
     ad_agency_info: AdAgencyCostTable,
     daily_customer_dist: DailyCustomerDist,
@@ -1104,6 +1108,12 @@ impl GameResource {
 
 	let daily_customer_dist = DailyCustomerDist::from_toml_file(ctx, &src_file.daily_customer_dist_path);
 
+	let mut bgm_table: HashMap<SoundID, Option<sound::SoundHandler>> = HashMap::new();
+	bgm_table.insert(SoundID::Title, None);
+	bgm_table.insert(SoundID::ScenarioBGM, None);
+	bgm_table.insert(SoundID::ShopBGM, None);
+	bgm_table.insert(SoundID::EndBGM, None);
+
         GameResource {
             texture_resource_paths: texture_paths_map,
             textures: textures,
@@ -1117,6 +1127,7 @@ impl GameResource {
             sounds: sounds,
             bgm_manager: sound::SoundManager::new(),
             se_manager: sound::SoundManager::new(),
+	    bgm_table: bgm_table,
             ad_info: AdCostTable::from_data(src_file.ad_cost_table, src_file.ad_gain_table),
             ad_agency_info: AdAgencyCostTable::from_data(
                 src_file.ad_agency_cost_table,
@@ -1216,9 +1227,14 @@ impl GameResource {
         ctx: &mut ggez::Context,
         sound_id: SoundID,
         flags: Option<sound::SoundPlayFlags>,
-    ) -> sound::SoundHandler {
-        let sound_data = self.sounds.get(sound_id as usize).unwrap();
-        self.bgm_manager.play(ctx, sound_data.clone(), flags)
+    ) {
+	if let Some(sound_handler) = self.bgm_table.get(&sound_id) {
+	    if sound_handler.is_none() {
+		let sound_data = self.sounds.get(sound_id.clone() as usize).unwrap();
+		let handler = self.bgm_manager.play(ctx, sound_data.clone(), flags);
+		self.bgm_table.insert(sound_id.clone(), Some(handler));
+	    }
+	}
     }
 
     pub fn play_sound_as_se(
@@ -1239,8 +1255,13 @@ impl GameResource {
 	self.ref_se(handler).playing()
     }
     
-    pub fn stop_bgm(&mut self, ctx: &mut ggez::Context, handler: sound::SoundHandler) {
-        self.bgm_manager.stop(ctx, handler);
+    pub fn stop_bgm(&mut self, ctx: &mut ggez::Context, handler: SoundID) {
+	if let Some(sound_handler) = self.bgm_table.get(&handler) {
+	    if let Some(sound_handler) = sound_handler {
+		self.bgm_manager.stop(ctx, sound_handler.clone());
+		self.bgm_table.insert(handler, None);
+	    }
+	}
     }
 
     pub fn stop_se(&mut self, ctx: &mut ggez::Context, handler: sound::SoundHandler) {
@@ -2179,6 +2200,7 @@ pub struct GameConfig {
     se_volume: f32,
     minute_per_clock: Clock,
     pause_when_inactive: bool,
+    extra_unlocked: bool,
 }
 
 impl GameConfig {
@@ -2250,6 +2272,10 @@ impl GameConfig {
         .unwrap();
         file.flush().expect("failed to flush game config file");
     }
+
+    pub fn unlock_extra(&mut self) {
+	self.extra_unlocked = true;
+    }
 }
 
 pub struct ProcessUtility<'ctx> {
@@ -2307,9 +2333,9 @@ impl<'ctx> SuzuContext<'ctx> {
         &mut self,
         sound_id: SoundID,
         flags: Option<sound::SoundPlayFlags>,
-    ) -> sound::SoundHandler {
+    ) {
         self.resource
-            .play_sound_as_bgm(self.context, sound_id, flags)
+            .play_sound_as_bgm(self.context, sound_id, flags);
     }
 
     pub fn play_sound_as_se(

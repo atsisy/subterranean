@@ -23,7 +23,6 @@ pub struct TitleScene {
     scene_transition_type: SceneTransition,
     current_title_contents: Option<TitleContents>,
     title_contents_set: TitleContentsSet,
-    bgm_handler: SoundHandler,
     scene_transition_lock: bool,
     clock: Clock,
 }
@@ -73,9 +72,9 @@ impl TitleScene {
         let mut title_contents_set =
             TitleContentsSet::from_file(ctx, "./resources/title_contents/title_contents_list.toml", 0);
 
-        let bgm_handler = ctx.play_sound_as_bgm(
+        ctx.play_sound_as_bgm(
             SoundID::Title,
-            Some(SoundPlayFlags::new(1000, 1.0, true, 0.1)),
+            Some(SoundPlayFlags::new(10000, 1.0, true, 0.1)),
         );
 
         TitleScene {
@@ -87,7 +86,6 @@ impl TitleScene {
             scene_transition_type: SceneTransition::Keep,
             current_title_contents: title_contents_set.remove_pickup("init-menu"),
             title_contents_set: title_contents_set,
-            bgm_handler: bgm_handler,
 	    logo: logo,
 	    scene_transition_lock: false,
             clock: 0,
@@ -152,7 +150,7 @@ impl TitleScene {
                 slf.scene_transition = scene_id;
                 slf.scene_transition_type = trans;
 		slf.unlock_scene_transition();
-                ctx.resource.stop_bgm(ctx.context, slf.bgm_handler);
+                ctx.resource.stop_bgm(ctx.context, SoundID::Title);
             }),
             t + 31,
         );

@@ -1,9 +1,9 @@
-use torifune::core::*;
+use torifune::{core::*, sound::SoundPlayFlags};
 use torifune::graphics::drawable::*;
 use torifune::graphics::object::*;
 use torifune::numeric;
 
-use crate::{core::*, flush_delay_event, flush_delay_event_and_redraw_check, scene::{DelayEventList, SceneTransition}};
+use crate::{core::*, flush_delay_event, flush_delay_event_and_redraw_check, scene::{DelayEventList, SceneID, SceneTransition}};
 use crate::core::util::read_from_resources_as_string;
 
 use super::{effect, util_object::FramedButton};
@@ -17,8 +17,10 @@ pub struct EndSceneFlow {
     ok_result_button: FramedButton,
     event_list: DelayEventList<Self>,
     scene_transition: SceneTransition,
+    next_scene_id: SceneID,
     drwob_essential: DrawableObjectEssential,
     flow_done: bool,
+    game_cleared: bool,
 }
 
 impl EndSceneFlow {
@@ -64,13 +66,18 @@ impl EndSceneFlow {
 	    pos.x -= 100.0;
 	});
 
+	let game_cleared = match ctx.take_save_data().game_mode {
+	    GameMode::Story => ctx.take_save_data().task_result.total_money > 100000,
+	    GameMode::TimeAttack(_) => false,
+	};
+
 	let font_info = FontInformation::new(
 	    ctx.resource.get_font(FontID::JpFude1),
 	    numeric::Vector2f::new(56.0, 56.0),
 	    ggez::graphics::Color::from_rgba_u32(0x150808ff)
 	);
 	let mut result_main_vtext = VerticalText::new(
-	    if ctx.take_save_data().task_result.total_money > 100000 { "目標達成" } else { "達成失敗" }.to_string(),
+	    if game_cleared { "目標達成" } else { "達成失敗" }.to_string(),
 	    pos,
 	    numeric::Vector2f::new(1.0, 1.0),
 	    0.0,
@@ -179,9 +186,11 @@ impl EndSceneFlow {
             drwob_essential: DrawableObjectEssential::new(true, 0),
 	    ok_result_button: ok_result_button,
 	    scene_transition: SceneTransition::Keep,
+	    next_scene_id: SceneID::End,
 	    thanks_text: thanks_text,
 	    book_collection: book_collection,
 	    flow_done: false,
+	    game_cleared: game_cleared,
 	    event_list: DelayEventList::new(),
         }
     }
@@ -218,7 +227,7 @@ impl EndSceneFlow {
 	}
     }
 
-    pub fn start_credit(&mut self, t: Clock) {
+    pub fn start_credit<'a>(&mut self, ctx: &mut SuzuContext<'a>, t: Clock) {
 	let mut animation_start = t + 30;
 	for vtext in self.result_vtext_list.iter_mut() {
 	    vtext.hide();
@@ -230,7 +239,7 @@ impl EndSceneFlow {
 	    vtext.appear();
 	    vtext.set_alpha(0.0);
 	    vtext.add_effect(vec![effect::alpha_effect(40, animation_start, 0, 255)]);
-	    animation_start += 300;
+	    animation_start += 400;
 	    vtext.add_effect(vec![effect::alpha_effect(40, animation_start, 255, 0)]);
 	    animation_start += 100;
 	}
@@ -248,8 +257,13 @@ impl EndSceneFlow {
 	    texture.appear();
 	    texture.set_alpha(0.0);
 	    texture.add_effect(vec![effect::alpha_effect(40, animation_start, 0, 255)]);
-	    animation_start += 300;
+	    animation_start += 400;
 	}
+
+	ctx.play_sound_as_bgm(
+            SoundID::EndBGM,
+            Some(SoundPlayFlags::new(3000, 1.0, true, ctx.config.get_bgm_volume())),
+        );
     }
     
     pub fn update<'a>(&mut self, ctx: &mut SuzuContext<'a>, t: Clock) {
@@ -274,14 +288,21 @@ impl EndSceneFlow {
         flush_delay_event_and_redraw_check!(self, self.event_list, ctx, t, {});
     }
 
-    pub fn click_handler<'a>(&mut self, _ctx: &mut SuzuContext<'a>, point: numeric::Point2f, t: Clock) {
+    pub fn click_handler<'a>(&mut self, ctx: &mut SuzuContext<'a>, point: numeric::Point2f, t: Clock) {
 	if self.ok_result_button.is_visible() && self.ok_result_button.contains(point) {
 	    self.ok_result_button.hide();
-	    self.start_credit(t);
+
+	    if self.game_cleared {
+		self.start_credit(ctx, t);
+	    } else {
+		self.scene_transition = SceneTransition::SwapTransition;
+		self.next_scene_id = SceneID::Title;
+	    }
 	}
 
 	if self.flow_done {
 	    self.scene_transition = SceneTransition::SwapTransition;
+	    self.next_scene_id = SceneID::Title;
 	}
     }
 

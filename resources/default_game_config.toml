@@ -2,3 +2,4 @@ bgm_volume = 0.5
 se_volume = 0.5
 minute_per_clock = 5
 pause_when_inactive = false
+extra_unlocked = false

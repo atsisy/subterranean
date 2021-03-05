@@ -30,7 +30,6 @@ pub struct EndScene {
     scene_transition_effect: Option<effect_object::ScreenTileEffect>,
     scene_transition: SceneID,
     scene_transition_type: SceneTransition,
-    bgm_handler: SoundHandler,
     kosuzu_speed: numeric::Vector2f,
     walking_kosuzu: MapObject,
     clock: Clock,
@@ -70,11 +69,6 @@ impl EndScene {
             31,
         );
 
-        let bgm_handler = ctx.play_sound_as_bgm(
-            SoundID::Title,
-            Some(SoundPlayFlags::new(1000, 1.0, true, ctx.config.get_bgm_volume())),
-        );
-
         let mut kosuzu = character_factory::create_endroll_sample(
             ctx,
             &numeric::Rect::new(0.0, 0.0, 1366.0, 768.0),
@@ -94,7 +88,6 @@ impl EndScene {
             scene_transition_effect: scene_transition_effect,
             scene_transition: SceneID::Save,
             scene_transition_type: SceneTransition::Keep,
-            bgm_handler: bgm_handler,
             walking_kosuzu: kosuzu,
             clock: 0,
         }
@@ -126,7 +119,7 @@ impl EndScene {
             Box::new(move |slf: &mut Self, ctx, _| {
                 slf.scene_transition = scene_id;
                 slf.scene_transition_type = SceneTransition::SwapTransition;
-                ctx.resource.stop_bgm(ctx.context, slf.bgm_handler);
+                ctx.resource.stop_bgm(ctx.context, SoundID::EndBGM);
             }),
             t + 31,
         );
@@ -208,9 +201,10 @@ impl SceneManager for EndScene {
             );
             add_delay_event!(
                 self.event_list,
-                |slf, _, _| {
+                |slf, ctx, _| {
                     slf.scene_transition = SceneID::Title;
                     slf.scene_transition_type = SceneTransition::SwapTransition;
+		    ctx.resource.stop_bgm(ctx.context, SoundID::EndBGM);
                 },
                 t + 140
             );

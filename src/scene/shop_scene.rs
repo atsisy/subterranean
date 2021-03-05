@@ -3,7 +3,7 @@ use std::cmp::PartialOrd;
 use std::collections::VecDeque;
 use std::rc::Rc;
 
-use torifune::device as tdev;
+use torifune::{device as tdev, sound::SoundPlayFlags};
 use torifune::graphics::object::*;
 use torifune::manhattan_distance;
 
@@ -775,6 +775,11 @@ impl ShopScene {
 	shop_time_status_header.make_center(ctx.context, numeric::Point2f::new(WINDOW_SIZE_X as f32 / 2.0, 45.0));
         //ctx.pay_ad_cost();
 
+	ctx.play_sound_as_bgm(
+            SoundID::ShopBGM,
+            Some(SoundPlayFlags::new(10000, 1.0, true, 0.1)),
+        );
+	
         ShopScene {
             mouse_info: MouseInformation::new(),
             player: player,
@@ -1654,6 +1659,9 @@ impl ShopScene {
 
                     slf.transition_status = SceneTransition::SwapTransition;
                     slf.transition_scene = SceneID::DayResult;
+
+		    ctx.resource.stop_bgm(ctx.context, SoundID::ShopBGM);
+		    
                 }),
                 t + 120,
             );

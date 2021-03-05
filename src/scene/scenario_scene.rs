@@ -1,12 +1,12 @@
 use ggez::graphics as ggraphics;
 use ggez::input::mouse::MouseButton;
 
-use torifune::core::Clock;
+use torifune::{core::Clock, sound::SoundPlayFlags};
 use torifune::device as tdev;
 use torifune::graphics::object::Effectable;
 use torifune::numeric;
 
-use crate::core::{GameMode, GeneralScenarioID, MouseInformation, SuzuContext, TileBatchTextureID};
+use crate::core::{GameMode, GeneralScenarioID, MouseInformation, SuzuContext, TileBatchTextureID, SoundID};
 
 use crate::add_delay_event;
 use crate::core::game_system::*;
@@ -121,6 +121,11 @@ impl ScenarioScene {
         );
         status_screen.hide();
 
+	ctx.play_sound_as_bgm(
+            SoundID::ScenarioBGM,
+            Some(SoundPlayFlags::new(10000, 1.0, true, 0.1)),
+        );
+
         ScenarioScene {
             mouse_info: MouseInformation::new(),
             scenario_event: scenario,
@@ -156,12 +161,14 @@ impl ScenarioScene {
 
     fn transition_to_title_scene<'a>(&mut self, ctx: &mut SuzuContext<'a>, t: Clock) {
         self.event_list.add_event(
-            Box::new(|slf: &mut Self, _, _| {
+            Box::new(|slf: &mut Self, ctx, _| {
                 slf.scene_transition_type = SceneTransition::SwapTransition;
                 slf.scene_transition = SceneID::Title;
+		ctx.resource.stop_bgm(ctx.context, SoundID::ScenarioBGM);
             }),
             t + 60,
         );
+	
         self.scene_transition_close_effect(ctx, t);
     }
 
@@ -298,9 +305,10 @@ impl ScenarioScene {
 
                         add_delay_event!(
                             self.event_list,
-                            |slf, _, _| {
+                            |slf, ctx, _| {
                                 slf.scene_transition = SceneID::End;
                                 slf.scene_transition_type = SceneTransition::SwapTransition;
+				ctx.resource.stop_bgm(ctx.context, SoundID::ScenarioBGM);
                                 //ctx.go_next_day();
                             },
                             self.get_current_clock() + 1
@@ -355,6 +363,7 @@ impl ScenarioScene {
                 slf.scene_transition = SceneID::SuzunaShop;
                 slf.scene_transition_type = SceneTransition::SwapTransition;
                 ctx.take_save_data_mut().award_data.shop_work_count += 1;
+		ctx.resource.stop_bgm(ctx.context, SoundID::ScenarioBGM);
             },
             self.get_current_clock() + 300
         );
