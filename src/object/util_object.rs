@@ -1643,6 +1643,7 @@ impl PauseScreenSet {
             if let Some(_) = panel.mouse_button_up(ctx, point, t) {
                 // ここに到達する場合は、"init-menu"に移動するとき
                 // ここでは、ConfigPanelのExitととしてみなす
+		ctx.process_utility.redraw();
                 self.config_panel = None;
             }
             return None;
@@ -1767,9 +1768,9 @@ impl SeekBar {
         depth: i8,
     ) -> Self {
         let mut handle = UniTexture::new(
-            ctx.ref_texture(TextureID::ChoicePanel1),
+            ctx.ref_texture(TextureID::Knob),
             numeric::Point2f::new(0.0, 0.0),
-            numeric::Vector2f::new(0.25, 0.25),
+            numeric::Vector2f::new(0.3, 0.3),
             0.0,
             0,
         );
@@ -1791,7 +1792,7 @@ impl SeekBar {
                 bar_height,
             ),
             ggraphics::DrawMode::fill(),
-            ggraphics::Color::from_rgba_u32(0xffffffff),
+            ggraphics::Color::from_rgba_u32(0xdbd4b8ff),
         );
 
         let mut builder = ggraphics::MeshBuilder::new();

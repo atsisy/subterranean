@@ -173,6 +173,7 @@ pub enum TextureID {
     Mob1DotLeft3,
     GoNextPageLeftNotAlpha,
     GoNextPageRightNotAlpha,
+    Knob,
     Unknown,
 }
 
@@ -298,6 +299,7 @@ impl FromStr for TextureID {
             "Mob1DotLeft3" => Ok(Self::Mob1DotLeft3),
 	    "GoNextPageLeftNotAlpha" => Ok(Self::GoNextPageLeftNotAlpha),
 	    "GoNextPageRightNotAlpha" => Ok(Self::GoNextPageRightNotAlpha),
+	    "Knob" => Ok(Self::Knob),
             _ => Err(()),
         }
     }
@@ -401,6 +403,7 @@ impl TextureID {
             92 => Some(Self::Mob1DotLeft3),
 	    93 => Some(Self::GoNextPageLeftNotAlpha),
 	    94 => Some(Self::GoNextPageRightNotAlpha),
+	    95 => Some(Self::Knob),
             _ => None,
         }
     }
@@ -1888,6 +1891,7 @@ pub struct SavableData {
     pub agency_status: HashMap<SuzunaAdAgencyType, bool>,
     pub award_data: game_system::AwardData,
     pub game_mode: GameMode,
+    pub run_tutorial: bool,
 }
 
 impl SavableData {
@@ -1930,6 +1934,7 @@ impl SavableData {
             agency_status: ad_agency_status,
             award_data: game_system::AwardData::new(),
 	    game_mode: game_mode,
+	    run_tutorial: true,
         }
     }
 
@@ -1990,6 +1995,7 @@ impl SavableData {
         self.week_schedule = data.week_schedule;
 	self.award_data = data.award_data;
 	self.game_mode = data.game_mode;
+	self.run_tutorial = data.run_tutorial;
     }
 
     pub fn change_ad_status(&mut self, ad_type: SuzunaAdType, status: bool) {

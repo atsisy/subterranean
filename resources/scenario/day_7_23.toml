@@ -1,9 +1,53 @@
-first-scenario-id = 10
+first-scenario-id = 6
 
 [scene-transition]
 scenario = 1
 dream = 2
 save = 4
+
+[[scenario-group]]
+type = "choice"
+header_text = "チュートリアルを行いますか？"
+background = "SightBackground1"	
+id = 6
+
+   [[scenario-group.choice-pattern]]
+   pattern = "はい"
+   jump-id = 10
+   [[scenario-group.choice-pattern]]
+   pattern = "いいえ"
+   jump-id = 7
+
+[[scenario-group]]
+type = "wait"
+id = 7
+next-id = 8
+opecode = "DisableTutorial"
+background = "SightBackground1"
+
+[[scenario-group]]
+type = "scenario"
+id = 8
+next-id = 9
+background = "SightBackground1"
+
+[scenario-group.tachie-data]
+right = "KosuzuTachie1"
+
+   [scenario-group.default-text-attribute]
+   fpc = 2.0
+   font_scale = 32.0
+   color = 0x000000ff
+
+   [[scenario-group.text]]
+   text_src_path = "./resources/scenario/7_23/1.txt"
+
+[[scenario-group]]
+type = "wait"
+id = 9
+next-id = 20
+opecode = "ShowStatusScreen"
+background = "SightBackground1"
 
 [[scenario-group]]
 type = "scenario"

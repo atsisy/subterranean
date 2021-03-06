@@ -736,7 +736,7 @@ impl ShopScene {
 
         let mut delay_event_list = DelayEventList::new();
 
-	if ctx.take_save_data().date.first_day() && ctx.take_save_data().game_mode.is_story_mode() {
+	if ctx.take_save_data().date.first_day() && ctx.take_save_data().game_mode.is_story_mode() && ctx.take_save_data().run_tutorial {
 	    delay_event_list.add_event(
 		Box::new(move |slf: &mut ShopScene, ctx, t| {
 		    slf.set_fixed_text_into_scenario_box(ctx, "/scenario/tutorial/1.toml", t);
@@ -836,7 +836,10 @@ impl ShopScene {
 	    shop_time_status_header: shop_time_status_header,
 	    random_customer_add_timing: ctx.resource.get_todays_customer_dist(&ctx.take_save_data().date),
 	    new_books: new_books,
-	    tutorial_list: if ctx.take_save_data().date.first_day() && ctx.take_save_data().game_mode.is_story_mode() {	
+	    tutorial_list: if ctx.take_save_data().date.first_day() &&
+		ctx.take_save_data().game_mode.is_story_mode() &&
+		ctx.take_save_data().run_tutorial
+	    {
 		ShopTutorialList::new()
 	    } else {
 		ShopTutorialList::new_done()

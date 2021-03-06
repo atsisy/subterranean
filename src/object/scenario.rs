@@ -1130,7 +1130,7 @@ impl Scenario {
     }
 }
 
-#[derive(PartialEq, Clone, Copy)]
+#[derive(PartialEq, Clone, Copy, Debug)]
 pub enum TextBoxStatus {
     WaitNextLineKey,
     UpdatingText,
@@ -1340,16 +1340,21 @@ impl TextBox {
             ),
             Vec::new(),
         ));
-        self.text_box_status = TextBoxStatus::FixedText;
+
+	self.set_text_box_status(TextBoxStatus::FixedText);
     }
 
     pub fn next_button_handler(&mut self) {
         self.head_line_number += 1;
-        self.text_box_status = TextBoxStatus::UpdatingText;
+	self.set_text_box_status(TextBoxStatus::UpdatingText);
     }
 
     pub fn reset_head_line(&mut self) {
         self.head_line_number = 0;
+    }
+
+    pub fn set_text_box_status(&mut self, status: TextBoxStatus) {
+	self.text_box_status = status;
     }
 }
 
@@ -1891,6 +1896,8 @@ impl ScenarioEvent {
                     .go_next_scenario_from_choice_scenario(maybe_index.unwrap());
                 self.update_event_background(ctx);
                 self.update_event_tachie(ctx, 0);
+
+		self.scenario_box.text_box.set_text_box_status(TextBoxStatus::UpdatingText);
 
                 // choice_boxは消す
                 self.scenario_box.insert_choice_box(None);

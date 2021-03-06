@@ -76,7 +76,7 @@ impl SuzunaSubScene {
 	    new_book_schedule.get_schedule_at(&GensoDate::new(112, 7, 23)).unwrap().clone()
 	};
 
-	let task_tutorial = if ctx.take_save_data().date.first_day() && ctx.take_save_data().game_mode.is_story_mode() {
+	let task_tutorial = if ctx.take_save_data().date.first_day() && ctx.take_save_data().game_mode.is_story_mode() && ctx.take_save_data().run_tutorial {
 	    TaskTutorialContext::new()
 	} else {
 	    TaskTutorialContext::new_done()

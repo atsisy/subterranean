@@ -637,7 +637,6 @@ impl ConfigPanel {
 	self.checkbox.click_handler(rpoint);
 
         if self.apply_button.contains(ctx.context, rpoint) {
-	    crate::core::crypt::encrypt_game_binary();
             ctx.change_bgm_volume(self.bgm_volume_bar.get_current_value());
             ctx.change_se_volume(self.se_volume_bar.get_current_value());
 	    ctx.config.set_pause_when_inactive(self.checkbox.checked_now());

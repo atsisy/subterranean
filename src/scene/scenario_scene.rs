@@ -197,7 +197,9 @@ impl ScenarioScene {
         if let Some(pause_result) = self.pause_screen_set.mouse_click_handler(ctx, point, t) {
             match pause_result {
                 PauseResult::GoToTitle => self.transition_to_title_scene(ctx, t),
-                PauseResult::ReleasePause => self.exit_pause_screen(t),
+                PauseResult::ReleasePause => {
+		    self.exit_pause_screen(t);
+		}
             }
         }
     }
@@ -237,6 +239,11 @@ impl ScenarioScene {
                         self.status_screen.show_schedule_page();
                         self.scenario_event.release_scenario_waiting(ctx);
                         self.scenario_ctx.wait_opecode_running = false;
+                    }
+		    "DisableTutorial" => {
+			ctx.take_save_data_mut().run_tutorial = false;
+                        self.scenario_ctx.wait_opecode_running = false;
+			self.scenario_event.release_scenario_waiting(ctx);
                     }
                     "ShowAd" => {
                         add_delay_event!(
@@ -666,8 +673,6 @@ impl SceneManager for ScenarioScene {
         if let Some(transition_effect) = self.scene_transition_effect.as_mut() {
             transition_effect.draw(ctx).unwrap();
         }
-
-        //println!("status -> {}", if self.scenario_ctx.scenario_is_finish_and_wait { "finish" } else { "not finish" });
         //}));
     }
 
