@@ -267,6 +267,22 @@ impl EndSceneFlow {
             SoundID::EndBGM,
             Some(SoundPlayFlags::new(3000, 1.0, true, ctx.config.get_bgm_volume())),
         );
+
+	ctx.permanent_save_data.story_cleared();
+
+	match ctx.take_save_data().game_mode {
+	    GameMode::TimeAttack(_) => {
+		ctx.permanent_save_data.add_hard_mode_record(HardModeRecord::new(
+		    ctx.take_save_data().task_result.total_money as i64
+		))
+	    },
+	    _ => (),
+	}
+
+	match ctx.permanent_save_data.save() {
+	    Ok(_) => (),
+	    Err(_) => (),
+	}
     }
     
     pub fn update<'a>(&mut self, ctx: &mut SuzuContext<'a>, t: Clock) {

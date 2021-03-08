@@ -33,9 +33,6 @@ id = 11
    pattern = "行動開始"
    jump-id = 13
    [[scenario-group.choice-pattern]]
-   pattern = "状態確認"
-   jump-id = 2
-   [[scenario-group.choice-pattern]]
    pattern = "保存"
    jump-id = 4
 

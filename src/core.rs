@@ -42,6 +42,7 @@ use std::io::{Read, Write};
 
 use serde::{Deserialize, Serialize};
 extern crate serde_json;
+extern crate chrono;
 
 use crate::object::scenario_object::SuzunaAdType;
 use number_to_jk::number_to_jk;
@@ -469,6 +470,7 @@ pub enum SoundID {
     ScenarioBGM,
     ShopBGM,
     EndBGM,
+    ResultSE,
     Unknown,
 }
 
@@ -2265,12 +2267,91 @@ impl<'ctx> ProcessUtility<'ctx> {
     }
 }
 
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+pub struct HardModeRecord {
+    total_money: i64,
+    date_str: String,
+}
+
+impl HardModeRecord {
+    pub fn new(total_money: i64) -> Self {
+	HardModeRecord {
+	    total_money: total_money,
+	    date_str: chrono::Local::now().format("%Y年%m月%d日 %H時%M分%S秒").to_string(),
+	}
+    }
+}
+
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+pub struct PermanentSaveData {
+    story_cleared: bool,
+    hard_mode_records: Vec<HardModeRecord>,
+}
+
+impl PermanentSaveData {
+    pub fn new_empty() -> Self {
+	PermanentSaveData {
+	    story_cleared: false,
+	    hard_mode_records: Vec::new(),
+	}
+    }
+    
+    pub fn from_toml() -> Self {
+	match File::open("./permanent_save") {
+	    Ok(mut file) => {
+		let mut buf = Vec::new();
+		match file
+		    .read_to_end(&mut buf) {
+			Ok(_) => (),
+			Err(_) => return Self::new_empty(),
+		    }
+		
+		let content = crypt::decrypt_str(&buf);
+
+		if content.is_none() {
+		    return Self::new_empty();
+		}
+		
+		let permanent_data: Result<PermanentSaveData, toml::de::Error> = toml::from_str(&content.unwrap());
+		match permanent_data {
+		    Ok(p) => return p,
+		    Err(e) => panic!("Failed to parse toml: {}", e),
+		}
+	    },
+	    Err(_) => Self::new_empty(),
+	}
+    }
+
+    pub fn save(&self) -> Result<(), Box<dyn std::error::Error>> {
+	let mut file = File::create("./permanent_save")?;
+
+        file.write_all(
+            crypt::crypt_str(&serde_json::to_string(self).unwrap())
+                .unwrap()
+                .as_slice(),
+        )
+        .unwrap();
+        file.flush()?;
+
+	Ok(())
+    }
+
+    pub fn add_hard_mode_record(&mut self, record: HardModeRecord) {
+	self.hard_mode_records.push(record);
+    }
+
+    pub fn story_cleared(&mut self) {
+	self.story_cleared = true;
+    }
+}
+
 pub struct SuzuContext<'ctx> {
     pub context: &'ctx mut ggez::Context,
     pub resource: &'ctx mut GameResource,
     pub savable_data: &'ctx mut Option<SavableData>,
     pub config: &'ctx mut GameConfig,
     pub process_utility: ProcessUtility<'ctx>,
+    pub permanent_save_data: &'ctx mut PermanentSaveData,
 }
 
 impl<'ctx> SuzuContext<'ctx> {
@@ -2479,6 +2560,7 @@ struct SceneController {
     game_status: Option<SavableData>,
     game_config: GameConfig,
     redraw_request: scene::DrawRequest,
+    permanent_save_data: PermanentSaveData,
 }
 
 impl SceneController {
@@ -2511,6 +2593,8 @@ impl SceneController {
         let mut game_status = None;
         let mut game_config = GameConfig::new_from_toml(ctx, "/default_game_config.toml");
 
+	let mut permanent_save_data = PermanentSaveData::from_toml();
+
         let mut _redraw_request = scene::DrawRequest::Draw;
 
         // let current_scene = scene::scenario_scene::ScenarioScene::new(&mut SuzuContext {
@@ -2526,6 +2610,7 @@ impl SceneController {
             process_utility: ProcessUtility {
                 redraw_request: &mut _redraw_request,
             },
+	    permanent_save_data: &mut permanent_save_data,
         });
 
         SceneController {
@@ -2538,6 +2623,7 @@ impl SceneController {
             game_status: game_status,
             game_config: game_config,
             redraw_request: scene::DrawRequest::Draw,
+	    permanent_save_data: permanent_save_data,
         }
     }
 
@@ -2555,6 +2641,7 @@ impl SceneController {
             process_utility: ProcessUtility {
                 redraw_request: &mut self.redraw_request,
             },
+	    permanent_save_data: &mut self.permanent_save_data,
         };
 
         match next_scene_id {
@@ -2623,6 +2710,7 @@ impl SceneController {
             process_utility: ProcessUtility {
                 redraw_request: &mut self.redraw_request,
             },
+	    permanent_save_data: &mut self.permanent_save_data,
         };
 
         let next_scene = match next_scene_id {
@@ -2653,6 +2741,7 @@ impl SceneController {
                 process_utility: ProcessUtility {
                     redraw_request: &mut self.redraw_request,
                 },
+		permanent_save_data: &mut self.permanent_save_data,
             });
         }
         //));
@@ -2682,6 +2771,7 @@ impl SceneController {
             process_utility: ProcessUtility {
                 redraw_request: &mut self.redraw_request,
             },
+	    permanent_save_data: &mut self.permanent_save_data,
         };
 
         match self.current_scene.abs_mut().post_process(&mut suzu_ctx) {
@@ -2741,6 +2831,7 @@ impl SceneController {
                 process_utility: ProcessUtility {
                     redraw_request: &mut self.redraw_request,
                 },
+		permanent_save_data: &mut self.permanent_save_data,
             },
             self.key_map.real_to_virtual(keycode),
         );
@@ -2764,6 +2855,7 @@ impl SceneController {
                 process_utility: ProcessUtility {
                     redraw_request: &mut self.redraw_request,
                 },
+		permanent_save_data: &mut self.permanent_save_data,
             },
             self.key_map.real_to_virtual(keycode),
         );
@@ -2787,6 +2879,7 @@ impl SceneController {
                 process_utility: ProcessUtility {
                     redraw_request: &mut self.redraw_request,
                 },
+		permanent_save_data: &mut self.permanent_save_data,
             },
             point,
             offset,
@@ -2811,6 +2904,7 @@ impl SceneController {
                 process_utility: ProcessUtility {
                     redraw_request: &mut self.redraw_request,
                 },
+		permanent_save_data: &mut self.permanent_save_data,
             },
             button,
             point,
@@ -2833,6 +2927,7 @@ impl SceneController {
                 process_utility: ProcessUtility {
                     redraw_request: &mut self.redraw_request,
                 },
+		permanent_save_data: &mut self.permanent_save_data,
             },
             button,
             point,
@@ -2856,6 +2951,7 @@ impl SceneController {
                 process_utility: ProcessUtility {
                     redraw_request: &mut self.redraw_request,
                 },
+		permanent_save_data: &mut self.permanent_save_data,
             },
             numeric::Point2f::new(point.x, point.y),
             x,
@@ -2876,6 +2972,7 @@ impl SceneController {
             process_utility: ProcessUtility {
                 redraw_request: &mut self.redraw_request,
             },
+	    permanent_save_data: &mut self.permanent_save_data,
         });
     }
 
@@ -2890,6 +2987,7 @@ impl SceneController {
                 process_utility: ProcessUtility {
                     redraw_request: &mut self.redraw_request,
                 },
+		permanent_save_data: &mut self.permanent_save_data,
             });
     }
 }

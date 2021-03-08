@@ -108,7 +108,8 @@ sound_file_path = [
 		"/sound/se/se_lab/message.mp3",
 		"/sound/bgm/scenario.wav",
 		"/sound/bgm/shop.wav",
-		"/sound/bgm/end.wav"
+		"/sound/bgm/end.wav",
+		"/sound/se/yuzu/result.wav"
 		]
 
 [[map_information]]
