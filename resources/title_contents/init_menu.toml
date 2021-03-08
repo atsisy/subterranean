@@ -30,6 +30,16 @@ transition-method = "StackingTransition"
 next-scene = "Save"
 
 [[each_entry_data]]
+text = "記録"
+event-type = "NextContents"
+next-contents-name = "record"
+
+[[each_entry_data]]
+text = "供養"
+event-type = "NextContents"
+next-contents-name = "gallery"
+
+[[each_entry_data]]
 text = "設定"
 event-type = "NextContents"
 next-contents-name = "config-panel"
@@ -38,11 +48,6 @@ next-contents-name = "config-panel"
 text = "更新"
 event-type = "NextContents"
 next-contents-name = "update-panel"
-
-[[each_entry_data]]
-text = "供養"
-event-type = "NextContents"
-next-contents-name = "gallery"
 
 [[each_entry_data]]
 text = "退場"

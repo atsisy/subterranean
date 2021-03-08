@@ -14,6 +14,11 @@ src = "./resources/title_contents/new_game_menu.toml"
 # src = "./resources/title_contents/hard_menu.toml"
 
 [[contents-list]]
+name = "record"
+type = "RecordRoom"
+src = "./resources/title_contents/record_room.toml"
+
+[[contents-list]]
 name = "sound-player"
 type = "TitleSoundPlayer"
 src = "./resources/title_contents/sound_player.toml"

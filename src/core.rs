@@ -2280,12 +2280,21 @@ impl HardModeRecord {
 	    date_str: chrono::Local::now().format("%Y年%m月%d日 %H時%M分%S秒").to_string(),
 	}
     }
+
+    pub fn get_date_str(&self) -> &str {
+	self.date_str.as_str()
+    }
+
+    pub fn get_total_money(&self) -> i64 {
+	self.total_money
+    }
 }
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct PermanentSaveData {
     story_cleared: bool,
     hard_mode_records: Vec<HardModeRecord>,
+    story_mode_records: Vec<HardModeRecord>,
 }
 
 impl PermanentSaveData {
@@ -2293,6 +2302,7 @@ impl PermanentSaveData {
 	PermanentSaveData {
 	    story_cleared: false,
 	    hard_mode_records: Vec::new(),
+	    story_mode_records: Vec::new(),
 	}
     }
     
@@ -2340,8 +2350,33 @@ impl PermanentSaveData {
 	self.hard_mode_records.push(record);
     }
 
+    pub fn add_story_mode_record(&mut self, record: HardModeRecord) {
+	self.story_mode_records.push(record);
+    }
+
+    pub fn iter_hard_mode_records(&self) -> std::slice::Iter<HardModeRecord> {
+	self.hard_mode_records.iter()
+    }
+
+    pub fn iter_story_mode_records(&self) -> std::slice::Iter<HardModeRecord> {
+	self.hard_mode_records.iter()
+    }
+    
     pub fn story_cleared(&mut self) {
 	self.story_cleared = true;
+    }
+
+    pub fn is_cleared(&self) -> bool {
+	self.story_cleared
+    }
+
+    pub fn sort_records(&mut self) {
+	self.story_mode_records.sort_by(|a, b| {
+	    b.total_money.partial_cmp(&a.total_money).unwrap()
+	});
+	self.hard_mode_records.sort_by(|a, b| {
+	    b.total_money.partial_cmp(&a.total_money).unwrap()
+	});
     }
 }
 

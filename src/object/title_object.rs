@@ -12,18 +12,20 @@ use torifune::impl_texture_object_for_wrapped;
 use torifune::core::Clock;
 use torifune::graphics::drawable::*;
 use torifune::graphics::object::*;
+use torifune::roundup2f;
 use torifune::numeric;
 
 use crate::object::character_factory;
 use crate::{core::{GameMode, WINDOW_SIZE_X, WINDOW_SIZE_Y}, flush_delay_event, flush_delay_event_and_redraw_check, object::util_object::{CheckBox, SeekBar, SelectButton, TextButtonTexture}, scene::DelayEventList};
 use crate::scene::SceneID;
 use crate::{
-    core::{font_information_from_toml_value, FontID, SuzuContext, TextureID},
+    set_table_frame_cell_center,
+    core::{font_information_from_toml_value, FontID, SuzuContext, TextureID, TileBatchTextureID},
     scene::SceneTransition,
     parse_toml_file,
 };
 
-use super::{DarkEffectPanel, map_object::MapObject, scenario::ScenarioEvent, util_object::FramedButton};
+use super::{DarkEffectPanel, map_object::MapObject, scenario::ScenarioEvent, util_object::{FramedButton, TableFrame, FrameData}};
 
 extern crate reqwest;
 
@@ -992,7 +994,6 @@ impl DrawableComponent for UpdatePanel {
     }
 }
 
-
 pub struct Gallery {
     canvas: sub_screen::SubScreen,
     background: DarkEffectPanel,
@@ -1245,6 +1246,401 @@ impl DrawableComponent for Gallery {
     }
 }
 
+pub struct RecordRoom {
+    canvas: sub_screen::SubScreen,
+    background: DarkEffectPanel,
+    desc_text: Vec<UniText>,
+    event_list: DelayEventList<Self>,
+    table_frame_hard: TableFrame,
+    table_frame_story: TableFrame,
+    vtext_list: Vec<UniText>,
+    exit_button: FramedButton,
+}
+
+impl RecordRoom {
+    pub fn new<'a>(ctx: &mut SuzuContext<'a>, pos_rect: numeric::Rect, depth: i8, t: Clock) -> Self {
+	ctx.permanent_save_data.sort_records();
+	
+        let font_info = FontInformation::new(
+            ctx.resource.get_font(FontID::Cinema),
+            numeric::Vector2f::new(28.0, 28.0),
+            ggraphics::Color::from_rgba_u32(0xccccccff),
+        );
+	
+        let mut background = DarkEffectPanel::new(
+            ctx.context,
+            numeric::Rect::new(0.0, 0.0, WINDOW_SIZE_X as f32, WINDOW_SIZE_X as f32),
+            t,
+        );
+	background.set_alpha(0.7);
+
+	let mut desc_text = Vec::new();
+
+        let mut header_text = UniText::new(
+            "記録".to_string(),
+            numeric::Point2f::new(650.0, 80.0),
+            numeric::Vector2f::new(1.0, 1.0),
+            0.0,
+            0,
+            font_info,
+        );
+	header_text.make_center(ctx.context, numeric::Point2f::new((WINDOW_SIZE_X / 2) as f32, 80.0));
+	desc_text.push(header_text);
+
+	let mut hard_text = UniText::new(
+            "熟練".to_string(),
+            numeric::Point2f::new(650.0, 80.0),
+            numeric::Vector2f::new(1.0, 1.0),
+            0.0,
+            0,
+            font_info,
+        );
+	hard_text.make_center(ctx.context, numeric::Point2f::new((WINDOW_SIZE_X / 6) as f32, 125.0));
+	desc_text.push(hard_text);
+
+	let mut story_text = UniText::new(
+            "通常".to_string(),
+            numeric::Point2f::new(650.0, 80.0),
+            numeric::Vector2f::new(1.0, 1.0),
+            0.0,
+            0,
+            font_info,
+        );
+	story_text.make_center(ctx.context, numeric::Point2f::new((WINDOW_SIZE_X / 6) as f32, 440.0));
+	desc_text.push(story_text);
+	
+	let exit_button = FramedButton::create_design1(
+	    ctx, numeric::Point2f::new(1100.0, 600.0), "逆戻",
+	    numeric::Vector2f::new(24.0, 24.0),
+	);
+
+	let table_frame_hard = TableFrame::new(
+	    ctx.resource,
+            numeric::Point2f::new(120.0, 145.0),
+            TileBatchTextureID::RedOldStyleFrame,
+            FrameData::new(vec![40.0; 6], vec![80.0, 380.0, 380.0]),
+            numeric::Vector2f::new(0.3, 0.3),
+            0,
+	);
+
+	let table_frame_story = TableFrame::new(
+	    ctx.resource,
+            numeric::Point2f::new(120.0, 460.0),
+            TileBatchTextureID::RedOldStyleFrame,
+            FrameData::new(vec![40.0; 6], vec![80.0, 380.0, 380.0]),
+            numeric::Vector2f::new(0.3, 0.3),
+            0,
+	);
+
+	let mut vtext_list = Vec::new();
+
+	let mut number = UniText::new(
+	    "順位".to_string(),
+	    numeric::Point2f::new(0.0, 0.0),
+	    numeric::Vector2f::new(1.0, 1.0),
+	    0.0,
+	    0,
+	    font_info.clone()
+	);
+	
+	let mut date = UniText::new(
+	    "日付".to_string(),
+	    numeric::Point2f::new(0.0, 0.0),
+	    numeric::Vector2f::new(1.0, 1.0),
+	    0.0,
+	    0,
+	    font_info.clone()
+	);
+	
+	let mut money = UniText::new(
+	    "所持金".to_string(),
+	    numeric::Point2f::new(0.0, 0.0),
+	    numeric::Vector2f::new(1.0, 1.0),
+	    0.0,
+	    0,
+	    font_info.clone()
+	);
+
+	set_table_frame_cell_center!(
+            ctx.context,
+            table_frame_hard,
+            number,
+            numeric::Vector2u::new(0, 0)
+        );
+	
+	set_table_frame_cell_center!(
+            ctx.context,
+            table_frame_hard,
+            date,
+            numeric::Vector2u::new(1, 0)
+        );
+	
+	set_table_frame_cell_center!(
+            ctx.context,
+            table_frame_hard,
+	    money,
+            numeric::Vector2u::new(2, 0)
+        );
+	
+	vtext_list.push(number);
+	vtext_list.push(date);
+	vtext_list.push(money);
+
+	let mut number = UniText::new(
+	    "順位".to_string(),
+	    numeric::Point2f::new(0.0, 0.0),
+	    numeric::Vector2f::new(1.0, 1.0),
+	    0.0,
+	    0,
+	    font_info.clone()
+	);
+	
+	let mut date = UniText::new(
+	    "日付".to_string(),
+	    numeric::Point2f::new(0.0, 0.0),
+	    numeric::Vector2f::new(1.0, 1.0),
+	    0.0,
+	    0,
+	    font_info.clone()
+	);
+	
+	let mut money = UniText::new(
+	    "所持金".to_string(),
+	    numeric::Point2f::new(0.0, 0.0),
+	    numeric::Vector2f::new(1.0, 1.0),
+	    0.0,
+	    0,
+	    font_info.clone()
+	);
+
+	set_table_frame_cell_center!(
+            ctx.context,
+            table_frame_story,
+            number,
+            numeric::Vector2u::new(0, 0)
+        );
+	
+	set_table_frame_cell_center!(
+            ctx.context,
+            table_frame_story,
+            date,
+            numeric::Vector2u::new(1, 0)
+        );
+	
+	set_table_frame_cell_center!(
+            ctx.context,
+            table_frame_story,
+	    money,
+            numeric::Vector2u::new(2, 0)
+        );
+	
+	vtext_list.push(number);
+	vtext_list.push(date);
+	vtext_list.push(money);
+	
+	for (index, data) in ctx.permanent_save_data.iter_hard_mode_records().enumerate() {
+	    if index >= 5 {
+		break;
+	    }
+
+	    let mut number = UniText::new(
+		number_to_jk::number_to_jk(index as u64),
+		numeric::Point2f::new(0.0, 0.0),
+		numeric::Vector2f::new(1.0, 1.0),
+		0.0,
+		0,
+		font_info.clone()
+	    );
+
+	    let mut date = UniText::new(
+		data.get_date_str().to_string(),
+		numeric::Point2f::new(0.0, 0.0),
+		numeric::Vector2f::new(1.0, 1.0),
+		0.0,
+		0,
+		font_info.clone()
+	    );
+
+	    let mut money = UniText::new(
+		number_to_jk::number_to_jk(data.get_total_money() as u64),
+		numeric::Point2f::new(0.0, 0.0),
+		numeric::Vector2f::new(1.0, 1.0),
+		0.0,
+		0,
+		font_info.clone()
+	    );
+	    
+	    set_table_frame_cell_center!(
+                ctx.context,
+                table_frame_hard,
+                number,
+                numeric::Vector2u::new(0, index as u32 + 1)
+            );
+
+	    set_table_frame_cell_center!(
+                ctx.context,
+                table_frame_hard,
+                date,
+                numeric::Vector2u::new(1, index as u32 + 1)
+            );
+
+	    set_table_frame_cell_center!(
+                ctx.context,
+                table_frame_hard,
+		money,
+                numeric::Vector2u::new(2, index as u32 + 1)
+            );
+
+	    vtext_list.push(number);
+	    vtext_list.push(date);
+	    vtext_list.push(money);
+	}
+
+	for (index, data) in ctx.permanent_save_data.iter_story_mode_records().enumerate() {
+	    if index >= 5 {
+		break;
+	    }
+
+	    let mut number = UniText::new(
+		number_to_jk::number_to_jk(index as u64),
+		numeric::Point2f::new(0.0, 0.0),
+		numeric::Vector2f::new(1.0, 1.0),
+		0.0,
+		0,
+		font_info.clone()
+	    );
+
+	    let mut date = UniText::new(
+		data.get_date_str().to_string(),
+		numeric::Point2f::new(0.0, 0.0),
+		numeric::Vector2f::new(1.0, 1.0),
+		0.0,
+		0,
+		font_info.clone()
+	    );
+
+	    let mut money = UniText::new(
+		number_to_jk::number_to_jk(data.get_total_money() as u64),
+		numeric::Point2f::new(0.0, 0.0),
+		numeric::Vector2f::new(1.0, 1.0),
+		0.0,
+		0,
+		font_info.clone()
+	    );
+	    
+	    set_table_frame_cell_center!(
+                ctx.context,
+                table_frame_story,
+                number,
+                numeric::Vector2u::new(0, index as u32 + 1)
+            );
+
+	    set_table_frame_cell_center!(
+                ctx.context,
+                table_frame_story,
+                date,
+                numeric::Vector2u::new(1, index as u32 + 1)
+            );
+
+	    set_table_frame_cell_center!(
+                ctx.context,
+                table_frame_story,
+		money,
+                numeric::Vector2u::new(2, index as u32 + 1)
+            );
+
+	    vtext_list.push(number);
+	    vtext_list.push(date);
+	    vtext_list.push(money);
+	}
+
+	RecordRoom {
+            desc_text,
+            canvas: sub_screen::SubScreen::new(
+                ctx.context,
+                pos_rect,
+                depth,
+                ggraphics::Color::from_rgba_u32(0),
+            ),
+            background: background,
+	    event_list: DelayEventList::new(),
+	    table_frame_hard,
+	    table_frame_story: table_frame_story,
+	    vtext_list: vtext_list,
+	    exit_button: exit_button,
+        }
+    }
+    
+    pub fn get_name(&self) -> String {
+        "record".to_string()
+    }
+
+    pub fn mouse_button_up<'a>(
+        &mut self,
+        _ctx: &mut SuzuContext<'a>,
+        point: numeric::Point2f,
+        _t: Clock,
+    ) -> Option<TitleContentsEvent> {
+	if self.exit_button.contains(point) {
+            return Some(TitleContentsEvent::NextContents("init-menu".to_string()));
+        }
+
+        None
+    }
+    
+    pub fn flush_delayed_event<'a>(&mut self, ctx: &mut SuzuContext<'a>, t: Clock) {
+	flush_delay_event_and_redraw_check!(self, self.event_list, ctx, t, { });
+    }
+}
+
+impl DrawableComponent for RecordRoom {
+    fn draw(&mut self, ctx: &mut ggez::Context) -> ggez::GameResult<()> {
+        if self.is_visible() {
+            sub_screen::stack_screen(ctx, &self.canvas);
+
+            self.background.draw(ctx)?;
+
+	    self.table_frame_hard.draw(ctx)?;
+	    self.table_frame_story.draw(ctx)?;
+
+	    for vtext in self.desc_text.iter_mut() {
+		vtext.draw(ctx)?;
+	    }
+	    
+	    for vtext in self.vtext_list.iter_mut() {
+		vtext.draw(ctx)?;
+	    }
+	    
+	    self.exit_button.draw(ctx)?;
+
+            sub_screen::pop_screen(ctx);
+            self.canvas.draw(ctx).unwrap();
+        }
+
+        Ok(())
+    }
+
+    fn hide(&mut self) {
+        self.canvas.hide();
+    }
+
+    fn appear(&mut self) {
+        self.canvas.appear();
+    }
+
+    fn is_visible(&self) -> bool {
+        self.canvas.is_visible()
+    }
+
+    fn set_drawing_depth(&mut self, depth: i8) {
+        self.canvas.set_drawing_depth(depth);
+    }
+
+    fn get_drawing_depth(&self) -> i8 {
+        self.canvas.get_drawing_depth()
+    }
+}
+
 
 pub enum TitleContents {
     InitialMenu(VTextList),
@@ -1252,6 +1648,7 @@ pub enum TitleContents {
     ConfigPanel(ConfigPanel),
     UpdatePanel(UpdatePanel),
     Gallery(Gallery),
+    RecordRoom(RecordRoom),
 }
 
 impl TitleContents {
@@ -1311,7 +1708,13 @@ impl TitleContents {
                 0,
 		t
             ))),
-            _ => None,
+	    "RecordRoom" => Some(TitleContents::RecordRoom(RecordRoom::new(
+		ctx,
+                numeric::Rect::new(0.0, 0.0, 1366.0, 768.0),
+		0,
+		t
+	    ))),
+	    _ => None,
         }
     }
 
@@ -1322,6 +1725,7 @@ impl TitleContents {
             TitleContents::ConfigPanel(panel) => panel.get_name(),
 	    TitleContents::UpdatePanel(panel) => panel.get_name(),
 	    TitleContents::Gallery(gallery) => gallery.get_name(),
+	    TitleContents::RecordRoom(rr) => rr.get_name(),
         }
     }
 
@@ -1332,6 +1736,7 @@ impl TitleContents {
             TitleContents::ConfigPanel(_) => (),
 	    TitleContents::UpdatePanel(panel) => panel.flush_delayed_event(ctx, t),
 	    TitleContents::Gallery(gallery) => gallery.flush_delayed_event(ctx, t),
+	    TitleContents::RecordRoom(rr) => rr.flush_delayed_event(ctx, t),
         }
     }
 
@@ -1342,6 +1747,7 @@ impl TitleContents {
             TitleContents::ConfigPanel(_) => (),
 	    TitleContents::UpdatePanel(panel) => panel.notify_switched(ctx, t),
 	    TitleContents::Gallery(_) => (),
+	    TitleContents::RecordRoom(_) => (),
         }	
     }
 }
@@ -1354,6 +1760,7 @@ impl DrawableComponent for TitleContents {
             TitleContents::ConfigPanel(panel) => panel.draw(ctx),
 	    TitleContents::UpdatePanel(panel) => panel.draw(ctx),
 	    TitleContents::Gallery(gallery) => gallery.draw(ctx),
+	    TitleContents::RecordRoom(rr) => rr.draw(ctx),
         }
     }
 
@@ -1364,6 +1771,7 @@ impl DrawableComponent for TitleContents {
             TitleContents::ConfigPanel(panel) => panel.hide(),
 	    TitleContents::UpdatePanel(panel) => panel.hide(),
 	    TitleContents::Gallery(gallery) => gallery.hide(),
+	    TitleContents::RecordRoom(rr) => rr.hide(),
         }
     }
 
@@ -1374,6 +1782,7 @@ impl DrawableComponent for TitleContents {
             TitleContents::ConfigPanel(panel) => panel.appear(),
 	    TitleContents::UpdatePanel(panel) => panel.appear(),
 	    TitleContents::Gallery(gallery) => gallery.appear(),
+	    TitleContents::RecordRoom(rr) => rr.appear(),
         }
     }
 
@@ -1384,6 +1793,7 @@ impl DrawableComponent for TitleContents {
             TitleContents::ConfigPanel(panel) => panel.is_visible(),
 	    TitleContents::UpdatePanel(panel) => panel.is_visible(),
 	    TitleContents::Gallery(gallery) => gallery.is_visible(),
+	    TitleContents::RecordRoom(rr) => rr.is_visible(),
         }
     }
 
@@ -1394,6 +1804,7 @@ impl DrawableComponent for TitleContents {
             TitleContents::ConfigPanel(panel) => panel.set_drawing_depth(depth),
 	    TitleContents::UpdatePanel(panel) => panel.set_drawing_depth(depth),
 	    TitleContents::Gallery(gallery) => gallery.set_drawing_depth(depth),
+	    TitleContents::RecordRoom(rr) => rr.set_drawing_depth(depth),
         }
     }
 
@@ -1404,6 +1815,7 @@ impl DrawableComponent for TitleContents {
             TitleContents::ConfigPanel(panel) => panel.get_drawing_depth(),
 	    TitleContents::UpdatePanel(panel) => panel.get_drawing_depth(),
 	    TitleContents::Gallery(gallery) => gallery.get_drawing_depth(),
+	    TitleContents::RecordRoom(rr) => rr.get_drawing_depth(),
         }
     }
 }

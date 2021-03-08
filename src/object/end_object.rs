@@ -271,12 +271,16 @@ impl EndSceneFlow {
 	ctx.permanent_save_data.story_cleared();
 
 	match ctx.take_save_data().game_mode {
+	    GameMode::Story => {
+		ctx.permanent_save_data.add_story_mode_record(HardModeRecord::new(
+		    ctx.take_save_data().task_result.total_money as i64
+		));	
+	    },
 	    GameMode::TimeAttack(_) => {
 		ctx.permanent_save_data.add_hard_mode_record(HardModeRecord::new(
 		    ctx.take_save_data().task_result.total_money as i64
-		))
+		));
 	    },
-	    _ => (),
 	}
 
 	match ctx.permanent_save_data.save() {

@@ -177,6 +177,7 @@ impl TitleScene {
             TitleContents::ConfigPanel(_) => (),
 	    TitleContents::UpdatePanel(_) => (),
 	    TitleContents::Gallery(_) => (),
+	    TitleContents::RecordRoom(_) => (),
         }
     }
 
@@ -206,6 +207,21 @@ impl TitleScene {
             print!("{}?", content_name);
             panic!("target title contents not found.");
         }
+
+	// Galleryはクリア後特典なので、クリアしていなければ
+	// listに戻して切り替え中断
+	match next_content.as_ref().unwrap() {
+	    TitleContents::Gallery(_) => {
+		if !ctx.permanent_save_data.is_cleared() {
+		    self.title_contents_set.add(
+			next_content.as_ref().unwrap().get_content_name(),
+			next_content.unwrap(),
+		    );
+		    return;
+		}
+	    },
+	    _ => (),
+	}
 
 	next_content.as_mut().unwrap().notify_switched(ctx, t);
 
@@ -277,6 +293,17 @@ impl TitleScene {
             }
 	    TitleContents::Gallery(gallery) => {
 		let maybe_event = gallery.mouse_button_up(ctx, point, t);
+                if let Some(event) = maybe_event {
+                    match event {
+                        TitleContentsEvent::NextContents(content_name) => {
+                            self.switch_current_content(ctx, content_name, t);
+                        }
+                        _ => (),
+                    }
+                }
+	    }
+	    TitleContents::RecordRoom(rr) => {
+		let maybe_event = rr.mouse_button_up(ctx, point, t);
                 if let Some(event) = maybe_event {
                     match event {
                         TitleContentsEvent::NextContents(content_name) => {
