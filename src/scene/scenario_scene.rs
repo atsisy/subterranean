@@ -16,6 +16,7 @@ use crate::object::effect_object;
 use crate::object::scenario::*;
 use crate::object::scenario_object::*;
 use crate::object::util_object::*;
+use crate::core::game_system;
 
 #[allow(unused_imports)] 
 use crate::perf_measure;
@@ -280,8 +281,16 @@ impl ScenarioScene {
                     }
                     "NextDay" => {
                         self.status_screen.show_main_page(ctx);
-                        self.status_screen.change_suzunaan_reputation(ctx, -2.0);
-                        ctx.take_save_data_mut().suzunaan_status.reputation -= 2.0;
+
+			let diff = if ctx.take_save_data_mut().suzunaan_status.reputation
+			    < game_system::TAKING_REST_REPUTATION_COST as f32 {
+				ctx.take_save_data_mut().suzunaan_status.reputation
+			    } else {
+				game_system::TAKING_REST_REPUTATION_COST as f32
+			    };
+			
+                        self.status_screen.change_suzunaan_reputation(ctx, -diff);
+                        ctx.take_save_data_mut().suzunaan_status.reputation -= diff;
 
                         add_delay_event!(
                             self.event_list,
@@ -472,7 +481,15 @@ impl ScenarioScene {
         add_delay_event!(
             self.event_list,
             |slf, ctx, _| {
-                let reputation_diff = ctx.current_total_ad_reputation_gain() as f32 - 2.0;
+                let reputation_diff = ctx.current_total_ad_reputation_gain() as f32 - game_system::TAKING_REST_REPUTATION_COST as f32;
+
+		let reputation_diff = if ctx.take_save_data_mut().suzunaan_status.reputation + reputation_diff
+		    < 0.0 {
+			ctx.take_save_data_mut().suzunaan_status.reputation
+		    } else {
+			reputation_diff
+		    };
+		
                 slf.status_screen
                     .change_suzunaan_reputation(ctx, reputation_diff);
                 ctx.take_save_data_mut().suzunaan_status.reputation += reputation_diff;

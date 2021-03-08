@@ -24,7 +24,7 @@
 	name = "アンの手記"
 	pages = 128	
 	size = "中判本"
-	billing_number = 3
+	billing_number = 7
 	base_price = 100
 	num = 2
 
@@ -54,7 +54,7 @@
 	name = "アンの手記"
 	pages = 128	
 	size = "中判本"
-	billing_number = 3
+	billing_number = 7
 	base_price = 100
 	num = 2
 
@@ -84,7 +84,7 @@
 	name = "アンの手記"
 	pages = 128	
 	size = "中判本"
-	billing_number = 3
+	billing_number = 7
 	base_price = 100
 	num = 2
 
@@ -114,7 +114,7 @@
 	name = "アンの手記"
 	pages = 128	
 	size = "中判本"
-	billing_number = 3
+	billing_number = 7
 	base_price = 100
 	num = 2
 

@@ -512,7 +512,14 @@ impl DrawableTaskResult {
             initial_save_data.suzunaan_status.reputation,
             1,
         );
-        meters.set_goal(ctx, ctx.take_save_data().suzunaan_status.reputation, 100);
+
+	let goal = if ctx.take_save_data().suzunaan_status.reputation >= 0.0 {
+	    ctx.take_save_data().suzunaan_status.reputation
+	} else {
+	    0.0
+	};
+	
+        meters.set_goal(ctx, goal, 100);
 
         let evaluation = DrawableEvaluationFlow::new(
             ctx,

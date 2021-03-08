@@ -1829,7 +1829,20 @@ impl ReturningRequestPool {
         let mut returning_request = Vec::new();
 
         let mut day = today.clone();
-        day.day -= 7;
+        day.day -= 12;
+
+	for _ in 1..=5 {
+            for _ in 1..=2 {
+                let rental_limit = RentalLimit::LongTerm;
+
+                returning_request.push(book_pool.generate_returning_request(
+                    game_data.customer_random_select(),
+                    day,
+                    rental_limit,
+                ));
+            }
+            day.add_day(1);
+        }
 
         for _ in 1..=7 {
             for _ in 1..=2 {

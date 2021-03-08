@@ -227,15 +227,6 @@ condition = "Good"
 unique_id = 0
 
 [[books_information]]
-name = "テスト本 拾"
-pages = 128
-size = "中判本"
-billing_number = 1
-base_price = 100
-condition = "Good"
-unique_id = 0
-
-[[books_information]]
 name = "越中史料"
 pages = 128
 size = "中判本"

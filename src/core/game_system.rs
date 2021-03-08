@@ -7,6 +7,9 @@ pub enum GoingOutEvent {
     Terakoya,
 }
 
+pub const GOING_OUT_MONEY_COST: i64 = 400;
+pub const TAKING_REST_REPUTATION_COST: i64 = 2;
+
 #[derive(Clone, Copy, Serialize, Deserialize, PartialEq)]
 pub enum DayWorkType {
     ShopWork,

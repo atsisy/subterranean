@@ -571,7 +571,17 @@ impl ScenarioAdPage {
             drwob_essential: DrawableObjectEssential::new(true, depth),
         };
 
-	while ad_page.total_ad_cost(ctx) > ctx.take_save_data().task_result.total_money {
+	let work_type_additional_cost = if let Some(sched) = ctx.take_save_data().get_todays_schedule() {
+	    match sched {
+		game_system::DayWorkType::GoingOut(_) => game_system::GOING_OUT_MONEY_COST,
+		_ => 0,
+	    }
+	} else {
+	    0
+	} as i32;
+	
+	// 広告料 + 追加料金 > 所持金 なら払えないので最も高価な広告を解除
+	while ad_page.total_ad_cost(ctx) + work_type_additional_cost > ctx.take_save_data().task_result.total_money {
 	    ad_page.uncheck_most_expensive(ctx);
 	}
 
@@ -580,6 +590,15 @@ impl ScenarioAdPage {
 
     pub fn click_handler<'a>(&mut self, ctx: &mut SuzuContext<'a>, click_point: numeric::Point2f) {
 	let total_ad_cost = self.total_ad_cost(ctx);
+
+	let work_type_additional_cost = if let Some(sched) = ctx.take_save_data().get_todays_schedule() {
+	    match sched {
+		game_system::DayWorkType::GoingOut(_) => game_system::GOING_OUT_MONEY_COST,
+		_ => 0,
+	    }
+	} else {
+	    0
+	} as i32;
 	
         for (ad_type, entry) in self.ad_table.iter_mut() {
 	    // クリックされてるか確認する広告の値段
@@ -595,7 +614,7 @@ impl ScenarioAdPage {
 	    };
 
 	    // 予想される合計価格 の方が 所持金 より大きいなら -> 追加をやめる
-	    if expected_total_ad_cost
+	    if expected_total_ad_cost + work_type_additional_cost
 		> ctx.take_save_data().task_result.total_money {
 		    continue;
 		}
