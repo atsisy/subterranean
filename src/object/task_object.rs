@@ -58,6 +58,7 @@ pub struct TaskTable {
     kosuzu_phrase: KosuzuPhrase,
     today: GensoDate,
     task_is_done: bool,
+    return_late_checked: bool,
     appearance_frame: TileBatchFrame,
     current_page_book_condition_report: Option<BookConditionEvalReport>,
 }
@@ -195,6 +196,7 @@ impl TaskTable {
             kosuzu_phrase: KosuzuPhrase::new(ctx, 0),
             today: ctx.take_save_data().date,
             task_is_done: false,
+	    return_late_checked: false,
             appearance_frame: appr_frame,
             current_page_book_condition_report: None,
         }
@@ -919,12 +921,17 @@ impl TaskTable {
 
 	if self.record_book_menu.date_check_menu_check_button_clicked() {
 	    if let Some(return_date) = self.borrowing_record_book.get_current_page_return_date() {
-		if return_date.is_past(&self.today) {
-		    self.add_fee_coins(ctx, 300, t);
-		    self.slide_hide_record_book(t);
-		    self.insert_kosuzu_message_set(ctx, "延滞してます\n延滞料金は三百円です", t);	    
+		if self.today.is_past(&return_date) {
+		    if self.return_late_checked {
+			self.insert_kosuzu_message_set(ctx, "もう延滞料金を受け取った", t);			
+		    } else {
+			self.add_fee_coins(ctx, 300, t);
+			self.slide_hide_record_book(t);
+			self.return_late_checked = true;
+			self.insert_kosuzu_message_set(ctx, "延滞してます\n延滞料金は三百円です", t);
+		    }
 		} else {
-		    self.insert_kosuzu_message_set(ctx, "（延滞はしていない）", t);		    
+		    self.insert_kosuzu_message_set(ctx, "延滞はしていない", t);	    
 		}
 	    }
 	}
@@ -1287,7 +1294,7 @@ impl TaskTable {
         &mut self,
         ctx: &mut SuzuContext<'a>,
         click_point: numeric::Point2f,
-	_lock_status: &RecordBookLockStatus,
+	lock_status: &RecordBookLockStatus,
         t: Clock,
     ) -> bool {
         let maybe_grid_pos = self
@@ -1323,9 +1330,17 @@ impl TaskTable {
 			    }
 			},
 			CustomerRequest::Returning(_) => {
-			    if grid_pos.x == 0 {
-				self.record_book_menu
-				    .show_date_check_menu(ctx, click_point, self.today.clone(), t);
+			    match lock_status {
+				RecordBookLockStatus::ReturningMatched => {
+				    if grid_pos.x == 0 {
+					let return_date = self.borrowing_record_book.get_current_page_return_date();
+					if let Some(return_date) = return_date {
+					    self.record_book_menu
+						.show_date_check_menu(ctx, click_point, self.today.clone(), return_date, t);
+					}
+				    }
+				},
+				_ => (),
 			    }
 			}
 		    }

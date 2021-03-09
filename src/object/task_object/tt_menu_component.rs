@@ -1116,7 +1116,6 @@ pub type DateDropMenu = DropDownArea<DateMenu>;
 pub struct DateCheckMenu {
     date_data: Vec<GensoDate>,
     date_table_frame: TableFrame,
-    today: GensoDate,
     desc_vtext: Vec<VerticalText>,
     date_vtext: Vec<VerticalText>,
     date_check_button: FramedButton,
@@ -1125,7 +1124,7 @@ pub struct DateCheckMenu {
 }
 
 impl DateCheckMenu {
-    pub fn new<'a>(ctx: &mut SuzuContext<'a>, today: GensoDate, drawing_depth: i8) -> Self {
+    pub fn new<'a>(ctx: &mut SuzuContext<'a>, today: GensoDate, return_date: GensoDate, drawing_depth: i8) -> Self {
 	let mut desc_vtext = Vec::new();
 	let mut date_data = Vec::new();
 	let mut date_vtext = Vec::new();
@@ -1165,7 +1164,7 @@ impl DateCheckMenu {
             desc_vtext.push(vtext);
         }
 
-	for (index, date) in vec![today.clone(), today.clone()].iter().enumerate() {
+	for (index, date) in vec![today.clone(), return_date].iter().enumerate() {
             let name_vtext_line = date.to_string();
             let mut vtext = VerticalText::new(
                 name_vtext_line,
@@ -1199,7 +1198,6 @@ impl DateCheckMenu {
 	    date_data: date_data,
 	    date_table_frame: date_table_frame,
 	    date_vtext: date_vtext,
-	    today: today,
 	    desc_vtext: desc_vtext,
 	    date_check_button: date_check_button,
 	    drwob_essential: DrawableObjectEssential::new(true, drawing_depth),
@@ -2578,9 +2576,10 @@ impl RecordBookMenuGroup {
         ctx: &mut SuzuContext<'a>,
         position: numeric::Point2f,
         today: GensoDate,
+	return_date: GensoDate,
         t: Clock,
     ) {
-        let mut date_menu = DateCheckMenu::new(ctx, today, 0);
+        let mut date_menu = DateCheckMenu::new(ctx, today, return_date, 0);
 
         let frame_size = date_menu.get_date_frame_size();
 
