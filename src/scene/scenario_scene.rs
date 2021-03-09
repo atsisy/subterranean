@@ -282,15 +282,15 @@ impl ScenarioScene {
                     "NextDay" => {
                         self.status_screen.show_main_page(ctx);
 
-			let diff = if ctx.take_save_data_mut().suzunaan_status.reputation
+			let diff = if ctx.take_save_data_mut().suzunaan_status.get_current_reputation()
 			    < game_system::TAKING_REST_REPUTATION_COST as f32 {
-				ctx.take_save_data_mut().suzunaan_status.reputation
+				ctx.take_save_data_mut().suzunaan_status.get_current_reputation()
 			    } else {
 				game_system::TAKING_REST_REPUTATION_COST as f32
 			    };
 			
                         self.status_screen.change_suzunaan_reputation(ctx, -diff);
-                        ctx.take_save_data_mut().suzunaan_status.reputation -= diff;
+			ctx.take_save_data_mut().suzunaan_status.add_reputation(-diff);
 
                         add_delay_event!(
                             self.event_list,
@@ -363,7 +363,7 @@ impl ScenarioScene {
                 let reputation_diff = ctx.current_total_ad_reputation_gain();
                 slf.status_screen
                     .change_suzunaan_reputation(ctx, reputation_diff as f32);
-                ctx.take_save_data_mut().suzunaan_status.reputation += reputation_diff as f32;
+		ctx.take_save_data_mut().suzunaan_status.add_reputation(reputation_diff as f32);
             },
             self.get_current_clock() + 100
         );
@@ -433,7 +433,7 @@ impl ScenarioScene {
                 let reputation_diff = ctx.current_total_ad_reputation_gain() as f32;
                 slf.status_screen
                     .change_suzunaan_reputation(ctx, reputation_diff);
-                ctx.take_save_data_mut().suzunaan_status.reputation += reputation_diff;
+		ctx.take_save_data_mut().suzunaan_status.add_reputation(reputation_diff);
             },
             self.get_current_clock() + 100
         );
@@ -460,7 +460,7 @@ impl ScenarioScene {
             |slf, ctx, t| {
                 slf.scene_transition_close_effect(ctx, t);
             },
-            self.get_current_clock() + 150
+            self.get_current_clock() + 200
         );
     }
 
@@ -483,16 +483,16 @@ impl ScenarioScene {
             |slf, ctx, _| {
                 let reputation_diff = ctx.current_total_ad_reputation_gain() as f32 - game_system::TAKING_REST_REPUTATION_COST as f32;
 
-		let reputation_diff = if ctx.take_save_data_mut().suzunaan_status.reputation + reputation_diff
+		let reputation_diff = if ctx.take_save_data().suzunaan_status.get_current_reputation() + reputation_diff
 		    < 0.0 {
-			ctx.take_save_data_mut().suzunaan_status.reputation
+			ctx.take_save_data().suzunaan_status.get_current_reputation()
 		    } else {
 			reputation_diff
 		    };
 		
                 slf.status_screen
                     .change_suzunaan_reputation(ctx, reputation_diff);
-                ctx.take_save_data_mut().suzunaan_status.reputation += reputation_diff;
+		ctx.take_save_data_mut().suzunaan_status.add_reputation(reputation_diff);
             },
             self.get_current_clock() + 100
         );

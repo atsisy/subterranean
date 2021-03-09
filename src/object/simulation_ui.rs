@@ -226,7 +226,7 @@ impl ScenarioMenuContents {
         }
 
         let mut reputation_text = VerticalText::new(
-            number_to_jk(ctx.take_save_data().suzunaan_status.reputation as u64),
+            number_to_jk(ctx.take_save_data().suzunaan_status.get_current_reputation() as u64),
             numeric::Point2f::new(0.0, 0.0),
             numeric::Vector2f::new(1.0, 1.0),
             0.0,

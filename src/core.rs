@@ -1594,7 +1594,7 @@ impl SceneStack {
 #[derive(Clone, Serialize, Deserialize)]
 pub struct SuzunaAnStatus {
     pub jinyou_balance: f32,
-    pub reputation: f32,
+    reputation: f32,
     pub kosuzu_hp: f32,
 }
 
@@ -1615,6 +1615,19 @@ impl SuzunaAnStatus {
         match event_type {
             ReputationEvent::DoneDeskTask => self.reputation += 1.0,
         }
+    }
+
+    pub fn get_current_reputation(&self) -> f32 {
+	self.reputation
+    }
+
+    pub fn add_reputation(&mut self, diff: f32) {
+	let next = self.reputation + diff;
+	self.reputation = if next > 100.0 {
+	    100.0
+	} else {
+	    next
+	};
     }
 }
 
@@ -2334,11 +2347,13 @@ impl PermanentSaveData {
 		if content.is_none() {
 		    return Self::new_empty();
 		}
-		
+
 		let permanent_data: Result<PermanentSaveData, toml::de::Error> = toml::from_str(&content.unwrap());
 		match permanent_data {
-		    Ok(p) => return p,
-		    Err(e) => panic!("Failed to parse toml: {}", e),
+		    Ok(p) => {
+			return p;
+		    },
+		    Err(_) => return Self::new_empty(),
 		}
 	    },
 	    Err(_) => Self::new_empty(),
@@ -2349,7 +2364,7 @@ impl PermanentSaveData {
 	let mut file = File::create("./permanent_save")?;
 
         file.write_all(
-            crypt::crypt_str(&serde_json::to_string(self).unwrap())
+            crypt::crypt_str(&toml::to_string(self).unwrap())
                 .unwrap()
                 .as_slice(),
         )
@@ -2372,7 +2387,7 @@ impl PermanentSaveData {
     }
 
     pub fn iter_story_mode_records(&self) -> std::slice::Iter<HardModeRecord> {
-	self.hard_mode_records.iter()
+	self.story_mode_records.iter()
     }
     
     pub fn story_cleared(&mut self) {

@@ -1628,7 +1628,7 @@ impl ShopMenuContents {
                 normal_scale_font,
             ),
             kosuzu_level_num: VerticalText::new(
-                format!("{}", number_to_jk(ctx.take_save_data().suzunaan_status.reputation as u64)),
+                format!("{}", number_to_jk(ctx.take_save_data().suzunaan_status.get_current_reputation() as u64)),
                 numeric::Point2f::new(230.0, 470.0),
                 numeric::Vector2f::new(1.0, 1.0),
                 0.0,

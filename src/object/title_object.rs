@@ -1295,7 +1295,7 @@ impl RecordRoom {
             0,
             font_info,
         );
-	hard_text.make_center(ctx.context, numeric::Point2f::new((WINDOW_SIZE_X / 6) as f32, 125.0));
+	hard_text.make_center(ctx.context, numeric::Point2f::new((WINDOW_SIZE_X / 8) as f32, 125.0));
 	desc_text.push(hard_text);
 
 	let mut story_text = UniText::new(
@@ -1306,7 +1306,7 @@ impl RecordRoom {
             0,
             font_info,
         );
-	story_text.make_center(ctx.context, numeric::Point2f::new((WINDOW_SIZE_X / 6) as f32, 440.0));
+	story_text.make_center(ctx.context, numeric::Point2f::new((WINDOW_SIZE_X / 8) as f32, 440.0));
 	desc_text.push(story_text);
 	
 	let exit_button = FramedButton::create_design1(
@@ -1382,9 +1382,9 @@ impl RecordRoom {
             numeric::Vector2u::new(2, 0)
         );
 	
-	vtext_list.push(number);
-	vtext_list.push(date);
-	vtext_list.push(money);
+	desc_text.push(number);
+	desc_text.push(date);
+	desc_text.push(money);
 
 	let mut number = UniText::new(
 	    "順位".to_string(),
@@ -1434,9 +1434,9 @@ impl RecordRoom {
             numeric::Vector2u::new(2, 0)
         );
 	
-	vtext_list.push(number);
-	vtext_list.push(date);
-	vtext_list.push(money);
+	desc_text.push(number);
+	desc_text.push(date);
+	desc_text.push(money);
 	
 	for (index, data) in ctx.permanent_save_data.iter_hard_mode_records().enumerate() {
 	    if index >= 5 {
@@ -1444,7 +1444,7 @@ impl RecordRoom {
 	    }
 
 	    let mut number = UniText::new(
-		number_to_jk::number_to_jk(index as u64),
+		number_to_jk::number_to_jk(index as u64 + 1),
 		numeric::Point2f::new(0.0, 0.0),
 		numeric::Vector2f::new(1.0, 1.0),
 		0.0,
@@ -1462,7 +1462,7 @@ impl RecordRoom {
 	    );
 
 	    let mut money = UniText::new(
-		number_to_jk::number_to_jk(data.get_total_money() as u64),
+		format!("{}円", number_to_jk::number_to_jk(data.get_total_money() as u64)),
 		numeric::Point2f::new(0.0, 0.0),
 		numeric::Vector2f::new(1.0, 1.0),
 		0.0,
@@ -1502,7 +1502,7 @@ impl RecordRoom {
 	    }
 
 	    let mut number = UniText::new(
-		number_to_jk::number_to_jk(index as u64),
+		number_to_jk::number_to_jk(index as u64 + 1),
 		numeric::Point2f::new(0.0, 0.0),
 		numeric::Vector2f::new(1.0, 1.0),
 		0.0,
@@ -1520,7 +1520,7 @@ impl RecordRoom {
 	    );
 
 	    let mut money = UniText::new(
-		number_to_jk::number_to_jk(data.get_total_money() as u64),
+		format!("{}円", number_to_jk::number_to_jk(data.get_total_money() as u64)),
 		numeric::Point2f::new(0.0, 0.0),
 		numeric::Vector2f::new(1.0, 1.0),
 		0.0,
@@ -1569,6 +1569,132 @@ impl RecordRoom {
 	    vtext_list: vtext_list,
 	    exit_button: exit_button,
         }
+    }
+
+    pub fn reset<'a>(&mut self, ctx: &mut SuzuContext<'a>) {
+	self.vtext_list.clear();
+
+	let font_info = FontInformation::new(
+            ctx.resource.get_font(FontID::Cinema),
+            numeric::Vector2f::new(28.0, 28.0),
+            ggraphics::Color::from_rgba_u32(0xccccccff),
+        );
+
+	for (index, data) in ctx.permanent_save_data.iter_hard_mode_records().enumerate() {
+	    if index >= 5 {
+		break;
+	    }
+
+	    let mut number = UniText::new(
+		number_to_jk::number_to_jk(index as u64 + 1),
+		numeric::Point2f::new(0.0, 0.0),
+		numeric::Vector2f::new(1.0, 1.0),
+		0.0,
+		0,
+		font_info.clone()
+	    );
+
+	    let mut date = UniText::new(
+		data.get_date_str().to_string(),
+		numeric::Point2f::new(0.0, 0.0),
+		numeric::Vector2f::new(1.0, 1.0),
+		0.0,
+		0,
+		font_info.clone()
+	    );
+
+	    let mut money = UniText::new(
+		format!("{}円", number_to_jk::number_to_jk(data.get_total_money() as u64)),
+		numeric::Point2f::new(0.0, 0.0),
+		numeric::Vector2f::new(1.0, 1.0),
+		0.0,
+		0,
+		font_info.clone()
+	    );
+	    
+	    set_table_frame_cell_center!(
+                ctx.context,
+                self.table_frame_hard,
+                number,
+                numeric::Vector2u::new(0, index as u32 + 1)
+            );
+
+	    set_table_frame_cell_center!(
+                ctx.context,
+                self.table_frame_hard,
+                date,
+                numeric::Vector2u::new(1, index as u32 + 1)
+            );
+
+	    set_table_frame_cell_center!(
+                ctx.context,
+                self.table_frame_hard,
+		money,
+                numeric::Vector2u::new(2, index as u32 + 1)
+            );
+
+	    self.vtext_list.push(number);
+	    self.vtext_list.push(date);
+	    self.vtext_list.push(money);
+	}
+
+	for (index, data) in ctx.permanent_save_data.iter_story_mode_records().enumerate() {
+	    if index >= 5 {
+		break;
+	    }
+
+	    let mut number = UniText::new(
+		number_to_jk::number_to_jk(index as u64 + 1),
+		numeric::Point2f::new(0.0, 0.0),
+		numeric::Vector2f::new(1.0, 1.0),
+		0.0,
+		0,
+		font_info.clone()
+	    );
+
+	    let mut date = UniText::new(
+		data.get_date_str().to_string(),
+		numeric::Point2f::new(0.0, 0.0),
+		numeric::Vector2f::new(1.0, 1.0),
+		0.0,
+		0,
+		font_info.clone()
+	    );
+
+	    let mut money = UniText::new(
+		format!("{}円", number_to_jk::number_to_jk(data.get_total_money() as u64)),
+		numeric::Point2f::new(0.0, 0.0),
+		numeric::Vector2f::new(1.0, 1.0),
+		0.0,
+		0,
+		font_info.clone()
+	    );
+	    
+	    set_table_frame_cell_center!(
+                ctx.context,
+                self.table_frame_story,
+                number,
+                numeric::Vector2u::new(0, index as u32 + 1)
+            );
+
+	    set_table_frame_cell_center!(
+                ctx.context,
+                self.table_frame_story,
+                date,
+                numeric::Vector2u::new(1, index as u32 + 1)
+            );
+
+	    set_table_frame_cell_center!(
+                ctx.context,
+                self.table_frame_story,
+		money,
+                numeric::Vector2u::new(2, index as u32 + 1)
+            );
+
+	    self.vtext_list.push(number);
+	    self.vtext_list.push(date);
+	    self.vtext_list.push(money);
+	}
     }
     
     pub fn get_name(&self) -> String {
@@ -1747,7 +1873,7 @@ impl TitleContents {
             TitleContents::ConfigPanel(_) => (),
 	    TitleContents::UpdatePanel(panel) => panel.notify_switched(ctx, t),
 	    TitleContents::Gallery(_) => (),
-	    TitleContents::RecordRoom(_) => (),
+	    TitleContents::RecordRoom(rr) => rr.reset(ctx),
         }	
     }
 }

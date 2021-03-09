@@ -189,7 +189,7 @@ impl SuzunaStatusMainPage {
             numeric::Rect::new(90.0, 290.0, 400.0, 40.0),
             6.0,
             100.0,
-            ctx.take_save_data().suzunaan_status.reputation,
+            ctx.take_save_data().suzunaan_status.get_current_reputation(),
             1,
         );
 
@@ -835,7 +835,7 @@ impl ScenarioAgencyPage {
     pub fn click_handler<'a>(&mut self, ctx: &mut SuzuContext<'a>, click_point: numeric::Point2f) {
         for (ad_type, entry) in self.ad_table.iter_mut() {
             if ctx.resource.get_default_ad_agency_cost(ad_type) as f32
-                <= ctx.take_save_data().suzunaan_status.reputation
+                <= ctx.take_save_data().suzunaan_status.get_current_reputation()
             {
                 entry.check_box.click_handler(click_point);
                 ctx.change_ad_agency_status(*ad_type, entry.is_checked());
@@ -892,7 +892,7 @@ impl ScenarioAgencyPage {
             SuzunaAdAgencyType::YamaJinja,
         ] {
             if self.ad_table.get(&ad_type).unwrap().is_checked() {
-                if ctx.resource.get_default_ad_agency_cost(&ad_type) as f32 > ctx.take_save_data().suzunaan_status.reputation {
+                if ctx.resource.get_default_ad_agency_cost(&ad_type) as f32 > ctx.take_save_data().suzunaan_status.get_current_reputation() {
 		    self.ad_table.get_mut(&ad_type).unwrap().check_box.try_check(false);
 		    ctx.change_ad_agency_status(ad_type, false);
 		}

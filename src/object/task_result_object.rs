@@ -509,12 +509,12 @@ impl DrawableTaskResult {
             numeric::Rect::new(350.0, 650.0, 500.0, 60.0),
             6.0,
             100.0,
-            initial_save_data.suzunaan_status.reputation,
+            initial_save_data.suzunaan_status.get_current_reputation(),
             1,
         );
 
-	let goal = if ctx.take_save_data().suzunaan_status.reputation >= 0.0 {
-	    ctx.take_save_data().suzunaan_status.reputation
+	let goal = if ctx.take_save_data().suzunaan_status.get_current_reputation() >= 0.0 {
+	    ctx.take_save_data().suzunaan_status.get_current_reputation()
 	} else {
 	    0.0
 	};

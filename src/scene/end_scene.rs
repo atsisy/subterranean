@@ -151,14 +151,6 @@ impl EndScene {
 
 impl SceneManager for EndScene {
     fn key_up_event<'a>(&mut self, ctx: &mut SuzuContext<'a>, vkey: tdev::VirtualKey) {
-        let t = self.get_current_clock();
-
-        match vkey {
-            VirtualKey::Action1 => {
-                self.transition_selected_scene(ctx, SceneID::Scenario, t);
-            }
-            _ => (),
-        }
     }
 
     fn pre_process<'a>(&mut self, ctx: &mut SuzuContext<'a>) {

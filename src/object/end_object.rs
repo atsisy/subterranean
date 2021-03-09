@@ -37,7 +37,7 @@ impl EndSceneFlow {
 	let mut pos = numeric::Point2f::new(1000.0, 90.0);
 	
 	vec![
-	    format!("評判\n　{}", number_to_jk::number_to_jk(ctx.take_save_data().suzunaan_status.reputation as u64)),
+	    format!("評判\n　{}", number_to_jk::number_to_jk(ctx.take_save_data().suzunaan_status.get_current_reputation() as u64)),
 	    format!("総収入\n　　{}円", number_to_jk::number_to_jk(ctx.take_save_data().task_result.total_money as u64)),
 	    format!("接客回数\n　{}回", number_to_jk::number_to_jk(ctx.take_save_data().award_data.customer_count as u64)),
 	    format!("貸出回数\n　{}回", number_to_jk::number_to_jk(ctx.take_save_data().award_data.borrowing_count as u64)),
