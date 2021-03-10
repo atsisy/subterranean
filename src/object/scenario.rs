@@ -11,7 +11,7 @@ use torifune::impl_drawable_object_for_wrapped;
 use torifune::impl_texture_object_for_wrapped;
 
 use super::*;
-use crate::parse_toml_file;
+use crate::{core::ScenarioSceneSaveData, parse_toml_file};
 use crate::scene::scenario_scene::ScenarioContext;
 use crate::scene::{SceneID, SceneTransition};
 use crate::{core::SoundID, object::util_object::*};
@@ -921,14 +921,23 @@ pub struct Scenario {
 }
 
 impl Scenario {
-    pub fn new<'a>(ctx: &mut SuzuContext<'a>, file_path: &str) -> Self {
+    pub fn new<'a>(
+	ctx: &mut SuzuContext<'a>,
+	file_path: &str,
+	save_data: Option<&ScenarioSceneSaveData>,
+    ) -> Self {
         let game_data = &ctx.resource;
 
         let mut scenario = ScenarioElementPool::new_empty();
 
         let root = parse_toml_file!(ctx.context, file_path);
 
-        let first_scenario_id = root["first-scenario-id"].as_integer().unwrap();
+        let first_scenario_id = 
+	    if let Some(save_data) = save_data {
+		save_data.scenario_id as i64
+	    } else {
+		root["first-scenario-id"].as_integer().unwrap()
+	    };
 
         let array = root["scenario-group"].as_array().unwrap();
 
@@ -1596,10 +1605,11 @@ impl ScenarioEvent {
         ctx: &mut SuzuContext<'a>,
         rect: numeric::Rect,
         file_path: &str,
+	save_data: Option<&ScenarioSceneSaveData>,
         hide_shadow: bool,
         t: Clock,
     ) -> Self {
-        let scenario = Scenario::new(ctx, file_path);
+        let scenario = Scenario::new(ctx, file_path, save_data);
 
         let event_background = if let Some(mut texture) =
             Self::update_event_background_sub(ctx, scenario.ref_current_element())
@@ -1649,7 +1659,8 @@ impl ScenarioEvent {
         scenario_path: &str,
         t: Clock,
     ) {
-        self.scenario = Scenario::new(ctx, scenario_path);
+	let save_data = ctx.take_save_data_mut().get_scenario_save_data();
+        self.scenario = Scenario::new(ctx, scenario_path, save_data.as_ref());
         self.status = ScenarioEventStatus::Scenario;
         self.key_down_action1(ctx, None, t);
         self.update_text(ctx, Some(scno_ctx));
@@ -1948,6 +1959,10 @@ impl ScenarioEvent {
             }
             _ => (),
         }
+    }
+
+    pub fn get_current_scenario_id(&self) -> usize {
+	self.scenario.current_page
     }
 }
 

@@ -6,9 +6,7 @@ use torifune::graphics::object::Effectable;
 use torifune::numeric;
 use torifune::{core::Clock, sound::SoundPlayFlags};
 
-use crate::core::{
-    GameMode, GeneralScenarioID, MouseInformation, SoundID, SuzuContext, TileBatchTextureID,
-};
+use crate::core::{GameMode, GeneralScenarioID, MouseInformation, ScenarioSceneSaveData, SoundID, SuzuContext, TileBatchTextureID};
 
 use crate::add_delay_event;
 use crate::core::game_system;
@@ -81,10 +79,13 @@ impl ScenarioScene {
             _ => panic!(""),
         };
 
+	let save_data = ctx.take_save_data_mut().get_scenario_save_data();
+
         let scenario = ScenarioEvent::new(
             ctx,
             numeric::Rect::new(0.0, 0.0, 1366.0, 768.0),
             &file_path,
+	    save_data.as_ref().clone(),
             false,
             0,
         );
@@ -121,6 +122,14 @@ impl ScenarioScene {
             0,
         );
         status_screen.hide();
+
+	if let Some(save_data) = save_data.as_ref() {
+	    if save_data.page_showed {
+		status_screen.appear();
+	    }
+
+	    status_screen.show(ctx, save_data.status_page.clone());
+	}
 
         ctx.play_sound_as_bgm(
             SoundID::ScenarioBGM,
@@ -721,7 +730,7 @@ impl SceneManager for ScenarioScene {
         //}));
     }
 
-    fn post_process<'a>(&mut self, _ctx: &mut SuzuContext<'a>) -> SceneTransition {
+    fn post_process<'a>(&mut self, ctx: &mut SuzuContext<'a>) -> SceneTransition {
         self.update_current_clock();
 
         // SceneTransition状態になっている
@@ -734,6 +743,18 @@ impl SceneManager for ScenarioScene {
             if let Some(scene_transition) = self.scenario_event.get_scene_transition_type() {
                 self.scene_transition_type = scene_transition;
             }
+
+	    match self.scene_transition {
+		SceneID::Save => {
+		    ctx.take_save_data_mut().scenario_save_data
+			= Some(ScenarioSceneSaveData {
+			    scenario_id: self.scenario_event.get_current_scenario_id() as i32,
+			    status_page: self.status_screen.get_current_page_id(),
+			    page_showed: self.status_screen.is_visible(),
+			});
+		},
+		_ => (),
+	    }
         }
 
         self.scene_transition_type

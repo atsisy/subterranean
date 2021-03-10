@@ -1157,6 +1157,7 @@ impl Gallery {
                 ctx,
                 numeric::Rect::new(0.0, 0.0, 1366.0, 748.0),
                 "/scenario/empty.toml",
+		None,
                 true,
                 t,
             ),

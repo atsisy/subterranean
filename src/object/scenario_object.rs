@@ -963,7 +963,7 @@ impl DrawableComponent for ScenarioAgencyPage {
     }
 }
 
-#[derive(Clone)]
+#[derive(Clone, Serialize, Deserialize)]
 pub enum SuzunaStatusPageID {
     Main = 0,
     Ad,
@@ -1204,6 +1204,10 @@ impl SuzunaStatusScreen {
         self.redraw_request = DrawRequest::Draw;
     }
 
+    pub fn get_current_page_id(&self) -> SuzunaStatusPageID {
+	self.pages.get_current_page_id()
+    }
+
     pub fn click_handler<'a>(
         &mut self,
         ctx: &mut SuzuContext<'a>,
@@ -1299,6 +1303,15 @@ impl SuzunaStatusScreen {
     pub fn update_main_page_todays_sched_text<'a>(&mut self, ctx: &mut SuzuContext<'a>) {
         self.pages.update_main_page_todays_sched_text(ctx);
         self.redraw_request = DrawRequest::Draw;
+    }
+
+    pub fn show<'a>(&mut self, ctx: &mut SuzuContext<'a>, page_id: SuzunaStatusPageID) {
+	match page_id {
+	    SuzunaStatusPageID::Main => self.show_main_page(ctx),
+	    SuzunaStatusPageID::Ad => self.show_ad_page(),
+	    SuzunaStatusPageID::AdAgency => self.show_ad_agency_page(),
+	    SuzunaStatusPageID::Schedule => self.show_schedule_page(),
+	}
     }
 }
 

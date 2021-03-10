@@ -29,7 +29,7 @@ use std::collections::HashMap;
 use std::collections::VecDeque;
 use std::str::FromStr;
 
-use crate::scene;
+use crate::{object::scenario_object::SuzunaStatusPageID, scene};
 use crate::{
     object::{
         scenario_object::SuzunaAdAgencyType, task_object::tt_sub_component::BorrowingRecordBookData,
@@ -1912,6 +1912,13 @@ impl ReturningRequestPool {
 }
 
 #[derive(Clone, Serialize, Deserialize)]
+pub struct ScenarioSceneSaveData {
+    pub scenario_id: i32,
+    pub status_page: SuzunaStatusPageID,
+    pub page_showed: bool,
+}
+
+#[derive(Clone, Serialize, Deserialize)]
 pub struct SavableData {
     pub suzuna_book_pool: SuzunaBookPool,
     pub record_book_data: BorrowingRecordBookData,
@@ -1924,6 +1931,7 @@ pub struct SavableData {
     pub award_data: game_system::AwardData,
     pub game_mode: GameMode,
     pub run_tutorial: bool,
+    pub scenario_save_data: Option<ScenarioSceneSaveData>,
 }
 
 impl SavableData {
@@ -1967,6 +1975,7 @@ impl SavableData {
             award_data: game_system::AwardData::new(),
             game_mode: game_mode,
             run_tutorial: true,
+	    scenario_save_data: None,
         }
     }
 
@@ -2065,6 +2074,10 @@ impl SavableData {
 
     pub fn get_todays_schedule(&self) -> Option<game_system::DayWorkType> {
         self.week_schedule.get_schedule_of(&self.date).clone()
+    }
+
+    pub fn get_scenario_save_data(&mut self) -> Option<ScenarioSceneSaveData> {
+	std::mem::replace(&mut self.scenario_save_data, None)
     }
 }
 

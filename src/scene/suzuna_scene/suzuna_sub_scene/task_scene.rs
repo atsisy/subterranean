@@ -397,6 +397,7 @@ impl TaskScene {
             ctx,
             numeric::Rect::new(0.0, 0.0, 1366.0, 748.0),
             path,
+	    None,
             true,
             t,
         );
