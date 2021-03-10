@@ -1,20 +1,20 @@
 use std::collections::LinkedList;
 use std::collections::VecDeque;
 
-use torifune::{graphics::drawable::*, sound::SoundHandler};
 use torifune::graphics::object::sub_screen;
 use torifune::graphics::object::sub_screen::SubScreen;
 use torifune::graphics::object::*;
 use torifune::numeric;
+use torifune::{graphics::drawable::*, sound::SoundHandler};
 
 use torifune::impl_drawable_object_for_wrapped;
 use torifune::impl_texture_object_for_wrapped;
 
 use super::*;
-use crate::{core::SoundID, object::util_object::*};
 use crate::parse_toml_file;
 use crate::scene::scenario_scene::ScenarioContext;
 use crate::scene::{SceneID, SceneTransition};
+use crate::{core::SoundID, object::util_object::*};
 use crate::{
     core::{FontID, GameResource, SuzuContext, TextureID, TileBatchTextureID},
     scene::DrawRequest,
@@ -156,17 +156,17 @@ pub struct ScenarioTachie {
 
 impl ScenarioTachie {
     fn tachie_texture_scale(id: TextureID) -> numeric::Vector2f {
-	match id {
-	    TextureID::KosuzuTachie1 => numeric::Vector2f::new(0.3, 0.3),
-	    TextureID::AkyuTachieDefault => numeric::Vector2f::new(0.248, 0.248),
-	    _ => numeric::Vector2f::new(1.0, 1.0),
-	}
+        match id {
+            TextureID::KosuzuTachie1 => numeric::Vector2f::new(0.3, 0.3),
+            TextureID::AkyuTachieDefault => numeric::Vector2f::new(0.248, 0.248),
+            _ => numeric::Vector2f::new(1.0, 1.0),
+        }
     }
-    
+
     pub fn new<'a>(ctx: &mut SuzuContext<'a>, tachie_data: TachieData, t: Clock) -> Self {
         // left
         let left_texture = if tachie_data.left.is_some() {
-	    let texture_id = tachie_data.left.unwrap();
+            let texture_id = tachie_data.left.unwrap();
             Some(SimpleObject::new(
                 MovableUniTexture::new(
                     Box::new(UniTexture::new(
@@ -185,9 +185,8 @@ impl ScenarioTachie {
             None
         };
 
-	
-	let inner_right_texture = if tachie_data.inner_right.is_some() {
-	    let texture_id = tachie_data.inner_right.unwrap();
+        let inner_right_texture = if tachie_data.inner_right.is_some() {
+            let texture_id = tachie_data.inner_right.unwrap();
             Some(SimpleObject::new(
                 MovableUniTexture::new(
                     Box::new(UniTexture::new(
@@ -207,15 +206,19 @@ impl ScenarioTachie {
         };
 
         let right_texture = if tachie_data.right.is_some() {
-	    let texture_id = tachie_data.right.unwrap();
+            let texture_id = tachie_data.right.unwrap();
             Some(SimpleObject::new(
                 MovableUniTexture::new(
                     Box::new(UniTexture::new(
                         ctx.ref_texture(texture_id),
                         numeric::Point2f::new(
-			    if inner_right_texture.is_some() { 880.0 } else { 820.0 },
-			    60.0
-			),
+                            if inner_right_texture.is_some() {
+                                880.0
+                            } else {
+                                820.0
+                            },
+                            60.0,
+                        ),
                         Self::tachie_texture_scale(texture_id),
                         0.0,
                         0,
@@ -229,9 +232,8 @@ impl ScenarioTachie {
             None
         };
 
-
         ScenarioTachie {
-	    inner_right: inner_right_texture,
+            inner_right: inner_right_texture,
             left: left_texture,
             right: right_texture,
             drwob_essential: DrawableObjectEssential::new(true, 0),
@@ -250,7 +252,7 @@ impl DrawableComponent for ScenarioTachie {
                 texture.draw(ctx)?;
             }
 
-	    if let Some(texture) = self.inner_right.as_mut() {
+            if let Some(texture) = self.inner_right.as_mut() {
                 texture.draw(ctx)?;
             }
         }
@@ -289,7 +291,7 @@ pub struct TachieData {
 impl TachieData {
     pub fn new_empty() -> TachieData {
         TachieData {
-	    inner_right: None,
+            inner_right: None,
             right: None,
             left: None,
         }
@@ -345,9 +347,9 @@ impl ScenarioText {
         }
 
         let background_texture_id = match toml_scripts.get("background") {
-	    Some(background) => Some(TextureID::from_str(background.as_str().unwrap()).unwrap()),
-	    None => None,
-	};
+            Some(background) => Some(TextureID::from_str(background.as_str().unwrap()).unwrap()),
+            None => None,
+        };
 
         let total_length: usize = seq_text.iter().fold(0, |sum, s| sum + s.str_len());
 
@@ -358,7 +360,7 @@ impl ScenarioText {
                 } else {
                     None
                 },
-		inner_right: if let Some(tid) = tachie_table.get("inner-right") {
+                inner_right: if let Some(tid) = tachie_table.get("inner-right") {
                     Some(TextureID::from_str(tid.as_str().unwrap()).unwrap())
                 } else {
                     None
@@ -371,7 +373,7 @@ impl ScenarioText {
             }
         } else {
             TachieData {
-		inner_right: None,
+                inner_right: None,
                 right: None,
                 left: None,
             }
@@ -481,7 +483,7 @@ impl ChoicePatternData {
                 } else {
                     None
                 },
-		inner_right: if let Some(tid) = tachie_table.get("inner-right") {
+                inner_right: if let Some(tid) = tachie_table.get("inner-right") {
                     Some(TextureID::from_str(tid.as_str().unwrap()).unwrap())
                 } else {
                     None
@@ -604,7 +606,7 @@ impl ChoiceBox {
         let rpoint = self.canvas.relative_point(point);
 
         self.selecting = None;
-	
+
         for (index, panel) in self.panels.iter_mut().enumerate() {
             if panel.contains(rpoint) {
                 panel.make_this_hovered_status(ctx);
@@ -696,7 +698,7 @@ impl ScenarioFinishAndWaitData {
                 } else {
                     None
                 },
-		inner_right: if let Some(tid) = tachie_table.get("inner-right") {
+                inner_right: if let Some(tid) = tachie_table.get("inner-right") {
                     Some(TextureID::from_str(tid.as_str().unwrap()).unwrap())
                 } else {
                     None
@@ -781,11 +783,11 @@ impl ScenarioBuiltinCommand {
                         } else {
                             None
                         },
-			inner_right: if let Some(tid) = tachie_table.get("inner-right") {
-			    Some(TextureID::from_str(tid.as_str().unwrap()).unwrap())
-			} else {
-			    None
-			},
+                        inner_right: if let Some(tid) = tachie_table.get("inner-right") {
+                            Some(TextureID::from_str(tid.as_str().unwrap()).unwrap())
+                        } else {
+                            None
+                        },
                         left: if let Some(tid) = tachie_table.get("left") {
                             Some(TextureID::from_str(tid.as_str().unwrap()).unwrap())
                         } else {
@@ -920,8 +922,8 @@ pub struct Scenario {
 
 impl Scenario {
     pub fn new<'a>(ctx: &mut SuzuContext<'a>, file_path: &str) -> Self {
-	let game_data = &ctx.resource;
-	
+        let game_data = &ctx.resource;
+
         let mut scenario = ScenarioElementPool::new_empty();
 
         let root = parse_toml_file!(ctx.context, file_path);
@@ -1341,12 +1343,12 @@ impl TextBox {
             Vec::new(),
         ));
 
-	self.set_text_box_status(TextBoxStatus::FixedText);
+        self.set_text_box_status(TextBoxStatus::FixedText);
     }
 
     pub fn next_button_handler(&mut self) {
         self.head_line_number += 1;
-	self.set_text_box_status(TextBoxStatus::UpdatingText);
+        self.set_text_box_status(TextBoxStatus::UpdatingText);
     }
 
     pub fn reset_head_line(&mut self) {
@@ -1354,7 +1356,7 @@ impl TextBox {
     }
 
     pub fn set_text_box_status(&mut self, status: TextBoxStatus) {
-	self.text_box_status = status;
+        self.text_box_status = status;
     }
 }
 
@@ -1515,7 +1517,8 @@ impl ScenarioBox {
                     "".to_string()
                 };
             //self.text_box.set_fixed_text(&format!("{}\n{}", header_text, selected_text), font_info);
-            self.text_box.set_fixed_text(header_text.to_string(), font_info);
+            self.text_box
+                .set_fixed_text(header_text.to_string(), font_info);
         }
     }
 
@@ -1593,7 +1596,7 @@ impl ScenarioEvent {
         ctx: &mut SuzuContext<'a>,
         rect: numeric::Rect,
         file_path: &str,
-	hide_shadow: bool,
+        hide_shadow: bool,
         t: Clock,
     ) -> Self {
         let scenario = Scenario::new(ctx, file_path);
@@ -1616,9 +1619,9 @@ impl ScenarioEvent {
             numeric::Vector2f::new(1.0, 1.0),
             0,
         );
-	if hide_shadow {
-	    appr_frame.hide();
-	}
+        if hide_shadow {
+            appr_frame.hide();
+        }
 
         ScenarioEvent {
             scenario: scenario,
@@ -1635,7 +1638,7 @@ impl ScenarioEvent {
             appearance_frame: appr_frame,
             tachie: event_tachie,
             redraw_request: DrawRequest::InitDraw,
-	    se_handlers: [None],
+            se_handlers: [None],
         }
     }
 
@@ -1721,7 +1724,11 @@ impl ScenarioEvent {
     ///
     /// 表示しているテキストや選択肢を更新するメソッド
     ///
-    pub fn update_text<'a>(&mut self, ctx: &mut SuzuContext<'a>, scno_ctx: Option<&mut ScenarioContext>) {
+    pub fn update_text<'a>(
+        &mut self,
+        ctx: &mut SuzuContext<'a>,
+        scno_ctx: Option<&mut ScenarioContext>,
+    ) {
         match self.scenario.ref_current_element_mut() {
             ScenarioElement::Text(scenario_text) => {
                 if self.scenario_box.get_text_box_status() == TextBoxStatus::UpdatingText {
@@ -1783,10 +1790,10 @@ impl ScenarioEvent {
                 self.redraw_request = DrawRequest::Draw;
             }
             ScenarioElement::FinishAndWait(_) => {
-		if let Some(scno_ctx) = scno_ctx {
+                if let Some(scno_ctx) = scno_ctx {
                     self.status = ScenarioEventStatus::FinishAndWait;
                     scno_ctx.scenario_is_finish_and_wait = true;
-		}
+                }
             }
             ScenarioElement::BuiltinCommand(ope) => match ope {
                 ScenarioBuiltinCommand::ScheduleStart(_) => {
@@ -1830,7 +1837,7 @@ impl ScenarioEvent {
         self.redraw_request = DrawRequest::Draw;
         self.scenario.release_waiting();
 
-	self.update_event_background(ctx);
+        self.update_event_background(ctx);
         self.update_event_tachie(ctx, 0);
     }
 
@@ -1849,7 +1856,12 @@ impl ScenarioEvent {
     ///
     /// Action1キーが押されたときの、ScenarioEventの挙動
     ///
-    pub fn key_down_action1<'a>(&mut self, ctx: &mut SuzuContext<'a>, click_point: Option<numeric::Point2f>, _: Clock) {
+    pub fn key_down_action1<'a>(
+        &mut self,
+        ctx: &mut SuzuContext<'a>,
+        click_point: Option<numeric::Point2f>,
+        _: Clock,
+    ) {
         match self.scenario.ref_current_element_mut() {
             // 現在のScenarioElementがテキスト
             ScenarioElement::Text(scenario_text) => {
@@ -1874,19 +1886,25 @@ impl ScenarioEvent {
                     // すでにchoice_boxがNoneなら、text_boxの行を進める動作
                     self.go_next_line();
 
-		    if self.se_handlers[0].is_none() || !ctx.is_se_playing(self.se_handlers[0].unwrap()) {
-			self.se_handlers[0] = Some(ctx.play_sound_as_se(SoundID::SeMessage, None));
-		    }
+                    if self.se_handlers[0].is_none()
+                        || !ctx.is_se_playing(self.se_handlers[0].unwrap())
+                    {
+                        self.se_handlers[0] = Some(ctx.play_sound_as_se(SoundID::SeMessage, None));
+                    }
                 }
             }
             ScenarioElement::ChoiceSwitch(_) => {
-		if click_point.is_none() {
-		    return;
-		}
+                if click_point.is_none() {
+                    return;
+                }
 
-		let rpoint = self.canvas.relative_point(click_point.unwrap());
-		
-		self.scenario_box.choice_box.as_mut().unwrap().cursor_select(ctx, rpoint);
+                let rpoint = self.canvas.relative_point(click_point.unwrap());
+
+                self.scenario_box
+                    .choice_box
+                    .as_mut()
+                    .unwrap()
+                    .cursor_select(ctx, rpoint);
                 let maybe_index = self.scenario_box.get_choice_selecting_index();
                 if maybe_index.is_none() {
                     return;
@@ -1897,7 +1915,9 @@ impl ScenarioEvent {
                 self.update_event_background(ctx);
                 self.update_event_tachie(ctx, 0);
 
-		self.scenario_box.text_box.set_text_box_status(TextBoxStatus::UpdatingText);
+                self.scenario_box
+                    .text_box
+                    .set_text_box_status(TextBoxStatus::UpdatingText);
 
                 // choice_boxは消す
                 self.scenario_box.insert_choice_box(None);

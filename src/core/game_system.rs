@@ -117,6 +117,6 @@ impl AwardData {
     }
 
     pub fn add_customer_count(&mut self, count: u16) {
-	self.customer_count += count;
+        self.customer_count += count;
     }
 }

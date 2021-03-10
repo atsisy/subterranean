@@ -211,7 +211,7 @@ impl DarkEffectPanel {
     }
 
     pub fn set_alpha(&mut self, alpha: f32) {
-	self.canvas.set_alpha(alpha);
+        self.canvas.set_alpha(alpha);
     }
 }
 

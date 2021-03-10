@@ -15,14 +15,18 @@ use torifune::impl_texture_object_for_wrapped;
 use torifune::numeric;
 use torifune::roundup2f;
 
-use crate::{core::{BookInformation, RentalLimit, TileBatchTextureID}, flush_delay_event_and_redraw_check, flush_delay_event, scene::DelayEventList};
 use crate::object::move_fn;
 use crate::object::util_object::*;
 use crate::set_table_frame_cell_center;
+use crate::{
+    core::{BookInformation, RentalLimit, TileBatchTextureID},
+    flush_delay_event, flush_delay_event_and_redraw_check,
+    scene::DelayEventList,
+};
 
 use serde::{Deserialize, Serialize};
 
-use super::{Clickable, tt_main_component::CustomerRequest};
+use super::{tt_main_component::CustomerRequest, Clickable};
 use crate::core::*;
 use crate::scene::DrawRequest;
 
@@ -359,9 +363,9 @@ impl OnDeskBook {
             )),
         };
 
-	if let Some(texture) = scratch_texture.as_mut() {
-	    texture.fit_scale(ctx.context, book_size);
-	}
+        if let Some(texture) = scratch_texture.as_mut() {
+            texture.fit_scale(ctx.context, book_size);
+        }
 
         let shadow_bounds = numeric::Rect::new(0.0, 0.0, book_size.x + 12.0, book_size.y + 12.0);
 
@@ -393,7 +397,7 @@ impl OnDeskBook {
             _ => panic!("invalid book size info"),
         };
 
-	let mut title_vtext = VerticalText::new(
+        let mut title_vtext = VerticalText::new(
             book_title,
             title_center,
             numeric::Vector2f::new(1.0, 1.0),
@@ -406,8 +410,8 @@ impl OnDeskBook {
             ),
         );
 
-	title_vtext.make_center(ctx.context, title_center);
-	
+        title_vtext.make_center(ctx.context, title_center);
+
         OnDeskBook {
             info: info,
             book_texture: book_texture,
@@ -1508,7 +1512,11 @@ impl BorrowingRecordBookPage {
             paper_texture: paper_texture,
             borrow_date: borrow_date,
             pay_frame: PayFrame::new(ctx, numeric::Point2f::new(220.0, 40.0), 0),
-            sign_frame: SignFrame::new(ctx, numeric::Point2f::new(rect.left() + 30.0, rect.bottom() - 190.0), 0),
+            sign_frame: SignFrame::new(
+                ctx,
+                numeric::Point2f::new(rect.left() + 30.0, rect.bottom() - 190.0),
+                0,
+            ),
             return_date: return_date,
             drwob_essential: DrawableObjectEssential::new(true, 0),
         }
@@ -1536,11 +1544,11 @@ impl BorrowingRecordBookPage {
     }
 
     pub fn is_books_table_some_data_at(&self, position: numeric::Vector2u) -> bool {
-	if let Some(hold_data) = self.borrow_book.get(&position) {
-	    hold_data.data.is_some()
-	} else {
-	    false
-	}
+        if let Some(hold_data) = self.borrow_book.get(&position) {
+            hold_data.data.is_some()
+        } else {
+            false
+        }
     }
 
     pub fn create_current_book_condition_report(&self) -> BookConditionEvalReport {
@@ -1637,13 +1645,13 @@ impl BorrowingRecordBookPage {
 
     fn borrowing_signing_is_available(&self) -> bool {
         // 何らかの値段が設定されていればOK
-        self.pay_frame.calculated_price.is_some() &&
-	    !self.sign_frame.borrowing_signing_is_done() &&
-	    self.count_written_book_title() > 0
+        self.pay_frame.calculated_price.is_some()
+            && !self.sign_frame.borrowing_signing_is_done()
+            && self.count_written_book_title() > 0
     }
 
     pub fn borrowing_sign_is_done(&self) -> bool {
-	self.sign_frame.borrowing_signing_is_done()
+        self.sign_frame.borrowing_signing_is_done()
     }
 
     fn returning_signing_is_available(&self) -> bool {
@@ -1827,7 +1835,7 @@ impl BorrowingRecordBookPage {
         let info = self.borrow_book.get_mut(&grid_position).unwrap();
         info.reset(HoldData::None);
     }
-    
+
     pub fn get_return_date(&self) -> Option<GensoDate> {
         if let Some(data) = self.request_information.get(&numeric::Vector2u::new(0, 1)) {
             data.ref_hold_data().to_date()
@@ -1835,7 +1843,7 @@ impl BorrowingRecordBookPage {
             None
         }
     }
-    
+
     pub fn export_page_data(&self) -> BorrowingRecordBookPageData {
         let mut borrow_book_title = Vec::new();
         let mut borrow_book_status = Vec::new();
@@ -2014,12 +2022,12 @@ impl BorrowingRecordBook {
         t: Clock,
     ) -> Self {
         let backup = book_data.clone();
-	let page_rect = numeric::Rect::new(60.0, 0.0, rect.w, rect.h);
-	let host_rect = numeric::Rect::new(rect.x, rect.y, rect.w + 60.0, rect.h);
-	
+        let page_rect = numeric::Rect::new(60.0, 0.0, rect.w, rect.h);
+        let host_rect = numeric::Rect::new(rect.x, rect.y, rect.w + 60.0, rect.h);
+
         let pages = {
             let mut pages = Vec::new();
-	    
+
             while !book_data.pages_data.is_empty() {
                 let page_data = book_data.pages_data.remove(0);
                 pages.push(BorrowingRecordBookPage::new(
@@ -2051,7 +2059,7 @@ impl BorrowingRecordBook {
         );
         prev.hide();
 
-	let button_texture = Box::new(TextButtonTexture::new(
+        let button_texture = Box::new(TextButtonTexture::new(
             ctx,
             numeric::Point2f::new(0.0, 0.0),
             "次10".to_string(),
@@ -2071,7 +2079,7 @@ impl BorrowingRecordBook {
             button_texture,
         );
 
-	let button_texture = Box::new(TextButtonTexture::new(
+        let button_texture = Box::new(TextButtonTexture::new(
             ctx,
             numeric::Point2f::new(0.0, 0.0),
             "前10".to_string(),
@@ -2090,12 +2098,12 @@ impl BorrowingRecordBook {
             numeric::Rect::new(0.0, 0.0, 60.0, 60.0),
             button_texture,
         );
-	
+
         BorrowingRecordBook {
             redraw_request: DrawRequest::InitDraw,
             pages: pages,
-	    host_rect: host_rect,
-	    page_rect: page_rect,
+            host_rect: host_rect,
+            page_rect: page_rect,
             current_page: 0,
             next_page_ope_mesh: next,
             prev_page_ope_mesh: prev,
@@ -2111,9 +2119,9 @@ impl BorrowingRecordBook {
             ),
             //scope: AlphaScope::new(ctx, 50, 230, numeric::Point2f::new(100.0, 100.0), 0),
             page_data_backup: backup,
-	    next10_button: next10_button,
-	    prev10_button: prev10_button,
-	    page_scroll_event_list: DelayEventList::new(),
+            next10_button: next10_button,
+            prev10_button: prev10_button,
+            page_scroll_event_list: DelayEventList::new(),
         }
     }
 
@@ -2220,7 +2228,7 @@ impl BorrowingRecordBook {
         }
     }
 
-    pub fn get_current_page_return_date(&self) -> Option<GensoDate> {	
+    pub fn get_current_page_return_date(&self) -> Option<GensoDate> {
         if let Some(page) = self.get_current_page() {
             page.get_return_date()
         } else {
@@ -2229,12 +2237,11 @@ impl BorrowingRecordBook {
     }
 
     pub fn is_current_books_table_some_data_at(&self, position: numeric::Vector2u) -> bool {
-	if let Some(page) = self.get_current_page() {
+        if let Some(page) = self.get_current_page() {
             page.is_books_table_some_data_at(position)
         } else {
-	    false
+            false
         }
-
     }
 
     pub fn insert_date_data_to_customer_info<'a>(
@@ -2306,43 +2313,43 @@ impl BorrowingRecordBook {
             self.check_move_page_icon_visibility();
             return true;
         } else if self.next10_button.contains(ctx.context, rpoint) {
-	    self.redraw_request = DrawRequest::Draw;
-	    self.page_scroll_event_list.clear();
-	    
-	    for i in 0..10 {
-		if self.current_page + i + 1 < self.pages.len() {
-		    self.page_scroll_event_list.add_event(
-			Box::new(|slf, _, _| {
-			    slf.current_page += 1;
-			    slf.redraw_request = DrawRequest::Draw;
-			    slf.check_move_page_icon_visibility();
-			}),
-			t + (i * 2) as Clock,
-		    );
-		} else {
-		    break;
-		}
-	    }
-	    ctx.play_sound_as_se(SoundID::SeTurnThePage, None);
-	    self.check_move_page_icon_visibility();
-	} else if self.prev10_button.contains(ctx.context, rpoint) {
-	    self.page_scroll_event_list.clear();
-	    for i in 0..10 {
-		if self.current_page as i32 - i > 0 {
-		    self.page_scroll_event_list.add_event(
-			Box::new(|slf, _, _| {
-			    slf.current_page -= 1;
-			    slf.redraw_request = DrawRequest::Draw;
-			    slf.check_move_page_icon_visibility();
-			}),
-			t + (i * 2) as Clock,
-		    );
-		} else {
-		    break;
-		}
-	    }
-	    ctx.play_sound_as_se(SoundID::SeTurnThePage, None);
-	}
+            self.redraw_request = DrawRequest::Draw;
+            self.page_scroll_event_list.clear();
+
+            for i in 0..10 {
+                if self.current_page + i + 1 < self.pages.len() {
+                    self.page_scroll_event_list.add_event(
+                        Box::new(|slf, _, _| {
+                            slf.current_page += 1;
+                            slf.redraw_request = DrawRequest::Draw;
+                            slf.check_move_page_icon_visibility();
+                        }),
+                        t + (i * 2) as Clock,
+                    );
+                } else {
+                    break;
+                }
+            }
+            ctx.play_sound_as_se(SoundID::SeTurnThePage, None);
+            self.check_move_page_icon_visibility();
+        } else if self.prev10_button.contains(ctx.context, rpoint) {
+            self.page_scroll_event_list.clear();
+            for i in 0..10 {
+                if self.current_page as i32 - i > 0 {
+                    self.page_scroll_event_list.add_event(
+                        Box::new(|slf, _, _| {
+                            slf.current_page -= 1;
+                            slf.redraw_request = DrawRequest::Draw;
+                            slf.check_move_page_icon_visibility();
+                        }),
+                        t + (i * 2) as Clock,
+                    );
+                } else {
+                    break;
+                }
+            }
+            ctx.play_sound_as_se(SoundID::SeTurnThePage, None);
+        }
 
         false
     }
@@ -2375,7 +2382,7 @@ impl BorrowingRecordBook {
             self.move_with_func(t);
         }
 
-	flush_delay_event_and_redraw_check!(self, self.page_scroll_event_list, ctx, t, {})
+        flush_delay_event_and_redraw_check!(self, self.page_scroll_event_list, ctx, t, {})
     }
 
     pub fn get_book_info_frame_grid_position(
@@ -2467,52 +2474,59 @@ impl BorrowingRecordBook {
         self.redraw_request = DrawRequest::Draw;
     }
 
-    pub fn check_current_page_is_matched_with(&self, customer_request: Option<&CustomerRequest>) -> RecordBookLockStatus {
-	if customer_request.is_none() {
-	    return RecordBookLockStatus::ReturningVary;
-	}
+    pub fn check_current_page_is_matched_with(
+        &self,
+        customer_request: Option<&CustomerRequest>,
+    ) -> RecordBookLockStatus {
+        if customer_request.is_none() {
+            return RecordBookLockStatus::ReturningVary;
+        }
 
-	let return_info = match customer_request.unwrap() {
-	    CustomerRequest::Returning(return_info) => return_info,
-	    _ => return RecordBookLockStatus::BorrowingOk,
-	};
-	
-	let page = match self.get_current_page() {
-	    Some(page) => page,
-	    None => return RecordBookLockStatus::ReturningVary,
-	};
+        let return_info = match customer_request.unwrap() {
+            CustomerRequest::Returning(return_info) => return_info,
+            _ => return RecordBookLockStatus::BorrowingOk,
+        };
 
-	let info = match page.export_page_data().generate_return_book_information_with_cut() {
-	    Some(info) => info,
-	    None => return RecordBookLockStatus::ReturningVary,
-	};
+        let page = match self.get_current_page() {
+            Some(page) => page,
+            None => return RecordBookLockStatus::ReturningVary,
+        };
 
-	for book_info in info.returning.iter() {
-	    if !return_info.returning.contains(book_info) {
-		return RecordBookLockStatus::ReturningVary;
-	    }
-	}
+        let info = match page
+            .export_page_data()
+            .generate_return_book_information_with_cut()
+        {
+            Some(info) => info,
+            None => return RecordBookLockStatus::ReturningVary,
+        };
 
-	if return_info.borrower != info.borrower ||
-	    return_info.borrow_date != info.borrow_date ||
-	    return_info.return_date != info.return_date {
-		return RecordBookLockStatus::ReturningVary;
-	    }
+        for book_info in info.returning.iter() {
+            if !return_info.returning.contains(book_info) {
+                return RecordBookLockStatus::ReturningVary;
+            }
+        }
 
-	return RecordBookLockStatus::ReturningMatched;
+        if return_info.borrower != info.borrower
+            || return_info.borrow_date != info.borrow_date
+            || return_info.return_date != info.return_date
+        {
+            return RecordBookLockStatus::ReturningVary;
+        }
+
+        return RecordBookLockStatus::ReturningMatched;
     }
 
     pub fn current_page_is_borrowing_signed(&self) -> RecordBookLockStatus {
-	let page = match self.get_current_page() {
-	    Some(page) => page,
-	    None => return RecordBookLockStatus::BorrowingLocked,
-	};
+        let page = match self.get_current_page() {
+            Some(page) => page,
+            None => return RecordBookLockStatus::BorrowingLocked,
+        };
 
-	if page.borrowing_sign_is_done() {
-	    RecordBookLockStatus::BorrowingLocked
-	} else {
-	    RecordBookLockStatus::BorrowingOk
-	}
+        if page.borrowing_sign_is_done() {
+            RecordBookLockStatus::BorrowingLocked
+        } else {
+            RecordBookLockStatus::BorrowingOk
+        }
     }
 }
 
@@ -2524,13 +2538,13 @@ impl DrawableComponent for BorrowingRecordBook {
                 self.redraw_request = DrawRequest::Skip;
                 sub_screen::stack_screen(ctx, &self.canvas);
 
-		self.next10_button.draw(ctx)?;
-		self.prev10_button.draw(ctx)?;
-		
+                self.next10_button.draw(ctx)?;
+                self.prev10_button.draw(ctx)?;
+
                 if self.pages.len() > 0 {
                     self.pages.get_mut(self.current_page).unwrap().draw(ctx)?;
                 }
-		
+
                 self.prev_page_ope_mesh.draw(ctx)?;
                 self.next_page_ope_mesh.draw(ctx)?;
 

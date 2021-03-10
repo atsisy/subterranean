@@ -6,7 +6,9 @@ use torifune::graphics::drawable::*;
 use torifune::graphics::object::*;
 use torifune::sound::*;
 
-use crate::core::{GameMode, MouseInformation, SoundID, SuzuContext, TextureID, TileBatchTextureID};
+use crate::core::{
+    GameMode, MouseInformation, SoundID, SuzuContext, TextureID, TileBatchTextureID,
+};
 use crate::object::effect_object;
 use crate::object::title_object::*;
 use crate::scene::*;
@@ -37,7 +39,7 @@ impl TitleScene {
             0,
         );
 
-	let logo = UniTexture::new(
+        let logo = UniTexture::new(
             ctx.ref_texture(TextureID::SuzuLogo),
             numeric::Point2f::new(950.0, 50.0),
             numeric::Vector2f::new(1.0, 1.0),
@@ -69,8 +71,11 @@ impl TitleScene {
             31,
         );
 
-        let mut title_contents_set =
-            TitleContentsSet::from_file(ctx, "./resources/title_contents/title_contents_list.toml", 0);
+        let mut title_contents_set = TitleContentsSet::from_file(
+            ctx,
+            "./resources/title_contents/title_contents_list.toml",
+            0,
+        );
 
         ctx.play_sound_as_bgm(
             SoundID::Title,
@@ -86,22 +91,22 @@ impl TitleScene {
             scene_transition_type: SceneTransition::Keep,
             current_title_contents: title_contents_set.remove_pickup("init-menu"),
             title_contents_set: title_contents_set,
-	    logo: logo,
-	    scene_transition_lock: false,
+            logo: logo,
+            scene_transition_lock: false,
             clock: 0,
         }
     }
 
     fn lock_scene_transition(&mut self) {
-	self.scene_transition_lock = true;
+        self.scene_transition_lock = true;
     }
 
     fn unlock_scene_transition(&mut self) {
-	self.scene_transition_lock = false;
+        self.scene_transition_lock = false;
     }
 
     fn is_scene_transition_locked(&self) -> bool {
-	self.scene_transition_lock
+        self.scene_transition_lock
     }
 
     pub fn transition_selected_scene<'a>(
@@ -109,15 +114,15 @@ impl TitleScene {
         ctx: &mut SuzuContext<'a>,
         scene_id: SceneID,
         trans: SceneTransition,
-	game_mode: Option<GameMode>,
+        game_mode: Option<GameMode>,
         t: Clock,
     ) {
-	if self.is_scene_transition_locked() {
-	    return;
-	}
+        if self.is_scene_transition_locked() {
+            return;
+        }
 
-	self.lock_scene_transition();
-	
+        self.lock_scene_transition();
+
         self.scene_transition_effect = Some(effect_object::ScreenTileEffect::new(
             ctx,
             TileBatchTextureID::Shoji,
@@ -134,22 +139,20 @@ impl TitleScene {
             t,
         ));
 
-	// 新規開始ならセーブデータを初期化
-	if scene_id == SceneID::Scenario {
-	    ctx.reset_save_data(
-		if let Some(game_mode) = game_mode {
-		    game_mode
-		} else {
-		    GameMode::story()
-		}
-	    );
-	}
+        // 新規開始ならセーブデータを初期化
+        if scene_id == SceneID::Scenario {
+            ctx.reset_save_data(if let Some(game_mode) = game_mode {
+                game_mode
+            } else {
+                GameMode::story()
+            });
+        }
 
         self.event_list.add_event(
             Box::new(move |slf: &mut Self, ctx, _| {
                 slf.scene_transition = scene_id;
                 slf.scene_transition_type = trans;
-		slf.unlock_scene_transition();
+                slf.unlock_scene_transition();
                 ctx.resource.stop_bgm(ctx.context, SoundID::Title);
             }),
             t + 31,
@@ -175,9 +178,9 @@ impl TitleScene {
                 contents.dragging_handler(ctx, point, offset);
             }
             TitleContents::ConfigPanel(_) => (),
-	    TitleContents::UpdatePanel(_) => (),
-	    TitleContents::Gallery(_) => (),
-	    TitleContents::RecordRoom(_) => (),
+            TitleContents::UpdatePanel(_) => (),
+            TitleContents::Gallery(_) => (),
+            TitleContents::RecordRoom(_) => (),
         }
     }
 
@@ -201,29 +204,34 @@ impl TitleScene {
         }
     }
 
-    fn switch_current_content<'a>(&mut self, ctx: &mut SuzuContext<'a>, content_name: String, t: Clock) {
+    fn switch_current_content<'a>(
+        &mut self,
+        ctx: &mut SuzuContext<'a>,
+        content_name: String,
+        t: Clock,
+    ) {
         let mut next_content = self.title_contents_set.remove_pickup(&content_name);
         if next_content.is_none() {
             print!("{}?", content_name);
             panic!("target title contents not found.");
         }
 
-	// Galleryはクリア後特典なので、クリアしていなければ
-	// listに戻して切り替え中断
-	match next_content.as_ref().unwrap() {
-	    TitleContents::Gallery(_) => {
-		if !ctx.permanent_save_data.is_cleared() {
-		    self.title_contents_set.add(
-			next_content.as_ref().unwrap().get_content_name(),
-			next_content.unwrap(),
-		    );
-		    return;
-		}
-	    },
-	    _ => (),
-	}
+        // Galleryはクリア後特典なので、クリアしていなければ
+        // listに戻して切り替え中断
+        match next_content.as_ref().unwrap() {
+            TitleContents::Gallery(_) => {
+                if !ctx.permanent_save_data.is_cleared() {
+                    self.title_contents_set.add(
+                        next_content.as_ref().unwrap().get_content_name(),
+                        next_content.unwrap(),
+                    );
+                    return;
+                }
+            }
+            _ => (),
+        }
 
-	next_content.as_mut().unwrap().notify_switched(ctx, t);
+        next_content.as_mut().unwrap().notify_switched(ctx, t);
 
         // contentの切り替え
         let old = std::mem::replace(&mut self.current_title_contents, next_content);
@@ -247,7 +255,7 @@ impl TitleScene {
             return;
         }
 
-	ctx.process_utility.redraw();
+        ctx.process_utility.redraw();
 
         match &mut self.current_title_contents.as_mut().unwrap() {
             TitleContents::InitialMenu(contents) => {
@@ -280,7 +288,7 @@ impl TitleScene {
                     }
                 }
             }
-	    TitleContents::UpdatePanel(panel) => {
+            TitleContents::UpdatePanel(panel) => {
                 let maybe_event = panel.mouse_button_up(ctx, point, t);
                 if let Some(event) = maybe_event {
                     match event {
@@ -291,8 +299,8 @@ impl TitleScene {
                     }
                 }
             }
-	    TitleContents::Gallery(gallery) => {
-		let maybe_event = gallery.mouse_button_up(ctx, point, t);
+            TitleContents::Gallery(gallery) => {
+                let maybe_event = gallery.mouse_button_up(ctx, point, t);
                 if let Some(event) = maybe_event {
                     match event {
                         TitleContentsEvent::NextContents(content_name) => {
@@ -301,9 +309,9 @@ impl TitleScene {
                         _ => (),
                     }
                 }
-	    }
-	    TitleContents::RecordRoom(rr) => {
-		let maybe_event = rr.mouse_button_up(ctx, point, t);
+            }
+            TitleContents::RecordRoom(rr) => {
+                let maybe_event = rr.mouse_button_up(ctx, point, t);
                 if let Some(event) = maybe_event {
                     match event {
                         TitleContentsEvent::NextContents(content_name) => {
@@ -312,7 +320,7 @@ impl TitleScene {
                         _ => (),
                     }
                 }
-	    }
+            }
         }
     }
 }
@@ -354,14 +362,14 @@ impl SceneManager for TitleScene {
             ctx.process_utility.redraw();
         }
 
-	if let Some(contents) = self.current_title_contents.as_mut() {
-	    contents.update(ctx, t);
-	}
+        if let Some(contents) = self.current_title_contents.as_mut() {
+            contents.update(ctx, t);
+        }
     }
 
     fn drawing_process(&mut self, ctx: &mut ggez::Context) {
         self.background.draw(ctx).unwrap();
-	self.logo.draw(ctx).unwrap();
+        self.logo.draw(ctx).unwrap();
 
         if let Some(contetns) = self.current_title_contents.as_mut() {
             contetns.draw(ctx).unwrap();

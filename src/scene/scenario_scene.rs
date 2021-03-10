@@ -1,14 +1,17 @@
 use ggez::graphics as ggraphics;
 use ggez::input::mouse::MouseButton;
 
-use torifune::{core::Clock, sound::SoundPlayFlags};
 use torifune::device as tdev;
 use torifune::graphics::object::Effectable;
 use torifune::numeric;
+use torifune::{core::Clock, sound::SoundPlayFlags};
 
-use crate::core::{GameMode, GeneralScenarioID, MouseInformation, SuzuContext, TileBatchTextureID, SoundID};
+use crate::core::{
+    GameMode, GeneralScenarioID, MouseInformation, SoundID, SuzuContext, TileBatchTextureID,
+};
 
 use crate::add_delay_event;
+use crate::core::game_system;
 use crate::core::game_system::*;
 use crate::flush_delay_event;
 use crate::flush_delay_event_and_redraw_check;
@@ -16,9 +19,8 @@ use crate::object::effect_object;
 use crate::object::scenario::*;
 use crate::object::scenario_object::*;
 use crate::object::util_object::*;
-use crate::core::game_system;
 
-#[allow(unused_imports)] 
+#[allow(unused_imports)]
 use crate::perf_measure;
 
 use effect_object::{SceneTransitionEffectType, TilingEffectType};
@@ -58,25 +60,23 @@ pub struct ScenarioScene {
 impl ScenarioScene {
     pub fn new<'a>(ctx: &mut SuzuContext<'a>, scenario_select: ScenarioSelect) -> Self {
         let file_path = match scenario_select {
-            ScenarioSelect::DayBegin => {
-		match &ctx.take_save_data().game_mode {
-		    GameMode::Story => 		ctx
-			.resource
-			.get_day_scenario_path(&ctx.take_save_data().date)
-			.expect("BUG"),
-		    GameMode::TimeAttack(data) => {
-			if ctx.take_save_data().date.first_day() {
-			    "/scenario/time_attack_first.toml".to_string()
-			} else if ctx.take_save_data().date.is_past(data.get_limit()) {
-			    "/scenario/time_attack_over.toml".to_string()
-			} else if ctx.take_save_data().date.is_week_first() {
-			    "/scenario/time_attack_week_first.toml".to_string()
-			} else {
-			    "/scenario/time_attack_default.toml".to_string()
-			}
-		    }
-		}
-	    },
+            ScenarioSelect::DayBegin => match &ctx.take_save_data().game_mode {
+                GameMode::Story => ctx
+                    .resource
+                    .get_day_scenario_path(&ctx.take_save_data().date)
+                    .expect("BUG"),
+                GameMode::TimeAttack(data) => {
+                    if ctx.take_save_data().date.first_day() {
+                        "/scenario/time_attack_first.toml".to_string()
+                    } else if ctx.take_save_data().date.is_past(data.get_limit()) {
+                        "/scenario/time_attack_over.toml".to_string()
+                    } else if ctx.take_save_data().date.is_week_first() {
+                        "/scenario/time_attack_week_first.toml".to_string()
+                    } else {
+                        "/scenario/time_attack_default.toml".to_string()
+                    }
+                }
+            },
             ScenarioSelect::OpeningEpisode => panic!(""),
             _ => panic!(""),
         };
@@ -85,7 +85,7 @@ impl ScenarioScene {
             ctx,
             numeric::Rect::new(0.0, 0.0, 1366.0, 768.0),
             &file_path,
-	    false,
+            false,
             0,
         );
 
@@ -122,7 +122,7 @@ impl ScenarioScene {
         );
         status_screen.hide();
 
-	ctx.play_sound_as_bgm(
+        ctx.play_sound_as_bgm(
             SoundID::ScenarioBGM,
             Some(SoundPlayFlags::new(10000, 1.0, true, 0.1)),
         );
@@ -165,11 +165,11 @@ impl ScenarioScene {
             Box::new(|slf: &mut Self, ctx, _| {
                 slf.scene_transition_type = SceneTransition::SwapTransition;
                 slf.scene_transition = SceneID::Title;
-		ctx.resource.stop_bgm(ctx.context, SoundID::ScenarioBGM);
+                ctx.resource.stop_bgm(ctx.context, SoundID::ScenarioBGM);
             }),
             t + 60,
         );
-	
+
         self.scene_transition_close_effect(ctx, t);
     }
 
@@ -199,8 +199,8 @@ impl ScenarioScene {
             match pause_result {
                 PauseResult::GoToTitle => self.transition_to_title_scene(ctx, t),
                 PauseResult::ReleasePause => {
-		    self.exit_pause_screen(t);
-		}
+                    self.exit_pause_screen(t);
+                }
             }
         }
     }
@@ -226,7 +226,7 @@ impl ScenarioScene {
                 match opecode {
                     "ScheduleCheck" => {
                         self.status_screen.show_schedule_page();
-			self.status_screen.unlock_schedule_page();
+                        self.status_screen.unlock_schedule_page();
                         self.scenario_event.set_fixed_text_to_scenario_box(
                             ctx,
                             if self.scenario_ctx.schedule_redefine {
@@ -241,10 +241,10 @@ impl ScenarioScene {
                         self.scenario_event.release_scenario_waiting(ctx);
                         self.scenario_ctx.wait_opecode_running = false;
                     }
-		    "DisableTutorial" => {
-			ctx.take_save_data_mut().run_tutorial = false;
+                    "DisableTutorial" => {
+                        ctx.take_save_data_mut().run_tutorial = false;
                         self.scenario_ctx.wait_opecode_running = false;
-			self.scenario_event.release_scenario_waiting(ctx);
+                        self.scenario_event.release_scenario_waiting(ctx);
                     }
                     "ShowAd" => {
                         add_delay_event!(
@@ -282,15 +282,23 @@ impl ScenarioScene {
                     "NextDay" => {
                         self.status_screen.show_main_page(ctx);
 
-			let diff = if ctx.take_save_data_mut().suzunaan_status.get_current_reputation()
-			    < game_system::TAKING_REST_REPUTATION_COST as f32 {
-				ctx.take_save_data_mut().suzunaan_status.get_current_reputation()
-			    } else {
-				game_system::TAKING_REST_REPUTATION_COST as f32
-			    };
-			
+                        let diff = if ctx
+                            .take_save_data_mut()
+                            .suzunaan_status
+                            .get_current_reputation()
+                            < game_system::TAKING_REST_REPUTATION_COST as f32
+                        {
+                            ctx.take_save_data_mut()
+                                .suzunaan_status
+                                .get_current_reputation()
+                        } else {
+                            game_system::TAKING_REST_REPUTATION_COST as f32
+                        };
+
                         self.status_screen.change_suzunaan_reputation(ctx, -diff);
-			ctx.take_save_data_mut().suzunaan_status.add_reputation(-diff);
+                        ctx.take_save_data_mut()
+                            .suzunaan_status
+                            .add_reputation(-diff);
 
                         add_delay_event!(
                             self.event_list,
@@ -324,7 +332,7 @@ impl ScenarioScene {
                             |slf, ctx, _| {
                                 slf.scene_transition = SceneID::End;
                                 slf.scene_transition_type = SceneTransition::SwapTransition;
-				ctx.resource.stop_bgm(ctx.context, SoundID::ScenarioBGM);
+                                ctx.resource.stop_bgm(ctx.context, SoundID::ScenarioBGM);
                                 //ctx.go_next_day();
                             },
                             self.get_current_clock() + 1
@@ -363,7 +371,9 @@ impl ScenarioScene {
                 let reputation_diff = ctx.current_total_ad_reputation_gain();
                 slf.status_screen
                     .change_suzunaan_reputation(ctx, reputation_diff as f32);
-		ctx.take_save_data_mut().suzunaan_status.add_reputation(reputation_diff as f32);
+                ctx.take_save_data_mut()
+                    .suzunaan_status
+                    .add_reputation(reputation_diff as f32);
             },
             self.get_current_clock() + 100
         );
@@ -379,7 +389,7 @@ impl ScenarioScene {
                 slf.scene_transition = SceneID::SuzunaShop;
                 slf.scene_transition_type = SceneTransition::SwapTransition;
                 ctx.take_save_data_mut().award_data.shop_work_count += 1;
-		ctx.resource.stop_bgm(ctx.context, SoundID::ScenarioBGM);
+                ctx.resource.stop_bgm(ctx.context, SoundID::ScenarioBGM);
             },
             self.get_current_clock() + 300
         );
@@ -417,7 +427,9 @@ impl ScenarioScene {
 
         self.status_screen
             .change_main_page_money(ctx, money_diff, self.get_current_clock());
-        ctx.take_save_data_mut().task_result.add_total_money(money_diff);
+        ctx.take_save_data_mut()
+            .task_result
+            .add_total_money(money_diff);
 
         self.scenario_ctx.builtin_command_inexec = true;
         self.status_screen.show_main_page(ctx);
@@ -433,7 +445,9 @@ impl ScenarioScene {
                 let reputation_diff = ctx.current_total_ad_reputation_gain() as f32;
                 slf.status_screen
                     .change_suzunaan_reputation(ctx, reputation_diff);
-		ctx.take_save_data_mut().suzunaan_status.add_reputation(reputation_diff);
+                ctx.take_save_data_mut()
+                    .suzunaan_status
+                    .add_reputation(reputation_diff);
             },
             self.get_current_clock() + 100
         );
@@ -481,18 +495,28 @@ impl ScenarioScene {
         add_delay_event!(
             self.event_list,
             |slf, ctx, _| {
-                let reputation_diff = ctx.current_total_ad_reputation_gain() as f32 - game_system::TAKING_REST_REPUTATION_COST as f32;
+                let reputation_diff = ctx.current_total_ad_reputation_gain() as f32
+                    - game_system::TAKING_REST_REPUTATION_COST as f32;
 
-		let reputation_diff = if ctx.take_save_data().suzunaan_status.get_current_reputation() + reputation_diff
-		    < 0.0 {
-			ctx.take_save_data().suzunaan_status.get_current_reputation()
-		    } else {
-			reputation_diff
-		    };
-		
+                let reputation_diff = if ctx
+                    .take_save_data()
+                    .suzunaan_status
+                    .get_current_reputation()
+                    + reputation_diff
+                    < 0.0
+                {
+                    ctx.take_save_data()
+                        .suzunaan_status
+                        .get_current_reputation()
+                } else {
+                    reputation_diff
+                };
+
                 slf.status_screen
                     .change_suzunaan_reputation(ctx, reputation_diff);
-		ctx.take_save_data_mut().suzunaan_status.add_reputation(reputation_diff);
+                ctx.take_save_data_mut()
+                    .suzunaan_status
+                    .add_reputation(reputation_diff);
             },
             self.get_current_clock() + 100
         );
@@ -640,8 +664,11 @@ impl SceneManager for ScenarioScene {
                     let _t = self.get_current_clock();
 
                     if self.scenario_event.contains_scenario_text_box(point) {
-                        self.scenario_event
-                            .key_down_action1(ctx, Some(point), self.get_current_clock());
+                        self.scenario_event.key_down_action1(
+                            ctx,
+                            Some(point),
+                            self.get_current_clock(),
+                        );
                     }
                 }
                 _ => (),
@@ -657,7 +684,8 @@ impl SceneManager for ScenarioScene {
         if self.now_paused() {
         } else {
             // 再描画要求はupdate_textメソッドの中で行われている
-            self.scenario_event.update_text(ctx, Some(&mut self.scenario_ctx));
+            self.scenario_event
+                .update_text(ctx, Some(&mut self.scenario_ctx));
 
             if self.scenario_event.get_status() == ScenarioEventStatus::StartSchedule
                 && !self.scenario_ctx.builtin_command_inexec

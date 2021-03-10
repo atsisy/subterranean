@@ -64,7 +64,7 @@ pub fn alpha_effect(
                     obj.set_alpha(init_ratio_alpha + (diff_alpha_per_clock * elapsed_time as f32));
                     EffectFnStatus::EffectContinue
                 } else {
-		    obj.set_alpha(fin_alpha as f32 * (1.0 / 255.0));
+                    obj.set_alpha(fin_alpha as f32 * (1.0 / 255.0));
                     EffectFnStatus::EffectFinish
                 }
             } else {

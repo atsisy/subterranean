@@ -845,7 +845,7 @@ impl CustomerCharacter {
         ctx: &mut ggez::Context,
         map_data: &mp::StageObjectMap,
         dest: numeric::Vector2u,
-	t: Clock,
+        t: Clock,
     ) -> Result<(), ()> {
         // 現在の移動キューをクリア
         self.move_queue.clear();
@@ -858,7 +858,7 @@ impl CustomerCharacter {
         if let Some(next_route) = maybe_next_route {
             self.move_queue.enqueue(next_route);
             self.customer_status = CustomerCharacterStatus::Ready;
-	    self.update_move_effect(ctx, map_data, t);
+            self.update_move_effect(ctx, map_data, t);
             Ok(())
         } else {
             println!(
@@ -882,13 +882,13 @@ impl CustomerCharacter {
         ctx: &mut ggez::Context,
         map_data: &mp::StageObjectMap,
         dest: numeric::Vector2u,
-	t: Clock,
+        t: Clock,
     ) {
         match self.set_destination_forced(ctx, map_data, dest, t) {
             Ok(_) => {
-		self.customer_status = CustomerCharacterStatus::GettingOut;
-		self.shopping_is_done = true;
-	    },
+                self.customer_status = CustomerCharacterStatus::GettingOut;
+                self.shopping_is_done = true;
+            }
             Err(_) => panic!("Failed to find route"),
         }
     }
@@ -898,7 +898,7 @@ impl CustomerCharacter {
         ctx: &mut ggez::Context,
         map_data: &mp::StageObjectMap,
         dest: numeric::Vector2u,
-	t: Clock,
+        t: Clock,
     ) {
         match self.set_destination_forced(ctx, map_data, dest, t) {
             Ok(_) => {
@@ -923,7 +923,11 @@ impl CustomerCharacter {
 
     fn generate_hold_request<'a>(&mut self, ctx: &mut SuzuContext<'a>) -> CustomerRequest {
         let random_select = rand::random::<usize>() % 2
-            + if !ctx.take_save_data().record_book_data.has_returning_request() {
+            + if !ctx
+                .take_save_data()
+                .record_book_data
+                .has_returning_request()
+            {
                 1
             } else {
                 0
@@ -945,21 +949,25 @@ impl CustomerCharacter {
         }
     }
 
-    fn generate_hold_request_with_order<'a>(&mut self, ctx: &mut SuzuContext<'a>, order: CustomerRequestOrder) -> CustomerRequest {
+    fn generate_hold_request_with_order<'a>(
+        &mut self,
+        ctx: &mut SuzuContext<'a>,
+        order: CustomerRequestOrder,
+    ) -> CustomerRequest {
         let today = ctx.take_save_data().date.clone();
 
         match order {
-            CustomerRequestOrder::ReturningOrder => CustomerRequest::Returning(ReturnBookInformation::new_random(
-                ctx.resource,
-                today,
-                GensoDate::new(128, 12, 20),
-            )),
-            CustomerRequestOrder::BorrowingOrder => CustomerRequest::Borrowing(BorrowingInformation::new(
-                vec![ctx.resource.book_random_select().clone()],
-                &self.customer_info.name,
-                today,
-                RentalLimit::random(),
-            )),
+            CustomerRequestOrder::ReturningOrder => CustomerRequest::Returning(
+                ReturnBookInformation::new_random(ctx.resource, today, GensoDate::new(128, 12, 20)),
+            ),
+            CustomerRequestOrder::BorrowingOrder => {
+                CustomerRequest::Borrowing(BorrowingInformation::new(
+                    vec![ctx.resource.book_random_select().clone()],
+                    &self.customer_info.name,
+                    today,
+                    RentalLimit::random(),
+                ))
+            }
         }
     }
 
@@ -1109,12 +1117,16 @@ impl CustomerCharacter {
         self.customer_status == CustomerCharacterStatus::WaitOnClerk
     }
 
-    pub fn check_rise_hand<'a>(&mut self, ctx: &mut SuzuContext<'a>, order: Option<CustomerRequestOrder>) -> Option<CustomerRequest> {
+    pub fn check_rise_hand<'a>(
+        &mut self,
+        ctx: &mut SuzuContext<'a>,
+        order: Option<CustomerRequestOrder>,
+    ) -> Option<CustomerRequest> {
         if self.customer_status == CustomerCharacterStatus::WaitOnClerk {
-	    match order {
-		Some(order) => Some(self.generate_hold_request_with_order(ctx, order)),
-		None => Some(self.generate_hold_request(ctx)),
-	    }
+            match order {
+                Some(order) => Some(self.generate_hold_request_with_order(ctx, order)),
+                None => Some(self.generate_hold_request(ctx)),
+            }
         } else {
             None
         }
@@ -1424,7 +1436,7 @@ impl MapEventList {
     pub fn from_file<'a>(ctx: &mut SuzuContext<'a>, file_path: &str) -> Self {
         let mut table = HashMap::new();
 
-	let content = util::read_from_resources_as_string(ctx.context, file_path);
+        let content = util::read_from_resources_as_string(ctx.context, file_path);
 
         let root = content.parse::<toml::Value>().unwrap();
         let array = root["event-panel"].as_array().unwrap();

@@ -1203,7 +1203,7 @@ impl SelectStoreBookUI {
         }
 
         self.update_window(ctx.context);
-	self.select_book_window.clear_selecting_index();
+        self.select_book_window.clear_selecting_index();
         self.redraw_request = DrawRequest::Draw;
     }
 
@@ -1561,10 +1561,14 @@ impl ShopMenuContents {
             ggraphics::Color::from_rgba_u32(0x000000ff),
         );
 
-	let date = &ctx.take_save_data().date;
+        let date = &ctx.take_save_data().date;
         ShopMenuContents {
             day_text: VerticalText::new(
-                format!("日付　{}月 {}日", number_to_jk(date.month as u64), number_to_jk(date.day as u64)),
+                format!(
+                    "日付　{}月 {}日",
+                    number_to_jk(date.month as u64),
+                    number_to_jk(date.day as u64)
+                ),
                 numeric::Point2f::new(350.0, 70.0),
                 numeric::Vector2f::new(1.0, 1.0),
                 0.0,
@@ -1580,7 +1584,10 @@ impl ShopMenuContents {
                 normal_scale_font,
             ),
             copy_request_num: VerticalText::new(
-                format!("{}人", number_to_jk(ctx.take_save_data().award_data.customer_count as u64)),
+                format!(
+                    "{}人",
+                    number_to_jk(ctx.take_save_data().award_data.customer_count as u64)
+                ),
                 numeric::Point2f::new(230.0, 170.0),
                 numeric::Vector2f::new(1.0, 1.0),
                 0.0,
@@ -1628,7 +1635,14 @@ impl ShopMenuContents {
                 normal_scale_font,
             ),
             kosuzu_level_num: VerticalText::new(
-                format!("{}", number_to_jk(ctx.take_save_data().suzunaan_status.get_current_reputation() as u64)),
+                format!(
+                    "{}",
+                    number_to_jk(
+                        ctx.take_save_data()
+                            .suzunaan_status
+                            .get_current_reputation() as u64
+                    )
+                ),
                 numeric::Point2f::new(230.0, 470.0),
                 numeric::Vector2f::new(1.0, 1.0),
                 0.0,
@@ -1654,9 +1668,13 @@ impl ShopMenuContents {
             ggraphics::Color::from_rgba_u32(0x000000ff),
         );
 
-	let date = &ctx.take_save_data().date;
+        let date = &ctx.take_save_data().date;
         self.day_text = VerticalText::new(
-            format!("日付　{}月 {}日", number_to_jk(date.month as u64), number_to_jk(date.day as u64)),
+            format!(
+                "日付　{}月 {}日",
+                number_to_jk(date.month as u64),
+                number_to_jk(date.day as u64)
+            ),
             numeric::Point2f::new(350.0, 70.0),
             numeric::Vector2f::new(1.0, 1.0),
             0.0,
@@ -2031,8 +2049,8 @@ impl SimpleBookListViewer {
             redraw_request: DrawRequest::InitDraw,
         };
 
-	viewer.update_window(ctx.context);
-	viewer
+        viewer.update_window(ctx.context);
+        viewer
     }
 
     ///
@@ -2457,22 +2475,22 @@ impl ShopSpecialObject {
             ui.on_click(ctx, t, button, point);
         }
     }
-    
+
     pub fn try_close_new_books_viewer<'a>(
-	&mut self,
-	ctx: &mut SuzuContext<'a>,
+        &mut self,
+        ctx: &mut SuzuContext<'a>,
         button: MouseButton,
         point: numeric::Point2f,
         t: Clock,
     ) -> bool {
-	if let Some(ui) = self.new_books_viewer.as_mut() {
+        if let Some(ui) = self.new_books_viewer.as_mut() {
             if ui.click_and_maybe_hide(ctx, t, button, point) {
                 self.hide_new_books_viewer(t);
-		return true;
+                return true;
             }
         }
 
-	false
+        false
     }
 
     pub fn mouse_wheel_scroll_action<'a>(
@@ -2865,7 +2883,7 @@ impl ShopCommandPalette {
         let action_button = FramedButton::new(
             ctx,
             numeric::Rect::new(350.0, 15.0, 120.0, 85.0),
-	    10.0,
+            10.0,
             2.0,
             ggraphics::Color::from_rgba(90, 80, 63, 255),
             ggraphics::Color::from_rgba(219, 212, 184, 255),
@@ -2874,10 +2892,10 @@ impl ShopCommandPalette {
             0,
         );
 
-	let shop_menu_button = FramedButton::new(
+        let shop_menu_button = FramedButton::new(
             ctx,
-	    numeric::Rect::new(150.0, 15.0, 120.0, 85.0),
-	    10.0,
+            numeric::Rect::new(150.0, 15.0, 120.0, 85.0),
+            10.0,
             2.0,
             ggraphics::Color::from_rgba(90, 80, 63, 255),
             ggraphics::Color::from_rgba(219, 212, 184, 255),
@@ -2886,64 +2904,71 @@ impl ShopCommandPalette {
             0,
         );
 
-	let show_map_button = FramedButton::new(
-	    ctx,
+        let show_map_button = FramedButton::new(
+            ctx,
             numeric::Rect::new(550.0, 15.0, 120.0, 85.0),
-	    10.0,
+            10.0,
             2.0,
             ggraphics::Color::from_rgba(90, 80, 63, 255),
             ggraphics::Color::from_rgba(219, 212, 184, 255),
             "配置図".to_string(),
             font_info,
             0,
-	);
+        );
 
-	let pause_button = FramedButton::new(
-	    ctx,
+        let pause_button = FramedButton::new(
+            ctx,
             numeric::Rect::new(750.0, 15.0, 120.0, 85.0),
-	    10.0,
+            10.0,
             2.0,
             ggraphics::Color::from_rgba(90, 80, 63, 255),
             ggraphics::Color::from_rgba(219, 212, 184, 255),
             "休止".to_string(),
             font_info,
             0,
-	);
-	
+        );
+
         ShopCommandPalette {
-	    canvas: EffectableWrap::new(
-		MovableWrap::new(
-		    Box::new(
-			SubScreen::new(
-			    ctx.context,
-			    pos,
-			    depth,
-			    ggraphics::Color::from_rgba_u32(0x00),
-			)),
-		    None, t
-		), Vec::new(),
-	    ),
+            canvas: EffectableWrap::new(
+                MovableWrap::new(
+                    Box::new(SubScreen::new(
+                        ctx.context,
+                        pos,
+                        depth,
+                        ggraphics::Color::from_rgba_u32(0x00),
+                    )),
+                    None,
+                    t,
+                ),
+                Vec::new(),
+            ),
             action_button: action_button,
-	    shop_menu_button: shop_menu_button,
-	    show_map_button: show_map_button,
-	    pause_button: pause_button,
+            shop_menu_button: shop_menu_button,
+            show_map_button: show_map_button,
+            pause_button: pause_button,
         }
     }
 
-    pub fn mouse_motion_handler<'a>(&mut self, ctx: &mut SuzuContext<'a>, p: numeric::Point2f, is_dragged: bool, t: Clock) {
-	let rpoint = self.canvas.relative_point(p);
+    pub fn mouse_motion_handler<'a>(
+        &mut self,
+        ctx: &mut SuzuContext<'a>,
+        p: numeric::Point2f,
+        is_dragged: bool,
+        t: Clock,
+    ) {
+        let rpoint = self.canvas.relative_point(p);
         self.action_button.mouse_motion_handler(ctx, rpoint);
-	self.shop_menu_button.mouse_motion_handler(ctx, rpoint);
-	self.show_map_button.mouse_motion_handler(ctx, rpoint);
-	self.pause_button.mouse_motion_handler(ctx, rpoint);
+        self.shop_menu_button.mouse_motion_handler(ctx, rpoint);
+        self.show_map_button.mouse_motion_handler(ctx, rpoint);
+        self.pause_button.mouse_motion_handler(ctx, rpoint);
 
-	if !is_dragged {
-	    if p.y <= 650.0 {
-		self.slide_out(t);
-	    } else {
-		self.slide_in(t);
-	    }
-	}
+        if !is_dragged {
+            if p.y <= 650.0 {
+                self.slide_out(t);
+            } else {
+                self.slide_in(t);
+            }
+        }
     }
 
     pub fn mouse_left_button_down_handler<'a>(
@@ -2951,11 +2976,11 @@ impl ShopCommandPalette {
         ctx: &mut SuzuContext<'a>,
         p: numeric::Point2f,
     ) {
-	let rpoint = self.canvas.relative_point(p);
+        let rpoint = self.canvas.relative_point(p);
         self.action_button.mouse_left_button_down(ctx, rpoint);
-	self.shop_menu_button.mouse_left_button_down(ctx, rpoint);
-	self.show_map_button.mouse_left_button_down(ctx, rpoint);
-	self.pause_button.mouse_left_button_down(ctx, rpoint);
+        self.shop_menu_button.mouse_left_button_down(ctx, rpoint);
+        self.show_map_button.mouse_left_button_down(ctx, rpoint);
+        self.pause_button.mouse_left_button_down(ctx, rpoint);
     }
 
     pub fn mouse_left_button_up_handler<'a>(
@@ -2963,37 +2988,37 @@ impl ShopCommandPalette {
         ctx: &mut SuzuContext<'a>,
         p: numeric::Point2f,
     ) {
-	let rpoint = self.canvas.relative_point(p);
+        let rpoint = self.canvas.relative_point(p);
         self.action_button.mouse_left_button_up(ctx, rpoint);
-	self.shop_menu_button.mouse_left_button_up(ctx, rpoint);
-    	self.show_map_button.mouse_left_button_up(ctx, rpoint);
-	self.pause_button.mouse_left_button_up(ctx, rpoint);
+        self.shop_menu_button.mouse_left_button_up(ctx, rpoint);
+        self.show_map_button.mouse_left_button_up(ctx, rpoint);
+        self.pause_button.mouse_left_button_up(ctx, rpoint);
     }
 
     pub fn contains_buttons(&self, p: numeric::Point2f) -> bool {
-	let rpoint = self.canvas.relative_point(p);
-        self.action_button.contains(rpoint) ||
-	    self.shop_menu_button.contains(rpoint) ||
-	    self.show_map_button.contains(rpoint) ||
-	    self.pause_button.contains(rpoint)
+        let rpoint = self.canvas.relative_point(p);
+        self.action_button.contains(rpoint)
+            || self.shop_menu_button.contains(rpoint)
+            || self.show_map_button.contains(rpoint)
+            || self.pause_button.contains(rpoint)
     }
 
     pub fn check_button_func(&self, p: numeric::Point2f) -> Option<CommandPaletteFunc> {
-	let rpoint = self.canvas.relative_point(p);
-	
+        let rpoint = self.canvas.relative_point(p);
+
         if self.action_button.contains(rpoint) {
             return Some(CommandPaletteFunc::Action);
         }
 
-	if self.shop_menu_button.contains(rpoint) {
+        if self.shop_menu_button.contains(rpoint) {
             return Some(CommandPaletteFunc::ShowShopMenu);
         }
 
-	if self.show_map_button.contains(rpoint) {
+        if self.show_map_button.contains(rpoint) {
             return Some(CommandPaletteFunc::ShowMap);
         }
 
-	if self.pause_button.contains(rpoint) {
+        if self.pause_button.contains(rpoint) {
             return Some(CommandPaletteFunc::Pause);
         }
 
@@ -3001,38 +3026,46 @@ impl ShopCommandPalette {
     }
 
     pub fn slide_in(&mut self, t: Clock) {
-	self.canvas.override_move_func(move_fn::move_constant_dest(
-	    numeric::Point2f::new(160.0, 650.0),
-	    numeric::Vector2f::new(0.0, -10.0)), t);
+        self.canvas.override_move_func(
+            move_fn::move_constant_dest(
+                numeric::Point2f::new(160.0, 650.0),
+                numeric::Vector2f::new(0.0, -10.0),
+            ),
+            t,
+        );
     }
 
     pub fn slide_out(&mut self, t: Clock) {
-	self.canvas.override_move_func(move_fn::move_constant_dest(
-	    numeric::Point2f::new(160.0, 720.0),
-	    numeric::Vector2f::new(0.0, 10.0)), t);
+        self.canvas.override_move_func(
+            move_fn::move_constant_dest(
+                numeric::Point2f::new(160.0, 720.0),
+                numeric::Vector2f::new(0.0, 10.0),
+            ),
+            t,
+        );
     }
 
     pub fn effect<'a>(&mut self, ctx: &mut SuzuContext<'a>, t: Clock) {
-	if !self.canvas.is_stop() {
-	    ctx.process_utility.redraw();
-	    self.canvas.move_with_func(t);
-	}
+        if !self.canvas.is_stop() {
+            ctx.process_utility.redraw();
+            self.canvas.move_with_func(t);
+        }
     }
 }
 
 impl DrawableComponent for ShopCommandPalette {
     fn draw(&mut self, ctx: &mut ggez::Context) -> ggez::GameResult<()> {
-	if self.canvas.is_visible() {
-	    sub_screen::stack_screen(ctx, &self.canvas);
-	    
-	    self.action_button.draw(ctx)?;
-	    self.shop_menu_button.draw(ctx)?;
-	    self.show_map_button.draw(ctx)?;
-	    self.pause_button.draw(ctx)?;
-	    
+        if self.canvas.is_visible() {
+            sub_screen::stack_screen(ctx, &self.canvas);
+
+            self.action_button.draw(ctx)?;
+            self.shop_menu_button.draw(ctx)?;
+            self.show_map_button.draw(ctx)?;
+            self.pause_button.draw(ctx)?;
+
             sub_screen::pop_screen(ctx);
             self.canvas.draw(ctx)?;
-	}
+        }
 
         Ok(())
     }
@@ -3057,4 +3090,3 @@ impl DrawableComponent for ShopCommandPalette {
         self.canvas.get_drawing_depth()
     }
 }
-

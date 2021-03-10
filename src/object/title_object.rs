@@ -12,20 +12,30 @@ use torifune::impl_texture_object_for_wrapped;
 use torifune::core::Clock;
 use torifune::graphics::drawable::*;
 use torifune::graphics::object::*;
-use torifune::roundup2f;
 use torifune::numeric;
+use torifune::roundup2f;
 
 use crate::object::character_factory;
-use crate::{core::{GameMode, WINDOW_SIZE_X, WINDOW_SIZE_Y}, flush_delay_event, flush_delay_event_and_redraw_check, object::util_object::{CheckBox, SeekBar, SelectButton, TextButtonTexture}, scene::DelayEventList};
 use crate::scene::SceneID;
 use crate::{
-    set_table_frame_cell_center,
     core::{font_information_from_toml_value, FontID, SuzuContext, TextureID, TileBatchTextureID},
-    scene::SceneTransition,
     parse_toml_file,
+    scene::SceneTransition,
+    set_table_frame_cell_center,
+};
+use crate::{
+    core::{GameMode, WINDOW_SIZE_X, WINDOW_SIZE_Y},
+    flush_delay_event, flush_delay_event_and_redraw_check,
+    object::util_object::{CheckBox, SeekBar, SelectButton, TextButtonTexture},
+    scene::DelayEventList,
 };
 
-use super::{DarkEffectPanel, map_object::MapObject, scenario::ScenarioEvent, util_object::{FramedButton, TableFrame, FrameData}};
+use super::{
+    map_object::MapObject,
+    scenario::ScenarioEvent,
+    util_object::{FrameData, FramedButton, TableFrame},
+    DarkEffectPanel,
+};
 
 extern crate reqwest;
 
@@ -58,16 +68,15 @@ impl TitleContentsEvent {
         match s {
             "SceneTransition" => {
                 let next_scene_str = toml_value["next-scene"].as_str().expect("error");
-                let (next_scene, game_mode) = 
-		    match SceneID::from_str(next_scene_str) {
-			Ok(id) => (id, None),
-			Err(_) => match next_scene_str {
-			    "ScenarioStory" => (SceneID::Scenario, Some(GameMode::story())),
-			    "ScenarioTA" => (SceneID::Scenario, Some(GameMode::time_attack())),
-			    _ => panic!("invalid next-scene-str field"),
-			}
-		    };
-		
+                let (next_scene, game_mode) = match SceneID::from_str(next_scene_str) {
+                    Ok(id) => (id, None),
+                    Err(_) => match next_scene_str {
+                        "ScenarioStory" => (SceneID::Scenario, Some(GameMode::story())),
+                        "ScenarioTA" => (SceneID::Scenario, Some(GameMode::time_attack())),
+                        _ => panic!("invalid next-scene-str field"),
+                    },
+                };
+
                 let next_trans_str = toml_value["transition-method"].as_str().expect("error");
                 let next_trans =
                     SceneTransition::from_str(next_trans_str).expect("Unknown next scene");
@@ -394,7 +403,7 @@ impl TemporaryConfigData {
         TemporaryConfigData {
             bgm_volume: ctx.config.get_bgm_volume(),
             se_volume: ctx.config.get_se_volume(),
-	    pause_when_inactive: ctx.config.is_pause_when_inactive(),
+            pause_when_inactive: ctx.config.is_pause_when_inactive(),
         }
     }
 }
@@ -414,7 +423,12 @@ pub struct ConfigPanel {
 }
 
 impl ConfigPanel {
-    pub fn new<'a>(ctx: &mut SuzuContext<'a>, pos_rect: numeric::Rect, depth: i8, t: Clock) -> Self {
+    pub fn new<'a>(
+        ctx: &mut SuzuContext<'a>,
+        pos_rect: numeric::Rect,
+        depth: i8,
+        t: Clock,
+    ) -> Self {
         let font_info = FontInformation::new(
             ctx.resource.get_font(FontID::Cinema),
             numeric::Vector2f::new(32.0, 32.0),
@@ -426,7 +440,7 @@ impl ConfigPanel {
             numeric::Rect::new(0.0, 0.0, WINDOW_SIZE_X as f32, WINDOW_SIZE_X as f32),
             t,
         );
-	background.set_alpha(0.5);
+        background.set_alpha(0.5);
 
         let header_text = UniText::new(
             "設定".to_string(),
@@ -516,7 +530,7 @@ impl ConfigPanel {
             text_texture,
         );
 
-	let pause_text = UniText::new(
+        let pause_text = UniText::new(
             "店番中の非アクティブ時にポーズ".to_string(),
             numeric::Point2f::new(200.0, 400.0),
             numeric::Vector2f::new(1.0, 1.0),
@@ -524,7 +538,7 @@ impl ConfigPanel {
             0,
             hrzn_text_font_info.clone(),
         );
-	hrzn_text_list.push(pause_text);
+        hrzn_text_list.push(pause_text);
         let choice_box_texture = Box::new(UniTexture::new(
             ctx.ref_texture(TextureID::CheckCircle),
             numeric::Point2f::new(200.0, 440.0),
@@ -593,15 +607,15 @@ impl ConfigPanel {
     fn recover_original_config<'a>(&mut self, ctx: &mut SuzuContext<'a>) {
         let original_bgm = self.original_config_data.bgm_volume * 100.0;
         let original_se = self.original_config_data.se_volume * 100.0;
-	let original_pause = self.original_config_data.pause_when_inactive;
+        let original_pause = self.original_config_data.pause_when_inactive;
 
         ctx.change_bgm_volume(original_bgm);
         ctx.change_se_volume(original_se);
-	ctx.config.set_pause_when_inactive(original_pause);
+        ctx.config.set_pause_when_inactive(original_pause);
 
         self.bgm_volume_bar.set_value(ctx, original_bgm);
         self.se_volume_bar.set_value(ctx, original_se);
-	self.checkbox.try_check(original_pause);
+        self.checkbox.try_check(original_pause);
     }
 
     pub fn get_name(&self) -> String {
@@ -634,15 +648,16 @@ impl ConfigPanel {
     ) -> Option<TitleContentsEvent> {
         self.bgm_volume_bar.release_handler();
         self.se_volume_bar.release_handler();
-	
+
         let rpoint = self.canvas.relative_point(point);
-	self.checkbox.click_handler(rpoint);
+        self.checkbox.click_handler(rpoint);
 
         if self.apply_button.contains(ctx.context, rpoint) {
             ctx.change_bgm_volume(self.bgm_volume_bar.get_current_value());
             ctx.change_se_volume(self.se_volume_bar.get_current_value());
-	    ctx.config.set_pause_when_inactive(self.checkbox.checked_now());
-	    ctx.config.save_config();
+            ctx.config
+                .set_pause_when_inactive(self.checkbox.checked_now());
+            ctx.config.save_config();
             return Some(TitleContentsEvent::NextContents("init-menu".to_string()));
         }
 
@@ -725,7 +740,6 @@ impl DrawableComponent for ConfigPanel {
     }
 }
 
-
 pub struct UpdatePanel {
     canvas: sub_screen::SubScreen,
     background: DarkEffectPanel,
@@ -738,7 +752,12 @@ pub struct UpdatePanel {
 }
 
 impl UpdatePanel {
-    pub fn new<'a>(ctx: &mut SuzuContext<'a>, pos_rect: numeric::Rect, depth: i8, t: Clock) -> Self {
+    pub fn new<'a>(
+        ctx: &mut SuzuContext<'a>,
+        pos_rect: numeric::Rect,
+        depth: i8,
+        t: Clock,
+    ) -> Self {
         let font_info = FontInformation::new(
             ctx.resource.get_font(FontID::Cinema),
             numeric::Vector2f::new(32.0, 32.0),
@@ -750,9 +769,9 @@ impl UpdatePanel {
             numeric::Rect::new(0.0, 0.0, WINDOW_SIZE_X as f32, WINDOW_SIZE_X as f32),
             t,
         );
-	background.set_alpha(0.5);
+        background.set_alpha(0.5);
 
-	let hrzn_text_font_info = FontInformation::new(
+        let hrzn_text_font_info = FontInformation::new(
             ctx.resource.get_font(FontID::Cinema),
             numeric::Vector2f::new(29.0, 29.0),
             ggraphics::Color::from_rgba_u32(0xbbbbbbff),
@@ -767,14 +786,14 @@ impl UpdatePanel {
             font_info,
         );
 
-	let main_message = UniText::new(
-	    "".to_string(),
+        let main_message = UniText::new(
+            "".to_string(),
             numeric::Point2f::new(650.0, 200.0),
             numeric::Vector2f::new(1.0, 1.0),
             0.0,
             0,
             font_info,
-	);
+        );
 
         let text_texture = Box::new(TextButtonTexture::new(
             ctx,
@@ -807,7 +826,7 @@ impl UpdatePanel {
             numeric::Rect::new(850.0, 600.0, 100.0, 50.0),
             text_texture,
         );
-	
+
         UpdatePanel {
             header_text: header_text,
             canvas: sub_screen::SubScreen::new(
@@ -816,15 +835,15 @@ impl UpdatePanel {
                 depth,
                 ggraphics::Color::from_rgba_u32(0),
             ),
-	    main_message: main_message,
+            main_message: main_message,
             background: background,
             apply_button: apply_button,
             cancel_button: cancel_button,
-	    event_list: DelayEventList::new(),
-	    latest_version: None,
+            event_list: DelayEventList::new(),
+            latest_version: None,
         }
     }
-    
+
     pub fn get_name(&self) -> String {
         "update-panel".to_string()
     }
@@ -833,13 +852,11 @@ impl UpdatePanel {
         &mut self,
         _ctx: &mut SuzuContext<'a>,
         button: MouseButton,
-	_point: numeric::Point2f,
+        _point: numeric::Point2f,
         _t: Clock,
     ) {
         match button {
-            MouseButton::Left => {
-		()
-            }
+            MouseButton::Left => (),
             _ => (),
         }
     }
@@ -853,20 +870,25 @@ impl UpdatePanel {
         let rpoint = self.canvas.relative_point(point);
 
         if self.apply_button.contains(ctx.context, rpoint) {
-	    if let Some(version) = self.latest_version {
-		self.replace_main_message(ctx, "更新中・・・");
-		
-		self.event_list.add_event(
-		    Box::new(move |slf: &mut UpdatePanel, ctx, _t| {
-			match slf.exec_update(version) {
-			    Ok(_) => slf.replace_main_message(ctx, &format!("更新完了 ver.{}", version)),
-			    Err(_) => slf.replace_main_message(ctx, "更新失敗 時間を置いて再度お試しください"),
-			}
-			slf.latest_version = None;
-			
-		    }
-		), t + 1);
-	    }
+            if let Some(version) = self.latest_version {
+                self.replace_main_message(ctx, "更新中・・・");
+
+                self.event_list.add_event(
+                    Box::new(move |slf: &mut UpdatePanel, ctx, _t| {
+                        match slf.exec_update(version) {
+                            Ok(_) => {
+                                slf.replace_main_message(ctx, &format!("更新完了 ver.{}", version))
+                            }
+                            Err(_) => slf.replace_main_message(
+                                ctx,
+                                "更新失敗 時間を置いて再度お試しください",
+                            ),
+                        }
+                        slf.latest_version = None;
+                    }),
+                    t + 1,
+                );
+            }
         }
 
         if self.cancel_button.contains(ctx.context, rpoint) {
@@ -877,79 +899,89 @@ impl UpdatePanel {
     }
 
     pub fn check_update<'a>(&mut self, _ctx: &mut SuzuContext<'a>, _t: Clock) -> Result<f64, ()> {
-	let resp = match reqwest::blocking::get("https://boxed-sumire.fun/suzu/update.toml") {
-	    Ok(resp) => match resp.text() {
-		Ok(text) => text,
-		Err(_) => return Err(()),
-	    },
-	    Err(_) => return Err(()),
-	};
-	
-	let root = match resp.parse::<toml::Value>() {
-	    Ok(root) => root,
-	    Err(_) => return Err(()),
-	};
-	
-	if let Some(latest_version) = root["latest"].as_float() {
-	    if latest_version > crate::core::VERSION {
-		Ok(latest_version)
-	    } else {
-		Err(())
-	    }
-	} else {
-	    Err(())
-	}
+        let resp = match reqwest::blocking::get("https://boxed-sumire.fun/suzu/update.toml") {
+            Ok(resp) => match resp.text() {
+                Ok(text) => text,
+                Err(_) => return Err(()),
+            },
+            Err(_) => return Err(()),
+        };
+
+        let root = match resp.parse::<toml::Value>() {
+            Ok(root) => root,
+            Err(_) => return Err(()),
+        };
+
+        if let Some(latest_version) = root["latest"].as_float() {
+            if latest_version > crate::core::VERSION {
+                Ok(latest_version)
+            } else {
+                Err(())
+            }
+        } else {
+            Err(())
+        }
     }
 
     pub fn exec_update(&self, version: f64) -> Result<(), ()> {
-	if version < crate::core::VERSION {
-	    return Err(());
-	}
+        if version < crate::core::VERSION {
+            return Err(());
+        }
 
-	let bytes = match reqwest::blocking::get(&format!("https://boxed-sumire.fun/suzu/suzu-{}.encrypted", version)) {
-	    Ok(resp) => match resp.bytes() {
-		Ok(bytes) => bytes,
-		Err(_) => return Err(()),
-	    },
-	    Err(_) => return Err(()),
-	};
+        let bytes = match reqwest::blocking::get(&format!(
+            "https://boxed-sumire.fun/suzu/suzu-{}.encrypted",
+            version
+        )) {
+            Ok(resp) => match resp.bytes() {
+                Ok(bytes) => bytes,
+                Err(_) => return Err(()),
+            },
+            Err(_) => return Err(()),
+        };
 
-	crate::core::crypt::decrypt_game_binary(&bytes.to_vec());
-	Ok(())
+        crate::core::crypt::decrypt_game_binary(&bytes.to_vec());
+        Ok(())
     }
-    
+
     pub fn flush_delayed_event<'a>(&mut self, ctx: &mut SuzuContext<'a>, t: Clock) {
-	flush_delay_event_and_redraw_check!(self, self.event_list, ctx, t, { });
+        flush_delay_event_and_redraw_check!(self, self.event_list, ctx, t, {});
     }
 
     pub fn notify_switched<'a>(&mut self, ctx: &mut SuzuContext<'a>, t: Clock) {
-	self.replace_main_message(ctx, "更新確認中・・・");
+        self.replace_main_message(ctx, "更新確認中・・・");
 
-	self.event_list.add_event(
-            Box::new(move |slf: &mut UpdatePanel, ctx, t| {
-		match slf.check_update(ctx, t) {
-		    Ok(version) => {
-			slf.latest_version = Some(version);
-			slf.replace_main_message(
-			    ctx,
-			    &format!("ver.{} → ver.{}の更新が見つかりました", crate::core::VERSION, version)
-			);
-		    },
-		    Err(()) => {
-			slf.replace_main_message(ctx, &format!("最新版です ver.{}", crate::core::VERSION));
-		    },
-		}
-            }),
-	    t + 2,
-	);
+        self.event_list.add_event(
+            Box::new(
+                move |slf: &mut UpdatePanel, ctx, t| match slf.check_update(ctx, t) {
+                    Ok(version) => {
+                        slf.latest_version = Some(version);
+                        slf.replace_main_message(
+                            ctx,
+                            &format!(
+                                "ver.{} → ver.{}の更新が見つかりました",
+                                crate::core::VERSION,
+                                version
+                            ),
+                        );
+                    }
+                    Err(()) => {
+                        slf.replace_main_message(
+                            ctx,
+                            &format!("最新版です ver.{}", crate::core::VERSION),
+                        );
+                    }
+                },
+            ),
+            t + 2,
+        );
     }
 
     pub fn replace_main_message<'a>(&mut self, ctx: &mut SuzuContext<'a>, s: &str) {
-	self.main_message.replace_text(s.to_string());
-	self.main_message.make_center(
-	    ctx.context,
-	    numeric::Point2f::new(WINDOW_SIZE_X as f32 / 2.0, WINDOW_SIZE_Y as f32 / 2.0)
-	);
+        self.main_message.replace_text(s.to_string());
+        self.main_message.make_center(
+            ctx.context,
+            numeric::Point2f::new(WINDOW_SIZE_X as f32 / 2.0, WINDOW_SIZE_Y as f32 / 2.0),
+        );
     }
 }
 
@@ -961,7 +993,7 @@ impl DrawableComponent for UpdatePanel {
             self.background.draw(ctx)?;
 
             self.header_text.draw(ctx)?;
-	    self.main_message.draw(ctx)?;
+            self.main_message.draw(ctx)?;
 
             self.apply_button.draw(ctx)?;
             self.cancel_button.draw(ctx)?;
@@ -1007,7 +1039,13 @@ pub struct Gallery {
 }
 
 impl Gallery {
-    pub fn new<'a>(ctx: &mut SuzuContext<'a>, pos_rect: numeric::Rect, toml_path: &str, depth: i8, t: Clock) -> Self {
+    pub fn new<'a>(
+        ctx: &mut SuzuContext<'a>,
+        pos_rect: numeric::Rect,
+        toml_path: &str,
+        depth: i8,
+        t: Clock,
+    ) -> Self {
         let font_info = FontInformation::new(
             ctx.resource.get_font(FontID::Cinema),
             numeric::Vector2f::new(32.0, 32.0),
@@ -1019,7 +1057,7 @@ impl Gallery {
             numeric::Rect::new(0.0, 0.0, WINDOW_SIZE_X as f32, WINDOW_SIZE_X as f32),
             t,
         );
-	background.set_alpha(0.5);
+        background.set_alpha(0.5);
 
         let header_text = UniText::new(
             "供養".to_string(),
@@ -1030,69 +1068,80 @@ impl Gallery {
             font_info,
         );
 
-	let mut gallery_list = Vec::new();
-	let mut char_list = Vec::new();
+        let mut gallery_list = Vec::new();
+        let mut char_list = Vec::new();
 
-	let root = parse_toml_file!(ctx.context, toml_path);
+        let root = parse_toml_file!(ctx.context, toml_path);
         let items = root["items"].as_array().unwrap();
 
-	for item in items {
-	    match item["type"].as_str().unwrap() {
-		"texture" => {
-		    let scale = item["scale"].as_float().unwrap() as f32;
-		    let pos_y = item["pos-y"].as_float().unwrap() as f32;
-		    
-		    let mut texture = UniTexture::new(
-			ctx.ref_texture(TextureID::from_str(item["texture-id"].as_str().unwrap()).unwrap()),
-			numeric::Point2f::new(0.0, 0.0),
-			numeric::Vector2f::new(scale, scale),
-			0.0,
-			0
-		    );
-		    texture.make_center(ctx.context, numeric::Point2f::new(WINDOW_SIZE_X as f32 / 2.0, pos_y));
+        for item in items {
+            match item["type"].as_str().unwrap() {
+                "texture" => {
+                    let scale = item["scale"].as_float().unwrap() as f32;
+                    let pos_y = item["pos-y"].as_float().unwrap() as f32;
 
-		    let msg = item["msg"].as_str().unwrap().to_string();
-		    gallery_list.push((texture, msg));
-		},
-		"character" => {
-		    let pos_y = item["pos-y"].as_float().unwrap() as f32;
-		    let character = match item["name"].as_str().unwrap() {
-			"kosuzu" => {
-			    let mut kosuzu = character_factory::create_kuyou_kosuzu(
-				ctx,
-				&numeric::Rect::new(0.0, 0.0, 1366.0, 768.0),
-				numeric::Point2f::new(600.0, pos_y),
-			    );
-			    kosuzu.change_animation_mode(crate::object::util_object::ObjectDirection::MoveDown);
+                    let mut texture = UniTexture::new(
+                        ctx.ref_texture(
+                            TextureID::from_str(item["texture-id"].as_str().unwrap()).unwrap(),
+                        ),
+                        numeric::Point2f::new(0.0, 0.0),
+                        numeric::Vector2f::new(scale, scale),
+                        0.0,
+                        0,
+                    );
+                    texture.make_center(
+                        ctx.context,
+                        numeric::Point2f::new(WINDOW_SIZE_X as f32 / 2.0, pos_y),
+                    );
 
-			    kosuzu
-			},
-			"mob1" => {
-			    let mut kosuzu = character_factory::create_customer_kuyou(
-				ctx,
-				&numeric::Rect::new(0.0, 0.0, 1366.0, 768.0),
-				numeric::Point2f::new(600.0, pos_y),
-			    );
-			    kosuzu.change_animation_mode(crate::object::util_object::ObjectDirection::MoveDown);
+                    let msg = item["msg"].as_str().unwrap().to_string();
+                    gallery_list.push((texture, msg));
+                }
+                "character" => {
+                    let pos_y = item["pos-y"].as_float().unwrap() as f32;
+                    let character = match item["name"].as_str().unwrap() {
+                        "kosuzu" => {
+                            let mut kosuzu = character_factory::create_kuyou_kosuzu(
+                                ctx,
+                                &numeric::Rect::new(0.0, 0.0, 1366.0, 768.0),
+                                numeric::Point2f::new(600.0, pos_y),
+                            );
+                            kosuzu.change_animation_mode(
+                                crate::object::util_object::ObjectDirection::MoveDown,
+                            );
 
-			    kosuzu
-			},
-			_ => panic!("invalid character name"),
-		    };
-		    
-		    let msg = item["msg"].as_str().unwrap().to_string();
-		    char_list.push((character, msg));
-		}
-		_ => (),
-	    }
-	}
+                            kosuzu
+                        }
+                        "mob1" => {
+                            let mut kosuzu = character_factory::create_customer_kuyou(
+                                ctx,
+                                &numeric::Rect::new(0.0, 0.0, 1366.0, 768.0),
+                                numeric::Point2f::new(600.0, pos_y),
+                            );
+                            kosuzu.change_animation_mode(
+                                crate::object::util_object::ObjectDirection::MoveDown,
+                            );
 
-	let exit_button = FramedButton::create_design1(
-	    ctx, numeric::Point2f::new(50.0, 400.0), "逆戻",
-	    numeric::Vector2f::new(24.0, 24.0),
-	);
+                            kosuzu
+                        }
+                        _ => panic!("invalid character name"),
+                    };
 
-	let mut g = Gallery {
+                    let msg = item["msg"].as_str().unwrap().to_string();
+                    char_list.push((character, msg));
+                }
+                _ => (),
+            }
+        }
+
+        let exit_button = FramedButton::create_design1(
+            ctx,
+            numeric::Point2f::new(50.0, 400.0),
+            "逆戻",
+            numeric::Vector2f::new(24.0, 24.0),
+        );
+
+        let mut g = Gallery {
             header_text: header_text,
             canvas: sub_screen::SubScreen::new(
                 ctx.context,
@@ -1101,72 +1150,71 @@ impl Gallery {
                 ggraphics::Color::from_rgba_u32(0),
             ),
             background: background,
-	    event_list: DelayEventList::new(),
-	    gallery_list: gallery_list,
-	    char_list: char_list,
-	    scenario_event: ScenarioEvent::new(
-		ctx,
-		numeric::Rect::new(0.0, 0.0, 1366.0, 748.0),
-		"/scenario/empty.toml",
-		true,
-		t
-	    ),
-	    gallery_index: 0,
-	    exit_button: exit_button,
+            event_list: DelayEventList::new(),
+            gallery_list: gallery_list,
+            char_list: char_list,
+            scenario_event: ScenarioEvent::new(
+                ctx,
+                numeric::Rect::new(0.0, 0.0, 1366.0, 748.0),
+                "/scenario/empty.toml",
+                true,
+                t,
+            ),
+            gallery_index: 0,
+            exit_button: exit_button,
         };
 
-	g.update_gallery_text(ctx);
-	g
+        g.update_gallery_text(ctx);
+        g
     }
-    
+
     pub fn get_name(&self) -> String {
         "gallery".to_string()
     }
 
     pub fn current_gallery_image(&mut self) -> Option<&mut dyn DrawableComponent> {
-	let index = self.get_current_index();
+        let index = self.get_current_index();
 
-	match index {
-	    0 | 1 | 2 => {
-		Some(&mut self.gallery_list.get_mut(index as usize).unwrap().0 as &mut dyn DrawableComponent)
-	    },
-	    3 | 4 => {
-		let index = (index as usize - self.gallery_list.len()) as usize;
-		Some(&mut self.char_list.get_mut(
-		    index
-		).unwrap().0 as &mut dyn DrawableComponent)
-	    }
-	    _=> None,
-	}
+        match index {
+            0 | 1 | 2 => Some(
+                &mut self.gallery_list.get_mut(index as usize).unwrap().0
+                    as &mut dyn DrawableComponent,
+            ),
+            3 | 4 => {
+                let index = (index as usize - self.gallery_list.len()) as usize;
+                Some(&mut self.char_list.get_mut(index).unwrap().0 as &mut dyn DrawableComponent)
+            }
+            _ => None,
+        }
     }
 
     fn get_current_index(&self) -> i64 {
-	self.gallery_index.abs() % (self.gallery_list.len() + self.char_list.len()) as i64
+        self.gallery_index.abs() % (self.gallery_list.len() + self.char_list.len()) as i64
     }
-    
-    pub fn update_gallery_text<'a>(&mut self, ctx: &mut SuzuContext<'a>) {
-	let index = self.get_current_index();
 
-	match index {
-	    0 | 1 | 2 => {
-		self.scenario_event.set_fixed_text_to_scenario_box(
-		    ctx,
-		    self.gallery_list.get(index as usize).unwrap().1.clone(),
-		);
-	    },
-	    3 | 4 => {
-		let index = (index as usize - self.gallery_list.len()) as usize;
-		self.scenario_event.set_fixed_text_to_scenario_box(
-		    ctx,
-		    self.char_list.get(index).unwrap().1.clone(),
-		);
-	    }
-	    _=> (),
-	}
+    pub fn update_gallery_text<'a>(&mut self, ctx: &mut SuzuContext<'a>) {
+        let index = self.get_current_index();
+
+        match index {
+            0 | 1 | 2 => {
+                self.scenario_event.set_fixed_text_to_scenario_box(
+                    ctx,
+                    self.gallery_list.get(index as usize).unwrap().1.clone(),
+                );
+            }
+            3 | 4 => {
+                let index = (index as usize - self.gallery_list.len()) as usize;
+                self.scenario_event.set_fixed_text_to_scenario_box(
+                    ctx,
+                    self.char_list.get(index).unwrap().1.clone(),
+                );
+            }
+            _ => (),
+        }
     }
 
     pub fn reset(&mut self) {
-	self.gallery_index = 0;
+        self.gallery_index = 0;
     }
 
     pub fn mouse_button_up<'a>(
@@ -1175,30 +1223,30 @@ impl Gallery {
         point: numeric::Point2f,
         _t: Clock,
     ) -> Option<TitleContentsEvent> {
-	if self.exit_button.contains(point) {
-	    self.reset();
+        if self.exit_button.contains(point) {
+            self.reset();
             return Some(TitleContentsEvent::NextContents("init-menu".to_string()));
         }
 
-	self.gallery_index += 1;
+        self.gallery_index += 1;
 
-	self.update_gallery_text(ctx);
+        self.update_gallery_text(ctx);
 
         None
     }
-    
-    pub fn flush_delayed_event<'a>(&mut self, ctx: &mut SuzuContext<'a>, t: Clock) {
-	flush_delay_event_and_redraw_check!(self, self.event_list, ctx, t, { });
 
-	let index = self.get_current_index() as i64;
-	match index {
-	    3 | 4 => {
-		let index = (index as usize - self.gallery_list.len()) as usize;
-		self.char_list.get_mut(index).unwrap().0.update_texture(t);
-		ctx.process_utility.redraw();
-	    }
-	    _=> (),
-	}
+    pub fn flush_delayed_event<'a>(&mut self, ctx: &mut SuzuContext<'a>, t: Clock) {
+        flush_delay_event_and_redraw_check!(self, self.event_list, ctx, t, {});
+
+        let index = self.get_current_index() as i64;
+        match index {
+            3 | 4 => {
+                let index = (index as usize - self.gallery_list.len()) as usize;
+                self.char_list.get_mut(index).unwrap().0.update_texture(t);
+                ctx.process_utility.redraw();
+            }
+            _ => (),
+        }
     }
 }
 
@@ -1211,12 +1259,12 @@ impl DrawableComponent for Gallery {
 
             self.header_text.draw(ctx)?;
 
-	    if let Some(obj) = self.current_gallery_image() {
-		obj.draw(ctx)?;
-	    }
+            if let Some(obj) = self.current_gallery_image() {
+                obj.draw(ctx)?;
+            }
 
-	    self.scenario_event.draw(ctx)?;
-	    self.exit_button.draw(ctx)?;
+            self.scenario_event.draw(ctx)?;
+            self.exit_button.draw(ctx)?;
 
             sub_screen::pop_screen(ctx);
             self.canvas.draw(ctx).unwrap();
@@ -1258,23 +1306,28 @@ pub struct RecordRoom {
 }
 
 impl RecordRoom {
-    pub fn new<'a>(ctx: &mut SuzuContext<'a>, pos_rect: numeric::Rect, depth: i8, t: Clock) -> Self {
-	ctx.permanent_save_data.sort_records();
-	
+    pub fn new<'a>(
+        ctx: &mut SuzuContext<'a>,
+        pos_rect: numeric::Rect,
+        depth: i8,
+        t: Clock,
+    ) -> Self {
+        ctx.permanent_save_data.sort_records();
+
         let font_info = FontInformation::new(
             ctx.resource.get_font(FontID::Cinema),
             numeric::Vector2f::new(28.0, 28.0),
             ggraphics::Color::from_rgba_u32(0xccccccff),
         );
-	
+
         let mut background = DarkEffectPanel::new(
             ctx.context,
             numeric::Rect::new(0.0, 0.0, WINDOW_SIZE_X as f32, WINDOW_SIZE_X as f32),
             t,
         );
-	background.set_alpha(0.7);
+        background.set_alpha(0.7);
 
-	let mut desc_text = Vec::new();
+        let mut desc_text = Vec::new();
 
         let mut header_text = UniText::new(
             "記録".to_string(),
@@ -1284,10 +1337,13 @@ impl RecordRoom {
             0,
             font_info,
         );
-	header_text.make_center(ctx.context, numeric::Point2f::new((WINDOW_SIZE_X / 2) as f32, 80.0));
-	desc_text.push(header_text);
+        header_text.make_center(
+            ctx.context,
+            numeric::Point2f::new((WINDOW_SIZE_X / 2) as f32, 80.0),
+        );
+        desc_text.push(header_text);
 
-	let mut hard_text = UniText::new(
+        let mut hard_text = UniText::new(
             "熟練".to_string(),
             numeric::Point2f::new(650.0, 80.0),
             numeric::Vector2f::new(1.0, 1.0),
@@ -1295,10 +1351,13 @@ impl RecordRoom {
             0,
             font_info,
         );
-	hard_text.make_center(ctx.context, numeric::Point2f::new((WINDOW_SIZE_X / 8) as f32, 125.0));
-	desc_text.push(hard_text);
+        hard_text.make_center(
+            ctx.context,
+            numeric::Point2f::new((WINDOW_SIZE_X / 8) as f32, 125.0),
+        );
+        desc_text.push(hard_text);
 
-	let mut story_text = UniText::new(
+        let mut story_text = UniText::new(
             "通常".to_string(),
             numeric::Point2f::new(650.0, 80.0),
             numeric::Vector2f::new(1.0, 1.0),
@@ -1306,255 +1365,270 @@ impl RecordRoom {
             0,
             font_info,
         );
-	story_text.make_center(ctx.context, numeric::Point2f::new((WINDOW_SIZE_X / 8) as f32, 440.0));
-	desc_text.push(story_text);
-	
-	let exit_button = FramedButton::create_design1(
-	    ctx, numeric::Point2f::new(1100.0, 600.0), "逆戻",
-	    numeric::Vector2f::new(24.0, 24.0),
-	);
+        story_text.make_center(
+            ctx.context,
+            numeric::Point2f::new((WINDOW_SIZE_X / 8) as f32, 440.0),
+        );
+        desc_text.push(story_text);
 
-	let table_frame_hard = TableFrame::new(
-	    ctx.resource,
+        let exit_button = FramedButton::create_design1(
+            ctx,
+            numeric::Point2f::new(1100.0, 600.0),
+            "逆戻",
+            numeric::Vector2f::new(24.0, 24.0),
+        );
+
+        let table_frame_hard = TableFrame::new(
+            ctx.resource,
             numeric::Point2f::new(120.0, 145.0),
             TileBatchTextureID::RedOldStyleFrame,
             FrameData::new(vec![40.0; 6], vec![80.0, 380.0, 380.0]),
             numeric::Vector2f::new(0.3, 0.3),
             0,
-	);
+        );
 
-	let table_frame_story = TableFrame::new(
-	    ctx.resource,
+        let table_frame_story = TableFrame::new(
+            ctx.resource,
             numeric::Point2f::new(120.0, 460.0),
             TileBatchTextureID::RedOldStyleFrame,
             FrameData::new(vec![40.0; 6], vec![80.0, 380.0, 380.0]),
             numeric::Vector2f::new(0.3, 0.3),
             0,
-	);
+        );
 
-	let mut vtext_list = Vec::new();
+        let mut vtext_list = Vec::new();
 
-	let mut number = UniText::new(
-	    "順位".to_string(),
-	    numeric::Point2f::new(0.0, 0.0),
-	    numeric::Vector2f::new(1.0, 1.0),
-	    0.0,
-	    0,
-	    font_info.clone()
-	);
-	
-	let mut date = UniText::new(
-	    "日付".to_string(),
-	    numeric::Point2f::new(0.0, 0.0),
-	    numeric::Vector2f::new(1.0, 1.0),
-	    0.0,
-	    0,
-	    font_info.clone()
-	);
-	
-	let mut money = UniText::new(
-	    "所持金".to_string(),
-	    numeric::Point2f::new(0.0, 0.0),
-	    numeric::Vector2f::new(1.0, 1.0),
-	    0.0,
-	    0,
-	    font_info.clone()
-	);
+        let mut number = UniText::new(
+            "順位".to_string(),
+            numeric::Point2f::new(0.0, 0.0),
+            numeric::Vector2f::new(1.0, 1.0),
+            0.0,
+            0,
+            font_info.clone(),
+        );
 
-	set_table_frame_cell_center!(
+        let mut date = UniText::new(
+            "日付".to_string(),
+            numeric::Point2f::new(0.0, 0.0),
+            numeric::Vector2f::new(1.0, 1.0),
+            0.0,
+            0,
+            font_info.clone(),
+        );
+
+        let mut money = UniText::new(
+            "所持金".to_string(),
+            numeric::Point2f::new(0.0, 0.0),
+            numeric::Vector2f::new(1.0, 1.0),
+            0.0,
+            0,
+            font_info.clone(),
+        );
+
+        set_table_frame_cell_center!(
             ctx.context,
             table_frame_hard,
             number,
             numeric::Vector2u::new(0, 0)
         );
-	
-	set_table_frame_cell_center!(
+
+        set_table_frame_cell_center!(
             ctx.context,
             table_frame_hard,
             date,
             numeric::Vector2u::new(1, 0)
         );
-	
-	set_table_frame_cell_center!(
+
+        set_table_frame_cell_center!(
             ctx.context,
             table_frame_hard,
-	    money,
+            money,
             numeric::Vector2u::new(2, 0)
         );
-	
-	desc_text.push(number);
-	desc_text.push(date);
-	desc_text.push(money);
 
-	let mut number = UniText::new(
-	    "順位".to_string(),
-	    numeric::Point2f::new(0.0, 0.0),
-	    numeric::Vector2f::new(1.0, 1.0),
-	    0.0,
-	    0,
-	    font_info.clone()
-	);
-	
-	let mut date = UniText::new(
-	    "日付".to_string(),
-	    numeric::Point2f::new(0.0, 0.0),
-	    numeric::Vector2f::new(1.0, 1.0),
-	    0.0,
-	    0,
-	    font_info.clone()
-	);
-	
-	let mut money = UniText::new(
-	    "所持金".to_string(),
-	    numeric::Point2f::new(0.0, 0.0),
-	    numeric::Vector2f::new(1.0, 1.0),
-	    0.0,
-	    0,
-	    font_info.clone()
-	);
+        desc_text.push(number);
+        desc_text.push(date);
+        desc_text.push(money);
 
-	set_table_frame_cell_center!(
+        let mut number = UniText::new(
+            "順位".to_string(),
+            numeric::Point2f::new(0.0, 0.0),
+            numeric::Vector2f::new(1.0, 1.0),
+            0.0,
+            0,
+            font_info.clone(),
+        );
+
+        let mut date = UniText::new(
+            "日付".to_string(),
+            numeric::Point2f::new(0.0, 0.0),
+            numeric::Vector2f::new(1.0, 1.0),
+            0.0,
+            0,
+            font_info.clone(),
+        );
+
+        let mut money = UniText::new(
+            "所持金".to_string(),
+            numeric::Point2f::new(0.0, 0.0),
+            numeric::Vector2f::new(1.0, 1.0),
+            0.0,
+            0,
+            font_info.clone(),
+        );
+
+        set_table_frame_cell_center!(
             ctx.context,
             table_frame_story,
             number,
             numeric::Vector2u::new(0, 0)
         );
-	
-	set_table_frame_cell_center!(
+
+        set_table_frame_cell_center!(
             ctx.context,
             table_frame_story,
             date,
             numeric::Vector2u::new(1, 0)
         );
-	
-	set_table_frame_cell_center!(
+
+        set_table_frame_cell_center!(
             ctx.context,
             table_frame_story,
-	    money,
+            money,
             numeric::Vector2u::new(2, 0)
         );
-	
-	desc_text.push(number);
-	desc_text.push(date);
-	desc_text.push(money);
-	
-	for (index, data) in ctx.permanent_save_data.iter_hard_mode_records().enumerate() {
-	    if index >= 5 {
-		break;
-	    }
 
-	    let mut number = UniText::new(
-		number_to_jk::number_to_jk(index as u64 + 1),
-		numeric::Point2f::new(0.0, 0.0),
-		numeric::Vector2f::new(1.0, 1.0),
-		0.0,
-		0,
-		font_info.clone()
-	    );
+        desc_text.push(number);
+        desc_text.push(date);
+        desc_text.push(money);
 
-	    let mut date = UniText::new(
-		data.get_date_str().to_string(),
-		numeric::Point2f::new(0.0, 0.0),
-		numeric::Vector2f::new(1.0, 1.0),
-		0.0,
-		0,
-		font_info.clone()
-	    );
+        for (index, data) in ctx.permanent_save_data.iter_hard_mode_records().enumerate() {
+            if index >= 5 {
+                break;
+            }
 
-	    let mut money = UniText::new(
-		format!("{}円", number_to_jk::number_to_jk(data.get_total_money() as u64)),
-		numeric::Point2f::new(0.0, 0.0),
-		numeric::Vector2f::new(1.0, 1.0),
-		0.0,
-		0,
-		font_info.clone()
-	    );
-	    
-	    set_table_frame_cell_center!(
+            let mut number = UniText::new(
+                number_to_jk::number_to_jk(index as u64 + 1),
+                numeric::Point2f::new(0.0, 0.0),
+                numeric::Vector2f::new(1.0, 1.0),
+                0.0,
+                0,
+                font_info.clone(),
+            );
+
+            let mut date = UniText::new(
+                data.get_date_str().to_string(),
+                numeric::Point2f::new(0.0, 0.0),
+                numeric::Vector2f::new(1.0, 1.0),
+                0.0,
+                0,
+                font_info.clone(),
+            );
+
+            let mut money = UniText::new(
+                format!(
+                    "{}円",
+                    number_to_jk::number_to_jk(data.get_total_money() as u64)
+                ),
+                numeric::Point2f::new(0.0, 0.0),
+                numeric::Vector2f::new(1.0, 1.0),
+                0.0,
+                0,
+                font_info.clone(),
+            );
+
+            set_table_frame_cell_center!(
                 ctx.context,
                 table_frame_hard,
                 number,
                 numeric::Vector2u::new(0, index as u32 + 1)
             );
 
-	    set_table_frame_cell_center!(
+            set_table_frame_cell_center!(
                 ctx.context,
                 table_frame_hard,
                 date,
                 numeric::Vector2u::new(1, index as u32 + 1)
             );
 
-	    set_table_frame_cell_center!(
+            set_table_frame_cell_center!(
                 ctx.context,
                 table_frame_hard,
-		money,
+                money,
                 numeric::Vector2u::new(2, index as u32 + 1)
             );
 
-	    vtext_list.push(number);
-	    vtext_list.push(date);
-	    vtext_list.push(money);
-	}
+            vtext_list.push(number);
+            vtext_list.push(date);
+            vtext_list.push(money);
+        }
 
-	for (index, data) in ctx.permanent_save_data.iter_story_mode_records().enumerate() {
-	    if index >= 5 {
-		break;
-	    }
+        for (index, data) in ctx
+            .permanent_save_data
+            .iter_story_mode_records()
+            .enumerate()
+        {
+            if index >= 5 {
+                break;
+            }
 
-	    let mut number = UniText::new(
-		number_to_jk::number_to_jk(index as u64 + 1),
-		numeric::Point2f::new(0.0, 0.0),
-		numeric::Vector2f::new(1.0, 1.0),
-		0.0,
-		0,
-		font_info.clone()
-	    );
+            let mut number = UniText::new(
+                number_to_jk::number_to_jk(index as u64 + 1),
+                numeric::Point2f::new(0.0, 0.0),
+                numeric::Vector2f::new(1.0, 1.0),
+                0.0,
+                0,
+                font_info.clone(),
+            );
 
-	    let mut date = UniText::new(
-		data.get_date_str().to_string(),
-		numeric::Point2f::new(0.0, 0.0),
-		numeric::Vector2f::new(1.0, 1.0),
-		0.0,
-		0,
-		font_info.clone()
-	    );
+            let mut date = UniText::new(
+                data.get_date_str().to_string(),
+                numeric::Point2f::new(0.0, 0.0),
+                numeric::Vector2f::new(1.0, 1.0),
+                0.0,
+                0,
+                font_info.clone(),
+            );
 
-	    let mut money = UniText::new(
-		format!("{}円", number_to_jk::number_to_jk(data.get_total_money() as u64)),
-		numeric::Point2f::new(0.0, 0.0),
-		numeric::Vector2f::new(1.0, 1.0),
-		0.0,
-		0,
-		font_info.clone()
-	    );
-	    
-	    set_table_frame_cell_center!(
+            let mut money = UniText::new(
+                format!(
+                    "{}円",
+                    number_to_jk::number_to_jk(data.get_total_money() as u64)
+                ),
+                numeric::Point2f::new(0.0, 0.0),
+                numeric::Vector2f::new(1.0, 1.0),
+                0.0,
+                0,
+                font_info.clone(),
+            );
+
+            set_table_frame_cell_center!(
                 ctx.context,
                 table_frame_story,
                 number,
                 numeric::Vector2u::new(0, index as u32 + 1)
             );
 
-	    set_table_frame_cell_center!(
+            set_table_frame_cell_center!(
                 ctx.context,
                 table_frame_story,
                 date,
                 numeric::Vector2u::new(1, index as u32 + 1)
             );
 
-	    set_table_frame_cell_center!(
+            set_table_frame_cell_center!(
                 ctx.context,
                 table_frame_story,
-		money,
+                money,
                 numeric::Vector2u::new(2, index as u32 + 1)
             );
 
-	    vtext_list.push(number);
-	    vtext_list.push(date);
-	    vtext_list.push(money);
-	}
+            vtext_list.push(number);
+            vtext_list.push(date);
+            vtext_list.push(money);
+        }
 
-	RecordRoom {
+        RecordRoom {
             desc_text,
             canvas: sub_screen::SubScreen::new(
                 ctx.context,
@@ -1563,140 +1637,150 @@ impl RecordRoom {
                 ggraphics::Color::from_rgba_u32(0),
             ),
             background: background,
-	    event_list: DelayEventList::new(),
-	    table_frame_hard,
-	    table_frame_story: table_frame_story,
-	    vtext_list: vtext_list,
-	    exit_button: exit_button,
+            event_list: DelayEventList::new(),
+            table_frame_hard,
+            table_frame_story: table_frame_story,
+            vtext_list: vtext_list,
+            exit_button: exit_button,
         }
     }
 
     pub fn reset<'a>(&mut self, ctx: &mut SuzuContext<'a>) {
-	self.vtext_list.clear();
+        self.vtext_list.clear();
 
-	let font_info = FontInformation::new(
+        let font_info = FontInformation::new(
             ctx.resource.get_font(FontID::Cinema),
             numeric::Vector2f::new(28.0, 28.0),
             ggraphics::Color::from_rgba_u32(0xccccccff),
         );
 
-	for (index, data) in ctx.permanent_save_data.iter_hard_mode_records().enumerate() {
-	    if index >= 5 {
-		break;
-	    }
+        for (index, data) in ctx.permanent_save_data.iter_hard_mode_records().enumerate() {
+            if index >= 5 {
+                break;
+            }
 
-	    let mut number = UniText::new(
-		number_to_jk::number_to_jk(index as u64 + 1),
-		numeric::Point2f::new(0.0, 0.0),
-		numeric::Vector2f::new(1.0, 1.0),
-		0.0,
-		0,
-		font_info.clone()
-	    );
+            let mut number = UniText::new(
+                number_to_jk::number_to_jk(index as u64 + 1),
+                numeric::Point2f::new(0.0, 0.0),
+                numeric::Vector2f::new(1.0, 1.0),
+                0.0,
+                0,
+                font_info.clone(),
+            );
 
-	    let mut date = UniText::new(
-		data.get_date_str().to_string(),
-		numeric::Point2f::new(0.0, 0.0),
-		numeric::Vector2f::new(1.0, 1.0),
-		0.0,
-		0,
-		font_info.clone()
-	    );
+            let mut date = UniText::new(
+                data.get_date_str().to_string(),
+                numeric::Point2f::new(0.0, 0.0),
+                numeric::Vector2f::new(1.0, 1.0),
+                0.0,
+                0,
+                font_info.clone(),
+            );
 
-	    let mut money = UniText::new(
-		format!("{}円", number_to_jk::number_to_jk(data.get_total_money() as u64)),
-		numeric::Point2f::new(0.0, 0.0),
-		numeric::Vector2f::new(1.0, 1.0),
-		0.0,
-		0,
-		font_info.clone()
-	    );
-	    
-	    set_table_frame_cell_center!(
+            let mut money = UniText::new(
+                format!(
+                    "{}円",
+                    number_to_jk::number_to_jk(data.get_total_money() as u64)
+                ),
+                numeric::Point2f::new(0.0, 0.0),
+                numeric::Vector2f::new(1.0, 1.0),
+                0.0,
+                0,
+                font_info.clone(),
+            );
+
+            set_table_frame_cell_center!(
                 ctx.context,
                 self.table_frame_hard,
                 number,
                 numeric::Vector2u::new(0, index as u32 + 1)
             );
 
-	    set_table_frame_cell_center!(
+            set_table_frame_cell_center!(
                 ctx.context,
                 self.table_frame_hard,
                 date,
                 numeric::Vector2u::new(1, index as u32 + 1)
             );
 
-	    set_table_frame_cell_center!(
+            set_table_frame_cell_center!(
                 ctx.context,
                 self.table_frame_hard,
-		money,
+                money,
                 numeric::Vector2u::new(2, index as u32 + 1)
             );
 
-	    self.vtext_list.push(number);
-	    self.vtext_list.push(date);
-	    self.vtext_list.push(money);
-	}
+            self.vtext_list.push(number);
+            self.vtext_list.push(date);
+            self.vtext_list.push(money);
+        }
 
-	for (index, data) in ctx.permanent_save_data.iter_story_mode_records().enumerate() {
-	    if index >= 5 {
-		break;
-	    }
+        for (index, data) in ctx
+            .permanent_save_data
+            .iter_story_mode_records()
+            .enumerate()
+        {
+            if index >= 5 {
+                break;
+            }
 
-	    let mut number = UniText::new(
-		number_to_jk::number_to_jk(index as u64 + 1),
-		numeric::Point2f::new(0.0, 0.0),
-		numeric::Vector2f::new(1.0, 1.0),
-		0.0,
-		0,
-		font_info.clone()
-	    );
+            let mut number = UniText::new(
+                number_to_jk::number_to_jk(index as u64 + 1),
+                numeric::Point2f::new(0.0, 0.0),
+                numeric::Vector2f::new(1.0, 1.0),
+                0.0,
+                0,
+                font_info.clone(),
+            );
 
-	    let mut date = UniText::new(
-		data.get_date_str().to_string(),
-		numeric::Point2f::new(0.0, 0.0),
-		numeric::Vector2f::new(1.0, 1.0),
-		0.0,
-		0,
-		font_info.clone()
-	    );
+            let mut date = UniText::new(
+                data.get_date_str().to_string(),
+                numeric::Point2f::new(0.0, 0.0),
+                numeric::Vector2f::new(1.0, 1.0),
+                0.0,
+                0,
+                font_info.clone(),
+            );
 
-	    let mut money = UniText::new(
-		format!("{}円", number_to_jk::number_to_jk(data.get_total_money() as u64)),
-		numeric::Point2f::new(0.0, 0.0),
-		numeric::Vector2f::new(1.0, 1.0),
-		0.0,
-		0,
-		font_info.clone()
-	    );
-	    
-	    set_table_frame_cell_center!(
+            let mut money = UniText::new(
+                format!(
+                    "{}円",
+                    number_to_jk::number_to_jk(data.get_total_money() as u64)
+                ),
+                numeric::Point2f::new(0.0, 0.0),
+                numeric::Vector2f::new(1.0, 1.0),
+                0.0,
+                0,
+                font_info.clone(),
+            );
+
+            set_table_frame_cell_center!(
                 ctx.context,
                 self.table_frame_story,
                 number,
                 numeric::Vector2u::new(0, index as u32 + 1)
             );
 
-	    set_table_frame_cell_center!(
+            set_table_frame_cell_center!(
                 ctx.context,
                 self.table_frame_story,
                 date,
                 numeric::Vector2u::new(1, index as u32 + 1)
             );
 
-	    set_table_frame_cell_center!(
+            set_table_frame_cell_center!(
                 ctx.context,
                 self.table_frame_story,
-		money,
+                money,
                 numeric::Vector2u::new(2, index as u32 + 1)
             );
 
-	    self.vtext_list.push(number);
-	    self.vtext_list.push(date);
-	    self.vtext_list.push(money);
-	}
+            self.vtext_list.push(number);
+            self.vtext_list.push(date);
+            self.vtext_list.push(money);
+        }
     }
-    
+
     pub fn get_name(&self) -> String {
         "record".to_string()
     }
@@ -1707,15 +1791,15 @@ impl RecordRoom {
         point: numeric::Point2f,
         _t: Clock,
     ) -> Option<TitleContentsEvent> {
-	if self.exit_button.contains(point) {
+        if self.exit_button.contains(point) {
             return Some(TitleContentsEvent::NextContents("init-menu".to_string()));
         }
 
         None
     }
-    
+
     pub fn flush_delayed_event<'a>(&mut self, ctx: &mut SuzuContext<'a>, t: Clock) {
-	flush_delay_event_and_redraw_check!(self, self.event_list, ctx, t, { });
+        flush_delay_event_and_redraw_check!(self, self.event_list, ctx, t, {});
     }
 }
 
@@ -1726,18 +1810,18 @@ impl DrawableComponent for RecordRoom {
 
             self.background.draw(ctx)?;
 
-	    self.table_frame_hard.draw(ctx)?;
-	    self.table_frame_story.draw(ctx)?;
+            self.table_frame_hard.draw(ctx)?;
+            self.table_frame_story.draw(ctx)?;
 
-	    for vtext in self.desc_text.iter_mut() {
-		vtext.draw(ctx)?;
-	    }
-	    
-	    for vtext in self.vtext_list.iter_mut() {
-		vtext.draw(ctx)?;
-	    }
-	    
-	    self.exit_button.draw(ctx)?;
+            for vtext in self.desc_text.iter_mut() {
+                vtext.draw(ctx)?;
+            }
+
+            for vtext in self.vtext_list.iter_mut() {
+                vtext.draw(ctx)?;
+            }
+
+            self.exit_button.draw(ctx)?;
 
             sub_screen::pop_screen(ctx);
             self.canvas.draw(ctx).unwrap();
@@ -1767,7 +1851,6 @@ impl DrawableComponent for RecordRoom {
     }
 }
 
-
 pub enum TitleContents {
     InitialMenu(VTextList),
     TitleSoundPlayer(DynamicTitleSoundPlayer),
@@ -1781,7 +1864,7 @@ impl TitleContents {
     pub fn from_toml_object<'a>(
         ctx: &mut SuzuContext<'a>,
         toml_src: &toml::Value,
-	t: Clock,
+        t: Clock,
     ) -> Option<TitleContents> {
         let name = toml_src
             .get("name")
@@ -1819,28 +1902,28 @@ impl TitleContents {
                 ctx,
                 numeric::Rect::new(0.0, 0.0, 1366.0, 768.0),
                 0,
-		t
+                t,
             ))),
-	    "UpdatePanel" => Some(TitleContents::UpdatePanel(UpdatePanel::new(
+            "UpdatePanel" => Some(TitleContents::UpdatePanel(UpdatePanel::new(
                 ctx,
                 numeric::Rect::new(0.0, 0.0, 1366.0, 768.0),
                 0,
-		t
+                t,
             ))),
-	    "Gallery" => Some(TitleContents::Gallery(Gallery::new(
+            "Gallery" => Some(TitleContents::Gallery(Gallery::new(
                 ctx,
                 numeric::Rect::new(0.0, 0.0, 1366.0, 768.0),
-		details_source_file,
+                details_source_file,
                 0,
-		t
+                t,
             ))),
-	    "RecordRoom" => Some(TitleContents::RecordRoom(RecordRoom::new(
-		ctx,
+            "RecordRoom" => Some(TitleContents::RecordRoom(RecordRoom::new(
+                ctx,
                 numeric::Rect::new(0.0, 0.0, 1366.0, 768.0),
-		0,
-		t
-	    ))),
-	    _ => None,
+                0,
+                t,
+            ))),
+            _ => None,
         }
     }
 
@@ -1849,9 +1932,9 @@ impl TitleContents {
             TitleContents::InitialMenu(menu) => menu.contents_name.to_string(),
             TitleContents::TitleSoundPlayer(player) => player.get_name(),
             TitleContents::ConfigPanel(panel) => panel.get_name(),
-	    TitleContents::UpdatePanel(panel) => panel.get_name(),
-	    TitleContents::Gallery(gallery) => gallery.get_name(),
-	    TitleContents::RecordRoom(rr) => rr.get_name(),
+            TitleContents::UpdatePanel(panel) => panel.get_name(),
+            TitleContents::Gallery(gallery) => gallery.get_name(),
+            TitleContents::RecordRoom(rr) => rr.get_name(),
         }
     }
 
@@ -1860,9 +1943,9 @@ impl TitleContents {
             TitleContents::InitialMenu(_) => (),
             TitleContents::TitleSoundPlayer(_) => (),
             TitleContents::ConfigPanel(_) => (),
-	    TitleContents::UpdatePanel(panel) => panel.flush_delayed_event(ctx, t),
-	    TitleContents::Gallery(gallery) => gallery.flush_delayed_event(ctx, t),
-	    TitleContents::RecordRoom(rr) => rr.flush_delayed_event(ctx, t),
+            TitleContents::UpdatePanel(panel) => panel.flush_delayed_event(ctx, t),
+            TitleContents::Gallery(gallery) => gallery.flush_delayed_event(ctx, t),
+            TitleContents::RecordRoom(rr) => rr.flush_delayed_event(ctx, t),
         }
     }
 
@@ -1871,10 +1954,10 @@ impl TitleContents {
             TitleContents::InitialMenu(_) => (),
             TitleContents::TitleSoundPlayer(_) => (),
             TitleContents::ConfigPanel(_) => (),
-	    TitleContents::UpdatePanel(panel) => panel.notify_switched(ctx, t),
-	    TitleContents::Gallery(_) => (),
-	    TitleContents::RecordRoom(rr) => rr.reset(ctx),
-        }	
+            TitleContents::UpdatePanel(panel) => panel.notify_switched(ctx, t),
+            TitleContents::Gallery(_) => (),
+            TitleContents::RecordRoom(rr) => rr.reset(ctx),
+        }
     }
 }
 
@@ -1884,9 +1967,9 @@ impl DrawableComponent for TitleContents {
             TitleContents::InitialMenu(contents) => contents.draw(ctx),
             TitleContents::TitleSoundPlayer(contents) => contents.draw(ctx),
             TitleContents::ConfigPanel(panel) => panel.draw(ctx),
-	    TitleContents::UpdatePanel(panel) => panel.draw(ctx),
-	    TitleContents::Gallery(gallery) => gallery.draw(ctx),
-	    TitleContents::RecordRoom(rr) => rr.draw(ctx),
+            TitleContents::UpdatePanel(panel) => panel.draw(ctx),
+            TitleContents::Gallery(gallery) => gallery.draw(ctx),
+            TitleContents::RecordRoom(rr) => rr.draw(ctx),
         }
     }
 
@@ -1895,9 +1978,9 @@ impl DrawableComponent for TitleContents {
             TitleContents::InitialMenu(contents) => contents.hide(),
             TitleContents::TitleSoundPlayer(contents) => contents.hide(),
             TitleContents::ConfigPanel(panel) => panel.hide(),
-	    TitleContents::UpdatePanel(panel) => panel.hide(),
-	    TitleContents::Gallery(gallery) => gallery.hide(),
-	    TitleContents::RecordRoom(rr) => rr.hide(),
+            TitleContents::UpdatePanel(panel) => panel.hide(),
+            TitleContents::Gallery(gallery) => gallery.hide(),
+            TitleContents::RecordRoom(rr) => rr.hide(),
         }
     }
 
@@ -1906,9 +1989,9 @@ impl DrawableComponent for TitleContents {
             TitleContents::InitialMenu(contents) => contents.appear(),
             TitleContents::TitleSoundPlayer(contents) => contents.appear(),
             TitleContents::ConfigPanel(panel) => panel.appear(),
-	    TitleContents::UpdatePanel(panel) => panel.appear(),
-	    TitleContents::Gallery(gallery) => gallery.appear(),
-	    TitleContents::RecordRoom(rr) => rr.appear(),
+            TitleContents::UpdatePanel(panel) => panel.appear(),
+            TitleContents::Gallery(gallery) => gallery.appear(),
+            TitleContents::RecordRoom(rr) => rr.appear(),
         }
     }
 
@@ -1917,9 +2000,9 @@ impl DrawableComponent for TitleContents {
             TitleContents::InitialMenu(contents) => contents.is_visible(),
             TitleContents::TitleSoundPlayer(contents) => contents.is_visible(),
             TitleContents::ConfigPanel(panel) => panel.is_visible(),
-	    TitleContents::UpdatePanel(panel) => panel.is_visible(),
-	    TitleContents::Gallery(gallery) => gallery.is_visible(),
-	    TitleContents::RecordRoom(rr) => rr.is_visible(),
+            TitleContents::UpdatePanel(panel) => panel.is_visible(),
+            TitleContents::Gallery(gallery) => gallery.is_visible(),
+            TitleContents::RecordRoom(rr) => rr.is_visible(),
         }
     }
 
@@ -1928,9 +2011,9 @@ impl DrawableComponent for TitleContents {
             TitleContents::InitialMenu(contents) => contents.set_drawing_depth(depth),
             TitleContents::TitleSoundPlayer(contents) => contents.set_drawing_depth(depth),
             TitleContents::ConfigPanel(panel) => panel.set_drawing_depth(depth),
-	    TitleContents::UpdatePanel(panel) => panel.set_drawing_depth(depth),
-	    TitleContents::Gallery(gallery) => gallery.set_drawing_depth(depth),
-	    TitleContents::RecordRoom(rr) => rr.set_drawing_depth(depth),
+            TitleContents::UpdatePanel(panel) => panel.set_drawing_depth(depth),
+            TitleContents::Gallery(gallery) => gallery.set_drawing_depth(depth),
+            TitleContents::RecordRoom(rr) => rr.set_drawing_depth(depth),
         }
     }
 
@@ -1939,9 +2022,9 @@ impl DrawableComponent for TitleContents {
             TitleContents::InitialMenu(contents) => contents.get_drawing_depth(),
             TitleContents::TitleSoundPlayer(contents) => contents.get_drawing_depth(),
             TitleContents::ConfigPanel(panel) => panel.get_drawing_depth(),
-	    TitleContents::UpdatePanel(panel) => panel.get_drawing_depth(),
-	    TitleContents::Gallery(gallery) => gallery.get_drawing_depth(),
-	    TitleContents::RecordRoom(rr) => rr.get_drawing_depth(),
+            TitleContents::UpdatePanel(panel) => panel.get_drawing_depth(),
+            TitleContents::Gallery(gallery) => gallery.get_drawing_depth(),
+            TitleContents::RecordRoom(rr) => rr.get_drawing_depth(),
         }
     }
 }
@@ -1962,7 +2045,7 @@ impl TitleContentsSet {
             Ok(c) => c,
             Err(_) => panic!("Failed to read: {}", file_path),
         };
-	
+
         let root = content.parse::<toml::Value>().unwrap();
         let contents_list = root["contents-list"].as_array().unwrap();
 

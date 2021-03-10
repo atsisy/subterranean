@@ -51,12 +51,12 @@ impl DrawableEvaluationFlow {
         let mut desc_text = Vec::new();
         let mut yet_effect_text = VecDeque::new();
 
-	let mut effect_time_list = VecDeque::new();
-	effect_time_list.push_back(t + effect_clock_offset + 50);
-	effect_time_list.push_back(t + effect_clock_offset + 150);
-	effect_time_list.push_back(t + effect_clock_offset + 250);
-	effect_time_list.push_back(t + effect_clock_offset + 350);
-	
+        let mut effect_time_list = VecDeque::new();
+        effect_time_list.push_back(t + effect_clock_offset + 50);
+        effect_time_list.push_back(t + effect_clock_offset + 150);
+        effect_time_list.push_back(t + effect_clock_offset + 250);
+        effect_time_list.push_back(t + effect_clock_offset + 350);
+
         let font_info = FontInformation::new(
             ctx.resource.get_font(FontID::JpFude1),
             numeric::Vector2f::new(28.0, 28.0),
@@ -103,8 +103,9 @@ impl DrawableEvaluationFlow {
             ),
             Vec::new(),
         );
-        ctx.take_save_data_mut().award_data.returning_check_mistake_count +=
-            result_report.get_conition_eval_mistakes() as u16;
+        ctx.take_save_data_mut()
+            .award_data
+            .returning_check_mistake_count += result_report.get_conition_eval_mistakes() as u16;
 
         eval_mistakes_vtext.set_crop(init_crop);
         set_table_frame_cell_center!(
@@ -114,7 +115,7 @@ impl DrawableEvaluationFlow {
             numeric::Vector2u::new(1, 1)
         );
 
-	let mut total_eval_text = EffectableWrap::new(
+        let mut total_eval_text = EffectableWrap::new(
             MovableWrap::new(
                 Box::new(VerticalText::new(
                     result_report.generate_eval_str().to_string(),
@@ -127,7 +128,7 @@ impl DrawableEvaluationFlow {
                 None,
                 t,
             ),
-	    Vec::new(),
+            Vec::new(),
         );
 
         total_eval_text.set_crop(init_crop);
@@ -151,7 +152,7 @@ impl DrawableEvaluationFlow {
                 None,
                 t,
             ),
-	    Vec::new(),
+            Vec::new(),
         );
 
         shelving_vtext.set_crop(init_crop);
@@ -175,7 +176,7 @@ impl DrawableEvaluationFlow {
                 None,
                 t,
             ),
-	    Vec::new(),
+            Vec::new(),
         );
         waiting_vtext.set_crop(init_crop);
 
@@ -186,18 +187,17 @@ impl DrawableEvaluationFlow {
             numeric::Vector2u::new(3, 1)
         );
 
-	
         yet_effect_text.push_back(waiting_vtext);
-	yet_effect_text.push_back(shelving_vtext);
-	yet_effect_text.push_back(eval_mistakes_vtext);
-	yet_effect_text.push_back(total_eval_text);
-	
+        yet_effect_text.push_back(shelving_vtext);
+        yet_effect_text.push_back(eval_mistakes_vtext);
+        yet_effect_text.push_back(total_eval_text);
+
         DrawableEvaluationFlow {
             eval_frame: eval_frame,
             desc_text: desc_text,
             yet_effect_text: yet_effect_text,
-	    now_effect_text: VecDeque::new(),
-	    effect_time_list: effect_time_list,
+            now_effect_text: VecDeque::new(),
+            effect_time_list: effect_time_list,
             drwob_essential: DrawableObjectEssential::new(true, depth),
         }
     }
@@ -206,18 +206,18 @@ impl DrawableEvaluationFlow {
     /// # 描画要求有り
     ///
     pub fn run_effect<'a>(&mut self, ctx: &mut SuzuContext<'a>, t: Clock) {
-	while !self.effect_time_list.is_empty() {
-	    if self.effect_time_list[0] <= t {
-		let mut vtext = self.yet_effect_text.pop_front().unwrap();
-		vtext.clear_effect();
-		vtext.add_effect(vec![effect::appear_bale_down_from_top(100, t)]);
-		self.now_effect_text.push_back(vtext);
-		self.effect_time_list.pop_front();
-	    } else {
-		break;
-	    }
-	}
-	
+        while !self.effect_time_list.is_empty() {
+            if self.effect_time_list[0] <= t {
+                let mut vtext = self.yet_effect_text.pop_front().unwrap();
+                vtext.clear_effect();
+                vtext.add_effect(vec![effect::appear_bale_down_from_top(100, t)]);
+                self.now_effect_text.push_back(vtext);
+                self.effect_time_list.pop_front();
+            } else {
+                break;
+            }
+        }
+
         for vtext in self.now_effect_text.iter_mut() {
             if vtext.is_empty_effect() && vtext.is_stop() {
                 continue;
@@ -229,17 +229,17 @@ impl DrawableEvaluationFlow {
     }
 
     pub fn skip_effect<'a>(&mut self, t: Clock) {
-	for vtext in self.now_effect_text.iter_mut() {
-	    vtext.clear_effect();
-	    vtext.set_crop(numeric::Rect::new(0.0, 0.0, 1.0, 1.0));
-	}
+        for vtext in self.now_effect_text.iter_mut() {
+            vtext.clear_effect();
+            vtext.set_crop(numeric::Rect::new(0.0, 0.0, 1.0, 1.0));
+        }
 
-	if let Some(next_effect_time) = self.effect_time_list.front() {
-	    let diff = next_effect_time - t;
-	    for effect_time in self.effect_time_list.iter_mut() {
-		*effect_time -= diff;
-	    }
-	}
+        if let Some(next_effect_time) = self.effect_time_list.front() {
+            let diff = next_effect_time - t;
+            for effect_time in self.effect_time_list.iter_mut() {
+                *effect_time -= diff;
+            }
+        }
     }
 }
 
@@ -256,7 +256,7 @@ impl DrawableComponent for DrawableEvaluationFlow {
                 vtext.draw(ctx)?;
             }
 
-	    for vtext in self.now_effect_text.iter_mut() {
+            for vtext in self.now_effect_text.iter_mut() {
                 vtext.draw(ctx)?;
             }
         }
@@ -319,18 +319,18 @@ impl DrawableTaskResult {
             ggraphics::Color::from_rgba_u32(0x000000ff),
         );
 
-	let font_info = FontInformation::new(
+        let font_info = FontInformation::new(
             ctx.resource.get_font(FontID::JpFude1),
             numeric::Vector2f::new(32.0, 32.0),
             ggraphics::Color::from_rgba_u32(0x000000ff),
         );
 
-	let font_info_small = FontInformation::new(
+        let font_info_small = FontInformation::new(
             ctx.resource.get_font(FontID::JpFude1),
             numeric::Vector2f::new(24.0, 24.0),
             ggraphics::Color::from_rgba_u32(0x000000ff),
-	);
-	
+        );
+
         let init_crop = numeric::Rect::new(0.0, 0.0, 1.0, 0.0);
 
         let result_frame = TableFrame::new(
@@ -381,13 +381,13 @@ impl DrawableTaskResult {
         );
         fixed_text.push(done_work_text);
 
-	let mut effect_time_list = VecDeque::new();
-	effect_time_list.push_back(t + 50);
-	effect_time_list.push_back(t + 150);
-	effect_time_list.push_back(t + 250);
+        let mut effect_time_list = VecDeque::new();
+        effect_time_list.push_back(t + 50);
+        effect_time_list.push_back(t + 150);
+        effect_time_list.push_back(t + 250);
 
         let task_result = ctx.take_save_data().task_result.clone();
-	
+
         let done_work_num = task_result.done_works - initial_save_data.task_result.done_works;
         let mut done_work_num_text = EffectableWrap::new(
             MovableWrap::new(
@@ -402,7 +402,7 @@ impl DrawableTaskResult {
                 None,
                 t,
             ),
-	    Vec::new(),
+            Vec::new(),
         );
         done_work_num_text.set_crop(init_crop);
         set_table_frame_cell_center!(
@@ -412,7 +412,9 @@ impl DrawableTaskResult {
             numeric::Vector2u::new(2, 1)
         );
         effect_text.push_back(done_work_num_text);
-        ctx.take_save_data_mut().award_data.add_customer_count(done_work_num as u16);
+        ctx.take_save_data_mut()
+            .award_data
+            .add_customer_count(done_work_num as u16);
 
         let mut money_desc_text = VerticalText::new(
             format!("収入"),
@@ -449,7 +451,7 @@ impl DrawableTaskResult {
                 None,
                 t,
             ),
-	    Vec::new(),
+            Vec::new(),
         );
         money_text.set_crop(init_crop);
         set_table_frame_cell_center!(
@@ -475,7 +477,7 @@ impl DrawableTaskResult {
             numeric::Vector2u::new(0, 0)
         );
         fixed_text.push(total_money_desc_text);
-	
+
         let mut total_money_text = EffectableWrap::new(
             MovableWrap::new(
                 Box::new(VerticalText::new(
@@ -513,12 +515,19 @@ impl DrawableTaskResult {
             1,
         );
 
-	let goal = if ctx.take_save_data().suzunaan_status.get_current_reputation() >= 0.0 {
-	    ctx.take_save_data().suzunaan_status.get_current_reputation()
-	} else {
-	    0.0
-	};
-	
+        let goal = if ctx
+            .take_save_data()
+            .suzunaan_status
+            .get_current_reputation()
+            >= 0.0
+        {
+            ctx.take_save_data()
+                .suzunaan_status
+                .get_current_reputation()
+        } else {
+            0.0
+        };
+
         meters.set_goal(ctx, goal, 100);
 
         let evaluation = DrawableEvaluationFlow::new(
@@ -531,10 +540,10 @@ impl DrawableTaskResult {
         );
 
         let mut this = DrawableTaskResult {
-	    effect_time_list: effect_time_list,
+            effect_time_list: effect_time_list,
             result_frame: result_frame,
             yet_effect_text: effect_text,
-	    now_effect_text: VecDeque::new(),
+            now_effect_text: VecDeque::new(),
             fixed_text: fixed_text,
             meters: meters,
             evaluation: evaluation,
@@ -566,18 +575,18 @@ impl DrawableTaskResult {
     }
 
     pub fn run_effect<'a>(&mut self, ctx: &mut SuzuContext<'a>, t: Clock) {
-	while !self.effect_time_list.is_empty() {
-	    if self.effect_time_list[0] <= t {
-		let mut vtext = self.yet_effect_text.pop_front().unwrap();
-		vtext.clear_effect();
-		vtext.add_effect(vec![effect::appear_bale_down_from_top(100, t)]);
-		self.now_effect_text.push_back(vtext);
-		self.effect_time_list.pop_front();
-	    } else {
-		break;
-	    }
-	}
-	
+        while !self.effect_time_list.is_empty() {
+            if self.effect_time_list[0] <= t {
+                let mut vtext = self.yet_effect_text.pop_front().unwrap();
+                vtext.clear_effect();
+                vtext.add_effect(vec![effect::appear_bale_down_from_top(100, t)]);
+                self.now_effect_text.push_back(vtext);
+                self.effect_time_list.pop_front();
+            } else {
+                break;
+            }
+        }
+
         for vtext in self.now_effect_text.iter_mut() {
             if vtext.is_empty_effect() && vtext.is_stop() {
                 continue;
@@ -593,19 +602,19 @@ impl DrawableTaskResult {
     }
 
     pub fn click_handler(&mut self, t: Clock) {
-	for vtext in self.now_effect_text.iter_mut() {
-	    vtext.clear_effect();
-	    vtext.set_crop(numeric::Rect::new(0.0, 0.0, 1.0, 1.0));
-	}
+        for vtext in self.now_effect_text.iter_mut() {
+            vtext.clear_effect();
+            vtext.set_crop(numeric::Rect::new(0.0, 0.0, 1.0, 1.0));
+        }
 
-	if let Some(next_effect_time) = self.effect_time_list.front() {
-	    let diff = next_effect_time - t;
-	    for effect_time in self.effect_time_list.iter_mut() {
-		*effect_time -= diff;
-	    }
-	} else {
-	    self.evaluation.skip_effect(t);
-	}
+        if let Some(next_effect_time) = self.effect_time_list.front() {
+            let diff = next_effect_time - t;
+            for effect_time in self.effect_time_list.iter_mut() {
+                *effect_time -= diff;
+            }
+        } else {
+            self.evaluation.skip_effect(t);
+        }
     }
 }
 

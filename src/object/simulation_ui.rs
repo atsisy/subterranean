@@ -126,17 +126,20 @@ impl DrawableComponent for Meter {
                 self.frame.get_mode(),
                 self.frame.get_bounds(),
                 self.frame.get_color(),
-            ).expect("failed to create rectangle")
+            )
+            .expect("failed to create rectangle")
             .rectangle(
                 self.empty_fill.get_mode(),
                 self.empty_fill.get_bounds(),
                 self.empty_fill.get_color(),
-            ).expect("failed to create rectangle")
+            )
+            .expect("failed to create rectangle")
             .rectangle(
                 self.count_fill.get_mode(),
                 self.count_fill.get_bounds(),
                 self.count_fill.get_color(),
-            ).expect("failed to create rectangle")
+            )
+            .expect("failed to create rectangle")
             .build(ctx)?;
 
         ggraphics::draw(
@@ -226,7 +229,11 @@ impl ScenarioMenuContents {
         }
 
         let mut reputation_text = VerticalText::new(
-            number_to_jk(ctx.take_save_data().suzunaan_status.get_current_reputation() as u64),
+            number_to_jk(
+                ctx.take_save_data()
+                    .suzunaan_status
+                    .get_current_reputation() as u64,
+            ),
             numeric::Point2f::new(0.0, 0.0),
             numeric::Vector2f::new(1.0, 1.0),
             0.0,
@@ -458,10 +465,10 @@ impl ResultMeter {
             pos.y,
         ));
 
-	let rect_pos = pos.point();
+        let rect_pos = pos.point();
         let desc_text = UniText::new(
             title,
-	    numeric::Point2f::new(rect_pos.x, rect_pos.y),
+            numeric::Point2f::new(rect_pos.x, rect_pos.y),
             numeric::Vector2f::new(1.0, 1.0),
             0.0,
             depth,
@@ -479,7 +486,7 @@ impl ResultMeter {
         }
     }
 
-    pub fn set_goal<'a>(&mut self, ctx: &mut SuzuContext<'a>, goal: f32, time: Clock)  {
+    pub fn set_goal<'a>(&mut self, ctx: &mut SuzuContext<'a>, goal: f32, time: Clock) {
         let current = self.meter.get_value();
         let diff = if goal > self.meter.max {
             self.meter.max - current
@@ -527,27 +534,27 @@ impl ResultMeter {
     }
 
     pub fn effect<'a>(&mut self, ctx: &mut SuzuContext<'a>) -> DrawRequest {
-	if self.diff_per_clock == 0.0 {
-	    return DrawRequest::Skip;
-	}
+        if self.diff_per_clock == 0.0 {
+            return DrawRequest::Skip;
+        }
 
         if (self.meter.get_value() - self.goal).abs() >= self.diff_per_clock.abs() {
             self.meter.add(self.diff_per_clock);
         } else {
-	    self.meter.set_value(self.goal);
-	}
+            self.meter.set_value(self.goal);
+        }
 
-	let before_x = self.current_value_text.get_drawing_size(ctx.context).x;
-	
+        let before_x = self.current_value_text.get_drawing_size(ctx.context).x;
+
         self.current_value_text
             .replace_text(format!("{}", self.meter.get_value() as i32));
-	
+
         let after_x = self.current_value_text.get_drawing_size(ctx.context).x;
         self.current_value_text
             .move_diff(numeric::Vector2f::new(before_x - after_x, 0.0));
-	
-	ctx.process_utility.redraw();
-	return DrawRequest::Draw;
+
+        ctx.process_utility.redraw();
+        return DrawRequest::Draw;
     }
 }
 

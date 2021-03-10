@@ -1,5 +1,4 @@
 use torifune::core::*;
-use torifune::device::*;
 use torifune::graphics::drawable::*;
 use torifune::graphics::object::*;
 
@@ -75,15 +74,15 @@ impl EndScene {
         );
         kosuzu.change_animation_mode(crate::object::util_object::ObjectDirection::MoveLeft);
 
-	let mut flow = EndSceneFlow::new(ctx, 0);
-	flow.start_result(0);
+        let mut flow = EndSceneFlow::new(ctx, 0);
+        flow.start_result(0);
 
         EndScene {
             mouse_info: MouseInformation::new(),
             background: background,
             event_list: event_list,
             end_flow: flow,
-	    kosuzu_speed: numeric::Vector2f::new(0.0, 0.0),
+            kosuzu_speed: numeric::Vector2f::new(0.0, 0.0),
             scene_transition_effect: scene_transition_effect,
             scene_transition: SceneID::Save,
             scene_transition_type: SceneTransition::Keep,
@@ -150,15 +149,11 @@ impl EndScene {
 }
 
 impl SceneManager for EndScene {
-    fn key_up_event<'a>(&mut self, ctx: &mut SuzuContext<'a>, vkey: tdev::VirtualKey) {
-    }
-
     fn pre_process<'a>(&mut self, ctx: &mut SuzuContext<'a>) {
         let t = self.get_current_clock();
 
         self.walking_kosuzu.update_texture(t);
-        self.walking_kosuzu
-            .move_map(self.kosuzu_speed);
+        self.walking_kosuzu.move_map(self.kosuzu_speed);
         self.walking_kosuzu
             .update_display_position(&numeric::Rect::new(
                 0.0,
@@ -179,14 +174,14 @@ impl SceneManager for EndScene {
 
         self.end_flow.update(ctx, t);
 
-	if self.end_flow.get_scene_transition_status() != SceneTransition::Keep {
-	    self.scene_transition_close_effect(ctx, t);
-	    self.kosuzu_speed = numeric::Vector2f::new(-2.0, 0.0);
+        if self.end_flow.get_scene_transition_status() != SceneTransition::Keep {
+            self.scene_transition_close_effect(ctx, t);
+            self.kosuzu_speed = numeric::Vector2f::new(-2.0, 0.0);
 
-	    add_delay_event!(
+            add_delay_event!(
                 self.event_list,
                 |slf, ctx, t| {
-		    slf.scene_transition_close_effect(ctx, t);
+                    slf.scene_transition_close_effect(ctx, t);
                 },
                 t + 80
             );
@@ -195,11 +190,11 @@ impl SceneManager for EndScene {
                 |slf, ctx, _| {
                     slf.scene_transition = SceneID::Title;
                     slf.scene_transition_type = SceneTransition::SwapTransition;
-		    ctx.resource.stop_bgm(ctx.context, SoundID::EndBGM);
+                    ctx.resource.stop_bgm(ctx.context, SoundID::EndBGM);
                 },
                 t + 140
             );
-	}
+        }
     }
 
     fn drawing_process(&mut self, ctx: &mut ggez::Context) {
@@ -245,7 +240,7 @@ impl SceneManager for EndScene {
 
         match button {
             ginput::mouse::MouseButton::Left => {
-		self.end_flow.click_handler(ctx, point, t);
+                self.end_flow.click_handler(ctx, point, t);
             }
             _ => (),
         }

@@ -295,7 +295,6 @@ pub fn create_kuyou_kosuzu<'a>(
     )
 }
 
-
 pub fn create_customer_kuyou<'a>(
     ctx: &mut SuzuContext<'a>,
     camera: &numeric::Rect,
@@ -371,7 +370,6 @@ pub fn create_customer_kuyou<'a>(
         15,
     )
 }
-
 
 #[derive(Debug, Eq, PartialEq, Clone, Copy)]
 pub enum CharacterFactoryOrder {

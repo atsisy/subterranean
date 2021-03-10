@@ -34,7 +34,7 @@ pub fn main() {
             max_width: 0.0,
             min_height: 0.0,
             max_height: 0.0,
-	    visible: true,
+            visible: true,
             resizable: false,
         })
         .build()

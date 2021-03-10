@@ -2,8 +2,8 @@ use std::collections::HashMap;
 
 use crate::parse_toml_file;
 
-use super::{BookInformation, SuzuContext};
 use super::GensoDate;
+use super::{BookInformation, SuzuContext};
 
 #[derive(Clone)]
 pub struct DayNewBooks {

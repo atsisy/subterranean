@@ -10,8 +10,8 @@ use torifune::roundup2f;
 use torifune::impl_drawable_object_for_wrapped;
 use torifune::impl_texture_object_for_wrapped;
 
-use crate::{core::*, set_table_frame_cell_center};
 use crate::object::util_object::*;
+use crate::{core::*, set_table_frame_cell_center};
 
 use number_to_jk::number_to_jk;
 
@@ -127,16 +127,19 @@ impl DrawableSaveEntry {
             0,
         );
 
-	let mut table_frame = TableFrame::new(
-	    ctx.resource,
-	    numeric::Point2f::new(20.0, 20.0),
-	    TileBatchTextureID::OldStyleFrame,
-	    FrameData::new(vec![80.0, 300.0], vec![50.0; 3]),
-	    numeric::Vector2f::new(0.3, 0.3),
-	    0
-	);
+        let mut table_frame = TableFrame::new(
+            ctx.resource,
+            numeric::Point2f::new(20.0, 20.0),
+            TileBatchTextureID::OldStyleFrame,
+            FrameData::new(vec![80.0, 300.0], vec![50.0; 3]),
+            numeric::Vector2f::new(0.3, 0.3),
+            0,
+        );
 
-	table_frame.make_center(numeric::Point2f::new(pos_rect.w / 2.0 - 10.0, pos_rect.h / 2.0 - 30.0));
+        table_frame.make_center(numeric::Point2f::new(
+            pos_rect.w / 2.0 - 10.0,
+            pos_rect.h / 2.0 - 30.0,
+        ));
 
         if let Some(savable_data) = savable_data {
             Self::new_some(
@@ -145,7 +148,7 @@ impl DrawableSaveEntry {
                 appr_frame,
                 savable_data,
                 pos_rect,
-		table_frame,
+                table_frame,
                 save_button,
                 load_button,
                 delete_button,
@@ -157,7 +160,7 @@ impl DrawableSaveEntry {
                 background,
                 appr_frame,
                 pos_rect,
-		table_frame,
+                table_frame,
                 save_button,
                 load_button,
                 delete_button,
@@ -172,7 +175,7 @@ impl DrawableSaveEntry {
         appr_frame: TileBatchFrame,
         savable_data: SavableData,
         pos_rect: numeric::Rect,
-	table_frame: TableFrame,
+        table_frame: TableFrame,
         save_button: SelectButton,
         load_button: SelectButton,
         delete_button: SelectButton,
@@ -182,14 +185,14 @@ impl DrawableSaveEntry {
             background: background,
             date_text: None,
             money_text: None,
-	    desc_text: Vec::new(),
+            desc_text: Vec::new(),
             save_button: save_button,
             load_button: load_button,
             delete_button: delete_button,
             appearance_frame: appr_frame,
             canvas: SubScreen::new(ctx.context, pos_rect, 0, ggraphics::Color::from_rgba_u32(0)),
             slot_id: slot_id,
-	    table_frame: table_frame,
+            table_frame: table_frame,
         };
 
         entry.update_entry_contents(ctx.context, ctx.resource, &savable_data);
@@ -201,7 +204,7 @@ impl DrawableSaveEntry {
         background: UniTexture,
         appr_frame: TileBatchFrame,
         pos_rect: numeric::Rect,
-	table_frame: TableFrame,
+        table_frame: TableFrame,
         save_button: SelectButton,
         load_button: SelectButton,
         delete_button: SelectButton,
@@ -211,25 +214,30 @@ impl DrawableSaveEntry {
             background: background,
             date_text: None,
             money_text: None,
-	    desc_text: Vec::new(),
+            desc_text: Vec::new(),
             save_button: save_button,
             load_button: load_button,
             delete_button: delete_button,
             appearance_frame: appr_frame,
             canvas: SubScreen::new(ctx.context, pos_rect, 0, ggraphics::Color::from_rgba_u32(0)),
             slot_id: slot_id,
-	    table_frame: table_frame,
+            table_frame: table_frame,
         };
 
         entry.update_none_contents(ctx);
         entry
     }
 
-    fn update_entry_contents(&mut self, ctx: &mut ggez::Context, resource: &GameResource, savable_data: &SavableData) {
-	self.desc_text.clear();
+    fn update_entry_contents(
+        &mut self,
+        ctx: &mut ggez::Context,
+        resource: &GameResource,
+        savable_data: &SavableData,
+    ) {
+        self.desc_text.clear();
 
-	let mut mode_desc_text = VerticalText::new(
-	    "規則".to_string(),
+        let mut mode_desc_text = VerticalText::new(
+            "規則".to_string(),
             numeric::Point2f::new(220.0, 60.0),
             numeric::Vector2f::new(1.0, 1.0),
             0.0,
@@ -241,16 +249,16 @@ impl DrawableSaveEntry {
             ),
         );
 
-	set_table_frame_cell_center!(
+        set_table_frame_cell_center!(
             ctx,
             self.table_frame,
             mode_desc_text,
             numeric::Vector2u::new(1, 0)
         );
-	self.desc_text.push(mode_desc_text);
-	
-	let mut mode_text = VerticalText::new(
-	    savable_data.game_mode.to_str_jp().to_string(),
+        self.desc_text.push(mode_desc_text);
+
+        let mut mode_text = VerticalText::new(
+            savable_data.game_mode.to_str_jp().to_string(),
             numeric::Point2f::new(220.0, 60.0),
             numeric::Vector2f::new(1.0, 1.0),
             0.0,
@@ -262,16 +270,16 @@ impl DrawableSaveEntry {
             ),
         );
 
-	set_table_frame_cell_center!(
+        set_table_frame_cell_center!(
             ctx,
             self.table_frame,
             mode_text,
             numeric::Vector2u::new(1, 1)
         );
-	self.desc_text.push(mode_text);
-	
-	let mut day_desc_text = VerticalText::new(
-	    "日付".to_string(),
+        self.desc_text.push(mode_text);
+
+        let mut day_desc_text = VerticalText::new(
+            "日付".to_string(),
             numeric::Point2f::new(220.0, 60.0),
             numeric::Vector2f::new(1.0, 1.0),
             0.0,
@@ -283,14 +291,14 @@ impl DrawableSaveEntry {
             ),
         );
 
-	set_table_frame_cell_center!(
+        set_table_frame_cell_center!(
             ctx,
             self.table_frame,
             day_desc_text,
             numeric::Vector2u::new(2, 0)
         );
-	self.desc_text.push(day_desc_text);
-	
+        self.desc_text.push(day_desc_text);
+
         let mut date_text = VerticalText::new(
             format!(
                 "{}月{}日",
@@ -307,15 +315,15 @@ impl DrawableSaveEntry {
                 ggraphics::Color::from_rgba_u32(0xff),
             ),
         );
-	set_table_frame_cell_center!(
+        set_table_frame_cell_center!(
             ctx,
             self.table_frame,
             date_text,
             numeric::Vector2u::new(2, 1)
         );
 
-	let mut money_desc_text = VerticalText::new(
-	    "所持金".to_string(),
+        let mut money_desc_text = VerticalText::new(
+            "所持金".to_string(),
             numeric::Point2f::new(220.0, 60.0),
             numeric::Vector2f::new(1.0, 1.0),
             0.0,
@@ -327,14 +335,14 @@ impl DrawableSaveEntry {
             ),
         );
 
-	set_table_frame_cell_center!(
+        set_table_frame_cell_center!(
             ctx,
             self.table_frame,
             money_desc_text,
             numeric::Vector2u::new(0, 0)
         );
-	self.desc_text.push(money_desc_text);
-	
+        self.desc_text.push(money_desc_text);
+
         let mut money_text = VerticalText::new(
             format!(
                 "{}円",
@@ -350,7 +358,7 @@ impl DrawableSaveEntry {
                 ggraphics::Color::from_rgba_u32(0xff),
             ),
         );
-	set_table_frame_cell_center!(
+        set_table_frame_cell_center!(
             ctx,
             self.table_frame,
             money_text,
@@ -367,22 +375,22 @@ impl DrawableSaveEntry {
     }
 
     fn save_action<'a>(&mut self, ctx: &mut SuzuContext<'a>) {
-	match ctx.save(self.slot_id) {
-	    Err(_) => return,
-	    _ => (),
-	}
+        match ctx.save(self.slot_id) {
+            Err(_) => return,
+            _ => (),
+        }
 
-	if let Some(data) = ctx.savable_data.as_mut() {
-	    self.update_entry_contents(ctx.context, ctx.resource, data);
-	}
+        if let Some(data) = ctx.savable_data.as_mut() {
+            self.update_entry_contents(ctx.context, ctx.resource, data);
+        }
 
-	ctx.process_utility.redraw();
+        ctx.process_utility.redraw();
     }
 
     fn delete_action<'a>(&mut self, ctx: &mut SuzuContext<'a>) {
         SavableData::delete(self.slot_id);
         self.update_none_contents(ctx);
-	self.desc_text.clear();
+        self.desc_text.clear();
     }
 
     pub fn click_handler<'a>(
@@ -414,7 +422,7 @@ impl DrawableComponent for DrawableSaveEntry {
             self.appearance_frame.draw(ctx)?;
             self.background.draw(ctx)?;
 
-	    self.table_frame.draw(ctx)?;
+            self.table_frame.draw(ctx)?;
 
             if let Some(vtext) = self.date_text.as_mut() {
                 vtext.draw(ctx)?;
@@ -424,9 +432,9 @@ impl DrawableComponent for DrawableSaveEntry {
                 vtext.draw(ctx)?;
             }
 
-	    for vtext in self.desc_text.iter_mut() {
-		vtext.draw(ctx)?;
-	    }
+            for vtext in self.desc_text.iter_mut() {
+                vtext.draw(ctx)?;
+            }
 
             self.save_button.draw(ctx)?;
             self.load_button.draw(ctx)?;

@@ -94,10 +94,7 @@ impl SuzunaStatusMainPage {
         }
 
         let mut money_text = UniText::new(
-            format!(
-                "{}円",
-		ctx.take_save_data().task_result.total_money
-            ),
+            format!("{}円", ctx.take_save_data().task_result.total_money),
             numeric::Point2f::new(0.0, 0.0),
             numeric::Vector2f::new(1.0, 1.0),
             0.0,
@@ -189,7 +186,9 @@ impl SuzunaStatusMainPage {
             numeric::Rect::new(90.0, 290.0, 400.0, 40.0),
             6.0,
             100.0,
-            ctx.take_save_data().suzunaan_status.get_current_reputation(),
+            ctx.take_save_data()
+                .suzunaan_status
+                .get_current_reputation(),
             1,
         );
 
@@ -571,55 +570,60 @@ impl ScenarioAdPage {
             drwob_essential: DrawableObjectEssential::new(true, depth),
         };
 
-	let work_type_additional_cost = if let Some(sched) = ctx.take_save_data().get_todays_schedule() {
-	    match sched {
-		game_system::DayWorkType::GoingOut(_) => game_system::GOING_OUT_MONEY_COST,
-		_ => 0,
-	    }
-	} else {
-	    0
-	} as i32;
-	
-	// 広告料 + 追加料金 > 所持金 なら払えないので最も高価な広告を解除
-	while ad_page.total_ad_cost(ctx) + work_type_additional_cost > ctx.take_save_data().task_result.total_money {
-	    ad_page.uncheck_most_expensive(ctx);
-	}
+        let work_type_additional_cost =
+            if let Some(sched) = ctx.take_save_data().get_todays_schedule() {
+                match sched {
+                    game_system::DayWorkType::GoingOut(_) => game_system::GOING_OUT_MONEY_COST,
+                    _ => 0,
+                }
+            } else {
+                0
+            } as i32;
 
-	ad_page
+        // 広告料 + 追加料金 > 所持金 なら払えないので最も高価な広告を解除
+        while ad_page.total_ad_cost(ctx) + work_type_additional_cost
+            > ctx.take_save_data().task_result.total_money
+        {
+            ad_page.uncheck_most_expensive(ctx);
+        }
+
+        ad_page
     }
 
     pub fn click_handler<'a>(&mut self, ctx: &mut SuzuContext<'a>, click_point: numeric::Point2f) {
-	let total_ad_cost = self.total_ad_cost(ctx);
+        let total_ad_cost = self.total_ad_cost(ctx);
 
-	let work_type_additional_cost = if let Some(sched) = ctx.take_save_data().get_todays_schedule() {
-	    match sched {
-		game_system::DayWorkType::GoingOut(_) => game_system::GOING_OUT_MONEY_COST,
-		_ => 0,
-	    }
-	} else {
-	    0
-	} as i32;
-	
+        let work_type_additional_cost =
+            if let Some(sched) = ctx.take_save_data().get_todays_schedule() {
+                match sched {
+                    game_system::DayWorkType::GoingOut(_) => game_system::GOING_OUT_MONEY_COST,
+                    _ => 0,
+                }
+            } else {
+                0
+            } as i32;
+
         for (ad_type, entry) in self.ad_table.iter_mut() {
-	    // クリックされてるか確認する広告の値段
-	    let add_cost = ctx.resource.get_default_ad_cost(*ad_type) as i32;
+            // クリックされてるか確認する広告の値段
+            let add_cost = ctx.resource.get_default_ad_cost(*ad_type) as i32;
 
-	    // この広告が追加または削除された時に変動する値段
-	    let expected_total_ad_cost = if entry.is_checked() {
-		// 既にチェックされてるということは、これが外される
-		total_ad_cost - add_cost
-	    } else {
-		// その逆
-		total_ad_cost + add_cost
-	    };
+            // この広告が追加または削除された時に変動する値段
+            let expected_total_ad_cost = if entry.is_checked() {
+                // 既にチェックされてるということは、これが外される
+                total_ad_cost - add_cost
+            } else {
+                // その逆
+                total_ad_cost + add_cost
+            };
 
-	    // 予想される合計価格 の方が 所持金 より大きいなら -> 追加をやめる
-	    if expected_total_ad_cost + work_type_additional_cost
-		> ctx.take_save_data().task_result.total_money {
-		    continue;
-		}
+            // 予想される合計価格 の方が 所持金 より大きいなら -> 追加をやめる
+            if expected_total_ad_cost + work_type_additional_cost
+                > ctx.take_save_data().task_result.total_money
+            {
+                continue;
+            }
 
-	    // 追加実行
+            // 追加実行
             entry.check_box.click_handler(click_point);
             ctx.change_ad_status(*ad_type, entry.is_checked());
         }
@@ -664,17 +668,25 @@ impl ScenarioAdPage {
     }
 
     pub fn uncheck_most_expensive<'a>(&mut self, ctx: &mut SuzuContext<'a>) {
-	for ad_type in vec![
+        for ad_type in vec![
             SuzunaAdType::AdPaper,
             SuzunaAdType::Chindon,
             SuzunaAdType::ShopNobori,
             SuzunaAdType::TownNobori,
             SuzunaAdType::NewsPaper,
             SuzunaAdType::BunBunMaruPaper,
-        ].as_slice().iter().rev() {
+        ]
+        .as_slice()
+        .iter()
+        .rev()
+        {
             if self.ad_table.get(ad_type).unwrap().is_checked() {
-		self.ad_table.get_mut(ad_type).unwrap().check_box.try_check(false);
-		ctx.change_ad_status(*ad_type, false);
+                self.ad_table
+                    .get_mut(ad_type)
+                    .unwrap()
+                    .check_box
+                    .try_check(false);
+                ctx.change_ad_status(*ad_type, false);
             }
         }
     }
@@ -835,7 +847,10 @@ impl ScenarioAgencyPage {
     pub fn click_handler<'a>(&mut self, ctx: &mut SuzuContext<'a>, click_point: numeric::Point2f) {
         for (ad_type, entry) in self.ad_table.iter_mut() {
             if ctx.resource.get_default_ad_agency_cost(ad_type) as f32
-                <= ctx.take_save_data().suzunaan_status.get_current_reputation()
+                <= ctx
+                    .take_save_data()
+                    .suzunaan_status
+                    .get_current_reputation()
             {
                 entry.check_box.click_handler(click_point);
                 ctx.change_ad_agency_status(*ad_type, entry.is_checked());
@@ -892,10 +907,19 @@ impl ScenarioAgencyPage {
             SuzunaAdAgencyType::YamaJinja,
         ] {
             if self.ad_table.get(&ad_type).unwrap().is_checked() {
-                if ctx.resource.get_default_ad_agency_cost(&ad_type) as f32 > ctx.take_save_data().suzunaan_status.get_current_reputation() {
-		    self.ad_table.get_mut(&ad_type).unwrap().check_box.try_check(false);
-		    ctx.change_ad_agency_status(ad_type, false);
-		}
+                if ctx.resource.get_default_ad_agency_cost(&ad_type) as f32
+                    > ctx
+                        .take_save_data()
+                        .suzunaan_status
+                        .get_current_reputation()
+                {
+                    self.ad_table
+                        .get_mut(&ad_type)
+                        .unwrap()
+                        .check_box
+                        .try_check(false);
+                    ctx.change_ad_agency_status(ad_type, false);
+                }
             }
         }
     }
@@ -961,22 +985,22 @@ impl SuzunaStatusPages {
         scno_ctx: &ScenarioContext,
         rect: numeric::Rect,
     ) -> Self {
-	let ad_page = ScenarioAdPage::new(
+        let ad_page = ScenarioAdPage::new(
             ctx,
             numeric::Point2f::new(0.0, 0.0),
             numeric::Vector2f::new(rect.w, rect.h),
             0,
         );
 
-	let ad_agency_page = ScenarioAgencyPage::new(
+        let ad_agency_page = ScenarioAgencyPage::new(
             ctx,
             numeric::Point2f::new(0.0, 0.0),
             numeric::Vector2f::new(rect.w, rect.h),
             0,
         );
 
-	let main_page = SuzunaStatusMainPage::new(ctx);
-	
+        let main_page = SuzunaStatusMainPage::new(ctx);
+
         SuzunaStatusPages {
             main_page: main_page,
             ad_page: ad_page,
@@ -1966,7 +1990,7 @@ impl ScheduleSelectWindow {
             background: background,
             candidate_vtext: candidate_vtext,
             selected_schedule: None,
-	    appr_frame: appr_frame,
+            appr_frame: appr_frame,
         }
     }
 }
@@ -1983,7 +2007,7 @@ impl DrawableComponent for ScheduleSelectWindow {
                 vtext.draw(ctx)?;
             }
 
-	    self.appr_frame.draw(ctx)?;
+            self.appr_frame.draw(ctx)?;
 
             sub_screen::pop_screen(ctx);
             self.canvas.draw(ctx).unwrap();
@@ -2119,25 +2143,25 @@ impl ScenarioSchedPage {
             header_text: header_text,
             window_stack: window_stack,
             drwob_essential: DrawableObjectEssential::new(true, depth),
-	    locked: true,
+            locked: true,
         }
     }
 
     pub fn unlock(&mut self) {
-	self.locked = false;
+        self.locked = false;
     }
-    
+
     pub fn click_handler<'a>(
         &mut self,
         ctx: &mut SuzuContext<'a>,
         click_point: numeric::Point2f,
         button: MouseButton,
     ) {
-	if !self.locked {
+        if !self.locked {
             self.window_stack
-		.mouse_click_handler(ctx, click_point, button);
+                .mouse_click_handler(ctx, click_point, button);
             self.window_stack.check_outofclick_hide(ctx, click_point, 1);
-	}
+        }
     }
 
     pub fn mouse_button_down<'a>(
@@ -2146,10 +2170,10 @@ impl ScenarioSchedPage {
         click_point: numeric::Point2f,
         button: MouseButton,
     ) {
-	if !self.locked {
+        if !self.locked {
             self.window_stack
-		.mouse_down_handler(ctx, click_point, button);
-	}
+                .mouse_down_handler(ctx, click_point, button);
+        }
     }
 
     pub fn update<'a>(&mut self, ctx: &mut SuzuContext<'a>) -> DrawRequest {

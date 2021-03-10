@@ -12,7 +12,7 @@ use sub_screen::SubScreen;
 use torifune::core::*;
 use torifune::graphics::drawable::*;
 use torifune::graphics::object::sub_screen;
-use torifune::{mintv, mintp};
+use torifune::{mintp, mintv};
 
 use collision::prelude::*;
 
@@ -358,11 +358,11 @@ impl StageObjectMap {
         scale: numeric::Vector2f,
     ) -> StageObjectMap {
         // マップ情報を読み込む
-	println!("FIXME: map_parse.rs StageObjectMap::new");
+        println!("FIXME: map_parse.rs StageObjectMap::new");
         //let file = ggez::filesystem::open(ctx, path).unwrap();
-	//let tile_map = tiled::parse(file).unwrap();
-	let tile_map = tiled::parse_file(std::path::Path::new(path)).unwrap();
-	
+        //let tile_map = tiled::parse(file).unwrap();
+        let tile_map = tiled::parse_file(std::path::Path::new(path)).unwrap();
+
         // タイルセットを読み込み、それと同時にタイルセットの画像からSpriteBatchを生成する
         let mut batchs = HashMap::new();
         let tilesets: Vec<TileSet> = tile_map
@@ -610,10 +610,10 @@ impl StageObjectMap {
 
                     let batch = self.tilesets_batchs.get_mut(&first_gid).unwrap(); // sprite batchをfirst_gidから取得
 
-		    let draw_param = ggraphics::DrawParam::default()
-			.src(numeric::Rect::new(crop.x, crop.y, crop.w, crop.h))
-			.scale(mintv!(self.scale))
-			.dest(mintp!(dest_pos));
+                    let draw_param = ggraphics::DrawParam::default()
+                        .src(numeric::Rect::new(crop.x, crop.y, crop.w, crop.h))
+                        .scale(mintv!(self.scale))
+                        .dest(mintp!(dest_pos));
                     // batch処理を追加
                     batch.add(draw_param);
                 }
@@ -729,17 +729,13 @@ impl DrawableComponent for StageObjectMap {
 
                 // 全てのsprite batchを描画
                 for (_, batch) in &self.tilesets_batchs {
-		    let draw_param = ggraphics::DrawParam::default()
-			.dest(mintp!(numeric::Point2f::new(
+                    let draw_param =
+                        ggraphics::DrawParam::default().dest(mintp!(numeric::Point2f::new(
                             -self.camera.borrow().x.round(),
                             -self.camera.borrow().y.round(),
                         )));
-		    
-                    ggraphics::draw(
-                        ctx,
-                        batch,
-			draw_param,
-                    )?;
+
+                    ggraphics::draw(ctx, batch, draw_param)?;
                 }
 
                 sub_screen::pop_screen(ctx);

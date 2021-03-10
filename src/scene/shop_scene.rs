@@ -3,9 +3,9 @@ use std::cmp::PartialOrd;
 use std::collections::VecDeque;
 use std::rc::Rc;
 
-use torifune::{device as tdev, sound::SoundPlayFlags};
 use torifune::graphics::object::*;
 use torifune::manhattan_distance;
+use torifune::{device as tdev, sound::SoundPlayFlags};
 
 use ggez::graphics as ggraphics;
 use torifune::core::Clock;
@@ -15,10 +15,9 @@ use torifune::graphics::drawable::*;
 use ggez::input::mouse::MouseButton;
 use torifune::numeric;
 
-use super::*;
 use super::suzuna_scene::suzuna_sub_scene::TaskTutorialContext;
-use crate::{add_delay_event, core::{SoundID, WINDOW_SIZE_X}, object::task_object::tt_main_component::CustomerRequestOrder};
-use crate::core::{map_parser as mp};
+use super::*;
+use crate::core::map_parser as mp;
 use crate::core::{
     BookInformation, FontID, MouseInformation, ResultReport, SavableData, SuzuContext,
     TileBatchTextureID,
@@ -34,6 +33,11 @@ use crate::object::task_object::tt_main_component::CustomerRequest;
 use crate::object::task_object::tt_sub_component::BookConditionEvalReport;
 use crate::object::util_object::*;
 use crate::object::*;
+use crate::{
+    add_delay_event,
+    core::{SoundID, WINDOW_SIZE_X},
+    object::task_object::tt_main_component::CustomerRequestOrder,
+};
 
 #[allow(unused_imports)]
 use crate::perf_measure;
@@ -424,7 +428,7 @@ impl GoToCheckCustomers {
         customer: CustomerCharacter,
         map_data: &mp::StageObjectMap,
         current_tail: numeric::Vector2u,
-	t: Clock,
+        t: Clock,
     ) {
         self.customers.push(customer);
         self.reset_each_customers_goal(ctx, map_data, current_tail, t);
@@ -435,7 +439,7 @@ impl GoToCheckCustomers {
         ctx: &mut SuzuContext<'a>,
         map_data: &mp::StageObjectMap,
         mut current_tail: numeric::Vector2u,
-	t: Clock,
+        t: Clock,
     ) {
         self.sort_customers(map_data);
 
@@ -471,14 +475,14 @@ impl GoToCheckCustomers {
         self.move_and_collision_check(ctx.context, camera, map_data, t);
 
         for customer in self.customers.iter_mut() {
-	    customer.try_update_move_effect(
+            customer.try_update_move_effect(
                 ctx,
                 map_data,
                 numeric::Vector2u::new(5, 14),
                 numeric::Vector2u::new(15, 14),
                 t,
-	    );
-	    customer.get_mut_character_object().update_texture(t);
+            );
+            customer.get_mut_character_object().update_texture(t);
         }
     }
 
@@ -562,12 +566,13 @@ pub enum ShopTimeStatus {
 
 impl ShopTimeStatus {
     pub fn to_string(&self) -> String {
-	match self {
-	    ShopTimeStatus::Preparing => "仕度中",
-	    ShopTimeStatus::Opening => "営業中",
-	    ShopTimeStatus::Closing => "終業中",
-	    ShopTimeStatus::Closed => "閉店",
-	}.to_string()
+        match self {
+            ShopTimeStatus::Preparing => "仕度中",
+            ShopTimeStatus::Opening => "営業中",
+            ShopTimeStatus::Closing => "終業中",
+            ShopTimeStatus::Closed => "閉店",
+        }
+        .to_string()
     }
 }
 
@@ -583,56 +588,53 @@ struct ShopTutorialList {
 
 impl ShopTutorialList {
     pub fn new() -> Self {
-	ShopTutorialList {
-	    hello: false,
-	    go_ret_box: false,
-	    first_ret_box: false,
-	    go_shelving: false,
-	    shelving_is_done: false,
-	    customer_is_comming: false,
-	    checking_customer_count: 0,
-	}
+        ShopTutorialList {
+            hello: false,
+            go_ret_box: false,
+            first_ret_box: false,
+            go_shelving: false,
+            shelving_is_done: false,
+            customer_is_comming: false,
+            checking_customer_count: 0,
+        }
     }
 
     pub fn new_done() -> Self {
-	ShopTutorialList {
-	    hello: true,
-	    go_ret_box: true,
-	    first_ret_box: true,
-	    go_shelving: true,
-	    shelving_is_done: true,
-	    customer_is_comming: true,
-	    checking_customer_count: 100,
-	}
+        ShopTutorialList {
+            hello: true,
+            go_ret_box: true,
+            first_ret_box: true,
+            go_shelving: true,
+            shelving_is_done: true,
+            customer_is_comming: true,
+            checking_customer_count: 100,
+        }
     }
 
     pub fn is_book_shelf_unlocked(&self) -> bool {
-	self.hello &&
-	    self.go_ret_box &&
-	    self.first_ret_box &&
-	    self.go_shelving
+        self.hello && self.go_ret_box && self.first_ret_box && self.go_shelving
     }
 
     pub fn all_done(&self) -> bool {
-	self.hello &&
-	    self.go_ret_box &&
-	    self.first_ret_box &&
-	    self.go_shelving &&
-	    self.shelving_is_done &&
-	    self.customer_is_comming &&
-	    self.gen_tutorial_customer_order().is_none()
+        self.hello
+            && self.go_ret_box
+            && self.first_ret_box
+            && self.go_shelving
+            && self.shelving_is_done
+            && self.customer_is_comming
+            && self.gen_tutorial_customer_order().is_none()
     }
 
     pub fn inc_checking_customer_count(&mut self) {
-	self.checking_customer_count += 1;
+        self.checking_customer_count += 1;
     }
 
     pub fn gen_tutorial_customer_order(&self) -> Option<CustomerRequestOrder> {
-	match self.checking_customer_count {
-	    0 => Some(CustomerRequestOrder::BorrowingOrder),
-	    1 => Some(CustomerRequestOrder::ReturningOrder),
-	    _ => None,
-	}
+        match self.checking_customer_count {
+            0 => Some(CustomerRequestOrder::BorrowingOrder),
+            1 => Some(CustomerRequestOrder::ReturningOrder),
+            _ => None,
+        }
     }
 }
 
@@ -698,7 +700,7 @@ impl ShopScene {
         ctx: &mut SuzuContext<'a>,
         map_id: u32,
         new_books: Vec<BookInformation>,
-	task_tutorial: TaskTutorialContext,
+        task_tutorial: TaskTutorialContext,
     ) -> ShopScene {
         let begining_save_data = ctx.take_save_data().clone();
 
@@ -719,11 +721,8 @@ impl ShopScene {
         map.tile_map.build_collision_map();
 
         let shop_time = ShopClock::new(8, 0);
-        let drawble_shop_clock = DrawableShopClock::from_toml(
-            ctx,
-            "/other_config/shop_clock.toml",
-            shop_time.clone(),
-        );
+        let drawble_shop_clock =
+            DrawableShopClock::from_toml(ctx, "/other_config/shop_clock.toml", shop_time.clone());
 
         let mut result_report = ResultReport::new();
         for new_book in new_books.iter() {
@@ -736,50 +735,58 @@ impl ShopScene {
 
         let mut delay_event_list = DelayEventList::new();
 
-	if ctx.take_save_data().date.first_day() && ctx.take_save_data().game_mode.is_story_mode() && ctx.take_save_data().run_tutorial {
-	    delay_event_list.add_event(
-		Box::new(move |slf: &mut ShopScene, ctx, t| {
-		    slf.set_fixed_text_into_scenario_box(ctx, "/scenario/tutorial/1.toml", t);
-		    slf.dark_effect_panel_shallow.new_effect(8, t, 0, 220);
-		}),
-		31
-	    );
-	} else {
-	    let cloned_new_books = new_books.clone();
-	    delay_event_list.add_event(
-		Box::new(move |slf: &mut ShopScene, ctx, t| {
-                    slf.shop_special_object
-			.show_new_books_viewer(ctx, cloned_new_books, t);
-		}),
-		31,
+        if ctx.take_save_data().date.first_day()
+            && ctx.take_save_data().game_mode.is_story_mode()
+            && ctx.take_save_data().run_tutorial
+        {
+            delay_event_list.add_event(
+                Box::new(move |slf: &mut ShopScene, ctx, t| {
+                    slf.set_fixed_text_into_scenario_box(ctx, "/scenario/tutorial/1.toml", t);
+                    slf.dark_effect_panel_shallow.new_effect(8, t, 0, 220);
+                }),
+                31,
             );
-	}
+        } else {
+            let cloned_new_books = new_books.clone();
+            delay_event_list.add_event(
+                Box::new(move |slf: &mut ShopScene, ctx, t| {
+                    slf.shop_special_object
+                        .show_new_books_viewer(ctx, cloned_new_books, t);
+                }),
+                31,
+            );
+        }
 
-	let mut shop_time_status_header = EffectableWrap::new(
-	    MovableWrap::new(
-		Box::new(UniText::new(
-		    ShopTimeStatus::Preparing.to_string(),
-		    numeric::Point2f::new(0.0, 0.0),
-		    numeric::Vector2f::new(1.0, 1.0),
-		    0.0,
-		    0,
-		    FontInformation::new(
-			ctx.resource.get_font(FontID::Cinema),
-			numeric::Vector2f::new(28.0, 28.0),
-			ggraphics::Color::from_rgba(30, 20, 12, 255),
-		    ))),
-		None,
-		0
-	    ),Vec::new()
-	);
-	shop_time_status_header.make_center(ctx.context, numeric::Point2f::new(WINDOW_SIZE_X as f32 / 2.0, 45.0));
+        let mut shop_time_status_header = EffectableWrap::new(
+            MovableWrap::new(
+                Box::new(UniText::new(
+                    ShopTimeStatus::Preparing.to_string(),
+                    numeric::Point2f::new(0.0, 0.0),
+                    numeric::Vector2f::new(1.0, 1.0),
+                    0.0,
+                    0,
+                    FontInformation::new(
+                        ctx.resource.get_font(FontID::Cinema),
+                        numeric::Vector2f::new(28.0, 28.0),
+                        ggraphics::Color::from_rgba(30, 20, 12, 255),
+                    ),
+                )),
+                None,
+                0,
+            ),
+            Vec::new(),
+        );
+        shop_time_status_header.make_center(
+            ctx.context,
+            numeric::Point2f::new(WINDOW_SIZE_X as f32 / 2.0, 45.0),
+        );
         //ctx.pay_ad_cost();
 
-	ctx.play_sound_as_bgm(
+        ctx.play_sound_as_bgm(
             SoundID::ShopBGM,
             Some(SoundPlayFlags::new(10000, 1.0, true, 0.1)),
         );
-	
+
         ShopScene {
             mouse_info: MouseInformation::new(),
             player: player,
@@ -809,7 +816,7 @@ impl ShopScene {
                 numeric::Rect::new(0.0, 0.0, 1366.0, 768.0),
                 0,
             ),
-	    dark_effect_panel_shallow: DarkEffectPanel::new(
+            dark_effect_panel_shallow: DarkEffectPanel::new(
                 ctx.context,
                 numeric::Rect::new(0.0, 0.0, 1366.0, 768.0),
                 0,
@@ -830,21 +837,23 @@ impl ShopScene {
                 ctx,
                 numeric::Rect::new(160.0, 720.0, 1066.0, 100.0),
                 0,
-		0,
+                0,
             ),
-	    shop_time_status: ShopTimeStatus::Preparing,
-	    shop_time_status_header: shop_time_status_header,
-	    random_customer_add_timing: ctx.resource.get_todays_customer_dist(&ctx.take_save_data().date),
-	    new_books: new_books,
-	    tutorial_list: if ctx.take_save_data().date.first_day() &&
-		ctx.take_save_data().game_mode.is_story_mode() &&
-		ctx.take_save_data().run_tutorial
-	    {
-		ShopTutorialList::new()
-	    } else {
-		ShopTutorialList::new_done()
-	    },
-	    task_tutorial_context: task_tutorial,
+            shop_time_status: ShopTimeStatus::Preparing,
+            shop_time_status_header: shop_time_status_header,
+            random_customer_add_timing: ctx
+                .resource
+                .get_todays_customer_dist(&ctx.take_save_data().date),
+            new_books: new_books,
+            tutorial_list: if ctx.take_save_data().date.first_day()
+                && ctx.take_save_data().game_mode.is_story_mode()
+                && ctx.take_save_data().run_tutorial
+            {
+                ShopTutorialList::new()
+            } else {
+                ShopTutorialList::new_done()
+            },
+            task_tutorial_context: task_tutorial,
         }
     }
 
@@ -1230,29 +1239,35 @@ impl ShopScene {
         self.check_event_panel_onmap(ctx, EventTrigger::Action);
     }
 
-    pub fn command_palette_handler<'a>(&mut self, ctx: &mut SuzuContext<'a>, func: CommandPaletteFunc) {
-	match func {
-            CommandPaletteFunc::Action | CommandPaletteFunc::ShowMap | CommandPaletteFunc::Pause => {
-		if self.shop_menu.first_menu_is_open() {
-		    return;
-		}
-		match func {
-		    CommandPaletteFunc::Action => {
-			self.command_palette_go_register_handler(ctx);
-		    },
-		    CommandPaletteFunc::ShowMap => {
-			self.toggle_shop_map_appearing();
-		    },
-		    CommandPaletteFunc::Pause => {
-			let t = self.get_current_clock();
-			self.enter_pause_screen(t);
-		    },
-		    _ => (),
-		}
-            },
-	    CommandPaletteFunc::ShowShopMenu => {
-		self.special_button_handler(ctx);
-	    },
+    pub fn command_palette_handler<'a>(
+        &mut self,
+        ctx: &mut SuzuContext<'a>,
+        func: CommandPaletteFunc,
+    ) {
+        match func {
+            CommandPaletteFunc::Action
+            | CommandPaletteFunc::ShowMap
+            | CommandPaletteFunc::Pause => {
+                if self.shop_menu.first_menu_is_open() {
+                    return;
+                }
+                match func {
+                    CommandPaletteFunc::Action => {
+                        self.command_palette_go_register_handler(ctx);
+                    }
+                    CommandPaletteFunc::ShowMap => {
+                        self.toggle_shop_map_appearing();
+                    }
+                    CommandPaletteFunc::Pause => {
+                        let t = self.get_current_clock();
+                        self.enter_pause_screen(t);
+                    }
+                    _ => (),
+                }
+            }
+            CommandPaletteFunc::ShowShopMenu => {
+                self.special_button_handler(ctx);
+            }
         }
     }
 
@@ -1271,15 +1286,19 @@ impl ShopScene {
                     self.get_current_clock(),
                 );
 
-		if !self.tutorial_list.first_ret_box {
-		    self.event_list.add_event(
-			Box::new(move |slf: &mut ShopScene, ctx, t| {
-			    slf.set_fixed_text_into_scenario_box(ctx, "/scenario/tutorial/3.toml", t);
-			    slf.dark_effect_panel_shallow.new_effect(8, t, 0, 220);
-			}),
-			31
-		    );
-		}
+                if !self.tutorial_list.first_ret_box {
+                    self.event_list.add_event(
+                        Box::new(move |slf: &mut ShopScene, ctx, t| {
+                            slf.set_fixed_text_into_scenario_box(
+                                ctx,
+                                "/scenario/tutorial/3.toml",
+                                t,
+                            );
+                            slf.dark_effect_panel_shallow.new_effect(8, t, 0, 220);
+                        }),
+                        31,
+                    );
+                }
             }
         }
     }
@@ -1316,7 +1335,7 @@ impl ShopScene {
         if let Some(event_element) = target_event {
             match event_element {
                 MapEventElement::TextEvent(_text) => {
-		    println!("Unsuported");
+                    println!("Unsuported");
                 }
                 MapEventElement::SwitchScene(switch_scene) => {
                     if !self.customer_request_queue.is_empty() && !self.customer_queue.is_empty() {
@@ -1324,29 +1343,31 @@ impl ShopScene {
 
                         self.event_list.add_event(
                             Box::new(move |slf: &mut ShopScene, ctx, _| {
-				let mut customer = if let Some((customer, _)) = slf.customer_queue.pop_head_customer() {
-				    customer
-				} else {
-				    return;
-				};
+                                let mut customer = if let Some((customer, _)) =
+                                    slf.customer_queue.pop_head_customer()
+                                {
+                                    customer
+                                } else {
+                                    return;
+                                };
 
                                 customer.get_out_shop(
                                     ctx.context,
                                     &slf.map.tile_map,
                                     numeric::Vector2u::new(15, 14),
-				    t
+                                    t,
                                 );
 
                                 slf.goto_check_customers.reset_each_customers_goal(
                                     ctx,
                                     &slf.map.tile_map,
                                     slf.customer_queue.tail_map_position(),
-				    t
+                                    t,
                                 );
 
                                 slf.character_group.add(customer);
 
-				slf.transition_status = SceneTransition::StackingTransition;
+                                slf.transition_status = SceneTransition::StackingTransition;
                                 slf.transition_scene = switch_scene_id;
 
                                 if slf.transition_scene == SceneID::MainDesk {
@@ -1361,26 +1382,30 @@ impl ShopScene {
                     }
                 }
                 MapEventElement::BookStoreEvent(book_store_event) => {
-		    if self.tutorial_list.is_book_shelf_unlocked() {
-			self.dark_effect_panel
+                    if self.tutorial_list.is_book_shelf_unlocked() {
+                        self.dark_effect_panel
                             .new_effect(8, self.get_current_clock(), 0, 200);
-			self.shop_special_object.show_storing_select_ui(
+                        self.shop_special_object.show_storing_select_ui(
                             ctx,
                             book_store_event.get_book_shelf_info().clone(),
                             self.player.get_shelving_book().clone(),
                             t,
-			);
-			
-			if !self.tutorial_list.shelving_is_done {
-			    self.event_list.add_event(
-				Box::new(move |slf: &mut ShopScene, ctx, t| {
-				    slf.set_fixed_text_into_scenario_box(ctx, "/scenario/tutorial/5.toml", t);
-				    slf.dark_effect_panel_shallow.new_effect(8, t, 0, 220);
-				}),
-				31
-			    );
-			}
-		    }
+                        );
+
+                        if !self.tutorial_list.shelving_is_done {
+                            self.event_list.add_event(
+                                Box::new(move |slf: &mut ShopScene, ctx, t| {
+                                    slf.set_fixed_text_into_scenario_box(
+                                        ctx,
+                                        "/scenario/tutorial/5.toml",
+                                        t,
+                                    );
+                                    slf.dark_effect_panel_shallow.new_effect(8, t, 0, 220);
+                                }),
+                                31,
+                            );
+                        }
+                    }
                 }
                 MapEventElement::BuiltinEvent(builtin_event) => {
                     let builtin_event = builtin_event.clone();
@@ -1485,7 +1510,7 @@ impl ShopScene {
         ctx: &mut SuzuContext<'a>,
         elapsed_clock: Clock,
         condition_eval_report: Option<BookConditionEvalReport>,
-	task_tutorial: TaskTutorialContext,
+        task_tutorial: TaskTutorialContext,
     ) {
         let t = self.get_current_clock();
         let animation_time = 30;
@@ -1514,7 +1539,7 @@ impl ShopScene {
                 .add_condition_eval_mistakes(report.count_mistake());
         }
 
-	self.task_tutorial_context = task_tutorial;
+        self.task_tutorial_context = task_tutorial;
 
         // self.event_list.add_event(
         //     Box::new(move |slf: &mut ShopScene, _, _| { slf.scene_transition_effect = None; }),
@@ -1540,15 +1565,15 @@ impl ShopScene {
                 .new_effect(8, self.get_current_clock(), 200, 0);
         }
 
-	if !self.tutorial_list.go_shelving {
-	    self.event_list.add_event(
-		Box::new(move |slf: &mut ShopScene, ctx, t| {
-		    slf.set_fixed_text_into_scenario_box(ctx, "/scenario/tutorial/4.toml", t);
-		    slf.dark_effect_panel_shallow.new_effect(8, t, 0, 220);
-		}),
-		31
-	    );
-	}
+        if !self.tutorial_list.go_shelving {
+            self.event_list.add_event(
+                Box::new(move |slf: &mut ShopScene, ctx, t| {
+                    slf.set_fixed_text_into_scenario_box(ctx, "/scenario/tutorial/4.toml", t);
+                    slf.dark_effect_panel_shallow.new_effect(8, t, 0, 220);
+                }),
+                31,
+            );
+        }
     }
 
     fn try_hide_storing_select_ui<'a>(&mut self, ctx: &mut SuzuContext<'a>, t: Clock) {
@@ -1562,15 +1587,15 @@ impl ShopScene {
             self.dark_effect_panel
                 .new_effect(8, self.get_current_clock(), 200, 0);
 
-	    if !self.tutorial_list.customer_is_comming {
-		self.event_list.add_event(
-		    Box::new(move |slf: &mut ShopScene, ctx, t| {
-			slf.set_fixed_text_into_scenario_box(ctx, "/scenario/tutorial/6.toml", t);
-			slf.dark_effect_panel_shallow.new_effect(8, t, 0, 220);
-		    }),
-		    t + 30
-		);
-	    }
+            if !self.tutorial_list.customer_is_comming {
+                self.event_list.add_event(
+                    Box::new(move |slf: &mut ShopScene, ctx, t| {
+                        slf.set_fixed_text_into_scenario_box(ctx, "/scenario/tutorial/6.toml", t);
+                        slf.dark_effect_panel_shallow.new_effect(8, t, 0, 220);
+                    }),
+                    t + 30,
+                );
+            }
         }
     }
 
@@ -1582,10 +1607,10 @@ impl ShopScene {
     /// # 再描画要求有り
     ///
     pub fn update_shop_clock_regular<'a>(&mut self, ctx: &mut SuzuContext<'a>, t: Clock) {
-	if self.shop_clock.is_past(9, 59) && !self.tutorial_is_done() {
-	    return;
-	}
-	
+        if self.shop_clock.is_past(9, 59) && !self.tutorial_is_done() {
+            return;
+        }
+
         if self.get_current_clock() % 15 == 0 {
             self.shop_clock.add_minute(1);
             self.drawable_shop_clock.update_time(&self.shop_clock);
@@ -1618,39 +1643,49 @@ impl ShopScene {
     /// # 再描画要求有り
     ///
     pub fn check_shop_clock_regular<'a>(&mut self, ctx: &mut SuzuContext<'a>, t: Clock) {
-	if self.shop_time_status == ShopTimeStatus::Preparing && self.shop_clock.is_past(9, 0) {
-	    self.shop_time_status = ShopTimeStatus::Opening;
-	    self.shop_time_status_header.make_center(ctx.context, numeric::Point2f::new(WINDOW_SIZE_X as f32 / 2.0, 45.0));
-	    self.shop_time_status_header.clear_effect();
-	    self.shop_time_status_header.add_effect(vec![
-		effect::alpha_effect(20, t, 255, 0), effect::alpha_effect(20, t + 20, 0, 255)
-	    ]);
-	    add_delay_event!(
+        if self.shop_time_status == ShopTimeStatus::Preparing && self.shop_clock.is_past(9, 0) {
+            self.shop_time_status = ShopTimeStatus::Opening;
+            self.shop_time_status_header.make_center(
+                ctx.context,
+                numeric::Point2f::new(WINDOW_SIZE_X as f32 / 2.0, 45.0),
+            );
+            self.shop_time_status_header.clear_effect();
+            self.shop_time_status_header.add_effect(vec![
+                effect::alpha_effect(20, t, 255, 0),
+                effect::alpha_effect(20, t + 20, 0, 255),
+            ]);
+            add_delay_event!(
                 self.event_list,
                 |slf, _ctx, _t| {
-		    slf.shop_time_status_header.replace_text(slf.shop_time_status.to_string());
+                    slf.shop_time_status_header
+                        .replace_text(slf.shop_time_status.to_string());
                 },
                 t + 20
             );
-	}
+        }
 
-	if self.shop_time_status == ShopTimeStatus::Opening && self.shop_clock.is_past(17, 0) {
-	    self.shop_time_status = ShopTimeStatus::Closing;
-	    self.shop_time_status_header.make_center(ctx.context, numeric::Point2f::new(WINDOW_SIZE_X as f32 / 2.0, 45.0));
-	    	    self.shop_time_status_header.clear_effect();
-	    self.shop_time_status_header.add_effect(vec![
-		effect::alpha_effect(20, t, 255, 0), effect::alpha_effect(20, t + 20, 0, 255)
-	    ]);
-	    add_delay_event!(
+        if self.shop_time_status == ShopTimeStatus::Opening && self.shop_clock.is_past(17, 0) {
+            self.shop_time_status = ShopTimeStatus::Closing;
+            self.shop_time_status_header.make_center(
+                ctx.context,
+                numeric::Point2f::new(WINDOW_SIZE_X as f32 / 2.0, 45.0),
+            );
+            self.shop_time_status_header.clear_effect();
+            self.shop_time_status_header.add_effect(vec![
+                effect::alpha_effect(20, t, 255, 0),
+                effect::alpha_effect(20, t + 20, 0, 255),
+            ]);
+            add_delay_event!(
                 self.event_list,
                 |slf, _ctx, _t| {
-		    slf.shop_time_status_header.replace_text(slf.shop_time_status.to_string());
+                    slf.shop_time_status_header
+                        .replace_text(slf.shop_time_status.to_string());
                 },
                 t + 20
             );
-	    self.get_out_all_customers(ctx, t);
-	}
-	
+            self.get_out_all_customers(ctx, t);
+        }
+
         if self.shop_time_status == ShopTimeStatus::Closing && self.shop_clock.is_past(18, 0) {
             self.event_list.add_event(
                 Box::new(move |slf: &mut Self, ctx, _| {
@@ -1663,14 +1698,13 @@ impl ShopScene {
                     slf.transition_status = SceneTransition::SwapTransition;
                     slf.transition_scene = SceneID::DayResult;
 
-		    ctx.resource.stop_bgm(ctx.context, SoundID::ShopBGM);
-		    
+                    ctx.resource.stop_bgm(ctx.context, SoundID::ShopBGM);
                 }),
                 t + 120,
             );
 
             self.scene_transition_close_effect(ctx, t);
-	    self.shop_time_status = ShopTimeStatus::Closed;
+            self.shop_time_status = ShopTimeStatus::Closed;
         }
     }
 
@@ -1682,37 +1716,37 @@ impl ShopScene {
             numeric::Point2f::new(1430.0, 1246.0),
         );
 
-	let customer = CustomerCharacter::new(
-	    ctx.resource,
-	    customer,
-	    CustomerDestPoint::new(vec![
-		numeric::Vector2u::new(10, 4),
-		numeric::Vector2u::new(6, 4),
-	    ]),
-	);
-	
-	self.character_group.add(customer);
+        let customer = CustomerCharacter::new(
+            ctx.resource,
+            customer,
+            CustomerDestPoint::new(vec![
+                numeric::Vector2u::new(10, 4),
+                numeric::Vector2u::new(6, 4),
+            ]),
+        );
 
-	if let Some(customer) = self.character_group.pickup_goto_check_customer() {
+        self.character_group.add(customer);
+
+        if let Some(customer) = self.character_group.pickup_goto_check_customer() {
             self.goto_check_customers.insert_new_customer(
                 ctx,
                 customer,
                 &self.map.tile_map,
                 self.customer_queue.tail_map_position(),
-		t
+                t,
             );
         }
     }
 
     fn random_add_customer<'a>(&mut self, ctx: &mut SuzuContext<'a>) {
-	if !self.tutorial_is_done() {
-	    return;
-	}
-	
-	match self.shop_time_status {
-	    ShopTimeStatus::Opening => (),
-	    _ => return,
-	}
+        if !self.tutorial_is_done() {
+            return;
+        }
+
+        match self.shop_time_status {
+            ShopTimeStatus::Opening => (),
+            _ => return,
+        }
 
         if rand::random::<usize>() % self.random_customer_add_timing as usize == 0 {
             let character = character_factory::create_character(
@@ -1721,7 +1755,7 @@ impl ShopScene {
                 &self.camera.borrow(),
                 numeric::Point2f::new(1430.0, 1246.0),
             );
-	    
+
             self.character_group.add(CustomerCharacter::new(
                 ctx.resource,
                 character,
@@ -1746,7 +1780,7 @@ impl ShopScene {
         ));
         self.notification_area
             .insert_new_contents(ctx, notification, t);
-	ctx.play_sound_as_se(SoundID::SeCustomerBell, None);
+        ctx.play_sound_as_se(SoundID::SeCustomerBell, None);
     }
 
     fn transition_to_title_scene<'a>(&mut self, ctx: &mut SuzuContext<'a>, t: Clock) {
@@ -1794,14 +1828,14 @@ impl ShopScene {
     }
 
     fn tutorial_is_done(&self) -> bool {
-	self.tutorial_list.all_done() && self.task_tutorial_context.all_done()
+        self.tutorial_list.all_done() && self.task_tutorial_context.all_done()
     }
 
     fn check_waiting_customer_giveup<'a>(&mut self, ctx: &mut SuzuContext<'a>, now: Clock) {
-	if !self.tutorial_is_done() {
-	    return;
-	}
-	
+        if !self.tutorial_is_done() {
+            return;
+        }
+
         let giveup_customers = self.customer_queue.drain_giveup_customers(now);
 
         if giveup_customers.len() > 0 {
@@ -1809,7 +1843,7 @@ impl ShopScene {
                 ctx,
                 &self.map.tile_map,
                 self.customer_queue.tail_map_position(),
-		now
+                now,
             );
         }
 
@@ -1818,10 +1852,10 @@ impl ShopScene {
                 ctx.context,
                 &self.map.tile_map,
                 numeric::Vector2u::new(15, 14),
-		now
+                now,
             );
             self.character_group.add(customer);
-	    self.customer_request_queue.pop_front();
+            self.customer_request_queue.pop_front();
         }
     }
 
@@ -1840,8 +1874,8 @@ impl ShopScene {
                         .new_effect(8, self.get_current_clock(), 200, 0);
                 }
             }
-	    tdev::VirtualKey::Action3 => {
-		self.shop_clock.add_minute(60);
+            tdev::VirtualKey::Action3 => {
+                self.shop_clock.add_minute(60);
             }
             tdev::VirtualKey::Action4 => {
                 let t = self.get_current_clock();
@@ -1877,7 +1911,7 @@ impl ShopScene {
                 customer,
                 &self.map.tile_map,
                 self.customer_queue.tail_map_position(),
-		t
+                t,
             );
         }
     }
@@ -1897,27 +1931,27 @@ impl ShopScene {
                 10
             );
         } else {
-	    self.dark_effect_panel
+            self.dark_effect_panel
                 .new_effect(8, self.get_current_clock(), 200, 0);
-	    
-	    add_delay_event!(
+
+            add_delay_event!(
                 self.event_list,
                 |slf, _ctx, t| {
-		    if slf.shop_menu.first_menu_is_open() {
-			slf.shop_menu.toggle_first_menu(t);
-		    }
+                    if slf.shop_menu.first_menu_is_open() {
+                        slf.shop_menu.toggle_first_menu(t);
+                    }
                 },
                 10
             );
-	    
+
             if self.shop_menu.detail_menu_is_open() {
                 self.shop_menu.toggle_detail_menu(self.get_current_clock());
             }
-	}
+        }
     }
 
     fn toggle_shop_map_appearing(&mut self) {
-	let t = self.get_current_clock();
+        let t = self.get_current_clock();
         if self.shop_map_is_staged {
             self.shop_map.override_move_func(
                 move_fn::devide_distance(numeric::Point2f::new(1366.0, 70.0), 0.25),
@@ -1929,86 +1963,115 @@ impl ShopScene {
                 t,
             );
         }
-	
+
         self.shop_map_is_staged = !self.shop_map_is_staged;
     }
 
     fn get_out_all_customers<'a>(&mut self, ctx: &mut SuzuContext<'a>, t: Clock) {
-	for customer in self.character_group.iter_mut() {
-	    customer.get_out_shop(ctx.context, &self.map.tile_map, numeric::Vector2u::new(15, 14), t);
-	}
+        for customer in self.character_group.iter_mut() {
+            customer.get_out_shop(
+                ctx.context,
+                &self.map.tile_map,
+                numeric::Vector2u::new(15, 14),
+                t,
+            );
+        }
 
-	for mut customer in self.goto_check_customers.drain_remove_if(|_| true) {
-	    customer.get_out_shop(ctx.context, &self.map.tile_map, numeric::Vector2u::new(15, 14), t);
-	    self.character_group.add(customer);
-	}
+        for mut customer in self.goto_check_customers.drain_remove_if(|_| true) {
+            customer.get_out_shop(
+                ctx.context,
+                &self.map.tile_map,
+                numeric::Vector2u::new(15, 14),
+                t,
+            );
+            self.character_group.add(customer);
+        }
 
-	while let Some((mut customer, _)) = self.customer_queue.pop_head_customer() {
-	    customer.get_out_shop(ctx.context, &self.map.tile_map, numeric::Vector2u::new(15, 14), t);
-	    self.character_group.add(customer);	    
-	}
+        while let Some((mut customer, _)) = self.customer_queue.pop_head_customer() {
+            customer.get_out_shop(
+                ctx.context,
+                &self.map.tile_map,
+                numeric::Vector2u::new(15, 14),
+                t,
+            );
+            self.character_group.add(customer);
+        }
     }
 
-    fn set_fixed_text_into_scenario_box<'a>(&mut self, ctx: &mut SuzuContext<'a>, path: &str, t: Clock) {
-	let scenario_box = ScenarioEvent::new(ctx, numeric::Rect::new(0.0, 0.0, 1366.0, 748.0), path, true, t);
+    fn set_fixed_text_into_scenario_box<'a>(
+        &mut self,
+        ctx: &mut SuzuContext<'a>,
+        path: &str,
+        t: Clock,
+    ) {
+        let scenario_box = ScenarioEvent::new(
+            ctx,
+            numeric::Rect::new(0.0, 0.0, 1366.0, 748.0),
+            path,
+            true,
+            t,
+        );
         self.map.scenario_event = Some(scenario_box);
-	self.player.reset_speed();
+        self.player.reset_speed();
     }
 
     fn try_finish_scenario_event<'a>(&mut self, ctx: &mut SuzuContext<'a>, t: Clock) {
-	if let Some(scenario_event) = self.map.scenario_event.as_ref() {
-	    if let Some(opecode) = scenario_event.get_scenario_waiting_opecode() {
-		match opecode {
-		    "Finish" => {
-			self.map.scenario_event = None;
-			self.tutorial_list.hello = true;
-			self.event_list.add_event(
-			    Box::new(move |slf: &mut ShopScene, ctx, t| {
-				slf.shop_special_object
-				    .show_new_books_viewer(ctx, slf.new_books.clone(), t);
-				slf.dark_effect_panel_shallow.new_effect(8, t, 220, 0);
-			    }),
-			    t + 10,
-			);
-		    },
-		    "TutorialGoReturnBox" => {
-			self.map.scenario_event = None;
-			self.dark_effect_panel_shallow.new_effect(8, t, 220, 0);
-			self.tutorial_list.go_ret_box = true;
-		    },
-		    "TutorialFirstReturnBox" => {
-			self.map.scenario_event = None;
-			self.dark_effect_panel_shallow.new_effect(8, t, 220, 0);
-			self.tutorial_list.first_ret_box = true;
-		    },
-		    "TutorialGoShelving" => {
-			self.map.scenario_event = None;
-			self.dark_effect_panel_shallow.new_effect(8, t, 220, 0);
-			self.tutorial_list.go_shelving = true;
-		    },
-		    "TutorialShelvingDone" => {
-			self.map.scenario_event = None;
-			self.dark_effect_panel_shallow.new_effect(8, t, 220, 0);
-			self.tutorial_list.shelving_is_done = true;
+        if let Some(scenario_event) = self.map.scenario_event.as_ref() {
+            if let Some(opecode) = scenario_event.get_scenario_waiting_opecode() {
+                match opecode {
+                    "Finish" => {
+                        self.map.scenario_event = None;
+                        self.tutorial_list.hello = true;
+                        self.event_list.add_event(
+                            Box::new(move |slf: &mut ShopScene, ctx, t| {
+                                slf.shop_special_object.show_new_books_viewer(
+                                    ctx,
+                                    slf.new_books.clone(),
+                                    t,
+                                );
+                                slf.dark_effect_panel_shallow.new_effect(8, t, 220, 0);
+                            }),
+                            t + 10,
+                        );
+                    }
+                    "TutorialGoReturnBox" => {
+                        self.map.scenario_event = None;
+                        self.dark_effect_panel_shallow.new_effect(8, t, 220, 0);
+                        self.tutorial_list.go_ret_box = true;
+                    }
+                    "TutorialFirstReturnBox" => {
+                        self.map.scenario_event = None;
+                        self.dark_effect_panel_shallow.new_effect(8, t, 220, 0);
+                        self.tutorial_list.first_ret_box = true;
+                    }
+                    "TutorialGoShelving" => {
+                        self.map.scenario_event = None;
+                        self.dark_effect_panel_shallow.new_effect(8, t, 220, 0);
+                        self.tutorial_list.go_shelving = true;
+                    }
+                    "TutorialShelvingDone" => {
+                        self.map.scenario_event = None;
+                        self.dark_effect_panel_shallow.new_effect(8, t, 220, 0);
+                        self.tutorial_list.shelving_is_done = true;
 
-			self.insert_goto_check_customer(ctx, t);
-	
-			self.event_list.add_event(
-			    Box::new(move |slf: &mut ShopScene, ctx, t| {
-				slf.insert_goto_check_customer(ctx, t);				
-			    }),
-			    t + 60
-			);
-		    },
-		    "TutorialCustomerComming" => {
-			self.map.scenario_event = None;
-			self.dark_effect_panel_shallow.new_effect(8, t, 220, 0);
-			self.tutorial_list.customer_is_comming = true;
-		    },
-		    _ => (),
-		}
-	    }
-	}
+                        self.insert_goto_check_customer(ctx, t);
+
+                        self.event_list.add_event(
+                            Box::new(move |slf: &mut ShopScene, ctx, t| {
+                                slf.insert_goto_check_customer(ctx, t);
+                            }),
+                            t + 60,
+                        );
+                    }
+                    "TutorialCustomerComming" => {
+                        self.map.scenario_event = None;
+                        self.dark_effect_panel_shallow.new_effect(8, t, 220, 0);
+                        self.tutorial_list.customer_is_comming = true;
+                    }
+                    _ => (),
+                }
+            }
+        }
     }
 }
 
@@ -2049,20 +2112,22 @@ impl SceneManager for ShopScene {
                 }
             }
         } else {
-	    let left_pressed = ggez::input::mouse::button_pressed(ctx.context, MouseButton::Left);
-	    
-	    if !self.shop_menu.first_menu_is_open()
-                && !self.shop_menu.detail_menu_is_open()
-		&& self.map.scenario_event.is_none()
-		&& !self.shop_special_object.is_enable_now() {
-		    if left_pressed {
-			if !self.shop_command_palette.contains_buttons(point) {
-			    self.start_mouse_move(ctx.context, point);
-			}
-		    }
-		}
+            let left_pressed = ggez::input::mouse::button_pressed(ctx.context, MouseButton::Left);
 
-	    self.shop_command_palette.mouse_motion_handler(ctx, point, left_pressed, t);
+            if !self.shop_menu.first_menu_is_open()
+                && !self.shop_menu.detail_menu_is_open()
+                && self.map.scenario_event.is_none()
+                && !self.shop_special_object.is_enable_now()
+            {
+                if left_pressed {
+                    if !self.shop_command_palette.contains_buttons(point) {
+                        self.start_mouse_move(ctx.context, point);
+                    }
+                }
+            }
+
+            self.shop_command_palette
+                .mouse_motion_handler(ctx, point, left_pressed, t);
         }
     }
 
@@ -2090,8 +2155,8 @@ impl SceneManager for ShopScene {
                     if !self.shop_command_palette.contains_buttons(point)
                         && !self.shop_menu.first_menu_is_open()
                         && !self.shop_menu.detail_menu_is_open()
-			&& !self.shop_special_object.is_enable_now()
-			&& self.map.scenario_event.is_none()
+                        && !self.shop_special_object.is_enable_now()
+                        && self.map.scenario_event.is_none()
                     {
                         self.start_mouse_move(ctx.context, point);
                     }
@@ -2113,14 +2178,15 @@ impl SceneManager for ShopScene {
                         }
                     }
 
-		    if self.map.scenario_event.is_none()
-			&& !self.shop_special_object.is_enable_now() {
-			    self.shop_command_palette
-				.mouse_left_button_down_handler(ctx, point);
-			    if let Some(func) = self.shop_command_palette.check_button_func(point) {
-				self.command_palette_handler(ctx, func);
-			    }
-			}
+                    if self.map.scenario_event.is_none()
+                        && !self.shop_special_object.is_enable_now()
+                    {
+                        self.shop_command_palette
+                            .mouse_left_button_down_handler(ctx, point);
+                        if let Some(func) = self.shop_command_palette.check_button_func(point) {
+                            self.command_palette_handler(ctx, func);
+                        }
+                    }
                 }
                 MouseButton::Right => {
                     self.player.reset_speed();
@@ -2128,29 +2194,33 @@ impl SceneManager for ShopScene {
                 _ => (),
             }
 
-	    if self.map.scenario_event.is_none() {
-		self.shop_special_object.mouse_down_action(
+            if self.map.scenario_event.is_none() {
+                self.shop_special_object.mouse_down_action(
                     ctx,
                     button,
                     point,
                     self.get_current_clock(),
-		);
-		if self.shop_special_object.try_close_new_books_viewer(
+                );
+                if self.shop_special_object.try_close_new_books_viewer(
                     ctx,
                     button,
                     point,
                     self.get_current_clock(),
-		) &&
-		    !self.tutorial_list.go_ret_box {
-		    self.event_list.add_event(
-			Box::new(move |slf: &mut ShopScene, ctx, t| {
-			    slf.set_fixed_text_into_scenario_box(ctx, "/scenario/tutorial/2.toml", t);
-			    slf.dark_effect_panel_shallow.new_effect(8, t, 0, 220);
-			}),
-			t + 10,
-		    );
-		}
-	    }
+                ) && !self.tutorial_list.go_ret_box
+                {
+                    self.event_list.add_event(
+                        Box::new(move |slf: &mut ShopScene, ctx, t| {
+                            slf.set_fixed_text_into_scenario_box(
+                                ctx,
+                                "/scenario/tutorial/2.toml",
+                                t,
+                            );
+                            slf.dark_effect_panel_shallow.new_effect(8, t, 0, 220);
+                        }),
+                        t + 10,
+                    );
+                }
+            }
         }
     }
 
@@ -2160,7 +2230,7 @@ impl SceneManager for ShopScene {
         button: MouseButton,
         point: numeric::Point2f,
     ) {
-	let t = self.get_current_clock();
+        let t = self.get_current_clock();
         self.mouse_info.update_dragging(button, false);
 
         if self.now_paused() {
@@ -2176,14 +2246,15 @@ impl SceneManager for ShopScene {
         } else {
             match button {
                 MouseButton::Left => {
-		    if let Some(scenario_event) = self.map.scenario_event.as_mut() {
-			if scenario_event.contains_scenario_text_box(point) {
-                            scenario_event
-				.key_down_action1(ctx, Some(point), t);
-			}
-		    }
+                    if let Some(scenario_event) = self.map.scenario_event.as_mut() {
+                        if scenario_event.contains_scenario_text_box(point) {
+                            scenario_event.key_down_action1(ctx, Some(point), t);
+                        }
+                    }
                     if !self.shop_command_palette.contains_buttons(point) {
-                        if self.shop_special_object.is_enable_now() && self.map.scenario_event.is_none() {
+                        if self.shop_special_object.is_enable_now()
+                            && self.map.scenario_event.is_none()
+                        {
                             if !self
                                 .shop_special_object
                                 .contains_shelving_select_ui_windows(ctx, point)
@@ -2200,17 +2271,18 @@ impl SceneManager for ShopScene {
                         }
                     }
 
-		    if !self.shop_menu.first_menu_is_open()
-			&& self.map.scenario_event.is_none()
-			&& !self.shop_special_object.is_enable_now() {
-			    self.player.reset_speed();
-			    self.player.update_animation_for_stop();
-			    self.shop_command_palette
-				.mouse_left_button_up_handler(ctx, point);
-			}
+                    if !self.shop_menu.first_menu_is_open()
+                        && self.map.scenario_event.is_none()
+                        && !self.shop_special_object.is_enable_now()
+                    {
+                        self.player.reset_speed();
+                        self.player.update_animation_for_stop();
+                        self.shop_command_palette
+                            .mouse_left_button_up_handler(ctx, point);
+                    }
                 }
                 MouseButton::Right => {
-		    self.toggle_shop_map_appearing();
+                    self.toggle_shop_map_appearing();
                 }
                 _ => (),
             }
@@ -2233,15 +2305,15 @@ impl SceneManager for ShopScene {
 
     fn pre_process<'a>(&mut self, ctx: &mut SuzuContext<'a>) {
         let t = self.get_current_clock();
-	
+
         //println!("{}", perf_measure!({
 
         flush_delay_event_and_redraw_check!(self, self.event_list, ctx, t, {});
 
-	if let Some(scenario_event) = self.map.scenario_event.as_mut() {
-	    scenario_event.update_text(ctx, None);
-	    self.try_finish_scenario_event(ctx, t);
-	}
+        if let Some(scenario_event) = self.map.scenario_event.as_mut() {
+            scenario_event.update_text(ctx, None);
+            self.try_finish_scenario_event(ctx, t);
+        }
         if !self.now_paused() && self.map.scenario_event.is_none() {
             self.random_add_customer(ctx);
             self.move_playable_character(ctx.context, t);
@@ -2265,8 +2337,10 @@ impl SceneManager for ShopScene {
             }
 
             for customer in &mut rising_customers {
-                if let Some(request) = customer.check_rise_hand(ctx, self.tutorial_list.gen_tutorial_customer_order()) {
-		    self.tutorial_list.inc_checking_customer_count();
+                if let Some(request) =
+                    customer.check_rise_hand(ctx, self.tutorial_list.gen_tutorial_customer_order())
+                {
+                    self.tutorial_list.inc_checking_customer_count();
                     self.customer_request_queue.push_back(request);
                 }
             }
@@ -2283,7 +2357,7 @@ impl SceneManager for ShopScene {
                     ctx,
                     &self.map.tile_map,
                     self.customer_queue.tail_map_position(),
-		    t
+                    t,
                 );
             }
 
@@ -2323,7 +2397,7 @@ impl SceneManager for ShopScene {
                 customer.get_mut_character_object().update_texture(t);
             }
 
-	    self.shop_time_status_header.effect(ctx.context, t);
+            self.shop_time_status_header.effect(ctx.context, t);
 
             self.character_group.remove_if(|c| c.is_got_out());
 
@@ -2335,7 +2409,7 @@ impl SceneManager for ShopScene {
             self.map.tile_map.update(ctx.context, t);
 
             self.shop_map.move_with_func(t);
-	    self.shop_command_palette.effect(ctx, t);
+            self.shop_command_palette.effect(ctx, t);
 
             // 時刻の更新
             self.update_shop_clock_regular(ctx, t);
@@ -2349,7 +2423,7 @@ impl SceneManager for ShopScene {
 
         // 暗転の描画
         self.dark_effect_panel.run_effect(ctx, t);
-	self.dark_effect_panel_shallow.run_effect(ctx, t);
+        self.dark_effect_panel_shallow.run_effect(ctx, t);
         self.pause_screen_set.effect(ctx, t);
 
         if let Some(transition_effect) = self.scene_transition_effect.as_mut() {
@@ -2413,21 +2487,21 @@ impl SceneManager for ShopScene {
         self.shop_map.draw(ctx).unwrap();
 
         self.drawable_shop_clock.draw(ctx).unwrap();
-	self.shop_time_status_header.draw(ctx).unwrap();
+        self.shop_time_status_header.draw(ctx).unwrap();
 
         self.dark_effect_panel.draw(ctx).unwrap();
 
         self.shop_special_object.draw(ctx).unwrap();
         self.shop_menu.draw(ctx).unwrap();
 
-	self.dark_effect_panel_shallow.draw(ctx).unwrap();
+        self.dark_effect_panel_shallow.draw(ctx).unwrap();
 
-	self.shop_command_palette.draw(ctx).unwrap();
+        self.shop_command_palette.draw(ctx).unwrap();
 
-	if let Some(scenario_box) = self.map.scenario_event.as_mut() {
+        if let Some(scenario_box) = self.map.scenario_event.as_mut() {
             scenario_box.draw(ctx).unwrap();
         }
-	
+
         self.notification_area.draw(ctx).unwrap();
 
         self.pause_screen_set.draw(ctx).unwrap();
@@ -2444,10 +2518,10 @@ impl SceneManager for ShopScene {
     }
 
     fn unfocus_event<'a>(&mut self, ctx: &mut SuzuContext<'a>) {
-	if ctx.config.is_pause_when_inactive() {
+        if ctx.config.is_pause_when_inactive() {
             let t = self.get_current_clock();
             self.enter_pause_screen(t);
-	}
+        }
     }
 
     fn transition(&self) -> SceneID {

@@ -7,14 +7,14 @@ use torifune::graphics::object::*;
 
 use super::super::*;
 
-use crate::{core::SoundID, flush_delay_event};
 use crate::flush_delay_event_and_redraw_check;
 use crate::object::effect_object;
 use crate::object::task_result_object::*;
 use crate::object::util_object;
 use crate::scene::{SceneID, SceneTransition};
+use crate::{core::SoundID, flush_delay_event};
 
-#[allow(unused_imports)] 
+#[allow(unused_imports)]
 use crate::{
     core::{MouseInformation, ResultReport, SavableData, TextureID, TileBatchTextureID},
     perf_measure,
@@ -90,7 +90,7 @@ impl TaskResultScene {
             31,
         );
 
-	ctx.play_sound_as_se(SoundID::ResultSE, None);
+        ctx.play_sound_as_se(SoundID::ResultSE, None);
 
         TaskResultScene {
             clock: 0,
@@ -181,7 +181,7 @@ impl SceneManager for TaskResultScene {
             self.ready_to_finish_scene(ctx, t);
         }
 
-	self.drawable_task_result.click_handler(t);
+        self.drawable_task_result.click_handler(t);
 
         self.mouse_info.update_dragging(button, false);
         self.mouse_info

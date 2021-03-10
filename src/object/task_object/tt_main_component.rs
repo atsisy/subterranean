@@ -12,7 +12,7 @@ use torifune::graphics::object::*;
 use torifune::impl_drawable_object_for_wrapped;
 use torifune::impl_texture_object_for_wrapped;
 use torifune::roundup2f;
-use torifune::{debug, numeric, mintp_new, mintp};
+use torifune::{debug, mintp, mintp_new, numeric};
 
 use crate::core::FontID;
 use crate::flush_delay_event;
@@ -172,18 +172,20 @@ impl DeskObjects {
 
             if obj.is_shelving_box_handover_locked() {
                 if next_position.x + area.w > canvas_size.x {
-                    obj.get_object_mut()
-                        .set_position(numeric::Point2f::new(canvas_size.x - area.w, next_position.y));
+                    obj.get_object_mut().set_position(numeric::Point2f::new(
+                        canvas_size.x - area.w,
+                        next_position.y,
+                    ));
                 }
             }
-	    
-	    if next_position.x < 0.0 {
+
+            if next_position.x < 0.0 {
                 obj.get_object_mut()
                     .set_position(numeric::Point2f::new(0.0, next_position.y));
             }
 
-	    if next_position.y + area.h > canvas_size.y {
-		let np = obj.get_object_mut().get_position();
+            if next_position.y + area.h > canvas_size.y {
+                let np = obj.get_object_mut().get_position();
                 obj.get_object_mut()
                     .set_position(numeric::Point2f::new(np.x, canvas_size.y - area.h));
             }
@@ -297,7 +299,7 @@ impl DeskObjects {
 
             self.desk_objects.sort_with_depth();
             self.draw_request = DrawRequest::Draw;
-	    ctx.process_utility.redraw();
+            ctx.process_utility.redraw();
         }
     }
 
@@ -486,7 +488,11 @@ impl DeskObjects {
             // 逆順から検索していくことで、最も手前に表示されているオブジェクトを
             // 取り出すことができる
             for obj in self.desk_objects.get_raw_container_mut().iter_mut().rev() {
-                if obj.get_object().get_drawing_area(ctx).contains(mintp!(rpoint)) {
+                if obj
+                    .get_object()
+                    .get_drawing_area(ctx)
+                    .contains(mintp!(rpoint))
+                {
                     return CursorIcon::Grabbing;
                 }
             }
@@ -759,19 +765,22 @@ impl TextBalloon {
         let balloon = shape::FramedLeadingRect::new(
             ctx,
             numeric::Rect::new(25.0, 0.0, vtext_size.x + 100.0, vtext_size.y + 50.0),
-	    0.0,
+            0.0,
             2.0,
-	    numeric::Vector2f::new(-25.0, 50.0),
-	    numeric::Vector2f::new(15.0, 15.0),
+            numeric::Vector2f::new(-25.0, 50.0),
+            numeric::Vector2f::new(15.0, 15.0),
             ggraphics::Color::WHITE,
             ggraphics::Color::from_rgb_u32(0x111111),
             0,
         );
 
-	let balloon_area = balloon.get_drawing_area();
-	vtext.make_center(
+        let balloon_area = balloon.get_drawing_area();
+        vtext.make_center(
             ctx,
-            numeric::Point2f::new(balloon_area.x + (balloon_area.w / 2.0), balloon_area.y + (balloon_area.h / 2.0)),
+            numeric::Point2f::new(
+                balloon_area.x + (balloon_area.w / 2.0),
+                balloon_area.y + (balloon_area.h / 2.0),
+            ),
         );
 
         TextBalloon {
@@ -800,21 +809,23 @@ impl TextBalloon {
         self.text_balloon = shape::FramedLeadingRect::new(
             ctx,
             numeric::Rect::new(25.0, 0.0, vtext_size.x + 100.0, vtext_size.y + 50.0),
-	    0.0,
+            0.0,
             2.0,
-	    numeric::Vector2f::new(-25.0, 50.0),
-	    numeric::Vector2f::new(15.0, 15.0),
+            numeric::Vector2f::new(-25.0, 50.0),
+            numeric::Vector2f::new(15.0, 15.0),
             ggraphics::Color::WHITE,
             ggraphics::Color::from_rgb_u32(0x111111),
             0,
         );
 
-	let balloon_area = self.text_balloon.get_drawing_area();	
-	self.text.make_center(
+        let balloon_area = self.text_balloon.get_drawing_area();
+        self.text.make_center(
             ctx,
-            numeric::Point2f::new(balloon_area.x + (balloon_area.w / 2.0), balloon_area.y + (balloon_area.h / 2.0)),
+            numeric::Point2f::new(
+                balloon_area.x + (balloon_area.w / 2.0),
+                balloon_area.y + (balloon_area.h / 2.0),
+            ),
         );
-
 
         self.phrase_type = phrase_type;
     }
@@ -1204,7 +1215,11 @@ impl OnDesk for SuzuMiniSightSilhouette {
     }
 
     fn click_hold_data(&self, ctx: &mut ggez::Context, point: numeric::Point2f) -> HoldData {
-        if self.silhouette.get_drawing_area(ctx).contains(mintp!(point)) {
+        if self
+            .silhouette
+            .get_drawing_area(ctx)
+            .contains(mintp!(point))
+        {
             self.silhouette.click_hold_data(ctx, point)
         } else {
             HoldData::None
@@ -1275,7 +1290,8 @@ impl SuzuMiniSight {
         if let Some(dragging) = self.dragging.as_ref() {
             match dragging {
                 TaskItem::Book(item) => {
-                    if !kosuzu_memory.is_written_in_record(item.get_large_object().get_book_info()) {
+                    if !kosuzu_memory.is_written_in_record(item.get_large_object().get_book_info())
+                    {
                         count += 1;
                     }
                 }
@@ -1286,7 +1302,8 @@ impl SuzuMiniSight {
         for obj in self.dropping_to_desk.iter() {
             match obj {
                 TaskItem::Book(item) => {
-                    if !kosuzu_memory.is_written_in_record(item.get_large_object().get_book_info()) {
+                    if !kosuzu_memory.is_written_in_record(item.get_large_object().get_book_info())
+                    {
                         count += 1;
                     }
                 }
@@ -1686,7 +1703,10 @@ impl ShelvingBookBox {
         // 逆順から検索していくことで、最も手前に表示されているオブジェクトを
         // 取り出すことができる
         for obj in self.shelved.iter_mut().rev() {
-            let contains = obj.get_object().get_drawing_area(ctx).contains(mintp!(rpoint));
+            let contains = obj
+                .get_object()
+                .get_drawing_area(ctx)
+                .contains(mintp!(rpoint));
             if contains {
                 clicked_data = obj.get_object_mut().click_hold_data(ctx, rpoint);
                 self.draw_request = DrawRequest::Draw;
@@ -1809,7 +1829,11 @@ impl ShelvingBookBox {
             // 逆順から検索していくことで、最も手前に表示されているオブジェクトを
             // 取り出すことができる
             for obj in self.shelved.iter_mut().rev() {
-                if obj.get_object().get_drawing_area(ctx).contains(mintp!(rpoint)) {
+                if obj
+                    .get_object()
+                    .get_drawing_area(ctx)
+                    .contains(mintp!(rpoint))
+                {
                     return CursorIcon::Grab;
                 }
             }
@@ -2037,10 +2061,10 @@ impl FloatingMemoryObject {
             ),
             padding: padding,
             font_info: FontInformation::new(
-		ctx.resource.get_font(FontID::JpFude1),
-		numeric::Vector2f::new(28.0, 28.0),
-		ggraphics::Color::from_rgba_u32(0xff)
-	    ),
+                ctx.resource.get_font(FontID::JpFude1),
+                numeric::Vector2f::new(28.0, 28.0),
+                ggraphics::Color::from_rgba_u32(0xff),
+            ),
         }
     }
 
@@ -2235,10 +2259,7 @@ impl TaskInfoContents {
         let mut desc_text = Vec::new();
         let mut request_text = HashMap::new();
 
-        for (index, s) in vec!["本日", "用件", "氏名", "期限"]
-            .iter()
-            .enumerate()
-        {
+        for (index, s) in vec!["本日", "用件", "氏名", "期限"].iter().enumerate() {
             let mut vtext = VerticalText::new(
                 s.to_string(),
                 numeric::Point2f::new(0.0, 0.0),
@@ -2280,8 +2301,8 @@ impl TaskInfoContents {
 
         request_text.insert("youken".to_string(), request_type_vtext);
 
-	let mut today_vtext = VerticalText::new(
-	    ctx.take_save_data().date.to_short_string(),
+        let mut today_vtext = VerticalText::new(
+            ctx.take_save_data().date.to_short_string(),
             numeric::Point2f::new(0.0, 0.0),
             numeric::Vector2f::new(1.0, 1.0),
             0.0,
@@ -2375,7 +2396,7 @@ impl TaskInfoContents {
         }
 
         let mut vtext = VerticalText::new(
-	    rental_limit.to_str().to_string(),
+            rental_limit.to_str().to_string(),
             numeric::Point2f::new(0.0, 0.0),
             numeric::Vector2f::new(1.0, 1.0),
             0.0,
@@ -2510,9 +2531,9 @@ impl TaskInfoPanel {
     }
 
     pub fn set_rental_limit<'a>(&mut self, ctx: &mut SuzuContext<'a>, rental_limit: RentalLimit) {
-	self.contents.set_rental_limit(ctx, rental_limit);
+        self.contents.set_rental_limit(ctx, rental_limit);
         self.draw_request = DrawRequest::Draw;
-    } 
+    }
 }
 
 impl DrawableComponent for TaskInfoPanel {

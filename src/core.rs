@@ -5,8 +5,8 @@ pub mod map_parser;
 pub mod util;
 
 use game_system::WeekWorkSchedule;
-use ggez::{audio::SoundSource, graphics as ggraphics};
 use ggez::*;
+use ggez::{audio::SoundSource, graphics as ggraphics};
 
 use tdev::ProgramableKey;
 use torifune::core::Clock;
@@ -41,8 +41,8 @@ use std::fs::File;
 use std::io::{Read, Write};
 
 use serde::{Deserialize, Serialize};
-extern crate serde_json;
 extern crate chrono;
+extern crate serde_json;
 
 use crate::object::scenario_object::SuzunaAdType;
 use number_to_jk::number_to_jk;
@@ -281,12 +281,12 @@ impl FromStr for TextureID {
             "Coin100Yen" => Ok(Self::Coin100Yen),
             "Coin50Yen" => Ok(Self::Coin50Yen),
             "Coin500Yen" => Ok(Self::Coin500Yen),
-	    "BaraBG" => Ok(Self::BaraBG),
-	    "SuzunaanMap" => Ok(Self::SuzunaanMap),
-	    "Mob1TachieDefault" => Ok(Self::Mob1TachieDefault),
-	    "SuzuLogo" => Ok(Self::SuzuLogo),
-	    "AkyuTachieDefault" => Ok(Self::AkyuTachieDefault),
-	    "Mob1DotFront1" => Ok(Self::Mob1DotFront1),
+            "BaraBG" => Ok(Self::BaraBG),
+            "SuzunaanMap" => Ok(Self::SuzunaanMap),
+            "Mob1TachieDefault" => Ok(Self::Mob1TachieDefault),
+            "SuzuLogo" => Ok(Self::SuzuLogo),
+            "AkyuTachieDefault" => Ok(Self::AkyuTachieDefault),
+            "Mob1DotFront1" => Ok(Self::Mob1DotFront1),
             "Mob1DotFront2" => Ok(Self::Mob1DotFront2),
             "Mob1DotFront3" => Ok(Self::Mob1DotFront3),
             "Mob1DotBack1" => Ok(Self::Mob1DotBack1),
@@ -298,9 +298,9 @@ impl FromStr for TextureID {
             "Mob1DotLeft1" => Ok(Self::Mob1DotLeft1),
             "Mob1DotLeft2" => Ok(Self::Mob1DotLeft2),
             "Mob1DotLeft3" => Ok(Self::Mob1DotLeft3),
-	    "GoNextPageLeftNotAlpha" => Ok(Self::GoNextPageLeftNotAlpha),
-	    "GoNextPageRightNotAlpha" => Ok(Self::GoNextPageRightNotAlpha),
-	    "Knob" => Ok(Self::Knob),
+            "GoNextPageLeftNotAlpha" => Ok(Self::GoNextPageLeftNotAlpha),
+            "GoNextPageRightNotAlpha" => Ok(Self::GoNextPageRightNotAlpha),
+            "Knob" => Ok(Self::Knob),
             _ => Err(()),
         }
     }
@@ -385,12 +385,12 @@ impl TextureID {
             73 => Some(Self::Coin100Yen),
             74 => Some(Self::Coin50Yen),
             75 => Some(Self::Coin500Yen),
-	    76 => Some(Self::BaraBG),
-	    77 => Some(Self::SuzunaanMap),
-	    78 => Some(Self::Mob1TachieDefault),
-	    79 => Some(Self::SuzuLogo),
-	    80 => Some(Self::AkyuTachieDefault),
-	    81 => Some(Self::Mob1DotFront1),
+            76 => Some(Self::BaraBG),
+            77 => Some(Self::SuzunaanMap),
+            78 => Some(Self::Mob1TachieDefault),
+            79 => Some(Self::SuzuLogo),
+            80 => Some(Self::AkyuTachieDefault),
+            81 => Some(Self::Mob1DotFront1),
             82 => Some(Self::Mob1DotFront2),
             83 => Some(Self::Mob1DotFront3),
             84 => Some(Self::Mob1DotBack1),
@@ -402,9 +402,9 @@ impl TextureID {
             90 => Some(Self::Mob1DotLeft1),
             91 => Some(Self::Mob1DotLeft2),
             92 => Some(Self::Mob1DotLeft3),
-	    93 => Some(Self::GoNextPageLeftNotAlpha),
-	    94 => Some(Self::GoNextPageRightNotAlpha),
-	    95 => Some(Self::Knob),
+            93 => Some(Self::GoNextPageLeftNotAlpha),
+            94 => Some(Self::GoNextPageRightNotAlpha),
+            95 => Some(Self::Knob),
             _ => None,
         }
     }
@@ -609,11 +609,11 @@ impl RentalLimit {
     }
 
     pub fn to_str(&self) -> &str {
-	match self {
-	    RentalLimit::ShortTerm => "短期",
-	    RentalLimit::LongTerm => "長期",
-	    RentalLimit::Today => "本日",
-	}
+        match self {
+            RentalLimit::ShortTerm => "短期",
+            RentalLimit::LongTerm => "長期",
+            RentalLimit::Today => "本日",
+        }
     }
 }
 
@@ -673,16 +673,16 @@ impl GensoDate {
             11 => "Nov.",
             12 => "Dec.",
             _ => {
-		eprintln!("Invalid month");
-		"Dec."
-	    },
+                eprintln!("Invalid month");
+                "Dec."
+            }
         }
         .to_string()
     }
 
     pub fn add_day_chain(mut self, day: i32) -> Self {
-	self.add_day(day);
-	self
+        self.add_day(day);
+        self
     }
 
     pub fn add_day(&mut self, mut day: i32) {
@@ -758,27 +758,27 @@ impl GensoDate {
     }
 
     pub fn is_past(&self, date: &GensoDate) -> bool {
-	match self.season.cmp(&date.season) {
-	    std::cmp::Ordering::Less => false,
-	    std::cmp::Ordering::Greater => true,
-	    std::cmp::Ordering::Equal => match self.month.cmp(&date.month) {
-		std::cmp::Ordering::Less => false,
-		std::cmp::Ordering::Greater => true,
-		std::cmp::Ordering::Equal => match self.day.cmp(&date.day) {
-		    std::cmp::Ordering::Less | std::cmp::Ordering::Equal => false,
-		    std::cmp::Ordering::Greater => true,
-		}
-	    }
-	}
+        match self.season.cmp(&date.season) {
+            std::cmp::Ordering::Less => false,
+            std::cmp::Ordering::Greater => true,
+            std::cmp::Ordering::Equal => match self.month.cmp(&date.month) {
+                std::cmp::Ordering::Less => false,
+                std::cmp::Ordering::Greater => true,
+                std::cmp::Ordering::Equal => match self.day.cmp(&date.day) {
+                    std::cmp::Ordering::Less | std::cmp::Ordering::Equal => false,
+                    std::cmp::Ordering::Greater => true,
+                },
+            },
+        }
     }
 
     pub fn is_week_first(&self) -> bool {
-	let diff = self.diff_day(&GensoDate::new(112, 7, 23));
-	diff % 7 == 0
+        let diff = self.diff_day(&GensoDate::new(112, 7, 23));
+        diff % 7 == 0
     }
 
     pub fn first_day(&self) -> bool {
-	self == &GensoDate::new(112, 7, 23)
+        self == &GensoDate::new(112, 7, 23)
     }
 }
 
@@ -983,33 +983,33 @@ pub struct DailyCustomerDist {
 
 impl DailyCustomerDist {
     pub fn from_toml_file(ctx: &mut ggez::Context, path: &str) -> Self {
-	let root = parse_toml_file!(ctx, path);
-	DailyCustomerDist {
-	    sun: root["sun"].as_integer().unwrap() as Clock,
-	    mon: root["mon"].as_integer().unwrap() as Clock,
-	    tue: root["tue"].as_integer().unwrap() as Clock,
-	    wed: root["wed"].as_integer().unwrap() as Clock,
-	    thu: root["thu"].as_integer().unwrap() as Clock,
-	    fri: root["fri"].as_integer().unwrap() as Clock,
-	    sat: root["sat"].as_integer().unwrap() as Clock,
-	}
+        let root = parse_toml_file!(ctx, path);
+        DailyCustomerDist {
+            sun: root["sun"].as_integer().unwrap() as Clock,
+            mon: root["mon"].as_integer().unwrap() as Clock,
+            tue: root["tue"].as_integer().unwrap() as Clock,
+            wed: root["wed"].as_integer().unwrap() as Clock,
+            thu: root["thu"].as_integer().unwrap() as Clock,
+            fri: root["fri"].as_integer().unwrap() as Clock,
+            sat: root["sat"].as_integer().unwrap() as Clock,
+        }
     }
 
     pub fn get_customer_dist_default(&self, day: &GensoDate) -> Clock {
-	let offset = GensoDate::new(112, 7, 23).diff_day(day) % 7;
-	match offset {
-	    0 => self.sun,
-	    1 => self.mon,
-	    2 => self.tue,
-	    3 => self.wed,
-	    4 => self.thu,
-	    5 => self.fri,
-	    6 => self.sat,
-	    _ => {
-		eprintln!("Error offset => {}, {:?}", offset, day);
-		self.sun
-	    },
-	}
+        let offset = GensoDate::new(112, 7, 23).diff_day(day) % 7;
+        match offset {
+            0 => self.sun,
+            1 => self.mon,
+            2 => self.tue,
+            3 => self.wed,
+            4 => self.thu,
+            5 => self.fri,
+            6 => self.sat,
+            _ => {
+                eprintln!("Error offset => {}, {:?}", offset, day);
+                self.sun
+            }
+        }
     }
 }
 
@@ -1111,19 +1111,20 @@ impl GameResource {
 
         let scenario_table = ScenarioTable::new(ctx, &src_file.scenario_table_path);
 
-	let daily_customer_dist = DailyCustomerDist::from_toml_file(ctx, &src_file.daily_customer_dist_path);
+        let daily_customer_dist =
+            DailyCustomerDist::from_toml_file(ctx, &src_file.daily_customer_dist_path);
 
-	let mut bgm_table: HashMap<SoundID, Option<sound::SoundHandler>> = HashMap::new();
-	bgm_table.insert(SoundID::Title, None);
-	bgm_table.insert(SoundID::ScenarioBGM, None);
-	bgm_table.insert(SoundID::ShopBGM, None);
-	bgm_table.insert(SoundID::EndBGM, None);
+        let mut bgm_table: HashMap<SoundID, Option<sound::SoundHandler>> = HashMap::new();
+        bgm_table.insert(SoundID::Title, None);
+        bgm_table.insert(SoundID::ScenarioBGM, None);
+        bgm_table.insert(SoundID::ShopBGM, None);
+        bgm_table.insert(SoundID::EndBGM, None);
 
         GameResource {
             texture_resource_paths: texture_paths_map,
             textures: textures,
             fonts: fonts,
-	    
+
             tile_batchs: sprite_batchs,
             customers_name: src_file.customers_name,
             books_information: src_file.books_information,
@@ -1132,13 +1133,13 @@ impl GameResource {
             sounds: sounds,
             bgm_manager: sound::SoundManager::new(),
             se_manager: sound::SoundManager::new(),
-	    bgm_table: bgm_table,
+            bgm_table: bgm_table,
             ad_info: AdCostTable::from_data(src_file.ad_cost_table, src_file.ad_gain_table),
             ad_agency_info: AdAgencyCostTable::from_data(
                 src_file.ad_agency_cost_table,
                 src_file.ad_agency_gain_table,
             ),
-	    daily_customer_dist: daily_customer_dist,
+            daily_customer_dist: daily_customer_dist,
         }
     }
 
@@ -1233,13 +1234,13 @@ impl GameResource {
         sound_id: SoundID,
         flags: Option<sound::SoundPlayFlags>,
     ) {
-	if let Some(sound_handler) = self.bgm_table.get(&sound_id) {
-	    if sound_handler.is_none() {
-		let sound_data = self.sounds.get(sound_id.clone() as usize).unwrap();
-		let handler = self.bgm_manager.play(ctx, sound_data.clone(), flags);
-		self.bgm_table.insert(sound_id.clone(), Some(handler));
-	    }
-	}
+        if let Some(sound_handler) = self.bgm_table.get(&sound_id) {
+            if sound_handler.is_none() {
+                let sound_data = self.sounds.get(sound_id.clone() as usize).unwrap();
+                let handler = self.bgm_manager.play(ctx, sound_data.clone(), flags);
+                self.bgm_table.insert(sound_id.clone(), Some(handler));
+            }
+        }
     }
 
     pub fn play_sound_as_se(
@@ -1253,20 +1254,20 @@ impl GameResource {
     }
 
     pub fn is_se_playing(&self, handler: sound::SoundHandler) -> bool {
-	self.ref_se(handler).playing()
+        self.ref_se(handler).playing()
     }
 
     pub fn is_bgm_playing(&self, handler: sound::SoundHandler) -> bool {
-	self.ref_se(handler).playing()
+        self.ref_se(handler).playing()
     }
-    
+
     pub fn stop_bgm(&mut self, ctx: &mut ggez::Context, handler: SoundID) {
-	if let Some(sound_handler) = self.bgm_table.get(&handler) {
-	    if let Some(sound_handler) = sound_handler {
-		self.bgm_manager.stop(ctx, sound_handler.clone());
-		self.bgm_table.insert(handler, None);
-	    }
-	}
+        if let Some(sound_handler) = self.bgm_table.get(&handler) {
+            if let Some(sound_handler) = sound_handler {
+                self.bgm_manager.stop(ctx, sound_handler.clone());
+                self.bgm_table.insert(handler, None);
+            }
+        }
     }
 
     pub fn stop_se(&mut self, ctx: &mut ggez::Context, handler: sound::SoundHandler) {
@@ -1317,7 +1318,7 @@ impl GameResource {
     }
 
     pub fn get_todays_customer_dist(&self, date: &GensoDate) -> Clock {
-	self.daily_customer_dist.get_customer_dist_default(date)
+        self.daily_customer_dist.get_customer_dist_default(date)
     }
 }
 
@@ -1383,9 +1384,9 @@ impl MouseInformation {
         match self.last_clicked.get(&button) {
             Some(x) => x.point,
             None => {
-		eprintln!("No such a mouse button");
-		numeric::Point2f::new(0.0, 0.0)
-	    }
+                eprintln!("No such a mouse button");
+                numeric::Point2f::new(0.0, 0.0)
+            }
         }
     }
 
@@ -1403,16 +1404,17 @@ impl MouseInformation {
         match self.last_dragged.get(&button) {
             Some(x) => x.point,
             None => {
-		eprintln!("No such a mouse button");
-		numeric::Point2f::new(0.0, 0.0)
-	    }
+                eprintln!("No such a mouse button");
+                numeric::Point2f::new(0.0, 0.0)
+            }
         }
     }
 
     pub fn set_last_dragged(&mut self, button: MouseButton, point: numeric::Point2f, t: Clock) {
         if self
             .last_dragged
-            .insert(button, MouseActionRecord::new(point, t)).is_none()
+            .insert(button, MouseActionRecord::new(point, t))
+            .is_none()
         {
             eprintln!("No such a mouse button")
         }
@@ -1422,34 +1424,37 @@ impl MouseInformation {
         match self.last_down.get(&button) {
             Some(x) => x.point,
             None => {
-		eprintln!("No such a mouse button");
-		numeric::Point2f::new(0.0, 0.0)
-	    },
+                eprintln!("No such a mouse button");
+                numeric::Point2f::new(0.0, 0.0)
+            }
         }
     }
 
     pub fn set_last_down(&mut self, button: MouseButton, point: numeric::Point2f, t: Clock) {
         if self
             .last_down
-            .insert(button, MouseActionRecord::new(point, t)).is_none() {
-		eprintln!("No such a mouse button")
-            }
+            .insert(button, MouseActionRecord::new(point, t))
+            .is_none()
+        {
+            eprintln!("No such a mouse button")
+        }
     }
 
     pub fn get_last_up(&self, button: MouseButton) -> numeric::Point2f {
         match self.last_up.get(&button) {
             Some(x) => x.point,
             None => {
-		eprintln!("No such a mouse button");
-		numeric::Point2f::new(0.0, 0.0)
-            },
+                eprintln!("No such a mouse button");
+                numeric::Point2f::new(0.0, 0.0)
+            }
         }
     }
 
     pub fn set_last_up(&mut self, button: MouseButton, point: numeric::Point2f, t: Clock) {
         if self
             .last_up
-            .insert(button, MouseActionRecord::new(point, t)).is_none()
+            .insert(button, MouseActionRecord::new(point, t))
+            .is_none()
         {
             eprintln!("No such a mouse button")
         }
@@ -1459,9 +1464,9 @@ impl MouseInformation {
         match self.dragging.get(&button) {
             Some(x) => *x,
             None => {
-		eprintln!("No such a mouse button");
-		false
-            },
+                eprintln!("No such a mouse button");
+                false
+            }
         }
     }
 
@@ -1479,13 +1484,11 @@ pub struct TimeAttackModeData {
 
 impl TimeAttackModeData {
     pub fn new(limit: GensoDate) -> Self {
-	TimeAttackModeData {
-	    limit: limit,
-	}
+        TimeAttackModeData { limit: limit }
     }
 
     pub fn get_limit(&self) -> &GensoDate {
-	&self.limit
+        &self.limit
     }
 }
 
@@ -1497,35 +1500,36 @@ pub enum GameMode {
 
 impl GameMode {
     pub fn story() -> Self {
-	Self::Story
+        Self::Story
     }
 
     pub fn time_attack() -> Self {
-	Self::TimeAttack(TimeAttackModeData::new(GensoDate::new(112, 7, 23).add_day_chain(60)))
+        Self::TimeAttack(TimeAttackModeData::new(
+            GensoDate::new(112, 7, 23).add_day_chain(60),
+        ))
     }
 
     pub fn to_str_jp(&self) -> &str {
-	match self {
-	    GameMode::Story => "通常",
-	    GameMode::TimeAttack(_) => "熟練",
-	}
+        match self {
+            GameMode::Story => "通常",
+            GameMode::TimeAttack(_) => "熟練",
+        }
     }
 
     pub fn is_story_mode(&self) -> bool {
-	match self {
-	    GameMode::Story => true,
-	    GameMode::TimeAttack(_) => false,
-	}
+        match self {
+            GameMode::Story => true,
+            GameMode::TimeAttack(_) => false,
+        }
     }
 
     pub fn is_ta_mode(&self) -> bool {
-	match self {
-	    GameMode::Story => false,
-	    GameMode::TimeAttack(_) => true,
-	}
+        match self {
+            GameMode::Story => false,
+            GameMode::TimeAttack(_) => true,
+        }
     }
 }
-
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct TaskResult {
@@ -1566,8 +1570,8 @@ impl TaskResult {
     }
 
     pub fn add_total_money(&mut self, money: i32) -> &mut Self {
-	self.total_money += money;
-	self
+        self.total_money += money;
+        self
     }
 }
 
@@ -1618,16 +1622,12 @@ impl SuzunaAnStatus {
     }
 
     pub fn get_current_reputation(&self) -> f32 {
-	self.reputation
+        self.reputation
     }
 
     pub fn add_reputation(&mut self, diff: f32) {
-	let next = self.reputation + diff;
-	self.reputation = if next > 100.0 {
-	    100.0
-	} else {
-	    next
-	};
+        let next = self.reputation + diff;
+        self.reputation = if next > 100.0 { 100.0 } else { next };
     }
 }
 
@@ -1838,13 +1838,17 @@ pub struct ReturningRequestPool {
 }
 
 impl ReturningRequestPool {
-    pub fn new(book_pool: &mut SuzunaBookPool, game_data: &GameResource, today: &GensoDate) -> Self {
+    pub fn new(
+        book_pool: &mut SuzunaBookPool,
+        game_data: &GameResource,
+        today: &GensoDate,
+    ) -> Self {
         let mut returning_request = Vec::new();
 
         let mut day = today.clone();
         day.day -= 12;
 
-	for _ in 1..=5 {
+        for _ in 1..=5 {
             for _ in 1..=2 {
                 let rental_limit = RentalLimit::LongTerm;
 
@@ -1961,8 +1965,8 @@ impl SavableData {
             ad_status: ad_status,
             agency_status: ad_agency_status,
             award_data: game_system::AwardData::new(),
-	    game_mode: game_mode,
-	    run_tutorial: true,
+            game_mode: game_mode,
+            run_tutorial: true,
         }
     }
 
@@ -1982,9 +1986,9 @@ impl SavableData {
 
     pub fn delete(slot: u8) {
         match std::fs::remove_file(&format!("./resources/save{}", slot)) {
-	    Ok(_) => (),
-	    Err(e) => eprintln!("{}", e),
-	}
+            Ok(_) => (),
+            Err(e) => eprintln!("{}", e),
+        }
     }
 
     pub fn new_load(slot: u8) -> Result<SavableData, ()> {
@@ -1994,11 +1998,10 @@ impl SavableData {
         }
 
         let mut buf = Vec::new();
-        if let Ok(_) = file.unwrap()
-                    .read_to_end(&mut buf) {
+        if let Ok(_) = file.unwrap().read_to_end(&mut buf) {
             ()
         } else {
-            return Err(())
+            return Err(());
         }
 
         let content = crypt::decrypt_str(&buf);
@@ -2021,9 +2024,9 @@ impl SavableData {
         self.ad_status = data.ad_status;
         self.agency_status = data.agency_status;
         self.week_schedule = data.week_schedule;
-	self.award_data = data.award_data;
-	self.game_mode = data.game_mode;
-	self.run_tutorial = data.run_tutorial;
+        self.award_data = data.award_data;
+        self.game_mode = data.game_mode;
+        self.run_tutorial = data.run_tutorial;
     }
 
     pub fn change_ad_status(&mut self, ad_type: SuzunaAdType, status: bool) {
@@ -2133,45 +2136,39 @@ impl ResultReport {
     }
 
     fn number_of_yet_shelved_and_new_books(&self) -> usize {
-	let mut count = 0;
-	
-	for yet_id in self.yet_shelved_books_id.iter() {
-	    if self.new_books_id.contains(yet_id) {
-		count += 1;
-	    }
+        let mut count = 0;
+
+        for yet_id in self.yet_shelved_books_id.iter() {
+            if self.new_books_id.contains(yet_id) {
+                count += 1;
+            }
         }
 
-	count
+        count
     }
-    
+
     pub fn generate_eval_str(&self) -> &str {
-	let missed_books_num = self.number_of_yet_shelved_and_new_books();
-	let total_waiting_minute = self.total_customers_waiting_time / 60;
-	
-	if missed_books_num == 0 &&
-	    total_waiting_minute < 30 &&
-	    self.condition_eval_mistakes == 0 {
-		return "鈴奈庵の主";
-	    }
+        let missed_books_num = self.number_of_yet_shelved_and_new_books();
+        let total_waiting_minute = self.total_customers_waiting_time / 60;
 
-	if missed_books_num == 0 &&
-	    total_waiting_minute < 60 &&
-	    self.condition_eval_mistakes == 0 {
-		return "占い師より向いてる";
-	    }
+        if missed_books_num == 0 && total_waiting_minute < 30 && self.condition_eval_mistakes == 0 {
+            return "鈴奈庵の主";
+        }
 
-	if missed_books_num <= 3 &&
-	    total_waiting_minute < 120 &&
-	    self.condition_eval_mistakes == 1 {
-		return "見習い";
-	    }
+        if missed_books_num == 0 && total_waiting_minute < 60 && self.condition_eval_mistakes == 0 {
+            return "占い師より向いてる";
+        }
 
-	if missed_books_num <= 3 &&
-	    total_waiting_minute < 120 {
-		return "霊夢より働く";
-	    }
+        if missed_books_num <= 3 && total_waiting_minute < 120 && self.condition_eval_mistakes == 1
+        {
+            return "見習い";
+        }
 
-	return "素人";
+        if missed_books_num <= 3 && total_waiting_minute < 120 {
+            return "霊夢より働く";
+        }
+
+        return "素人";
     }
 }
 
@@ -2206,30 +2203,29 @@ pub struct GameConfig {
 
 impl GameConfig {
     pub fn new_from_toml(ctx: &mut ggez::Context, path: &str) -> Self {
-	match File::open("./game_config") {
-	    Ok(mut file) => {
-		let mut buf = Vec::new();
-		match file
-		    .read_to_end(&mut buf) {
-			Ok(_) => (),
-			Err(_) => return Self::load_default_config(ctx, path),
-		    }
-		
-		let content = crypt::decrypt_str(&buf);
-		
-		let game_config = serde_json::from_str(&content.unwrap());
+        match File::open("./game_config") {
+            Ok(mut file) => {
+                let mut buf = Vec::new();
+                match file.read_to_end(&mut buf) {
+                    Ok(_) => (),
+                    Err(_) => return Self::load_default_config(ctx, path),
+                }
 
-		match game_config {
-		    Ok(game_config) => game_config,
-		    Err(_) => Self::load_default_config(ctx, path)
-		}
-	    },
-	    Err(_) => Self::load_default_config(ctx, path)
-	}
+                let content = crypt::decrypt_str(&buf);
+
+                let game_config = serde_json::from_str(&content.unwrap());
+
+                match game_config {
+                    Ok(game_config) => game_config,
+                    Err(_) => Self::load_default_config(ctx, path),
+                }
+            }
+            Err(_) => Self::load_default_config(ctx, path),
+        }
     }
 
     fn load_default_config(ctx: &mut ggez::Context, path: &str) -> Self {
-	let s = util::read_from_resources_as_string(ctx, path);
+        let s = util::read_from_resources_as_string(ctx, path);
 
         let raw_data: Result<GameConfig, toml::de::Error> = toml::from_str(&s);
         match raw_data {
@@ -2255,15 +2251,15 @@ impl GameConfig {
     }
 
     pub fn is_pause_when_inactive(&self) -> bool {
-	self.pause_when_inactive
+        self.pause_when_inactive
     }
 
     pub fn set_pause_when_inactive(&mut self, flag: bool) {
-	self.pause_when_inactive = flag;
+        self.pause_when_inactive = flag;
     }
 
     pub fn save_config(&self) {
-	let mut file = File::create("./game_config").expect("failed to create game config file.");
+        let mut file = File::create("./game_config").expect("failed to create game config file.");
 
         file.write_all(
             crypt::crypt_str(&serde_json::to_string(self).unwrap())
@@ -2275,7 +2271,7 @@ impl GameConfig {
     }
 
     pub fn unlock_extra(&mut self) {
-	self.extra_unlocked = true;
+        self.extra_unlocked = true;
     }
 }
 
@@ -2301,18 +2297,20 @@ pub struct HardModeRecord {
 
 impl HardModeRecord {
     pub fn new(total_money: i64) -> Self {
-	HardModeRecord {
-	    total_money: total_money,
-	    date_str: chrono::Local::now().format("%Y年%m月%d日 %H時%M分%S秒").to_string(),
-	}
+        HardModeRecord {
+            total_money: total_money,
+            date_str: chrono::Local::now()
+                .format("%Y年%m月%d日 %H時%M分%S秒")
+                .to_string(),
+        }
     }
 
     pub fn get_date_str(&self) -> &str {
-	self.date_str.as_str()
+        self.date_str.as_str()
     }
 
     pub fn get_total_money(&self) -> i64 {
-	self.total_money
+        self.total_money
     }
 }
 
@@ -2325,43 +2323,43 @@ pub struct PermanentSaveData {
 
 impl PermanentSaveData {
     pub fn new_empty() -> Self {
-	PermanentSaveData {
-	    story_cleared: false,
-	    hard_mode_records: Vec::new(),
-	    story_mode_records: Vec::new(),
-	}
+        PermanentSaveData {
+            story_cleared: false,
+            hard_mode_records: Vec::new(),
+            story_mode_records: Vec::new(),
+        }
     }
-    
+
     pub fn from_toml() -> Self {
-	match File::open("./permanent_save") {
-	    Ok(mut file) => {
-		let mut buf = Vec::new();
-		match file
-		    .read_to_end(&mut buf) {
-			Ok(_) => (),
-			Err(_) => return Self::new_empty(),
-		    }
-		
-		let content = crypt::decrypt_str(&buf);
+        match File::open("./permanent_save") {
+            Ok(mut file) => {
+                let mut buf = Vec::new();
+                match file.read_to_end(&mut buf) {
+                    Ok(_) => (),
+                    Err(_) => return Self::new_empty(),
+                }
 
-		if content.is_none() {
-		    return Self::new_empty();
-		}
+                let content = crypt::decrypt_str(&buf);
 
-		let permanent_data: Result<PermanentSaveData, toml::de::Error> = toml::from_str(&content.unwrap());
-		match permanent_data {
-		    Ok(p) => {
-			return p;
-		    },
-		    Err(_) => return Self::new_empty(),
-		}
-	    },
-	    Err(_) => Self::new_empty(),
-	}
+                if content.is_none() {
+                    return Self::new_empty();
+                }
+
+                let permanent_data: Result<PermanentSaveData, toml::de::Error> =
+                    toml::from_str(&content.unwrap());
+                match permanent_data {
+                    Ok(p) => {
+                        return p;
+                    }
+                    Err(_) => return Self::new_empty(),
+                }
+            }
+            Err(_) => Self::new_empty(),
+        }
     }
 
     pub fn save(&self) -> Result<(), Box<dyn std::error::Error>> {
-	let mut file = File::create("./permanent_save")?;
+        let mut file = File::create("./permanent_save")?;
 
         file.write_all(
             crypt::crypt_str(&toml::to_string(self).unwrap())
@@ -2371,40 +2369,38 @@ impl PermanentSaveData {
         .unwrap();
         file.flush()?;
 
-	Ok(())
+        Ok(())
     }
 
     pub fn add_hard_mode_record(&mut self, record: HardModeRecord) {
-	self.hard_mode_records.push(record);
+        self.hard_mode_records.push(record);
     }
 
     pub fn add_story_mode_record(&mut self, record: HardModeRecord) {
-	self.story_mode_records.push(record);
+        self.story_mode_records.push(record);
     }
 
     pub fn iter_hard_mode_records(&self) -> std::slice::Iter<HardModeRecord> {
-	self.hard_mode_records.iter()
+        self.hard_mode_records.iter()
     }
 
     pub fn iter_story_mode_records(&self) -> std::slice::Iter<HardModeRecord> {
-	self.story_mode_records.iter()
+        self.story_mode_records.iter()
     }
-    
+
     pub fn story_cleared(&mut self) {
-	self.story_cleared = true;
+        self.story_cleared = true;
     }
 
     pub fn is_cleared(&self) -> bool {
-	self.story_cleared
+        self.story_cleared
     }
 
     pub fn sort_records(&mut self) {
-	self.story_mode_records.sort_by(|a, b| {
-	    b.total_money.partial_cmp(&a.total_money).unwrap()
-	});
-	self.hard_mode_records.sort_by(|a, b| {
-	    b.total_money.partial_cmp(&a.total_money).unwrap()
-	});
+        self.story_mode_records
+            .sort_by(|a, b| b.total_money.partial_cmp(&a.total_money).unwrap());
+        self.hard_mode_records
+            .sort_by(|a, b| b.total_money.partial_cmp(&a.total_money).unwrap());
     }
 }
 
@@ -2419,38 +2415,26 @@ pub struct SuzuContext<'ctx> {
 
 impl<'ctx> SuzuContext<'ctx> {
     pub fn take_save_data_mut(&mut self) -> &mut SavableData {
-	self.savable_data.as_mut().expect("save data not found")
+        self.savable_data.as_mut().expect("save data not found")
     }
 
     pub fn take_save_data(&self) -> &SavableData {
-	self.savable_data.as_ref().expect("save data not found")
+        self.savable_data.as_ref().expect("save data not found")
     }
-    
+
     pub fn ref_texture(&mut self, id: TextureID) -> ggraphics::Image {
         self.resource.ref_texture(self.context, id)
     }
 
-    pub fn is_bgm_playing(
-        &self,
-	handler: sound::SoundHandler
-    ) -> bool {
-        self.resource
-            .is_bgm_playing(handler)
+    pub fn is_bgm_playing(&self, handler: sound::SoundHandler) -> bool {
+        self.resource.is_bgm_playing(handler)
     }
 
-    pub fn is_se_playing(
-        &self,
-	handler: sound::SoundHandler
-    ) -> bool {
-        self.resource
-            .is_se_playing(handler)
+    pub fn is_se_playing(&self, handler: sound::SoundHandler) -> bool {
+        self.resource.is_se_playing(handler)
     }
 
-    pub fn play_sound_as_bgm(
-        &mut self,
-        sound_id: SoundID,
-        flags: Option<sound::SoundPlayFlags>,
-    ) {
+    pub fn play_sound_as_bgm(&mut self, sound_id: SoundID, flags: Option<sound::SoundPlayFlags>) {
         self.resource
             .play_sound_as_bgm(self.context, sound_id, flags);
     }
@@ -2475,7 +2459,10 @@ impl<'ctx> SuzuContext<'ctx> {
     }
 
     pub fn pay_ad_cost(&mut self) -> i32 {
-        self.savable_data.as_mut().expect("save data not found").pay_ad_cost(self.resource)
+        self.savable_data
+            .as_mut()
+            .expect("save data not found")
+            .pay_ad_cost(self.resource)
     }
 
     pub fn holding_week_schedule_is_available(&self) -> bool {
@@ -2547,30 +2534,31 @@ impl<'ctx> SuzuContext<'ctx> {
     }
 
     pub fn reset_save_data(&mut self, game_mode: GameMode) {
-	*self.savable_data = Some(SavableData::new(&self.resource, game_mode));
+        *self.savable_data = Some(SavableData::new(&self.resource, game_mode));
     }
 
     pub fn save(&mut self, slot_id: u8) -> Result<(), ()> {
-	if let Some(save_data) = self.savable_data.as_mut() {
-	    match save_data.save(slot_id) {
-		Ok(_) => Ok(()),
-		Err(_) => Err(()),
-	    }
-	} else {
-	    Err(())
-	}
+        if let Some(save_data) = self.savable_data.as_mut() {
+            match save_data.save(slot_id) {
+                Ok(_) => Ok(()),
+                Err(_) => Err(()),
+            }
+        } else {
+            Err(())
+        }
     }
 
     pub fn change_ad_status(&mut self, ad_type: SuzunaAdType, status: bool) {
-	self.take_save_data_mut().change_ad_status(ad_type, status);
+        self.take_save_data_mut().change_ad_status(ad_type, status);
     }
 
     pub fn change_ad_agency_status(&mut self, ad_type: SuzunaAdAgencyType, status: bool) {
-	self.take_save_data_mut().change_ad_agency_status(ad_type, status);
+        self.take_save_data_mut()
+            .change_ad_agency_status(ad_type, status);
     }
 
     pub fn update_week_schedule(&mut self, sched: WeekWorkSchedule) {
-	self.take_save_data_mut().update_week_schedule(sched);
+        self.take_save_data_mut().update_week_schedule(sched);
     }
 }
 
@@ -2656,7 +2644,7 @@ impl SceneController {
         let mut game_status = None;
         let mut game_config = GameConfig::new_from_toml(ctx, "/default_game_config.toml");
 
-	let mut permanent_save_data = PermanentSaveData::from_toml();
+        let mut permanent_save_data = PermanentSaveData::from_toml();
 
         let mut _redraw_request = scene::DrawRequest::Draw;
 
@@ -2673,7 +2661,7 @@ impl SceneController {
             process_utility: ProcessUtility {
                 redraw_request: &mut _redraw_request,
             },
-	    permanent_save_data: &mut permanent_save_data,
+            permanent_save_data: &mut permanent_save_data,
         });
 
         SceneController {
@@ -2686,7 +2674,7 @@ impl SceneController {
             game_status: game_status,
             game_config: game_config,
             redraw_request: scene::DrawRequest::Draw,
-	    permanent_save_data: permanent_save_data,
+            permanent_save_data: permanent_save_data,
         }
     }
 
@@ -2704,7 +2692,7 @@ impl SceneController {
             process_utility: ProcessUtility {
                 redraw_request: &mut self.redraw_request,
             },
-	    permanent_save_data: &mut self.permanent_save_data,
+            permanent_save_data: &mut self.permanent_save_data,
         };
 
         match next_scene_id {
@@ -2773,7 +2761,7 @@ impl SceneController {
             process_utility: ProcessUtility {
                 redraw_request: &mut self.redraw_request,
             },
-	    permanent_save_data: &mut self.permanent_save_data,
+            permanent_save_data: &mut self.permanent_save_data,
         };
 
         let next_scene = match next_scene_id {
@@ -2804,7 +2792,7 @@ impl SceneController {
                 process_utility: ProcessUtility {
                     redraw_request: &mut self.redraw_request,
                 },
-		permanent_save_data: &mut self.permanent_save_data,
+                permanent_save_data: &mut self.permanent_save_data,
             });
         }
         //));
@@ -2834,7 +2822,7 @@ impl SceneController {
             process_utility: ProcessUtility {
                 redraw_request: &mut self.redraw_request,
             },
-	    permanent_save_data: &mut self.permanent_save_data,
+            permanent_save_data: &mut self.permanent_save_data,
         };
 
         match self.current_scene.abs_mut().post_process(&mut suzu_ctx) {
@@ -2894,7 +2882,7 @@ impl SceneController {
                 process_utility: ProcessUtility {
                     redraw_request: &mut self.redraw_request,
                 },
-		permanent_save_data: &mut self.permanent_save_data,
+                permanent_save_data: &mut self.permanent_save_data,
             },
             self.key_map.real_to_virtual(keycode),
         );
@@ -2918,7 +2906,7 @@ impl SceneController {
                 process_utility: ProcessUtility {
                     redraw_request: &mut self.redraw_request,
                 },
-		permanent_save_data: &mut self.permanent_save_data,
+                permanent_save_data: &mut self.permanent_save_data,
             },
             self.key_map.real_to_virtual(keycode),
         );
@@ -2942,7 +2930,7 @@ impl SceneController {
                 process_utility: ProcessUtility {
                     redraw_request: &mut self.redraw_request,
                 },
-		permanent_save_data: &mut self.permanent_save_data,
+                permanent_save_data: &mut self.permanent_save_data,
             },
             point,
             offset,
@@ -2967,7 +2955,7 @@ impl SceneController {
                 process_utility: ProcessUtility {
                     redraw_request: &mut self.redraw_request,
                 },
-		permanent_save_data: &mut self.permanent_save_data,
+                permanent_save_data: &mut self.permanent_save_data,
             },
             button,
             point,
@@ -2990,7 +2978,7 @@ impl SceneController {
                 process_utility: ProcessUtility {
                     redraw_request: &mut self.redraw_request,
                 },
-		permanent_save_data: &mut self.permanent_save_data,
+                permanent_save_data: &mut self.permanent_save_data,
             },
             button,
             point,
@@ -3014,7 +3002,7 @@ impl SceneController {
                 process_utility: ProcessUtility {
                     redraw_request: &mut self.redraw_request,
                 },
-		permanent_save_data: &mut self.permanent_save_data,
+                permanent_save_data: &mut self.permanent_save_data,
             },
             numeric::Point2f::new(point.x, point.y),
             x,
@@ -3035,7 +3023,7 @@ impl SceneController {
             process_utility: ProcessUtility {
                 redraw_request: &mut self.redraw_request,
             },
-	    permanent_save_data: &mut self.permanent_save_data,
+            permanent_save_data: &mut self.permanent_save_data,
         });
     }
 
@@ -3050,7 +3038,7 @@ impl SceneController {
                 process_utility: ProcessUtility {
                     redraw_request: &mut self.redraw_request,
                 },
-		permanent_save_data: &mut self.permanent_save_data,
+                permanent_save_data: &mut self.permanent_save_data,
             });
     }
 }
@@ -3064,7 +3052,8 @@ pub struct State {
 
 impl ggez::event::EventHandler for State {
     fn update(&mut self, ctx: &mut Context) -> GameResult<()> {
-        self.scene_controller.run_pre_process(ctx, &mut self.game_data);
+        self.scene_controller
+            .run_pre_process(ctx, &mut self.game_data);
 
         self.clock += 1;
         if (self.clock % 100) == 0 {
@@ -3085,14 +3074,15 @@ impl ggez::event::EventHandler for State {
 
         graphics::present(ctx)?;
 
-        self.scene_controller.run_post_process(ctx, &mut self.game_data);
+        self.scene_controller
+            .run_post_process(ctx, &mut self.game_data);
 
         Ok(())
     }
 
     fn quit_event(&mut self, ctx: &mut Context) -> bool {
-	ggez::event::quit(ctx);
-	false
+        ggez::event::quit(ctx);
+        false
     }
 
     fn key_down_event(
@@ -3159,7 +3149,8 @@ impl ggez::event::EventHandler for State {
         if gained {
             self.scene_controller.focus_event(ctx, &mut self.game_data);
         } else {
-            self.scene_controller.unfocus_event(ctx, &mut self.game_data);
+            self.scene_controller
+                .unfocus_event(ctx, &mut self.game_data);
         }
     }
 }

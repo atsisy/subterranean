@@ -196,7 +196,7 @@ impl TaskTable {
             kosuzu_phrase: KosuzuPhrase::new(ctx, 0),
             today: ctx.take_save_data().date,
             task_is_done: false,
-	    return_late_checked: false,
+            return_late_checked: false,
             appearance_frame: appr_frame,
             current_page_book_condition_report: None,
         }
@@ -849,9 +849,9 @@ impl TaskTable {
             t,
         );
 
-	for book in written_books {
-	    self.kosuzu_memory.add_book_to_written_list(book);
-	}
+        for book in written_books {
+            self.kosuzu_memory.add_book_to_written_list(book);
+        }
     }
 
     pub fn signing_returning_handler<'a>(
@@ -909,33 +909,37 @@ impl TaskTable {
                 .click_book_title_menu(ctx, button, point, t)
             && !self.record_book_menu.click_date_menu(ctx, button, point, t)
             && !self
-            .record_book_menu
-            .click_customer_name_menu(ctx, button, point, t)
-	    && !self
-            .record_book_menu
-            .click_date_check_menu(ctx, button, point, t)
+                .record_book_menu
+                .click_customer_name_menu(ctx, button, point, t)
+            && !self
+                .record_book_menu
+                .click_date_check_menu(ctx, button, point, t)
         {
             // メニューをクリックしていない場合はfalseをクリックして終了
             return false;
         }
 
-	if self.record_book_menu.date_check_menu_check_button_clicked() {
-	    if let Some(return_date) = self.borrowing_record_book.get_current_page_return_date() {
-		if self.today.is_past(&return_date) {
-		    if self.return_late_checked {
-			self.insert_kosuzu_message_set(ctx, "もう延滞料金を受け取った", t);			
-		    } else {
-			self.add_fee_coins(ctx, 300, t);
-			self.slide_hide_record_book(t);
-			self.return_late_checked = true;
-			self.insert_kosuzu_message_set(ctx, "延滞してます\n延滞料金は三百円です", t);
-		    }
-		} else {
-		    self.insert_kosuzu_message_set(ctx, "延滞はしていない", t);	    
-		}
-	    }
-	}
-	
+        if self.record_book_menu.date_check_menu_check_button_clicked() {
+            if let Some(return_date) = self.borrowing_record_book.get_current_page_return_date() {
+                if self.today.is_past(&return_date) {
+                    if self.return_late_checked {
+                        self.insert_kosuzu_message_set(ctx, "もう延滞料金を受け取った", t);
+                    } else {
+                        self.add_fee_coins(ctx, 300, t);
+                        self.slide_hide_record_book(t);
+                        self.return_late_checked = true;
+                        self.insert_kosuzu_message_set(
+                            ctx,
+                            "延滞してます\n延滞料金は三百円です",
+                            t,
+                        );
+                    }
+                } else {
+                    self.insert_kosuzu_message_set(ctx, "延滞はしていない", t);
+                }
+            }
+        }
+
         if let Some(index) = self.record_book_menu.book_status_menu_last_clicked() {
             let menu_position = self
                 .record_book_menu
@@ -1058,13 +1062,18 @@ impl TaskTable {
                     self.sight
                         .silhouette
                         .insert_customer_message_in_chatbox(ctx, phrase_text);
-		    self.info_panel.set_rental_limit(ctx, info.rental_limit.clone());
-                },
+                    self.info_panel
+                        .set_rental_limit(ctx, info.rental_limit.clone());
+                }
                 CustomerRequest::Returning(info) => {
                     let rental_limit = info.get_rental_limit();
                     let phrase_text = match &rental_limit {
-                        RentalLimit::ShortTerm => format!("{}に\n短期で借りました", info.borrow_date.to_short_string()),
-                        RentalLimit::LongTerm => format!("{}に\n長期で借りました", info.borrow_date.to_short_string()),
+                        RentalLimit::ShortTerm => {
+                            format!("{}に\n短期で借りました", info.borrow_date.to_short_string())
+                        }
+                        RentalLimit::LongTerm => {
+                            format!("{}に\n長期で借りました", info.borrow_date.to_short_string())
+                        }
                         _ => "".to_string(),
                     };
 
@@ -1078,7 +1087,7 @@ impl TaskTable {
                     self.sight
                         .silhouette
                         .insert_customer_message_in_chatbox(ctx, phrase_text);
-		    self.info_panel.set_rental_limit(ctx, rental_limit);
+                    self.info_panel.set_rental_limit(ctx, rental_limit);
                 }
             }
         }
@@ -1212,7 +1221,7 @@ impl TaskTable {
         &mut self,
         ctx: &mut SuzuContext<'a>,
         click_point: numeric::Point2f,
-	lock_status: &RecordBookLockStatus,
+        lock_status: &RecordBookLockStatus,
         t: Clock,
     ) -> bool {
         let grid_pos = self
@@ -1232,50 +1241,50 @@ impl TaskTable {
 
             match grid_pos.unwrap().y {
                 0 => {
-		    if let Some(request) = self.current_customer_request.as_ref() {
-			match request {
-			    CustomerRequest::Borrowing(_) => {
-				match lock_status {
-				    RecordBookLockStatus::BorrowingOk => {
-					self.record_book_menu.show_book_title_menu(
-					    ctx,
-					    click_point,
-					    &self.kosuzu_memory,
-					    t,
-					);
-				    },
-				    _ => (),
-				}
-			    },
-			    _ => (),
-			}
-		    }
-		},
+                    if let Some(request) = self.current_customer_request.as_ref() {
+                        match request {
+                            CustomerRequest::Borrowing(_) => match lock_status {
+                                RecordBookLockStatus::BorrowingOk => {
+                                    self.record_book_menu.show_book_title_menu(
+                                        ctx,
+                                        click_point,
+                                        &self.kosuzu_memory,
+                                        t,
+                                    );
+                                }
+                                _ => (),
+                            },
+                            _ => (),
+                        }
+                    }
+                }
                 1 => {
-		    if let Some(request) = self.current_customer_request.as_ref() {
-			match request {
-			    CustomerRequest::Returning(_) => {
-				match lock_status {
-				    RecordBookLockStatus::ReturningMatched => {
-					if self.borrowing_record_book.is_current_books_table_some_data_at(
-					    numeric::Vector2u::new(grid_pos.unwrap().x, 0)
-					) {
-					    self
-						.record_book_menu
-						.show_book_status_menu(ctx, click_point, t);
-					}
-				    },
-				    RecordBookLockStatus::ReturningVary => {
-					self.record_book_menu
-					    .show_locked_menu(ctx, click_point, t);
-				    },
-				    _ => (),
-				}
-			    }
-			    _ => (),
-			}
-		    }
-		},
+                    if let Some(request) = self.current_customer_request.as_ref() {
+                        match request {
+                            CustomerRequest::Returning(_) => match lock_status {
+                                RecordBookLockStatus::ReturningMatched => {
+                                    if self
+                                        .borrowing_record_book
+                                        .is_current_books_table_some_data_at(
+                                            numeric::Vector2u::new(grid_pos.unwrap().x, 0),
+                                        )
+                                    {
+                                        self.record_book_menu.show_book_status_menu(
+                                            ctx,
+                                            click_point,
+                                            t,
+                                        );
+                                    }
+                                }
+                                RecordBookLockStatus::ReturningVary => {
+                                    self.record_book_menu.show_locked_menu(ctx, click_point, t);
+                                }
+                                _ => (),
+                            },
+                            _ => (),
+                        }
+                    }
+                }
                 _ => (),
             }
 
@@ -1294,7 +1303,7 @@ impl TaskTable {
         &mut self,
         ctx: &mut SuzuContext<'a>,
         click_point: numeric::Point2f,
-	lock_status: &RecordBookLockStatus,
+        lock_status: &RecordBookLockStatus,
         t: Clock,
     ) -> bool {
         let maybe_grid_pos = self
@@ -1303,48 +1312,64 @@ impl TaskTable {
 
         if let Some(grid_pos) = maybe_grid_pos {
             if grid_pos == numeric::Vector2u::new(2, 1) {
-		if let Some(request) = self.current_customer_request.as_ref() {
-		    match request {
-			CustomerRequest::Borrowing(_) => {
-			    if self.borrowing_record_book.current_page_is_borrowing_signed() != RecordBookLockStatus::BorrowingLocked {
-				self.record_book_menu.show_customer_name_menu(
-				    ctx,
-				    click_point,
-				    &self.kosuzu_memory,
-				    t,
-				);
-			    }
-			},
-			_ => (),
-		    }
-		}
+                if let Some(request) = self.current_customer_request.as_ref() {
+                    match request {
+                        CustomerRequest::Borrowing(_) => {
+                            if self
+                                .borrowing_record_book
+                                .current_page_is_borrowing_signed()
+                                != RecordBookLockStatus::BorrowingLocked
+                            {
+                                self.record_book_menu.show_customer_name_menu(
+                                    ctx,
+                                    click_point,
+                                    &self.kosuzu_memory,
+                                    t,
+                                );
+                            }
+                        }
+                        _ => (),
+                    }
+                }
             } else if grid_pos == numeric::Vector2u::new(1, 1)
                 || grid_pos == numeric::Vector2u::new(0, 1)
             {
-		if let Some(request) = self.current_customer_request.as_ref() {
-		    match request {
-			CustomerRequest::Borrowing(_) => {
-			    if self.borrowing_record_book.current_page_is_borrowing_signed() != RecordBookLockStatus::BorrowingLocked {
-				self.record_book_menu
-				    .show_date_menu(ctx, click_point, self.today.clone(), t);
-			    }
-			},
-			CustomerRequest::Returning(_) => {
-			    match lock_status {
-				RecordBookLockStatus::ReturningMatched => {
-				    if grid_pos.x == 0 {
-					let return_date = self.borrowing_record_book.get_current_page_return_date();
-					if let Some(return_date) = return_date {
-					    self.record_book_menu
-						.show_date_check_menu(ctx, click_point, self.today.clone(), return_date, t);
-					}
-				    }
-				},
-				_ => (),
-			    }
-			}
-		    }
-		}
+                if let Some(request) = self.current_customer_request.as_ref() {
+                    match request {
+                        CustomerRequest::Borrowing(_) => {
+                            if self
+                                .borrowing_record_book
+                                .current_page_is_borrowing_signed()
+                                != RecordBookLockStatus::BorrowingLocked
+                            {
+                                self.record_book_menu.show_date_menu(
+                                    ctx,
+                                    click_point,
+                                    self.today.clone(),
+                                    t,
+                                );
+                            }
+                        }
+                        CustomerRequest::Returning(_) => match lock_status {
+                            RecordBookLockStatus::ReturningMatched => {
+                                if grid_pos.x == 0 {
+                                    let return_date =
+                                        self.borrowing_record_book.get_current_page_return_date();
+                                    if let Some(return_date) = return_date {
+                                        self.record_book_menu.show_date_check_menu(
+                                            ctx,
+                                            click_point,
+                                            self.today.clone(),
+                                            return_date,
+                                            t,
+                                        );
+                                    }
+                                }
+                            }
+                            _ => (),
+                        },
+                    }
+                }
             }
 
             true
@@ -1447,33 +1472,40 @@ impl TaskTable {
             return ();
         }
 
-	if self.current_customer_request.is_some() {
-	    let record_book_lock_status =
-		match self.current_customer_request.as_ref().unwrap() {
-		    CustomerRequest::Borrowing(_) => {
-			self.borrowing_record_book.current_page_is_borrowing_signed()
-		    },
-		    CustomerRequest::Returning(_) => {
-			self.borrowing_record_book.check_current_page_is_matched_with(
-			    self.current_customer_request.as_ref()
-			)
-		    }
-		};
-	    
-            if self.try_show_menus_regarding_book_info(ctx, click_point, &record_book_lock_status, t) {
-		return;
+        if self.current_customer_request.is_some() {
+            let record_book_lock_status = match self.current_customer_request.as_ref().unwrap() {
+                CustomerRequest::Borrowing(_) => self
+                    .borrowing_record_book
+                    .current_page_is_borrowing_signed(),
+                CustomerRequest::Returning(_) => self
+                    .borrowing_record_book
+                    .check_current_page_is_matched_with(self.current_customer_request.as_ref()),
+            };
+
+            if self.try_show_menus_regarding_book_info(
+                ctx,
+                click_point,
+                &record_book_lock_status,
+                t,
+            ) {
+                return;
             }
-	    
-            if self.try_show_menus_regarding_customer_info(ctx, click_point, &record_book_lock_status, t) {
-		return;
+
+            if self.try_show_menus_regarding_customer_info(
+                ctx,
+                click_point,
+                &record_book_lock_status,
+                t,
+            ) {
+                return;
             }
-	}
-	
+        }
+
         if self
-	    .borrowing_record_book
-	    .contains(ctx.context, click_point)
+            .borrowing_record_book
+            .contains(ctx.context, click_point)
         {
-	    return;
+            return;
         } else {
             if self.record_book_is_staged {
                 self.slide_hide_record_book(t);
@@ -1524,14 +1556,14 @@ impl DrawableComponent for TaskTable {
             }
 
             self.dark_effect_panel.draw(ctx).unwrap();
-	    
+
             //self.manual_book.draw(ctx)?;
 
             self.appearance_frame.draw(ctx)?;
 
-	    self.borrowing_record_book.draw(ctx)?;
-	    self.kosuzu_phrase.draw(ctx)?;
-	    self.customer_silhouette_menu.draw(ctx)?;
+            self.borrowing_record_book.draw(ctx)?;
+            self.kosuzu_phrase.draw(ctx)?;
+            self.customer_silhouette_menu.draw(ctx)?;
             self.record_book_menu.draw(ctx)?;
             self.on_desk_menu.draw(ctx)?;
 

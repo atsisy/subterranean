@@ -681,14 +681,10 @@ impl TextButtonTexture {
 impl DrawableComponent for TextButtonTexture {
     fn draw(&mut self, ctx: &mut ggez::Context) -> ggez::GameResult<()> {
         if self.is_visible() {
-	    let draw_param = ggraphics::DrawParam::default()
-		.dest(mintp_new!(self.button_pos.x, self.button_pos.y));
+            let draw_param = ggraphics::DrawParam::default()
+                .dest(mintp_new!(self.button_pos.x, self.button_pos.y));
 
-            ggraphics::draw(
-                ctx,
-                &self.background,
-		draw_param,
-            )?;
+            ggraphics::draw(ctx, &self.background, draw_param)?;
             self.text.draw(ctx)?;
         }
 
@@ -724,7 +720,7 @@ impl DrawableObject for TextButtonTexture {
 
     fn get_position(&self) -> numeric::Point2f {
         let p = self.button_pos.point();
-	numeric::Point2f::new(p.x, p.y)
+        numeric::Point2f::new(p.x, p.y)
     }
 
     fn move_diff(&mut self, offset: numeric::Vector2f) {
@@ -1440,13 +1436,15 @@ impl GraphDrawer {
             .collect();
 
         for scaled_point in scaled_points.iter() {
-            builder.circle(
-                ggraphics::DrawMode::fill(),
-                mint::Point2::from_slice(&[scaled_point.x, scaled_point.y]),
-                point_radius,
-                0.01,
-                point_color,
-            ).expect("failed to create ");
+            builder
+                .circle(
+                    ggraphics::DrawMode::fill(),
+                    mint::Point2::from_slice(&[scaled_point.x, scaled_point.y]),
+                    point_radius,
+                    0.01,
+                    point_color,
+                )
+                .expect("failed to create ");
         }
 
         let mint_p_vec: Vec<mint::Point2<f32>> = scaled_points
@@ -1605,14 +1603,14 @@ impl PauseScreenSet {
     }
 
     pub fn mouse_motion_handler<'a>(&mut self, ctx: &mut SuzuContext<'a>, point: numeric::Point2f) {
-	if self.config_panel.is_none() {
+        if self.config_panel.is_none() {
             for (index, vtext) in self.entries.iter().enumerate() {
-		if vtext.contains(ctx.context, point) {
+                if vtext.contains(ctx.context, point) {
                     self.select_entries_handler(ctx, index);
                     return;
-		}
+                }
             }
-	}
+        }
 
         // ここまで到達するのは、すべてのテキストにカーソルが重なっていなかった場合
         if self.cursored_index.is_some() {
@@ -1643,7 +1641,7 @@ impl PauseScreenSet {
             if let Some(_) = panel.mouse_button_up(ctx, point, t) {
                 // ここに到達する場合は、"init-menu"に移動するとき
                 // ここでは、ConfigPanelのExitととしてみなす
-		ctx.process_utility.redraw();
+                ctx.process_utility.redraw();
                 self.config_panel = None;
             }
             return None;
@@ -1657,7 +1655,7 @@ impl PauseScreenSet {
                             ctx,
                             numeric::Rect::new(50.0, 50.0, 1266.0, 668.0),
                             0,
-			    t
+                            t,
                         ));
                         None
                     }
@@ -1923,7 +1921,7 @@ impl CheckBox {
         is_checked: bool,
         depth: i8,
     ) -> Self {
-	let frame_pos = pos_rect.point();
+        let frame_pos = pos_rect.point();
         let frame = TableFrame::new(
             ctx.resource,
             numeric::Point2f::new(frame_pos.x, frame_pos.y),
@@ -1976,9 +1974,9 @@ impl CheckBox {
     }
 
     pub fn try_check(&mut self, check: bool) {
-	self.is_checked = check;
-	
-	if self.is_checked {
+        self.is_checked = check;
+
+        if self.is_checked {
             self.check_texture.appear();
         } else {
             self.check_texture.hide();
@@ -2090,11 +2088,11 @@ impl FramedButton {
     //     button.make_this_none_status(ctx);
     //     button
     // }
-    
+
     pub fn new<'a>(
         ctx: &mut SuzuContext<'a>,
         rect: numeric::Rect,
-	r: f32,
+        r: f32,
         frame_width: f32,
         inner_color: ggraphics::Color,
         outer_color: ggraphics::Color,
@@ -2105,7 +2103,7 @@ impl FramedButton {
         let texture = shape::FramedRoundRect::new(
             ctx.context,
             rect,
-	    r,
+            r,
             frame_width,
             inner_color,
             outer_color,
@@ -2170,7 +2168,7 @@ impl FramedButton {
         //     font_info,
         //     0,
         // )
-	FramedButton::new(
+        FramedButton::new(
             ctx,
             numeric::Rect::new(
                 pos.x,
@@ -2178,7 +2176,7 @@ impl FramedButton {
                 font_size.x * (text.len() as f32 / 3.0) + 50.0,
                 font_size.y + 50.0,
             ),
-	    5.0,
+            5.0,
             2.0,
             ggraphics::Color::from_rgba(90, 80, 63, 255),
             ggraphics::Color::from_rgba(219, 212, 184, 255),

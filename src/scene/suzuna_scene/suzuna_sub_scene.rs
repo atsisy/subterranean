@@ -32,21 +32,21 @@ pub struct TaskTutorialContext {
 
 impl TaskTutorialContext {
     pub fn new() -> Self {
-	TaskTutorialContext {
-	    borrowing_request: false,
-	    returning_request: false,
-	}
+        TaskTutorialContext {
+            borrowing_request: false,
+            returning_request: false,
+        }
     }
 
     pub fn new_done() -> Self {
-	TaskTutorialContext {
-	    borrowing_request: true,
-	    returning_request: true,
-	}
+        TaskTutorialContext {
+            borrowing_request: true,
+            returning_request: true,
+        }
     }
 
     pub fn all_done(&self) -> bool {
-	self.borrowing_request && self.returning_request
+        self.borrowing_request && self.returning_request
     }
 }
 
@@ -71,34 +71,40 @@ impl SuzunaSubScene {
             NewBookSchedule::from_toml(ctx, "/other_config/new_book_schedule.toml");
 
         let todays_new_books = if let Some(sched) = new_book_schedule.get_schedule_at(&date) {
-	    sched.clone()
-	} else {
-	    new_book_schedule.get_schedule_at(&GensoDate::new(112, 7, 23)).unwrap().clone()
-	};
+            sched.clone()
+        } else {
+            new_book_schedule
+                .get_schedule_at(&GensoDate::new(112, 7, 23))
+                .unwrap()
+                .clone()
+        };
 
-	let task_tutorial = if ctx.take_save_data().date.first_day() && ctx.take_save_data().game_mode.is_story_mode() && ctx.take_save_data().run_tutorial {
-	    TaskTutorialContext::new()
-	} else {
-	    TaskTutorialContext::new_done()
-	};
+        let task_tutorial = if ctx.take_save_data().date.first_day()
+            && ctx.take_save_data().game_mode.is_story_mode()
+            && ctx.take_save_data().run_tutorial
+        {
+            TaskTutorialContext::new()
+        } else {
+            TaskTutorialContext::new_done()
+        };
 
         SuzunaSubScene {
             shop_scene: Some(Box::new(ShopScene::new(
                 ctx,
                 map_id,
                 todays_new_books.get_new_books(),
-		task_tutorial.clone()
+                task_tutorial.clone(),
             ))),
             desk_work_scene: None,
             day_result_scene: None,
             scene_status: SuzunaSceneStatus::Shop,
             new_book_schedule: new_book_schedule,
             date: date,
-	    tutorial_context: task_tutorial,
+            tutorial_context: task_tutorial,
         }
     }
 
-     pub fn get_shop_scene_mut(&mut self) -> Option<&mut Box<ShopScene>> {
+    pub fn get_shop_scene_mut(&mut self) -> Option<&mut Box<ShopScene>> {
         self.shop_scene.as_mut()
     }
 
@@ -159,7 +165,7 @@ impl SuzunaSubScene {
                     ctx,
                     Some(customer_request),
                     record_book_data,
-		    &self.tutorial_context,
+                    &self.tutorial_context,
                 )));
             }
         }
@@ -198,7 +204,12 @@ impl SuzunaSubScene {
                 .as_ref()
                 .unwrap()
                 .export_borrowing_record_book_data();
-	    self.tutorial_context = self.desk_work_scene.as_ref().unwrap().get_tutorial_context().clone();
+            self.tutorial_context = self
+                .desk_work_scene
+                .as_ref()
+                .unwrap()
+                .get_tutorial_context()
+                .clone();
             self.scene_status = SuzunaSceneStatus::Shop;
             self.shop_scene.as_mut().unwrap().switched_and_restart(
                 ctx,
@@ -207,7 +218,7 @@ impl SuzunaSubScene {
                     .as_ref()
                     .unwrap()
                     .get_target_page_book_condition_eval_report(),
-		self.tutorial_context.clone(),
+                self.tutorial_context.clone(),
             );
             self.desk_work_scene = None;
         }

@@ -57,7 +57,7 @@ impl KosuzuMemory {
     pub fn is_written_in_record(&self, book_info: &BookInformation) -> bool {
         self.borrowing_written_book.contains(book_info)
     }
-    
+
     pub fn add_customer_name(&mut self, name: String) {
         if self.customers_name.contains(&name) {
             return;
@@ -546,9 +546,9 @@ impl BookTitleMenu {
             0.0,
             0,
             FontInformation::new(
-		ctx.resource.get_font(FontID::Cinema),
-		numeric::Vector2f::new(32.0, 32.0),
-		ggraphics::Color::from_rgba_u32(0xff),
+                ctx.resource.get_font(FontID::Cinema),
+                numeric::Vector2f::new(32.0, 32.0),
+                ggraphics::Color::from_rgba_u32(0xff),
             ),
         );
 
@@ -1124,12 +1124,17 @@ pub struct DateCheckMenu {
 }
 
 impl DateCheckMenu {
-    pub fn new<'a>(ctx: &mut SuzuContext<'a>, today: GensoDate, return_date: GensoDate, drawing_depth: i8) -> Self {
-	let mut desc_vtext = Vec::new();
-	let mut date_data = Vec::new();
-	let mut date_vtext = Vec::new();
-	
-	let font_info = FontInformation::new(
+    pub fn new<'a>(
+        ctx: &mut SuzuContext<'a>,
+        today: GensoDate,
+        return_date: GensoDate,
+        drawing_depth: i8,
+    ) -> Self {
+        let mut desc_vtext = Vec::new();
+        let mut date_data = Vec::new();
+        let mut date_vtext = Vec::new();
+
+        let font_info = FontInformation::new(
             ctx.resource.get_font(FontID::Cinema),
             numeric::Vector2f::new(20.0, 20.0),
             ggraphics::Color::from_rgba_u32(0xff),
@@ -1164,7 +1169,7 @@ impl DateCheckMenu {
             desc_vtext.push(vtext);
         }
 
-	for (index, date) in vec![today.clone(), return_date].iter().enumerate() {
+        for (index, date) in vec![today.clone(), return_date].iter().enumerate() {
             let name_vtext_line = date.to_string();
             let mut vtext = VerticalText::new(
                 name_vtext_line,
@@ -1186,27 +1191,27 @@ impl DateCheckMenu {
             date_data.push(date.clone());
         }
 
-	let area = date_table_frame.get_area();
-	let date_check_button = FramedButton::create_design1(
-	    ctx,
-	    numeric::Point2f::new(area.x + 10.0, area.bottom() + 20.0),
-	    "指摘",
-	    numeric::Vector2f::new(24.0, 24.0)
-	);
+        let area = date_table_frame.get_area();
+        let date_check_button = FramedButton::create_design1(
+            ctx,
+            numeric::Point2f::new(area.x + 10.0, area.bottom() + 20.0),
+            "指摘",
+            numeric::Vector2f::new(24.0, 24.0),
+        );
 
-	DateCheckMenu {
-	    date_data: date_data,
-	    date_table_frame: date_table_frame,
-	    date_vtext: date_vtext,
-	    desc_vtext: desc_vtext,
-	    date_check_button: date_check_button,
-	    drwob_essential: DrawableObjectEssential::new(true, drawing_depth),
-	    check_button_clicked: false,
-	}
+        DateCheckMenu {
+            date_data: date_data,
+            date_table_frame: date_table_frame,
+            date_vtext: date_vtext,
+            desc_vtext: desc_vtext,
+            date_check_button: date_check_button,
+            drwob_essential: DrawableObjectEssential::new(true, drawing_depth),
+            check_button_clicked: false,
+        }
     }
 
     pub fn set_to_center<'a>(&mut self, ctx: &mut SuzuContext<'a>, center: numeric::Point2f) {
-	self.date_table_frame
+        self.date_table_frame
             .make_center(numeric::Point2f::new(center.x, center.y - 30.0));
 
         for (index, text) in self.date_vtext.iter_mut().enumerate() {
@@ -1229,26 +1234,26 @@ impl DateCheckMenu {
     }
 
     pub fn click_handler(&mut self, _ctx: &mut ggez::Context, point: numeric::Point2f) {
-	if self.date_check_button.contains(point) {
-	    self.check_button_clicked = true;
-	}
+        if self.date_check_button.contains(point) {
+            self.check_button_clicked = true;
+        }
     }
 
     pub fn check_button_is_clicked_volatile(&mut self) -> bool {
-	let ret = self.check_button_clicked;
-	self.check_button_clicked = false;
-	ret
+        let ret = self.check_button_clicked;
+        self.check_button_clicked = false;
+        ret
     }
 
     pub fn get_date_frame_size(&self) -> numeric::Vector2f {
-	self.date_table_frame.size() + numeric::Vector2f::new(0.0, 50.0)
+        self.date_table_frame.size() + numeric::Vector2f::new(0.0, 50.0)
     }
 }
 
 impl DrawableComponent for DateCheckMenu {
     fn draw(&mut self, ctx: &mut ggez::Context) -> ggez::GameResult<()> {
         if self.is_visible() {
-	    self.date_table_frame.draw(ctx)?;
+            self.date_table_frame.draw(ctx)?;
 
             for vtext in &mut self.date_vtext {
                 vtext.draw(ctx)?;
@@ -1257,8 +1262,8 @@ impl DrawableComponent for DateCheckMenu {
             for vtext in &mut self.desc_vtext {
                 vtext.draw(ctx)?;
             }
-	    
-	    self.date_check_button.draw(ctx)?;
+
+            self.date_check_button.draw(ctx)?;
         }
         Ok(())
     }
@@ -1987,7 +1992,7 @@ impl RecordBookMenuGroup {
             customer_name_menu: None,
             simple_message_menu: None,
             date_menu: None,
-	    date_check_menu: None,
+            date_check_menu: None,
             drwob_essential: DrawableObjectEssential::new(true, drawing_depth),
         }
     }
@@ -1997,7 +2002,7 @@ impl RecordBookMenuGroup {
             || self.book_title_menu.is_some()
             || self.customer_name_menu.is_some()
             || self.date_menu.is_some()
-	    || self.date_check_menu.is_some()
+            || self.date_check_menu.is_some()
             || self.simple_message_menu.is_some()
     }
 
@@ -2108,8 +2113,13 @@ impl RecordBookMenuGroup {
         self.date_menu.is_some() && self.date_menu.as_ref().unwrap().contains(ctx, point)
     }
 
-    pub fn contains_date_check_menu(&self, ctx: &mut ggez::Context, point: numeric::Point2f) -> bool {
-        self.date_check_menu.is_some() && self.date_check_menu.as_ref().unwrap().contains(ctx, point)
+    pub fn contains_date_check_menu(
+        &self,
+        ctx: &mut ggez::Context,
+        point: numeric::Point2f,
+    ) -> bool {
+        self.date_check_menu.is_some()
+            && self.date_check_menu.as_ref().unwrap().contains(ctx, point)
     }
 
     pub fn contains_simple_message_menu(
@@ -2130,7 +2140,7 @@ impl RecordBookMenuGroup {
             || self.contains_book_status_menu(ctx, point)
             || self.contains_customer_name_menu(ctx, point)
             || self.contains_date_menu(ctx, point)
-	    || self.contains_date_check_menu(ctx, point)
+            || self.contains_date_check_menu(ctx, point)
             || self.contains_simple_message_menu(ctx, point)
     }
 
@@ -2343,9 +2353,11 @@ impl RecordBookMenuGroup {
 
     pub fn date_check_menu_check_button_clicked(&mut self) -> bool {
         if let Some(date_menu) = self.date_check_menu.as_mut() {
-	    date_menu.get_component_mut().check_button_is_clicked_volatile()
+            date_menu
+                .get_component_mut()
+                .check_button_is_clicked_volatile()
         } else {
-	    false
+            false
         }
     }
 
@@ -2354,7 +2366,7 @@ impl RecordBookMenuGroup {
         self.close_book_title_menu(t);
         self.close_customer_name_menu(t);
         self.close_date_menu(t);
-	self.close_date_check_menu(t);
+        self.close_date_check_menu(t);
         self.close_simple_message_menu(t);
     }
 
@@ -2472,12 +2484,12 @@ impl RecordBookMenuGroup {
     }
 
     pub fn show_locked_menu<'a>(
-	&mut self,
-	ctx: &mut SuzuContext<'a>,
+        &mut self,
+        ctx: &mut SuzuContext<'a>,
         position: numeric::Point2f,
-	t: Clock,
+        t: Clock,
     ) {
-	self.show_simple_message_menu(
+        self.show_simple_message_menu(
             ctx,
             position,
             "".to_string(),
@@ -2576,7 +2588,7 @@ impl RecordBookMenuGroup {
         ctx: &mut SuzuContext<'a>,
         position: numeric::Point2f,
         today: GensoDate,
-	return_date: GensoDate,
+        return_date: GensoDate,
         t: Clock,
     ) {
         let mut date_menu = DateCheckMenu::new(ctx, today, return_date, 0);
@@ -2638,7 +2650,7 @@ impl RecordBookMenuGroup {
             ctx.process_utility.redraw();
         }
 
-	if let Some(date_menu) = self.date_check_menu.as_mut() {
+        if let Some(date_menu) = self.date_check_menu.as_mut() {
             date_menu.move_with_func(t);
             date_menu.effect(ctx.context, t);
             ctx.process_utility.redraw();
@@ -2671,7 +2683,7 @@ impl DrawableComponent for RecordBookMenuGroup {
                 date_menu.draw(ctx)?;
             }
 
-	    if let Some(date_menu) = self.date_check_menu.as_mut() {
+            if let Some(date_menu) = self.date_check_menu.as_mut() {
                 date_menu.draw(ctx)?;
             }
 
