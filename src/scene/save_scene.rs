@@ -42,7 +42,7 @@ impl SaveScene {
         let background = UniTexture::new(
             ctx.ref_texture(TextureID::JpHouseTexture),
             numeric::Point2f::new(0.0, 0.0),
-            numeric::Vector2f::new(0.7, 0.7),
+            numeric::Vector2f::new(1.0, 1.0),
             0.0,
             0,
         );
@@ -132,6 +132,10 @@ impl SaveScene {
             }),
             31,
         );
+
+	if let Some(save_data) = ctx.savable_data.as_mut() {
+	    let _ = save_data.get_scenario_save_data();
+	}
     }
 
     fn load_and_scene_swap<'a>(&mut self, ctx: &mut SuzuContext<'a>, slot: u8, t: Clock) {

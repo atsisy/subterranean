@@ -25,6 +25,7 @@ right = "KosuzuTachie1"
 [[scenario-group]]
 type = "choice"
 header_text = "サァ準備ができたわよ"
+background = "SightBackground1"
 id = 11
    [scenario-group.tachie-data]
    right = "KosuzuTachie1"

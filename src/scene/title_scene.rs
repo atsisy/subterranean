@@ -34,18 +34,19 @@ impl TitleScene {
         let background = UniTexture::new(
             ctx.ref_texture(TextureID::JpHouseTexture),
             numeric::Point2f::new(0.0, 0.0),
-            numeric::Vector2f::new(0.7, 0.7),
+            numeric::Vector2f::new(1.0, 1.0),
             0.0,
             0,
         );
 
-        let logo = UniTexture::new(
+        let mut logo = UniTexture::new(
             ctx.ref_texture(TextureID::SuzuLogo),
             numeric::Point2f::new(950.0, 50.0),
             numeric::Vector2f::new(1.0, 1.0),
             0.0,
             0,
         );
+	logo.hide();
 
         let scene_transition_effect = Some(effect_object::ScreenTileEffect::new(
             ctx,

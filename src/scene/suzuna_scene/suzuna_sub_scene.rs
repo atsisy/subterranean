@@ -58,7 +58,6 @@ pub struct SuzunaSubScene {
     pub desk_work_scene: Option<Box<TaskScene>>,
     pub day_result_scene: Option<Box<TaskResultScene>>,
     scene_status: SuzunaSceneStatus,
-    new_book_schedule: NewBookSchedule,
     tutorial_context: TaskTutorialContext,
     date: GensoDate,
 }
@@ -67,17 +66,7 @@ impl SuzunaSubScene {
     pub fn new<'a>(ctx: &mut SuzuContext<'a>, map_id: u32) -> Self {
         let date = ctx.take_save_data().date.clone();
 
-        let new_book_schedule =
-            NewBookSchedule::from_toml(ctx, "/other_config/new_book_schedule.toml");
-
-        let todays_new_books = if let Some(sched) = new_book_schedule.get_schedule_at(&date) {
-            sched.clone()
-        } else {
-            new_book_schedule
-                .get_schedule_at(&GensoDate::new(112, 7, 23))
-                .unwrap()
-                .clone()
-        };
+	let todays_new_books = DayNewBooks::random(ctx.resource, 5, 3);
 
         let task_tutorial = if ctx.take_save_data().date.first_day()
             && ctx.take_save_data().game_mode.is_story_mode()
@@ -98,7 +87,6 @@ impl SuzunaSubScene {
             desk_work_scene: None,
             day_result_scene: None,
             scene_status: SuzunaSceneStatus::Shop,
-            new_book_schedule: new_book_schedule,
             date: date,
             tutorial_context: task_tutorial,
         }

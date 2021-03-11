@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use crate::parse_toml_file;
 
-use super::GensoDate;
+use super::{GameResource, GensoDate};
 use super::{BookInformation, SuzuContext};
 
 #[derive(Clone)]
@@ -39,6 +39,20 @@ impl DayNewBooks {
 
     pub fn get_new_books(&self) -> Vec<BookInformation> {
         self.new_books.clone()
+    }
+
+    pub fn random(resource: &GameResource, num: usize, unit: usize) -> Self {
+	let mut books = Vec::new();
+	for _ in 0..num {
+	    let info = resource.book_random_select();
+	    for _ in 0..unit {
+		books.push(info.clone_with_new_id_condition());
+	    }
+	}
+
+	DayNewBooks {
+	    new_books: books
+	}
     }
 }
 

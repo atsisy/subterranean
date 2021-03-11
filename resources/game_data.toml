@@ -41,7 +41,7 @@ texture_paths = [
 	      "/textures/reset_button.png",
 	      "/textures/menu_art1.png",
 	      "/textures/menu_art2.png",
-	      "/textures/jp_house_background1.png",
+	      "/textures/title.png",
 	      "/textures/book_box_front.png",
 	      "/textures/book_box_back.png",
 	      "/textures/paper3.png",
