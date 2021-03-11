@@ -154,7 +154,7 @@ impl TaskScene {
     ) {
         let last = self.mouse_info.get_last_dragged(MouseButton::Left);
         self.task_table.dragging_handler(ctx, point, last);
-        self.task_table.hand_over_check(ctx.context, point);
+        self.task_table.hand_over_check(ctx, point);
     }
 
     fn unselect_dragging_object<'a>(&mut self, ctx: &mut SuzuContext<'a>, t: Clock) {
@@ -445,6 +445,7 @@ impl SceneManager for TaskScene {
                     self.pause_screen_set.mouse_motion_handler(ctx, point);
                 }
             }
+	    ctx.process_utility.redraw();
         } else {
             if self.mouse_info.is_dragging(MouseButton::Left) {
                 let d = numeric::Vector2f::new(offset.x / 2.0, offset.y / 2.0);

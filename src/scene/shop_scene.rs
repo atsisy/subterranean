@@ -2129,6 +2129,8 @@ impl SceneManager for ShopScene {
 
             self.shop_command_palette
                 .mouse_motion_handler(ctx, point, left_pressed, t);
+
+	    ctx.process_utility.redraw();
         }
     }
 

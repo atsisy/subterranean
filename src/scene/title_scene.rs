@@ -433,6 +433,7 @@ impl SceneManager for TitleScene {
         } else {
             self.contents_mouse_motion_handler(ctx, point, offset);
         }
+	ctx.process_utility.redraw();
     }
     fn scene_popping_return_handler<'a>(&mut self, ctx: &mut SuzuContext<'a>) {
         self.scene_transition_type = SceneTransition::Keep;

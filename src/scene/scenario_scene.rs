@@ -610,6 +610,8 @@ impl SceneManager for ScenarioScene {
         } else {
             self.scenario_event.mouse_motion_handler(ctx, point);
         }
+
+	ctx.process_utility.redraw();
     }
 
     fn scene_popping_return_handler<'a>(&mut self, _: &mut SuzuContext<'a>) {

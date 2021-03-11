@@ -48,7 +48,6 @@ pub struct TaskTable {
     shelving_box: ShelvingBookBox,
     event_list: DelayEventList<TaskTable>,
     borrowing_record_book: BorrowingRecordBook,
-    manual_book: EffectableWrap<MovableWrap<TaskManualBook>>,
     record_book_is_staged: bool,
     manual_book_is_staged: bool,
     customer_silhouette_menu: CustomerMenuGroup,
@@ -175,18 +174,6 @@ impl TaskTable {
             shelving_box: shelving_box,
             event_list: DelayEventList::new(),
             borrowing_record_book: record_book,
-            manual_book: EffectableWrap::new(
-                MovableWrap::new(
-                    Box::new(TaskManualBook::new(
-                        ctx,
-                        numeric::Rect::new(320.0, -550.0, 1000.0, 550.0),
-                        0,
-                    )),
-                    None,
-                    0,
-                ),
-                Vec::new(),
-            ),
             record_book_is_staged: false,
             manual_book_is_staged: false,
             customer_silhouette_menu: CustomerMenuGroup::new(0),
@@ -259,17 +246,6 @@ impl TaskTable {
         self.dark_effect_panel.new_effect(8, t, 0, 200);
     }
 
-    fn slide_appear_manual_book(&mut self, t: Clock) {
-        self.manual_book.appear();
-
-        self.manual_book.override_move_func(
-            move_fn::devide_distance(numeric::Point2f::new(250.0, 100.0), 0.2),
-            t,
-        );
-
-        self.dark_effect_panel.new_effect(8, t, 0, 200);
-    }
-
     fn slide_hide_record_book(&mut self, t: Clock) {
         self.borrowing_record_book.override_move_func(
             move_fn::devide_distance(numeric::Point2f::new(250.0, -550.0), 0.2),
@@ -281,17 +257,7 @@ impl TaskTable {
 
         self.dark_effect_panel.new_effect(8, t, 200, 0);
     }
-
-    fn slide_hide_manual_book(&mut self, t: Clock) {
-        self.manual_book.override_move_func(
-            move_fn::devide_distance(numeric::Point2f::new(250.0, -550.0), 0.2),
-            t,
-        );
-        self.manual_book_is_staged = false;
-
-        self.dark_effect_panel.new_effect(8, t, 200, 0);
-    }
-
+    
     fn try_open_borrowing_record_book<'a>(
         &mut self,
         ctx: &mut SuzuContext<'a>,
@@ -313,7 +279,6 @@ impl TaskTable {
                 }
                 OnDeskType::ManualBook => {
                     if !self.some_full_screen_object_is_appeared() {
-                        self.slide_appear_manual_book(t);
                         self.manual_book_is_staged = true;
                         return true;
                     }
@@ -336,7 +301,7 @@ impl TaskTable {
 
         self.sight.dragging_handler(ctx, rpoint, rlast);
         self.desk.dragging_handler(ctx, rpoint);
-        self.shelving_box.dragging_handler(rpoint, rlast);
+        self.shelving_box.dragging_handler(ctx, rpoint, rlast);
     }
 
     pub fn unselect_dragging_object<'a>(&mut self, ctx: &mut SuzuContext<'a>, t: Clock) {
@@ -345,7 +310,7 @@ impl TaskTable {
         self.shelving_box.unselect_dragging_object(t);
     }
 
-    pub fn hand_over_check(&mut self, ctx: &mut ggez::Context, point: numeric::Point2f) {
+    pub fn hand_over_check<'a>(&mut self, ctx: &mut SuzuContext<'a>, point: numeric::Point2f) {
         let rpoint = self.canvas.relative_point(point);
 
         self.hand_over_check_d2s(ctx, rpoint);
@@ -413,12 +378,13 @@ impl TaskTable {
     ///
     /// DeskからMiniSightにオブジェクトを移動させるメソッド
     ///
-    fn hand_over_check_d2s(&mut self, ctx: &mut ggez::Context, rpoint: numeric::Point2f) {
-        let border = self.desk_border(ctx);
+    fn hand_over_check_d2s<'a>(&mut self, ctx: &mut SuzuContext<'a>, rpoint: numeric::Point2f) {
+        let border = self.desk_border(ctx.context);
 
         if self.desk.has_dragging() && border > rpoint.y {
             if let Some(mut dragging) = self.desk.release_dragging() {
-                self.apply_d2s_point_convertion(ctx, &mut dragging);
+		ctx.process_utility.redraw();
+                self.apply_d2s_point_convertion(ctx.context, &mut dragging);
                 self.sight.insert_dragging(dragging);
             }
         }
@@ -427,19 +393,20 @@ impl TaskTable {
     ///
     /// MiniSightからDeskにオブジェクトを移動させるメソッド
     ///
-    fn hand_over_check_s2d(&mut self, ctx: &mut ggez::Context, rpoint: numeric::Point2f) {
-        let border = self.desk_border(ctx);
+    fn hand_over_check_s2d<'a>(&mut self, ctx: &mut SuzuContext<'a>, rpoint: numeric::Point2f) {
+        let border = self.desk_border(ctx.context);
 
         if self.sight.has_dragging() && border < rpoint.y {
             if let Some(mut dragging) = self.sight.release_dragging() {
-                self.apply_s2d_point_convertion(ctx, &mut dragging);
+		ctx.process_utility.redraw();
+                self.apply_s2d_point_convertion(ctx.context, &mut dragging);
                 self.desk.insert_dragging(dragging);
             }
         }
     }
 
-    fn hand_over_check_desk2box(&mut self, ctx: &mut ggez::Context, rpoint: numeric::Point2f) {
-        let border = self.desk_border_x(ctx);
+    fn hand_over_check_desk2box<'a>(&mut self, ctx: &mut SuzuContext<'a>, rpoint: numeric::Point2f) {
+        let border = self.desk_border_x(ctx.context);
 
         if self.desk.has_dragging() && border < rpoint.x {
             if self
@@ -452,19 +419,20 @@ impl TaskTable {
             }
 
             if let Some(mut dragging) = self.desk.release_dragging() {
-                self.apply_desk2box_point_convertion(ctx, &mut dragging);
+		ctx.process_utility.redraw();
+                self.apply_desk2box_point_convertion(ctx.context, &mut dragging);
                 self.shelving_box.insert_dragging(dragging);
             }
         }
     }
 
-    fn hand_over_check_box2desk(&mut self, ctx: &mut ggez::Context, rpoint: numeric::Point2f) {
-        let border = self.desk_border_x(ctx);
+    fn hand_over_check_box2desk<'a>(&mut self, ctx: &mut SuzuContext<'a>, rpoint: numeric::Point2f) {
+        let border = self.desk_border_x(ctx.context);
 
         if self.shelving_box.has_dragging() && border >= rpoint.x {
-            debug::debug_screen_push_text("box 2 desk");
             if let Some(mut dragging) = self.shelving_box.release_dragging() {
-                self.apply_box2desk_point_convertion(ctx, &mut dragging);
+		ctx.process_utility.redraw();
+                self.apply_box2desk_point_convertion(ctx.context, &mut dragging);
                 self.desk.insert_dragging(dragging);
             }
         }
@@ -556,16 +524,6 @@ impl TaskTable {
         self.check_task_is_done(ctx);
 
         self.dark_effect_panel.run_effect(ctx, t);
-
-        if !self.manual_book.is_stop() {
-            self.manual_book.move_with_func(t);
-            ctx.process_utility.redraw();
-        }
-
-        if !self.manual_book.is_empty_effect() {
-            self.manual_book.effect(ctx.context, t);
-            ctx.process_utility.redraw();
-        }
     }
 
     pub fn finish_customer_event(&mut self, now: Clock) {
@@ -801,7 +759,6 @@ impl TaskTable {
                 }
 
                 self.slide_hide_record_book(t);
-                self.slide_hide_manual_book(t);
             }
             _ => (),
         }
@@ -1513,15 +1470,6 @@ impl TaskTable {
             }
         }
 
-        if self.manual_book.contains(ctx.context, click_point) {
-            return;
-        } else {
-            if self.manual_book_is_staged {
-                self.slide_hide_manual_book(t);
-                return;
-            }
-        }
-
         // BorrowingRecordBookが表示されていない場合、
         // OnDeskBookに関するメニューの表示をチェックする
         if !self.try_show_menus_regarding_customer_silhoutte(ctx, click_point, t) {
@@ -1661,10 +1609,6 @@ impl Clickable for TaskTable {
 
         if self.borrowing_record_book.click_handler(ctx, t, rpoint) {
             // クリックハンドラが呼び出されたので終了
-            return;
-        }
-
-        if self.manual_book.click_handler(ctx, point) {
             return;
         }
 

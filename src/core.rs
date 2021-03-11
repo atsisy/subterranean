@@ -2948,8 +2948,6 @@ impl SceneController {
             point,
             offset,
         );
-
-        self.redraw_request = scene::DrawRequest::Draw;
     }
 
     fn mouse_button_down_event(

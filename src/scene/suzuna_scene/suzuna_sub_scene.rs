@@ -266,6 +266,7 @@ impl SceneManager for SuzunaSubScene {
                     .as_mut()
                     .unwrap()
                     .mouse_motion_event(ctx, point, offset);
+		ctx.process_utility.redraw();
             }
             SuzunaSceneStatus::DeskWork => {
                 self.desk_work_scene
@@ -278,6 +279,7 @@ impl SceneManager for SuzunaSubScene {
                     .as_mut()
                     .unwrap()
                     .mouse_motion_event(ctx, point, offset);
+		ctx.process_utility.redraw();
             }
         }
     }

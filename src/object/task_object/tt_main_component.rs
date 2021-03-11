@@ -149,6 +149,7 @@ impl DeskObjects {
 
     fn drag_current_object<'a>(&mut self, ctx: &mut SuzuContext<'a>, point: numeric::Point2f) {
         if let Some(obj) = &mut self.dragging {
+	    ctx.process_utility.redraw();
             let area = match obj {
                 TaskItem::Book(item) => item.get_large_object().get_drawing_area(ctx.context),
                 TaskItem::Texture(item) => item.get_large_object().get_drawing_area(ctx.context),
@@ -1321,6 +1322,7 @@ impl SuzuMiniSight {
         last: numeric::Point2f,
     ) {
         if let Some(obj) = &mut self.dragging {
+	    ctx.process_utility.redraw();
             obj.get_object_mut()
                 .move_diff(numeric::Vector2f::new(point.x - last.x, point.y - last.y));
 
@@ -1717,8 +1719,9 @@ impl ShelvingBookBox {
         clicked_data
     }
 
-    pub fn dragging_handler(&mut self, point: numeric::Point2f, last: numeric::Point2f) {
+    pub fn dragging_handler<'a>(&mut self, ctx: &mut SuzuContext<'a>, point: numeric::Point2f, last: numeric::Point2f) {
         if let Some(obj) = &mut self.dragging {
+	    ctx.process_utility.redraw();
             obj.get_object_mut()
                 .move_diff(numeric::Vector2f::new(point.x - last.x, point.y - last.y));
             self.draw_request = DrawRequest::Draw;
