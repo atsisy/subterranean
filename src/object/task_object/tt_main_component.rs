@@ -587,14 +587,20 @@ impl TaskSilhouette {
         self.name = Some(name);
         self
     }
+    
+    pub fn run_effect<'a>(&mut self, ctx: &mut SuzuContext<'a>, t: Clock) -> DrawRequest {
+	let mut draw_request = DrawRequest::Skip;
+	
+        if let Some(obj) = self.character.as_mut() {
+            if !obj.is_stop() || !obj.is_empty_effect() {
+                draw_request = DrawRequest::Draw;
+            }
+            obj.move_with_func(t);
+            obj.effect(ctx.context, t);
+        }
 
-    pub fn get_object(&self) -> Option<&SimpleObject> {
-        self.character.as_ref()
-    }
-
-    pub fn get_object_mut(&mut self) -> Option<&mut SimpleObject> {
-        self.character.as_mut()
-    }
+	draw_request
+    }    
 }
 
 impl DrawableComponent for TaskSilhouette {
@@ -1059,13 +1065,7 @@ impl SuzuMiniSightSilhouette {
             draw_request = DrawRequest::Draw;
         }
 
-        if let Some(obj) = self.silhouette.get_object_mut() {
-            if !obj.is_stop() || !obj.is_empty_effect() {
-                draw_request = DrawRequest::Draw;
-            }
-            obj.move_with_func(t);
-            obj.effect(ctx.context, t);
-        }
+	draw_request |= self.silhouette.run_effect(ctx, t);
 
         if !self.text_balloon.is_empty_effect() {
             self.text_balloon.effect(ctx.context, t);
