@@ -52,10 +52,10 @@ impl DrawableEvaluationFlow {
         let mut yet_effect_text = VecDeque::new();
 
         let mut effect_time_list = VecDeque::new();
+        effect_time_list.push_back(t + effect_clock_offset);
         effect_time_list.push_back(t + effect_clock_offset + 50);
+        effect_time_list.push_back(t + effect_clock_offset + 100);
         effect_time_list.push_back(t + effect_clock_offset + 150);
-        effect_time_list.push_back(t + effect_clock_offset + 250);
-        effect_time_list.push_back(t + effect_clock_offset + 350);
 
         let font_info = FontInformation::new(
             ctx.resource.get_font(FontID::JpFude1),
@@ -210,7 +210,7 @@ impl DrawableEvaluationFlow {
             if self.effect_time_list[0] <= t {
                 let mut vtext = self.yet_effect_text.pop_front().unwrap();
                 vtext.clear_effect();
-                vtext.add_effect(vec![effect::appear_bale_down_from_top(100, t)]);
+                vtext.add_effect(vec![effect::appear_bale_down_from_top(50, t)]);
                 self.now_effect_text.push_back(vtext);
                 self.effect_time_list.pop_front();
             } else {
@@ -240,6 +240,16 @@ impl DrawableEvaluationFlow {
                 *effect_time -= diff;
             }
         }
+    }
+
+    pub fn is_done(&self) -> bool {
+	for vtext in self.now_effect_text.iter() {
+            if !vtext.is_empty_effect() || !vtext.is_stop() {
+		return false;
+            }
+
+	}
+	self.yet_effect_text.is_empty()
     }
 }
 
@@ -383,8 +393,8 @@ impl DrawableTaskResult {
 
         let mut effect_time_list = VecDeque::new();
         effect_time_list.push_back(t + 50);
+        effect_time_list.push_back(t + 100);
         effect_time_list.push_back(t + 150);
-        effect_time_list.push_back(t + 250);
 
         let task_result = ctx.take_save_data().task_result.clone();
 
@@ -534,7 +544,7 @@ impl DrawableTaskResult {
             ctx,
             numeric::Point2f::new(250.0, 80.0),
             result_report,
-            350 as Clock,
+            200 as Clock,
             0,
             t,
         );
@@ -574,12 +584,16 @@ impl DrawableTaskResult {
         self.canvas.draw(ctx.context).unwrap();
     }
 
+    pub fn evaluation_flow_is_done(&self) -> bool {
+	self.evaluation.is_done()
+    }
+
     pub fn run_effect<'a>(&mut self, ctx: &mut SuzuContext<'a>, t: Clock) {
         while !self.effect_time_list.is_empty() {
             if self.effect_time_list[0] <= t {
                 let mut vtext = self.yet_effect_text.pop_front().unwrap();
                 vtext.clear_effect();
-                vtext.add_effect(vec![effect::appear_bale_down_from_top(100, t)]);
+                vtext.add_effect(vec![effect::appear_bale_down_from_top(50, t)]);
                 self.now_effect_text.push_back(vtext);
                 self.effect_time_list.pop_front();
             } else {

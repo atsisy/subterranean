@@ -12,7 +12,7 @@ use torifune::graphics::object::*;
 use torifune::impl_drawable_object_for_wrapped;
 use torifune::impl_texture_object_for_wrapped;
 use torifune::roundup2f;
-use torifune::{debug, mintp, mintp_new, numeric};
+use torifune::{mintp, mintp_new, numeric};
 
 use crate::core::FontID;
 use crate::flush_delay_event;
@@ -32,16 +32,6 @@ pub enum TaskTableStagingObject {
 }
 
 impl TaskTableStagingObject {
-    ///
-    /// 移動関数を変更しスライドアウトするように見せる
-    ///
-    pub fn slide_hide(&mut self, _t: Clock) {
-        match self {
-            TaskTableStagingObject::BorrowingRecordBook(_) => {
-                debug::debug_screen_push_text("Implement slide hide, TaskTableStagingObject");
-            }
-        }
-    }
 }
 
 impl DrawableComponent for TaskTableStagingObject {
@@ -588,10 +578,6 @@ impl TaskSilhouette {
         self.character.is_some()
     }
 
-    pub fn get_name(&self) -> Option<&String> {
-        self.name.as_ref()
-    }
-
     pub fn change_character(&mut self, character: SimpleObject) -> &mut Self {
         self.character = Some(character);
         self
@@ -699,14 +685,12 @@ pub enum TextBalloonPhraseType {
 pub struct CustomerDialogue {
     dialogue: Vec<String>,
     time_step: Vec<u64>,
-    phrase_type: Vec<TextBalloonPhraseType>,
     current_index: usize,
 }
 
 impl CustomerDialogue {
     pub fn new(dialogue: Vec<String>, time_step: Vec<u64>) -> Self {
         CustomerDialogue {
-            phrase_type: vec![TextBalloonPhraseType::SimplePhrase; dialogue.len()],
             dialogue: dialogue,
             time_step: time_step,
             current_index: 0,

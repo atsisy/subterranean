@@ -7,7 +7,6 @@ use crate::flush_delay_event;
 use crate::object::character_factory;
 use crate::object::effect_object;
 use crate::object::end_object::*;
-use crate::object::title_object::*;
 use crate::scene::*;
 use crate::{
     core::{
@@ -121,12 +120,6 @@ impl EndScene {
             }),
             t + 31,
         );
-    }
-
-    fn run_builtin_command(&mut self, command: TitleBuiltinCommand) {
-        match command {
-            TitleBuiltinCommand::Exit => std::process::exit(0),
-        }
     }
 
     fn scene_transition_close_effect<'a>(&mut self, ctx: &mut SuzuContext<'a>, t: Clock) {

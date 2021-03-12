@@ -1045,9 +1045,13 @@ impl ShopScene {
         camera: &numeric::Rect,
         t: Clock,
     ) {
+	if player.get_last_map_move_distance().x == 0.0 && character.get_last_map_move_distance().x == 0.0 {
+	    return;
+	}
+	
         // 他キャラクターのマップ座標を更新
         character.update_display_position(camera);
-
+	
         // 衝突情報を取得
         let collision_info = player.check_collision_with_character(ctx, character);
 
@@ -1056,6 +1060,8 @@ impl ShopScene {
             // プレイヤーと他キャラクターの衝突状況から、プレイヤーがどれだけ、突き放されればいいのか計算
             let diff = player.fix_collision_horizon(ctx, &collision_info, t);
 
+	    println!("{:?}, {:?}", collision_info.object1_position, collision_info.object2_position);
+	    println!("collision diff -> {}, {}", -diff, 0.0);
             // プレイヤーの突き放し距離分動かす
             player.move_map(numeric::Vector2f::new(-diff, 0.0));
 
@@ -1071,6 +1077,11 @@ impl ShopScene {
         camera: &numeric::Rect,
         t: Clock,
     ) {
+	if player.get_character_object().get_last_move_distance().y == 0.0 &&
+	    character.get_character_object().get_last_move_distance().y == 0.0 {
+	    return;
+	}
+	
         // 他キャラクターのマップ座標を更新
         character
             .get_mut_character_object()
@@ -1900,12 +1911,11 @@ impl ShopScene {
     }
 
     fn try_add_goto_check_customers<'a>(&mut self, ctx: &mut SuzuContext<'a>, t: Clock) {
-        if t % 900 != 0 {
+        if t % self.random_customer_add_timing != 0 {
             return;
         }
 
         if let Some(customer) = self.character_group.pickup_goto_check_customer() {
-            println!("picked up!!");
             self.goto_check_customers.insert_new_customer(
                 ctx,
                 customer,
@@ -2439,7 +2449,7 @@ impl SceneManager for ShopScene {
         // メニューの更新
         self.shop_menu.update(ctx, t);
 
-        //}));
+    //}));
     }
 
     fn drawing_process(&mut self, ctx: &mut ggez::Context) {

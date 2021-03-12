@@ -341,13 +341,11 @@ impl TaskScene {
     }
 
     fn after_task_done_process<'a>(&mut self, ctx: &mut SuzuContext<'a>, t: Clock) {
-        debug::debug_screen_push_text(&format!("register delay process!!"));
         self.event_list.add_event(
             Box::new(|scene: &mut TaskScene, _, _| {
                 scene
                     .task_table
                     .finish_customer_event(scene.get_current_clock());
-                debug::debug_screen_push_text(&format!("run delay process!! finish!!"));
                 scene.status = TaskSceneStatus::CustomerFree;
             }),
             self.get_current_clock() + 30,

@@ -3,7 +3,6 @@ pub mod suzuna_sub_scene;
 use ggez::input::mouse::MouseButton;
 
 use torifune::core::*;
-use torifune::debug;
 use torifune::device::VirtualKey;
 use torifune::numeric;
 
@@ -32,7 +31,6 @@ impl SuzunaScene {
     ) -> SceneTransition {
         if transition_status == SceneTransition::StackingTransition {
             if self.sub_scene.get_shop_scene_mut().unwrap().transition() == SceneID::MainDesk {
-                debug::debug_screen_push_text("switch shop -> work");
                 self.sub_scene
                     .switch_shop_to_deskwork(ctx, transition_status);
             }
@@ -41,7 +39,6 @@ impl SuzunaScene {
         }
 
         if self.sub_scene.get_shop_scene_mut().unwrap().transition() == SceneID::DayResult {
-            debug::debug_screen_push_text("switch shop -> result");
             self.sub_scene
                 .switch_shop_to_day_result(ctx, transition_status);
 
@@ -49,7 +46,6 @@ impl SuzunaScene {
         }
 
         if self.sub_scene.get_shop_scene_mut().unwrap().transition() == SceneID::Title {
-            debug::debug_screen_push_text("switch shop -> title");
             return SceneTransition::SwapTransition;
         }
 

@@ -2,7 +2,6 @@ use std::collections::VecDeque;
 
 use ggez::graphics as ggraphics;
 
-use torifune::debug;
 use torifune::distance;
 use torifune::graphics::drawable::*;
 use torifune::graphics::object::shape;
@@ -164,7 +163,6 @@ impl EffectableHangi {
     pub fn release_handler(&mut self, ctx: &mut ggez::Context) {
         self.drag_distance.release();
         self.lag_effect.update_mesh(ctx);
-        debug::debug_screen_push_text(&format!("distance: {}", self.drag_distance.get_distance()));
     }
 }
 

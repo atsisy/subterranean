@@ -8,7 +8,6 @@ use ggez::input as ginput;
 use ginput::mouse::CursorIcon;
 
 use torifune::core::Clock;
-use torifune::debug;
 use torifune::device::VirtualKey;
 use torifune::graphics::drawable::*;
 use torifune::graphics::object::sub_screen;
@@ -365,7 +364,6 @@ impl TaskTable {
 
         // Y座標は変更せず, X座標をCanvasの左端に来るように設定
         obj_p.x = self.desk.canvas.get_drawing_size(ctx).x;
-        debug::debug_screen_push_text(&format!("y: {}", obj_p.y));
 
         obj.enable_large();
 
@@ -751,7 +749,6 @@ impl TaskTable {
         match vkey {
             VirtualKey::Action3 => {
                 if self.staging_object.is_some() {
-                    self.staging_object.as_mut().unwrap().slide_hide(t);
                     self.event_list.add_event(
                         Box::new(|tt: &mut Self, _, _| tt.staging_object = None),
                         t + 100,

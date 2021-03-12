@@ -4,7 +4,7 @@ use torifune::core::Clock;
 use torifune::graphics::drawable::*;
 use torifune::graphics::object::*;
 
-use crate::core::{FontID, SavableData, SuzuContext, TextureID, TileBatchTextureID};
+use crate::core::{FontID, SavableData, SoundID, SuzuContext, TextureID, TileBatchTextureID};
 use crate::object::effect_object;
 use crate::object::save_scene_object::*;
 use crate::object::util_object::*;
@@ -163,9 +163,10 @@ impl SaveScene {
         ));
 
         self.event_list.add_event(
-            Box::new(move |slf: &mut Self, _, _| {
+            Box::new(move |slf: &mut Self, ctx, _| {
                 slf.scene_transition = SceneID::Scenario;
                 slf.scene_transition_type = SceneTransition::SwapTransition;
+		ctx.resource.stop_bgm(ctx.context, SoundID::Title);
             }),
             31,
         );

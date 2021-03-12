@@ -59,12 +59,14 @@ impl TaskResultScene {
             ),
         );
 
-        let ok_button = util_object::FramedButton::create_design1(
+        let mut ok_button = util_object::FramedButton::create_design1(
             ctx,
-            numeric::Point2f::new(100.0, 608.0),
+            numeric::Point2f::new(80.0, 550.0),
             "戸締まり",
             numeric::Vector2f::new(28.0, 28.0),
         );
+
+	ok_button.hide();
 
         let scene_transition = Some(effect_object::ScreenTileEffect::new(
             ctx,
@@ -176,7 +178,7 @@ impl SceneManager for TaskResultScene {
     ) {
         let t = self.get_current_clock();
 
-        if self.ok_button.contains(point) {
+        if self.ok_button.is_visible() && self.ok_button.contains(point) {
             self.ok_button.make_this_hovered_status(ctx);
             self.ready_to_finish_scene(ctx, t);
         }
@@ -196,6 +198,10 @@ impl SceneManager for TaskResultScene {
 
         self.drawable_task_result
             .run_effect(ctx, self.get_current_clock());
+
+	if self.drawable_task_result.evaluation_flow_is_done() {
+	    self.ok_button.appear();
+	}
 
         if let Some(effect) = self.scene_transition_effect.as_mut() {
             effect.effect(ctx.context, t);

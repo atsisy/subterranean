@@ -141,12 +141,15 @@ impl TitleScene {
         ));
 
         // 新規開始ならセーブデータを初期化
-        if scene_id == SceneID::Scenario {
-            ctx.reset_save_data(if let Some(game_mode) = game_mode {
-                game_mode
-            } else {
-                GameMode::story()
-            });
+        match scene_id {
+            SceneID::Scenario => {
+		ctx.reset_save_data(if let Some(game_mode) = game_mode {
+                    game_mode
+		} else {
+                    GameMode::story()
+		});
+	    },
+	    _ => (),
         }
 
         self.event_list.add_event(
@@ -154,7 +157,9 @@ impl TitleScene {
                 slf.scene_transition = scene_id;
                 slf.scene_transition_type = trans;
                 slf.unlock_scene_transition();
-                ctx.resource.stop_bgm(ctx.context, SoundID::Title);
+		if slf.scene_transition != SceneID::Save {
+                    ctx.resource.stop_bgm(ctx.context, SoundID::Title);
+		}
             }),
             t + 31,
         );

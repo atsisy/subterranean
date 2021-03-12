@@ -5,7 +5,6 @@ use std::str::FromStr;
 use ggez::graphics as ggraphics;
 
 use torifune::core::Clock;
-use torifune::debug;
 use torifune::distance;
 use torifune::graphics::drawable::*;
 use torifune::graphics::object::*;
@@ -171,7 +170,7 @@ impl MapObject {
         self.object.get_mut_object().set_position(last);
     }
 
-    fn get_last_move_distance(&self) -> numeric::Vector2f {
+    pub fn get_last_move_distance(&self) -> numeric::Vector2f {
         let current = self.object.get_object().get_position();
         numeric::Vector2f::new(
             current.x - self.last_position.x,
@@ -762,8 +761,6 @@ impl CustomerCharacter {
             // 基本的な速さは一致するようにしたいため、次のように計算する
             let speed = numeric::Vector2f::new(rad.cos() * 1.4, rad.sin() * 1.4);
 
-            debug::debug_screen_push_text(&format!("rad: {}", rad.to_degrees()));
-
             // 向きによってアニメーションを更新
             self.update_animation_mode_with_rad(rad);
 
@@ -793,8 +790,6 @@ impl CustomerCharacter {
     ) {
         // ルート検索
         let maybe_next_route = self.find_route(ctx, map_data, goal);
-
-        debug::debug_screen_push_text(&format!("{:?}", maybe_next_route));
 
         // 一定時間後にルートを設定し、状態をReadyに変更する。
         // 移動開始するまでは、ストップ
@@ -830,7 +825,6 @@ impl CustomerCharacter {
         // 情報をキューから取り出し、速度を計算し直す
         let maybe_next_position = self.move_queue.dequeue();
         if let Some(next_position) = maybe_next_position {
-            debug::debug_screen_push_text(&format!("next: {:?}", next_position));
             self.override_move_effect(ctx, next_position);
             self.current_goal = next_position;
             self.customer_status = CustomerCharacterStatus::Moving;
@@ -851,8 +845,6 @@ impl CustomerCharacter {
         self.move_queue.clear();
         // 新しくルートを検索
         let maybe_next_route = self.find_route(ctx, map_data, dest);
-
-        debug::debug_screen_push_text(&format!("{:?}", maybe_next_route));
 
         // ルートが見つかれば、その情報をキューに追加
         if let Some(next_route) = maybe_next_route {
@@ -1029,8 +1021,6 @@ impl CustomerCharacter {
                 // 移動中, 目的地に到着したか？
                 if self.is_goal_now(ctx.context) {
                     let goal = self.current_goal;
-
-                    debug::debug_screen_push_text(&format!("goal: {:?}", goal));
 
                     // 目的地でマップ位置を上書き
                     self.get_mut_character_object()

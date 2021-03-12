@@ -10,7 +10,6 @@ use ggez::{audio::SoundSource, graphics as ggraphics};
 
 use tdev::ProgramableKey;
 use torifune::core::Clock;
-use torifune::debug;
 use torifune::device as tdev;
 use torifune::graphics::drawable::*;
 use torifune::graphics::object::sub_screen;
@@ -2643,17 +2642,6 @@ impl SceneController {
             numeric::Vector2f::new(window_size.0.round(), window_size.1.round()),
         );
 
-        debug::debug_screen_init(
-            ctx,
-            numeric::Rect::new(940.0, 0.0, 420.0, 300.0),
-            FontInformation::new(
-                game_data.get_font(FontID::DEFAULT),
-                numeric::Vector2f::new(12.0, 12.0),
-                ggraphics::Color::from_rgba_u32(0xffffffa0),
-            ),
-        );
-        debug::debug_screen_hide();
-
         let mut game_status = None;
         let mut game_config = GameConfig::new_from_toml(ctx, "/default_game_config.toml");
 
@@ -2818,8 +2806,6 @@ impl SceneController {
 
             self.current_scene.abs_mut().drawing_process(ctx);
 
-            debug::debug_screen_draw(ctx);
-
             sub_screen::pop_screen(ctx);
             self.root_screen.draw(ctx).unwrap();
         }
@@ -2878,14 +2864,6 @@ impl SceneController {
         _keymods: KeyMods,
         _repeat: bool,
     ) {
-        if keycode == KeyCode::F1 {
-            debug::debug_screen_appear();
-        }
-
-        if keycode == KeyCode::F2 {
-            debug::debug_screen_hide();
-        }
-
         self.current_scene.abs_mut().key_down_event(
             &mut SuzuContext {
                 context: ctx,
@@ -3075,6 +3053,7 @@ impl ggez::event::EventHandler for State {
     }
 
     fn draw(&mut self, ctx: &mut Context) -> GameResult<()> {
+	//println!("{}", perf_measure!({
         match self.scene_controller.redraw_request_status() {
             scene::DrawRequest::Draw | scene::DrawRequest::InitDraw => {
                 graphics::clear(ctx, [0.0, 0.0, 0.0, 0.0].into());
@@ -3082,11 +3061,12 @@ impl ggez::event::EventHandler for State {
             }
             _ => (),
         }
+    //}));
 
         graphics::present(ctx)?;
 
         self.scene_controller
-            .run_post_process(ctx, &mut self.game_data);
+		.run_post_process(ctx, &mut self.game_data);
 
         Ok(())
     }

@@ -1,6 +1,5 @@
 pub mod character_factory;
 pub mod collision;
-pub mod copy_scene_object;
 pub mod effect;
 pub mod effect_object;
 pub mod end_object;

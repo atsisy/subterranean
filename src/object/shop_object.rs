@@ -5,7 +5,6 @@ use ggez::input::mouse::MouseButton;
 
 use sub_screen::SubScreen;
 use torifune::core::Clock;
-use torifune::debug;
 use torifune::device::*;
 use torifune::graphics::drawable::*;
 use torifune::graphics::object::sub_screen;
@@ -600,7 +599,6 @@ impl SelectShelvingBookUI {
             if remaining_capacity == enum_index {
                 break;
             }
-            debug::debug_screen_push_text(&format!("remove book: {}", selecting_index));
             let select_book = self.boxed_books.swap_remove(*selecting_index);
             self.shelving_books.push(select_book);
         }
@@ -622,7 +620,6 @@ impl SelectShelvingBookUI {
         // 大体同じ
         self.shelving_window.sort_selecting_index_less();
         for selecting_index in self.shelving_window.get_selecting_index().iter() {
-            debug::debug_screen_push_text(&format!("remove book: {}", selecting_index));
             let select_book = self.shelving_books.swap_remove(*selecting_index);
             self.boxed_books.push(select_book);
         }

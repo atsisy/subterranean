@@ -15,6 +15,14 @@ x = 2
 y = 14
 
 [[event-panel]]
+type = "switch-scene"
+trigger = "action"
+switch-scene-id = "MainDesk"
+[event-panel.position]
+x = 2
+y = 13
+
+[[event-panel]]
 type = "book-shelf"
 trigger = "action"
 [event-panel.shelf-info]
