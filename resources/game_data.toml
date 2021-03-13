@@ -95,6 +95,7 @@ texture_paths = [
 	      "/textures/page_edge_left_not_alpha.png",
 	      "/textures/page_edge_right_not_alpha.png",
 	      "/textures/knob.png",
+	      "/textures/nitori_default_tachie.png"
 	      ]
 font_paths = ["/fonts/azuki.ttf", "/fonts/RiiT_F.ttf", "/fonts/OradanoGSRR.ttf", "/fonts/cinecaption226.ttf", "/fonts/JF-Dot-ShinonomeMaru12B.ttf"]
 tileset_paths = ["/maps/suzunaan2/main.tmx"]

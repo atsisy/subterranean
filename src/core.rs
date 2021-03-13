@@ -174,6 +174,7 @@ pub enum TextureID {
     GoNextPageLeftNotAlpha,
     GoNextPageRightNotAlpha,
     Knob,
+    NitoriTachieDefault,
     Unknown,
 }
 
@@ -300,6 +301,7 @@ impl FromStr for TextureID {
             "GoNextPageLeftNotAlpha" => Ok(Self::GoNextPageLeftNotAlpha),
             "GoNextPageRightNotAlpha" => Ok(Self::GoNextPageRightNotAlpha),
             "Knob" => Ok(Self::Knob),
+	    "NitoriTachieDefault" => Ok(Self::NitoriTachieDefault),
             _ => Err(()),
         }
     }
@@ -404,6 +406,7 @@ impl TextureID {
             93 => Some(Self::GoNextPageLeftNotAlpha),
             94 => Some(Self::GoNextPageRightNotAlpha),
             95 => Some(Self::Knob),
+	    96 => Some(Self::NitoriTachieDefault),
             _ => None,
         }
     }
