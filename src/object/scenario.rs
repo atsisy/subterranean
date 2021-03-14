@@ -440,6 +440,40 @@ impl ScenarioText {
     }
 }
 
+pub struct ScenarioSwitch {
+    opecode: String,
+    self_id: ScenarioElementID,
+    yes_branch: ScenarioElementID,
+    no_branch: ScenarioElementID,
+}
+
+impl ScenarioSwitch {
+    pub fn from_toml_object(toml_scripts: &toml::value::Value) -> Self {
+	ScenarioSwitch {
+	    self_id: toml_scripts["id"].as_integer().unwrap() as i32,
+	    opecode: toml_scripts["opecode"].as_str().unwrap().to_string(),
+	    yes_branch: toml_scripts["yes"].as_integer().unwrap() as i32,
+	    no_branch: toml_scripts["no"].as_integer().unwrap() as i32,
+	}
+    }
+
+    pub fn get_opecode(&self) -> &str {
+	self.opecode.as_str()
+    }
+
+    pub fn get_yes_branch(&self) -> ScenarioElementID {
+	self.yes_branch
+    }
+
+    pub fn get_no_branch(&self) -> ScenarioElementID {
+	self.no_branch
+    }
+
+    pub fn get_self_scenario_id(&self) -> ScenarioElementID {
+	self.self_id
+    }
+}
+
 ///
 /// 選択肢のデータを保持する構造体
 ///
@@ -842,6 +876,7 @@ pub enum ScenarioElement {
     SceneTransition(ScenarioTransitionData),
     FinishAndWait(ScenarioFinishAndWaitData),
     BuiltinCommand(ScenarioBuiltinCommand),
+    Switch(ScenarioSwitch),
 }
 
 impl ScenarioElement {
@@ -852,6 +887,7 @@ impl ScenarioElement {
             Self::SceneTransition(transition_data) => transition_data.2,
             Self::FinishAndWait(data) => data.get_scenario_id(),
             Self::BuiltinCommand(command) => command.get_scenario_id(),
+	    Self::Switch(switch) => switch.get_self_scenario_id(),
         }
     }
 
@@ -862,6 +898,7 @@ impl ScenarioElement {
             Self::SceneTransition(_) => None,
             Self::FinishAndWait(data) => data.get_background_texture_id(),
             Self::BuiltinCommand(command) => command.get_background_texture_id(),
+	    Self::Switch(_) => None,
         }
     }
 
@@ -872,6 +909,7 @@ impl ScenarioElement {
             Self::SceneTransition(_) => TachieData::new_empty(),
             Self::FinishAndWait(data) => data.get_tachie_data(),
             Self::BuiltinCommand(command) => command.get_tachie_info(),
+	    Self::Switch(_) => TachieData::new_empty(),
         }
     }
 }
@@ -963,6 +1001,9 @@ impl Scenario {
                             ScenarioBuiltinCommand::from_toml_object(elem),
                         ));
                     }
+		    "switch" => {
+			scenario.add(ScenarioElement::Switch(ScenarioSwitch::from_toml_object(elem)));
+		    }
                     _ => eprintln!("Error"),
                 }
             } else {
@@ -1585,6 +1626,7 @@ pub enum ScenarioEventStatus {
     SceneTransition,
     FinishAndWait,
     StartSchedule,
+    BuiltinSwitch,
 }
 
 pub struct ScenarioEvent {
@@ -1812,6 +1854,28 @@ impl ScenarioEvent {
                     self.status = ScenarioEventStatus::StartSchedule;
                 }
             },
+	    ScenarioElement::Switch(switch) => {
+		let next_id = match switch.get_opecode() {
+		    "cleared" => {
+			if ctx.take_save_data().game_cleared() {
+			    switch.get_yes_branch()
+			} else {
+			    switch.get_no_branch()
+			}
+		    },
+		    _ => panic!("Scenario Script BUG"),
+		};
+
+		self.scenario.update_current_page_index(next_id);
+		
+		// 次がシナリオなら初期化する
+		match self.scenario.ref_current_element_mut() {
+		    ScenarioElement::Text(obj) => {
+			obj.reset();
+		    }
+		    _ => (),
+		}
+	    }
         }
     }
 
@@ -1938,6 +2002,7 @@ impl ScenarioEvent {
             ScenarioElement::SceneTransition(_) => (),
             ScenarioElement::FinishAndWait(_) => (),
             ScenarioElement::BuiltinCommand(_) => (),
+	    ScenarioElement::Switch(_) => (),
         }
     }
 

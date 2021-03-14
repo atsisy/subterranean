@@ -2081,6 +2081,10 @@ impl SavableData {
     pub fn get_scenario_save_data(&mut self) -> Option<ScenarioSceneSaveData> {
 	std::mem::replace(&mut self.scenario_save_data, None)
     }
+
+    pub fn game_cleared(&self) -> bool {
+	self.task_result.total_money > 100000
+    }
 }
 
 pub struct ResultReportStringTable {
