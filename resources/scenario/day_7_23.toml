@@ -7,28 +7,28 @@ save = 4
 
 [[scenario-group]]
 type = "choice"
-header_text = "チュートリアルを行いますか？"
+header_text = "エピソードとチュートリアルを短縮しますか？"
 background = "SightBackground1"	
 id = 6
 
    [[scenario-group.choice-pattern]]
    pattern = "はい"
-   jump-id = 10
+   jump-id = 7
    [[scenario-group.choice-pattern]]
    pattern = "いいえ"
-   jump-id = 7
+   jump-id = 8
 
 [[scenario-group]]
 type = "wait"
 id = 7
-next-id = 8
+next-id = 20
 opecode = "DisableTutorial"
 background = "SightBackground1"
 
 [[scenario-group]]
 type = "scenario"
 id = 8
-next-id = 9
+next-id = 201
 background = "SightBackground1"
 
 [scenario-group.tachie-data]
@@ -40,7 +40,59 @@ right = "KosuzuTachie1"
    color = 0x000000ff
 
    [[scenario-group.text]]
+   text = "さてと、昨日の続きでも読もうかな。"
+
+[[scenario-group]]
+type = "scenario"
+id = 201
+next-id = 203
+background = "SightBackground1"
+
+[scenario-group.tachie-data]
+right = "KosuzuTachie1"
+left = "NitoriTachieDefault"
+
+   [scenario-group.default-text-attribute]
+   fpc = 2.0
+   font_scale = 32.0
+   color = 0x000000ff
+
+   [[scenario-group.text]]
    text_src_path = "./resources/scenario/7_23/1.txt"
+
+[[scenario-group]]
+type = "scenario"
+id = 202
+next-id = 203
+background = "SightBackground1"
+
+[scenario-group.tachie-data]
+right = "NitoriTachieDefault"
+
+   [scenario-group.default-text-attribute]
+   fpc = 2.0
+   font_scale = 32.0
+   color = 0x000000ff
+
+   [[scenario-group.text]]
+   text_src_path = "./resources/scenario/7_23/2.txt"
+
+[[scenario-group]]
+type = "scenario"
+id = 203
+next-id = 101
+background = "SightBackground1"
+
+[scenario-group.tachie-data]
+right = "KosuzuTachie1"
+
+   [scenario-group.default-text-attribute]
+   fpc = 2.0
+   font_scale = 32.0
+   color = 0x000000ff
+
+   [[scenario-group.text]]
+   text_src_path = "./resources/scenario/7_23/3.txt"
 
 [[scenario-group]]
 type = "wait"

@@ -159,6 +159,7 @@ impl ScenarioTachie {
         match id {
             TextureID::KosuzuTachie1 => numeric::Vector2f::new(0.3, 0.3),
             TextureID::AkyuTachieDefault => numeric::Vector2f::new(0.248, 0.248),
+	    TextureID::NitoriTachieDefault => numeric::Vector2f::new(0.248, 0.248),
             _ => numeric::Vector2f::new(1.0, 1.0),
         }
     }
