@@ -1875,6 +1875,7 @@ impl ScenarioEvent {
 		    }
 		    _ => (),
 		}
+		self.update_event_tachie(ctx, 0);
 	    }
         }
     }
