@@ -615,7 +615,7 @@ impl DrawableTaskResult {
         self.meters.effect(ctx);
     }
 
-    pub fn click_handler(&mut self, t: Clock) {
+    pub fn click_handler<'a>(&mut self, ctx: &mut SuzuContext<'a>, t: Clock) {
         for vtext in self.now_effect_text.iter_mut() {
             vtext.clear_effect();
             vtext.set_crop(numeric::Rect::new(0.0, 0.0, 1.0, 1.0));
@@ -629,6 +629,8 @@ impl DrawableTaskResult {
         } else {
             self.evaluation.skip_effect(t);
         }
+
+	ctx.process_utility.redraw();
     }
 }
 

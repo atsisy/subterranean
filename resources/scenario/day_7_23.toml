@@ -45,12 +45,12 @@ right = "KosuzuTachie1"
 [[scenario-group]]
 type = "scenario"
 id = 201
-next-id = 203
+next-id = 202
 background = "SightBackground1"
 
 [scenario-group.tachie-data]
 right = "KosuzuTachie1"
-left = "NitoriTachieDefault"
+left = "NitoriTachieSunGlass"
 
    [scenario-group.default-text-attribute]
    fpc = 2.0
@@ -64,10 +64,10 @@ left = "NitoriTachieDefault"
 type = "scenario"
 id = 202
 next-id = 203
-background = "SightBackground1"
+background = "TownBackground"
 
 [scenario-group.tachie-data]
-right = "NitoriTachieDefault"
+left = "NitoriTachieDefault"
 
    [scenario-group.default-text-attribute]
    fpc = 2.0

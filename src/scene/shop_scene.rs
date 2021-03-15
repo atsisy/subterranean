@@ -784,7 +784,7 @@ impl ShopScene {
 
         ctx.play_sound_as_bgm(
             SoundID::ShopBGM,
-            Some(SoundPlayFlags::new(10000, 1.0, true, 0.1)),
+            Some(SoundPlayFlags::new(10000, 1.0, true, ctx.config.get_bgm_volume())),
         );
 
         ShopScene {

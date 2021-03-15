@@ -61,7 +61,7 @@ impl TaskResultScene {
 
         let mut ok_button = util_object::FramedButton::create_design1(
             ctx,
-            numeric::Point2f::new(80.0, 550.0),
+            numeric::Point2f::new(60.0, 550.0),
             "戸締まり",
             numeric::Vector2f::new(28.0, 28.0),
         );
@@ -183,7 +183,7 @@ impl SceneManager for TaskResultScene {
             self.ready_to_finish_scene(ctx, t);
         }
 
-        self.drawable_task_result.click_handler(t);
+        self.drawable_task_result.click_handler(ctx, t);
 
         self.mouse_info.update_dragging(button, false);
         self.mouse_info
