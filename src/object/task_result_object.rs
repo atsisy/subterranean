@@ -44,6 +44,7 @@ impl DrawableEvaluationFlow {
             TileBatchTextureID::OldStyleFrame,
             FrameData::new(vec![250.0, 250.0], vec![50.0; 4]),
             numeric::Vector2f::new(0.5, 0.5),
+	    ggraphics::FilterMode::Nearest,
             0,
         );
         let init_crop = numeric::Rect::new(0.0, 0.0, 1.0, 0.0);
@@ -349,6 +350,7 @@ impl DrawableTaskResult {
             TileBatchTextureID::OldStyleFrame,
             FrameData::new(vec![280.0, 270.0], vec![50.0; 3]),
             numeric::Vector2f::new(0.5, 0.5),
+	    ggraphics::FilterMode::Nearest,
             0,
         );
 

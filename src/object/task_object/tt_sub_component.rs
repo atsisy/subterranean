@@ -729,6 +729,7 @@ impl SignFrame {
             TileBatchTextureID::RedOldStyleFrame,
             FrameData::new(vec![80.0; 2], vec![80.0]),
             numeric::Vector2f::new(0.3, 0.3),
+	    ggraphics::FilterMode::Nearest,
             0,
         );
 
@@ -868,6 +869,7 @@ impl PayFrame {
             TileBatchTextureID::RedOldStyleFrame,
             FrameData::new(vec![160.0, 300.0], vec![42.0; 3]),
             numeric::Vector2f::new(0.3, 0.3),
+	    ggraphics::FilterMode::Nearest,
             0,
         );
 
@@ -1213,6 +1215,7 @@ impl BorrowingRecordBookPage {
             TileBatchTextureID::OldStyleFrame,
             FrameData::new(vec![150.0, 300.0], vec![40.0; 3]),
             numeric::Vector2f::new(0.3, 0.3),
+	    ggraphics::FilterMode::Nearest,
             0,
         );
 
@@ -1282,6 +1285,7 @@ impl BorrowingRecordBookPage {
             TileBatchTextureID::OldStyleFrame,
             FrameData::new(vec![380.0, 70.0], vec![40.0; 6]),
             numeric::Vector2f::new(0.3, 0.3),
+	    ggraphics::FilterMode::Nearest,
             0,
         );
 

@@ -29,9 +29,9 @@ pub struct DrawableSaveEntry {
     date_text: Option<VerticalText>,
     money_text: Option<VerticalText>,
     table_frame: TableFrame,
-    save_button: SelectButton,
-    delete_button: SelectButton,
-    load_button: SelectButton,
+    save_button: FramedButton,
+    delete_button: FramedButton,
+    load_button: FramedButton,
     canvas: SubScreen,
     appearance_frame: TileBatchFrame,
 }
@@ -52,65 +52,26 @@ impl DrawableSaveEntry {
             0,
         );
 
-        let button_texture = Box::new(TextButtonTexture::new(
-            ctx,
-            numeric::Point2f::new(0.0, 0.0),
-            "記録".to_string(),
-            FontInformation::new(
-                ctx.resource.get_font(FontID::Cinema),
-                numeric::Vector2f::new(18.0, 18.0),
-                ggraphics::Color::from_rgba_u32(0xf6e1d5ff),
-            ),
-            5.0,
-            ggraphics::Color::from_rgba_u32(0x5a4f3fff),
-            0,
-        ));
+	let save_button = FramedButton::create_design_small(
+	    ctx,
+	    numeric::Point2f::new(30.0, pos_rect.h - 70.0),
+	    "保存",
+	    numeric::Vector2f::new(18.0, 18.0)
+	);
 
-        let save_button = SelectButton::new(
-            ctx,
-            numeric::Rect::new(30.0, pos_rect.h - 70.0, 60.0, 60.0),
-            button_texture,
-        );
+	let delete_button = FramedButton::create_design_small(
+	    ctx,
+	    numeric::Point2f::new(110.0, pos_rect.h - 70.0),
+	    "削除",
+	    numeric::Vector2f::new(18.0, 18.0)
+	);
 
-        let button_texture = Box::new(TextButtonTexture::new(
-            ctx,
-            numeric::Point2f::new(0.0, 0.0),
-            "削除".to_string(),
-            FontInformation::new(
-                ctx.resource.get_font(FontID::Cinema),
-                numeric::Vector2f::new(18.0, 18.0),
-                ggraphics::Color::from_rgba_u32(0xf6e1d5ff),
-            ),
-            5.0,
-            ggraphics::Color::from_rgba_u32(0x5a4f3fff),
-            0,
-        ));
-
-        let delete_button = SelectButton::new(
-            ctx,
-            numeric::Rect::new(110.0, pos_rect.h - 70.0, 60.0, 60.0),
-            button_texture,
-        );
-
-        let button_texture = Box::new(TextButtonTexture::new(
-            ctx,
-            numeric::Point2f::new(0.0, 0.0),
-            "再開".to_string(),
-            FontInformation::new(
-                ctx.resource.get_font(FontID::Cinema),
-                numeric::Vector2f::new(18.0, 18.0),
-                ggraphics::Color::from_rgba_u32(0xf6e1d5ff),
-            ),
-            5.0,
-            ggraphics::Color::from_rgba_u32(0x5a4f3fff),
-            0,
-        ));
-
-        let load_button = SelectButton::new(
-            ctx,
-            numeric::Rect::new(190.0, pos_rect.h - 70.0, 60.0, 60.0),
-            button_texture,
-        );
+	let load_button = FramedButton::create_design_small(
+	    ctx,
+	    numeric::Point2f::new(190.0, pos_rect.h - 70.0),
+	    "再開",
+	    numeric::Vector2f::new(18.0, 18.0)
+	);
 
         let drawing_size = background.get_drawing_size(ctx.context);
         background.set_crop(numeric::Rect::new(
@@ -133,6 +94,7 @@ impl DrawableSaveEntry {
             TileBatchTextureID::OldStyleFrame,
             FrameData::new(vec![80.0, 300.0], vec![50.0; 3]),
             numeric::Vector2f::new(0.3, 0.3),
+	    ggraphics::FilterMode::Nearest,
             0,
         );
 
@@ -176,9 +138,9 @@ impl DrawableSaveEntry {
         savable_data: SavableData,
         pos_rect: numeric::Rect,
         table_frame: TableFrame,
-        save_button: SelectButton,
-        load_button: SelectButton,
-        delete_button: SelectButton,
+        save_button: FramedButton,
+        load_button: FramedButton,
+        delete_button: FramedButton,
         slot_id: u8,
     ) -> Self {
         let mut entry = DrawableSaveEntry {
@@ -205,9 +167,9 @@ impl DrawableSaveEntry {
         appr_frame: TileBatchFrame,
         pos_rect: numeric::Rect,
         table_frame: TableFrame,
-        save_button: SelectButton,
-        load_button: SelectButton,
-        delete_button: SelectButton,
+        save_button: FramedButton,
+        load_button: FramedButton,
+        delete_button: FramedButton,
         slot_id: u8,
     ) -> Self {
         let mut entry = DrawableSaveEntry {
@@ -400,13 +362,13 @@ impl DrawableSaveEntry {
     ) -> SaveDataOperation {
         let rpoint = self.canvas.relative_point(point);
 
-        if self.save_button.contains(ctx.context, rpoint) {
+        if self.save_button.contains(rpoint) {
             self.save_action(ctx);
             SaveDataOperation::Saving
-        } else if self.delete_button.contains(ctx.context, rpoint) {
+        } else if self.delete_button.contains(rpoint) {
             self.delete_action(ctx);
             SaveDataOperation::Deleting
-        } else if self.load_button.contains(ctx.context, rpoint) {
+        } else if self.load_button.contains(rpoint) {
             SaveDataOperation::Loading(self.slot_id)
         } else {
             SaveDataOperation::NoOperation

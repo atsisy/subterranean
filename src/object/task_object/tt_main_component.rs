@@ -2230,6 +2230,7 @@ impl TaskInfoContents {
             TileBatchTextureID::OldStyleFrame,
             FrameData::new(vec![150.0, 170.0], vec![45.0; 4]),
             numeric::Vector2f::new(0.25, 0.25),
+	    ggraphics::FilterMode::Nearest,
             0,
         );
 

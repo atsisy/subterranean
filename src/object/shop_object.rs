@@ -52,6 +52,7 @@ impl SelectBookWindowContents {
             TileBatchTextureID::OldStyleFrame,
             FrameData::new(vec![140.0, 400.0], vec![42.0; 128]),
             numeric::Vector2f::new(0.3, 0.3),
+	    ggraphics::FilterMode::Nearest,
             0,
         );
 
@@ -271,6 +272,7 @@ impl SelectBookWindow {
             TileBatchTextureID::OldStyleFrame,
             FrameData::new(vec![140.0, 400.0], vec![42.0]),
             numeric::Vector2f::new(0.3, 0.3),
+	    ggraphics::FilterMode::Nearest,
             0,
         );
 
@@ -316,7 +318,7 @@ impl SelectBookWindow {
         let background = UniTexture::new(
             ctx.ref_texture(TextureID::TextBackground),
             numeric::Point2f::new(0.0, 0.0),
-            numeric::Vector2f::new(1.0, 1.0),
+            numeric::Vector2f::new(1.5, 1.5),
             0.0,
             100,
         );
@@ -779,6 +781,7 @@ impl SelectStoringBookWindow {
             TileBatchTextureID::OldStyleFrame,
             FrameData::new(vec![107.0, 107.0, 370.0], vec![50.0; 6]),
             numeric::Vector2f::new(0.3, 0.3),
+	    ggraphics::FilterMode::Nearest,
             0,
         );
 
@@ -1117,8 +1120,8 @@ pub struct SelectStoreBookUI {
     shelving_books: Vec<BookInformation>,
     stored_books: Vec<BookInformation>,
     select_book_window: SelectStoringBookWindow,
-    store_button: SelectButton,
-    reset_select_button: SelectButton,
+    store_button: FramedButton,
+    reset_select_button: FramedButton,
     book_shelf_info: BookShelfInformation,
     redraw_request: DrawRequest,
 }
@@ -1132,25 +1135,20 @@ impl SelectStoreBookUI {
     ) -> Self {
         shelving_book.sort_by(|a, b| a.billing_number.cmp(&b.billing_number));
 
-        let texture = Box::new(UniTexture::new(
-            ctx.ref_texture(TextureID::StoreButton),
-            numeric::Point2f::new(0.0, 0.0),
-            numeric::Vector2f::new(0.5, 0.5),
-            0.0,
-            0,
-        ));
-        let store_button =
-            SelectButton::new(ctx, numeric::Rect::new(1000.0, 200.0, 100.0, 50.0), texture);
+	let store_button = FramedButton::create_design_ok1(
+	    ctx,
+	    numeric::Point2f::new(1000.0, 200.0),
+	    "返却",
+	    numeric::Vector2f::new(28.0, 28.0)
+	);
 
-        let texture = Box::new(UniTexture::new(
-            ctx.ref_texture(TextureID::ResetButton),
-            numeric::Point2f::new(0.0, 0.0),
-            numeric::Vector2f::new(0.5, 0.5),
-            0.0,
-            0,
-        ));
-        let reset_select_button =
-            SelectButton::new(ctx, numeric::Rect::new(1000.0, 500.0, 100.0, 50.0), texture);
+	let reset_select_button = FramedButton::create_design_ok2(
+	    ctx,
+	    numeric::Point2f::new(1000.0, 320.0),
+	    "やり直し",
+	    numeric::Vector2f::new(28.0, 28.0)
+	);
+	
 
         SelectStoreBookUI {
             canvas: SubScreen::new(ctx.context, ui_rect, 0, ggraphics::Color::from_rgba_u32(0)),
@@ -1174,8 +1172,8 @@ impl SelectStoreBookUI {
         let rpoint = self.canvas.relative_point(point);
 
         self.select_book_window.contains(ctx.context, rpoint)
-            || self.reset_select_button.contains(ctx.context, rpoint)
-            || self.store_button.contains(ctx.context, rpoint)
+            || self.reset_select_button.contains(rpoint)
+            || self.store_button.contains(rpoint)
     }
 
     fn sort_book_info_greater(&mut self) {
@@ -1277,12 +1275,12 @@ impl Clickable for SelectStoreBookUI {
             self.redraw_request = DrawRequest::Draw;
         }
 
-        if self.reset_select_button.contains(ctx.context, rpoint) {
+        if self.reset_select_button.contains(rpoint) {
             self.select_book_window.clear_selecting_index();
             self.redraw_request = DrawRequest::Draw;
         }
 
-        if self.store_button.contains(ctx.context, rpoint) {
+        if self.store_button.contains(rpoint) {
             self.store_shelving_books(ctx);
             self.redraw_request = DrawRequest::Draw;
         }
@@ -1332,6 +1330,7 @@ impl ShelvingDetailContents {
             TileBatchTextureID::OldStyleFrame,
             FrameData::new(vec![160.0, 420.0], vec![44.0; 6]),
             numeric::Vector2f::new(0.3, 0.3),
+	    ggraphics::FilterMode::Nearest,
             0,
         );
 

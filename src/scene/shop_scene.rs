@@ -1806,12 +1806,10 @@ impl ShopScene {
     }
 
     fn exit_pause_screen(&mut self, t: Clock) {
-        self.dark_effect_panel.new_effect(8, t, 220, 0);
         self.pause_screen_set.exit_pause(t);
     }
 
     fn enter_pause_screen<'a>(&mut self, t: Clock) {
-        self.dark_effect_panel.new_effect(8, t, 0, 220);
         self.player.reset_speed();
         self.pause_screen_set.enter_pause(t);
     }

@@ -515,6 +515,7 @@ impl BookTitleMenu {
             TileBatchTextureID::OldStyleFrame,
             FrameData::new(vec![250.0], vec![64.0; book_info_data.len()]),
             numeric::Vector2f::new(0.3, 0.3),
+	    ggraphics::FilterMode::Nearest,
             0,
         );
 
@@ -779,6 +780,7 @@ impl CustomerNameMenu {
             TileBatchTextureID::OldStyleFrame,
             FrameData::new(vec![250.0], vec![56.0; customer_name_data.len()]),
             numeric::Vector2f::new(0.3, 0.3),
+	    ggraphics::FilterMode::Nearest,
             0,
         );
 
@@ -939,6 +941,7 @@ impl DateMenu {
             TileBatchTextureID::OldStyleFrame,
             FrameData::new(vec![110.0, 256.0], vec![56.0; 3]),
             numeric::Vector2f::new(0.3, 0.3),
+	    ggraphics::FilterMode::Nearest,
             0,
         );
 
@@ -1146,6 +1149,7 @@ impl DateCheckMenu {
             TileBatchTextureID::OldStyleFrame,
             FrameData::new(vec![110.0, 256.0], vec![56.0; 2]),
             numeric::Vector2f::new(0.3, 0.3),
+	    ggraphics::FilterMode::Nearest,
             0,
         );
 
@@ -1327,6 +1331,7 @@ impl CustomerQuestionMenu {
             TileBatchTextureID::OldStyleFrame,
             FrameData::new(vec![240.0], vec![64.0; 2]),
             numeric::Vector2f::new(0.3, 0.3),
+	    ggraphics::FilterMode::Nearest,
             0,
         );
 
@@ -1472,6 +1477,7 @@ impl RememberCustomerNameMenu {
             TileBatchTextureID::OldStyleFrame,
             FrameData::new(vec![240.0], vec![64.0]),
             numeric::Vector2f::new(0.3, 0.3),
+	    ggraphics::FilterMode::Nearest,
             0,
         );
 
@@ -1594,6 +1600,7 @@ impl OkMenu {
             TileBatchTextureID::OldStyleFrame,
             FrameData::new(vec![240.0], vec![64.0]),
             numeric::Vector2f::new(0.3, 0.3),
+	    ggraphics::FilterMode::Nearest,
             0,
         );
 
@@ -2743,6 +2750,7 @@ impl BookInfoDrawer {
             TileBatchTextureID::OldStyleFrame,
             FrameData::new(vec![150.0, 150.0], vec![56.0; 3]),
             numeric::Vector2f::new(0.3, 0.3),
+	    ggraphics::FilterMode::Nearest,
             0,
         );
 

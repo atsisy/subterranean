@@ -203,6 +203,7 @@ impl ScenarioMenuContents {
             TileBatchTextureID::OldStyleFrame,
             FrameData::new(vec![250.0, 250.0], vec![50.0; 3]),
             numeric::Vector2f::new(0.25, 0.25),
+	    ggraphics::FilterMode::Nearest,
             0,
         );
 

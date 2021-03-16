@@ -21,7 +21,7 @@ id = 6
 [[scenario-group]]
 type = "wait"
 id = 7
-next-id = 20
+next-id = 9
 opecode = "DisableTutorial"
 background = "SightBackground1"
 

@@ -1385,6 +1385,7 @@ impl RecordRoom {
             TileBatchTextureID::RedOldStyleFrame,
             FrameData::new(vec![40.0; 6], vec![80.0, 380.0, 380.0]),
             numeric::Vector2f::new(0.3, 0.3),
+	    ggraphics::FilterMode::Nearest,
             0,
         );
 
@@ -1394,6 +1395,7 @@ impl RecordRoom {
             TileBatchTextureID::RedOldStyleFrame,
             FrameData::new(vec![40.0; 6], vec![80.0, 380.0, 380.0]),
             numeric::Vector2f::new(0.3, 0.3),
+	    ggraphics::FilterMode::Nearest,
             0,
         );
 

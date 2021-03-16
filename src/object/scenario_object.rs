@@ -65,6 +65,7 @@ impl SuzunaStatusMainPage {
             TileBatchTextureID::OldStyleFrame,
             FrameData::new(vec![42.0; 5], vec![180.0, 250.0]),
             numeric::Vector2f::new(0.25, 0.25),
+	    ggraphics::FilterMode::Nearest,
             0,
         );
 
@@ -1574,6 +1575,7 @@ impl WeekScheduleWindow {
             TileBatchTextureID::OldStyleFrame,
             FrameData::new(vec![110.0, 110.0], vec![56.0; 7]),
             numeric::Vector2f::new(0.3, 0.3),
+	    ggraphics::FilterMode::Nearest,
             0,
         );
         let frame_area = frame.get_area();
@@ -1943,6 +1945,7 @@ impl ScheduleSelectWindow {
             TileBatchTextureID::OldStyleFrame,
             FrameData::new(vec![220.0], vec![56.0; 3]),
             numeric::Vector2f::new(0.3, 0.3),
+	    ggraphics::FilterMode::Nearest,
             0,
         );
         let frame_area = frame.get_area();

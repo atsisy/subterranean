@@ -64,10 +64,12 @@ impl TableFrame {
         frame_batch_texture: TileBatchTextureID,
         frame_data: FrameData,
         frame_scale: numeric::Vector2f,
+	filter: ggraphics::FilterMode,
         draw_depth: i8,
     ) -> Self {
         let mut tile_batch = game_data.ref_tile_batch(frame_batch_texture);
         tile_batch.set_position(position);
+	tile_batch.set_filter(filter);
 
         let mut table_frame = TableFrame {
             tile_batch: tile_batch,
@@ -271,7 +273,7 @@ impl TableFrame {
 
         let begin = numeric::Point2f::new(begin.x.round(), begin.y.round());
         let mut position = begin;
-        println!("{}", self.tile_per_vline(height));
+        //println!("{}", self.tile_per_vline(height));
 
         for _ in 1..self.tile_per_vline(height) {
             position.y += tile_size.y;
@@ -579,6 +581,11 @@ impl SelectButton {
     pub fn get_button_status(&self) -> bool {
         self.button_toggle
     }
+
+    pub fn contains<'a>(&self, ctx: &mut ggez::Context, p: numeric::Point2f) -> bool {
+	let rpoint = self.canvas.relative_point(p);
+	self.button_texture.contains(ctx, rpoint)
+    }
 }
 
 impl DrawableComponent for SelectButton {
@@ -768,7 +775,7 @@ impl TextureObject for TextButtonTexture {
     }
 
     fn get_texture_size(&self, _ctx: &mut ggez::Context) -> numeric::Vector2f {
-        numeric::Vector2f::new(self.button_pos.x, self.button_pos.y)
+        numeric::Vector2f::new(self.button_pos.w, self.button_pos.h)
     }
 
     fn replace_texture(&mut self, _texture: ggraphics::Image) {}
@@ -1928,6 +1935,7 @@ impl CheckBox {
             TileBatchTextureID::OldStyleFrame,
             FrameData::new(vec![pos_rect.h], vec![pos_rect.w]),
             numeric::Vector2f::new(0.25, 0.25),
+	    ggraphics::FilterMode::Nearest,
             0,
         );
 
@@ -2180,6 +2188,96 @@ impl FramedButton {
             2.0,
             ggraphics::Color::from_rgba(90, 80, 63, 255),
             ggraphics::Color::from_rgba(219, 212, 184, 255),
+            text.to_string(),
+            font_info,
+            0,
+        )
+    }
+
+    pub fn create_design_ok1<'a>(
+        ctx: &mut SuzuContext<'a>,
+        pos: numeric::Point2f,
+        text: &str,
+        font_size: numeric::Vector2f,
+    ) -> Self {
+        let font_info = FontInformation::new(
+            ctx.resource.get_font(FontID::JpFude1),
+            font_size,
+            ggraphics::Color::WHITE,
+        );
+	
+        FramedButton::new(
+            ctx,
+            numeric::Rect::new(
+                pos.x,
+                pos.y,
+                font_size.x * (text.len() as f32 / 3.0) + 50.0,
+                font_size.y + 50.0,
+            ),
+            5.0,
+            2.0,
+            ggraphics::Color::from_rgba(90, 80, 63, 255),
+            ggraphics::Color::from_rgba(237, 175, 167, 255),
+            text.to_string(),
+            font_info,
+            0,
+        )
+    }
+
+    pub fn create_design_ok2<'a>(
+        ctx: &mut SuzuContext<'a>,
+        pos: numeric::Point2f,
+        text: &str,
+        font_size: numeric::Vector2f,
+    ) -> Self {
+        let font_info = FontInformation::new(
+            ctx.resource.get_font(FontID::JpFude1),
+            font_size,
+            ggraphics::Color::WHITE,
+        );
+	
+        FramedButton::new(
+            ctx,
+            numeric::Rect::new(
+                pos.x,
+                pos.y,
+                font_size.x * (text.len() as f32 / 3.0) + 50.0,
+                font_size.y + 50.0,
+            ),
+            5.0,
+            2.0,
+            ggraphics::Color::from_rgba(90, 80, 63, 255),
+            ggraphics::Color::from_rgba(191, 198, 172, 255),
+            text.to_string(),
+            font_info,
+            0,
+        )
+    }
+
+    pub fn create_design_small<'a>(
+        ctx: &mut SuzuContext<'a>,
+        pos: numeric::Point2f,
+        text: &str,
+        font_size: numeric::Vector2f,
+    ) -> Self {
+        let font_info = FontInformation::new(
+            ctx.resource.get_font(FontID::JpFude1),
+            font_size,
+            ggraphics::Color::WHITE,
+        );
+	
+        FramedButton::new(
+            ctx,
+            numeric::Rect::new(
+                pos.x,
+                pos.y,
+                font_size.x * (text.len() as f32 / 3.0) + 20.0,
+                font_size.y + 20.0,
+            ),
+            3.0,
+            2.0,
+            ggraphics::Color::from_rgba(90, 80, 63, 255),
+	    ggraphics::Color::from_rgba(219, 212, 184, 255),
             text.to_string(),
             font_info,
             0,
