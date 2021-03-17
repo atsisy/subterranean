@@ -10,7 +10,7 @@ use torifune::roundup2f;
 use torifune::impl_drawable_object_for_wrapped;
 use torifune::impl_texture_object_for_wrapped;
 
-use crate::object::util_object::*;
+use crate::{object::util_object::*, scene::DrawRequest};
 use crate::{core::*, set_table_frame_cell_center};
 
 use number_to_jk::number_to_jk;
@@ -34,6 +34,7 @@ pub struct DrawableSaveEntry {
     load_button: FramedButton,
     canvas: SubScreen,
     appearance_frame: TileBatchFrame,
+    redraw_request: DrawRequest,
 }
 
 impl DrawableSaveEntry {
@@ -155,6 +156,7 @@ impl DrawableSaveEntry {
             canvas: SubScreen::new(ctx.context, pos_rect, 0, ggraphics::Color::from_rgba_u32(0)),
             slot_id: slot_id,
             table_frame: table_frame,
+	    redraw_request: DrawRequest::InitDraw,
         };
 
         entry.update_entry_contents(ctx.context, ctx.resource, &savable_data);
@@ -184,6 +186,7 @@ impl DrawableSaveEntry {
             canvas: SubScreen::new(ctx.context, pos_rect, 0, ggraphics::Color::from_rgba_u32(0)),
             slot_id: slot_id,
             table_frame: table_frame,
+	    redraw_request: DrawRequest::InitDraw,
         };
 
         entry.update_none_contents(ctx);
@@ -329,6 +332,8 @@ impl DrawableSaveEntry {
 
         self.date_text = Some(date_text);
         self.money_text = Some(money_text);
+
+	self.redraw_request = DrawRequest::Draw;
     }
 
     fn update_none_contents<'a>(&mut self, _ctx: &mut SuzuContext<'a>) {
@@ -346,6 +351,7 @@ impl DrawableSaveEntry {
             self.update_entry_contents(ctx.context, ctx.resource, data);
         }
 
+	self.redraw_request = DrawRequest::Draw;
         ctx.process_utility.redraw();
     }
 
@@ -353,6 +359,8 @@ impl DrawableSaveEntry {
         SavableData::delete(self.slot_id);
         self.update_none_contents(ctx);
         self.desc_text.clear();
+	self.redraw_request = DrawRequest::Draw;
+	ctx.process_utility.redraw();
     }
 
     pub fn click_handler<'a>(
@@ -363,12 +371,15 @@ impl DrawableSaveEntry {
         let rpoint = self.canvas.relative_point(point);
 
         if self.save_button.contains(rpoint) {
+	    self.redraw_request = DrawRequest::Draw;
             self.save_action(ctx);
             SaveDataOperation::Saving
         } else if self.delete_button.contains(rpoint) {
+	    self.redraw_request = DrawRequest::Draw;
             self.delete_action(ctx);
             SaveDataOperation::Deleting
         } else if self.load_button.contains(rpoint) {
+	    self.redraw_request = DrawRequest::Draw;
             SaveDataOperation::Loading(self.slot_id)
         } else {
             SaveDataOperation::NoOperation
@@ -379,30 +390,33 @@ impl DrawableSaveEntry {
 impl DrawableComponent for DrawableSaveEntry {
     fn draw(&mut self, ctx: &mut ggez::Context) -> ggez::GameResult<()> {
         if self.is_visible() {
-            sub_screen::stack_screen(ctx, &self.canvas);
-
-            self.appearance_frame.draw(ctx)?;
-            self.background.draw(ctx)?;
-
-            self.table_frame.draw(ctx)?;
-
-            if let Some(vtext) = self.date_text.as_mut() {
-                vtext.draw(ctx)?;
-            }
-
-            if let Some(vtext) = self.money_text.as_mut() {
-                vtext.draw(ctx)?;
-            }
-
-            for vtext in self.desc_text.iter_mut() {
-                vtext.draw(ctx)?;
-            }
-
-            self.save_button.draw(ctx)?;
-            self.load_button.draw(ctx)?;
-            self.delete_button.draw(ctx)?;
-
-            sub_screen::pop_screen(ctx);
+	    if self.redraw_request != DrawRequest::Skip {
+                self.redraw_request = DrawRequest::Skip;
+		sub_screen::stack_screen(ctx, &self.canvas);
+		
+		self.appearance_frame.draw(ctx)?;
+		self.background.draw(ctx)?;
+		
+		self.table_frame.draw(ctx)?;
+		
+		if let Some(vtext) = self.date_text.as_mut() {
+                    vtext.draw(ctx)?;
+		}
+		
+		if let Some(vtext) = self.money_text.as_mut() {
+                    vtext.draw(ctx)?;
+		}
+		
+		for vtext in self.desc_text.iter_mut() {
+                    vtext.draw(ctx)?;
+		}
+		
+		self.save_button.draw(ctx)?;
+		self.load_button.draw(ctx)?;
+		self.delete_button.draw(ctx)?;
+		
+		sub_screen::pop_screen(ctx);
+	    }
             self.canvas.draw(ctx).unwrap();
         }
         Ok(())
@@ -443,6 +457,7 @@ pub struct SaveEntryTable {
     appearance_frame: TileBatchFrame,
     entries: Vec<DrawableSaveEntry>,
     title_text: UniText,
+    redraw_request: DrawRequest,
 }
 
 impl SaveEntryTable {
@@ -518,6 +533,7 @@ impl SaveEntryTable {
             appearance_frame: appr_frame,
             entries: entries,
             title_text: title_text,
+	    redraw_request: DrawRequest::InitDraw,
         }
     }
 
@@ -530,6 +546,7 @@ impl SaveEntryTable {
 
         for entry in self.entries.iter_mut() {
             if entry.contains(ctx.context, rpoint) {
+		self.redraw_request = DrawRequest::Draw;
                 return entry.click_handler(ctx, rpoint);
             }
         }
@@ -541,18 +558,21 @@ impl SaveEntryTable {
 impl DrawableComponent for SaveEntryTable {
     fn draw(&mut self, ctx: &mut ggez::Context) -> ggez::GameResult<()> {
         if self.is_visible() {
-            sub_screen::stack_screen(ctx, &self.canvas);
-
-            self.background.draw(ctx)?;
-            self.appearance_frame.draw(ctx)?;
-
-            for entry in self.entries.iter_mut() {
-                entry.draw(ctx)?;
-            }
-
-            self.title_text.draw(ctx)?;
-
-            sub_screen::pop_screen(ctx);
+	    if self.redraw_request != DrawRequest::Skip {
+                self.redraw_request = DrawRequest::Skip;
+		sub_screen::stack_screen(ctx, &self.canvas);
+		
+		self.background.draw(ctx)?;
+		self.appearance_frame.draw(ctx)?;
+		
+		for entry in self.entries.iter_mut() {
+                    entry.draw(ctx)?;
+		}
+		
+		self.title_text.draw(ctx)?;
+		
+		sub_screen::pop_screen(ctx);
+	    }
             self.canvas.draw(ctx).unwrap();
         }
         Ok(())

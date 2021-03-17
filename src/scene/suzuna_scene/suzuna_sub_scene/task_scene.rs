@@ -6,7 +6,7 @@ use torifune::graphics::object::Effectable;
 use torifune::numeric;
 
 use super::super::*;
-use crate::object::{scenario::ScenarioEvent, Clickable, DarkEffectPanel};
+use crate::{core::SoundID, object::{scenario::ScenarioEvent, Clickable, DarkEffectPanel}};
 
 use crate::core::{MouseActionRecord, MouseInformation, ReputationEvent, TileBatchTextureID};
 use crate::object::effect_object;
@@ -243,9 +243,10 @@ impl TaskScene {
 
     fn transition_to_title_scene<'a>(&mut self, ctx: &mut SuzuContext<'a>, t: Clock) {
         self.event_list.add_event(
-            Box::new(|slf: &mut Self, _, _| {
+            Box::new(|slf: &mut Self, ctx, _| {
                 slf.transition_status = SceneTransition::SwapTransition;
                 slf.transition_scene = SceneID::Title;
+		ctx.resource.stop_bgm(ctx.context, SoundID::ShopBGM);
             }),
             t + 60,
         );

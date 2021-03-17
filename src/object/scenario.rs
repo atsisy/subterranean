@@ -2023,6 +2023,7 @@ impl ScenarioEvent {
                             ggraphics::Color::from_rgba_u32(0x000000ff),
                         ));
                     self.redraw_request = DrawRequest::Draw;
+		    ctx.process_utility.redraw();
                 }
             }
             _ => (),

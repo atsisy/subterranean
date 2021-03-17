@@ -2320,7 +2320,10 @@ impl FramedButton {
     pub fn mouse_motion_handler<'a>(&mut self, ctx: &mut SuzuContext<'a>, p: numeric::Point2f) {
         if self.contains(p) {
             match self.button_status {
-                ButtonStatus::None => self.make_this_hovered_status(ctx),
+                ButtonStatus::None => {
+		    self.make_this_hovered_status(ctx);
+		    ctx.process_utility.redraw();
+		},
                 _ => (),
             }
             return;

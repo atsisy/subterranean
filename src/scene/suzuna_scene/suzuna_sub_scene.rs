@@ -66,7 +66,7 @@ impl SuzunaSubScene {
     pub fn new<'a>(ctx: &mut SuzuContext<'a>, map_id: u32) -> Self {
         let date = ctx.take_save_data().date.clone();
 
-	let todays_new_books = DayNewBooks::random(ctx.resource, 5, 3);
+	let todays_new_books = DayNewBooks::random(ctx.resource, 4, 3);
 
         let task_tutorial = if ctx.take_save_data().date.first_day()
             && ctx.take_save_data().game_mode.is_story_mode()

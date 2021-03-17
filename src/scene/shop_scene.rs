@@ -1783,7 +1783,7 @@ impl ShopScene {
         let notification = Box::new(notify::GeneralNotificationContents::new(
             ctx,
             NotificationContentsData::new(
-                "セラ知オ".to_string(),
+                "おしらせ".to_string(),
                 "御客ガ呼ンデイマス".to_string(),
                 NotificationType::CustomerCalling,
             ),
@@ -1796,9 +1796,10 @@ impl ShopScene {
 
     fn transition_to_title_scene<'a>(&mut self, ctx: &mut SuzuContext<'a>, t: Clock) {
         self.event_list.add_event(
-            Box::new(|slf: &mut Self, _, _| {
+            Box::new(|slf: &mut Self, ctx, _| {
                 slf.transition_status = SceneTransition::SwapTransition;
                 slf.transition_scene = SceneID::Title;
+		ctx.resource.stop_bgm(ctx.context, SoundID::ShopBGM);
             }),
             t + 60,
         );
