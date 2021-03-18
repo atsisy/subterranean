@@ -1611,7 +1611,7 @@ impl Clickable for TaskTable {
 
         if let Some(sign_entry) = self
             .borrowing_record_book
-            .sign_with_mouse_click(ctx, rpoint)
+            .sign_with_mouse_click(ctx, rpoint, self.current_customer_request.as_ref())
         {
             match sign_entry {
                 SignFrameEntry::BorrowingSign => self.signing_borrowing_handler(ctx, t),

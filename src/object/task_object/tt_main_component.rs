@@ -1592,6 +1592,13 @@ impl CustomerRequest {
             CustomerRequest::Returning(info) => info.borrower.clone(),
         }
     }
+
+    pub fn get_rental_limit(&self) -> RentalLimit {
+        match self {
+            CustomerRequest::Borrowing(info) => info.rental_limit.clone(),
+            CustomerRequest::Returning(info) => info.get_rental_limit(),
+        }
+    }
 }
 
 impl ToString for CustomerRequest {

@@ -1630,6 +1630,29 @@ impl BorrowingRecordBookPage {
         }
     }
 
+    fn get_borrowing_date(&self) -> Option<GensoDate> {
+	if let Some(data) = self.request_information.get(&numeric::Vector2u::new(1, 1)) {
+            data.ref_hold_data().to_date()
+        } else {
+            None
+        }
+    }
+
+    fn borrowing_and_returning_date_is_ok(&self) -> bool {
+	let borrowing = self.get_borrowing_date();
+	let returning = self.get_return_date();
+
+	if let Some(borrowing) = borrowing {
+	    if let Some(returning) = returning {
+		returning.is_past(&borrowing)
+	    } else {
+		false
+	    }
+	} else {
+	    false
+	}
+    }
+
     fn count_written_book_title(&self) -> usize {
         self.borrow_book
             .iter()
@@ -1647,9 +1670,23 @@ impl BorrowingRecordBookPage {
             .fold(0, |sum, c| sum + c)
     }
 
-    fn borrowing_signing_is_available(&self) -> bool {
+    fn rental_limit_is_ok(&self, customer_request: Option<&CustomerRequest>) -> bool {
+	if let Some(customer_request) = customer_request {
+	    if let Some(data) = self.pay_frame.rental_limit_data.as_ref() {
+		customer_request.get_rental_limit().eq(data)
+            } else {
+		false
+            }
+	} else {
+	    false
+	}
+    }
+
+    fn borrowing_signing_is_available(&self, customer_request: Option<&CustomerRequest>) -> bool {
         // 何らかの値段が設定されていればOK
         self.pay_frame.calculated_price.is_some()
+	    && self.borrowing_and_returning_date_is_ok()
+	    && self.rental_limit_is_ok(customer_request)
             && !self.sign_frame.borrowing_signing_is_done()
             && self.count_written_book_title() > 0
     }
@@ -1922,13 +1959,14 @@ impl BorrowingRecordBookPage {
         &mut self,
         ctx: &mut SuzuContext<'a>,
         point: numeric::Point2f,
+	customer_request: Option<&CustomerRequest>
     ) -> Option<SignFrameEntry> {
         let maybe_sign_entry = self.sign_frame.contains_sign_frame(ctx.context, point);
 
         if let Some(sign_entry) = maybe_sign_entry.as_ref() {
             match sign_entry {
                 SignFrameEntry::BorrowingSign => {
-                    if self.borrowing_signing_is_available() {
+                    if self.borrowing_signing_is_available(customer_request) {
                         self.sign_frame.sign_borrowing_frame(ctx);
                         return maybe_sign_entry;
                     }
@@ -2362,11 +2400,12 @@ impl BorrowingRecordBook {
         &mut self,
         ctx: &mut SuzuContext<'a>,
         point: numeric::Point2f,
+	customer_request: Option<&CustomerRequest>
     ) -> Option<SignFrameEntry> {
         let rpoint = self.relative_point(point);
 
         if let Some(page) = self.get_current_page_mut() {
-            let ret = page.sign_with_mouse_click(ctx, rpoint);
+            let ret = page.sign_with_mouse_click(ctx, rpoint, customer_request);
             if ret.is_some() {
                 self.redraw_request = DrawRequest::Draw;
             }

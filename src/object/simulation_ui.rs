@@ -505,9 +505,9 @@ impl ResultMeter {
 
         self.diff_text = Some(UniText::new(
             if diff >= 0.0 {
-                format!("{:+}", diff)
+                format!("{:+}", diff.round() as i32)
             } else {
-                format!("{}", diff)
+                format!("{}", diff.round() as i32)
             },
             numeric::Point2f::new(pos.x + 100.0, pos.y),
             numeric::Vector2f::new(1.0, 1.0),
