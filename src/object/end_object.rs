@@ -138,8 +138,8 @@ impl EndSceneFlow {
                 0.0,
                 0,
                 FontInformation::new(
-                    ctx.resource.get_font(crate::core::FontID::Cinema),
-                    numeric::Vector2f::new(28.0, 28.0),
+                    ctx.resource.get_font(crate::core::FontID::Mamelon),
+                    numeric::Vector2f::new(30.0, 30.0),
                     ggez::graphics::Color::from_rgba_u32(0xff),
                 ),
             ));
@@ -174,7 +174,7 @@ impl EndSceneFlow {
                     0,
                     FontInformation::new(
                         ctx.resource.get_font(crate::core::FontID::Cinema),
-                        numeric::Vector2f::new(36.0, 36.0),
+                        numeric::Vector2f::new(40.0, 40.0),
                         ggez::graphics::Color::from_rgba_u32(0xff),
                     ),
                 )),

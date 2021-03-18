@@ -8,7 +8,7 @@ use torifune::numeric;
 use super::super::*;
 use crate::{core::SoundID, object::{scenario::ScenarioEvent, Clickable, DarkEffectPanel}};
 
-use crate::core::{MouseActionRecord, MouseInformation, ReputationEvent, TileBatchTextureID};
+use crate::core::{MouseActionRecord, MouseInformation, TileBatchTextureID};
 use crate::object::effect_object;
 use crate::object::task_object::*;
 use crate::object::util_object::*;
@@ -210,9 +210,9 @@ impl TaskScene {
 
         self.scene_transition_close_effect(ctx, t);
 
-        ctx.take_save_data_mut()
-            .suzunaan_status
-            .eval_reputation(ReputationEvent::DoneDeskTask);
+        // ctx.take_save_data_mut()
+        //     .suzunaan_status
+        //     .eval_reputation(ReputationEvent::DoneDeskTask);
     }
 
     pub fn export_borrowing_record_book_data(&self) -> BorrowingRecordBookData {

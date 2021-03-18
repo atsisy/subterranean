@@ -1,5 +1,5 @@
 use ggez::input::mouse::MouseButton;
-use torifune::core::*;
+use torifune::{core::*, sound::SoundPlayFlags};
 use torifune::numeric;
 
 use torifune::graphics::drawable::*;
@@ -92,7 +92,10 @@ impl TaskResultScene {
             31,
         );
 
-        ctx.play_sound_as_se(SoundID::ResultSE, None);
+        ctx.play_sound_as_se(
+	    SoundID::ResultSE,
+	    Some(SoundPlayFlags::new(10, 1.0, false, ctx.config.get_se_volume()))
+	);
 
         TaskResultScene {
             clock: 0,

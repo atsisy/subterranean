@@ -187,6 +187,7 @@ pub enum FontID {
     CorpMincho,
     Cinema,
     BitMap1,
+    Mamelon,
 }
 
 impl FromStr for FontID {
@@ -198,6 +199,7 @@ impl FromStr for FontID {
             "CorpMincho" => Ok(FontID::CorpMincho),
             "Cinema" => Ok(FontID::Cinema),
             "BitMap1" => Ok(FontID::BitMap1),
+	    "Mamelon" => Ok(FontID::Mamelon),
             _ => Err(()),
         }
     }
@@ -479,6 +481,7 @@ pub enum SoundID {
     ShopBGM,
     EndBGM,
     ResultSE,
+    FinalResultSE,
     Unknown,
 }
 
@@ -1623,12 +1626,6 @@ impl SuzunaAnStatus {
         }
     }
 
-    pub fn eval_reputation(&mut self, event_type: ReputationEvent) {
-        match event_type {
-            ReputationEvent::DoneDeskTask => self.reputation += 1.0,
-        }
-    }
-
     pub fn get_current_reputation(&self) -> f32 {
         self.reputation
     }
@@ -2194,6 +2191,29 @@ impl ResultReport {
         }
 
         return "素人";
+    }
+
+    pub fn generate_eval_result(&self) -> f32 {
+        let missed_books_num = self.number_of_yet_shelved_and_new_books();
+        let total_waiting_minute = self.total_customers_waiting_time / 60;
+
+        if missed_books_num == 0 && total_waiting_minute < 30 && self.condition_eval_mistakes == 0 {
+            return 5.0;
+        }
+
+        if missed_books_num == 0 && total_waiting_minute < 60 && self.condition_eval_mistakes == 0 {
+            return 2.0;
+        }
+
+        if missed_books_num <= 3 && total_waiting_minute < 120 && self.condition_eval_mistakes == 1 {
+            return 0.0;
+        }
+
+        if missed_books_num <= 3 && total_waiting_minute < 120 {
+            return -1.0;
+        }
+
+        return -3.0;
     }
 }
 

@@ -99,7 +99,7 @@ texture_paths = [
 	      "/textures/nitori_tachie_sunglass.png",
 	      "/textures/town.png",
 	      ]
-font_paths = ["/fonts/azuki.ttf", "/fonts/RiiT_F.ttf", "/fonts/OradanoGSRR.ttf", "/fonts/cinecaption226.ttf", "/fonts/JF-Dot-ShinonomeMaru12B.ttf"]
+font_paths = ["/fonts/azuki.ttf", "/fonts/RiiT_F.ttf", "/fonts/OradanoGSRR.ttf", "/fonts/cinecaption226.ttf", "/fonts/JF-Dot-ShinonomeMaru12B.ttf", "/fonts/Mamelon-3-Hi-Regular.otf"]
 tileset_paths = ["/maps/suzunaan2/main.tmx"]
 scenario_table_path = "/scenario_table.toml"
 daily_customer_dist_path = "/daily_customer_dist.toml"
@@ -112,7 +112,8 @@ sound_file_path = [
 		"/sound/bgm/scenario.wav",
 		"/sound/bgm/shop.wav",
 		"/sound/bgm/end.wav",
-		"/sound/se/yuzu/result.wav"
+		"/sound/se/yuzu/result.wav",
+		"/sound/se/yuzu/final_result.wav"
 		]
 
 [[map_information]]

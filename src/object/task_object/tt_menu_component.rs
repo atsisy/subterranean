@@ -931,7 +931,7 @@ impl DateMenu {
 
         let font_info = FontInformation::new(
             ctx.resource.get_font(FontID::Cinema),
-            numeric::Vector2f::new(24.0, 24.0),
+            numeric::Vector2f::new(28.0, 28.0),
             ggraphics::Color::from_rgba_u32(0xff),
         );
 
@@ -939,7 +939,7 @@ impl DateMenu {
             ctx.resource,
             numeric::Point2f::new(48.0, 50.0),
             TileBatchTextureID::OldStyleFrame,
-            FrameData::new(vec![110.0, 256.0], vec![56.0; 3]),
+            FrameData::new(vec![140.0, 220.0], vec![56.0; 3]),
             numeric::Vector2f::new(0.3, 0.3),
 	    ggraphics::FilterMode::Nearest,
             0,
@@ -947,7 +947,7 @@ impl DateMenu {
 
         let mut loop_date = today.clone();
         for index in 0..3 {
-            let name_vtext_line = loop_date.to_string();
+            let name_vtext_line = loop_date.to_short_string();
             let mut vtext = VerticalText::new(
                 name_vtext_line,
                 numeric::Point2f::new(0.0, 0.0),

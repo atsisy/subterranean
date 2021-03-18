@@ -1791,7 +1791,10 @@ impl ShopScene {
         ));
         self.notification_area
             .insert_new_contents(ctx, notification, t);
-        ctx.play_sound_as_se(SoundID::SeCustomerBell, None);
+        ctx.play_sound_as_se(
+	    SoundID::SeCustomerBell,
+	    Some(SoundPlayFlags::new(10, 1.0, false, ctx.config.get_se_volume()))
+	);
     }
 
     fn transition_to_title_scene<'a>(&mut self, ctx: &mut SuzuContext<'a>, t: Clock) {

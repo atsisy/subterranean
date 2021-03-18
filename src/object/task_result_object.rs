@@ -527,15 +527,12 @@ impl DrawableTaskResult {
             1,
         );
 
-        let goal = if ctx
-            .take_save_data()
-            .suzunaan_status
-            .get_current_reputation()
-            >= 0.0
+	let eval = result_report.generate_eval_result();
+	ctx.take_save_data_mut().suzunaan_status.add_reputation(eval);
+	let goal = ctx.take_save_data().suzunaan_status.get_current_reputation();
+        let goal = if goal >= 0.0
         {
-            ctx.take_save_data()
-                .suzunaan_status
-                .get_current_reputation()
+	    goal
         } else {
             0.0
         };

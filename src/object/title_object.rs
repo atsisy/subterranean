@@ -1177,11 +1177,11 @@ impl Gallery {
         let index = self.get_current_index();
 
         match index {
-            0 | 1 | 2 => Some(
+            0 | 1 | 2 | 3 | 4 => Some(
                 &mut self.gallery_list.get_mut(index as usize).unwrap().0
                     as &mut dyn DrawableComponent,
             ),
-            3 | 4 => {
+            5 | 6 => {
                 let index = (index as usize - self.gallery_list.len()) as usize;
                 Some(&mut self.char_list.get_mut(index).unwrap().0 as &mut dyn DrawableComponent)
             }
@@ -1197,13 +1197,13 @@ impl Gallery {
         let index = self.get_current_index();
 
         match index {
-            0 | 1 | 2 => {
+            0 | 1 | 2 | 3 | 4 => {
                 self.scenario_event.set_fixed_text_to_scenario_box(
                     ctx,
                     self.gallery_list.get(index as usize).unwrap().1.clone(),
                 );
             }
-            3 | 4 => {
+            5 | 6 => {
                 let index = (index as usize - self.gallery_list.len()) as usize;
                 self.scenario_event.set_fixed_text_to_scenario_box(
                     ctx,
@@ -1241,7 +1241,7 @@ impl Gallery {
 
         let index = self.get_current_index() as i64;
         match index {
-            3 | 4 => {
+            5 | 6 => {
                 let index = (index as usize - self.gallery_list.len()) as usize;
                 self.char_list.get_mut(index).unwrap().0.update_texture(t);
                 ctx.process_utility.redraw();

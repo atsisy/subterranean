@@ -1,4 +1,4 @@
-use torifune::core::*;
+use torifune::{core::*, sound::SoundPlayFlags};
 use torifune::graphics::drawable::*;
 use torifune::graphics::object::*;
 
@@ -64,6 +64,21 @@ impl EndScene {
                 slf.scene_transition_effect = None;
             }),
             31,
+        );
+
+	event_list.add_event(
+            Box::new(move |_: &mut Self, ctx, _| {
+        	ctx.play_sound_as_se(
+		    SoundID::FinalResultSE,
+		    Some(SoundPlayFlags::new(
+			10,
+			1.0,
+			false,
+			ctx.config.get_se_volume(),
+		    )),
+		);
+            }),
+            60,
         );
 
         let mut kosuzu = character_factory::create_endroll_sample(
