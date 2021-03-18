@@ -1720,7 +1720,7 @@ impl BorrowingRecordBookPage {
             }
         }
 
-        true
+        !self.sign_frame.retuning_signing_is_done()
     }
 
     ///

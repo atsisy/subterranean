@@ -48,7 +48,7 @@ use number_to_jk::number_to_jk;
 
 extern crate num;
 
-pub const VERSION: f64 = 0.97;
+pub const VERSION: f64 = 1.0;
 
 pub const WINDOW_SIZE_X: i16 = 1366;
 pub const WINDOW_SIZE_Y: i16 = 768;
