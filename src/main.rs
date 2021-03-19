@@ -22,6 +22,7 @@ pub fn main() {
     let (mut ctx, event_loop) = ContextBuilder::new("suzu", "akichi")
         .window_setup(
             conf::WindowSetup::default()
+                .icon("/tile_textures/menu_art3.png")
                 .title("電氣貸本屋")
                 .samples(ggez::conf::NumSamples::Four),
         )
