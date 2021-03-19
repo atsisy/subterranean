@@ -99,7 +99,7 @@ texture_paths = [
 	      "/textures/nitori_tachie_sunglass.png",
 	      "/textures/town.png",
 	      ]
-font_paths = ["/fonts/azuki.ttf", "/fonts/RiiT_F.ttf", "/fonts/OradanoGSRR.ttf", "/fonts/cinecaption226.ttf", "/fonts/JF-Dot-ShinonomeMaru12B.ttf", "/fonts/Mamelon-3-Hi-Regular.otf"]
+font_paths = ["/fonts/RiiT_F.ttf", "/fonts/cinecaption226.ttf", "/fonts/JF-Dot-ShinonomeMaru12B.ttf", "/fonts/Mamelon-3-Hi-Regular.otf"]
 tileset_paths = ["/maps/suzunaan2/main.tmx"]
 scenario_table_path = "/scenario_table.toml"
 daily_customer_dist_path = "/daily_customer_dist.toml"

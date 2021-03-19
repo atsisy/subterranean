@@ -82,7 +82,7 @@ impl ScenarioTextSegment {
             attribute: ScenarioTextAttribute {
                 fpc: fpc,
                 font_info: FontInformation::new(
-                    game_data.get_font(FontID::DEFAULT),
+                    game_data.get_font(FontID::Cinema),
                     numeric::Vector2f::new(font_scale, font_scale),
                     color,
                 ),
@@ -330,7 +330,7 @@ impl ScenarioText {
         let default = ScenarioTextAttribute {
             fpc: toml_default_attribute["fpc"].as_float().unwrap() as f32,
             font_info: FontInformation::new(
-                game_data.get_font(FontID::DEFAULT),
+                game_data.get_font(FontID::Cinema),
                 numeric::Vector2f::new(default_font_scale, default_font_scale),
                 ggraphics::Color::from_rgba_u32(
                     toml_default_attribute["color"].as_integer().unwrap() as u32,

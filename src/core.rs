@@ -182,9 +182,7 @@ pub enum TextureID {
 
 #[derive(Debug, Clone, Copy)]
 pub enum FontID {
-    DEFAULT = 0,
     JpFude1,
-    CorpMincho,
     Cinema,
     BitMap1,
     Mamelon,
@@ -194,9 +192,7 @@ impl FromStr for FontID {
     type Err = ();
     fn from_str(s: &str) -> Result<Self, ()> {
         match s {
-            "Default" => Ok(FontID::DEFAULT),
             "JpFude1" => Ok(FontID::JpFude1),
-            "CorpMincho" => Ok(FontID::CorpMincho),
             "Cinema" => Ok(FontID::Cinema),
             "BitMap1" => Ok(FontID::BitMap1),
 	    "Mamelon" => Ok(FontID::Mamelon),
