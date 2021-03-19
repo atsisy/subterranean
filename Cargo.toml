@@ -1,6 +1,6 @@
 [package]
 name = "suzu"
-version = "0.1.0"
+version = "1.0.0"
 authors = ["Akihiro Takai <at.sisy@gmail.com>"]
 edition = "2018"
 

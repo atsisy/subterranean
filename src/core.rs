@@ -48,7 +48,57 @@ use number_to_jk::number_to_jk;
 
 extern crate num;
 
-pub const VERSION: f64 = 1.0;
+pub const VERSION: &str = env!("CARGO_PKG_VERSION");
+
+#[derive(PartialEq, Clone)]
+pub struct Version {
+    major: u8,
+    minor: u8,
+    patch: u8
+}
+
+impl Version {
+    pub fn this() -> Self {
+	Self::from_str(VERSION)
+    }
+    
+    pub fn from_str(s: &str) -> Self {
+	let ver = s.rsplit(".").collect::<Vec<&str>>();
+	Version {
+	    major: ver[0].parse().unwrap(),
+	    minor: ver[1].parse().unwrap(),
+	    patch: ver[2].parse().unwrap(),
+	}
+    }
+
+    pub fn to_string(&self) -> String {
+	format!("{}.{}.{}", self.major, self.minor, self.patch)
+    }
+}
+
+impl PartialOrd for Version {
+    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
+	if let Some(order) = self.major.partial_cmp(&other.major) {
+	    match order {
+		std::cmp::Ordering::Equal => {
+		    if let Some(order) = self.minor.partial_cmp(&other.minor) {
+			match order {
+			    std::cmp::Ordering::Equal => {
+				self.patch.partial_cmp(&other.patch)
+			    },
+			    _ => Some(order),
+			}
+		    } else {
+			None
+		    }
+		},
+		_ => Some(order),
+	    }
+	} else {
+	    None
+	}
+    }
+}
 
 pub const WINDOW_SIZE_X: i16 = 1366;
 pub const WINDOW_SIZE_Y: i16 = 768;

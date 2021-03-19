@@ -815,7 +815,7 @@ pub struct UpdatePanel {
     apply_button: SelectButton,
     cancel_button: SelectButton,
     event_list: DelayEventList<Self>,
-    latest_version: Option<f64>,
+    latest_version: Option<crate::core::Version>,
 }
 
 impl UpdatePanel {
@@ -937,14 +937,15 @@ impl UpdatePanel {
         let rpoint = self.canvas.relative_point(point);
 
         if self.apply_button.contains(ctx.context, rpoint) {
-            if let Some(version) = self.latest_version {
+            if let Some(version) = self.latest_version.as_ref() {
+		let version = version.clone();
                 self.replace_main_message(ctx, "更新中・・・");
-
+		
                 self.event_list.add_event(
                     Box::new(move |slf: &mut UpdatePanel, ctx, _t| {
-                        match slf.exec_update(version) {
+                        match slf.exec_update(&version) {
                             Ok(_) => {
-                                slf.replace_main_message(ctx, &format!("更新完了 ver.{}", version))
+                                slf.replace_main_message(ctx, &format!("更新完了 v{}", version.to_string()))
                             }
                             Err(_) => slf.replace_main_message(
                                 ctx,
@@ -965,7 +966,7 @@ impl UpdatePanel {
         None
     }
 
-    pub fn check_update<'a>(&mut self, _ctx: &mut SuzuContext<'a>, _t: Clock) -> Result<f64, ()> {
+    pub fn check_update<'a>(&mut self, _ctx: &mut SuzuContext<'a>, _t: Clock) -> Result<String, ()> {
         let resp = match reqwest::blocking::get("https://boxed-sumire.fun/suzu/update.toml") {
             Ok(resp) => match resp.text() {
                 Ok(text) => text,
@@ -979,9 +980,9 @@ impl UpdatePanel {
             Err(_) => return Err(()),
         };
 
-        if let Some(latest_version) = root["latest"].as_float() {
-            if latest_version > crate::core::VERSION {
-                Ok(latest_version)
+        if let Some(latest_version) = root["latest"].as_str() {
+            if crate::core::Version::from_str(latest_version) > crate::core::Version::this() {
+                Ok(latest_version.to_string())
             } else {
                 Err(())
             }
@@ -990,14 +991,14 @@ impl UpdatePanel {
         }
     }
 
-    pub fn exec_update(&self, version: f64) -> Result<(), ()> {
-        if version < crate::core::VERSION {
+    pub fn exec_update(&self, version: &crate::core::Version) -> Result<(), ()> {
+        if version < &crate::core::Version::this() {
             return Err(());
         }
 
         let bytes = match reqwest::blocking::get(&format!(
             "https://boxed-sumire.fun/suzu/suzu-{}.encrypted",
-            version
+            version.to_string()
         )) {
             Ok(resp) => match resp.bytes() {
                 Ok(bytes) => bytes,
@@ -1021,11 +1022,11 @@ impl UpdatePanel {
             Box::new(
                 move |slf: &mut UpdatePanel, ctx, t| match slf.check_update(ctx, t) {
                     Ok(version) => {
-                        slf.latest_version = Some(version);
+                        slf.latest_version = Some(crate::core::Version::from_str(&version));
                         slf.replace_main_message(
                             ctx,
                             &format!(
-                                "ver.{} → ver.{}の更新が見つかりました",
+                                "v{} → v{}の更新が見つかりました",
                                 crate::core::VERSION,
                                 version
                             ),
@@ -1034,7 +1035,7 @@ impl UpdatePanel {
                     Err(()) => {
                         slf.replace_main_message(
                             ctx,
-                            &format!("最新版です ver.{}", crate::core::VERSION),
+                            &format!("最新版です v{}", crate::core::VERSION),
                         );
                     }
                 },
