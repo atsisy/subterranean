@@ -396,6 +396,7 @@ struct TemporaryConfigData {
     bgm_volume: f32,
     se_volume: f32,
     pause_when_inactive: bool,
+    fullscreen_mode: bool,
 }
 
 impl TemporaryConfigData {
@@ -404,6 +405,7 @@ impl TemporaryConfigData {
             bgm_volume: ctx.config.get_bgm_volume(),
             se_volume: ctx.config.get_se_volume(),
             pause_when_inactive: ctx.config.is_pause_when_inactive(),
+	    fullscreen_mode: ctx.config.is_fullscreen_mode_configed(),
         }
     }
 }
@@ -417,6 +419,7 @@ pub struct ConfigPanel {
     bgm_volume_bar: SeekBar,
     se_volume_bar: SeekBar,
     checkbox: CheckBox,
+    fullscreen_checkbox: CheckBox,
     apply_button: SelectButton,
     cancel_button: SelectButton,
     original_config_data: TemporaryConfigData,
@@ -554,6 +557,30 @@ impl ConfigPanel {
             0,
         );
 
+	let fullscreen_text = UniText::new(
+            "フルスクリーン".to_string(),
+            numeric::Point2f::new(750.0, 400.0),
+            numeric::Vector2f::new(1.0, 1.0),
+            0.0,
+            0,
+            hrzn_text_font_info.clone(),
+        );
+        hrzn_text_list.push(fullscreen_text);
+        let choice_box_texture = Box::new(UniTexture::new(
+            ctx.ref_texture(TextureID::CheckCircle),
+            numeric::Point2f::new(750.0, 440.0),
+            numeric::Vector2f::new(1.0, 1.0),
+            0.0,
+            0,
+        ));
+        let fullscreen_check = CheckBox::new(
+            ctx,
+            numeric::Rect::new(750.0, 440.0, 50.0, 50.0),
+            choice_box_texture,
+            ctx.config.is_fullscreen_mode_configed(),
+            0,
+        );
+
         ConfigPanel {
             header_text: header_text,
             sb_dynamic_text: sb_dynamic_text,
@@ -587,6 +614,7 @@ impl ConfigPanel {
             cancel_button: cancel_button,
             original_config_data: TemporaryConfigData::new(ctx),
             checkbox: check_box,
+	    fullscreen_checkbox: fullscreen_check,
         }
     }
 
@@ -608,14 +636,29 @@ impl ConfigPanel {
         let original_bgm = self.original_config_data.bgm_volume * 100.0;
         let original_se = self.original_config_data.se_volume * 100.0;
         let original_pause = self.original_config_data.pause_when_inactive;
+	let original_fullscreen_config = self.original_config_data.fullscreen_mode;
 
         ctx.change_bgm_volume(original_bgm);
         ctx.change_se_volume(original_se);
         ctx.config.set_pause_when_inactive(original_pause);
+	ctx.config.set_fullscreen_mode_config(original_fullscreen_config);
 
         self.bgm_volume_bar.set_value(ctx, original_bgm);
         self.se_volume_bar.set_value(ctx, original_se);
         self.checkbox.try_check(original_pause);
+	self.fullscreen_checkbox.try_check(original_fullscreen_config);
+
+	match ggraphics::set_fullscreen(
+	    ctx.context,
+	    if original_fullscreen_config {
+		ggez::conf::FullscreenType::Desktop
+	    } else {
+		ggez::conf::FullscreenType::Windowed
+	    }
+	) {
+	    Ok(_) => (),
+	    Err(e) => eprintln!("{}", e),
+	}
     }
 
     pub fn get_name(&self) -> String {
@@ -640,6 +683,26 @@ impl ConfigPanel {
         }
     }
 
+    fn fullscreen_checkbox_handler<'a>(&mut self, ctx: &mut SuzuContext<'a>, rpoint: numeric::Point2f) {
+	let before = self.fullscreen_checkbox.checked_now();
+	self.fullscreen_checkbox.click_handler(rpoint);
+	let after = self.fullscreen_checkbox.checked_now();
+
+	if before ^ after {
+	    match ggraphics::set_fullscreen(
+		ctx.context,
+		if after {
+		    ggez::conf::FullscreenType::Desktop
+		} else {
+		    ggez::conf::FullscreenType::Windowed
+		}
+	    ) {
+		Ok(_) => (),
+		Err(e) => eprintln!("{}", e),
+	    }
+	}
+    }
+
     pub fn mouse_button_up<'a>(
         &mut self,
         ctx: &mut SuzuContext<'a>,
@@ -651,13 +714,16 @@ impl ConfigPanel {
 
         let rpoint = self.canvas.relative_point(point);
         self.checkbox.click_handler(rpoint);
+	self.fullscreen_checkbox_handler(ctx, rpoint);
 
         if self.apply_button.contains(ctx.context, rpoint) {
             ctx.change_bgm_volume(self.bgm_volume_bar.get_current_value());
             ctx.change_se_volume(self.se_volume_bar.get_current_value());
             ctx.config
                 .set_pause_when_inactive(self.checkbox.checked_now());
+	    ctx.config.set_fullscreen_mode_config(self.fullscreen_checkbox.checked_now());
             ctx.config.save_config();
+	    
             return Some(TitleContentsEvent::NextContents("init-menu".to_string()));
         }
 
@@ -711,6 +777,7 @@ impl DrawableComponent for ConfigPanel {
             self.cancel_button.draw(ctx)?;
 
             self.checkbox.draw(ctx)?;
+	    self.fullscreen_checkbox.draw(ctx)?;
 
             sub_screen::pop_screen(ctx);
             self.canvas.draw(ctx).unwrap();

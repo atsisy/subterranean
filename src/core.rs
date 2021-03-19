@@ -2239,6 +2239,7 @@ pub struct GameConfig {
     se_volume: f32,
     minute_per_clock: Clock,
     pause_when_inactive: bool,
+    fullscreen_mode: bool,
     extra_unlocked: bool,
 }
 
@@ -2297,6 +2298,14 @@ impl GameConfig {
 
     pub fn set_pause_when_inactive(&mut self, flag: bool) {
         self.pause_when_inactive = flag;
+    }
+
+    pub fn is_fullscreen_mode_configed(&self) -> bool {
+	self.fullscreen_mode
+    }
+
+    pub fn set_fullscreen_mode_config(&mut self, flag: bool) {
+	self.fullscreen_mode = flag;
     }
 
     pub fn save_config(&self) {
@@ -3066,6 +3075,7 @@ pub struct State {
     fps: f64,
     scene_controller: SceneController,
     game_data: GameResource,
+    window_scale: numeric::Vector2f,
 }
 
 impl ggez::event::EventHandler for State {
@@ -3125,8 +3135,8 @@ impl ggez::event::EventHandler for State {
         self.scene_controller.mouse_motion_event(
             ctx,
             &mut self.game_data,
-            numeric::Point2f::new(x, y),
-            numeric::Vector2f::new(dx, dy),
+            numeric::Point2f::new(x * self.window_scale.x, y * self.window_scale.y),
+            numeric::Vector2f::new(dx * self.window_scale.x, dy * self.window_scale.y),
         );
     }
 
@@ -3141,7 +3151,7 @@ impl ggez::event::EventHandler for State {
             ctx,
             &mut self.game_data,
             button,
-            numeric::Point2f::new(x, y),
+            numeric::Point2f::new(x * self.window_scale.x, y * self.window_scale.y),
         );
     }
 
@@ -3156,7 +3166,7 @@ impl ggez::event::EventHandler for State {
             ctx,
             &mut self.game_data,
             button,
-            numeric::Point2f::new(x, y),
+            numeric::Point2f::new(x * self.window_scale.x, y * self.window_scale.y),
         );
     }
 
@@ -3173,6 +3183,16 @@ impl ggez::event::EventHandler for State {
                 .unfocus_event(ctx, &mut self.game_data);
         }
     }
+
+    fn resize_event(&mut self, ctx: &mut Context, width: f32, height: f32) {
+	println!("resize, {}, {}", width, height);
+	self.scene_controller.root_screen.set_scale(
+	    numeric::Vector2f::new(width / WINDOW_SIZE_X as f32, height / WINDOW_SIZE_Y as f32)
+	);
+	
+	let window_size = ggez::graphics::drawable_size(&ctx);
+	self.window_scale = numeric::Vector2f::new(WINDOW_SIZE_X as f32 / window_size.0, WINDOW_SIZE_Y as f32 / window_size.1);
+    }
 }
 
 impl State {
@@ -3186,11 +3206,16 @@ impl State {
             .se_manager
             .change_global_volume(scene_controller.game_config.se_volume);
 
+	let window_size = ggez::graphics::drawable_size(&ctx);
+
+	println!("window size -> ({}, {})", window_size.0, window_size.1);
+	
         let s = State {
             clock: 0,
             fps: 0.0,
             scene_controller: scene_controller,
             game_data: game_data,
+	    window_scale: numeric::Vector2f::new(WINDOW_SIZE_X as f32 / window_size.0, WINDOW_SIZE_Y as f32 / window_size.1),
         };
 
         Ok(s)
