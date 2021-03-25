@@ -697,6 +697,7 @@ pub struct ShopScene {
     new_books: Vec<BookInformation>,
     tutorial_list: ShopTutorialList,
     task_tutorial_context: TaskTutorialContext,
+    shop_closing_lock: bool,
 }
 
 impl ShopScene {
@@ -858,6 +859,7 @@ impl ShopScene {
                 ShopTutorialList::new_done()
             },
             task_tutorial_context: task_tutorial,
+	    shop_closing_lock: false,
         }
     }
 
@@ -1389,10 +1391,13 @@ impl ShopScene {
                                     slf.shop_clock.add_minute(10);
                                     slf.drawable_shop_clock.update_time(&slf.shop_clock);
                                 }
+
+				slf.shop_closing_lock = false;
                             }),
                             t + 31,
                         );
 
+			self.shop_closing_lock = true;
                         self.scene_transition_close_effect(ctx, t);
                     }
                 }
@@ -1680,6 +1685,10 @@ impl ShopScene {
         }
 
         if self.shop_time_status == ShopTimeStatus::Opening && self.shop_clock.is_past(17, 0) {
+	    if self.shop_closing_lock {
+		return;
+	    }
+	    
             self.shop_time_status = ShopTimeStatus::Closing;
             self.shop_time_status_header.make_center(
                 ctx.context,
@@ -1896,7 +1905,7 @@ impl ShopScene {
                 // }
             }
             tdev::VirtualKey::Action3 => {
-                // self.shop_clock.add_minute(60);
+                //self.shop_clock.add_minute(60);
             }
             tdev::VirtualKey::Action4 => {
                 let t = self.get_current_clock();
@@ -2332,6 +2341,8 @@ impl SceneManager for ShopScene {
         //println!("{}", perf_measure!({
 
         flush_delay_event_and_redraw_check!(self, self.event_list, ctx, t, {});
+
+	println!("transition scene id -> {:?}", self.transition_scene);
 
         if let Some(scenario_event) = self.map.scenario_event.as_mut() {
             scenario_event.update_text(ctx, None);
