@@ -2108,16 +2108,16 @@ impl BorrowingRecordBook {
 
         let next = UniTexture::new(
             ctx.ref_texture(TextureID::GoNextPageLeft),
-            numeric::Point2f::new(page_rect.x, page_rect.h - 32.0),
-            numeric::Vector2f::new(0.5, 0.5),
+            numeric::Point2f::new(page_rect.x, page_rect.h - 35.0),
+            numeric::Vector2f::new(0.55, 0.55),
             0.0,
             0,
         );
 
         let mut prev = UniTexture::new(
             ctx.ref_texture(TextureID::GoNextPageRight),
-            numeric::Point2f::new(page_rect.right() - 32.0, page_rect.h - 32.0),
-            numeric::Vector2f::new(0.5, 0.5),
+            numeric::Point2f::new(page_rect.right() - 35.0, page_rect.h - 35.0),
+            numeric::Vector2f::new(0.55, 0.55),
             0.0,
             0,
         );

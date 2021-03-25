@@ -1082,25 +1082,27 @@ impl Clickable for SelectStoringBookWindow {
     ) {
         let rpoint = self.canvas.relative_point(point);
 
-        // 本情報のVerticalTextへのクリック処理
-        for (index, vtext) in self.book_title_text.iter_mut().enumerate() {
-            if *self.book_storable.get(index).unwrap() {
-                // 本情報をクリックしたか？
-                if vtext.contains(ctx.context, rpoint) {
-                    // 既に選択されている場合は、削除
-                    if self.selecting_book_index.contains(&index) {
-                        vtext.set_color(ggraphics::Color::from_rgba_u32(0x000000ff));
-                        self.selecting_book_index
-                            .retain(|inner_index| *inner_index != index);
-                    } else {
-                        // テキストを赤に変更し、選択中のインデックスとして登録
-                        vtext.set_color(ggraphics::Color::from_rgba_u32(0xee0000ff));
-                        self.selecting_book_index.push(index);
-                    }
+	let maybe_grid_position = self.table_frame.get_grid_position(ctx.context, point);
+        let grid_position = match maybe_grid_position {
+            Some(it) => it,
+            _ => return,
+        };
 
-                    break;
-                }
-            }
+        let index = self.table_frame.get_rows() - 1 - grid_position.x as usize;
+	let vtext = self.book_title_text.get_mut(index);
+	let vtext = match vtext {
+            Some(it) => it,
+            _ => return,
+        };
+
+	if self.selecting_book_index.contains(&index) {
+            vtext.set_color(ggraphics::Color::from_rgba_u32(0x000000ff));
+            self.selecting_book_index
+                .retain(|inner_index| *inner_index != index);
+        } else {
+            // テキストを赤に変更し、選択中のインデックスとして登録
+            vtext.set_color(ggraphics::Color::from_rgba_u32(0xee0000ff));
+            self.selecting_book_index.push(index);
         }
 
         self.redraw_request = DrawRequest::Draw;
