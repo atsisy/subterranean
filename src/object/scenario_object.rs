@@ -580,7 +580,7 @@ impl ScenarioAdPage {
         // 広告料 + 追加料金 > 所持金 なら払えないので最も高価な広告を解除
         while ad_page.total_ad_cost(ctx) + work_type_additional_cost
             > ctx.take_save_data().task_result.total_money &&
-	    ctx.take_save_data().task_result.total_money > work_type_additional_cost
+	    ctx.take_save_data().task_result.total_money >= work_type_additional_cost
         {
             ad_page.uncheck_most_expensive(ctx);
         }
@@ -728,7 +728,7 @@ impl DrawableComponent for ScenarioAdPage {
     }
 }
 
-#[derive(Copy, Clone, Hash, Eq, PartialEq, Deserialize, Serialize)]
+#[derive(Debug, Copy, Clone, Hash, Eq, PartialEq, Deserialize, Serialize)]
 pub enum SuzunaAdAgencyType {
     HakureiJinja,
     KirisameMahoten,
@@ -813,8 +813,9 @@ impl ScenarioAgencyPage {
             SuzunaAdAgencyType::YamaJinja,
         ] {
             if let Some(is_checked) = ctx.take_save_data().agency_status.get(&ad_type) {
-                if *is_checked {
-                    ad_table.get_mut(&ad_type).unwrap().check_box.apply_check();
+		let cost = ctx.resource.get_default_ad_agency_cost(&ad_type);
+                if !*is_checked || cost > ctx.take_save_data().suzunaan_status.get_current_reputation().round() as u32 {
+                    ad_table.get_mut(&ad_type).unwrap().check_box.clear_check();
                 }
             }
         }

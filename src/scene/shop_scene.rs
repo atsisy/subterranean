@@ -1903,7 +1903,7 @@ impl ShopScene {
                 // }
             }
             tdev::VirtualKey::Action3 => {
-                self.shop_clock.add_minute(60);
+                //self.shop_clock.add_minute(60);
             }
             tdev::VirtualKey::Action4 => {
                 let t = self.get_current_clock();

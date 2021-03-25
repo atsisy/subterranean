@@ -1999,6 +1999,11 @@ impl CheckBox {
         self.is_checked = true;
         self.check_texture.appear();
     }
+
+    pub fn clear_check(&mut self) {
+        self.is_checked = false;
+        self.check_texture.hide();
+    }
 }
 
 impl DrawableComponent for CheckBox {
