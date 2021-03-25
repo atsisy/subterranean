@@ -577,12 +577,19 @@ impl ScenarioAdPage {
                 0
             } as i32;
 
+	if ctx.take_save_data().task_result.total_money <= work_type_additional_cost {
+	    
+	}
+
         // 広告料 + 追加料金 > 所持金 なら払えないので最も高価な広告を解除
         while ad_page.total_ad_cost(ctx) + work_type_additional_cost
-            > ctx.take_save_data().task_result.total_money &&
-	    ctx.take_save_data().task_result.total_money >= work_type_additional_cost
+            > ctx.take_save_data().task_result.total_money
         {
             ad_page.uncheck_most_expensive(ctx);
+
+	    if ad_page.all_checks_are_cleared(ctx) {
+		break;
+	    }
         }
 
         ad_page
@@ -687,6 +694,23 @@ impl ScenarioAdPage {
                 ctx.change_ad_status(*ad_type, false);
             }
         }
+    }
+
+    pub fn all_checks_are_cleared<'a>(&mut self, ctx: &mut SuzuContext<'a>) -> bool {
+        for ad_type in vec![
+            SuzunaAdType::AdPaper,
+            SuzunaAdType::Chindon,
+            SuzunaAdType::ShopNobori,
+            SuzunaAdType::TownNobori,
+            SuzunaAdType::NewsPaper,
+            SuzunaAdType::BunBunMaruPaper,
+        ] {
+            if self.ad_table.get(&ad_type).unwrap().is_checked() {
+		return false;
+	    }
+        }
+
+	return true;
     }
 }
 
