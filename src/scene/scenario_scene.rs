@@ -371,6 +371,14 @@ impl ScenarioScene {
     }
 
     fn start_shop_work_schedule<'a>(&mut self, ctx: &mut SuzuContext<'a>) {
+	let next_hp = ctx.take_save_data().suzunaan_status.kosuzu_hp - 20.0;
+        if next_hp < 0.0 {
+            let t = self.get_current_clock();
+            self.scenario_event
+                .replace_scenario(ctx, &mut self.scenario_ctx, "/scenario/no_enough_hp.toml", t);
+            return;
+        }
+	
         self.scenario_ctx.builtin_command_inexec = true;
         self.status_screen.show_main_page(ctx);
         self.status_screen.change_kosuzu_hp(ctx, -20.0);

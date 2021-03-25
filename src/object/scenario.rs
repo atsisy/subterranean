@@ -986,6 +986,10 @@ impl Scenario {
 	    time_attack_week_first_scenario
 		.parse::<toml::Value>()
 		.expect("Failed to parse toml file")
+	} else if file_path ==  "/scenario/no_enough_hp.toml" {
+	    no_enough_hp_scenario
+		.parse::<toml::Value>()
+		.expect("Failed to parse toml file")	    
 	} else {
 	    parse_toml_file!(ctx.context, file_path)
 	};
@@ -2783,3 +2787,35 @@ background = \"SightBackground1\"
 [scenario-group.tachie-data]
 right = \"KosuzuTachie1\"
 ";
+
+const no_enough_hp_scenario: &str = "first-scenario-id = 10
+
+[scene-transition]
+scenario = 1
+dream = 2
+save = 4
+
+[[scenario-group]]
+type = \"scenario\"
+id = 10
+next-id = 11
+background = \"SightBackground1\"
+
+[scenario-group.tachie-data]
+right = \"KosuzuTachie1\"
+left = \"KosuzuTachie1\"
+
+   [scenario-group.default-text-attribute]
+   fpc = 2.0
+   font_scale = 32.0
+   color = 0x000000ff
+
+   [[scenario-group.text]]
+   text = \"なんか疲れちゃったカモ。今日はお休みにしましょ。\"
+
+[[scenario-group]]
+type = \"wait\"
+id = 11
+next-id = 12
+opecode = \"NextDay\"
+background = \"SightBackground1\"";

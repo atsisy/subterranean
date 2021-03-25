@@ -1066,8 +1066,6 @@ impl ShopScene {
             // プレイヤーと他キャラクターの衝突状況から、プレイヤーがどれだけ、突き放されればいいのか計算
             let diff = player.fix_collision_horizon(ctx, &collision_info, t);
 
-	    println!("{:?}, {:?}", collision_info.object1_position, collision_info.object2_position);
-	    println!("collision diff -> {}, {}", -diff, 0.0);
             // プレイヤーの突き放し距離分動かす
             player.move_map(numeric::Vector2f::new(-diff, 0.0));
 
@@ -1905,7 +1903,7 @@ impl ShopScene {
                 // }
             }
             tdev::VirtualKey::Action3 => {
-                //self.shop_clock.add_minute(60);
+                self.shop_clock.add_minute(60);
             }
             tdev::VirtualKey::Action4 => {
                 let t = self.get_current_clock();
@@ -2341,8 +2339,6 @@ impl SceneManager for ShopScene {
         //println!("{}", perf_measure!({
 
         flush_delay_event_and_redraw_check!(self, self.event_list, ctx, t, {});
-
-	println!("transition scene id -> {:?}", self.transition_scene);
 
         if let Some(scenario_event) = self.map.scenario_event.as_mut() {
             scenario_event.update_text(ctx, None);

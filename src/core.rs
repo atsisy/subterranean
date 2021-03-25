@@ -843,6 +843,7 @@ impl GensoDate {
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum GeneralScenarioID {
     NoEnoughMoney,
+    NoRnoughHP,
 }
 
 impl GeneralScenarioID {

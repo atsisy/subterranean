@@ -525,11 +525,15 @@ impl ResultMeter {
         ));
 
         let next_goal = self.meter.get_value() + diff;
-        self.goal = if next_goal > self.meter.max {
-            self.meter.max
-        } else {
-            next_goal
-        };
+        self.goal = if next_goal >= 0.0 {
+	    if next_goal > self.meter.max {
+		self.meter.max
+            } else {
+		next_goal
+            }
+	} else {
+	    0.0
+	};
 
         self.diff_per_clock = (self.goal - self.meter.get_value()) / time as f32;
     }
