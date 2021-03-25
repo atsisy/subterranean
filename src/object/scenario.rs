@@ -974,6 +974,18 @@ impl Scenario {
 	    first_day_scenario
 		.parse::<toml::Value>()
 		.expect("Failed to parse toml file")
+	} else if file_path == "/scenario/time_attack_first.toml" {
+	    time_attack_first_day_scenario
+		.parse::<toml::Value>()
+		.expect("Failed to parse toml file")
+	} else if file_path == "/scenario/time_attack_default.toml" {
+	    time_attack_default_day_scenario
+		.parse::<toml::Value>()
+		.expect("Failed to parse toml file")
+	} else if file_path == "/scenario/time_attack_week_first.toml" {
+	    time_attack_week_first_scenario
+		.parse::<toml::Value>()
+		.expect("Failed to parse toml file")
 	} else {
 	    parse_toml_file!(ctx.context, file_path)
 	};
@@ -2450,4 +2462,324 @@ type = \"builtin\"
 opecode = \"StartSchedule\"
 id = 27
 background = \"SightBackground1\"
+";
+
+const time_attack_first_day_scenario: &str = "first-scenario-id = 10
+
+[scene-transition]
+scenario = 1
+dream = 2
+save = 4
+
+[[scenario-group]]
+type = \"scenario\"
+id = 10
+next-id = 12
+background = \"SightBackground1\"
+
+[scenario-group.tachie-data]
+right = \"KosuzuTachie1\"
+
+   [scenario-group.default-text-attribute]
+   fpc = 2.0
+   font_scale = 32.0
+   color = 0x000000ff
+
+   [[scenario-group.text]]
+   text = \"\"\"*助言*
+熟練モードへようこそ。
+熟練モードでは通常モードとは異なり、60日間
+働くことになります。特に目標金額は無く、この期限の間
+にいくら稼げるかがテーマになります。
+かなり長時間かかると思われますので保存を忘れずに
+まったりお楽しみください。\"\"\"
+
+[[scenario-group]]
+type = \"choice\"
+header_text = \"サァ準備ができたわよ\"
+id = 11
+background = \"SightBackground1\"
+   [scenario-group.tachie-data]
+   right = \"KosuzuTachie1\"
+
+   [[scenario-group.choice-pattern]]
+   pattern = \"行動開始\"
+   jump-id = 13
+   [[scenario-group.choice-pattern]]
+   pattern = \"保存\"
+   jump-id = 4
+
+[[scenario-group]]
+type = \"choice\"
+header_text = \"宣伝の依頼もやらないとネ\"
+id = 14
+   [scenario-group.tachie-data]
+   right = \"KosuzuTachie1\"
+
+   [[scenario-group.choice-pattern]]
+   pattern = \"完了\"
+   jump-id = 18
+
+[[scenario-group]]
+type = \"wait\"
+id = 18
+next-id = 17
+opecode = \"ShowAdAgency\"
+background = \"SightBackground1\"
+
+[[scenario-group]]
+type = \"choice\"
+header_text = \"宣伝の受注もしないとネ\"
+id = 17
+   [scenario-group.tachie-data]
+   right = \"KosuzuTachie1\"
+
+   [[scenario-group.choice-pattern]]
+   pattern = \"完了\"
+   jump-id = 16
+
+[[scenario-group]]
+type = \"wait\"
+id = 16
+next-id = 11
+opecode = \"ShowMain\"
+background = \"SightBackground1\"
+
+
+[[scenario-group]]
+type = \"builtin\"
+opecode = \"StartSchedule\"
+id = 13
+background = \"SightBackground1\"
+
+[[scenario-group]]
+type = \"wait\"
+id = 12
+next-id = 20
+opecode = \"ShowStatusScreen\"
+background = \"SightBackground1\"
+
+[[scenario-group]]
+type = \"wait\"
+id = 20
+next-id = 15
+opecode = \"ScheduleCheck\"
+background = \"SightBackground1\"
+
+[[scenario-group]]
+type = \"wait\"
+id = 15
+next-id = 14
+opecode = \"ShowAd\"
+background = \"SightBackground1\"
+
+[scenario-group.tachie-data]
+right = \"KosuzuTachie1\"
+";
+
+const time_attack_default_day_scenario: &str = "first-scenario-id = 10
+
+[scene-transition]
+scenario = 1
+dream = 2
+save = 4
+
+[[scenario-group]]
+type = \"scenario\"
+id = 10
+next-id = 12
+background = \"SightBackground1\"
+
+[scenario-group.tachie-data]
+right = \"KosuzuTachie1\"
+
+   [scenario-group.default-text-attribute]
+   fpc = 2.0
+   font_scale = 32.0
+   color = 0x000000ff
+
+   [[scenario-group.text]]
+   text = \"サァ、今日も働くわヨ\"
+
+[[scenario-group]]
+type = \"choice\"
+header_text = \"サァ準備ができたわよ\"
+id = 11
+background = \"SightBackground1\"
+   [scenario-group.tachie-data]
+   right = \"KosuzuTachie1\"
+
+   [[scenario-group.choice-pattern]]
+   pattern = \"行動開始\"
+   jump-id = 13
+   [[scenario-group.choice-pattern]]
+   pattern = \"保存\"
+   jump-id = 4
+
+[[scenario-group]]
+type = \"choice\"
+header_text = \"宣伝の依頼もやらないとネ\"
+id = 14
+   [scenario-group.tachie-data]
+   right = \"KosuzuTachie1\"
+
+   [[scenario-group.choice-pattern]]
+   pattern = \"完了\"
+   jump-id = 18
+
+[[scenario-group]]
+type = \"wait\"
+id = 18
+next-id = 17
+opecode = \"ShowAdAgency\"
+background = \"SightBackground1\"
+
+[[scenario-group]]
+type = \"choice\"
+header_text = \"宣伝の受注もしないとネ\"
+id = 17
+   [scenario-group.tachie-data]
+   right = \"KosuzuTachie1\"
+
+   [[scenario-group.choice-pattern]]
+   pattern = \"完了\"
+   jump-id = 16
+
+[[scenario-group]]
+type = \"wait\"
+id = 16
+next-id = 11
+opecode = \"ShowMain\"
+background = \"SightBackground1\"
+
+
+[[scenario-group]]
+type = \"builtin\"
+opecode = \"StartSchedule\"
+id = 13
+background = \"SightBackground1\"
+
+[[scenario-group]]
+type = \"wait\"
+id = 12
+next-id = 20
+opecode = \"ShowStatusScreen\"
+background = \"SightBackground1\"
+
+[[scenario-group]]
+type = \"wait\"
+id = 20
+next-id = 14
+opecode = \"ShowAd\"
+background = \"SightBackground1\"
+
+[scenario-group.tachie-data]
+right = \"KosuzuTachie1\"
+";
+
+const time_attack_week_first_scenario: &str = "first-scenario-id = 10
+
+[scene-transition]
+scenario = 1
+dream = 2
+save = 4
+
+[[scenario-group]]
+type = \"scenario\"
+id = 10
+next-id = 12
+background = \"SightBackground1\"
+
+[scenario-group.tachie-data]
+right = \"KosuzuTachie1\"
+
+   [scenario-group.default-text-attribute]
+   fpc = 2.0
+   font_scale = 32.0
+   color = 0x000000ff
+
+   [[scenario-group.text]]
+   text = \"サァ、今日も働くわヨ\"
+
+[[scenario-group]]
+type = \"choice\"
+header_text = \"サァ準備ができたわよ\"
+id = 11
+background = \"SightBackground1\"
+   [scenario-group.tachie-data]
+   right = \"KosuzuTachie1\"
+
+   [[scenario-group.choice-pattern]]
+   pattern = \"行動開始\"
+   jump-id = 13
+   [[scenario-group.choice-pattern]]
+   pattern = \"保存\"
+   jump-id = 4
+
+[[scenario-group]]
+type = \"choice\"
+header_text = \"宣伝の依頼もやらないとネ\"
+id = 14
+   [scenario-group.tachie-data]
+   right = \"KosuzuTachie1\"
+
+   [[scenario-group.choice-pattern]]
+   pattern = \"完了\"
+   jump-id = 18
+
+[[scenario-group]]
+type = \"wait\"
+id = 18
+next-id = 17
+opecode = \"ShowAdAgency\"
+background = \"SightBackground1\"
+
+[[scenario-group]]
+type = \"choice\"
+header_text = \"宣伝の受注もしないとネ\"
+id = 17
+   [scenario-group.tachie-data]
+   right = \"KosuzuTachie1\"
+
+   [[scenario-group.choice-pattern]]
+   pattern = \"完了\"
+   jump-id = 16
+
+[[scenario-group]]
+type = \"wait\"
+id = 16
+next-id = 11
+opecode = \"ShowMain\"
+background = \"SightBackground1\"
+
+
+[[scenario-group]]
+type = \"builtin\"
+opecode = \"StartSchedule\"
+id = 13
+background = \"SightBackground1\"
+
+[[scenario-group]]
+type = \"wait\"
+id = 12
+next-id = 20
+opecode = \"ShowStatusScreen\"
+background = \"SightBackground1\"
+
+[[scenario-group]]
+type = \"wait\"
+id = 20
+next-id = 15
+opecode = \"ScheduleCheck\"
+background = \"SightBackground1\"
+
+[[scenario-group]]
+type = \"wait\"
+id = 15
+next-id = 14
+opecode = \"ShowAd\"
+background = \"SightBackground1\"
+
+[scenario-group.tachie-data]
+right = \"KosuzuTachie1\"
 ";
