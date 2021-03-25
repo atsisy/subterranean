@@ -743,7 +743,7 @@ impl GensoDate {
     }
 
     pub fn add_day(&mut self, mut day: i32) {
-        static MONTH: [i32; 12] = [31, 28, 31, 30, 30, 30, 31, 31, 30, 31, 30, 31];
+        static MONTH: [i32; 13] = [0, 31, 28, 31, 30, 30, 30, 31, 31, 30, 31, 30, 31];
 
         while self.day as i32 + day > MONTH[self.month as usize] {
             day -= MONTH[self.month as usize] - self.day as i32;
@@ -765,7 +765,7 @@ impl GensoDate {
     /// return 7
     ///
     pub fn diff_day(&self, date2: &Self) -> i32 {
-        static MONTH: [i32; 12] = [31, 28, 31, 30, 30, 30, 31, 31, 30, 31, 30, 31];
+        static MONTH: [i32; 13] = [0, 31, 28, 31, 30, 30, 30, 31, 31, 30, 31, 30, 31];
 
         let greater_self = self.month.partial_cmp(&date2.month).unwrap();
 
@@ -791,11 +791,11 @@ impl GensoDate {
                 for month_index in (date2.month + 1)..self.month {
                     diff += MONTH[month_index as usize];
                 }
-                -(diff + date2.day as i32)
+                -(diff + self.day as i32)
             }
         }
     }
-
+    
     pub fn rental_limit_type(&self, limit: &GensoDate) -> Option<RentalLimit> {
         let day_diff = self.diff_day(&limit);
 
@@ -831,6 +831,7 @@ impl GensoDate {
 
     pub fn is_week_first(&self) -> bool {
         let diff = self.diff_day(&GensoDate::new(112, 7, 23));
+	println!("diff -> {}", diff);
         diff % 7 == 0
     }
 
