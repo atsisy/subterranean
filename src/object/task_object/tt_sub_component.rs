@@ -1982,6 +1982,28 @@ impl BorrowingRecordBookPage {
 
         None
     }
+
+    pub fn contains_book_id(&self, id: u64) -> bool {
+        for index in 0..self.books_table.get_rows() {
+            let position = numeric::Vector2u::new(index as u32, 0);
+            let hold_data_vtext = self.borrow_book.get(&position);
+	    
+            if let Some(hold_data_vtext) = hold_data_vtext {
+                if !hold_data_vtext.is_none() {
+                    match hold_data_vtext.copy_hold_data() {
+                        HoldData::BookName(info) => {
+                            if info.get_unique_id() == id {
+				return true;
+			    }
+                        }
+                        _ => (),
+                    }
+                }
+            }
+        }
+
+	false
+    }
 }
 
 impl DrawableComponent for BorrowingRecordBookPage {
@@ -2255,7 +2277,14 @@ impl BorrowingRecordBook {
         menu_position: numeric::Point2f,
         book_info: BookInformation,
     ) {
+	for page in self.pages.iter() {
+	    if page.contains_book_id(book_info.get_unique_id()) {
+		return;
+	    }
+	}
+	
         let rpoint = self.relative_point(menu_position);
+	
         if let Some(page) = self.get_current_page_mut() {
             self.redraw_request =
                 page.try_insert_data_in_borrowing_books_frame(ctx, rpoint, book_info);

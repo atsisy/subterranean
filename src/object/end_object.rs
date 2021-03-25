@@ -129,7 +129,28 @@ impl EndSceneFlow {
         );
         result_main_vtext.hide();
 
-        let credit = read_from_resources_as_string(ctx.context, "/credit.txt");
+        //let credit = read_from_resources_as_string(ctx.context, "/credit.txt");
+	let credit = "令和3年3月21日
+第十八回博麗神社例大祭next原作
+上海アリス幻樂団 東方Projectシリーズnext二次創作作品
+電氣貸本屋next企画・開発・キャラクターイラスト
+空き地nextBGM
+YuzuSound　様
+YuzuSound - Completeより
+夜のおませさん
+ふわふわおはなばたけ
+おしまい。nextBGM
+そこからは茶畑になっている　様
+東方自作アレンジ集より
+希望の星は青霄に昇る：arranged by aochanextSE
+YuzuSound　様
+YuzuSound - Completeより
+ほおずきみたいに紅い魂 - あかるいピアノ
+紅より儚い永遠 - おしまい？nextSE
+On-Jin ～音人～
+効果音ラボnextマップチップ
+ぴぽやnextスペシャルサンクス
+デバッグをしてくれた3人";
         for s in credit.rsplit("next").collect::<Vec<&str>>().iter().rev() {
             let mut credit_vtext = Box::new(UniText::new(
                 s.to_string(),
@@ -379,6 +400,7 @@ impl EndSceneFlow {
             } else {
                 self.scene_transition = SceneTransition::SwapTransition;
                 self.next_scene_id = SceneID::Title;
+		std::mem::replace(ctx.savable_data, None);
             }
         }
 

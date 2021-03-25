@@ -1898,7 +1898,7 @@ impl ReturningRequestPool {
 
         let mut day = today.clone();
         day.day -= 12;
-
+	
         for _ in 1..=5 {
             for _ in 1..=2 {
                 let rental_limit = RentalLimit::LongTerm;
@@ -1913,7 +1913,7 @@ impl ReturningRequestPool {
         }
 
         for _ in 1..=7 {
-            for _ in 1..=2 {
+            for _ in 1..=3 {
                 let rental_limit = match rand::random::<u32>() % 2 {
                     0 => RentalLimit::ShortTerm,
                     1 => RentalLimit::LongTerm,
@@ -2732,6 +2732,10 @@ impl SceneController {
 
         let mut game_status = None;
         let mut game_config = GameConfig::new_from_toml(ctx, "/default_game_config.toml");
+
+	if game_config.is_fullscreen_mode_configed() {
+	    ggraphics::set_fullscreen(ctx, ggez::conf::FullscreenType::Desktop);
+	}
 
         let mut permanent_save_data = PermanentSaveData::from_toml();
 

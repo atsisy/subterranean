@@ -1,4 +1,3 @@
-use ggez::graphics as ggraphics;
 use ggez::input::mouse::MouseButton;
 
 use torifune::device as tdev;
@@ -45,7 +44,7 @@ pub struct ScenarioScene {
     mouse_info: MouseInformation,
     scenario_event: ScenarioEvent,
     pause_screen_set: PauseScreenSet,
-    graph_sample: GraphDrawer,
+    //graph_sample: GraphDrawer,
     event_list: DelayEventList<Self>,
     status_screen: SuzunaStatusScreen,
     scene_transition_type: SceneTransition,
@@ -90,22 +89,22 @@ impl ScenarioScene {
             0,
         );
 
-        let graph_drawer = GraphDrawer::new(
-            ctx,
-            numeric::Rect::new(300.0, 100.0, 700.0, 600.0),
-            numeric::Rect::new(20.0, 20.0, 660.0, 560.0),
-            vec![
-                numeric::Vector2f::new(0.0, 0.0),
-                numeric::Vector2f::new(10.0, 10.0),
-                numeric::Vector2f::new(20.0, 20.0),
-                numeric::Vector2f::new(50.0, 50.0),
-            ],
-            6.0,
-            ggraphics::Color::from_rgba_u32(0x00ff00ff),
-            2.0,
-            ggraphics::Color::from_rgba_u32(0xff),
-            0,
-        );
+        // let graph_drawer = GraphDrawer::new(
+        //     ctx,
+        //     numeric::Rect::new(300.0, 100.0, 700.0, 600.0),
+        //     numeric::Rect::new(20.0, 20.0, 660.0, 560.0),
+        //     vec![
+        //         numeric::Vector2f::new(0.0, 0.0),
+        //         numeric::Vector2f::new(10.0, 10.0),
+        //         numeric::Vector2f::new(20.0, 20.0),
+        //         numeric::Vector2f::new(50.0, 50.0),
+        //     ],
+        //     6.0,
+        //     ggraphics::Color::from_rgba_u32(0x00ff00ff),
+        //     2.0,
+        //     ggraphics::Color::from_rgba_u32(0xff),
+        //     0,
+        // );
 
         let scenario_ctx = ScenarioContext {
             schedule_redefine: !ctx.holding_week_schedule_is_available(),
@@ -114,7 +113,7 @@ impl ScenarioScene {
             schedule_define_done: false,
             builtin_command_inexec: false,
         };
-
+	
         let mut status_screen = SuzunaStatusScreen::new(
             ctx,
             &scenario_ctx,
@@ -136,13 +135,14 @@ impl ScenarioScene {
             Some(SoundPlayFlags::new(10000, 1.0, true, ctx.config.get_bgm_volume())),
         );
 
+
         ScenarioScene {
             mouse_info: MouseInformation::new(),
             scenario_event: scenario,
             pause_screen_set: PauseScreenSet::new(ctx, 0, 0),
             scene_transition_effect: None,
             event_list: DelayEventList::new(),
-            graph_sample: graph_drawer,
+            //graph_sample: graph_drawer,
             scene_transition: SceneID::Scenario,
             status_screen: status_screen,
             scene_transition_type: SceneTransition::Keep,
@@ -749,7 +749,7 @@ impl SceneManager for ScenarioScene {
 		SceneID::Save => {
 		    ctx.take_save_data_mut().scenario_save_data
 			= Some(ScenarioSceneSaveData {
-			    scenario_id: self.scenario_event.get_current_scenario_id() as i32,
+			    scenario_id: self.scenario_event.get_scenario_id_for_saving(),
 			    status_page: self.status_screen.get_current_page_id(),
 			    page_showed: self.status_screen.is_visible(),
 			});

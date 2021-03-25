@@ -163,6 +163,10 @@ impl CharacterGroup {
 
         None
     }
+
+    pub fn len(&self) -> usize {
+	self.group.len()
+    }
 }
 
 impl DrawableComponent for CharacterGroup {
@@ -1759,6 +1763,10 @@ impl ShopScene {
             _ => return,
         }
 
+	if self.character_group.len() >= 6 {
+	    return;
+	}
+
         if rand::random::<usize>() % self.random_customer_add_timing as usize == 0 {
             let character = character_factory::create_character(
                 character_factory::CharacterFactoryOrder::CustomerSample,
@@ -1878,17 +1886,17 @@ impl ShopScene {
                 self.check_event_panel_onmap(ctx, EventTrigger::Action);
             }
             tdev::VirtualKey::Action2 => {
-                self.shop_menu.toggle_first_menu(self.get_current_clock());
-                if self.shop_menu.first_menu_is_open() {
-                    self.dark_effect_panel
-                        .new_effect(8, self.get_current_clock(), 0, 200);
-                } else {
-                    self.dark_effect_panel
-                        .new_effect(8, self.get_current_clock(), 200, 0);
-                }
+                // self.shop_menu.toggle_first_menu(self.get_current_clock());
+                // if self.shop_menu.first_menu_is_open() {
+                //     self.dark_effect_panel
+                //         .new_effect(8, self.get_current_clock(), 0, 200);
+                // } else {
+                //     self.dark_effect_panel
+                //         .new_effect(8, self.get_current_clock(), 200, 0);
+                // }
             }
             tdev::VirtualKey::Action3 => {
-                self.shop_clock.add_minute(60);
+                // self.shop_clock.add_minute(60);
             }
             tdev::VirtualKey::Action4 => {
                 let t = self.get_current_clock();
@@ -1897,13 +1905,13 @@ impl ShopScene {
             tdev::VirtualKey::Action5 => {
                 // self.transition_status = SceneTransition::StackingTransition;
                 // self.transition_scene = SceneID::MainDesk;
-                if self.goto_check_customers.is_visible() {
-                    self.goto_check_customers.hide();
-                } else {
-                    self.goto_check_customers.appear();
-                }
+                // if self.goto_check_customers.is_visible() {
+                //     self.goto_check_customers.hide();
+                // } else {
+                //     self.goto_check_customers.appear();
+                // }
 
-                self.goto_check_customers.debug_print(&self.map.tile_map);
+                // self.goto_check_customers.debug_print(&self.map.tile_map);
             }
             _ => (),
         }

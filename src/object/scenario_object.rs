@@ -26,8 +26,6 @@ use crate::scene::DelayEventList;
 use crate::set_table_frame_cell_center;
 use crate::{core::game_system, scene::DrawRequest};
 
-use number_to_jk::number_to_jk;
-
 use serde::{Deserialize, Serialize};
 
 pub struct SuzunaStatusMainPage {
@@ -252,10 +250,8 @@ impl SuzunaStatusMainPage {
                 move |slf, ctx, _| {
                     slf.money_text.replace_text(format!(
                         "{}円",
-                        number_to_jk(
-                            (current_money as f32 + (diff_per_clock * additional as f32) as f32)
-                                as u64
-                        )
+                        (current_money as f32 + (diff_per_clock * additional as f32) as f32)
+                            as u64
                     ));
 
                     set_table_frame_cell_center!(
@@ -583,7 +579,8 @@ impl ScenarioAdPage {
 
         // 広告料 + 追加料金 > 所持金 なら払えないので最も高価な広告を解除
         while ad_page.total_ad_cost(ctx) + work_type_additional_cost
-            > ctx.take_save_data().task_result.total_money
+            > ctx.take_save_data().task_result.total_money &&
+	    ctx.take_save_data().task_result.total_money > work_type_additional_cost
         {
             ad_page.uncheck_most_expensive(ctx);
         }
@@ -1148,7 +1145,6 @@ impl SuzunaStatusScreen {
             0.0,
             0,
         );
-
         background_texture.fit_scale(ctx.context, numeric::Vector2f::new(rect.w, rect.h));
 
         let appr_frame = TileBatchFrame::new(

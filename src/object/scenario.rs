@@ -956,7 +956,7 @@ impl ScenarioElementPool {
 
 pub struct Scenario {
     scenario: ScenarioElementPool,
-    element_id_stack: LinkedList<ScenarioElementID>,
+    element_id_stack: Vec<ScenarioElementID>,
     current_page: usize,
 }
 
@@ -970,10 +970,17 @@ impl Scenario {
 
         let mut scenario = ScenarioElementPool::new_empty();
 
-        let root = parse_toml_file!(ctx.context, file_path);
+        let root = if file_path == "/scenario/day_7_23.toml" {
+	    first_day_scenario
+		.parse::<toml::Value>()
+		.expect("Failed to parse toml file")
+	} else {
+	    parse_toml_file!(ctx.context, file_path)
+	};
 
         let first_scenario_id = 
 	    if let Some(save_data) = save_data {
+		println!("first id -> {}", save_data.scenario_id);
 		save_data.scenario_id as i64
 	    } else {
 		root["first-scenario-id"].as_integer().unwrap()
@@ -1036,7 +1043,7 @@ impl Scenario {
 
         let mut scenario = Scenario {
             scenario: scenario,
-            element_id_stack: LinkedList::new(),
+            element_id_stack: Vec::new(),
             current_page: 0,
         };
 
@@ -1049,7 +1056,7 @@ impl Scenario {
     ///
     pub fn update_current_page_index(&mut self, scenario_element_id: ScenarioElementID) {
         // 次のScenarioElementIDから、ScenarioElementのインデックスを得る
-        self.element_id_stack.push_back(scenario_element_id);
+        self.element_id_stack.push(scenario_element_id);
         let index = self
             .scenario
             .find_index_of_specified_scenario_id(scenario_element_id);
@@ -1058,10 +1065,10 @@ impl Scenario {
 
     pub fn turn_back_scenario_offset(&mut self, offset: usize) {
         for _ in 0..offset {
-            self.element_id_stack.pop_back();
+            self.element_id_stack.pop();
         }
 
-        let turn_backed_id = self.element_id_stack.back().unwrap();
+        let turn_backed_id = self.element_id_stack.last().unwrap();
 
         self.current_page = self
             .scenario
@@ -2030,8 +2037,9 @@ impl ScenarioEvent {
         }
     }
 
-    pub fn get_current_scenario_id(&self) -> usize {
-	self.scenario.current_page
+    pub fn get_scenario_id_for_saving(&self) -> i32 {
+	let len = self.scenario.element_id_stack.len();
+	self.scenario.element_id_stack[len - 2 as usize]
     }
 }
 
@@ -2081,3 +2089,365 @@ impl DrawableComponent for ScenarioEvent {
         self.canvas.get_drawing_depth()
     }
 }
+
+const first_day_scenario: &str = "first-scenario-id = 6
+
+[scene-transition]
+scenario = 1
+dream = 2
+save = 4
+
+[[scenario-group]]
+type = \"choice\"
+header_text = \"エピソードとチュートリアルを短縮しますか？\"
+background = \"SightBackground1\"	
+id = 6
+
+   [[scenario-group.choice-pattern]]
+   pattern = \"はい\"
+   jump-id = 7
+   [[scenario-group.choice-pattern]]
+   pattern = \"いいえ\"
+   jump-id = 8
+
+[[scenario-group]]
+type = \"wait\"
+id = 7
+next-id = 9
+opecode = \"DisableTutorial\"
+background = \"SightBackground1\"
+
+[[scenario-group]]
+type = \"scenario\"
+id = 8
+next-id = 201
+background = \"SightBackground1\"
+
+[scenario-group.tachie-data]
+right = \"KosuzuTachie1\"
+
+   [scenario-group.default-text-attribute]
+   fpc = 2.0
+   font_scale = 32.0
+   color = 0x000000ff
+
+   [[scenario-group.text]]
+   text = \"さてと、昨日の続きでも読もうかな。\"
+
+[[scenario-group]]
+type = \"scenario\"
+id = 201
+next-id = 202
+background = \"SightBackground1\"
+
+[scenario-group.tachie-data]
+right = \"KosuzuTachie1\"
+left = \"NitoriTachieSunGlass\"
+
+   [scenario-group.default-text-attribute]
+   fpc = 2.0
+   font_scale = 32.0
+   color = 0x000000ff
+
+   [[scenario-group.text]]
+   text_src_path = \"./resources/scenario/7_23/1.txt\"
+
+[[scenario-group]]
+type = \"scenario\"
+id = 202
+next-id = 203
+background = \"TownBackground\"
+
+[scenario-group.tachie-data]
+left = \"NitoriTachieDefault\"
+
+   [scenario-group.default-text-attribute]
+   fpc = 2.0
+   font_scale = 32.0
+   color = 0x000000ff
+
+   [[scenario-group.text]]
+   text_src_path = \"./resources/scenario/7_23/2.txt\"
+
+[[scenario-group]]
+type = \"scenario\"
+id = 203
+next-id = 101
+background = \"SightBackground1\"
+
+[scenario-group.tachie-data]
+right = \"KosuzuTachie1\"
+
+   [scenario-group.default-text-attribute]
+   fpc = 2.0
+   font_scale = 32.0
+   color = 0x000000ff
+
+   [[scenario-group.text]]
+   text_src_path = \"./resources/scenario/7_23/3.txt\"
+
+[[scenario-group]]
+type = \"wait\"
+id = 9
+next-id = 20
+opecode = \"ShowStatusScreen\"
+background = \"SightBackground1\"
+
+[[scenario-group]]
+type = \"scenario\"
+id = 10
+next-id = 101
+background = \"SightBackground1\"
+
+[scenario-group.tachie-data]
+right = \"KosuzuTachie1\"
+
+   [scenario-group.default-text-attribute]
+   fpc = 2.0
+   font_scale = 32.0
+   color = 0x000000ff
+
+   [[scenario-group.text]]
+   text_src_path = \"./resources/scenario/7_23/1.txt\"
+
+[[scenario-group]]
+type = \"scenario\"
+id = 101
+next-id = 11
+background = \"SightBackground1\"
+
+[[scenario-group.text]]
+text = \"\"\"
+
+ちょっと何張り切ってんのよ。
+
+あ、阿求じゃない。ちょっとカクカクシカジカで・・・。
+
+・・・
+
+ふーん。大金を稼がないといけないことは分かったけど大丈夫なの？
+
+まあ何回かお店の手伝いはしたことはあるから。
+
+どうも心配ネ。ここは私が稗田家に伝わる商売術を伝授するわよ。
+
+稗田家に商売術なんて伝わってるのかしら。
+
+\"\"\"
+
+
+[scenario-group.tachie-data]
+right = \"KosuzuTachie1\"
+left = \"AkyuTachieDefault\"
+
+   [scenario-group.default-text-attribute]
+   fpc = 2.0
+   font_scale = 32.0
+   color = 0x000000ff
+
+[[scenario-group]]
+type = \"wait\"
+id = 11
+next-id = 12
+opecode = \"ShowStatusScreen\"
+background = \"SightBackground1\"
+
+[[scenario-group]]
+type = \"wait\"
+id = 12
+next-id = 13
+opecode = \"ShowAd\"
+background = \"SightBackground1\"
+
+[[scenario-group]]
+type = \"scenario\"
+id = 13
+next-id = 14
+background = \"SightBackground1\"
+
+[[scenario-group.text]]
+text = \"\"\"
+
+まずこれネ。お店の評判は重要よ。お客さんがたくさん来てくれるかもしれないわ。
+もし悪評が広まれば商売上がったりネ。\"\"\"
+
+
+[scenario-group.tachie-data]
+right = \"KosuzuTachie1\"
+inner-right = \"AkyuTachieDefault\"
+
+   [scenario-group.default-text-attribute]
+   fpc = 2.0
+   font_scale = 32.0
+   color = 0x000000ff
+
+[[scenario-group]]
+type = \"wait\"
+id = 14
+next-id = 15
+opecode = \"ShowAdAgency\"
+background = \"SightBackground1\"
+
+[[scenario-group]]
+type = \"scenario\"
+id = 15
+next-id = 16
+background = \"SightBackground1\"
+
+[[scenario-group.text]]
+text = \"\"\"
+
+次にこれ。人間の里で商売してるのはあなただけじゃない。
+みんな自分の店の宣伝をしようとしているわ。
+その手段として他のお店に宣伝をお願いすることもあるのよ。
+鈴奈庵も例外じゃないわ。
+鈴奈庵の評判が良ければ大きなお店から宣伝をお願いされるかも。
+宣伝をすることでもられるお金も立派なお給料よ。
+\"\"\"
+
+[scenario-group.tachie-data]
+right = \"KosuzuTachie1\"
+inner-right = \"AkyuTachieDefault\"
+
+   [scenario-group.default-text-attribute]
+   fpc = 2.0
+   font_scale = 32.0
+   color = 0x000000ff
+
+[[scenario-group]]
+type = \"wait\"
+id = 16
+next-id = 17
+opecode = \"ShowSchedule\"
+background = \"SightBackground1\"
+
+[[scenario-group]]
+type = \"scenario\"
+id = 17
+next-id = 18
+background = \"SightBackground1\"
+
+[[scenario-group.text]]
+text = \"\"\"
+
+次はこれを見て。まだ今週の予定は決めてないみたいネ。
+週の始まりにはその週の予定を決めましょう。\"\"\"
+
+[scenario-group.tachie-data]
+right = \"KosuzuTachie1\"
+inner-right = \"AkyuTachieDefault\"
+
+   [scenario-group.default-text-attribute]
+   fpc = 2.0
+   font_scale = 32.0
+   color = 0x000000ff
+
+[[scenario-group]]
+type = \"wait\"
+id = 18
+next-id = 19
+opecode = \"ShowMain\"
+background = \"SightBackground1\"
+
+[[scenario-group]]
+type = \"scenario\"
+id = 19
+next-id = 20
+background = \"SightBackground1\"
+
+[[scenario-group.text]]
+text = \"\"\"
+
+最後にこれ。今の所持金だったりお店の状態が分かるわ。
+これを参考にしながら計画的にお仕事を頑張りなさい。
+
+分かったような分からないような。
+
+習うより慣れろよ。それじゃ、また今度鈴奈庵に来るわネ。
+
+一体何しに来たんだ。\"\"\"
+
+[scenario-group.tachie-data]
+right = \"KosuzuTachie1\"
+inner-right = \"AkyuTachieDefault\"
+
+   [scenario-group.default-text-attribute]
+   fpc = 2.0
+   font_scale = 32.0
+   color = 0x000000ff
+
+[[scenario-group]]
+type = \"wait\"
+id = 20
+next-id = 21
+opecode = \"ScheduleCheck\"
+background = \"SightBackground1\"
+
+	   [scenario-group.tachie-data]
+	   right = \"KosuzuTachie1\"
+
+[[scenario-group]]
+type = \"wait\"
+id = 21
+next-id = 22
+opecode = \"ShowAd\"
+background = \"SightBackground1\"
+
+[[scenario-group]]
+type = \"choice\"
+header_text = \"宣伝の依頼もやらないとネ\"
+id = 22
+   [scenario-group.tachie-data]
+   right = \"KosuzuTachie1\"
+
+   [[scenario-group.choice-pattern]]
+   pattern = \"完了\"
+   jump-id = 23
+
+[[scenario-group]]
+type = \"wait\"
+id = 23
+next-id = 24
+opecode = \"ShowAdAgency\"
+background = \"SightBackground1\"
+
+[[scenario-group]]
+type = \"choice\"
+header_text = \"宣伝の受注もしないとネ\"
+id = 24
+   [scenario-group.tachie-data]
+   right = \"KosuzuTachie1\"
+
+   [[scenario-group.choice-pattern]]
+   pattern = \"完了\"
+   jump-id = 25
+
+[[scenario-group]]
+type = \"wait\"
+id = 25
+next-id = 26
+opecode = \"ShowMain\"
+background = \"SightBackground1\"
+
+[[scenario-group]]
+type = \"choice\"
+background = \"SightBackground1\"
+header_text = \"サァ準備ができたわよ\"
+id = 26
+   [scenario-group.tachie-data]
+   right = \"KosuzuTachie1\"
+
+   [[scenario-group.choice-pattern]]
+   pattern = \"行動開始\"
+   jump-id = 27
+   [[scenario-group.choice-pattern]]
+   pattern = \"保存\"
+   jump-id = 4
+
+
+[[scenario-group]]
+type = \"builtin\"
+opecode = \"StartSchedule\"
+id = 27
+background = \"SightBackground1\"
+";
