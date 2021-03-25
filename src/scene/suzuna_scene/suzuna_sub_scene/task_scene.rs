@@ -301,7 +301,7 @@ impl TaskScene {
             .button_up(ctx, self.get_current_clock(), button, point);
 
         let info: &MouseActionRecord = &self.mouse_info.last_down.get(&button).unwrap();
-        if info.point == point {
+        if (info.point.x - point.x).powf(2.0) + (info.point.y - point.y).powf(2.0) < 2.5 {
             self.task_table
                 .on_click(ctx, self.get_current_clock(), button, point);
         }

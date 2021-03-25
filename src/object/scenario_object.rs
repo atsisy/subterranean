@@ -577,10 +577,6 @@ impl ScenarioAdPage {
                 0
             } as i32;
 
-	if ctx.take_save_data().task_result.total_money <= work_type_additional_cost {
-	    
-	}
-
         // 広告料 + 追加料金 > 所持金 なら払えないので最も高価な広告を解除
         while ad_page.total_ad_cost(ctx) + work_type_additional_cost
             > ctx.take_save_data().task_result.total_money
